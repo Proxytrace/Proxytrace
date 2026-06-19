@@ -1,4 +1,5 @@
 import type { KeyboardEvent } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { FormField } from '../../../components/ui/FormField';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -39,6 +40,7 @@ export function ProviderStep({
   onTestConnection,
   onKeyDown,
 }: ProviderStepProps) {
+  const { t } = useLingui();
   const preset = presetById(presetId);
 
   return (
@@ -68,16 +70,16 @@ export function ProviderStep({
 
       <p className="text-body-sm text-muted leading-relaxed -mt-1">{preset.hint}</p>
 
-      <FormField label="Provider name">
+      <FormField label={t`Provider name`}>
         <Input
-          placeholder="e.g. OpenAI Production"
+          placeholder={t`e.g. OpenAI Production`}
           value={providerName}
           onChange={e => onNameChange(e.target.value)}
           onKeyDown={onKeyDown}
           data-testid="setup-provider-name"
         />
       </FormField>
-      <FormField label="Endpoint URL">
+      <FormField label={t`Endpoint URL`}>
         <Input
           placeholder={preset.endpointPlaceholder}
           value={providerEndpoint}
@@ -87,7 +89,7 @@ export function ProviderStep({
           data-testid="setup-provider-endpoint"
         />
       </FormField>
-      <FormField label="Upstream API key" error={error ?? undefined}>
+      <FormField label={t`Upstream API key`} error={error ?? undefined}>
         <Input
           type="password"
           placeholder={preset.keyPlaceholder}
@@ -108,7 +110,7 @@ export function ProviderStep({
           loading={testing}
           data-testid="setup-test-connection-btn"
         >
-          Test connection
+          <Trans>Test connection</Trans>
         </Button>
         {testResult && (
           <span className={cn('text-body', testResult.ok ? 'text-success' : 'text-danger')}>
@@ -117,7 +119,7 @@ export function ProviderStep({
         )}
       </div>
       <p className="text-body-sm text-muted leading-relaxed">
-        Stored encrypted. Used only to forward proxied requests upstream.
+        <Trans>Stored encrypted. Used only to forward proxied requests upstream.</Trans>
       </p>
     </div>
   );

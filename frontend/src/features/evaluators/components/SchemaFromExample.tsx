@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { Button } from '../../../components/ui/Button';
 import { Textarea } from '../../../components/ui/Textarea';
 import { generateSchemaFromExample } from '../jsonSchemaInference';
@@ -26,7 +27,7 @@ export function SchemaFromExample({ onGenerate }: Props) {
   return (
     <details className="group">
       <summary className="cursor-pointer text-[12px] font-medium text-accent select-none py-1">
-        Generate from an example JSON object
+        <Trans>Generate from an example JSON object</Trans>
       </summary>
       <div className="mt-2 flex flex-col gap-2">
         <Textarea
@@ -41,7 +42,7 @@ export function SchemaFromExample({ onGenerate }: Props) {
         {error && <div className="text-[11px] text-danger">{error}</div>}
         <div className="flex items-center justify-between gap-3">
           <div className="text-[11px] text-muted">
-            Replaces the schema above — every example key becomes required; loosen by hand if needed.
+            <Trans>Replaces the schema above — every example key becomes required; loosen by hand if needed.</Trans>
           </div>
           <Button
             variant="secondary"
@@ -49,7 +50,7 @@ export function SchemaFromExample({ onGenerate }: Props) {
             onClick={generate}
             data-testid="schema-from-example-generate"
           >
-            Generate schema
+            <Trans>Generate schema</Trans>
           </Button>
         </div>
       </div>

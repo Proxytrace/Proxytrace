@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { UpgradeErrorType } from '../../api/client';
 import type { LicenseFeature, LicenseSource, LicenseStatus, LicenseTier } from '../../api/license';
 
@@ -29,12 +31,12 @@ export function daysLeft(endsAt: string | null | undefined, now: number = Date.n
 const TIER_LABEL: Record<LicenseTier, string> = { free: 'Free', enterprise: 'Enterprise' };
 
 /** Human-readable label per license status. */
-export const STATUS_LABELS: Record<LicenseStatus, string> = {
-  free: 'Free tier',
-  active: 'Active',
-  grace: 'Grace period',
-  expired: 'Expired / revoked',
-  invalid: 'Invalid',
+export const STATUS_LABELS: Record<LicenseStatus, MessageDescriptor> = {
+  free: msg`Free tier`,
+  active: msg`Active`,
+  grace: msg`Grace period`,
+  expired: msg`Expired / revoked`,
+  invalid: msg`Invalid`,
 };
 
 /**

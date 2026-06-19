@@ -1,5 +1,6 @@
 // 2×2 grid of KPI stat tiles in the hero row.
 
+import { useLingui } from '@lingui/react/macro';
 import { ActivityIcon, ClockIcon, ZapIcon, TargetIcon } from '../../../components/icons';
 import type { SummaryDto, LiveTelemetryDto, DashboardTrendsDto } from '../../../api/models';
 import { fmtLatency } from '../../../lib/format';
@@ -14,6 +15,7 @@ interface StatTileGridProps {
 }
 
 export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatTileGridProps) {
+  const { t } = useLingui();
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
 
   return (
@@ -22,18 +24,18 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         accent
         testId="stat-tile-traces"
         icon={<ActivityIcon size={11} />}
-        label="Traces"
+        label={t`Traces`}
         value={(summary?.totalCalls ?? 0).toLocaleString()}
-        sub="LLM calls captured"
+        sub={t`LLM calls captured`}
         delta="+24%"
         trace={trends?.traces}
         traceColor="var(--accent-primary)"
-        traceFormat={v => `${Math.round(v)} traces`}
+        traceFormat={v => t`${Math.round(v)} traces`}
       />
       <StatTile
         testId="stat-tile-latency"
         icon={<ClockIcon size={11} />}
-        label="Avg Latency"
+        label={t`Avg Latency`}
         value={String(Math.round(summary?.avgLatencyMs ?? 0))}
         unit="ms"
         sub={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'}
@@ -46,10 +48,10 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
       <StatTile
         testId="stat-tile-throughput"
         icon={<ZapIcon size={11} />}
-        label="Throughput"
+        label={t`Throughput`}
         value={telemetry ? String(Math.round(telemetry.tokensPerSecond)) : '—'}
         unit="t/s"
-        sub={telemetry ? `p95 ${fmtLatency(telemetry.p95Ms)}` : 'awaiting telemetry'}
+        sub={telemetry ? `p95 ${fmtLatency(telemetry.p95Ms)}` : t`awaiting telemetry`}
         delta="+18%"
         trace={trends?.throughput}
         traceColor="var(--teal)"
@@ -58,14 +60,14 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
       <StatTile
         testId="stat-tile-pass-rate"
         icon={<TargetIcon size={11} />}
-        label="Pass Rate"
+        label={t`Pass Rate`}
         value={String(passPct)}
         unit="%"
-        sub="latest suite run"
+        sub={t`latest suite run`}
         delta="+7pt"
         trace={trends?.passRate}
         traceColor="var(--success)"
-        traceFormat={v => `${v.toFixed(0)}% pass`}
+        traceFormat={v => t`${v.toFixed(0)}% pass`}
       />
     </div>
   );

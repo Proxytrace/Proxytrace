@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { localAuthApi } from '../../auth/local/localAuthApi';
 import { useInvitePreview } from './hooks/useInvitePreview';
@@ -11,6 +12,7 @@ import useLocalAuth from '../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../auth/password';
 
 export default function Signup() {
+  const { t } = useLingui();
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const navigate = useNavigate();
@@ -26,8 +28,8 @@ export default function Signup() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface p-6 text-center text-primary">
         <div>
-          <h1 className="text-lg font-semibold">Invite expired or already used</h1>
-          <p className="mt-2 text-sm text-muted">Ask an admin for a new invite link.</p>
+          <h1 className="text-lg font-semibold"><Trans>Invite expired or already used</Trans></h1>
+          <p className="mt-2 text-sm text-muted"><Trans>Ask an admin for a new invite link.</Trans></p>
         </div>
       </div>
     );
@@ -49,19 +51,19 @@ export default function Signup() {
             setToken(r.token);
             navigate('/');
           } catch {
-            setErr('Could not complete signup. The invite may have expired.');
+            setErr(t`Could not complete signup. The invite may have expired.`);
           } finally {
             setSubmitting(false);
           }
         }}
       >
-        <h1 className="text-lg font-semibold">Create your account</h1>
+        <h1 className="text-lg font-semibold"><Trans>Create your account</Trans></h1>
         <p className="text-xs text-muted">
-          Role: <span className="text-primary">{preview.role}</span>
+          <Trans>Role: <span className="text-primary">{preview.role}</span></Trans>
         </p>
         {/* Email is fixed by the invite — the backend ignores any client value and uses the
             invited address, so the field is locked here to match. */}
-        <FormField label="Email">
+        <FormField label={t`Email`}>
           <Input
             value={preview.email}
             data-testid="signup-email"
@@ -73,7 +75,7 @@ export default function Signup() {
         <Input
           data-testid="signup-password"
           type="password"
-          placeholder="Password"
+          placeholder={t`Password`}
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -82,7 +84,7 @@ export default function Signup() {
         <PasswordRequirements password={password} />
         {err && <p data-testid="signup-error" className="text-sm text-danger">{err}</p>}
         <Button data-testid="signup-submit" type="submit" fullWidth loading={submitting} disabled={!passwordIsValid(password)}>
-          Create account
+          <Trans>Create account</Trans>
         </Button>
       </form>
     </div>

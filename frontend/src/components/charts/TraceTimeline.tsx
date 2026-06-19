@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { computeTimeline, timeToX, xToTime, timelineAxisTicks, zoomTowardPivot } from './chart-math';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { useWheelZoom } from '../../hooks/useWheelZoom';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function TraceTimeline({ buckets, from, to, onZoom, onZoomOut, canZoomOut, height = 84 }: Props) {
+  const { t } = useLingui();
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(600);
   const w = measuredWidth || 600;
   const geo = useMemo(() => computeTimeline(buckets, w, height), [buckets, w, height]);
@@ -112,8 +114,8 @@ export function TraceTimeline({ buckets, from, to, onZoom, onZoomOut, canZoomOut
       onPointerLeave={() => setHoverIdx(null)}
       title={
         canZoomOut
-          ? 'Scroll or drag to zoom in · click a bar to focus it · scroll down to zoom out'
-          : 'Scroll or drag to zoom in · click a bar to focus it'
+          ? t`Scroll or drag to zoom in · click a bar to focus it · scroll down to zoom out`
+          : t`Scroll or drag to zoom in · click a bar to focus it`
       }
     >
       <svg viewBox={`0 0 ${w} ${height}`} width="100%" height={height} className="block">
@@ -157,13 +159,15 @@ export function TraceTimeline({ buckets, from, to, onZoom, onZoomOut, canZoomOut
       </svg>
       {buckets.length === 0 && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-body-sm text-muted">
-          No traces in this range{canZoomOut ? ' · scroll down to zoom out' : ''}
+          {canZoomOut
+            ? <Trans>No traces in this range · scroll down to zoom out</Trans>
+            : <Trans>No traces in this range</Trans>}
         </div>
       )}
       {hoverBucket && (
         <div className="pointer-events-none absolute top-1 left-1 rounded-sm bg-card px-2 py-1 text-caption text-secondary shadow-[var(--shadow-float)]">
-          {new Date(hoverBucket.start).toLocaleTimeString()} · {hoverBucket.total} traces
-          {hoverBucket.errors > 0 && <span className="text-[var(--danger)]"> · {hoverBucket.errors} err</span>}
+          {new Date(hoverBucket.start).toLocaleTimeString()} · <Plural value={hoverBucket.total} one="# trace" other="# traces" />
+          {hoverBucket.errors > 0 && <span className="text-[var(--danger)]"> · <Trans>{hoverBucket.errors} err</Trans></span>}
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import { EVALUATOR_KIND_COLOR, EVALUATOR_KIND_CATEGORY } from '../../../lib/colors';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
@@ -10,10 +11,11 @@ interface Props {
 }
 
 export function EvaluatorPreview({ evaluator, attached }: Props) {
+  const { t } = useLingui();
   if (!evaluator) {
     return (
       <div className="h-full flex items-center justify-center">
-        <EmptyState title="Select an evaluator" description="Click a row to inspect its config." />
+        <EmptyState title={t`Select an evaluator`} description={t`Click a row to inspect its config.`} />
       </div>
     );
   }
@@ -29,16 +31,16 @@ export function EvaluatorPreview({ evaluator, attached }: Props) {
           <div className="text-[14px] font-bold text-primary truncate">{evaluator.name}</div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <ColoredBadge color={c} label={evaluator.kind} />
-            <span className="text-[10.5px] font-mono text-muted uppercase tracking-[0.06em]">{cat}-based</span>
+            <span className="text-[10.5px] font-mono text-muted uppercase tracking-[0.06em]"><Trans>{cat}-based</Trans></span>
             <span className={`text-[10.5px] font-semibold uppercase tracking-[0.08em] ${attached ? 'text-accent' : 'text-muted'}`}>
-              {attached ? '● Attached' : '○ Not attached'}
+              {attached ? <Trans>● Attached</Trans> : <Trans>○ Not attached</Trans>}
             </span>
           </div>
         </div>
       </div>
 
       {evaluator.systemMessage && (
-        <Field label="System prompt">
+        <Field label={t`System prompt`}>
           <div className="text-[12.5px] leading-[1.6] text-secondary whitespace-pre-wrap bg-card-2 border border-border rounded-[10px] px-3 py-[10px] max-h-[200px] overflow-y-auto">
             {evaluator.systemMessage}
           </div>
@@ -46,13 +48,13 @@ export function EvaluatorPreview({ evaluator, attached }: Props) {
       )}
 
       {evaluator.endpointName && (
-        <Field label="Judge model">
+        <Field label={t`Judge model`}>
           <div className="text-[12.5px] text-primary font-mono">{evaluator.endpointName}</div>
         </Field>
       )}
 
       {evaluator.extractionPattern && (
-        <Field label="Extraction pattern">
+        <Field label={t`Extraction pattern`}>
           <div className="text-[12px] font-mono text-primary bg-card-2 border border-border rounded-[8px] px-3 py-[8px] break-all">
             {evaluator.extractionPattern}
           </div>
@@ -60,19 +62,19 @@ export function EvaluatorPreview({ evaluator, attached }: Props) {
       )}
 
       {evaluator.tolerance != null && (
-        <Field label="Tolerance">
+        <Field label={t`Tolerance`}>
           <div className="text-[12.5px] text-primary font-mono">{evaluator.tolerance}</div>
         </Field>
       )}
 
       {evaluator.jsonSchema && (
-        <Field label="JSON schema">
+        <Field label={t`JSON schema`}>
           <CodeBlock content={evaluator.jsonSchema} language="json" />
         </Field>
       )}
 
       {!evaluator.systemMessage && !evaluator.extractionPattern && !evaluator.jsonSchema && evaluator.tolerance == null && (
-        <div className="text-[12px] text-muted italic">No additional configuration.</div>
+        <div className="text-[12px] text-muted italic"><Trans>No additional configuration.</Trans></div>
       )}
     </div>
   );

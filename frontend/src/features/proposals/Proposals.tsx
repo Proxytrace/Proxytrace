@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { SparklesIcon } from '../../components/icons';
 import { useSelectedId } from '../../hooks/useSelectedId';
 import { agentColor } from '../../lib/colors';
@@ -18,6 +19,7 @@ import { ProposalStatus, TheoryStatus } from '../../api/models';
 import { BOARD_COLUMNS, boardStats, groupByColumn } from './theoryBoard';
 
 export default function Proposals() {
+  const { t } = useLingui();
   const { theories, isLoading } = useTheories();
   // While any theory is still validating, proposals can appear/change server-side — poll alongside.
   const hasActiveTheories = theories.some(
@@ -42,10 +44,10 @@ export default function Proposals() {
       else byAgent.set(t.agentId, { name: t.agentName, count: 1 });
     }
     return [
-      { key: '', label: `All agents (${theories.length})` },
+      { key: '', label: t`All agents (${theories.length})` },
       ...Array.from(byAgent, ([id, { name, count }]) => ({ key: id, label: `${name} (${count})`, accent: agentColor(id) })),
     ];
-  }, [theories]);
+  }, [theories, t]);
 
   const visibleTheories = agentFilter ? theories.filter(t => t.agentId === agentFilter) : theories;
 
@@ -63,13 +65,13 @@ export default function Proposals() {
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2.5 mb-1.5">
-            <h1 className="text-h1 font-bold tracking-[-0.02em] m-0">Optimization Theories</h1>
+            <h1 className="text-h1 font-bold tracking-[-0.02em] m-0"><Trans>Optimization Theories</Trans></h1>
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-body-sm font-semibold text-accent-hover bg-[image:linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_20%,transparent),color-mix(in_srgb,var(--teal)_12%,transparent))]">
-              <SparklesIcon size={11} /> Auto-generated
+              <SparklesIcon size={11} /> <Trans>Auto-generated</Trans>
             </span>
           </div>
           <p className="text-body-sm text-muted m-0">
-            Hypotheses spawned from failing test results, moving through validation — from untested to proven.
+            <Trans>Hypotheses spawned from failing test results, moving through validation — from untested to proven.</Trans>
           </p>
         </div>
         <BoardStats stats={stats} />
@@ -79,7 +81,7 @@ export default function Proposals() {
       {theories.length > 0 && (
         <div className="fade-up flex items-center gap-3 shrink-0 [animation-delay:30ms]" data-testid="proposals-agent-filter">
           <FilterDropdown
-            label="Agent"
+            label={t`Agent`}
             value={agentFilter ?? ''}
             options={agentOptions}
             onChange={key => setAgentFilter(key || null)}
@@ -96,8 +98,8 @@ export default function Proposals() {
       {/* Board */}
       {!isLoading && theories.length === 0 ? (
         <EmptyState
-          title="No optimization theories yet"
-          description="Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate."
+          title={t`No optimization theories yet`}
+          description={t`Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate.`}
         />
       ) : (
         <div
@@ -111,7 +113,7 @@ export default function Proposals() {
                 {isLoading
                   ? Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-[150px] rounded-lg" />)
                   : columnTheories.length === 0
-                    ? <p className="text-caption text-muted px-1 py-2">Nothing here yet.</p>
+                    ? <p className="text-caption text-muted px-1 py-2"><Trans>Nothing here yet.</Trans></p>
                     : columnTheories.map(theory => (
                         <TheoryCard
                           key={theory.id}

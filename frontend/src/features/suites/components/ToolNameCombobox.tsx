@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { ToolSpecDto } from '../../../api/models';
 import { Input } from '../../../components/ui/Input';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -21,6 +22,7 @@ interface Props {
  * Picking one fills the name and lets the caller seed its argument skeleton.
  */
 export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }: Props) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -65,10 +67,10 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
     <div ref={wrapRef} className="relative flex-1 min-w-0">
       <Input
         inputSize="sm"
-        aria-label="Tool name"
+        aria-label={t`Tool name`}
         role="combobox"
         aria-expanded={open}
-        placeholder="Choose a tool or type a name…"
+        placeholder={t`Choose a tool or type a name…`}
         className="pr-7"
         invalid={value.trim().length === 0 || invalid}
         value={value}
@@ -79,7 +81,7 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
       <button
         type="button"
         tabIndex={-1}
-        aria-label={open ? 'Hide tools' : 'Show available tools'}
+        aria-label={open ? t`Hide tools` : t`Show available tools`}
         onClick={() => setOpen(o => !o)}
         className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-primary cursor-pointer transition-colors"
       >
@@ -98,7 +100,7 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
           style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
         >
           {matches.length === 0 ? (
-            <div className="px-[10px] py-2 text-[12px] text-muted">No matching tools — keep typing for a custom name.</div>
+            <div className="px-[10px] py-2 text-[12px] text-muted"><Trans>No matching tools — keep typing for a custom name.</Trans></div>
           ) : (
             matches.map(tool => (
               <RowButton
@@ -110,7 +112,7 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
               >
                 <span className="mono text-[12.5px] text-primary truncate max-w-full">{tool.name}</span>
                 <span className="text-[10.5px] text-muted truncate max-w-full">
-                  {tool.arguments.length} param{tool.arguments.length !== 1 ? 's' : ''}
+                  <Plural value={tool.arguments.length} one="# param" other="# params" />
                   {tool.description ? ` · ${tool.description}` : ''}
                 </span>
               </RowButton>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { JsonBlock } from '../ui/JsonBlock';
 import { Markdown } from '../markdown/Markdown';
 import { AlertTriangleIcon } from '../icons';
@@ -43,6 +44,7 @@ function RawText({ content, isSystem }: { content: string; isSystem?: boolean })
  * exception to the no-dangerouslySetInnerHTML rule — DESIGN §9), warning when tags were stripped.
  */
 export function MessageContent({ content, view, isSystem }: Props) {
+  const { t } = useLingui();
   const json = useMemo(() => (view === 'json' ? tryParseJson(content) : null), [view, content]);
   const sanitized = useMemo(() => (view === 'html' ? sanitizeHtml(content) : null), [view, content]);
 
@@ -55,7 +57,7 @@ export function MessageContent({ content, view, isSystem }: Props) {
           <JsonBlock value={content} transparent />
         ) : (
           <>
-            <WarningBanner>Not valid JSON — showing raw text</WarningBanner>
+            <WarningBanner>{t`Not valid JSON — showing raw text`}</WarningBanner>
             <RawText content={content} isSystem={isSystem} />
           </>
         ))}
@@ -64,7 +66,7 @@ export function MessageContent({ content, view, isSystem }: Props) {
 
       {view === 'html' && sanitized && (
         <>
-          {sanitized.modified && <WarningBanner>Some HTML was removed for safety</WarningBanner>}
+          {sanitized.modified && <WarningBanner>{t`Some HTML was removed for safety`}</WarningBanner>}
           {/* DOMPurify-sanitized markup — see lib/sanitize.ts sanitizeHtml. */}
           <div
             className="text-[13px] leading-relaxed text-primary"

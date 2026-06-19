@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { CheckIcon, ZapIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -27,6 +28,7 @@ export function ComposeBox({
   onEndpointChange,
   onSend,
 }: Props) {
+  const { t } = useLingui();
   const [text, setText] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -69,7 +71,7 @@ export function ComposeBox({
   const isModified = !!defaultEndpointId && !!endpointId && endpointId !== defaultEndpointId;
   const badgeLabel = current
     ? `${current.providerName} · ${current.modelName}`
-    : (endpointId ? '…' : 'Pick endpoint');
+    : (endpointId ? '…' : t`Pick endpoint`);
 
   return (
     <div className="border-t border-border p-[12px] flex flex-col gap-[8px] bg-[rgba(0,0,0,0.12)]">
@@ -86,7 +88,7 @@ export function ComposeBox({
           ref={taRef}
           data-testid="compose-box"
           className="w-full bg-transparent border-0 outline-none resize-none px-[12px] pt-[10px] pb-[6px] text-[13.5px] leading-[1.55] text-primary placeholder:text-muted"
-          placeholder={disabled && disabledReason ? disabledReason : 'Send a user message…'}
+          placeholder={disabled && disabledReason ? disabledReason : t`Send a user message…`}
           value={text}
           disabled={disabled}
           onChange={e => setText(e.target.value)}
@@ -94,7 +96,7 @@ export function ComposeBox({
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); send(); }
           }}
           rows={2}
-          aria-label="Message"
+          aria-label={t`Message`}
         />
         <div className="flex items-center gap-[8px] px-[10px] pb-[8px] pt-[2px]">
           {onEndpointChange && (
@@ -110,7 +112,7 @@ export function ComposeBox({
                     ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
                     : 'bg-[rgba(255,255,255,0.04)] border-border text-secondary',
                 )}
-                title="Switch endpoint"
+                title={t`Switch endpoint`}
                 aria-haspopup="listbox"
                 aria-expanded={pickerOpen}
               >
@@ -118,8 +120,8 @@ export function ComposeBox({
                 {badgeLabel}
                 {isModified && (
                   <span
-                    aria-label="modified"
-                    title="Modified from agent default"
+                    aria-label={t`modified`}
+                    title={t`Modified from agent default`}
                     className="ml-[2px] size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-card)]"
                   />
                 )}
@@ -130,19 +132,19 @@ export function ComposeBox({
                   className="absolute left-0 bottom-full mb-[6px] z-30 w-[280px] rounded-[12px] py-[6px] max-h-[320px] overflow-y-auto fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
                 >
                   <div className="px-[10px] pt-[2px] pb-[6px] flex items-center justify-between">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Endpoint</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
                     {defaultEndpointId && endpointId !== defaultEndpointId && (
                       <Button
                         variant="link"
                         className="text-[10px] uppercase tracking-[0.08em]"
                         onClick={() => { onEndpointChange(defaultEndpointId); setPickerOpen(false); }}
                       >
-                        Reset
+                        <Trans>Reset</Trans>
                       </Button>
                     )}
                   </div>
                   {endpoints.length === 0 ? (
-                    <div className="px-[10px] py-[8px] text-[11.5px] text-muted">No endpoints configured.</div>
+                    <div className="px-[10px] py-[8px] text-[11.5px] text-muted"><Trans>No endpoints configured.</Trans></div>
                   ) : endpoints.map(ep => {
                     const active = ep.id === endpointId;
                     return (
@@ -172,8 +174,8 @@ export function ComposeBox({
             </div>
           )}
           <div className="ml-auto flex items-center gap-[10px] text-[10.5px] mono text-muted tabular-nums">
-            <span title="Approximate tokens (chars / 4)">~{tokens} tok</span>
-            <span>{text.length} chars</span>
+            <span title={t`Approximate tokens (chars / 4)`}><Trans>~{tokens} tok</Trans></span>
+            <span><Trans>{text.length} chars</Trans></span>
           </div>
           <Button
             variant="primary"
@@ -181,9 +183,9 @@ export function ComposeBox({
             onClick={send}
             disabled={!canSend}
             data-testid="compose-send"
-            aria-label="Send message"
+            aria-label={t`Send message`}
           >
-            Send
+            <Trans>Send</Trans>
             <span className="kbd-hint">⌘↵</span>
           </Button>
         </div>

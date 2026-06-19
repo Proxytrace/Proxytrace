@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useLingui } from '@lingui/react/macro';
 import { IconButton } from '../../../components/ui/Button';
 import { XIcon, ChevronRightIcon } from '../../../components/icons';
 import { ID_SHORT_LEN } from '../../../lib/constants';
@@ -41,6 +42,7 @@ export function DrawerShell({
   trailing,
   children,
 }: Props) {
+  const { t } = useLingui();
   useDrawerKeys({ onClose, onPrev, onNext });
 
   return createPortal(
@@ -57,7 +59,7 @@ export function DrawerShell({
               <span className="mono shrink-0 px-1.5 py-px rounded-sm bg-card-2 text-muted text-body-sm">
                 {caseId.slice(0, ID_SHORT_LEN)}
               </span>
-              <span className="text-h2 font-semibold truncate">{caseSummary ?? 'Test Case'}</span>
+              <span className="text-h2 font-semibold truncate">{caseSummary ?? t`Test Case`}</span>
             </div>
           </div>
 
@@ -68,15 +70,15 @@ export function DrawerShell({
           )}
 
           <div className="flex gap-[3px] shrink-0">
-            <IconButton size="sm" onClick={onPrev} disabled={!onPrev} aria-label="Previous case" className="disabled:opacity-30">
+            <IconButton size="sm" onClick={onPrev} disabled={!onPrev} aria-label={t`Previous case`} className="disabled:opacity-30">
               <ChevronRightIcon size={14} className="rotate-180" />
             </IconButton>
-            <IconButton size="sm" onClick={onNext} disabled={!onNext} aria-label="Next case" className="disabled:opacity-30">
+            <IconButton size="sm" onClick={onNext} disabled={!onNext} aria-label={t`Next case`} className="disabled:opacity-30">
               <ChevronRightIcon size={14} />
             </IconButton>
           </div>
 
-          <IconButton onClick={onClose} aria-label="Close"><XIcon size={14} /></IconButton>
+          <IconButton onClick={onClose} aria-label={t`Close`}><XIcon size={14} /></IconButton>
         </div>
 
         {children}

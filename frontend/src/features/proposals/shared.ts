@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { ProposalKind } from '../../api/models';
 
 export type DisplayTone = 'accent' | 'success' | 'danger' | 'muted' | 'secondary' | 'teal';
@@ -33,12 +35,12 @@ export const TONE_SUBTLE_BG: Record<DisplayTone, string> = {
 };
 
 export interface KindMeta {
-  label: string;
+  label: MessageDescriptor;
   color: string;
 }
 
 export const KIND_META: Record<ProposalKind, KindMeta> = {
-  [ProposalKind.SystemPrompt]: { label: 'Prompt rewrite', color: 'var(--accent-primary)' },
-  [ProposalKind.Tool]:         { label: 'Tool update',    color: 'var(--success)' },
-  [ProposalKind.ModelSwitch]:  { label: 'Model swap',     color: 'var(--teal)' },
+  [ProposalKind.SystemPrompt]: { label: msg`Prompt rewrite`, color: 'var(--accent-primary)' },
+  [ProposalKind.Tool]:         { label: msg`Tool update`,    color: 'var(--success)' },
+  [ProposalKind.ModelSwitch]:  { label: msg`Model swap`,     color: 'var(--teal)' },
 };

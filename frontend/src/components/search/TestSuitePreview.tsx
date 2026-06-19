@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { SearchHit } from '../../api/search';
 import { useTestSuitePreview } from './hooks/useSearchPreviewQuery';
 import { MetaGrid, PreviewLoading } from './SearchPreviewPrimitives';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function TestSuitePreview({ id, hit }: Props) {
+  const { t } = useLingui();
   const q = useTestSuitePreview(id);
   if (q.isLoading) return <PreviewLoading />;
   if (q.isError || !q.data) return <GenericBody hit={hit} />;
@@ -20,12 +22,12 @@ export function TestSuitePreview({ id, hit }: Props) {
     <>
       <MetaGrid entries={[
         ['Agent',      s.agentName],
-        ['Test cases', String(s.testCases?.length ?? 0)],
-        ['Pass rate',  s.passRate != null ? `${(s.passRate * 100).toFixed(0)}%` : '—'],
-        ['Total runs', String(s.totalRuns)],
+        [t`Test cases`, String(s.testCases?.length ?? 0)],
+        [t`Pass rate`,  s.passRate != null ? `${(s.passRate * 100).toFixed(0)}%` : '—'],
+        [t`Total runs`, String(s.totalRuns)],
       ]} />
       {s.description && (
-        <PreviewSection title="Description">
+        <PreviewSection title={t`Description`}>
           <div className="text-[12px] text-white/75 leading-relaxed whitespace-pre-wrap break-words">
             {truncate(s.description, 400)}
           </div>

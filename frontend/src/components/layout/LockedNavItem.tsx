@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useLingui } from '@lingui/react/macro';
 import { LockIcon } from '../icons';
 
 /**
@@ -11,10 +12,11 @@ export function LockedNavItem({ label, icon, collapsed }: {
   icon: React.ReactNode;
   collapsed: boolean;
 }) {
+  const { t } = useLingui();
   return (
     <Link
       to="/upgrade"
-      title={collapsed ? `${label} (Enterprise)` : 'Requires Enterprise'}
+      title={collapsed ? t`${label} (Enterprise)` : t`Requires Enterprise`}
       data-testid={`nav-locked-${label.toLowerCase().replace(/\s+/g, '-')}`}
       className={`nav-item opacity-60${collapsed ? ' justify-center' : ''}`}
     >

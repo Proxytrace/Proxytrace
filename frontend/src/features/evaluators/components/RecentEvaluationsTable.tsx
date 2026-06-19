@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { fmtRelative, fmtLatency } from '../../../lib/format';
 import { ActivityIcon, XIcon, ExternalLinkIcon } from '../../../components/icons';
@@ -19,12 +20,13 @@ interface Props {
 
 /** Recent evaluations table for one evaluator (last 8). Data is supplied by the parent detail view. */
 export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFilter, onOpenResult }: Props) {
+  const { t, i18n } = useLingui();
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)] overflow-hidden">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
         <ActivityIcon size={13} />
-        <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">Recent evaluations</span>
-        {!scoreFilter && <span className="text-[11px] text-muted">last 8</span>}
+        <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Recent evaluations</Trans></span>
+        {!scoreFilter && <span className="text-[11px] text-muted"><Trans>last 8</Trans></span>}
         {scoreFilter && (
           // eslint-disable-next-line no-restricted-syntax -- bespoke removable filter pill
           <button
@@ -33,32 +35,32 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
             data-testid="evaluator-recent-filter-clear"
             className="ml-auto inline-flex items-center gap-1 px-2 py-[3px] rounded-full bg-accent-subtle text-accent-text text-[10px] font-semibold cursor-pointer transition-colors hover:bg-card-2"
           >
-            {SCORE_LABEL[scoreFilter]}
+            {i18n._(SCORE_LABEL[scoreFilter])}
             <XIcon size={10} />
           </button>
         )}
       </header>
       {isLoading ? (
-        <div className="px-4 py-8 text-center text-muted text-[12px]">Loading…</div>
+        <div className="px-4 py-8 text-center text-muted text-[12px]"><Trans>Loading…</Trans></div>
       ) : rows.length === 0 ? (
         <div className="px-4 py-10 text-center text-muted text-[12px]">
           {scoreFilter ? (
             <>
-              No recent <strong>{SCORE_LABEL[scoreFilter]}</strong> evaluations.{' '}
-              <Button variant="link" size="sm" onClick={onClearFilter}>Clear filter</Button>
+              <Trans>No recent <strong>{i18n._(SCORE_LABEL[scoreFilter])}</strong> evaluations.</Trans>{' '}
+              <Button variant="link" size="sm" onClick={onClearFilter}><Trans>Clear filter</Trans></Button>
             </>
           ) : (
-            'No evaluations yet. Attach this evaluator to a suite and run it.'
+            <Trans>No evaluations yet. Attach this evaluator to a suite and run it.</Trans>
           )}
         </div>
       ) : (
         <div>
           <div className={cn(GRID, 'px-4 py-2 gap-3 items-center text-[9.5px] text-muted uppercase tracking-[0.08em] border-b border-hairline font-semibold')}>
-            <span>Time</span>
-            <span>Case · reason</span>
-            <span className="text-right">Latency</span>
-            <span className="text-right">Score</span>
-            <span className="text-right">Verdict</span>
+            <span><Trans>Time</Trans></span>
+            <span><Trans>Case · reason</Trans></span>
+            <span className="text-right"><Trans>Latency</Trans></span>
+            <span className="text-right"><Trans>Score</Trans></span>
+            <span className="text-right"><Trans>Verdict</Trans></span>
           </div>
           {rows.map((s, i) => {
             const clickable = !!s.runId;
@@ -68,7 +70,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
                 disabled={!clickable}
                 onClick={() => onOpenResult(s)}
                 data-testid={`evaluator-recent-row-${s.testResultId}`}
-                title={clickable ? 'Open this result in the run matrix' : undefined}
+                title={clickable ? t`Open this result in the run matrix` : undefined}
                 className={cn(
                   GRID,
                   'group px-4 py-[11px] items-center gap-3 text-[11.5px] transition-colors',
@@ -92,7 +94,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
                   <span className={cn(
                     'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-[0.04em]',
                     s.passed ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
-                  )}>{s.passed ? 'PASS' : 'FAIL'}</span>
+                  )}>{s.passed ? t`PASS` : t`FAIL`}</span>
                 </span>
               </RowButton>
             );

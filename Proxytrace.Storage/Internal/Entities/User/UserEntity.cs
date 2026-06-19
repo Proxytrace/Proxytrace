@@ -15,4 +15,7 @@ internal record UserEntity : Entity
     public string? PasswordHash { get; init; }
 
     public required UserRole Role { get; init; }
+
+    /// <summary><see cref="Proxytrace.Domain.User.IUser.Language"/>. BCP-47 culture code; defaults to English.</summary>
+    public string Language { get; init; } = "en";
 }

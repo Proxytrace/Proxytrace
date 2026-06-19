@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import type { UpgradeErrorType } from '../../api/client';
 import { Modal } from '../overlays/Modal';
 import { Button } from '../ui/Button';
@@ -60,11 +61,11 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
           </div>
           <div className="mt-1 flex items-center gap-2">
             <Button variant="secondary" onClick={close} data-testid="upgrade-modal-dismiss">
-              Not now
+              <Trans>Not now</Trans>
             </Button>
             <a href={PRICING_URL} target="_blank" rel="noopener noreferrer">
               <Button variant="primary" data-testid="upgrade-modal-cta">
-                View Enterprise plans
+                <Trans>View Enterprise plans</Trans>
               </Button>
             </a>
           </div>

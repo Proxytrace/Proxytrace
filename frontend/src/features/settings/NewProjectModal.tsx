@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
@@ -13,6 +14,7 @@ interface NewProjectModalProps {
 }
 
 export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewProjectModalProps) {
+  const { t } = useLingui();
   const [name, setName] = useState('');
   const [systemEndpointId, setSystemEndpointId] = useState(endpoints[0]?.id ?? '');
 
@@ -20,31 +22,31 @@ export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewP
 
   return (
     <Modal
-      title="New project"
+      title={t`New project`}
       onClose={onCancel}
       footer={
         <ModalFooter
           onCancel={onCancel}
           onSubmit={() => onSubmit({ name: name.trim(), systemEndpointId })}
-          submitLabel={loading ? 'Creating…' : 'Create project'}
+          submitLabel={loading ? t`Creating…` : t`Create project`}
           disabled={!valid}
           loading={loading}
         />
       }
     >
       <div className="flex flex-col gap-4" data-testid="new-project-modal">
-        <FormField label="Name">
+        <FormField label={t`Name`}>
           <Input
             autoFocus
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="e.g. Production analytics"
+            placeholder={t`e.g. Production analytics`}
             data-testid="project-name-input"
           />
         </FormField>
-        <FormField label="System endpoint">
+        <FormField label={t`System endpoint`}>
           <Select value={systemEndpointId} onValueChange={setSystemEndpointId}>
-            {endpoints.length === 0 && <option value="">No endpoints available</option>}
+            {endpoints.length === 0 && <option value="">{t`No endpoints available`}</option>}
             {endpoints.map(e => (
               <option key={e.id} value={e.id}>
                 {e.providerName} · {e.modelName}

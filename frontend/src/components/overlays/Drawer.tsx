@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { IconButton } from '../ui/Button';
 import { ChevronRightIcon, XIcon } from '../icons';
 import { DetailPanel } from './DetailPanel';
@@ -17,6 +18,7 @@ interface DrawerProps {
  * header/tab layout, render {@link DetailPanel} directly instead.
  */
 export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: DrawerProps) {
+  const { t } = useLingui();
   return (
     <DetailPanel onClose={onClose} onPrev={onPrev} onNext={onNext}>
       <div className="px-5 pt-4 pb-3 border-b border-hairline flex items-center gap-3 shrink-0">
@@ -26,7 +28,7 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
               size="sm"
               onClick={onPrev}
               disabled={!onPrev}
-              aria-label="Previous"
+              aria-label={t`Previous`}
               className="rotate-180 disabled:opacity-30"
             >
               <ChevronRightIcon size={14} strokeWidth={2.5} />
@@ -35,7 +37,7 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
               size="sm"
               onClick={onNext}
               disabled={!onNext}
-              aria-label="Next"
+              aria-label={t`Next`}
               className="disabled:opacity-30"
             >
               <ChevronRightIcon size={14} strokeWidth={2.5} />
@@ -46,7 +48,7 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
           {title && <div className="text-sm font-bold text-primary truncate">{title}</div>}
           {subtitle && <div className="text-xs text-muted mt-[2px]">{subtitle}</div>}
         </div>
-        <IconButton onClick={onClose} aria-label="Close" className="shrink-0"><XIcon size={14} /></IconButton>
+        <IconButton onClick={onClose} aria-label={t`Close`} className="shrink-0"><XIcon size={14} /></IconButton>
       </div>
       <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5">
         {children}

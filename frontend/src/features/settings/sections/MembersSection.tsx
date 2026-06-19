@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { ProjectMemberDto } from '../../../api/models';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { Button, IconButton } from '../../../components/ui/Button';
@@ -14,6 +15,7 @@ import { SectionHeader } from '../components/SectionHeader';
 
 /** Membership of the active project: add and remove users. */
 export function MembersSection() {
+  const { t } = useLingui();
   const { currentProjectId } = useCurrentProject();
   const { data: project, isLoading } = useProject(currentProjectId);
 
@@ -26,8 +28,8 @@ export function MembersSection() {
   if (!currentProjectId) {
     return (
       <EmptyState
-        title="No project selected"
-        description="Create a project in the Projects section to manage its members."
+        title={t`No project selected`}
+        description={t`Create a project in the Projects section to manage its members.`}
       />
     );
   }
@@ -35,8 +37,8 @@ export function MembersSection() {
   return (
     <div className="w-full min-w-0 flex flex-col" data-testid="settings-members">
       <SectionHeader
-        title="Members"
-        subtitle="Users with access to the active project."
+        title={t`Members`}
+        subtitle={t`Users with access to the active project.`}
         action={
           <Button
             variant="secondary"
@@ -47,7 +49,7 @@ export function MembersSection() {
             onClick={() => setShowAdd(true)}
             disabled={!project}
           >
-            Add member
+            <Trans>Add member</Trans>
           </Button>
         }
       />
@@ -56,7 +58,7 @@ export function MembersSection() {
         {isLoading || !project ? (
           <SkeletonList rows={4} height={48} gap={8} />
         ) : project.members.length === 0 ? (
-          <EmptyState title="No members yet" description="Add users to this project to grant them access." />
+          <EmptyState title={t`No members yet`} description={t`Add users to this project to grant them access.`} />
         ) : (
           <div className="border border-hairline rounded-[12px] overflow-hidden" data-testid="member-list">
             {project.members.map(m => (
@@ -69,7 +71,7 @@ export function MembersSection() {
                 <span className="flex-1 text-title font-semibold text-primary truncate">{m.email}</span>
                 <IconButton
                   data-write
-                  aria-label={`Remove ${m.email}`}
+                  aria-label={t`Remove ${m.email}`}
                   className="text-muted hover:text-danger"
                   onClick={() => setRemoving(m)}
                 >

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import type { EvaluatorKind } from '../../../api/models';
 import { KIND_CATEGORY, META, type TypeCategory } from '../evaluatorMeta';
@@ -20,6 +21,7 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
   onPick: (k: EvaluatorKind) => void;
   locked?: boolean;
 }) {
+  const { i18n } = useLingui();
   const cat = KIND_CATEGORY[kind];
   const meta = META[kind];
 
@@ -30,11 +32,11 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-semibold mb-[3px] flex items-center gap-1.5">
-          {meta.label}
+          {i18n._(meta.label)}
           {locked && <LockIcon size={12} className="text-muted" />}
         </div>
         <div className="text-[11.5px] text-muted leading-[1.45]">
-          {locked ? 'Requires the Enterprise tier. Upgrade to enable LLM-judge evaluators.' : meta.desc}
+          {locked ? <Trans>Requires the Enterprise tier. Upgrade to enable LLM-judge evaluators.</Trans> : i18n._(meta.desc)}
         </div>
       </div>
     </>

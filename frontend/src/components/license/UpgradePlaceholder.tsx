@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Button } from '../ui/Button';
 import { LockIcon } from '../icons';
 
@@ -7,6 +8,7 @@ import { LockIcon } from '../icons';
  * dead-ending the user.
  */
 export function UpgradePlaceholder({ title, description }: { title?: string; description?: string }) {
+  const { t } = useLingui();
   return (
     <div
       data-testid="upgrade-placeholder"
@@ -16,15 +18,15 @@ export function UpgradePlaceholder({ title, description }: { title?: string; des
         <LockIcon size={24} />
       </div>
       <div className="max-w-md">
-        <h1 className="text-h1 font-semibold text-primary">{title ?? 'Upgrade to Enterprise'}</h1>
+        <h1 className="text-h1 font-semibold text-primary">{title ?? t`Upgrade to Enterprise`}</h1>
         <p className="mt-2 text-body text-secondary">
           {description ??
-            'This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more.'}
+            t`This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more.`}
         </p>
       </div>
       <a href="https://proxytrace.dev/#pricing" target="_blank" rel="noopener noreferrer">
         <Button variant="primary" data-testid="upgrade-cta">
-          View Enterprise plans
+          <Trans>View Enterprise plans</Trans>
         </Button>
       </a>
     </div>

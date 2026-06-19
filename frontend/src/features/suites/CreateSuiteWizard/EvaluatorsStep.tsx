@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import { EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
@@ -10,12 +11,13 @@ interface Props {
 }
 
 export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
+  const { t } = useLingui();
   if (evaluators.length === 0) {
     return (
       <div data-testid="wizard-step-evaluators" className="max-w-[640px] mx-auto">
         <EmptyState
-          title="No evaluators yet"
-          description="You can create the suite without evaluators and attach them later."
+          title={t`No evaluators yet`}
+          description={t`You can create the suite without evaluators and attach them later.`}
         />
       </div>
     );
@@ -24,9 +26,9 @@ export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
   return (
     <div data-testid="wizard-step-evaluators" className="max-w-[640px] mx-auto flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-[12.5px] text-muted m-0">Attach evaluators (optional). They'll score every test run.</p>
+        <p className="text-[12.5px] text-muted m-0"><Trans>Attach evaluators (optional). They'll score every test run.</Trans></p>
         <span className="text-[11.5px] text-muted">
-          {selectedIds.size} of {evaluators.length} attached
+          <Trans>{selectedIds.size} of {evaluators.length} attached</Trans>
         </span>
       </div>
       <div className="flex flex-col gap-1.5 max-h-[420px] overflow-y-auto pr-1">

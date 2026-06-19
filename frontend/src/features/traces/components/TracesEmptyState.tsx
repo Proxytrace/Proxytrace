@@ -6,6 +6,7 @@ import useCurrentProject from '../../../hooks/useCurrentProject';
 import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import { ingestionUrl } from '../../../lib/ingestion';
 import { buildQuickStartSnippets, type SnippetLanguage } from '../../../lib/ingestionSnippets';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 /** Illustrative model id used in the quick-start snippet (the user picks their own). */
 const SAMPLE_MODEL = 'gpt-4o-mini';
@@ -17,6 +18,7 @@ const SAMPLE_MODEL = 'gpt-4o-mini';
  * not just a link to the manual.
  */
 export function TracesEmptyState() {
+  const { t } = useLingui();
   const [lang, setLang] = useState<SnippetLanguage>('python');
   const { currentProject } = useCurrentProject();
   const proxyBase = useIngestionBase();
@@ -32,17 +34,19 @@ export function TracesEmptyState() {
       className="py-10 px-4 flex flex-col items-center gap-4 text-center"
     >
       <div className="flex flex-col gap-1">
-        <span className="text-h2 font-semibold text-primary">No traces yet</span>
+        <span className="text-h2 font-semibold text-primary"><Trans>No traces yet</Trans></span>
         <span className="text-body text-secondary max-w-prose">
-          Route your agent through the proxy and every LLM call lands here automatically. Point
-          your OpenAI client at this project's <span className="font-mono text-accent-text">base_url</span> —
-          keep your existing provider API key — and nothing else changes.
+          <Trans>
+            Route your agent through the proxy and every LLM call lands here automatically. Point
+            your OpenAI client at this project's <span className="font-mono text-accent-text">base_url</span> —
+            keep your existing provider API key — and nothing else changes.
+          </Trans>
         </span>
       </div>
 
       {baseUrl && (
         <div className="w-full max-w-2xl flex flex-col gap-3 text-left">
-          <CodeBlock heading="Your project's OpenAI base_url" content={baseUrl} maxLines={1} />
+          <CodeBlock heading={t`Your project's OpenAI base_url`} content={baseUrl} maxLines={1} />
 
           <div className="flex flex-col gap-2">
             <Tabs
@@ -66,7 +70,7 @@ export function TracesEmptyState() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Full proxy setup guide →
+          <Trans>Full proxy setup guide →</Trans>
         </a>
       </Button>
     </div>

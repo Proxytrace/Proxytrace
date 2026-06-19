@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { CopyIcon, CheckIcon } from '../icons';
 import { cn } from '../../lib/cn';
 
@@ -15,7 +16,9 @@ interface Props {
  * Stops click propagation so it can sit inside hoverable / clickable surfaces
  * (e.g. a collapsible message header) without triggering them.
  */
-export function CopyButton({ text, label = 'Copy', className, 'data-testid': testId }: Props) {
+export function CopyButton({ text, label, className, 'data-testid': testId }: Props) {
+  const { t } = useLingui();
+  const labelText = label ?? t`Copy`;
   const [copied, setCopied] = useState(false);
 
   function copy(e: React.MouseEvent) {
@@ -30,8 +33,8 @@ export function CopyButton({ text, label = 'Copy', className, 'data-testid': tes
     <button
       type="button"
       onClick={copy}
-      aria-label={copied ? 'Copied' : label}
-      title={label}
+      aria-label={copied ? t`Copied` : labelText}
+      title={labelText}
       data-testid={testId}
       className={cn(
         'inline-flex items-center justify-center w-6 h-6 rounded-[6px] cursor-pointer',

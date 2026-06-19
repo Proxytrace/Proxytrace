@@ -1,3 +1,4 @@
+import { Trans, Plural } from '@lingui/react/macro';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Button } from '../../../components/ui/Button';
 import { EditPencilIcon, ResetIcon } from '../../../components/icons';
@@ -6,7 +7,7 @@ import { EditPencilIcon, ResetIcon } from '../../../components/icons';
 export function ExpectedResponse({ text }: { text: string }) {
   return (
     <section className="flex flex-col gap-1.5 min-w-0 shrink-0">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Expected · reference</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Expected · reference</Trans></span>
       <pre className="m-0 px-3.5 py-3 rounded-lg bg-card-2 border border-border-subtle text-[12.5px] leading-relaxed text-secondary font-mono whitespace-pre-wrap break-words max-h-[200px] overflow-auto">
         {text || '—'}
       </pre>
@@ -26,18 +27,18 @@ export function EditableResponse({ value, original, onChange, onReset }: {
   return (
     <section className="flex flex-col gap-1.5 min-w-0 shrink-0">
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-accent-text">Candidate response</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-accent-text"><Trans>Candidate response</Trans></span>
         <span className="inline-flex items-center gap-1 text-[9.5px] text-muted">
-          <EditPencilIcon size={10} /> editable
+          <EditPencilIcon size={10} /> <Trans>editable</Trans>
         </span>
         {edited && (
           <span className="inline-flex items-center gap-1 text-[9.5px] text-accent-text px-1.5 py-0.5 rounded-full bg-accent-subtle font-semibold">
-            <span className="w-[5px] h-[5px] rounded-full bg-accent" /> edited
+            <span className="w-[5px] h-[5px] rounded-full bg-accent" /> <Trans>edited</Trans>
           </span>
         )}
         {edited && (
           <Button variant="ghost" size="sm" className="ml-auto" leftIcon={<ResetIcon size={12} />} onClick={onReset}>
-            Reset
+            <Trans>Reset</Trans>
           </Button>
         )}
       </div>
@@ -50,9 +51,9 @@ export function EditableResponse({ value, original, onChange, onReset }: {
         className="resize-none font-mono text-[12.5px] leading-relaxed"
       />
       <div className="flex items-center gap-2 text-[10px] text-muted font-mono">
-        <span>{value.length} chars</span>
+        <span><Trans>{value.length} chars</Trans></span>
         <span className="opacity-50">·</span>
-        <span>{words} {words === 1 ? 'word' : 'words'}</span>
+        <span><Plural value={words} one="# word" other="# words" /></span>
       </div>
     </section>
   );

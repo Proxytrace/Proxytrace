@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { Modal } from '../../../components/overlays/Modal';
 import { IconButton } from '../../../components/ui/Button';
 import { ExpandIcon, ChevronDownIcon } from '../../../components/icons';
@@ -30,8 +31,10 @@ export function Widget({
   accent,
   children,
 }: WidgetProps) {
+  const { t } = useLingui();
   const [expanded, setExpanded] = useState(false);
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const expandLabel = title ?? t`widget`;
   const hasExpand = !!expandContent;
   const showHeader = title || right || hasExpand || collapsible;
 
@@ -71,8 +74,8 @@ export function Widget({
             {hasExpand && (
               <IconButton
                 onClick={() => setExpanded(true)}
-                title="Expand"
-                aria-label={`Expand ${title ?? 'widget'}`}
+                title={t`Expand`}
+                aria-label={t`Expand ${expandLabel}`}
               >
                 <ExpandIcon size={13} />
               </IconButton>

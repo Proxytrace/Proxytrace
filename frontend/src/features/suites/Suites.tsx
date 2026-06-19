@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { EvaluatorDetailDto, TestSuiteListItemDto } from '../../api/models';
 import type { FilterDropdownOption } from '../../components/ui/FilterDropdown';
 import { Modal } from '../../components/overlays/Modal';
@@ -24,6 +25,7 @@ import { useSuiteFocus } from './hooks/useSuiteFocus';
 import { useScrollToSelectedSuite } from './hooks/useScrollToSelectedSuite';
 
 export default function Suites() {
+  const { t } = useLingui();
   const [runSuite, setRunSuite] = useState<TestSuiteListItemDto | null>(null);
   const [runDone, setRunDone] = useState(false);
   const [deleteSuite, setDeleteSuite] = useState<TestSuiteListItemDto | null>(null);
@@ -113,25 +115,25 @@ export default function Suites() {
       else byAgent.set(s.agentId, { name: s.agentName, count: 1 });
     }
     return [
-      { key: '', label: `All agents (${suites.length})` },
+      { key: '', label: t`All agents (${suites.length})` },
       ...Array.from(byAgent, ([id, { name, count }]) => ({
         key: id,
         label: `${name} (${count})`,
         accent: agentColor(id),
       })),
     ];
-  }, [suites]);
+  }, [suites, t]);
 
   const canAdvanceCreate =
     ([!!createAgentId, selectedCalls.size > 0, !!createName.trim(), true] as boolean[])[createStep] ?? false;
 
   const wizardSteps = [
     {
-      label: 'Select agent',
+      label: t`Select agent`,
       content: <AgentStep agents={agents} value={createAgentId} onChange={setCreateAgentId} />,
     },
     {
-      label: 'Select traces',
+      label: t`Select traces`,
       content: (
         <TracesStep
           agentId={createAgentId}
@@ -143,11 +145,11 @@ export default function Suites() {
       ),
     },
     {
-      label: 'Name suite',
+      label: t`Name suite`,
       content: <NameStep value={createName} onChange={setCreateName} />,
     },
     {
-      label: 'Select evaluators',
+      label: t`Select evaluators`,
       content: (
         <EvaluatorsStep
           evaluators={evaluators as EvaluatorDetailDto[]}
@@ -197,7 +199,7 @@ export default function Suites() {
                 onClick={() => setSelectedSuiteId(null)}
                 leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
               >
-                All suites
+                <Trans>All suites</Trans>
               </Button>
             )}
             {selectedSuite
@@ -209,7 +211,7 @@ export default function Suites() {
                   onDelete={() => setDeleteSuite(selectedSuite)}
                 />
               : !isLoading
-                ? <Card><div className="py-[60px] text-center text-muted text-body">Select a suite to see details.</div></Card>
+                ? <Card><div className="py-[60px] text-center text-muted text-body"><Trans>Select a suite to see details.</Trans></div></Card>
                 : null}
           </main>
         )}
@@ -228,7 +230,7 @@ export default function Suites() {
 
       {/* Create wizard */}
       {createOpen && (
-        <Modal title="Create Test Suite" onClose={() => { setCreateOpen(false); resetCreate(); }} size="xl">
+        <Modal title={t`Create Test Suite`} onClose={() => { setCreateOpen(false); resetCreate(); }} size="xl">
           <StepWizard
             steps={wizardSteps}
             currentStep={createStep}
@@ -236,7 +238,7 @@ export default function Suites() {
             onBack={() => setCreateStep(s => s - 1)}
             onSubmit={() => createSuite.mutate({ name: createName, agentId: createAgentId, agentCallIds: Array.from(selectedCalls), evaluatorIds: Array.from(selectedEvaluatorIds) })}
             canAdvance={canAdvanceCreate}
-            submitLabel="Create suite"
+            submitLabel={t`Create suite`}
             loading={createSuite.isPending}
           />
         </Modal>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentDto } from '../../../api/models';
 import { usePlaygroundAgents } from '../hooks/usePlaygroundAgents';
 import { ChevronDownIcon, CheckIcon } from '../../../components/icons';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick, compact = false }: Props) {
+  const { t } = useLingui();
   const { data, isLoading } = usePlaygroundAgents(projectId);
 
   const agents = data?.items ?? [];
@@ -36,7 +38,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
   }, [open]);
 
   const current = selectedAgent ?? agents.find(a => a.id === selectedAgentId) ?? null;
-  const subtitle = current ? 'Agent' : (isLoading ? 'Loading…' : 'Pick to start');
+  const subtitle = current ? 'Agent' : (isLoading ? t`Loading…` : t`Pick to start`);
 
   return (
     <div ref={ref} className={compact ? 'relative inline-flex' : 'relative'}>
@@ -62,13 +64,13 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         <AgentAvatar seed={current?.id ?? 'none'} label={current?.name ?? '?'} size={compact ? 26 : 36} />
         {compact ? (
           <span className="text-[12.5px] font-semibold text-primary truncate max-w-[200px]">
-            {current?.name ?? 'Pick an agent'}
+            {current?.name ?? t`Pick an agent`}
           </span>
         ) : (
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{subtitle}</div>
             <div className="text-[13px] font-semibold text-primary truncate">
-              {current?.name ?? 'Pick an agent'}
+              {current?.name ?? t`Pick an agent`}
             </div>
           </div>
         )}
@@ -90,7 +92,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
           }}
         >
           {agents.length === 0 ? (
-            <div className="px-[12px] py-[10px] text-[12px] text-muted">No agents in this project.</div>
+            <div className="px-[12px] py-[10px] text-[12px] text-muted"><Trans>No agents in this project.</Trans></div>
           ) : agents.map(a => {
             const active = a.id === selectedAgentId;
             return (

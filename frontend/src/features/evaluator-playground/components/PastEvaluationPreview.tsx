@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { usePastEvaluation } from '../hooks/usePastEvaluation';
 import { scoreAnchor } from '../testBenchMeta';
 import { ScoreSquare } from './ScoreSquare';
@@ -13,18 +14,19 @@ interface Props {
  * it was scored against. Scoped to the one evaluator (BEST_PRACTICES — derive at the leaf).
  */
 export function PastEvaluationPreview({ evaluatorId, evaluatorName, caseId }: Props) {
+  const { t } = useLingui();
   const { data, isLoading, isError } = usePastEvaluation(evaluatorId, caseId);
 
-  if (caseId == null) return <Note>Hover or pick a past evaluation to preview it.</Note>;
-  if (isLoading) return <Note>Loading…</Note>;
-  if (isError || !data) return <Note>Couldn&rsquo;t load this evaluation.</Note>;
+  if (caseId == null) return <Note><Trans>Hover or pick a past evaluation to preview it.</Trans></Note>;
+  if (isLoading) return <Note><Trans>Loading…</Trans></Note>;
+  if (isError || !data) return <Note><Trans>Couldn’t load this evaluation.</Trans></Note>;
 
   const verdict = data.loggedEvaluation;
 
   return (
     <div className="flex flex-col gap-3.5" data-testid="past-evaluation-preview">
       <section>
-        <SectionLabel>{evaluatorName}&rsquo;s verdict</SectionLabel>
+        <SectionLabel><Trans>{evaluatorName}’s verdict</Trans></SectionLabel>
         {verdict ? (
           <div className="flex gap-2.5">
             <ScoreSquare score={verdict.score} />
@@ -35,20 +37,20 @@ export function PastEvaluationPreview({ evaluatorId, evaluatorName, caseId }: Pr
               ) : verdict.reasoning ? (
                 <p className="mt-1 text-[11.5px] leading-relaxed text-secondary m-0">&ldquo;{verdict.reasoning}&rdquo;</p>
               ) : (
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted italic m-0">No written reasoning.</p>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-muted italic m-0"><Trans>No written reasoning.</Trans></p>
               )}
             </div>
           </div>
         ) : (
-          <p className="text-[11.5px] text-muted m-0">This evaluator hasn&rsquo;t scored this case yet.</p>
+          <p className="text-[11.5px] text-muted m-0"><Trans>This evaluator hasn’t scored this case yet.</Trans></p>
         )}
       </section>
 
       <section className="border-t border-hairline pt-3">
-        <SectionLabel>Test case</SectionLabel>
+        <SectionLabel><Trans>Test case</Trans></SectionLabel>
         <div className="text-[12px] font-semibold text-primary">{data.testCaseSummary}</div>
-        <Field label="Expected" value={data.expectedResponse} />
-        <Field label="Actual" value={data.actualResponse} />
+        <Field label={t`Expected`} value={data.expectedResponse} />
+        <Field label={t`Actual`} value={data.actualResponse} />
       </section>
     </div>
   );

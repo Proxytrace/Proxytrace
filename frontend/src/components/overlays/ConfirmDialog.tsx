@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -21,25 +22,26 @@ export function ConfirmDialog({
   displayName,
   title,
   message,
-  confirmLabel = 'Delete',
+  confirmLabel,
   onConfirm,
   onCancel,
   loading,
 }: ConfirmDialogProps) {
+  const { t } = useLingui();
   const [input, setInput] = useState('');
   const requireMatch = entityName !== undefined;
   const canConfirm = !requireMatch || input === entityName;
 
   return (
     <Modal
-      title={title ?? `Delete "${displayName ?? entityName}"`}
+      title={title ?? t`Delete "${displayName ?? entityName}"`}
       onClose={onCancel}
-      headerActions={requireMatch ? <CopyButton text={entityName} label="Copy name" /> : undefined}
+      headerActions={requireMatch ? <CopyButton text={entityName} label={t`Copy name`} /> : undefined}
       footer={
         <>
-          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+          <Button variant="ghost" onClick={onCancel}><Trans>Cancel</Trans></Button>
           <Button variant="danger" onClick={onConfirm} disabled={!canConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel ?? <Trans>Delete</Trans>}
           </Button>
         </>
       }
@@ -47,7 +49,7 @@ export function ConfirmDialog({
       {requireMatch ? (
         <>
           <p className="text-[13px] text-secondary m-0 mb-4">
-            This action cannot be undone. Type <strong className="text-primary font-mono">{entityName}</strong> to confirm.
+            <Trans>This action cannot be undone. Type <strong className="text-primary font-mono">{entityName}</strong> to confirm.</Trans>
           </p>
           <Input
             autoFocus
@@ -59,7 +61,7 @@ export function ConfirmDialog({
         </>
       ) : (
         <p className="text-[13px] text-secondary m-0">
-          {message ?? 'This action cannot be undone.'}
+          {message ?? t`This action cannot be undone.`}
         </p>
       )}
     </Modal>

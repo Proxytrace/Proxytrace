@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowDownToLineIcon, ArrowUpFromLineIcon, ClockIcon, CoinsIcon, CheckIcon } from '../../../components/icons';
 import type { PlaygroundStats } from '../state/types';
 import { KpiCell } from './KpiCell';
@@ -43,11 +44,12 @@ function finishTone(reason: string | null | undefined) {
 }
 
 export function CompletionStats({ stats, streaming }: Props) {
+  const { t } = useLingui();
   // Render placeholder cells if no stats yet
   if (!stats && !streaming) {
     return (
       <div data-testid="completion-stats" className="flex items-center gap-[6px] text-[11px] text-muted italic">
-        Send a message to see completion metrics.
+        <Trans>Send a message to see completion metrics.</Trans>
       </div>
     );
   }
@@ -61,45 +63,45 @@ export function CompletionStats({ stats, streaming }: Props) {
     <div data-testid="completion-stats" className="flex items-center gap-[6px] flex-wrap">
       <KpiCell
         icon={<ArrowDownToLineIcon size={13} strokeWidth={2.2} />}
-        label="Input"
+        label={t`Input`}
         value={stats ? fmt(inT) : '…'}
-        tooltip="Input tokens (prompt)"
+        tooltip={t`Input tokens (prompt)`}
       />
       <KpiCell
         icon={<ArrowUpFromLineIcon size={13} strokeWidth={2.2} />}
-        label="Output"
+        label={t`Output`}
         value={stats ? fmt(outT) : '…'}
-        tooltip="Output tokens (generated)"
+        tooltip={t`Output tokens (generated)`}
       />
       <KpiCell
         icon={<ClockIcon size={13} strokeWidth={2.2} />}
-        label="Latency"
+        label={t`Latency`}
         value={stats ? fmtLatency(lat) : '…'}
         tone={stats ? latencyTone(lat) : 'neutral'}
-        tooltip="End-to-end latency"
+        tooltip={t`End-to-end latency`}
       />
       <KpiCell
         icon={<CoinsIcon size={13} strokeWidth={2.2} />}
-        label="Cost"
+        label={t`Cost`}
         value={fmtCost(cost)}
         tone={costTone(cost)}
-        tooltip="Estimated cost in EUR"
+        tooltip={t`Estimated cost in EUR`}
       />
       {streaming ? (
         <KpiCell
           icon={<span className="size-[7px] rounded-full bg-accent pulse-dot" />}
-          label="Status"
-          value="Streaming…"
+          label={t`Status`}
+          value={t`Streaming…`}
           tone="live"
-          tooltip="Receiving tokens"
+          tooltip={t`Receiving tokens`}
         />
       ) : (
         <KpiCell
           icon={<CheckIcon size={13} strokeWidth={2.4} />}
-          label="Finish"
+          label={t`Finish`}
           value={stats?.finishReason ?? '—'}
           tone={finishTone(stats?.finishReason)}
-          tooltip="Finish reason returned by the model"
+          tooltip={t`Finish reason returned by the model`}
         />
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type {
   ModelEndpointDto,
   TestRunScheduleDto,
@@ -43,6 +44,7 @@ export interface ScheduleFormValues {
 }
 
 export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, pending }: Props) {
+  const { t } = useLingui();
   const isEdit = schedule !== undefined;
   const { suites } = useSuites();
   const { data: endpoints = [] } = useModelEndpoints();
@@ -80,33 +82,33 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
 
   return (
     <Modal
-      title={isEdit ? 'Edit schedule' : 'New schedule'}
+      title={isEdit ? t`Edit schedule` : t`New schedule`}
       onClose={onClose}
       maxWidth={520}
       footer={
         <ModalFooter
           onCancel={onClose}
           onSubmit={submit}
-          submitLabel={isEdit ? 'Save schedule' : 'Create schedule'}
+          submitLabel={isEdit ? t`Save schedule` : t`Create schedule`}
           loading={pending}
           disabled={!valid}
         />
       }
     >
       <div className="flex flex-col gap-4" data-testid="schedule-form">
-        <FormField label="Name" htmlFor="schedule-name">
+        <FormField label={t`Name`} htmlFor="schedule-name">
           <Input
             id="schedule-name"
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="Nightly regression"
+            placeholder={t`Nightly regression`}
             autoFocus
             data-testid="schedule-name-input"
           />
         </FormField>
 
         {lockedSuite && (
-          <FormField label="Test suite">
+          <FormField label={t`Test suite`}>
             <div
               className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary truncate"
               data-testid="schedule-suite-locked"
@@ -117,12 +119,12 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
         )}
 
         {!isEdit && !lockedSuite && (
-          <FormField label="Test suite" htmlFor="schedule-suite">
+          <FormField label={t`Test suite`} htmlFor="schedule-suite">
             <Select
               id="schedule-suite"
               value={suiteId}
               onValueChange={setSuiteId}
-              placeholder="Select a suite"
+              placeholder={t`Select a suite`}
               data-testid="schedule-suite-select"
             >
               {suites.map((s: TestSuiteListItemDto) => (
@@ -132,7 +134,7 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
           </FormField>
         )}
 
-        <FormField label="Model endpoints">
+        <FormField label={t`Model endpoints`}>
           <MultiCombobox
             values={Array.from(selected)}
             onChange={ids => setSelected(new Set(ids))}
@@ -142,10 +144,10 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
             itemMeta={ep => ep.providerName}
             itemColor={ep => modelColor(ep.modelName)}
             maxSelected={MAX_RUN_ENDPOINTS}
-            placeholder="Select model endpoints…"
-            searchPlaceholder="Search models…"
-            emptyText="No endpoints configured. Add providers first."
-            aria-label="Model endpoints"
+            placeholder={t`Select model endpoints…`}
+            searchPlaceholder={t`Search models…`}
+            emptyText={t`No endpoints configured. Add providers first.`}
+            aria-label={t`Model endpoints`}
             data-testid="schedule-endpoints"
           />
         </FormField>
@@ -153,11 +155,11 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
         <ScheduleCadenceField cadence={cadence} onChange={setCadence} />
 
         <div className="flex items-center justify-between">
-          <span className="text-title font-medium text-secondary">Enabled</span>
+          <span className="text-title font-medium text-secondary"><Trans>Enabled</Trans></span>
           <Switch
             checked={enabled}
             onChange={setEnabled}
-            label="Enabled"
+            label={t`Enabled`}
             data-testid="schedule-enabled-toggle"
           />
         </div>

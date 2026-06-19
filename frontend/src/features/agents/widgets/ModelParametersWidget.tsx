@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { ModelParametersDto } from '../../../api/models';
 import { ModelParametersGrid } from '../../../components/ui/ModelParametersGrid';
 import { Widget } from './Widget';
@@ -15,15 +16,16 @@ function summary(params: ModelParametersDto): string {
 }
 
 export function ModelParametersWidget({ params, className }: Props) {
+  const { t } = useLingui();
   const sum = summary(params);
   return (
     <Widget
-      title="Model Parameters"
+      title={t`Model Parameters`}
       right={sum && <span className="text-body-sm text-muted font-mono">{sum}</span>}
       className={className}
       collapsible
       defaultCollapsed
-      expandTitle="Model Parameters"
+      expandTitle={t`Model Parameters`}
       expandContent={<ModelParametersGrid params={params} />}
     >
       <ModelParametersGrid params={params} />

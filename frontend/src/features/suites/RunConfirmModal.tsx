@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { ModelEndpointDto, TestSuiteListItemDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import useModelEndpoints from '../../hooks/useModelEndpoints';
@@ -65,8 +66,9 @@ interface DoneStateProps {
 }
 
 function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsData, onNavigate }: DoneStateProps) {
+  const { t } = useLingui();
   const selectedModelName =
-    modelsData.find(ep => selectedEndpoints.includes(ep.id))?.modelName ?? 'selected model';
+    modelsData.find(ep => selectedEndpoints.includes(ep.id))?.modelName ?? t`selected model`;
 
   return (
     <div className="py-[10px] text-center">
@@ -76,19 +78,19 @@ function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsDat
         ✓
       </div>
       <h3 className="text-[17px] font-bold mb-2">
-        {isMulti ? 'Parallel evaluation started' : 'Evaluation started'}
+        {isMulti ? <Trans>Parallel evaluation started</Trans> : <Trans>Evaluation started</Trans>}
       </h3>
       <p className="text-body text-muted leading-[1.6] mb-6">
-        Running <strong className="text-primary">{suite.testCaseCount} test cases</strong>
+        <Trans>Running <strong className="text-primary"><Plural value={suite.testCaseCount} one="# test case" other="# test cases" /></strong></Trans>
         {isMulti ? (
-          <> across <strong style={{ color: c }}>{selectedEndpoints.length} models</strong> in parallel</>
+          <> <Trans>across <strong style={{ color: c }}><Plural value={selectedEndpoints.length} one="# model" other="# models" /></strong> in parallel</Trans></>
         ) : selectedEndpoints.length === 1 ? (
-          <> against <strong style={{ color: c }}>{selectedModelName}</strong></>
+          <> <Trans>against <strong style={{ color: c }}>{selectedModelName}</strong></Trans></>
         ) : null}
         .
       </p>
       <Button variant="primary" onClick={onNavigate}>
-        View Test Runs →
+        <Trans>View Test Runs →</Trans>
       </Button>
     </div>
   );

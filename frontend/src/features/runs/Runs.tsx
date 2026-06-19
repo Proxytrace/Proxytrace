@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { agentColor } from '../../lib/colors';
 import { cn } from '../../lib/cn';
 import { useSelectedId } from '../../hooks/useSelectedId';
@@ -18,6 +19,7 @@ import { useProjectAgents } from './hooks/useProjectAgents';
 import { useDeleteTestRunGroup } from './hooks/useDeleteTestRunGroup';
 
 export default function Runs() {
+  const { t } = useLingui();
   const [searchParams] = useSearchParams();
   const runParam = searchParams.get('run');
 
@@ -47,7 +49,7 @@ export default function Runs() {
     ?? null;
   const selectedGroup = explicitGroup ?? (isMobile ? null : groups[0] ?? null);
   const agentOptions = [
-    { key: '', label: 'All agents' },
+    { key: '', label: t`All agents` },
     ...agents.map(a => ({ key: a.id, label: a.name, accent: agentColor(a.id) })),
   ];
 
@@ -76,8 +78,8 @@ export default function Runs() {
         value={tab}
         onChange={v => setTab(v as 'runs' | 'scheduled')}
         items={[
-          { value: 'runs', label: 'Runs', 'data-testid': 'runs-tab' },
-          { value: 'scheduled', label: 'Scheduled', 'data-testid': 'schedules-tab' },
+          { value: 'runs', label: t`Runs`, 'data-testid': 'runs-tab' },
+          { value: 'scheduled', label: t`Scheduled`, 'data-testid': 'schedules-tab' },
         ]}
       />
 
@@ -124,12 +126,12 @@ export default function Runs() {
               onClick={() => setSelectedGroupId(null, ['run'])}
               leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
             >
-              All runs
+              <Trans>All runs</Trans>
             </Button>
           )}
           {selectedGroup
             ? <GroupDetail key={selectedGroup.id} groupId={selectedGroup.id} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
-            : <Card><div className="py-[60px] text-center text-muted text-body">Select a run to see details.</div></Card>
+            : <Card><div className="py-[60px] text-center text-muted text-body"><Trans>Select a run to see details.</Trans></div></Card>
           }
         </div>
         )}
@@ -138,8 +140,8 @@ export default function Runs() {
 
       {deleteGroupId && deleteTarget && (
         <ConfirmDialog
-          title={`Delete run for "${deleteTarget.suiteName}"?`}
-          message="This permanently deletes the run and its results. This action cannot be undone."
+          title={t`Delete run for "${deleteTarget.suiteName}"?`}
+          message={t`This permanently deletes the run and its results. This action cannot be undone.`}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteGroupId(null)}
           loading={delGroup.isPending}

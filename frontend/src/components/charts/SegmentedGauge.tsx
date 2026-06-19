@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { computeSegmentedGauge } from './chart-math';
 
 interface SegmentedGaugeProps {
@@ -8,6 +9,7 @@ interface SegmentedGaugeProps {
 }
 
 export function SegmentedGauge({ value, size = 180, label }: SegmentedGaugeProps) {
+  const { t } = useLingui();
   const gauge = useMemo(() => computeSegmentedGauge(value, size), [value, size]);
   const glowId = useId();
   const s = size / 220;
@@ -16,7 +18,7 @@ export function SegmentedGauge({ value, size = 180, label }: SegmentedGaugeProps
   const labelSize = 8 * s + 3;
 
   return (
-    <svg width={size} height={size} className="block" role="img" aria-label={`${value}% pass rate`}>
+    <svg width={size} height={size} className="block" role="img" aria-label={t`${value}% pass rate`}>
       <defs>
         <filter id={glowId}>
           <feGaussianBlur stdDeviation="2" result="b" />

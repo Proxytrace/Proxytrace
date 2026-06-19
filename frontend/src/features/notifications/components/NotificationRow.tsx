@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { NotificationDto } from '../../../api/models';
 import { NotificationStatus } from '../../../api/models';
 import { Badge } from '../../../components/ui/Badge';
@@ -16,6 +17,7 @@ interface NotificationRowProps {
 }
 
 export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }: NotificationRowProps) {
+  const { t } = useLingui();
   const { id, title, message, severity, status, createdAt, targetKind, targetId } = notification;
   const route = targetRoute(targetKind, targetId);
   const isUnread = status === NotificationStatus.Unread;
@@ -45,7 +47,7 @@ export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }:
         {route && (
           <Button asChild variant="link" className="mt-1.5 px-0 text-body-sm">
             <Link to={route} data-testid={`notification-link-${id}`} className="inline-flex items-center gap-1">
-              View details
+              <Trans>View details</Trans>
               <ExternalLinkIcon size={11} />
             </Link>
           </Button>
@@ -56,7 +58,7 @@ export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }:
         {isUnread && (
           <IconButton
             size="sm"
-            aria-label="Mark as read"
+            aria-label={t`Mark as read`}
             data-testid={`notification-read-btn-${id}`}
             disabled={isBusy}
             onClick={() => onMarkRead(id)}
@@ -66,7 +68,7 @@ export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }:
         )}
         <IconButton
           size="sm"
-          aria-label="Dismiss"
+          aria-label={t`Dismiss`}
           data-testid={`notification-dismiss-btn-${id}`}
           disabled={isBusy}
           onClick={() => onDismiss(id)}

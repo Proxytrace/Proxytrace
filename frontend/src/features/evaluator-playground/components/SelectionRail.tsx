@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { EvaluatorListItemDto } from '../../../api/models';
 import { TargetIcon } from '../../../components/icons';
 import { RailHeader, RAIL_CARD_CLS } from '../../../components/ui/ListRail';
@@ -20,6 +21,7 @@ export function SelectionRail({
   evaluators, selectedEvaluatorId, onSelectEvaluator,
   recent, selectedCaseId, onSelectCase,
 }: Props) {
+  const { t } = useLingui();
   const selectedName = evaluators.find(e => e.id === selectedEvaluatorId)?.name ?? '';
   return (
     <aside className={RAIL_CARD_CLS}>
@@ -29,12 +31,12 @@ export function SelectionRail({
             <TargetIcon size={16} />
           </span>
         }
-        title="Evaluator playground"
-        subtitle="Pick a judge, then a case"
+        title={t`Evaluator playground`}
+        subtitle={t`Pick a judge, then a case`}
       />
 
       <div className="flex-1 min-h-0 p-3 flex flex-col gap-3">
-        <RailSection title="Evaluator">
+        <RailSection title={t`Evaluator`}>
           <EvaluatorRailList
             evaluators={evaluators}
             selectedId={selectedEvaluatorId}
@@ -42,7 +44,7 @@ export function SelectionRail({
           />
         </RailSection>
 
-        <RailSection title="Past evaluation">
+        <RailSection title={t`Past evaluation`}>
           <PastEvaluationList
             evaluatorId={selectedEvaluatorId}
             evaluatorName={selectedName}

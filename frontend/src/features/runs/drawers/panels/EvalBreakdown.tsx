@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { CheckIcon, XIcon } from '../../../../components/icons';
 import { modelColor } from '../../../../lib/colors';
 import type { TestRunDto, TestCaseFixtureDto } from '../../../../api/models';
@@ -15,11 +16,11 @@ export function EvalBreakdown({ runs, fixtures }: { runs: TestRunDto[]; fixtures
 
   return (
     <section>
-      <div className={SECTION_LABEL}>Evaluator breakdown</div>
+      <div className={SECTION_LABEL}><Trans>Evaluator breakdown</Trans></div>
       <div className="overflow-x-auto rounded-lg border border-hairline">
         <div className="grid" style={{ gridTemplateColumns: gridCols }}>
           {/* Header */}
-          <div className="bg-card px-3 py-2 border-b border-hairline text-body-sm font-semibold text-secondary">Evaluator</div>
+          <div className="bg-card px-3 py-2 border-b border-hairline text-body-sm font-semibold text-secondary"><Trans>Evaluator</Trans></div>
           {runs.map(run => (
             <div key={run.id} className="bg-card px-2 py-2 border-b border-hairline flex items-center justify-center gap-1.5 min-w-0">
               <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: modelColor(run.endpointName) }} />

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronRightIcon, ExternalLinkIcon } from '../icons';
 import { JsonBlock } from './JsonBlock';
 import { CopyButton } from './CopyButton';
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function ToolMessageBubble({ request, result, onJumpToDefinition, defaultOpen = true }: Props) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(defaultOpen);
 
   const args = safeParse(request.arguments);
@@ -42,16 +44,16 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
     null,
     2,
   );
-  const statusLabel = hasResult ? 'ok' : 'pending';
+  const statusLabel = hasResult ? t`ok` : t`pending`;
   const statusFg = hasResult ? 'var(--teal)' : 'var(--warn)';
   const statusBg = hasResult ? 'color-mix(in srgb, var(--teal) 14%, transparent)' : 'color-mix(in srgb, var(--warn) 14%, transparent)';
-  const statusTitle = hasResult ? 'Tool returned a response' : 'No response captured for this call';
+  const statusTitle = hasResult ? t`Tool returned a response` : t`No response captured for this call`;
 
   return (
     <div
       className="relative group rounded-[12px] overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
     >
-      <CopyButton text={copyText} label="Copy tool call" className={hoverRevealOverlayCls} />
+      <CopyButton text={copyText} label={t`Copy tool call`} className={hoverRevealOverlayCls} />
       {/* Header */}
       <button
         type="button"
@@ -65,7 +67,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
         >
           <ChevronRightIcon size={11} strokeWidth={2.5} />
         </span>
-        <span className="font-mono text-[10.5px] font-bold tracking-[0.06em] text-success">TOOL</span>
+        <span className="font-mono text-[10.5px] font-bold tracking-[0.06em] text-success"><Trans>TOOL</Trans></span>
         <span className="font-mono text-[12.5px] font-semibold text-success">{request.name}</span>
         {argsPreview(args) && (
           <span className="font-mono text-[11px] truncate min-w-0 text-muted">
@@ -97,11 +99,11 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
                 onJumpToDefinition();
               }
             }}
-            title="View tool definition on Agents page"
+            title={t`View tool definition on Agents page`}
             className="ml-1 inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-[6px] text-[10.5px] font-semibold cursor-pointer transition-colors duration-150 shrink-0 text-success hover:bg-success-subtle"
           >
             <ExternalLinkIcon size={10} strokeWidth={2.5} />
-            Definition
+            <Trans>Definition</Trans>
           </span>
         )}
       </button>
@@ -113,7 +115,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
           <div className="px-[14px] py-[10px] bg-success-subtle">
             <div className="flex items-center gap-2 mb-[6px]">
               <span aria-hidden className="w-[4px] h-[4px] rounded-full bg-success" />
-              <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-success">Input</span>
+              <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-success"><Trans>Input</Trans></span>
             </div>
             <JsonBlock value={args} hideCopy transparent maxHeight={280} className="!px-0 !py-0" />
           </div>
@@ -123,8 +125,8 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
             <div className="px-[14px] py-[10px] border-t border-border-subtle bg-[color-mix(in_srgb,var(--teal)_7%,transparent)]">
               <div className="flex items-center gap-2 mb-[6px]">
                 <span aria-hidden className="w-[4px] h-[4px] rounded-full bg-teal" />
-                <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-teal">Output</span>
-                <span className="ml-auto font-mono text-[10px] text-muted">{resultBytes} B</span>
+                <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-teal"><Trans>Output</Trans></span>
+                <span className="ml-auto font-mono text-[10px] text-muted"><Trans>{resultBytes} B</Trans></span>
               </div>
               <JsonBlock value={resultParsed} hideCopy transparent maxHeight={280} className="!px-0 !py-0" />
             </div>
@@ -132,7 +134,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
             <div
               className="px-[14px] py-[9px] border-t border-dashed border-border-subtle text-[11px] font-mono italic bg-[color-mix(in_srgb,var(--warn)_5%,transparent)] text-warn"
             >
-              No response captured for this call.
+              <Trans>No response captured for this call.</Trans>
             </div>
           )}
         </div>

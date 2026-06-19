@@ -5,6 +5,7 @@
  * and a reset button. Clicking a button toggles the drawer for that section.
  */
 import { useState, type ReactNode } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { CpuIcon, ResetIcon, SigmaIcon, SparklesIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import type { ModelParametersDto } from '../../../api/models';
@@ -87,6 +88,7 @@ export function RightRail({
   onResetAll,
   initialSection = null,
 }: Props) {
+  const { t } = useLingui();
   const [active, setActive] = useState<SectionKey | null>(initialSection);
 
   const systemPromptModified = defaultSystemPrompt != null && overrides.systemPrompt !== defaultSystemPrompt;
@@ -114,7 +116,7 @@ export function RightRail({
         <RailIconButton
           active={active === 'system'}
           modified={systemPromptModified}
-          title="System prompt"
+          title={t`System prompt`}
           onClick={() => toggle('system')}
         >
           <SparklesIcon size={16} strokeWidth={1.8} />
@@ -122,7 +124,7 @@ export function RightRail({
         <RailIconButton
           active={active === 'parameters'}
           modified={parametersModified}
-          title="Parameters"
+          title={t`Parameters`}
           onClick={() => toggle('parameters')}
         >
           <SigmaIcon size={16} strokeWidth={1.8} />
@@ -130,7 +132,7 @@ export function RightRail({
         <RailIconButton
           active={active === 'tools'}
           modified={toolsModifiedFlag}
-          title="Tools"
+          title={t`Tools`}
           onClick={() => toggle('tools')}
         >
           <CpuIcon size={16} strokeWidth={1.8} />
@@ -143,8 +145,8 @@ export function RightRail({
           type="button"
           onClick={onResetAll}
           disabled={!hasAgentDefaults || !anyModified}
-          title={anyModified ? 'Reset all settings to agent defaults' : 'Settings match agent defaults'}
-          aria-label="Reset all to agent defaults"
+          title={anyModified ? t`Reset all settings to agent defaults` : t`Settings match agent defaults`}
+          aria-label={t`Reset all to agent defaults`}
           className={cn(
             'size-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer transition-colors border',
             anyModified

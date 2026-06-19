@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import * as Popover from '@radix-ui/react-popover';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../lib/cn';
 import { Input } from './Input';
 import { CheckIcon, ChevronDownIcon, SearchIcon } from '../icons';
@@ -47,15 +48,19 @@ export function MultiCombobox<T>({
   itemMeta,
   itemColor,
   maxSelected,
-  placeholder = 'Select…',
-  searchPlaceholder = 'Search…',
-  emptyText = 'No options available.',
+  placeholder,
+  searchPlaceholder,
+  emptyText,
   invalid,
   disabled,
   inputSize = 'md',
   'aria-label': ariaLabel,
   'data-testid': testId,
 }: MultiComboboxProps<T>) {
+  const { t } = useLingui();
+  const placeholderText = placeholder ?? t`Select…`;
+  const searchPlaceholderText = searchPlaceholder ?? t`Search…`;
+  const emptyTextResolved = emptyText ?? t`No options available.`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -103,7 +108,7 @@ export function MultiCombobox<T>({
         >
           <span className="flex flex-wrap items-center gap-1 flex-1 min-w-0">
             {selectedItems.length === 0 ? (
-              <span className="truncate text-muted">{placeholder}</span>
+              <span className="truncate text-muted">{placeholderText}</span>
             ) : (
               selectedItems.map(item => {
                 const color = itemColor?.(item);
@@ -149,8 +154,8 @@ export function MultiCombobox<T>({
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
+              placeholder={searchPlaceholderText}
+              aria-label={searchPlaceholderText}
               className="pl-8"
             />
           </div>
@@ -162,16 +167,16 @@ export function MultiCombobox<T>({
               data-testid={testId ? `${testId}-hint` : undefined}
             >
               {limitReached
-                ? `Maximum of ${maxSelected} selected.`
-                : `Select up to ${maxSelected}.`}
+                ? t`Maximum of ${maxSelected} selected.`
+                : t`Select up to ${maxSelected}.`}
             </p>
           )}
 
           <div role="listbox" aria-multiselectable className="max-h-[240px] overflow-y-auto">
             {items.length === 0 ? (
-              <div className="px-2.5 py-2 text-body-sm text-muted">{emptyText}</div>
+              <div className="px-2.5 py-2 text-body-sm text-muted">{emptyTextResolved}</div>
             ) : matches.length === 0 ? (
-              <div className="px-2.5 py-2 text-body-sm text-muted">No matches.</div>
+              <div className="px-2.5 py-2 text-body-sm text-muted"><Trans>No matches.</Trans></div>
             ) : (
               matches.map(item => {
                 const key = itemKey(item);

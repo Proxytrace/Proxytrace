@@ -1,5 +1,6 @@
 import { useState, useMemo, Fragment } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunGroupDto } from '../../api/models';
 import { FOCUS_RING } from '../../lib/constants';
 import { cn } from '../../lib/cn';
@@ -19,6 +20,7 @@ export function MatrixView({ group, live }: {
   group: TestRunGroupDto;
   live?: LiveProgress;
 }) {
+  const { t } = useLingui();
   const runs = group.runs;
   const [searchParams, setSearchParams] = useSearchParams();
   const caseParam = searchParams.get('case');
@@ -57,11 +59,11 @@ export function MatrixView({ group, live }: {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-h2 font-semibold">Test case matrix</span>
+          <span className="text-h2 font-semibold"><Trans>Test case matrix</Trans></span>
           <span className="text-body-sm text-muted">
             {multi
-              ? <>{counts.all} cases × {runs.length} models — divergent rows striped</>
-              : `${counts.all} cases × 1 model`}
+              ? <Trans>{counts.all} cases × {runs.length} models — divergent rows striped</Trans>
+              : <Trans>{counts.all} cases × 1 model</Trans>}
           </span>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -69,29 +71,29 @@ export function MatrixView({ group, live }: {
             value={filter}
             onChange={setFilter}
             segments={[
-              { value: 'all', label: 'All', count: counts.all },
-              ...(multi ? [{ value: 'divergent' as const, label: 'Divergent', count: counts.divergent }] : []),
-              { value: 'failing', label: 'Failing', count: counts.failing },
-              { value: 'passing', label: 'Passing', count: counts.passing },
+              { value: 'all', label: t`All`, count: counts.all },
+              ...(multi ? [{ value: 'divergent' as const, label: t`Divergent`, count: counts.divergent }] : []),
+              { value: 'failing', label: t`Failing`, count: counts.failing },
+              { value: 'passing', label: t`Passing`, count: counts.passing },
             ]}
           />
           <SegmentedControl
             value={sort}
             onChange={setSort}
-            segments={[{ value: 'order', label: 'Order' }, { value: 'worst', label: 'Worst' }]}
+            segments={[{ value: 'order', label: t`Order` }, { value: 'worst', label: t`Worst` }]}
           />
         </div>
       </div>
 
       {/* Matrix */}
       {rows.length === 0 ? (
-        <div className="py-[60px] text-center text-muted text-body">No cases match this filter.</div>
+        <div className="py-[60px] text-center text-muted text-body"><Trans>No cases match this filter.</Trans></div>
       ) : (
         <div className="flex-1 min-h-0 overflow-auto">
           <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]">Test case</div>
-            <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right">Lat</div>
+            <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]"><Trans>Test case</Trans></div>
+            <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right"><Trans>Lat</Trans></div>
             {runs.map(run => (
               <div key={run.id} data-testid={`matrix-col-${run.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center">
                 <ModelTag name={run.endpointName} size="xs" />
@@ -119,7 +121,7 @@ export function MatrixView({ group, live }: {
                     onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary })}
                     data-testid={`matrix-row-${row.caseId}`}
                     className={cn('px-4 py-2.5 flex items-center gap-2.5 min-w-0 hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', stripe, selBg, FOCUS_RING)}
-                    title={`Compare all models — ${row.summary}`}
+                    title={t`Compare all models — ${row.summary}`}
                   >
                     {multi ? (
                       <span className={cn('mono text-caption font-bold px-1 py-0.5 rounded-sm shrink-0', divChipClass(row.divergent, passes, total))}>{passes}/{total}</span>
@@ -151,7 +153,7 @@ export function MatrixView({ group, live }: {
             })}
 
             {/* Footer: pass rate + avg latency per model */}
-            <div className="sticky bottom-0 z-20 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary">Pass rate</div>
+            <div className="sticky bottom-0 z-20 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary"><Trans>Pass rate</Trans></div>
             <div className="sticky bottom-0 z-20 bg-card border-t border-hairline" />
             {runs.map(run => {
               const pr = passRatePercent(run.passedCases, run.passedCases + run.failedCases);

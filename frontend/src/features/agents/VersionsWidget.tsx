@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { AgentDto, AgentVersionDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { fmtDate } from '../../lib/format';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function VersionsWidget({ agent, selectedVersion, onSelect, className }: Props) {
+  const { t } = useLingui();
   const { versions, latestVersion, isLoading } = useAgentVersions(agent.id);
   const [moving, setMoving] = useState<AgentVersionDto | null>(null);
   const c = agentColor(agent.id);
@@ -24,13 +26,13 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
 
   return (
     <Widget
-      title="Version history"
+      title={t`Version history`}
       right={versions.length > 0 && <span className="text-body-sm text-muted">{versions.length}</span>}
       className={className}
       bodyClassName="p-4"
     >
-      {isLoading && <p className="text-body-sm text-muted">Loading…</p>}
-      {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted">No versions yet.</p>}
+      {isLoading && <p className="text-body-sm text-muted"><Trans>Loading…</Trans></p>}
+      {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted"><Trans>No versions yet.</Trans></p>}
       {!isLoading && ordered.length > 0 && (
         <ul
           className="flex flex-col gap-0.5 max-h-[17rem] overflow-y-auto pr-1.5"
@@ -85,7 +87,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                         className="px-1.5 py-px rounded-sm text-caption font-bold shrink-0"
                         style={{ background: `color-mix(in srgb, ${c} 18%, transparent)`, color: c }}
                       >
-                        current
+                        <Trans>current</Trans>
                       </span>
                     )}
                     {isSelected && !isCurrent && (
@@ -93,13 +95,13 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                         className="px-1.5 py-px rounded-sm text-caption font-bold shrink-0"
                         style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
                       >
-                        viewing
+                        <Trans>viewing</Trans>
                       </span>
                     )}
                     <span className="ml-auto shrink-0 text-caption text-muted">{fmtDate(v.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-caption text-muted">
-                    <span>{v.tools.length} tool{v.tools.length === 1 ? '' : 's'}</span>
+                    <span><Plural value={v.tools.length} one="# tool" other="# tools" /></span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -110,7 +112,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                       }}
                       data-testid={`agent-version-move-btn-${v.versionNumber}`}
                     >
-                      Move…
+                      <Trans>Move…</Trans>
                     </Button>
                   </div>
                 </div>

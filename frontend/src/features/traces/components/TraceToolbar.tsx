@@ -6,6 +6,7 @@ import { agentColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
 import type { TimeRange } from '../../../lib/timeRange';
 import type { AgentListItemDto } from '../../../api/models';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 interface Props {
   search: string;
@@ -23,6 +24,7 @@ export function TraceToolbar({
   search, timeRange, agentFilter, showSystem, agents,
   onSearchChange, onTimeRangeChange, onAgentFilterChange, onShowSystemChange,
 }: Props) {
+  const { t } = useLingui();
   return (
     <div className="fade-up relative z-20 flex items-center gap-2 flex-wrap shrink-0 [animation-delay:80ms]">
       <div className="flex-1 min-w-[260px] max-w-[420px]">
@@ -30,19 +32,19 @@ export function TraceToolbar({
           leftAddon={<SearchIcon size={13} />}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
-          placeholder="Search by trace ID, content, or model…"
+          placeholder={t`Search by trace ID, content, or model…`}
           className="h-9"
         />
       </div>
 
       <FilterDropdown
-        label="Agent:"
+        label={t`Agent:`}
         testId="traces-agent-filter"
         value={agentFilter || '__all'}
         active={!!agentFilter}
         accent={agentFilter ? agentColor(agentFilter) : undefined}
         options={[
-          { key: '__all', label: 'All agents' },
+          { key: '__all', label: t`All agents` },
           ...agents.map(a => ({ key: a.id, label: a.name, accent: agentColor(a.id) })),
         ]}
         onChange={key => onAgentFilterChange(key === '__all' ? '' : key)}
@@ -57,7 +59,7 @@ export function TraceToolbar({
         role="switch"
         aria-checked={showSystem}
         onClick={() => onShowSystemChange(!showSystem)}
-        title={showSystem ? 'Hide traces from system agents' : 'Show traces from system agents'}
+        title={showSystem ? t`Hide traces from system agents` : t`Show traces from system agents`}
         className={cn(
           'inline-flex items-center gap-2 h-9 px-3 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
           showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card',
@@ -77,7 +79,7 @@ export function TraceToolbar({
             style={{ left: showSystem ? '14px' : '2px' }}
           />
         </span>
-        System Traces
+        <Trans>System Traces</Trans>
       </button>
     </div>
   );

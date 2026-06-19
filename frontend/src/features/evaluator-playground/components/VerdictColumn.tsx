@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { EvaluatorListItemDto } from '../../../api/models';
 import { tint } from '../../../lib/colors';
 import { TargetIcon } from '../../../components/icons';
@@ -19,20 +20,20 @@ export function VerdictColumn({ session, evaluator }: { session: PlaygroundSessi
       className="flex flex-col rounded-lg bg-card border border-border-subtle overflow-hidden min-h-0"
     >
       <div className="px-5 py-4 border-b border-hairline flex items-center gap-2 shrink-0">
-        <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-secondary">Verdict</span>
+        <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-secondary"><Trans>Verdict</Trans></span>
         {scored && currentRun && (
           currentRun.kind === 'logged' ? (
-            <span className="text-[9.5px] px-2 py-0.5 rounded-full font-semibold bg-card-2 text-muted">logged baseline</span>
+            <span className="text-[9.5px] px-2 py-0.5 rounded-full font-semibold bg-card-2 text-muted"><Trans>logged baseline</Trans></span>
           ) : (
             <span
               className="text-[9.5px] px-2 py-0.5 rounded-full font-bold"
               style={{ color: scoreColor(currentRun.result.score), background: tint(scoreColor(currentRun.result.score), 16) }}
             >
-              live re-score
+              <Trans>live re-score</Trans>
             </span>
           )
         )}
-        {runPending && <span className="ml-auto text-[10.5px] text-muted">scoring…</span>}
+        {runPending && <span className="ml-auto text-[10.5px] text-muted"><Trans>scoring…</Trans></span>}
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5 min-h-0">
@@ -50,7 +51,7 @@ export function VerdictColumn({ session, evaluator }: { session: PlaygroundSessi
             {runs.length > 0 && (
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted">Run history</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted"><Trans>Run history</Trans></span>
                   <span className="text-[10.5px] text-muted font-mono">{runs.length}</span>
                 </div>
                 <RunHistoryTimeline runs={runs} currentId={currentRun.id} onSelect={session.selectRun} />
@@ -70,9 +71,9 @@ function EmptyVerdict({ pending }: { pending: boolean }) {
       <span className="w-12 h-12 rounded-lg bg-accent-subtle text-accent inline-flex items-center justify-center">
         <TargetIcon size={22} />
       </span>
-      <div className="text-title font-semibold text-secondary">{pending ? 'Scoring…' : 'Not scored yet'}</div>
+      <div className="text-title font-semibold text-secondary">{pending ? <Trans>Scoring…</Trans> : <Trans>Not scored yet</Trans>}</div>
       <p className="text-body-sm text-muted max-w-[220px] leading-relaxed m-0">
-        Run the evaluator to see a 1–5 verdict, the judge&rsquo;s reasoning, and how edits move the score.
+        <Trans>Run the evaluator to see a 1–5 verdict, the judge’s reasoning, and how edits move the score.</Trans>
       </p>
     </div>
   );

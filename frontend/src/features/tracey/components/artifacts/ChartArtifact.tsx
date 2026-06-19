@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import type { ChartArtifact as ChartArtifactData } from '../../tracey-artifacts';
 import {
@@ -26,11 +27,12 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /** Dependency-free, interactive SVG chart built on chart-geometry.ts. Hover a column for details. */
 export function ChartArtifact({ artifact }: { artifact: ChartArtifactData }) {
+  const { t } = useLingui();
   const { points, chartType } = artifact;
   const [hover, setHover] = useState<number | null>(null);
 
   if (points.length === 0) {
-    return <EmptyState title="No data" description="Tracey produced an empty chart." />;
+    return <EmptyState title={t`No data`} description={t`Tracey produced an empty chart.`} />;
   }
 
   const values = points.map((p) => p.value);
@@ -42,10 +44,10 @@ export function ChartArtifact({ artifact }: { artifact: ChartArtifactData }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-x-6 gap-y-2">
-        <Stat label="Max" value={formatNum(Math.max(...values))} />
-        <Stat label="Min" value={formatNum(Math.min(...values))} />
-        <Stat label="Avg" value={formatNum(sum / values.length)} />
-        <Stat label="Last" value={formatNum(values[values.length - 1])} />
+        <Stat label={t`Max`} value={formatNum(Math.max(...values))} />
+        <Stat label={t`Min`} value={formatNum(Math.min(...values))} />
+        <Stat label={t`Avg`} value={formatNum(sum / values.length)} />
+        <Stat label={t`Last`} value={formatNum(values[values.length - 1])} />
       </div>
 
       <div className="relative">
@@ -129,8 +131,8 @@ export function ChartArtifact({ artifact }: { artifact: ChartArtifactData }) {
         <caption>{artifact.title}</caption>
         <thead>
           <tr>
-            <th scope="col">Label</th>
-            <th scope="col">Value</th>
+            <th scope="col"><Trans>Label</Trans></th>
+            <th scope="col"><Trans>Value</Trans></th>
           </tr>
         </thead>
         <tbody>

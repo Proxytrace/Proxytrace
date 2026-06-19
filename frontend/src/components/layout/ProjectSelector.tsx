@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { Avatar } from '../ui/Avatar';
 import { Menu } from '../ui/Menu';
 import { RowButton } from '../ui/RowButton';
@@ -19,9 +20,10 @@ function projectInitials(name: string) {
 export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
   const { projects, currentProject, setCurrentProjectId } = useCurrentProject();
   const navigate = useNavigate();
+  const { t } = useLingui();
   const isAdmin = useCurrentUser()?.role === 'Admin';
 
-  const name = currentProject?.name ?? 'No project';
+  const name = currentProject?.name ?? t`No project`;
   const memberCount = currentProject?.memberCount ?? 0;
   const color = currentProject ? projectColor(currentProject.id) : 'var(--teal)';
 
@@ -44,7 +46,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
               <div className="flex-1 min-w-0 text-left">
                 <div className="text-xs font-semibold truncate">{name}</div>
                 <div className="text-[11px] text-muted">
-                  {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                  <Plural value={memberCount} one="# member" other="# members" />
                 </div>
               </div>
               <ChevronUpIcon size={12} className="text-muted shrink-0" />
@@ -54,9 +56,9 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
       }
     >
       <div className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
-        Switch project
+        <Trans>Switch project</Trans>
       </div>
-      {projects.length === 0 && <div className="px-3 py-2 text-[12px] text-muted">No projects</div>}
+      {projects.length === 0 && <div className="px-3 py-2 text-[12px] text-muted"><Trans>No projects</Trans></div>}
       {projects.map((p) => {
         const active = p.id === currentProject?.id;
         return (
@@ -80,7 +82,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
       {isAdmin && (
         <>
           <Menu.Separator />
-          <Menu.Item icon={<SettingsIcon size={14} />} onSelect={() => navigate('/settings')}>Settings</Menu.Item>
+          <Menu.Item icon={<SettingsIcon size={14} />} onSelect={() => navigate('/settings')}><Trans>Settings</Trans></Menu.Item>
         </>
       )}
     </Menu>

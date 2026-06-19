@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { ActivityIcon, CheckIcon, ClockIcon, ExternalLinkIcon, XIcon } from '../../components/icons';
 import { cn } from '../../lib/cn';
 import { Card } from '../../components/ui/Card';
@@ -12,15 +15,16 @@ interface Props {
   expectedPassRateDelta?: number | null;
 }
 
-const STATUS_META: Record<TestRunStatus, { label: string; tone: DisplayTone; icon: React.ReactNode; pulse: boolean }> = {
-  [TestRunStatus.Pending]:   { label: 'Queued',    tone: 'teal',    icon: <ClockIcon size={11}/>,    pulse: true  },
-  [TestRunStatus.Running]:   { label: 'Running',   tone: 'teal',    icon: <ActivityIcon size={11}/>, pulse: true  },
-  [TestRunStatus.Completed]: { label: 'Completed', tone: 'success', icon: <CheckIcon size={11}/>,    pulse: false },
-  [TestRunStatus.Failed]:    { label: 'Failed',    tone: 'danger',  icon: <XIcon size={11}/>,        pulse: false },
-  [TestRunStatus.Cancelled]: { label: 'Cancelled', tone: 'muted',   icon: <XIcon size={11}/>,        pulse: false },
+const STATUS_META: Record<TestRunStatus, { label: MessageDescriptor; tone: DisplayTone; icon: React.ReactNode; pulse: boolean }> = {
+  [TestRunStatus.Pending]:   { label: msg`Queued`,    tone: 'teal',    icon: <ClockIcon size={11}/>,    pulse: true  },
+  [TestRunStatus.Running]:   { label: msg`Running`,   tone: 'teal',    icon: <ActivityIcon size={11}/>, pulse: true  },
+  [TestRunStatus.Completed]: { label: msg`Completed`, tone: 'success', icon: <CheckIcon size={11}/>,    pulse: false },
+  [TestRunStatus.Failed]:    { label: msg`Failed`,    tone: 'danger',  icon: <XIcon size={11}/>,        pulse: false },
+  [TestRunStatus.Cancelled]: { label: msg`Cancelled`, tone: 'muted',   icon: <XIcon size={11}/>,        pulse: false },
 };
 
 export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
+  const { t, i18n } = useLingui();
   if (!ab) {
     return (
       <Card elevation="flat" padding="md">
@@ -29,8 +33,8 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
             <ClockIcon size={14}/>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-title font-semibold text-primary mb-0.5">No A/B test attached</div>
-            <div className="text-body-sm text-muted">Proposal has not been benchmarked against a test suite yet.</div>
+            <div className="text-title font-semibold text-primary mb-0.5"><Trans>No A/B test attached</Trans></div>
+            <div className="text-body-sm text-muted"><Trans>Proposal has not been benchmarked against a test suite yet.</Trans></div>
           </div>
         </div>
       </Card>
@@ -66,21 +70,21 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
           <span
             className={cn('inline-block size-1.5 rounded-full', TONE_BG[meta.tone], meta.pulse && 'pulse-dot')}
           />
-          A/B test · {meta.label}
+          <Trans>A/B test</Trans> · {i18n._(meta.label)}
         </span>
         <span className="mono text-caption text-muted">{ab.id.slice(0, 8)}</span>
         <Link
           to={`/runs?run=${ab.id}`}
           className="ml-auto inline-flex items-center gap-1 text-body-sm text-secondary hover:text-primary transition-colors"
         >
-          View run <ExternalLinkIcon size={11}/>
+          <Trans>View run</Trans> <ExternalLinkIcon size={11}/>
         </Link>
       </div>
 
       {/* Hero numbers */}
       <div className="flex items-stretch gap-6 px-4 py-4">
         <div className="flex-1 min-w-0">
-          <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">Pass rate</div>
+          <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1"><Trans>Pass rate</Trans></div>
           <div className="flex items-baseline gap-2.5">
             <span
               className={cn('text-display font-bold tracking-[-0.02em] mono leading-none', TONE_TEXT[passTone])}
@@ -95,7 +99,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
               </span>
             )}
             {!deltaTone && deltaPts == null && (
-              <span className="text-body-sm text-muted">no delta predicted</span>
+              <span className="text-body-sm text-muted"><Trans>no delta predicted</Trans></span>
             )}
           </div>
         </div>
@@ -103,10 +107,10 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         <div className="w-px bg-hairline"/>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 items-center">
-          <Stat label="Sample"   value={`${ab.completedCases}/${ab.totalCases}`}/>
-          <Stat label="Duration" value={fmtDuration(ab.durationMs)}/>
-          <Stat label="Passed"   value={ab.passedCases} color="var(--success)"/>
-          <Stat label="Failed"   value={ab.failedCases} color="var(--danger)"/>
+          <Stat label={t`Sample`}   value={`${ab.completedCases}/${ab.totalCases}`}/>
+          <Stat label={t`Duration`} value={fmtDuration(ab.durationMs)}/>
+          <Stat label={t`Passed`}   value={ab.passedCases} color="var(--success)"/>
+          <Stat label={t`Failed`}   value={ab.failedCases} color="var(--danger)"/>
         </div>
       </div>
 
@@ -119,12 +123,12 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         </div>
         {hasResults && (
           <div className="flex items-center gap-3 mt-1.5 text-caption text-muted">
-            <LegendDot color="var(--success)" label={`${ab.passedCases} passed`}/>
-            <LegendDot color="var(--danger)"  label={`${ab.failedCases} failed`}/>
+            <LegendDot color="var(--success)" label={t`${ab.passedCases} passed`}/>
+            <LegendDot color="var(--danger)"  label={t`${ab.failedCases} failed`}/>
             {ab.totalCases - ab.completedCases > 0 && (
               <LegendDot
                 color="color-mix(in srgb, var(--text-muted) 60%, transparent)"
-                label={`${ab.totalCases - ab.completedCases} pending`}
+                label={t`${ab.totalCases - ab.completedCases} pending`}
               />
             )}
           </div>

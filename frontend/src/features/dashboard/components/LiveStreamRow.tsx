@@ -1,6 +1,7 @@
 // One row of the dashboard live trace stream — either a single trace or a
 // collapsed multi-turn conversation summary. Clicking drills into the Traces tab.
 
+import { Trans, Plural } from '@lingui/react/macro';
 import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { modelColor, statusColor } from '../../../lib/colors';
@@ -65,10 +66,10 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
         {tracePreview(head) ?? <span className="text-muted">—</span>}
       </span>
       <span className="justify-self-center inline-flex items-center text-caption font-semibold px-[5px] py-[1px] rounded-full text-accent bg-accent-subtle">
-        {turns.length} turns
+        <Plural value={turns.length} one="# turn" other="# turns" />
       </span>
       <span className="justify-self-center"><Pill label={head.model} color={modelColor(head.model)} size="sm" /></span>
-      <span className="text-[10.5px] font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : 'mixed'}</span>
+      <span className="text-[10.5px] font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : <Trans>mixed</Trans>}</span>
       <span className="text-secondary text-right min-w-[54px]">{fmtTokens(totalTokens)}</span>
       <span className="text-muted text-right min-w-[58px]">{fmtLatency(totalMs)}</span>
     </RowButton>

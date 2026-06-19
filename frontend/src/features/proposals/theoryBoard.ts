@@ -1,23 +1,25 @@
 // Pure logic for the optimization-theory pipeline board. No JSX, no I/O — unit-tested in
 // theoryBoard.spec.ts. The column rendering and icons live in the components.
 
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { TheoryDto } from '../../api/models';
 import { TheoryStatus } from '../../api/models';
 import type { DisplayTone } from './shared';
 
 export interface ColumnMeta {
   status: TheoryStatus;
-  label: string;
-  sublabel: string;
+  label: MessageDescriptor;
+  sublabel: MessageDescriptor;
   tone: DisplayTone;
 }
 
 /** Left-to-right pipeline order, matching the theory lifecycle. */
 export const BOARD_COLUMNS: readonly ColumnMeta[] = [
-  { status: TheoryStatus.Proposed, label: 'Proposed', sublabel: 'Hypotheses awaiting a test', tone: 'accent' },
-  { status: TheoryStatus.Validating, label: 'Validating', sublabel: 'A/B test in flight', tone: 'teal' },
-  { status: TheoryStatus.Validated, label: 'Validated', sublabel: 'Confirmed — ready to ship', tone: 'success' },
-  { status: TheoryStatus.Invalidated, label: 'Rejected', sublabel: 'Disproven by A/B', tone: 'danger' },
+  { status: TheoryStatus.Proposed, label: msg`Proposed`, sublabel: msg`Hypotheses awaiting a test`, tone: 'accent' },
+  { status: TheoryStatus.Validating, label: msg`Validating`, sublabel: msg`A/B test in flight`, tone: 'teal' },
+  { status: TheoryStatus.Validated, label: msg`Validated`, sublabel: msg`Confirmed — ready to ship`, tone: 'success' },
+  { status: TheoryStatus.Invalidated, label: msg`Rejected`, sublabel: msg`Disproven by A/B`, tone: 'danger' },
 ] as const;
 
 /** Groups theories into their pipeline column, preserving input order within each column. */

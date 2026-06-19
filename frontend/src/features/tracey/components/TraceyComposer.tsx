@@ -1,5 +1,6 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { ComposerPrimitive, ThreadPrimitive, useComposer, useComposerRuntime } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 import { TRACEY_TOOLS_META } from '../tracey-tools';
 import { ArrowUpIcon, MessagePlusIcon, SparklesIcon, StopIcon } from '../../../components/icons';
@@ -63,12 +64,13 @@ function AutoApproveToggle({ checked, onChange }: { checked: boolean; onChange: 
           )}
         />
       </span>
-      Auto-approve actions
+      <Trans>Auto-approve actions</Trans>
     </button>
   );
 }
 
 export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStarters }: TraceyComposerProps) {
+  const { t } = useLingui();
   const composer = useComposerRuntime();
   const text = useComposer(c => c.text);
   // The selection is tagged with the list ("key") it belongs to. When the menu (re)opens or the
@@ -126,10 +128,12 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
             <div className="flex size-11 items-center justify-center rounded-xl bg-accent-subtle text-accent">
               <SparklesIcon size={22} />
             </div>
-            <div className="text-h1 font-semibold text-primary">How can I help?</div>
+            <div className="text-h1 font-semibold text-primary"><Trans>How can I help?</Trans></div>
             <div className="max-w-md text-[13px] text-secondary">
-              Ask about your agents, suites, runs, or proposals — or have me run a suite, review a
-              proposal, or plot your data.
+              <Trans>
+                Ask about your agents, suites, runs, or proposals — or have me run a suite, review a
+                proposal, or plot your data.
+              </Trans>
             </div>
           </div>
           <div className="flex w-full justify-center">
@@ -153,7 +157,7 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-controls={open ? 'tracey-slash-menu' : undefined}
-            placeholder="Ask Tracey…  (/ for tools)"
+            placeholder={t`Ask Tracey…  (/ for tools)`}
             className="max-h-48 min-h-16 w-full resize-none bg-transparent px-1 pt-1 text-body text-primary outline-none placeholder:text-muted"
           />
           <div className="flex items-center justify-between gap-2">
@@ -161,8 +165,8 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
             <div className="flex items-center gap-1">
               <IconButton
                 onClick={onClear}
-                aria-label="New conversation"
-                title="New conversation"
+                aria-label={t`New conversation`}
+                title={t`New conversation`}
               >
                 <MessagePlusIcon size={16} />
               </IconButton>
@@ -173,8 +177,8 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
                   cancellation token fires on the proxied call. */}
               <ThreadPrimitive.If running={false}>
                 <ComposerPrimitive.Send
-                  aria-label="Send"
-                  title="Send"
+                  aria-label={t`Send`}
+                  title={t`Send`}
                   data-testid="tracey-send-btn"
                   className={cn(COMPOSER_BTN_CLS, SEND_BTN_CLS)}
                 >
@@ -183,8 +187,8 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
               </ThreadPrimitive.If>
               <ThreadPrimitive.If running>
                 <ComposerPrimitive.Cancel
-                  aria-label="Stop"
-                  title="Stop generating"
+                  aria-label={t`Stop`}
+                  title={t`Stop generating`}
                   data-testid="tracey-stop-btn"
                   className={cn(COMPOSER_BTN_CLS, STOP_BTN_CLS)}
                 >

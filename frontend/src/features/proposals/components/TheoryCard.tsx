@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { BeakerIcon, CpuIcon, PlayIcon, ZapIcon } from '../../../components/icons';
 import { Card } from '../../../components/ui/Card';
 import type { TheoryDto } from '../../../api/models';
@@ -38,6 +39,7 @@ const KIND_PILL: Record<ProposalKind, string> = {
 };
 
 export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting }: Props) {
+  const { i18n } = useLingui();
   const kind = KIND_META[theory.kind];
   const evidenceCount = theory.evidenceTestRunIds.length;
 
@@ -57,7 +59,7 @@ export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting }
         {/* Kind + handle */}
         <div className="flex items-center gap-1.5 mb-2">
           <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-[2px] text-caption font-semibold border ${KIND_PILL[theory.kind]}`}>
-            {KIND_ICON[theory.kind]} {kind.label}
+            {KIND_ICON[theory.kind]} {i18n._(kind.label)}
           </span>
           <span className="mono ml-auto text-caption text-muted" data-testid={`theory-handle-${theory.id}`}>
             {theoryShortId(theory.id)}
@@ -73,7 +75,7 @@ export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting }
         <div className="flex items-center gap-2 mb-2.5 text-caption">
           <span className="inline-flex items-center gap-1.5 min-w-0 text-secondary">
             <PlayIcon size={10} className="shrink-0 text-muted" />
-            <span className="truncate">{suiteName ?? 'Unassigned suite'}</span>
+            <span className="truncate">{suiteName ?? <Trans>Unassigned suite</Trans>}</span>
           </span>
           {evidenceCount > 0 && (
             <span className="mono ml-auto shrink-0 text-muted">{evidenceCount}×</span>

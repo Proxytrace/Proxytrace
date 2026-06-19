@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { ToolDetailsDto, ToolSpecDto } from '../../../api/models';
 
 interface ToolRowProps {
@@ -11,7 +12,7 @@ function ToolRow({ kind, tool }: ToolRowProps) {
   const bg = isAdd
     ? 'color-mix(in srgb, var(--success) 6%, transparent)'
     : 'color-mix(in srgb, var(--danger) 6%, transparent)';
-  const label = isAdd ? '+ added' : '− removed';
+  const label = isAdd ? <Trans>+ added</Trans> : <Trans>− removed</Trans>;
   return (
     <div
       className="px-3.5 py-3"
@@ -39,12 +40,12 @@ export function ToolUpdateSection({ details }: Props) {
   return (
     <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle" data-testid="tool-update-section">
       <div className="px-3.5 py-2 border-b border-hairline bg-card-2/30">
-        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">Tool definition diff</span>
+        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]"><Trans>Tool definition diff</Trans></span>
       </div>
       {added.map(t => <ToolRow key={`a-${t.name}`} kind="add" tool={t}/>)}
       {removed.map(t => <ToolRow key={`r-${t.name}`} kind="del" tool={t}/>)}
       {added.length === 0 && removed.length === 0 && (
-        <div className="px-3.5 py-3 text-body text-muted">No tool additions or removals.</div>
+        <div className="px-3.5 py-3 text-body text-muted"><Trans>No tool additions or removals.</Trans></div>
       )}
     </div>
   );

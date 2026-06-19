@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { LicenseFeature } from '../../api/license';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
@@ -18,13 +20,15 @@ export interface NavEntry {
 }
 
 export interface NavGroup {
-  label: string | null;
+  // Group labels are translated; resolve at render with i18n._(). Item labels stay English
+  // (glossary terms — Traces, Agents, Proposals, …).
+  label: MessageDescriptor | null;
   items: NavEntry[];
 }
 
 export const navGroups: NavGroup[] = [
   {
-    label: 'Overview',
+    label: msg`Overview`,
     items: [
       { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
       { label: 'Traces', icon: 'activity', to: '/traces' },
@@ -32,7 +36,7 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Agents',
+    label: msg`Agents`,
     items: [
       { label: 'Agents', icon: 'users', to: '/agents' },
       { label: 'Agent Playground', icon: 'beaker', to: '/playground' },
@@ -40,14 +44,14 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Evaluators',
+    label: msg`Evaluators`,
     items: [
       { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
       { label: 'Evaluator Playground', icon: 'target', to: '/evaluator-playground' },
     ],
   },
   {
-    label: 'Benchmarks',
+    label: msg`Benchmarks`,
     items: [
       { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
       { label: 'Test Runs', icon: 'play', to: '/runs' },
@@ -87,8 +91,8 @@ export const HEALTH_DOT: Record<HealthStatus, string> = {
   connecting: 'bg-warn',
 };
 
-export const HEALTH_LABEL: Record<HealthStatus, string> = {
-  online: 'Online',
-  offline: 'Offline',
-  connecting: 'Connecting…',
+export const HEALTH_LABEL: Record<HealthStatus, MessageDescriptor> = {
+  online: msg`Online`,
+  offline: msg`Offline`,
+  connecting: msg`Connecting…`,
 };

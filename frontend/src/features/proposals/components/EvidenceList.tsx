@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans, Plural } from '@lingui/react/macro';
 import { ChevronRightIcon, ExternalLinkIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
@@ -11,8 +12,8 @@ export function EvidenceList({ ids }: Props) {
   return (
     <Card elevation="raised" padding="none" className="overflow-hidden" data-testid="evidence-list">
       <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-hairline">
-        <span className="text-title font-semibold">Evidence</span>
-        <span className="text-body-sm text-muted">· {ids.length} failing run{ids.length !== 1 ? 's' : ''} motivated this</span>
+        <span className="text-title font-semibold"><Trans>Evidence</Trans></span>
+        <span className="text-body-sm text-muted">· <Plural value={ids.length} one="# failing run motivated this" other="# failing runs motivated this" /></span>
       </div>
       {ids.map((id, i) => (
         <Link
@@ -25,8 +26,8 @@ export function EvidenceList({ ids }: Props) {
         >
           <span className="size-1.5 rounded-full bg-warn"/>
           <div className="min-w-0">
-            <div className="text-title font-medium mb-0.5 text-primary">Test run {id.slice(0, 8)}</div>
-            <div className="text-body-sm text-muted">Captured failing trace cluster</div>
+            <div className="text-title font-medium mb-0.5 text-primary"><Trans>Test run {id.slice(0, 8)}</Trans></div>
+            <div className="text-body-sm text-muted"><Trans>Captured failing trace cluster</Trans></div>
           </div>
           <span className="mono text-caption text-muted">{id.slice(0, 8)}</span>
           <span className="text-muted inline-flex items-center gap-1 text-caption">

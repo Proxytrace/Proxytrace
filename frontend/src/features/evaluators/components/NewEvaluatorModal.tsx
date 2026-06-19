@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { XIcon } from '../../../components/icons';
@@ -21,6 +22,7 @@ interface Props {
 
 /** Create-evaluator overlay: kind picker first, then the kind-specific form. */
 export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, onClose, onSubmit, loading }: Props) {
+  const { t, i18n } = useLingui();
   const agenticEnabled = useFeature('AgenticEvaluators');
   return (
     <div
@@ -34,12 +36,12 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-hairline">
           <div>
-            <div className="text-[16px] font-bold tracking-[-0.01em]">New evaluator</div>
+            <div className="text-[16px] font-bold tracking-[-0.01em]"><Trans>New evaluator</Trans></div>
             <div className="text-[12px] text-muted mt-[3px]">
-              {pickedKind ? 'Configure your evaluator.' : 'Choose how this evaluator scores agent responses.'}
+              {pickedKind ? <Trans>Configure your evaluator.</Trans> : <Trans>Choose how this evaluator scores agent responses.</Trans>}
             </div>
           </div>
-          <IconButton onClick={onClose} aria-label="Close"><XIcon size={16} /></IconButton>
+          <IconButton onClick={onClose} aria-label={t`Close`}><XIcon size={16} /></IconButton>
         </div>
 
         <div className="p-5">
@@ -62,9 +64,9 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
                   categoryTint18[KIND_CATEGORY[pickedKind]],
                   categoryText[KIND_CATEGORY[pickedKind]],
                 )}>
-                  {META[pickedKind].label}
+                  {i18n._(META[pickedKind].label)}
                 </span>
-                <Button variant="secondary" size="sm" onClick={() => setPickedKind(null)}>← Change</Button>
+                <Button variant="secondary" size="sm" onClick={() => setPickedKind(null)}><Trans>← Change</Trans></Button>
               </div>
               <EvaluatorForm form={form} setForm={setForm} kind={pickedKind} presets={presets} />
             </div>
@@ -72,9 +74,9 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
         </div>
 
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-hairline">
-          <span className="text-[11.5px] text-muted">You can change the configuration later from the evaluator's settings.</span>
+          <span className="text-[11.5px] text-muted"><Trans>You can change the configuration later from the evaluator's settings.</Trans></span>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" size="sm" onClick={onClose}><Trans>Cancel</Trans></Button>
             <Button
               variant="primary"
               size="sm"
@@ -83,7 +85,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
               disabled={!pickedKind}
               loading={loading}
             >
-              Create
+              <Trans>Create</Trans>
             </Button>
           </div>
         </div>

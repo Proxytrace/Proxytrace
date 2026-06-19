@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { AgentCallDto, TestCaseDto } from '../../../api/models';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -44,6 +45,7 @@ export function TestCasesPanel({
   onUnstageAdd,
   onOpenAdd,
 }: Props) {
+  const { t } = useLingui();
   const [search, setSearch] = useState('');
 
   const q = search.trim().toLowerCase();
@@ -61,8 +63,8 @@ export function TestCasesPanel({
     <div className="flex flex-col gap-3 min-h-0 h-full">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
-          {cases.length} case{cases.length !== 1 ? 's' : ''}
-          {pendingAddTraces.length > 0 && <span className="text-accent"> · +{pendingAddTraces.length} pending</span>}
+          <Plural value={cases.length} one="# case" other="# cases" />
+          {pendingAddTraces.length > 0 && <span className="text-accent"> <Trans>· +{pendingAddTraces.length} pending</Trans></span>}
         </span>
         <Button
           variant="secondary"
@@ -71,26 +73,26 @@ export function TestCasesPanel({
           onClick={onOpenAdd}
           data-testid="suite-add-traces-btn"
         >
-          Add from traces
+          <Trans>Add from traces</Trans>
         </Button>
       </div>
 
       <Input
         leftAddon={<SearchIcon size={13} />}
-        rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}>clear</Button> : undefined}
+        rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}><Trans>clear</Trans></Button> : undefined}
         value={search}
         onChange={e => setSearch(e.target.value)}
-        placeholder="Search cases…"
+        placeholder={t`Search cases…`}
       />
 
       <div className="flex-1 min-h-0 overflow-y-auto rounded-[12px] border border-border bg-card">
         {totalEmpty && (
           <EmptyState
-            title="No test cases"
-            description="Add cases from captured traces to seed this suite."
+            title={t`No test cases`}
+            description={t`Add cases from captured traces to seed this suite.`}
           />
         )}
-        {noMatches && <EmptyState title="No matches" description="Clear the search to see all cases." />}
+        {noMatches && <EmptyState title={t`No matches`} description={t`Clear the search to see all cases.`} />}
 
         {!totalEmpty && !noMatches && (
           <ul className="flex flex-col">
@@ -129,6 +131,7 @@ function CaseRow({
   onSelect: () => void;
   onToggleRemove: () => void;
 }) {
+  const { t } = useLingui();
   const snippet = lastUserSnippet(testCase.input).slice(0, 120);
   return (
     <li
@@ -140,22 +143,22 @@ function CaseRow({
       )}
     >
       <div className="flex items-center gap-2">
-        <ColoredBadge color="var(--teal)" label={`${testCase.input.length} msg`} size="sm" />
+        <ColoredBadge color="var(--teal)" label={t`${testCase.input.length} msg`} size="sm" />
         <span className={cn('text-[12.5px] truncate min-w-0 flex-1', removing ? 'line-through text-muted' : 'text-primary')}>
-          {snippet || <span className="text-muted italic">No user message</span>}
+          {snippet || <span className="text-muted italic"><Trans>No user message</Trans></span>}
         </span>
         {removing ? (
-          <Button variant="link" className="text-[11px] shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(); }} title="Undo remove">
-            Undo
+          <Button variant="link" className="text-[11px] shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(); }} title={t`Undo remove`}>
+            <Trans>Undo</Trans>
           </Button>
         ) : (
-          <IconButton danger className="shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(); }} aria-label="Remove" title="Remove">
+          <IconButton danger className="shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(); }} aria-label={t`Remove`} title={t`Remove`}>
             <XIcon size={12} />
           </IconButton>
         )}
       </div>
       {removing && (
-        <div className="mt-[3px] text-[10.5px] text-warn font-semibold uppercase tracking-[0.08em]">Pending removal</div>
+        <div className="mt-[3px] text-[10.5px] text-warn font-semibold uppercase tracking-[0.08em]"><Trans>Pending removal</Trans></div>
       )}
     </li>
   );
@@ -169,6 +172,7 @@ function AddedTraceRow({
   onSelect: () => void;
   onUndo: () => void;
 }) {
+  const { t } = useLingui();
   const snippet = traceUserSnippet(trace).slice(0, 120);
   return (
     <li
@@ -182,14 +186,14 @@ function AddedTraceRow({
         <ColoredBadge color={modelColor(trace.model)} label={trace.model} dot size="sm" />
         <span className="text-[11px] font-mono text-muted shrink-0">{fmtRelative(trace.createdAt)}</span>
         <span className="text-[11px] font-mono text-secondary shrink-0">{fmtTokens(trace.inputTokens)}→{fmtTokens(trace.outputTokens)}</span>
-        <Button variant="link" className="text-[11px] shrink-0 ml-auto" onClick={e => { e.stopPropagation(); onUndo(); }} title="Remove from staged">
-          Undo
+        <Button variant="link" className="text-[11px] shrink-0 ml-auto" onClick={e => { e.stopPropagation(); onUndo(); }} title={t`Remove from staged`}>
+          <Trans>Undo</Trans>
         </Button>
       </div>
       <div className="mt-[5px] flex items-center gap-2 min-w-0">
-        <span className="text-[10px] font-semibold text-accent uppercase tracking-[0.08em] shrink-0">+ Pending add</span>
+        <span className="text-[10px] font-semibold text-accent uppercase tracking-[0.08em] shrink-0"><Trans>+ Pending add</Trans></span>
         <span className="text-[12px] text-secondary truncate min-w-0">
-          {snippet || <span className="text-muted italic">No user message</span>}
+          {snippet || <span className="text-muted italic"><Trans>No user message</Trans></span>}
         </span>
       </div>
     </li>

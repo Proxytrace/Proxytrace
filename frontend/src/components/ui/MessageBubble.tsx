@@ -1,4 +1,7 @@
 import { useState, type ReactNode } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { ChevronRightIcon } from '../icons';
 import { CopyButton } from './CopyButton';
 import { cn } from '../../lib/cn';
@@ -14,7 +17,7 @@ interface RoleStyle {
   bodyBg: string;
   border: string;
   hover: string;
-  label: string;
+  label: MessageDescriptor;
 }
 
 const ROLES: Record<RoleKey, RoleStyle> = {
@@ -24,7 +27,7 @@ const ROLES: Record<RoleKey, RoleStyle> = {
     bodyBg: 'bg-[color-mix(in_srgb,var(--teal)_6%,transparent)]',
     border: 'border-[color-mix(in_srgb,var(--teal)_25%,transparent)]',
     hover: 'hover:bg-[color-mix(in_srgb,var(--teal)_5%,transparent)]',
-    label: 'USER',
+    label: msg`USER`,
   },
   assistant: {
     accentText: 'text-[var(--accent-primary)]',
@@ -32,7 +35,7 @@ const ROLES: Record<RoleKey, RoleStyle> = {
     bodyBg: 'bg-[var(--accent-subtle)]',
     border: 'border-[color-mix(in_srgb,var(--accent-primary)_25%,transparent)]',
     hover: 'hover:bg-[color-mix(in_srgb,var(--accent-primary)_5%,transparent)]',
-    label: 'ASSISTANT',
+    label: msg`ASSISTANT`,
   },
   system: {
     accentText: 'text-[var(--text-secondary)]',
@@ -40,7 +43,7 @@ const ROLES: Record<RoleKey, RoleStyle> = {
     bodyBg: 'bg-[var(--bg-wash-hover)]',
     border: 'border-[var(--border-color)]',
     hover: 'hover:bg-[var(--bg-wash-hover)]',
-    label: 'SYSTEM',
+    label: msg`SYSTEM`,
   },
   tool: {
     accentText: 'text-success',
@@ -48,7 +51,7 @@ const ROLES: Record<RoleKey, RoleStyle> = {
     bodyBg: 'bg-success-subtle',
     border: 'border-[color-mix(in_srgb,var(--success)_25%,transparent)]',
     hover: 'hover:bg-success-subtle',
-    label: 'TOOL',
+    label: msg`TOOL`,
   },
 };
 
@@ -68,6 +71,7 @@ interface Props {
 }
 
 export function MessageBubble({ msg, defaultOpen = true, label, actions, streaming }: Props) {
+  const { i18n, t } = useLingui();
   const role = ROLES[roleKey(msg.role)];
   const [open, setOpen] = useState(defaultOpen);
 
@@ -100,7 +104,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
           </span>
           <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
           <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
-            {label ?? role.label}
+            {label ?? i18n._(role.label)}
           </span>
           {!isOpen && (
             <span className="text-[12px] truncate min-w-0 text-secondary">
@@ -110,12 +114,12 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
         </button>
         <CopyButton
           text={content}
-          label="Copy message"
+          label={t`Copy message`}
           className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-[var(--motion-fast)]"
         />
         {actions}
         <span className="font-mono text-[9.5px] leading-none tracking-[0.06em] shrink-0 text-muted">
-          {charCount.toLocaleString()} chars
+          <Trans>{charCount.toLocaleString()} chars</Trans>
         </span>
         {isOpen && !streaming && <MessageViewSelect value={view} onChange={setView} />}
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import type { AgentCallDto, TestSuiteDto } from '../../api/models';
 import { Card } from '../../components/ui/Card';
 import { Tabs, type TabItem } from '../../components/ui/Tabs';
@@ -44,6 +45,7 @@ export function SuiteDetail({ suiteId, projectId, onRun, onDelete }: Props) {
 }
 
 function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSuiteDto; projectId?: string; onRun: () => void; onDelete: () => void }) {
+  const { t } = useLingui();
   const editor = useSuiteEditor(suite);
   const [tab, setTab] = useState<Tab>('cases');
   const [windowKey, setWindowKey] = useState<SuiteWindowKey>('all');
@@ -96,10 +98,10 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
   function discard() { editor.reset(); setAddedTraceObjs(new Map()); }
 
   const tabItems: TabItem[] = [
-    { value: 'cases', label: 'Test Cases', count: suite.testCases.length, 'data-testid': 'suite-tab-cases' },
-    { value: 'evaluators', label: 'Evaluators', count: suite.evaluators.length, 'data-testid': 'suite-tab-evaluators' },
-    { value: 'history', label: 'History', count: suite.totalRuns || undefined, 'data-testid': 'suite-tab-history' },
-    { value: 'schedules', label: 'Schedules', count: scheduleCount || undefined, 'data-testid': 'suite-tab-schedules' },
+    { value: 'cases', label: t`Test Cases`, count: suite.testCases.length, 'data-testid': 'suite-tab-cases' },
+    { value: 'evaluators', label: t`Evaluators`, count: suite.evaluators.length, 'data-testid': 'suite-tab-evaluators' },
+    { value: 'history', label: t`History`, count: suite.totalRuns || undefined, 'data-testid': 'suite-tab-history' },
+    { value: 'schedules', label: t`Schedules`, count: scheduleCount || undefined, 'data-testid': 'suite-tab-schedules' },
   ];
 
   return (
@@ -135,7 +137,7 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
                 ? <TraceConversationPreview trace={focusedTrace} />
                 : focusedCase
                   ? <EditableTestCasePreview key={focusedCase.id} testCase={focusedCase} tools={agentTools} />
-                  : <PreviewEmpty title="Select a case or trace" description="Click any row to inspect its conversation." />}
+                  : <PreviewEmpty title={t`Select a case or trace`} description={t`Click any row to inspect its conversation.`} />}
             </div>
           </div>
         )}

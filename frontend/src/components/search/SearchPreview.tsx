@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { SearchHit, SearchKind } from '../../api/search';
 import { KIND_META } from './searchMeta';
 import {
@@ -44,7 +45,7 @@ export function SearchPreview({ hit }: { hit: SearchHit }) {
           {meta.label}
         </span>
         {hit.score > 0 && (
-          <span className="text-[10px] text-white/30">score {hit.score.toFixed(2)}</span>
+          <span className="text-[10px] text-white/30"><Trans>score {hit.score.toFixed(2)}</Trans></span>
         )}
       </div>
 

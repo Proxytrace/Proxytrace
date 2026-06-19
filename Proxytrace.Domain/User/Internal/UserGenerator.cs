@@ -21,6 +21,7 @@ internal class UserGenerator : DomainEntityGenerator<IUser>
                 email: random.Email(),
                 externalSubject: $"test|{random.UniqueString()}",
                 passwordHash: null,
-                role: random.Enum<UserRole>())
+                role: random.Enum<UserRole>(),
+                language: random.Any(SupportedLanguages.All))
             .ToTaskResult();
 }

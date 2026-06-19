@@ -1,12 +1,14 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { AgentCallDto, MessageDto } from '../../api/models';
 
 // ─── Right rail section types ────────────────────────────────────────────────
 export type SectionKey = 'system' | 'parameters' | 'tools';
 
-export const SECTION_TITLES: Record<SectionKey, string> = {
-  system: 'System Prompt',
-  parameters: 'Parameters',
-  tools: 'Tools',
+export const SECTION_TITLES: Record<SectionKey, MessageDescriptor> = {
+  system: msg`System Prompt`,
+  parameters: msg`Parameters`,
+  tools: msg`Tools`,
 };
 import type { PlaygroundMessagePayload } from '../../api/playground';
 import { makeMessage } from './state/usePlaygroundSession';

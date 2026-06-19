@@ -1,3 +1,4 @@
+import { Plural, useLingui } from '@lingui/react/macro';
 import { DataTable, type DataColumn } from '../../../../components/ui/DataTable';
 import type { TableArtifact as TableArtifactData } from '../../tracey-artifacts';
 
@@ -24,6 +25,7 @@ function isNumericColumn(rows: (string | number)[][], ci: number): boolean {
  * tabular mono so figures line up column-wise; a footer reports the row count.
  */
 export function TableArtifact({ artifact }: { artifact: TableArtifactData }) {
+  const { t } = useLingui();
   const rows: Row[] = artifact.rows.map((cells, i) => ({ __i: i, cells }));
   const numeric = artifact.columns.map((_, ci) => isNumericColumn(artifact.rows, ci));
 
@@ -45,13 +47,13 @@ export function TableArtifact({ artifact }: { artifact: TableArtifactData }) {
           columns={columns}
           rows={rows}
           rowKey={(row) => String(row.__i)}
-          emptyMessage="No rows."
+          emptyMessage={t`No rows.`}
         />
       </div>
       {rows.length > 0 && (
         <div className="px-1 text-body-sm text-muted">
-          {rows.length} {rows.length === 1 ? 'row' : 'rows'} · {artifact.columns.length}{' '}
-          {artifact.columns.length === 1 ? 'column' : 'columns'}
+          <Plural value={rows.length} one="# row" other="# rows" /> ·{' '}
+          <Plural value={artifact.columns.length} one="# column" other="# columns" />
         </div>
       )}
     </div>

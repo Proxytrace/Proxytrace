@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { AgentListItemDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../lib/selectionRow';
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem, onToggleSystem }: Props) {
+  const { t } = useLingui();
   const [search, setSearch] = useState('');
 
   const q = search.trim().toLowerCase();
@@ -32,9 +34,9 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
   return (
     <ListRail
       listTestId="agent-list"
-      title="Agents"
+      title={t`Agents`}
       count={agents.length}
-      search={{ value: search, onChange: setSearch, placeholder: 'Search agents…' }}
+      search={{ value: search, onChange: setSearch, placeholder: t`Search agents…` }}
       filter={onToggleSystem ? (
         // eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control)
         <button
@@ -42,7 +44,7 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
           role="switch"
           aria-checked={showSystem}
           onClick={onToggleSystem}
-          title={showSystem ? 'Hide system agents' : 'Show system agents'}
+          title={showSystem ? t`Hide system agents` : t`Show system agents`}
           className={cn(
             'inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
             showSystem
@@ -61,12 +63,12 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
               )}
             />
           </span>
-          System Agents
+          <Trans>System Agents</Trans>
         </button>
       ) : undefined}
       loading={isLoading}
       isEmpty={filtered.length === 0}
-      empty={<EmptyState title={search ? 'No matches' : 'No agents yet'} description={search ? 'Clear the search to see all agents.' : undefined} />}
+      empty={<EmptyState title={search ? t`No matches` : t`No agents yet`} description={search ? t`Clear the search to see all agents.` : undefined} />}
     >
       <div className="flex flex-col gap-1.5">
         {filtered.map(a => (
@@ -116,8 +118,8 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentListItemDto; selec
       <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-[40px]">
         <span className="truncate">{agent.projectName}</span>
         <span className="text-border">·</span>
-        <span className="shrink-0">{agent.toolCount} tool{agent.toolCount !== 1 ? 's' : ''}</span>
-        <span className="ml-auto shrink-0 font-mono">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
+        <span className="shrink-0"><Plural value={agent.toolCount} one="# tool" other="# tools" /></span>
+        <span className="ml-auto shrink-0 font-mono">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : <Trans>never</Trans>}</span>
       </div>
     </RowButton>
   );

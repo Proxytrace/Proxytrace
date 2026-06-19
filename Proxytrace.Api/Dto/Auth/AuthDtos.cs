@@ -8,7 +8,7 @@ public record ClaimLegacyRequest(string Email, string Password);
 public record SignupRequest(string Token, string Password);
 public record SetupAdminRequest(string Email, string Password);
 public record TokenResponse(string Token, DateTimeOffset ExpiresAt);
-public record MeDto(Guid Id, string Email, UserRole Role);
+public record MeDto(Guid Id, string Email, UserRole Role, string Language);
 public record StreamTicketResponse(string Token, DateTimeOffset ExpiresAt);
 public record CreateInviteRequest(string Email, UserRole Role);
 public record InviteDto(Guid Id, string Email, UserRole Role, DateTimeOffset ExpiresAt, DateTimeOffset? ConsumedAt, string Url);

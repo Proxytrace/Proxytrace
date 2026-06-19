@@ -10,18 +10,21 @@ internal record User : DomainEntity<IUser>, IUser
     public string? ExternalSubject { get; }
     public string? PasswordHash { get; private init; }
     public UserRole Role { get; private init; }
+    public string Language { get; private init; }
 
     public User(
         string email,
         string? externalSubject,
         string? passwordHash,
         UserRole role,
+        string language,
         IRepository<IUser> repository) : base(repository)
     {
         Email = email;
         ExternalSubject = externalSubject;
         PasswordHash = passwordHash;
         Role = role;
+        Language = language;
     }
 
     public User(
@@ -29,6 +32,7 @@ internal record User : DomainEntity<IUser>, IUser
         string? externalSubject,
         string? passwordHash,
         UserRole role,
+        string language,
         IDomainEntityData existing,
         IRepository<IUser> repository) : base(existing, repository)
     {
@@ -36,6 +40,7 @@ internal record User : DomainEntity<IUser>, IUser
         ExternalSubject = externalSubject;
         PasswordHash = passwordHash;
         Role = role;
+        Language = language;
     }
 
     public Task<IUser> ChangeRole(UserRole role, CancellationToken cancellationToken = default)
@@ -46,6 +51,11 @@ internal record User : DomainEntity<IUser>, IUser
     public Task<IUser> ChangePasswordHash(string passwordHash, CancellationToken cancellationToken = default)
         => ApplyAsync(this with { PasswordHash = passwordHash }, cancellationToken);
 
+    public Task<IUser> ChangeLanguage(string language, CancellationToken cancellationToken = default)
+        => Language == language
+            ? Task.FromResult<IUser>(this)
+            : ApplyAsync(this with { Language = language }, cancellationToken);
+
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
@@ -55,7 +65,15 @@ internal record User : DomainEntity<IUser>, IUser
 
         yield return Validation.NotNullOrWhiteSpace(Email);
         yield return Validation.Defined(Role);
-        
+
+        yield return Validation.NotNullOrWhiteSpace(Language);
+        if (!SupportedLanguages.IsSupported(Language))
+        {
+            yield return new ValidationResult(
+                $"Language '{Language}' is not a supported UI language.",
+                [nameof(Language)]);
+        }
+
         if (string.IsNullOrWhiteSpace(ExternalSubject) && string.IsNullOrWhiteSpace(PasswordHash))
         {
             yield return new ValidationResult(

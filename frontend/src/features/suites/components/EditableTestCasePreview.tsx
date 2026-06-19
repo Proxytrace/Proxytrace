@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestCaseDto, ToolSpecDto } from '../../../api/models';
 import { useUpdateTestCaseExpected } from '../hooks/useSuiteMutations';
 import { Button } from '../../../components/ui/Button';
@@ -14,12 +15,13 @@ interface Props {
 }
 
 export function EditableTestCasePreview({ testCase, tools }: Props) {
+  const { t } = useLingui();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => expectedFromDto(testCase.expectedOutput));
   const { show: toast } = useToast();
 
   const save = useUpdateTestCaseExpected(testCase.id, () => {
-    toast('Expected output updated', 'success');
+    toast(t`Expected output updated`, 'success');
     setEditing(false);
   });
 
@@ -33,7 +35,7 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
             leftIcon={<EditPencilIcon size={13} />}
             onClick={() => { setDraft(expectedFromDto(testCase.expectedOutput)); setEditing(true); }}
           >
-            Edit expected output
+            <Trans>Edit expected output</Trans>
           </Button>
         </div>
         <div className="flex-1 min-h-0">
@@ -46,16 +48,16 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
   return (
     <div className="h-full min-h-0 px-4 py-4 flex flex-col gap-3">
       <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em] shrink-0">
-        Edit expected output
+        <Trans>Edit expected output</Trans>
       </div>
       <ExpectedOutputEditor value={draft} tools={tools} onChange={setDraft} fill />
       {save.isError && (
         <span className="text-[12px] text-danger shrink-0">
-          {(save.error as Error).message || 'Failed to save'}
+          {(save.error as Error).message || t`Failed to save`}
         </span>
       )}
       <div className="flex gap-2 justify-end shrink-0">
-        <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+        <Button variant="secondary" size="sm" onClick={() => setEditing(false)}><Trans>Cancel</Trans></Button>
         <Button
           variant="primary"
           size="sm"
@@ -63,7 +65,7 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
           disabled={!validateExpected(draft) || save.isPending}
           loading={save.isPending}
         >
-          Save
+          <Trans>Save</Trans>
         </Button>
       </div>
     </div>

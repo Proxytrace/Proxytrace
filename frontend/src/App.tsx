@@ -2,6 +2,8 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, usePa
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
+import { Trans } from '@lingui/react/macro';
+import { LocaleSync } from './i18n/LocaleSync';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { TooltipProvider } from './components/ui/Tooltip';
@@ -73,7 +75,7 @@ queryClient.prefetchQuery({ queryKey: QUERY_KEYS.appConfig, queryFn: configApi.g
 function PageLoader() {
   return (
     <div className="flex items-center justify-center flex-1 text-muted text-[13px]">
-      Loading…
+      <Trans>Loading…</Trans>
     </div>
   );
 }
@@ -96,7 +98,7 @@ function OidcAuthGate({ children }: { children: React.ReactNode }) {
   if (auth.error) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-danger">
-        Auth error: {auth.error.message}
+        <Trans>Auth error: {auth.error.message}</Trans>
       </div>
     );
   }
@@ -199,6 +201,7 @@ function AppRoutes() {
   return (
     <>
     <ErrorLogNavBridge enabled={isAdmin} />
+    <LocaleSync />
     <Routes>
       {authMode.mode === 'local' && <Route path="/signup" element={wrap(<Signup />)} />}
       <Route
@@ -282,7 +285,7 @@ function ModeShell() {
   if (error || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-danger">
-        Could not detect auth mode.
+        <Trans>Could not detect auth mode.</Trans>
       </div>
     );
   }

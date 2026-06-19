@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentOverviewDto } from '../../../api/models';
 import { Sparkline } from '../../../components/charts';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -55,6 +56,7 @@ function KpiCell({ kpi }: { kpi: Kpi }) {
 }
 
 export function PerformanceCard({ overview, isLoading, range, onRangeChange, className }: Props) {
+  const { t } = useLingui();
   const pass = overview ? summarizePassRate(overview.passRateTrend) : null;
   const passClr = pass?.overall != null ? passRateColor(pass.overall) : 'var(--text-muted)';
   const delta = overview ? passRateDelta(overview.passRateTrend) : null;
@@ -64,39 +66,39 @@ export function PerformanceCard({ overview, isLoading, range, onRangeChange, cla
 
   const kpis: Kpi[] = [
     {
-      label: 'Pass rate',
+      label: t`Pass rate`,
       value: pass?.overall != null ? `${Math.round(pass.overall)}%` : '—',
-      sub: pass?.overall != null ? `${pass.totalPassed}/${pass.totalCases} cases` : 'no test data',
+      sub: pass?.overall != null ? t`${pass.totalPassed}/${pass.totalCases} cases` : t`no test data`,
       valueColor: passClr,
       delta,
       spark: pass?.trendValues ?? [],
       sparkColor: passClr,
     },
     {
-      label: 'Traces',
+      label: t`Traces`,
       value: String(sum?.totalTraces ?? 0),
-      sub: `in ${win}`,
+      sub: t`in ${win}`,
       spark: ts.map(p => p.traceCount),
       sparkColor: 'var(--accent-primary)',
     },
     {
-      label: 'Tokens',
+      label: t`Tokens`,
       value: sum ? fmtTokens(sum.totalInputTokens + sum.totalOutputTokens) : '—',
-      sub: sum ? `${fmtTokens(sum.totalInputTokens)} in · ${fmtTokens(sum.totalOutputTokens)} out` : win,
+      sub: sum ? t`${fmtTokens(sum.totalInputTokens)} in · ${fmtTokens(sum.totalOutputTokens)} out` : win,
       spark: ts.map(p => p.inputTokens + p.outputTokens),
       sparkColor: 'var(--teal)',
     },
     {
-      label: 'Cost',
+      label: t`Cost`,
       value: sum ? fmtCost(sum.totalCostEur) : '—',
       sub: win,
       spark: ts.map(p => p.costEur),
       sparkColor: 'var(--warn)',
     },
     {
-      label: 'Avg latency',
+      label: t`Avg latency`,
       value: sum ? fmtLatency(sum.avgLatencyMs) : '—',
-      sub: 'per call',
+      sub: t`per call`,
       spark: ts.map(p => p.avgLatencyMs),
       sparkColor: 'var(--success)',
     },
@@ -108,10 +110,10 @@ export function PerformanceCard({ overview, isLoading, range, onRangeChange, cla
       className={`bg-card rounded-lg overflow-hidden shadow-[var(--shadow-card)] ${className ?? ''}`}
     >
       <div className="flex items-center gap-2 px-4 py-3 border-b border-hairline">
-        <span className="text-h2 font-semibold tracking-[-0.005em]">Performance</span>
+        <span className="text-h2 font-semibold tracking-[-0.005em]"><Trans>Performance</Trans></span>
         <span className="inline-flex items-center gap-1.5 text-body-sm text-success">
           <span className="pulse-dot w-1.5 h-1.5 rounded-full bg-success" />
-          live
+          <Trans>live</Trans>
         </span>
         <div className="ml-auto">
           <RangeTabs value={range} onChange={onRangeChange} />

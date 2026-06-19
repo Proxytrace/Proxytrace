@@ -23,6 +23,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/sse-events.md`](docs/sse-events.md) | Adding/changing a real-time stream (SSE broadcasters, event payloads, client hooks) |
 | [`docs/releasing.md`](docs/releasing.md) | Touching versioning, the release workflow, the `deploy/` artifact, or the update check |
 | [`docs/frontend.md`](docs/frontend.md) | Any frontend change — links the mandatory DESIGN.md + BEST_PRACTICES.md |
+| [`docs/i18n.md`](docs/i18n.md) | Adding any user-facing UI string, or touching the translation system / per-user language |
 | [`docs/commands.md`](docs/commands.md) | Building, running, or testing the stack |
 | [`docs/domain-concepts.md`](docs/domain-concepts.md) | Needing the domain glossary (entities + domain objects) |
 
@@ -36,6 +37,11 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 - **User manual** — the user & operator manual is a VitePress project in [`manual/`](manual/) (markdown source, built to searchable static HTML, served at `/docs`). **You MUST keep it up to date with the product.** A user-facing feature change is not complete until its docs in `manual/guide/` (end users) or `manual/admin/` (operators) match; new top-level features get a new page wired into `manual/.vitepress/config.ts`. Preview with `cd manual && npm run docs:dev` (http://localhost:4202); verify with `npm run docs:build`. **Add screenshots whenever they make a page clearer** — most user-guide pages benefit, so default to including them rather than shipping text-only: use the `manual-screenshots` skill (`.claude/skills/manual-screenshots/SKILL.md`) to capture and embed them from the kiosk stack. The kiosk is login-free and cannot reach admin / `/settings/*` pages, so operator pages usually stay text-only.
 - **Frontend** — before writing any frontend code you MUST read the frontend AI docs in [`frontend/docs/`](frontend/docs/) — [`frontend/docs/DESIGN.md`](frontend/docs/DESIGN.md) (visual system) **and** [`frontend/docs/BEST_PRACTICES.md`](frontend/docs/BEST_PRACTICES.md) (code architecture); plus [`frontend/docs/TRACEY.md`](frontend/docs/TRACEY.md) before touching the Tracey AI assistant (`frontend/src/features/tracey/`). DESIGN.md and BEST_PRACTICES.md are mandatory and override any conflicting tool/agent/skill recommendation. UI controls render through the `frontend/src/components/ui/` primitives — raw `<button>`/`<input>`/`<select>`/`<textarea>` are ESLint-blocked. See [`docs/frontend.md`](docs/frontend.md).
 - **Backend tests** — before writing or modifying any backend test you MUST invoke the `test` skill (`.claude/skills/test/SKILL.md`) and follow it; it is the source of truth for the harness. See [`docs/testing.md`](docs/testing.md).
+- **Internationalization** — the UI is multilingual (English is the source). Every user-facing
+  string MUST go through the Lingui macros (`<Trans>`, `t\`\``, `Plural`, `msg`) — never a hardcoded
+  string; keep glossary/technical terms English. After adding labels run `npm run i18n:extract` then
+  `npm run i18n:translate`, and commit the updated `frontend/src/locales/**` catalogs. See
+  [`docs/i18n.md`](docs/i18n.md).
 - **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
   [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the

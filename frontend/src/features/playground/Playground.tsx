@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { PlayIcon, SearchIcon, TrashIcon } from '../../components/icons';
 import { IconButton } from '../../components/ui/Button';
@@ -23,6 +24,7 @@ import { ToolRequestPrompt } from './components/ToolRequestPrompt';
 import { CompletionStats } from './components/CompletionStats';
 
 export default function Playground() {
+  const { t } = useLingui();
   const { currentProject } = useCurrentProject();
   const { state, dispatch } = usePlaygroundSession();
   const { showSeed, setShowSeed, seedAnchorRef } = useSeedDropdown();
@@ -126,15 +128,15 @@ export default function Playground() {
     state.messages.length > 0;
 
   const composerDisabledReason = !state.agentId
-    ? 'Pick an agent on the left to start a conversation.'
+    ? t`Pick an agent on the left to start a conversation.`
     : state.isStreaming
-    ? 'Waiting for the model to finish streaming…'
+    ? t`Waiting for the model to finish streaming…`
     : null;
 
   if (!currentProject) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted text-[13px]">
-        Pick a project first.
+        <Trans>Pick a project first.</Trans>
       </div>
     );
   }
@@ -154,8 +156,8 @@ export default function Playground() {
           <IconButton
             onClick={onClearConversation}
             disabled={!state.agentId || state.messages.length === 0}
-            title="Clear conversation"
-            aria-label="Clear conversation"
+            title={t`Clear conversation`}
+            aria-label={t`Clear conversation`}
           >
             <TrashIcon size={13} strokeWidth={2.2} />
           </IconButton>
@@ -163,8 +165,8 @@ export default function Playground() {
             <IconButton
               onClick={() => setShowSeed(o => !o)}
               disabled={!state.agentId}
-              title="Load from trace or test case"
-              aria-label="Load from trace or test case"
+              title={t`Load from trace or test case`}
+              aria-label={t`Load from trace or test case`}
               aria-expanded={showSeed}
               aria-haspopup="listbox"
             >
@@ -178,7 +180,7 @@ export default function Playground() {
                   width="auto"
                   autoFocus
                   showShortcut={false}
-                  placeholder="Search traces and test cases…"
+                  placeholder={t`Search traces and test cases…`}
                   onSelect={async hit => {
                     try {
                       const messages = await loadMessagesForHit(hit);
@@ -195,8 +197,8 @@ export default function Playground() {
             onClick={onRunCompletion}
             disabled={!canRunCompletion}
             data-write
-            title="Run completion on current conversation"
-            aria-label="Run completion on current conversation"
+            title={t`Run completion on current conversation`}
+            aria-label={t`Run completion on current conversation`}
           >
             <PlayIcon size={13} strokeWidth={2.4} />
           </IconButton>

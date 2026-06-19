@@ -1,4 +1,5 @@
 import { useMessage } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { AlertTriangleIcon, ClockIcon, CoinsIcon } from '../../../components/icons';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
 import { readMessageStats, readTraceConversationId } from '../message-stats';
@@ -13,6 +14,7 @@ import { OpenTraceButton } from './OpenTraceButton';
  * trace(s). Hidden while the turn is still streaming (metadata is attached only on finish).
  */
 export function MessageStatusBar() {
+  const { t } = useLingui();
   // `metadata.custom` is a stable reference on the stored message, so selecting it (rather than a
   // freshly-derived object) keeps the selector snapshot stable.
   const custom = useMessage((m) => (m.role === 'assistant' ? m.metadata.custom : undefined));
@@ -32,13 +34,13 @@ export function MessageStatusBar() {
         <div className="flex items-center gap-3">
           <span
             className="inline-flex items-center gap-1"
-            title={`Total tokens (input ${stats.inputTokens.toLocaleString()} · output ${stats.outputTokens.toLocaleString()})`}
+            title={t`Total tokens (input ${stats.inputTokens.toLocaleString()} · output ${stats.outputTokens.toLocaleString()})`}
           >
             <CoinsIcon size={12} strokeWidth={2.2} />
             <span className="font-mono">{fmtTokens(stats.totalTokens)}</span>
           </span>
           {stats.durationMs != null && (
-            <span className="inline-flex items-center gap-1" title="Response time">
+            <span className="inline-flex items-center gap-1" title={t`Response time`}>
               <ClockIcon size={12} strokeWidth={2.2} />
               <span className="font-mono">{fmtLatency(stats.durationMs)}</span>
             </span>
@@ -47,10 +49,10 @@ export function MessageStatusBar() {
             <span
               data-testid="tracey-step-limit"
               className="inline-flex items-center gap-1 text-warn"
-              title="The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
+              title={t`The turn hit its tool-step budget before Tracey could answer. Ask her to continue.`}
             >
               <AlertTriangleIcon size={12} strokeWidth={2.2} />
-              Step limit reached
+              <Trans>Step limit reached</Trans>
             </span>
           )}
         </div>

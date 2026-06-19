@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Button, IconButton } from '../ui/Button';
 import { XIcon } from '../icons';
 
@@ -18,6 +19,7 @@ interface ModalProps {
 }
 
 export function Modal({ title, onClose, children, footer, headerActions, maxWidth, size }: ModalProps) {
+  const { t } = useLingui();
   const resolvedMaxWidth = maxWidth ?? (size ? SIZE_PX[size] : SIZE_PX.sm);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -40,7 +42,7 @@ export function Modal({ title, onClose, children, footer, headerActions, maxWidt
               <h2 className="m-0 text-base font-bold text-primary truncate">{title}</h2>
               {headerActions}
             </div>
-            <IconButton onClick={onClose} aria-label="Close"><XIcon size={14} /></IconButton>
+            <IconButton onClick={onClose} aria-label={t`Close`}><XIcon size={14} /></IconButton>
           </div>
         )}
         {children}
@@ -67,7 +69,7 @@ interface ModalFooterProps {
 export function ModalFooter({ onCancel, onSubmit, submitLabel, loading, disabled, danger }: ModalFooterProps) {
   return (
     <>
-      <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      <Button variant="ghost" onClick={onCancel}><Trans>Cancel</Trans></Button>
       <Button
         variant={danger ? 'danger' : 'primary'}
         data-testid="modal-submit"

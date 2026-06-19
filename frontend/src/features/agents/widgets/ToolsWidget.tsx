@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { ToolSpecDto } from '../../../api/models';
 import { Widget } from './Widget';
 import { ToolInspector } from './ToolInspector';
@@ -9,17 +10,18 @@ interface Props {
 }
 
 export function ToolsWidget({ tools, highlightTool, className }: Props) {
+  const { t } = useLingui();
   if (tools.length === 0) {
     return (
-      <Widget title="Tools" className={className}>
-        <div className="text-body text-muted italic">No tools defined</div>
+      <Widget title={t`Tools`} className={className}>
+        <div className="text-body text-muted italic"><Trans>No tools defined</Trans></div>
       </Widget>
     );
   }
 
   return (
     <Widget
-      title="Tools"
+      title={t`Tools`}
       right={
         <span className="px-1.5 py-px rounded-full text-body-sm font-semibold bg-teal/15 text-teal">
           {tools.length}

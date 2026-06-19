@@ -1,6 +1,8 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { lingui, linguiTransformerBabelPreset } from '@lingui/vite-plugin'
+import babel from '@rolldown/plugin-babel'
 
 // Production-only CSP. Kept out of dev so it doesn't block Vite's HMR websocket.
 // script-src 'self' (only hashed same-origin assets, no inline script); style-src
@@ -23,7 +25,16 @@ function cspMeta(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), cspMeta()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // `lingui()` turns `.po` catalog imports into runtime messages (no separate compile step).
+    // The macro transform (Trans, t, plural, …) runs via the rolldown Babel preset, since Vite 8's
+    // oxc-based React plugin no longer accepts inline Babel plugins.
+    lingui(),
+    babel({ presets: [linguiTransformerBabelPreset()] }),
+    cspMeta(),
+  ],
   // Release version stamped into the bundle by the Docker build (ARG APP_VERSION);
   // dev builds and plain `npm run build` report 0.0.0-dev.
   define: {

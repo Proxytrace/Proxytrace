@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { tint } from '../../../../lib/colors';
 import type { OutputValueDto } from '../../../../api/models';
 
@@ -22,7 +23,7 @@ export function OutputBlock({ label, color, value }: { label: string; color: str
         className="rounded-lg px-3 py-2.5 max-h-[160px] overflow-y-auto mono text-body-sm leading-relaxed text-primary whitespace-pre-wrap break-words bg-black/[0.18] border"
         style={{ borderColor: tint(color, 14) }}
       >
-        {text || <span className="text-muted italic">(empty)</span>}
+        {text || <span className="text-muted italic"><Trans>(empty)</Trans></span>}
       </div>
     </div>
   );

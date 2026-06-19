@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { FormField } from '../../../components/ui/FormField';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -12,6 +13,7 @@ interface FirstAdminStepProps {
 }
 
 export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
+  const { t } = useLingui();
   const localAuth = useLocalAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,7 +39,7 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
             onDone();
           } catch (e2) {
             const status = (e2 as { status?: number }).status;
-            setErr(status === 409 ? 'Admin already exists.' : 'Could not create admin.');
+            setErr(status === 409 ? t`Admin already exists.` : t`Could not create admin.`);
           } finally {
             setSubmitting(false);
           }
@@ -45,24 +47,24 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
       >
         <div>
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">
-            Step 0
+            <Trans>Step 0</Trans>
           </div>
-          <h1 className="text-[20px] font-bold text-primary tracking-[-0.01em]">Create the first admin</h1>
+          <h1 className="text-[20px] font-bold text-primary tracking-[-0.01em]"><Trans>Create the first admin</Trans></h1>
           <p className="mt-1.5 text-[13px] text-secondary">
-            Local install needs an administrator account before you can configure providers.
+            <Trans>Local install needs an administrator account before you can configure providers.</Trans>
           </p>
         </div>
-        <FormField label="Email">
+        <FormField label={t`Email`}>
           <Input
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t`you@example.com`}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </FormField>
-        <FormField label="Password">
+        <FormField label={t`Password`}>
           <Input
             type="password"
             autoComplete="new-password"
@@ -79,7 +81,7 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
           loading={submitting}
           disabled={!passwordIsValid(password) || email.trim() === ''}
         >
-          Create admin
+          <Trans>Create admin</Trans>
         </Button>
       </form>
     </div>

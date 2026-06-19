@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans, Plural } from '@lingui/react/macro';
 import { useLicense } from '../../api/license';
 import { LockIcon } from '../icons';
 import { daysLeft } from './licenseUtils';
@@ -13,7 +14,6 @@ export function GracePeriodBanner() {
   if (!data || data.status !== 'grace') return null;
 
   const remaining = daysLeft(data.gracePeriodEndsAt);
-  const dayLabel = remaining === 1 ? 'day' : 'days';
 
   return (
     <div
@@ -23,11 +23,14 @@ export function GracePeriodBanner() {
     >
       <LockIcon size={14} />
       <span>
-        License server unreachable — running on cached license. Enterprise features
-        stay active for {remaining} more {dayLabel}.
+        <Trans>
+          License server unreachable — running on cached license. Enterprise features
+          stay active for{' '}
+          <Plural value={remaining} one="# more day" other="# more days" />.
+        </Trans>
       </span>
       <Link to="/upgrade" className="ml-auto underline underline-offset-2 hover:text-primary">
-        Details
+        <Trans>Details</Trans>
       </Link>
     </div>
   );

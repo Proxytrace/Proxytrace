@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { ModelParametersDto } from '../../api/models';
 
 const FIELD_LABELS: Record<keyof ModelParametersDto, string> = {
@@ -45,7 +46,7 @@ export function ModelParametersGrid({ params }: { params: ModelParametersDto }) 
   if (setFields.length === 0) {
     return (
       <div className="px-3 py-[10px] bg-card-2 rounded-[8px] text-[12px] text-muted italic">
-        Default parameters (none specified)
+        <Trans>Default parameters (none specified)</Trans>
       </div>
     );
   }

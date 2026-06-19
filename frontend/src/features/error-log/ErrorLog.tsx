@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { useSearchParams } from 'react-router-dom';
 import { SearchIcon } from '../../components/icons';
 import { Input } from '../../components/ui/Input';
@@ -16,13 +17,13 @@ import { ALL_TIME, resolveRange, type TimeRange } from '../../lib/timeRange';
 
 type LevelFilter = 'all' | ApplicationErrorLevel;
 
-const LEVEL_SEGMENTS: Segment<LevelFilter>[] = [
-  { value: 'all', label: 'All' },
-  { value: ApplicationErrorLevel.Error, label: 'Error' },
-  { value: ApplicationErrorLevel.Critical, label: 'Critical' },
-];
-
 export default function ErrorLog() {
+  const { t } = useLingui();
+  const LEVEL_SEGMENTS: Segment<LevelFilter>[] = [
+    { value: 'all', label: t`All` },
+    { value: ApplicationErrorLevel.Error, label: t`Error` },
+    { value: ApplicationErrorLevel.Critical, label: t`Critical` },
+  ];
   const [page, setPage] = useState(1);
   const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('errorLog.pageSize', PAGE_SIZE);
   // Guard against a stale/garbage stored value — only accept a known option.
@@ -83,9 +84,9 @@ export default function ErrorLog() {
     <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-[14px]">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-bold text-primary">Error Log</h1>
+          <h1 className="text-base font-bold text-primary"><Trans>Error Log</Trans></h1>
           <p className="text-[13px] text-muted mt-0.5">
-            Latest application errors and critical failures captured across the backend.
+            <Trans>Latest application errors and critical failures captured across the backend.</Trans>
           </p>
         </div>
         <SegmentedControl value={levelFilter} onChange={handleLevelChange} segments={LEVEL_SEGMENTS} />
@@ -97,8 +98,8 @@ export default function ErrorLog() {
             leftAddon={<SearchIcon size={13} />}
             value={search}
             onChange={e => handleSearchChange(e.target.value)}
-            placeholder="Search message or stacktrace…"
-            aria-label="Search errors by message or stacktrace"
+            placeholder={t`Search message or stacktrace…`}
+            aria-label={t`Search errors by message or stacktrace`}
             data-testid="error-log-search"
           />
         </div>
@@ -116,7 +117,7 @@ export default function ErrorLog() {
 
       <footer data-testid="error-log-pagination" className="flex items-center justify-between gap-3 shrink-0">
         <FilterDropdown
-          label="Per page:"
+          label={t`Per page:`}
           value={String(pageSize)}
           active
           direction="up"
@@ -125,7 +126,7 @@ export default function ErrorLog() {
           width={110}
         />
         <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
-        <span className="text-xs text-muted whitespace-nowrap">{total.toLocaleString()} {total === 1 ? 'error' : 'errors'}</span>
+        <span className="text-xs text-muted whitespace-nowrap">{total.toLocaleString()} <Plural value={total} one="error" other="errors" /></span>
       </footer>
 
       {activeError && <ErrorLogDetail error={activeError} onClose={closeDetail} />}

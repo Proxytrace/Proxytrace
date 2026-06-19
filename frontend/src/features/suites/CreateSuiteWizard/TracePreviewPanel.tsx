@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { AgentCallDto } from '../../../api/models';
 import { ConversationView } from '../../../components/conversation/ConversationView';
 import { fromAgentCall } from '../../../components/conversation/adapters';
@@ -8,10 +9,11 @@ interface Props {
 }
 
 export function TracePreviewPanel({ trace }: Props) {
+  const { t } = useLingui();
   if (!trace) {
     return (
       <div className="h-full flex items-center justify-center">
-        <EmptyState title="Select a trace to preview" description="Click a row to inspect its conversation." />
+        <EmptyState title={t`Select a trace to preview`} description={t`Click a row to inspect its conversation.`} />
       </div>
     );
   }

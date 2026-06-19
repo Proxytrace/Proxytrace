@@ -1,11 +1,13 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { EvaluationScore, EvaluatorKind } from '../../api/models';
 
 /** Short label for an evaluator kind, used in rail rows + pickers. */
-export const KIND_LABEL: Record<EvaluatorKind, string> = {
-  [EvaluatorKind.Agentic]: 'LLM judge',
-  [EvaluatorKind.ExactMatch]: 'Exact match',
-  [EvaluatorKind.NumericMatch]: 'Numeric',
-  [EvaluatorKind.JsonSchemaMatch]: 'JSON schema',
+export const KIND_LABEL: Record<EvaluatorKind, MessageDescriptor> = {
+  [EvaluatorKind.Agentic]: msg`LLM judge`,
+  [EvaluatorKind.ExactMatch]: msg`Exact match`,
+  [EvaluatorKind.NumericMatch]: msg`Numeric`,
+  [EvaluatorKind.JsonSchemaMatch]: msg`JSON schema`,
 };
 
 /** Per-score accent color (CSS var) for the test-bench result pill. */

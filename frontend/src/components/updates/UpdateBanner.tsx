@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useUpdateStatus } from '../../api/updates';
 import { IconButton } from '../ui/Button';
 import { ArrowUpFromLineIcon, XIcon } from '../icons';
@@ -11,6 +12,7 @@ const DISMISSED_KEY = 'proxytrace-update-dismissed';
  * stores the version in localStorage, so the banner returns for the next release.
  */
 export function UpdateBanner() {
+  const { t } = useLingui();
   const { data } = useUpdateStatus();
   const [dismissedVersion, setDismissedVersion] = useState(() => localStorage.getItem(DISMISSED_KEY));
 
@@ -33,8 +35,10 @@ export function UpdateBanner() {
     >
       <ArrowUpFromLineIcon size={14} />
       <span>
-        Proxytrace <span className="font-mono">{data.latestVersion}</span> is available — you're
-        running <span className="font-mono">{data.currentVersion}</span>.
+        <Trans>
+          Proxytrace <span className="font-mono">{data.latestVersion}</span> is available — you're
+          running <span className="font-mono">{data.currentVersion}</span>.
+        </Trans>
       </span>
       {releaseHref && (
         <a
@@ -43,10 +47,10 @@ export function UpdateBanner() {
           rel="noopener noreferrer"
           className="underline underline-offset-2 hover:text-primary"
         >
-          Release notes
+          <Trans>Release notes</Trans>
         </a>
       )}
-      <IconButton aria-label="Dismiss update notice" className="ml-auto" onClick={dismiss} data-testid="update-banner-dismiss">
+      <IconButton aria-label={t`Dismiss update notice`} className="ml-auto" onClick={dismiss} data-testid="update-banner-dismiss">
         <XIcon size={14} />
       </IconButton>
     </div>

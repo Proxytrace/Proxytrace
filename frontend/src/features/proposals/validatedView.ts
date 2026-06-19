@@ -2,6 +2,8 @@
 // validatedView.spec.ts. Once an A/B test has confirmed a theory, the drawer leads with the
 // concrete change and its effective gain; this file derives both from the theory + proposal.
 
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { OptimizationProposalDto, TheoryDto } from '../../api/models';
 import { ProposalStatus } from '../../api/models';
 import type { DisplayTone } from './shared';
@@ -37,32 +39,32 @@ export function formatDeltaPt(deltaPt: number): string {
 }
 
 export interface ReviewMeta {
-  label: string;
+  label: MessageDescriptor;
   tone: DisplayTone;
-  description: string;
+  description: MessageDescriptor;
 }
 
 /** Review state of the proposal backing a validated theory. A missing proposal reads as Draft. */
 export const REVIEW_META: Record<ProposalStatus, ReviewMeta> = {
   [ProposalStatus.Draft]: {
-    label: 'Pending review',
+    label: msg`Pending review`,
     tone: 'teal',
-    description: 'The change beat the baseline. Promote it to get the handoff package, or dismiss it.',
+    description: msg`The change beat the baseline. Promote it to get the handoff package, or dismiss it.`,
   },
   [ProposalStatus.Accepted]: {
-    label: 'Promoted',
+    label: msg`Promoted`,
     tone: 'accent',
-    description: 'Promoted — awaiting adoption in your agent.',
+    description: msg`Promoted — awaiting adoption in your agent.`,
   },
   [ProposalStatus.Adopted]: {
-    label: 'Adopted',
+    label: msg`Adopted`,
     tone: 'success',
-    description: 'The change is live in the agent.',
+    description: msg`The change is live in the agent.`,
   },
   [ProposalStatus.Rejected]: {
-    label: 'Dismissed',
+    label: msg`Dismissed`,
     tone: 'danger',
-    description: 'A reviewer chose not to apply this change.',
+    description: msg`A reviewer chose not to apply this change.`,
   },
 };
 

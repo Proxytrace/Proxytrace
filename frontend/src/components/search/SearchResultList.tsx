@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans } from '@lingui/react/macro';
 import type { SearchHit, SearchKind } from '../../api/search';
 import { RowButton } from '../ui/RowButton';
 import { searchHitToHref } from '../../lib/search-routes';
@@ -44,7 +45,7 @@ export function SearchResultList({
     <>
       {isRecentMode && (
         <div className="px-3 pt-1 pb-1.5 text-[10px] uppercase tracking-wider text-white/40 font-semibold">
-          Recent
+          <Trans>Recent</Trans>
         </div>
       )}
       {groupOrder.map(g => {

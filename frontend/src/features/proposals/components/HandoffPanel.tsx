@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowDownToLineIcon, CheckIcon, CopyIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { OptimizationProposalDto } from '../../../api/models';
@@ -19,6 +20,7 @@ type CopyTarget = 'payload' | 'doc';
  * apply it, then adoption is auto-detected from live traffic (or confirmed via Mark adopted).
  */
 export function HandoffPanel({ proposal }: Props) {
+  const { t, i18n } = useLingui();
   const [copied, setCopied] = useState<CopyTarget | null>(null);
   const setStatus = useSetProposalStatus();
 
@@ -52,8 +54,10 @@ export function HandoffPanel({ proposal }: Props) {
   return (
     <section className="flex flex-col gap-2.5 rounded-md bg-card-2 px-3.5 py-3" data-testid="proposal-handoff-panel">
       <p className="text-body-sm text-secondary m-0">
-        Apply this change in your agent's code — Proxytrace flips the proposal to Adopted when the
-        exact change shows up in live traffic. Applied a tweaked variant? Mark it adopted manually.
+        <Trans>
+          Apply this change in your agent's code — Proxytrace flips the proposal to Adopted when the
+          exact change shows up in live traffic. Applied a tweaked variant? Mark it adopted manually.
+        </Trans>
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -62,7 +66,7 @@ export function HandoffPanel({ proposal }: Props) {
           onClick={() => copy('payload', proposedClipboardPayload(proposal))}
           data-testid="proposal-copy-change-btn"
         >
-          {copied === 'payload' ? 'Copied' : COPY_PAYLOAD_LABEL[proposal.kind]}
+          {copied === 'payload' ? t`Copied` : i18n._(COPY_PAYLOAD_LABEL[proposal.kind])}
         </Button>
         <Button
           variant="secondary" size="sm"
@@ -70,7 +74,7 @@ export function HandoffPanel({ proposal }: Props) {
           onClick={() => copy('doc', buildHandoffMarkdown(proposal))}
           data-testid="proposal-copy-doc-btn"
         >
-          {copied === 'doc' ? 'Copied' : 'Copy handoff doc'}
+          {copied === 'doc' ? t`Copied` : t`Copy handoff doc`}
         </Button>
         <Button
           variant="ghost" size="sm"
@@ -78,7 +82,7 @@ export function HandoffPanel({ proposal }: Props) {
           onClick={downloadDoc}
           data-testid="proposal-download-doc-btn"
         >
-          Download .md
+          <Trans>Download .md</Trans>
         </Button>
         <Button
           variant="success" size="sm" className="ml-auto"
@@ -86,7 +90,7 @@ export function HandoffPanel({ proposal }: Props) {
           onClick={() => setStatus.mutate({ id: proposal.id, status: ProposalStatus.Adopted })}
           data-testid="proposal-mark-adopted-btn"
         >
-          Mark adopted
+          <Trans>Mark adopted</Trans>
         </Button>
       </div>
     </section>

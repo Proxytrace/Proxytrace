@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -13,11 +14,12 @@ interface ErrorLogTableProps {
 }
 
 export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: ErrorLogTableProps) {
+  const { t } = useLingui();
   if (errors.length === 0) {
     return (
       <EmptyState
-        title="No errors logged"
-        description="Application errors and critical failures will appear here as they occur."
+        title={t`No errors logged`}
+        description={t`Application errors and critical failures will appear here as they occur.`}
       />
     );
   }
@@ -28,10 +30,10 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
       className={`flex flex-col ${isFetching ? 'opacity-60 transition-opacity' : ''}`}
     >
       <div className="grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
-        <span>Level</span>
-        <span>Message</span>
-        <span>Source</span>
-        <span className="text-right">When</span>
+        <span><Trans>Level</Trans></span>
+        <span><Trans>Message</Trans></span>
+        <span><Trans>Source</Trans></span>
+        <span className="text-right"><Trans>When</Trans></span>
       </div>
       {errors.map(error => (
         <RowButton

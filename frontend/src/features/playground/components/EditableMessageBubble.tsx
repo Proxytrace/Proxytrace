@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { EditIcon, GripVerticalIcon, TrashIcon } from '../../../components/icons';
 import { ToolCallBlock } from '../../../components/conversation/ToolCallBlock';
 import { MessageBubble } from '../../../components/ui/MessageBubble';
@@ -25,6 +26,7 @@ interface Props {
  * and drag-to-reorder. Tool calls render through the shared `ToolCallBlock`.
  */
 export function EditableMessageBubble(props: Props) {
+  const { t } = useLingui();
   const {
     message, isStreaming, isDragging,
     onEdit, onDelete,
@@ -40,17 +42,17 @@ export function EditableMessageBubble(props: Props) {
   const actions = !isStreaming && (
     <span className="flex items-center gap-[2px] shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-[var(--motion-fast)]">
       {draggable && (
-        <span aria-hidden title="Drag to reorder" className="inline-flex text-muted cursor-grab px-[2px]">
+        <span aria-hidden title={t`Drag to reorder`} className="inline-flex text-muted cursor-grab px-[2px]">
           <GripVerticalIcon size={12} />
         </span>
       )}
       {message.errored && (
-        <span className="text-[10px] text-danger mono uppercase tracking-[0.05em] mr-[4px]">error</span>
+        <span className="text-[10px] text-danger mono uppercase tracking-[0.05em] mr-[4px]"><Trans>error</Trans></span>
       )}
-      <IconButton size="sm" title="Edit" onClick={beginEdit} aria-label="Edit" data-testid="editable-message-edit">
+      <IconButton size="sm" title={t`Edit`} onClick={beginEdit} aria-label={t`Edit`} data-testid="editable-message-edit">
         <EditIcon size={12} strokeWidth={2.2} />
       </IconButton>
-      <IconButton size="sm" danger title="Delete" onClick={onDelete} aria-label="Delete">
+      <IconButton size="sm" danger title={t`Delete`} onClick={onDelete} aria-label={t`Delete`}>
         <TrashIcon size={12} strokeWidth={2.2} />
       </IconButton>
     </span>
@@ -111,7 +113,7 @@ function EmptyTurn({ role, actions }: { role: string; actions: React.ReactNode }
   return (
     <div className="group relative rounded-[12px] bg-card-2 border border-border border-dashed flex items-center gap-2 px-3 py-[10px]">
       <span className="font-mono text-[10.5px] font-bold tracking-[0.08em] text-muted uppercase">{role}</span>
-      <span className="text-[12px] text-muted italic">(empty — click edit to add content)</span>
+      <span className="text-[12px] text-muted italic"><Trans>(empty — click edit to add content)</Trans></span>
       <span className="ml-auto" />
       {actions}
     </div>

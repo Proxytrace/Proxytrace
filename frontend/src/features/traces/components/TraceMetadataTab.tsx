@@ -2,6 +2,7 @@ import type { AgentCallDto } from '../../../api/models';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
 import { ModelParametersGrid } from '../../../components/ui/ModelParametersGrid';
 import { fmtDate } from '../../../lib/format';
+import { Trans } from '@lingui/react/macro';
 
 // ── Raw JSON tab ───────────────────────────────────────────────────────────────
 
@@ -77,7 +78,7 @@ export function TraceMetadataTab({ trace }: MetadataProps) {
         ))}
       </div>
       <div className="text-caption text-muted uppercase tracking-[0.08em] font-semibold mt-[6px]">
-        Model parameters
+        <Trans>Model parameters</Trans>
       </div>
       <ModelParametersGrid params={trace.modelParameters} />
     </>

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate } from 'react-router-dom';
 import { statusColor } from '../../../lib/colors';
 import { fmtRelative, fmtDuration } from '../../../lib/format';
@@ -14,16 +15,20 @@ interface Props {
 }
 
 export function RecentTracesWidget({ agentId, className }: Props) {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const { traces, isLoading } = useAgentRecentTraces(agentId);
 
+  // Resolved here because the `traces.map(t => …)` callback below shadows the i18n `t`.
+  const tOpenTrace = t`Open trace`;
+
   return (
     <Widget
-      title="Recent traces"
+      title={t`Recent traces`}
       right={
         traces.length > 0 && (
           <Button variant="link" className="text-body-sm" onClick={() => navigate('/traces')}>
-            View all ›
+            <Trans>View all ›</Trans>
           </Button>
         )
       }
@@ -38,7 +43,7 @@ export function RecentTracesWidget({ agentId, className }: Props) {
       )}
 
       {!isLoading && traces.length === 0 && (
-        <p className="text-body-sm text-muted" data-testid="agent-recent-traces-empty">No traces yet.</p>
+        <p className="text-body-sm text-muted" data-testid="agent-recent-traces-empty"><Trans>No traces yet.</Trans></p>
       )}
 
       {!isLoading && traces.length > 0 && (
@@ -50,7 +55,7 @@ export function RecentTracesWidget({ agentId, className }: Props) {
                 key={t.id}
                 data-testid={`agent-recent-trace-${t.id}`}
                 onClick={() => navigate(`/traces?focus=${t.id}`)}
-                title={preview ?? 'Open trace'}
+                title={preview ?? tOpenTrace}
                 className="flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-1 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
               >
                 <span
@@ -59,7 +64,7 @@ export function RecentTracesWidget({ agentId, className }: Props) {
                   aria-hidden
                 />
                 <span className="text-body-sm text-secondary truncate">
-                  {preview ?? <span className="text-muted italic">No user message</span>}
+                  {preview ?? <span className="text-muted italic"><Trans>No user message</Trans></span>}
                 </span>
                 <span className="ml-auto shrink-0 font-mono text-caption text-muted">{fmtDuration(t.durationMs)}</span>
                 <span className="shrink-0 text-caption text-muted w-14 text-right">{fmtRelative(t.createdAt)}</span>

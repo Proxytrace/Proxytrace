@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { TestRunGroupDto } from '../../../api/models';
 import { buildEvaluatorHeatmap, scoreBucketColor, SCORE_LEVELS } from '../comparison';
 import type { LiveProgress } from '../live';
@@ -19,8 +20,8 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
     <Card padding="none" data-testid="evaluator-heatmap">
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-baseline gap-2.5 min-w-0">
-          <span className="text-h2 font-semibold">Evaluator breakdown</span>
-          <span className="text-body-sm text-muted">Score distribution per evaluator, per model</span>
+          <span className="text-h2 font-semibold"><Trans>Evaluator breakdown</Trans></span>
+          <span className="text-body-sm text-muted"><Trans>Score distribution per evaluator, per model</Trans></span>
         </div>
         <ScoreRamp />
       </div>
@@ -28,7 +29,7 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
       <div className="overflow-x-auto">
         <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
           {/* Header */}
-          <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] flex items-center">Evaluator</div>
+          <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] flex items-center"><Trans>Evaluator</Trans></div>
           {runs.map(run => (
             <div key={run.id} className="px-3 py-2 border-b border-hairline flex items-center">
               <ModelTag name={run.endpointName} size="xs" />
@@ -67,13 +68,13 @@ function Row({ divider, children }: { divider: boolean; children: React.ReactNod
 function ScoreRamp() {
   return (
     <div className="flex items-center gap-2 text-caption text-muted">
-      <span className="text-success">pass</span>
+      <span className="text-success"><Trans>pass</Trans></span>
       <div className="flex h-2 w-24 rounded-full overflow-hidden">
         {SCORE_LEVELS.map(level => (
           <span key={level} title={level} className="flex-1" style={{ background: scoreBucketColor(level) }} />
         ))}
       </div>
-      <span className="text-danger">fail</span>
+      <span className="text-danger"><Trans>fail</Trans></span>
     </div>
   );
 }

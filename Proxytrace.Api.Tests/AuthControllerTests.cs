@@ -1,8 +1,10 @@
 using AwesomeAssertions;
+using Autofac;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Auth;
 using Proxytrace.Application.Auth;
@@ -148,7 +150,7 @@ public sealed class AuthControllerTests : BaseTest<Module>
 
         result.Value.Should().NotBeNull();
         var setCookie = controller.Response.Headers.SetCookie.ToString();
-        setCookie.Should().Contain($"proxytrace_session={result.Value!.Token}");
+        setCookie.Should().Contain($"proxytrace_session={result.Value.Token}");
     }
 
     [TestMethod]
@@ -184,6 +186,22 @@ public sealed class AuthControllerTests : BaseTest<Module>
         var result = await controller.Me(CancellationToken);
 
         result.Result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [TestMethod]
+    public async Task Me_WithAuthenticatedUser_IncludesLanguage()
+    {
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(accessor).As<ICurrentUserAccessor>());
+        var create = services.GetRequiredService<IUser.CreateNew>();
+        var user = create($"{Guid.NewGuid():N}@example.test", externalSubject: null, passwordHash: "hash", UserRole.Member, "de");
+        await services.GetRequiredService<IRepository<IUser>>().AddAsync(user, CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(user);
+
+        var result = await ResolveController(services).Me(CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        result.Value.Language.Should().Be("de");
     }
 
     private static AuthController ResolveController(IServiceProvider services) => new(

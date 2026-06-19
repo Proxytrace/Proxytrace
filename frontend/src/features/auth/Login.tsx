@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useAuthMode } from '../../auth/authMode';
@@ -29,20 +30,21 @@ function OidcLogin() {
           <span className="text-primary">proxy</span><span className="text-accent">trace</span>
         </span>
       </div>
-      <p className="text-muted text-sm">Sign in to continue.</p>
+      <p className="text-muted text-sm"><Trans>Sign in to continue.</Trans></p>
       {auth.error && (
         <div className="rounded border border-danger px-3 py-2 text-sm text-danger">
           {auth.error.message}
         </div>
       )}
       <Button loading={auth.isLoading} onClick={() => void auth.signinRedirect()}>
-        Sign in
+        <Trans>Sign in</Trans>
       </Button>
     </div>
   );
 }
 
 function LocalLogin() {
+  const { t } = useLingui();
   const { setToken } = useLocalAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -64,16 +66,16 @@ function LocalLogin() {
             setToken(r.token);
             navigate('/');
           } catch {
-            setErr('Invalid email or password.');
+            setErr(t`Invalid email or password.`);
           } finally {
             setSubmitting(false);
           }
         }}
       >
-        <h1 className="text-lg font-semibold">Sign in</h1>
+        <h1 className="text-lg font-semibold"><Trans>Sign in</Trans></h1>
         <Input
           data-testid="login-email"
-          placeholder="Email"
+          placeholder={t`Email`}
           type="email"
           autoComplete="email"
           value={email}
@@ -82,7 +84,7 @@ function LocalLogin() {
         />
         <Input
           data-testid="login-password"
-          placeholder="Password"
+          placeholder={t`Password`}
           type="password"
           autoComplete="current-password"
           value={password}
@@ -91,7 +93,7 @@ function LocalLogin() {
         />
         {err && <p data-testid="login-error" className="text-sm text-danger">{err}</p>}
         <Button data-testid="login-submit" type="submit" fullWidth loading={submitting}>
-          Sign in
+          <Trans>Sign in</Trans>
         </Button>
       </form>
     </div>
@@ -99,6 +101,7 @@ function LocalLogin() {
 }
 
 function LegacyClaim() {
+  const { t } = useLingui();
   const { setToken } = useLocalAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -121,18 +124,18 @@ function LegacyClaim() {
             setToken(r.token);
             navigate('/');
           } catch {
-            setErr('Could not claim account. Check the email matches your existing user.');
+            setErr(t`Could not claim account. Check the email matches your existing user.`);
           } finally {
             setSubmitting(false);
           }
         }}
       >
-        <h1 className="text-lg font-semibold">Set a password for your account</h1>
+        <h1 className="text-lg font-semibold"><Trans>Set a password for your account</Trans></h1>
         <p className="text-xs text-muted">
-          Local authentication was enabled on this install. Confirm your email and choose a password to finish migrating your existing user.
+          <Trans>Local authentication was enabled on this install. Confirm your email and choose a password to finish migrating your existing user.</Trans>
         </p>
         <Input
-          placeholder="Email"
+          placeholder={t`Email`}
           type="email"
           autoComplete="email"
           value={email}
@@ -140,7 +143,7 @@ function LegacyClaim() {
           required
         />
         <Input
-          placeholder="New password"
+          placeholder={t`New password`}
           type="password"
           autoComplete="new-password"
           value={password}
@@ -150,7 +153,7 @@ function LegacyClaim() {
         <PasswordRequirements password={password} />
         {err && <p className="text-sm text-danger">{err}</p>}
         <Button type="submit" fullWidth loading={submitting} disabled={!valid}>
-          Set password &amp; sign in
+          <Trans>Set password &amp; sign in</Trans>
         </Button>
       </form>
     </div>

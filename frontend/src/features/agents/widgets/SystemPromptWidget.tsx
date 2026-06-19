@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { CopyIcon, CheckIcon, GitCompareIcon, ChevronDownIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { useAgentVersions } from '../hooks/useAgentVersions';
@@ -22,6 +23,7 @@ function countWords(text: string): number {
 }
 
 export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLatest, className }: Props) {
+  const { t } = useLingui();
   const trimmed = systemMessage ?? '';
   const isEmpty = trimmed.trim().length === 0;
   const lineCount = isEmpty ? 0 : trimmed.split('\n').length;
@@ -41,7 +43,7 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
   const meta = isEmpty ? null : (
     <span className="text-body-sm text-muted">
       {!isLatest && <span className="font-mono font-semibold text-secondary">v{activeVersion} · </span>}
-      {wordCount} word{wordCount !== 1 ? 's' : ''} · {lineCount} line{lineCount !== 1 ? 's' : ''}
+      <Plural value={wordCount} one="# word" other="# words" /> · <Plural value={lineCount} one="# line" other="# lines" />
     </span>
   );
 
@@ -56,7 +58,7 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
           data-testid="system-prompt-diff-btn"
           leftIcon={<GitCompareIcon size={12} />}
         >
-          Diff vs v{previous.versionNumber}
+          <Trans>Diff vs v{previous.versionNumber}</Trans>
         </Button>
       )}
       {clipped && (
@@ -68,7 +70,7 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
           data-testid="system-prompt-expand-btn"
           leftIcon={<ChevronDownIcon size={12} className={`transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`} />}
         >
-          {expanded ? 'Collapse' : 'Expand'}
+          {expanded ? <Trans>Collapse</Trans> : <Trans>Expand</Trans>}
         </Button>
       )}
       <CopyButton value={trimmed} disabled={isEmpty} />
@@ -77,13 +79,13 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
 
   return (
     <Widget
-      title="System Prompt"
+      title={t`System Prompt`}
       right={right}
       className={className}
       bodyClassName="p-0"
     >
       {isEmpty ? (
-        <div data-testid="agent-system-prompt" className="px-4 py-5 text-muted italic text-body">(no system prompt)</div>
+        <div data-testid="agent-system-prompt" className="px-4 py-5 text-muted italic text-body"><Trans>(no system prompt)</Trans></div>
       ) : (
         <div
           data-testid="agent-system-prompt"
@@ -117,6 +119,7 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
 }
 
 function CopyButton({ value, disabled }: { value: string; disabled?: boolean }) {
+  const { t } = useLingui();
   const [copied, setCopied] = useState(false);
   return (
     <Button
@@ -128,10 +131,10 @@ function CopyButton({ value, disabled }: { value: string; disabled?: boolean }) 
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      aria-label="Copy system prompt"
+      aria-label={t`Copy system prompt`}
       leftIcon={copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
     >
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? <Trans>Copied</Trans> : <Trans>Copy</Trans>}
     </Button>
   );
 }

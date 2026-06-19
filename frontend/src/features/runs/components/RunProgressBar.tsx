@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { TestRunDto } from '../../../api/models';
 import { runGroupProgress } from '../results';
 import { fmtDuration } from '../../../lib/format';
@@ -16,7 +17,7 @@ export function RunProgressBar({ runs }: { runs: TestRunDto[] }) {
       </div>
       <span className="mono text-caption text-muted shrink-0">{done}/{total} · {percent}%</span>
       {etaMs !== null && (
-        <span className="mono text-caption text-muted shrink-0">~{fmtDuration(etaMs)} left</span>
+        <span className="mono text-caption text-muted shrink-0"><Trans>~{fmtDuration(etaMs)} left</Trans></span>
       )}
     </div>
   );

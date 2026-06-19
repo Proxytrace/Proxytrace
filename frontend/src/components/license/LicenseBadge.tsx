@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useLingui } from '@lingui/react/macro';
 import { CrownIcon, SparklesIcon } from '../icons';
 import { cn } from '../../lib/cn';
 import { useLicense } from '../../api/license';
@@ -42,6 +43,7 @@ const TONE_CLS: Record<TierTone, string> = {
  * that links to the upgrade page so the current tier is always communicated.
  */
 export function LicenseBadge() {
+  const { t } = useLingui();
   const { data } = useLicense();
   if (!data) return null;
 
@@ -58,14 +60,14 @@ export function LicenseBadge() {
 
   if (badge.linkToUpgrade) {
     return (
-      <Link to="/upgrade" data-testid="license-badge" aria-label={`${badge.label} tier — upgrade`}>
+      <Link to="/upgrade" data-testid="license-badge" aria-label={t`${badge.label} tier — upgrade`}>
         {chip}
       </Link>
     );
   }
 
   return (
-    <span data-testid="license-badge" aria-label={`${badge.label} tier`}>
+    <span data-testid="license-badge" aria-label={t`${badge.label} tier`}>
       {chip}
     </span>
   );

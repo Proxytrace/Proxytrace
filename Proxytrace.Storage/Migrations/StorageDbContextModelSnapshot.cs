@@ -1102,6 +1102,12 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<string>("ExternalSubject")
                         .HasColumnType("text");
 
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("en");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 

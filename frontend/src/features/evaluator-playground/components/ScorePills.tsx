@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { type EvaluationScore } from '../../../api/models';
 import { tint } from '../../../lib/colors';
@@ -28,7 +29,7 @@ export function DeltaChip({ delta }: { delta: number | null }) {
   if (delta == null) return null;
   if (delta === 0) {
     return (
-      <span className="inline-flex items-center gap-1 text-body-sm text-muted font-mono">= no change vs previous</span>
+      <span className="inline-flex items-center gap-1 text-body-sm text-muted font-mono"><Trans>= no change vs previous</Trans></span>
     );
   }
   const up = delta > 0;
@@ -37,7 +38,7 @@ export function DeltaChip({ delta }: { delta: number | null }) {
       className={cn('inline-flex items-center gap-1 text-body-sm font-mono font-semibold', up ? 'text-success' : 'text-danger')}
     >
       <ArrowUpRightIcon size={11} className={up ? '' : 'rotate-180'} />
-      {up ? '+' : ''}{delta} vs previous
+      <Trans>{up ? '+' : ''}{delta} vs previous</Trans>
     </span>
   );
 }

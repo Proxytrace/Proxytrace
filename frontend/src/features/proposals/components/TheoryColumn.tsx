@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { CheckIcon, FlaskIcon, SparklesIcon, XIcon } from '../../../components/icons';
 import { TheoryStatus } from '../../../api/models';
 import { cn } from '../../../lib/cn';
@@ -29,6 +30,7 @@ const TONE_TOP_BORDER: Record<DisplayTone, string> = {
 };
 
 export function TheoryColumn({ column, count, children }: Props) {
+  const { i18n } = useLingui();
   return (
     <section className="flex flex-col xl:min-h-0" data-testid={`theory-column-${column.status}`}>
       {/* Header */}
@@ -37,7 +39,7 @@ export function TheoryColumn({ column, count, children }: Props) {
           <span className={cn('inline-flex size-6 items-center justify-center rounded-md', TONE_SUBTLE_BG[column.tone], TONE_TEXT[column.tone])}>
             {COLUMN_ICON[column.status]}
           </span>
-          <h2 className="text-h2 font-semibold text-primary m-0">{column.label}</h2>
+          <h2 className="text-h2 font-semibold text-primary m-0">{i18n._(column.label)}</h2>
           <span
             className={cn('mono ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 text-body-sm font-semibold', TONE_SUBTLE_BG[column.tone], TONE_TEXT[column.tone])}
             data-testid={`theory-column-count-${column.status}`}
@@ -45,7 +47,7 @@ export function TheoryColumn({ column, count, children }: Props) {
             {count}
           </span>
         </div>
-        <p className="text-caption text-muted mt-1 ml-8">{column.sublabel}</p>
+        <p className="text-caption text-muted mt-1 ml-8">{i18n._(column.sublabel)}</p>
       </div>
 
       {/* Cards */}

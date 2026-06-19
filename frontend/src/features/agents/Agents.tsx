@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useSearchParams } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -13,6 +14,7 @@ import { AgentDetail } from './AgentDetail';
 import { useAgents, useAgentDetail, useDeleteAgent } from './hooks/useAgents';
 
 export default function Agents() {
+  const { t } = useLingui();
   // Selection lives in ?id= (survives refresh); ?tool= is a transient deep-link from a trace.
   const [selectedId, setSelectedId] = useSelectedId();
   const [searchParams] = useSearchParams();
@@ -54,7 +56,7 @@ export default function Agents() {
     <div className="w-full min-w-0 flex flex-col gap-3 h-full overflow-hidden">
       {isEmpty && (
         <div data-testid="agent-empty-state">
-          <EmptyState title="No agents yet" description="Agents are auto-created when traces are captured." />
+          <EmptyState title={t`No agents yet`} description={t`Agents are auto-created when traces are captured.`} />
         </div>
       )}
 
@@ -87,7 +89,7 @@ export default function Agents() {
                 onClick={() => setSelectedId(null, ['tool'])}
                 leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
               >
-                All agents
+                <Trans>All agents</Trans>
               </Button>
             )}
             {selected && selectedAgent ? (
@@ -98,9 +100,9 @@ export default function Agents() {
                 highlightTool={highlightTool}
               />
             ) : selected ? (
-              <div className="text-center py-12 text-body text-muted">Loading agent…</div>
+              <div className="text-center py-12 text-body text-muted"><Trans>Loading agent…</Trans></div>
             ) : !isLoading ? (
-              <div className="text-center py-12 text-body text-muted">Select an agent to view details.</div>
+              <div className="text-center py-12 text-body text-muted"><Trans>Select an agent to view details.</Trans></div>
             ) : null}
           </main>
           )}

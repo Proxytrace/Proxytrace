@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { evaluatorColor } from '../../../lib/colors';
 import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../../lib/selectionRow';
@@ -14,6 +15,7 @@ interface Props {
 
 /** Step-1 rail list: every evaluator as a selectable monogram row. */
 export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
+  const { i18n } = useLingui();
   return (
     <div data-testid="evaluator-rail-list" className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-0.5 pr-1">
       {evaluators.map(ev => {
@@ -39,7 +41,7 @@ export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
               <span className={cn('block text-[12.5px] font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
                 {ev.name}
               </span>
-              <span className="block text-[10px] text-muted mt-0.5">{KIND_LABEL[ev.kind]}</span>
+              <span className="block text-[10px] text-muted mt-0.5">{i18n._(KIND_LABEL[ev.kind])}</span>
             </span>
             <span
               className="w-[7px] h-[7px] rounded-full shrink-0"

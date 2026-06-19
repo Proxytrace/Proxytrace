@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { RowButton } from '../../../components/ui/RowButton';
 import { SkeletonList } from '../../../components/ui/Skeleton';
@@ -39,7 +40,7 @@ export function PastEvaluationList({ evaluatorId, evaluatorName, items, selected
             className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card-2 text-[12px] text-muted hover:bg-card transition-colors"
           >
             <SearchIcon size={13} className="shrink-0" />
-            <span className="flex-1 text-left truncate">Search all past evaluations…</span>
+            <span className="flex-1 text-left truncate"><Trans>Search all past evaluations…</Trans></span>
           </RowButton>
         }
       >
@@ -51,14 +52,14 @@ export function PastEvaluationList({ evaluatorId, evaluatorName, items, selected
         />
       </Popover>
 
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted px-1 pt-1 shrink-0">Recent</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted px-1 pt-1 shrink-0"><Trans>Recent</Trans></span>
 
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {isLoading ? (
           <SkeletonList rows={4} height={44} />
         ) : items.length === 0 ? (
           <div className="px-2.5 py-5 text-center text-[11.5px] text-muted leading-relaxed">
-            No past evaluations yet — search above to load any test case.
+            <Trans>No past evaluations yet — search above to load any test case.</Trans>
           </div>
         ) : (
           <div data-testid="past-evaluation-list" className="flex flex-col gap-1">

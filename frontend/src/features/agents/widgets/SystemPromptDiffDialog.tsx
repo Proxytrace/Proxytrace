@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentVersionDto } from '../../../api/models';
 import { Modal } from '../../../components/overlays/Modal';
 import { Select } from '../../../components/ui/Select';
@@ -21,6 +22,7 @@ const ROW_CLS: Record<DiffKind, string> = {
 const SIGN: Record<DiffKind, string> = { same: ' ', add: '+', del: '-' };
 
 export function SystemPromptDiffDialog({ versions, initialBase, initialCompare, onClose }: Props) {
+  const { t } = useLingui();
   const ordered = useMemo(
     () => [...versions].sort((a, b) => b.versionNumber - a.versionNumber),
     [versions],
@@ -37,14 +39,14 @@ export function SystemPromptDiffDialog({ versions, initialBase, initialCompare, 
   const removed = rows.filter(r => r.kind === 'del').length;
 
   return (
-    <Modal title="System Prompt diff" onClose={onClose} maxWidth={860}>
+    <Modal title={t`System Prompt diff`} onClose={onClose} maxWidth={860}>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <VersionSelect label="Base" value={base} onChange={setBase} options={ordered} testid="diff-base-select" />
+        <VersionSelect label={t`Base`} value={base} onChange={setBase} options={ordered} testid="diff-base-select" />
         <ChevronRightIcon size={16} className="text-muted shrink-0 mt-5" />
-        <VersionSelect label="Compare" value={compare} onChange={setCompare} options={ordered} testid="diff-compare-select" />
+        <VersionSelect label={t`Compare`} value={compare} onChange={setCompare} options={ordered} testid="diff-compare-select" />
         <div className="ml-auto flex items-center gap-3 text-body-sm shrink-0 self-end pb-1.5">
-          <span className="text-success font-semibold">+{added} added</span>
-          <span className="text-danger font-semibold">−{removed} removed</span>
+          <span className="text-success font-semibold"><Trans>+{added} added</Trans></span>
+          <span className="text-danger font-semibold"><Trans>−{removed} removed</Trans></span>
         </div>
       </div>
       <div
@@ -52,7 +54,7 @@ export function SystemPromptDiffDialog({ versions, initialBase, initialCompare, 
         data-testid="system-prompt-diff"
       >
         {base === compare ? (
-          <div className="px-3 py-4 text-muted italic">Same version on both sides — nothing to compare.</div>
+          <div className="px-3 py-4 text-muted italic"><Trans>Same version on both sides — nothing to compare.</Trans></div>
         ) : (
           rows.map((row, i) => (
             <div key={i} className={`flex gap-2 px-3 py-0.5 whitespace-pre-wrap ${ROW_CLS[row.kind]}`}>

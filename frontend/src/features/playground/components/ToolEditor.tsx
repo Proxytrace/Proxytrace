@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { ChevronDownIcon, TrashIcon } from '../../../components/icons';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
@@ -32,6 +33,7 @@ interface ToolCardProps {
 }
 
 function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const argCount = tool.arguments.length;
 
@@ -57,15 +59,15 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
             className={`text-muted transition-transform ${open ? '' : '-rotate-90'}`}
           />
           <span className="mono text-[12px] font-semibold text-success">
-            {tool.name || '(unnamed)'}
+            {tool.name || t`(unnamed)`}
           </span>
           <span
             className="text-[10px] mono px-[6px] py-[1px] rounded-full bg-[rgba(255,255,255,0.04)] text-muted"
           >
-            {argCount} arg{argCount === 1 ? '' : 's'}
+            <Plural value={argCount} one="# arg" other="# args" />
           </span>
         </RowButton>
-        <IconButton danger onClick={onRemove} title="Remove tool" aria-label="Remove tool">
+        <IconButton danger onClick={onRemove} title={t`Remove tool`} aria-label={t`Remove tool`}>
           <TrashIcon size={11} />
         </IconButton>
       </div>
@@ -76,18 +78,18 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
         <div className="px-[10px] pb-[10px] flex flex-col gap-[8px]">
           <Input
             value={tool.name}
-            placeholder="Name"
+            placeholder={t`Name`}
             onChange={e => onUpdate({ name: e.target.value })}
           />
           <Textarea
             rows={2}
             value={tool.description}
-            placeholder="Description"
+            placeholder={t`Description`}
             onChange={e => onUpdate({ description: e.target.value })}
           />
           {argCount > 0 && (
             <div className="flex flex-col gap-[6px]">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">Arguments</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted"><Trans>Arguments</Trans></div>
               {tool.arguments.map((arg, ai) => {
                 return (
                   <div
@@ -97,7 +99,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
                     <div className="flex items-center gap-[6px] flex-wrap">
                       <span className="mono text-[12px] font-semibold text-primary">{arg.name}</span>
                       {arg.isRequired && (
-                        <span className="text-danger text-[12px]" title="Required" aria-label="required">*</span>
+                        <span className="text-danger text-[12px]" title={t`Required`} aria-label={t`required`}>*</span>
                       )}
                       <span className={`mono text-[10px] px-[6px] py-[1px] rounded-full border ${typeClass(arg.type)}`}>
                         {arg.type}
@@ -107,7 +109,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
                       className="text-[12px]"
                       rows={2}
                       value={arg.description}
-                      placeholder="Parameter description"
+                      placeholder={t`Parameter description`}
                       onChange={e => updateArg(ai, { description: e.target.value })}
                     />
                   </div>
@@ -139,7 +141,7 @@ export function ToolEditor({ tools, onChange }: Props) {
       <div
         className="rounded-[10px] border border-dashed border-border text-[11.5px] text-muted px-[10px] py-[12px] text-center"
       >
-        Agent has no tools.
+        <Trans>Agent has no tools.</Trans>
       </div>
     );
   }

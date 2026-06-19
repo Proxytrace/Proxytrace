@@ -1,3 +1,4 @@
+import { Trans, Plural } from '@lingui/react/macro';
 import type { MessageDto } from '../../../api/models';
 import { MessageBubble } from '../../../components/ui/MessageBubble';
 import { TestBenchChevronIcon } from '../../../components/icons';
@@ -8,18 +9,18 @@ export function ConversationPanel({ messages }: { messages: MessageDto[] }) {
     <details className="group rounded-lg border border-hairline bg-card-2 shrink-0">
       <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer select-none list-none">
         <TestBenchChevronIcon />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-secondary">Input conversation</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-secondary"><Trans>Input conversation</Trans></span>
         <span className="text-[10.5px] text-muted font-mono">
-          {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+          <Plural value={messages.length} one="# message" other="# messages" />
         </span>
         <span className="ml-auto text-[11px] text-muted">
-          <span className="group-open:hidden">Show</span>
-          <span className="hidden group-open:inline">Hide</span>
+          <span className="group-open:hidden"><Trans>Show</Trans></span>
+          <span className="hidden group-open:inline"><Trans>Hide</Trans></span>
         </span>
       </summary>
       <div className="px-3 pb-3 max-h-[240px] overflow-auto">
         {messages.length === 0 ? (
-          <div className="text-body text-muted">No messages.</div>
+          <div className="text-body text-muted"><Trans>No messages.</Trans></div>
         ) : (
           <div className="flex flex-col gap-2">
             {messages.map((m, i) => (

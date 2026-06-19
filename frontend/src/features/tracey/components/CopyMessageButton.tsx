@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { CheckIcon, CopyIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
 import { showToast } from '../../../components/ui/Toast';
 
 /** Copies the assistant response text to the clipboard, briefly confirming with a check icon. */
 export function CopyMessageButton({ text }: { text: string }) {
+  const { t } = useLingui();
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<number | null>(null);
 
@@ -20,7 +22,7 @@ export function CopyMessageButton({ text }: { text: string }) {
       if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
       resetTimer.current = window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      showToast('Could not copy to clipboard.', 'error');
+      showToast(t`Could not copy to clipboard.`, 'error');
     }
   };
 
@@ -28,8 +30,8 @@ export function CopyMessageButton({ text }: { text: string }) {
     <IconButton
       size="sm"
       onClick={onCopy}
-      aria-label={copied ? 'Copied' : 'Copy response'}
-      title={copied ? 'Copied' : 'Copy response'}
+      aria-label={copied ? t`Copied` : t`Copy response`}
+      title={copied ? t`Copied` : t`Copy response`}
       data-testid="tracey-copy-btn"
     >
       {copied ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}

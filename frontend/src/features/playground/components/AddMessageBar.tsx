@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { PlusIcon, SearchIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -13,13 +16,14 @@ interface Props {
 
 const MENU_WIDTH = 260;
 
-const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; description: string }[] = [
-  { value: 'user', label: 'User', accent: 'var(--teal)', description: 'Message from the human' },
-  { value: 'assistant', label: 'Assistant', accent: 'var(--accent-hover)', description: 'Reply from the model' },
-  { value: 'system', label: 'System', accent: 'var(--text-secondary)', description: 'System instruction' },
+const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; description: MessageDescriptor }[] = [
+  { value: 'user', label: 'User', accent: 'var(--teal)', description: msg`Message from the human` },
+  { value: 'assistant', label: 'Assistant', accent: 'var(--accent-hover)', description: msg`Reply from the model` },
+  { value: 'system', label: 'System', accent: 'var(--text-secondary)', description: msg`System instruction` },
 ];
 
 export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
+  const { i18n } = useLingui();
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -79,7 +83,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
-        <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em]">Add message</span>
+        <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em]"><Trans>Add message</Trans></span>
       </Button>
       {open && pos && createPortal(
         <div
@@ -89,7 +93,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
           style={{ bottom: pos.bottom, left: pos.left, width: MENU_WIDTH }}
         >
           <div className="px-[10px] pt-[2px] pb-[6px] text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-            New message role
+            <Trans>New message role</Trans>
           </div>
           {ROLE_OPTIONS.map(opt => (
             <RowButton
@@ -111,7 +115,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               </span>
               <span className="flex flex-col min-w-0">
                 <span className="text-[12.5px] text-primary font-semibold">{opt.label}</span>
-                <span className="text-[10.5px] text-muted">{opt.description}</span>
+                <span className="text-[10.5px] text-muted">{i18n._(opt.description)}</span>
               </span>
             </RowButton>
           ))}
@@ -130,8 +134,8 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
                   <SearchIcon size={12} strokeWidth={2.2} />
                 </span>
                 <span className="flex flex-col min-w-0">
-                  <span className="text-[12.5px] text-primary font-semibold">Load from trace</span>
-                  <span className="text-[10.5px] text-muted">Seed conversation from past trace or test case</span>
+                  <span className="text-[12.5px] text-primary font-semibold"><Trans>Load from trace</Trans></span>
+                  <span className="text-[10.5px] text-muted"><Trans>Seed conversation from past trace or test case</Trans></span>
                 </span>
               </RowButton>
             </>

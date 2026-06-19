@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { EvaluatorListItemDto } from '../../../api/models';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -10,6 +11,7 @@ import { ExpectedResponse, EditableResponse } from './ResponseEditor';
 
 /** Center pane: the picked case, its conversation, the editable candidate, and the run control. */
 export function BenchPane({ session, evaluator }: { session: PlaygroundSession; evaluator: EvaluatorListItemDto }) {
+  const { t } = useLingui();
   const {
     effectiveCaseId, payload, payloadLoading, payloadError, payloadErrorMessage,
     conversationMessages, currentActual, originalActual, isModified,
@@ -20,8 +22,8 @@ export function BenchPane({ session, evaluator }: { session: PlaygroundSession; 
     <section className="flex flex-col gap-4 min-h-0 overflow-y-auto px-0.5 pb-1">
       {effectiveCaseId == null && !payloadLoading ? (
         <EmptyState
-          title="No past evaluations"
-          description="This evaluator hasn’t scored any test results yet — search for a case in the rail to load one."
+          title={t`No past evaluations`}
+          description={t`This evaluator hasn’t scored any test results yet — search for a case in the rail to load one.`}
         />
       ) : payloadLoading ? (
         <BenchSkeleton />
@@ -54,8 +56,8 @@ export function BenchPane({ session, evaluator }: { session: PlaygroundSession; 
               {runLabel}
             </Button>
             <span className="text-body-sm text-muted flex-1 leading-relaxed">
-              {isModified ? 'Candidate edited — ' : ''}
-              Re-score with <span className="font-mono text-secondary">{evaluator.name}</span> to see how the 1–5 verdict shifts.
+              {isModified ? <Trans>Candidate edited — </Trans> : ''}
+              <Trans>Re-score with <span className="font-mono text-secondary">{evaluator.name}</span> to see how the 1–5 verdict shifts.</Trans>
             </span>
           </div>
         </>

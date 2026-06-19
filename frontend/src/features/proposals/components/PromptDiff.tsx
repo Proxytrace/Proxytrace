@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { SystemPromptDetailsDto } from '../../../api/models';
 import { cn } from '../../../lib/cn';
 import { buildPromptDiff } from '../proposalsMeta';
@@ -35,7 +36,7 @@ function PromptDiffView({ before, after }: PromptDiffProps) {
   return (
     <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle" data-testid="prompt-diff">
       <div className="flex items-center gap-2.5 px-3.5 py-2 border-b border-hairline bg-card-2/30">
-        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">System prompt</span>
+        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]"><Trans>System prompt</Trans></span>
         <span className="mono text-body-sm text-success">+{adds}</span>
         <span className="mono text-body-sm text-danger">−{dels}</span>
       </div>

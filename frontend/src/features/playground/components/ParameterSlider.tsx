@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function ParameterSlider({ label, value, defaultValue, min, max, step, onChange, hint, testId }: Props) {
+  const { t } = useLingui();
   const id = useId();
   const isModified = value !== defaultValue && !(value == null && defaultValue == null);
   const effective = value ?? defaultValue ?? min;
@@ -27,8 +29,8 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
           {label}
           {isModified && (
             <span
-              aria-label="modified"
-              title="Modified from agent default"
+              aria-label={t`modified`}
+              title={t`Modified from agent default`}
               className="size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--accent-subtle)]"
             />
           )}

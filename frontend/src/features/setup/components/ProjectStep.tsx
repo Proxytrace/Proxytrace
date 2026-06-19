@@ -1,4 +1,5 @@
 import type { KeyboardEvent } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 
@@ -10,11 +11,12 @@ interface ProjectStepProps {
 }
 
 export function ProjectStep({ projectName, error, onProjectNameChange, onKeyDown }: ProjectStepProps) {
+  const { t } = useLingui();
   return (
     <div className="flex flex-col gap-4">
-      <FormField label="Project name" error={error ?? undefined}>
+      <FormField label={t`Project name`} error={error ?? undefined}>
         <Input
-          placeholder="e.g. Customer Support Bot"
+          placeholder={t`e.g. Customer Support Bot`}
           value={projectName}
           onChange={e => onProjectNameChange(e.target.value)}
           onKeyDown={onKeyDown}

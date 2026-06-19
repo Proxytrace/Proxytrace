@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { QuickAction } from '../tracey-quick-actions';
 
 export type SlashItem =
@@ -14,6 +15,7 @@ interface SlashMenuProps {
 
 /** The "/" picker: quick-actions ("skills") on top, raw tools below. Anchored above the composer. */
 export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuProps) {
+  const { t } = useLingui();
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
       ref={listRef}
       id="tracey-slash-menu"
       role="listbox"
-      aria-label="Tracey quick actions and tools"
+      aria-label={t`Tracey quick actions and tools`}
       className="absolute bottom-full left-0 right-0 mb-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-surface-2 py-1 shadow-[var(--shadow-float)]"
     >
       {items.map((item, index) => {
@@ -39,8 +41,8 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
         const hint = item.kind === 'action' ? item.action.hint : item.description;
         return (
           <div key={item.kind === 'action' ? item.action.id : item.name}>
-            {index === 0 && item.kind === 'action' && <SectionLabel>Quick actions</SectionLabel>}
-            {index === firstToolIndex && firstToolIndex >= 0 && <SectionLabel>Tools</SectionLabel>}
+            {index === 0 && item.kind === 'action' && <SectionLabel><Trans>Quick actions</Trans></SectionLabel>}
+            {index === firstToolIndex && firstToolIndex >= 0 && <SectionLabel><Trans>Tools</Trans></SectionLabel>}
             {/* eslint-disable-next-line no-restricted-syntax -- composer slash-menu option; focus/keyboard coupled to the composer (see TRACEY.md) */}
             <button
               type="button"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../lib/cn';
 import { Button, IconButton } from './Button';
 import { Input } from './Input';
@@ -40,6 +41,7 @@ interface RailHeaderProps {
  * playground's two-picker rail so the title line is pixel-identical everywhere.
  */
 export function RailHeader({ title, count, subtitle, leading, create, search }: RailHeaderProps) {
+  const { t } = useLingui();
   return (
     <div className="flex flex-col gap-[9px] px-3.5 pt-3.5 pb-2.5 border-b border-hairline shrink-0">
       <div className="flex items-center gap-2.5">
@@ -60,7 +62,7 @@ export function RailHeader({ title, count, subtitle, leading, create, search }: 
           leftIcon={<PlusIcon size={12} />}
           onClick={create.onClick}
         >
-          {create.label ?? 'New'}
+          {create.label ?? t`New`}
         </Button>
       )}
 
@@ -69,13 +71,13 @@ export function RailHeader({ title, count, subtitle, leading, create, search }: 
           leftAddon={<SearchLineIcon size={12} />}
           inputSize="sm"
           rightAddon={search.value ? (
-            <IconButton size="sm" onClick={() => search.onChange('')} aria-label="Clear search">
+            <IconButton size="sm" onClick={() => search.onChange('')} aria-label={t`Clear search`}>
               <XIcon size={12} />
             </IconButton>
           ) : undefined}
           value={search.value}
           onChange={e => search.onChange(e.target.value)}
-          placeholder={search.placeholder ?? 'Search…'}
+          placeholder={search.placeholder ?? t`Search…`}
         />
       )}
     </div>
@@ -126,6 +128,7 @@ export function ListRail({
   railTestId,
   className,
 }: ListRailProps) {
+  const { t } = useLingui();
   return (
     <aside data-testid={railTestId} className={cn(RAIL_CARD_CLS, className)}>
       <RailHeader title={title} count={count} subtitle={subtitle} leading={leading} create={create} search={search} />
@@ -136,7 +139,7 @@ export function ListRail({
         {loading
           ? <SkeletonList rows={skeletonRows} height={skeletonHeight} gap={6} />
           : isEmpty
-            ? (empty ?? <EmptyState title="Nothing here yet" />)
+            ? (empty ?? <EmptyState title={t`Nothing here yet`} />)
             : children}
       </div>
     </aside>

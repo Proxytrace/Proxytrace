@@ -13,7 +13,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pretest": "npm run gen:docs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "i18n:extract": "lingui extract --clean",
+    "i18n:translate": "node scripts/i18n/translate.mjs",
+    "i18n:check": "node scripts/i18n/translate.mjs --check"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.67",
@@ -22,6 +25,8 @@
     "@assistant-ui/react-markdown": "^0.14.1",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@lingui/core": "^6.4.0",
+    "@lingui/react": "^6.4.0",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
@@ -42,13 +47,21 @@
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
     "@eslint/js": "^10.0.1",
+    "@lingui/babel-plugin-lingui-macro": "^6.4.0",
+    "@lingui/cli": "^6.4.0",
+    "@lingui/conf": "^6.4.0",
+    "@lingui/format-po": "^6.4.0",
+    "@lingui/vite-plugin": "^6.4.0",
+    "@rolldown/plugin-babel": "^0.2.3",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^10.0.0",
     "eslint": "^10.2.1",
+    "eslint-plugin-lingui": "^0.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "fake-indexeddb": "^6.2.5",

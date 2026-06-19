@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { JsonBlock } from '../ui/JsonBlock';
 
 interface Props {
@@ -18,7 +19,7 @@ export function ToolCallBlock({ name, id, arguments: args }: Props) {
     <div className="rounded-md p-[10px] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle">
       <div className="flex items-center gap-[8px] text-body-sm mono mb-[6px]">
         <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success">
-          tool call
+          <Trans>tool call</Trans>
         </span>
         <span className="font-bold text-success">{name}</span>
         {id && <span className="text-muted text-[10px]">{id.slice(0, 12)}</span>}
