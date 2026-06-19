@@ -1,4 +1,4 @@
-import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { type ToolCallMessagePartComponent, useThread } from '@assistant-ui/react';
 import { ClockIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { Spinner } from '../../../../components/ui/Spinner';
@@ -37,9 +37,19 @@ function statusVariant(item: AwaitResult) {
  * progress — this card only summarizes what the wait returned.
  */
 export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
+  const threadRunning = useThread((t) => t.isRunning);
+  const resolved = result as AwaitActionsResult | undefined;
   // User hit Stop while the wait was polling: the poll aborts, but the test run / theory keeps
-  // running on the backend — so this is a calm "stopped", not a red error.
-  if (status.type === 'incomplete' && status.reason === 'cancelled') {
+  // running on the backend — so this is a calm "stopped", not a red error. Two shapes reach here:
+  // assistant-ui sometimes finalizes the part as `incomplete/cancelled`, but when Stop lands mid
+  // `execute` the aborted tool call leaves no terminal delta, so the part is orphaned with no
+  // result (status stays `running`/`complete`). Once the thread is idle a result-less wait can
+  // never resolve, so treat any non-error part with no result on an idle thread as stopped —
+  // otherwise it spins on "Waiting for N actions" forever.
+  const stopped =
+    (status.type === 'incomplete' && status.reason === 'cancelled') ||
+    (status.type !== 'incomplete' && !resolved && !threadRunning);
+  if (stopped) {
     return (
       <ToolUIFrame state="ready" icon={<ClockIcon size={14} />} title="Wait stopped" testId="tracey-await-card">
         <span className="text-body-sm text-muted">
@@ -53,7 +63,6 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
   }
 
   const { handles } = args as AwaitActionsArgs;
-  const resolved = result as AwaitActionsResult | undefined;
 
   if (!resolved) {
     const pending = (handles ?? []).filter((h): h is { kind: AwaitKind; id: string } => !!h.kind && !!h.id);

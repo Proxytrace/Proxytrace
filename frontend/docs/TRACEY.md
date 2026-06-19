@@ -124,7 +124,11 @@ propagates the whole way down both planes:
 - A long-running `await_actions` wait honors the same signal (abort-aware sleep + the poll GET's
   `signal`), so Stop ends the polling immediately instead of waiting out the 10-minute cap. The
   backend run/theory itself keeps going — only Tracey's *wait* is cancelled — so `AwaitActionsToolUI`
-  renders a calm "Wait stopped" state for `status.reason === 'cancelled'` (not a red error).
+  renders a calm "Wait stopped" state (not a red error). It detects the stop two ways: assistant-ui
+  sometimes finalizes the part as `incomplete/cancelled`, but a Stop that lands mid-`execute` leaves
+  the aborted tool call **orphaned in `running`** (no terminal delta, no result), so the card also
+  treats a still-`running` part as stopped once the thread itself is idle (`useThread(t => t.isRunning)`)
+  — otherwise it would spin on "Waiting for N actions" forever.
 
 ## Progressive tool disclosure (skills gate tools)
 
