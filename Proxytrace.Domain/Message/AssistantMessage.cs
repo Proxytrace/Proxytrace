@@ -58,8 +58,16 @@ public sealed record AssistantMessage : Message
            && ToolRequests.SequenceEqual(other.ToolRequests);
 
     /// <inheritdoc />
-    public override int GetHashCode() 
-        => HashCode.Combine(base.GetHashCode(), ToolRequests);
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(base.GetHashCode());
+        foreach (ToolRequest toolRequest in ToolRequests)
+        {
+            hash.Add(toolRequest);
+        }
+        return hash.ToHashCode();
+    }
 
     public override string ToString()
     {

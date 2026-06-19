@@ -10,12 +10,12 @@ public sealed record TokenUsage : IDomainObject
     /// <summary>
     /// The number of input tokens (prompt) used.
     /// </summary>
-    public ulong InputTokenCount { get; private set; }
+    public ulong InputTokenCount { get; init; }
     
     /// <summary>
     /// The number of output tokens (response) generated.
     /// </summary>
-    public ulong OutputTokenCount { get; private set; }
+    public ulong OutputTokenCount { get; init; }
     
     /// <summary>
     /// No tokens used
@@ -41,14 +41,15 @@ public sealed record TokenUsage : IDomainObject
     }
     
     /// <summary>
-    /// Overloads the - operator to add two TokenUsage instances.
+    /// Overloads the - operator to subtract one TokenUsage from another, per token kind.
+    /// Counts are clamped at zero so a larger subtrahend can never wrap the unsigned result.
     /// </summary>
     public static TokenUsage? operator -(TokenUsage? a, TokenUsage? b)
         => a == null || b == null
             ? a ?? b
             : new(
-                a.InputTokenCount - b.InputTokenCount,
-                a.OutputTokenCount - b.OutputTokenCount);
+                a.InputTokenCount > b.InputTokenCount ? a.InputTokenCount - b.InputTokenCount : 0,
+                a.OutputTokenCount > b.OutputTokenCount ? a.OutputTokenCount - b.OutputTokenCount : 0);
 
     /// <summary>
     /// Overloads the + operator to add two TokenUsage instances.

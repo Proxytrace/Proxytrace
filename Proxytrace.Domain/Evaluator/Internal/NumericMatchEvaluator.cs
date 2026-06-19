@@ -101,7 +101,11 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
-        yield return Validation.NotNull(ExtractionPattern);
-        yield return Validation.NotDefault(Tolerance);
+        foreach (var result in Project.Validate(validationContext))
+            yield return result;
+
+        // ExtractionPattern is a non-nullable Regex (no NotNull needed). Tolerance of 0 is a valid
+        // exact-match configuration (delta <= 0); only a negative tolerance is invalid.
+        yield return Validation.NotNegative(Tolerance);
     }
 }

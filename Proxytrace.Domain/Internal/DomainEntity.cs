@@ -83,13 +83,16 @@ internal abstract record DomainEntity<TSelf> :
     public Task RemoveAsync(CancellationToken cancellationToken = default)
         => repository.RemoveAsync(Id, cancellationToken);
 
+    // Identity is the Id alone. Two instances of the same entity — the pre- and post-save copies of
+    // an UpdatedAt-bumping persist, or a reloaded row — must compare equal and hash identically.
+    // CreatedAt/UpdatedAt are deliberately excluded: folding the storage-stamped UpdatedAt into
+    // equality would make a reloaded/re-saved entity unequal to its in-memory original and give it a
+    // different hash bucket, silently breaking set/dictionary membership.
     public virtual bool Equals(DomainEntity<TSelf>? other)
         => other is not null
            && EqualityContract == other.EqualityContract
-           && Id == other.Id
-           && CreatedAt == other.CreatedAt
-           && UpdatedAt == other.UpdatedAt;
+           && Id == other.Id;
 
     public override int GetHashCode()
-        => HashCode.Combine(EqualityContract, Id, CreatedAt, UpdatedAt);
+        => HashCode.Combine(EqualityContract, Id);
 }

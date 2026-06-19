@@ -78,8 +78,17 @@ public sealed record Conversation : IDomainObject
            Messages.SequenceEqual(other.Messages);
 
     /// <inheritdoc />
-    public override int GetHashCode() 
-        => HashCode.Combine(Messages);
+    public override int GetHashCode()
+    {
+        // Hash the backing field's elements, not the Messages property (which allocates a fresh array
+        // each call and would hash by reference, yielding a different value on every invocation).
+        var hash = new HashCode();
+        foreach (Message message in messages)
+        {
+            hash.Add(message);
+        }
+        return hash.ToHashCode();
+    }
     
     /// <summary>
     /// Replaces any existing system Prompt with this system prompt

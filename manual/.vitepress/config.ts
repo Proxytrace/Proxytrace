@@ -36,6 +36,7 @@ export default defineConfig({
             { text: 'Optimization Theories', link: '/guide/optimization-theories' },
             { text: 'Optimization Proposals', link: '/guide/optimization-proposals' },
             { text: 'Dashboard', link: '/guide/dashboard' },
+            { text: 'Notifications', link: '/guide/notifications' },
             { text: 'Tracey (AI Assistant)', link: '/guide/tracey' },
           ],
         },

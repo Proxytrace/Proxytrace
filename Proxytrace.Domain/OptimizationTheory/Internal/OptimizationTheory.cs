@@ -175,5 +175,8 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
 
         if (string.IsNullOrWhiteSpace(Rationale))
             yield return Validation.NotNullOrWhiteSpace(Rationale);
+
+        if (string.IsNullOrWhiteSpace(ContentHash))
+            yield return Validation.NotNullOrWhiteSpace(ContentHash);
     }
 }

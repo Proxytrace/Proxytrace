@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Internal;
 
@@ -45,6 +46,23 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
     
     public IProviderClient CreateClient()
         => clientFactory(this);
+
+    // Redact the secret upstream credential from the record's generated ToString()/PrintMembers so
+    // the key never leaks into a log line, exception message, or debugger string. ApiKey stays a
+    // public member (the proxy reads it; equality keeps it) — only its textual rendering is masked.
+    protected override bool PrintMembers(StringBuilder builder)
+    {
+        if (base.PrintMembers(builder))
+        {
+            builder.Append(", ");
+        }
+
+        builder.Append("Name = ").Append(Name)
+            .Append(", Endpoint = ").Append(Endpoint)
+            .Append(", ApiKey = ***")
+            .Append(", Kind = ").Append(Kind);
+        return true;
+    }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

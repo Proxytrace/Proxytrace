@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Agent;
+using Proxytrace.Application.Anomaly;
+using Proxytrace.Application.Anomaly.Internal;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Internal;
 using Proxytrace.Application.Auth.Local;
@@ -19,6 +21,8 @@ using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Ingestion.Internal;
 using Proxytrace.Application.Licensing;
 using Proxytrace.Application.Licensing.Internal;
+using Proxytrace.Application.Notifications;
+using Proxytrace.Application.Notifications.Internal;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Application.Pricing.Internal;
@@ -120,6 +124,56 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<TheoryBroadcaster>()
             .As<ITheoryBroadcaster>()
             .SingleInstance();
+
+        builder.RegisterType<NotificationBroadcaster>()
+            .As<INotificationBroadcaster>()
+            .SingleInstance();
+
+        // Notification system. NotificationService fans every NotificationRequest out to all
+        // registered INotificationChannel implementations (auto-discovered below). v1 ships the
+        // dashboard channel (persists + SSE) and an email stub; future channels need no caller change.
+        builder.RegisterType<NotificationService>()
+            .As<INotificationService>()
+            .SingleInstance();
+
+        builder.RegisterAssemblyTypes(typeof(Module).Assembly)
+            .Where(t => typeof(INotificationChannel).IsAssignableFrom(t)
+                        && t is { IsClass: true, IsAbstract: false })
+            .As<INotificationChannel>()
+            .SingleInstance();
+
+        // Anomaly detection. Mirrors the optimizer: a queue fed from the test runner on group
+        // completion, drained by a background worker that raises notifications for detected anomalies.
+        builder.RegisterInstance(new AnomalyDetectionConfiguration())
+            .IfNotRegistered(typeof(AnomalyDetectionConfiguration));
+
+        builder.RegisterType<AnomalyDetector>()
+            .As<IAnomalyDetector>()
+            .SingleInstance();
+
+        builder.RegisterType<AnomalyDetectionService>()
+            .As<IAnomalyDetectionService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AnomalyDetectionService));
+
+        const string anomalyDetectionHostedServiceKey = "Proxytrace.Application.AnomalyDetectionService.Registered";
+        if (!builder.Properties.ContainsKey(anomalyDetectionHostedServiceKey))
+        {
+            builder.Properties[anomalyDetectionHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services
+                => services.AddSingleton<IHostedService>(sc =>
+                {
+                    var kiosk = sc.GetRequiredService<KioskOptions>();
+                    var endpoint = sc.GetRequiredService<KioskEndpointOptions>();
+
+                    // Disabled only in a read-only kiosk (no LLM endpoint), matching the test runner:
+                    // with no runs executing there are no groups to inspect.
+                    return kiosk.Enabled && !endpoint.IsConfigured
+                        ? new NullHostedService()
+                        : sc.GetRequiredService<AnomalyDetectionService>();
+                }));
+        }
 
         builder.RegisterModule<Optimization.Module>();
         builder.RegisterModule<Statistics.Module>();

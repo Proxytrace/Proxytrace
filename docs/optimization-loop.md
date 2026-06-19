@@ -68,6 +68,16 @@ feed every downstream stage of this loop exactly like manual ones.
 When a group completes, `TestRunnerService` calls `IOptimizerService.EnqueueAsync(group)`
 (`TestRunnerService.cs:178`). `TestRunGroupsController` can also enqueue on demand.
 
+The same completion point also feeds **anomaly detection** (a parallel, independent pipeline — see
+below): `TestRunnerService` calls `IAnomalyDetectionService.EnqueueAsync(group)` on both the success
+and the failure path (a failed group is itself the most important anomaly). Anomaly detection raises
+user notifications rather than theories; it does not participate in the theory→proposal loop.
+`Proxytrace.Application/Anomaly/` holds `IAnomalyDetectionService` (a hosted background queue, a
+structural copy of `OptimizerService`), the pure `IAnomalyDetector` rule engine (run failed /
+endpoint unavailable, pass-rate drop or latency increase vs a rolling baseline computed from
+`TestRunStats`), and `AnomalyDetectionConfiguration` (thresholds + baseline window). Detected
+anomalies are delivered through `INotificationService` → the dashboard notification channel.
+
 ## Stage 2 — Discover theories
 
 `IOptimizerService` (a hosted background service) hands the completed group to `IOptimizer`.

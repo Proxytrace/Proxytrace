@@ -81,8 +81,9 @@ internal sealed record AgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEval
                 cost, 
                 completion.Response.Reasoning);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Let cancellation propagate rather than persisting it as a normal "errored" evaluation.
             return erroredFactory(this, sw.Elapsed, ex);
         }
     }

@@ -110,5 +110,10 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
                 yield return result;
             }
         }
+
+        foreach (var result in ModelParameters.Validate(validationContext))
+        {
+            yield return result;
+        }
     }
 }

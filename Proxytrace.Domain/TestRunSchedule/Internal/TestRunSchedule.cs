@@ -111,5 +111,8 @@ internal record TestRunSchedule : DomainEntity<ITestRunSchedule>, ITestRunSchedu
 
         foreach (var result in Suite.Validate(validationContext))
             yield return result;
+
+        foreach (var result in Endpoints.SelectMany(endpoint => endpoint.Validate(validationContext)))
+            yield return result;
     }
 }

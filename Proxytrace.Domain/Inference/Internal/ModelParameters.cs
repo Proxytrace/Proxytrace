@@ -61,15 +61,25 @@ internal sealed record ModelParameters : IModelParameters
             && (Stop ?? []).SequenceEqual(other.Stop ?? []);
     }
 
-    public override int GetHashCode() 
-        => HashCode.Combine(
-            Temperature, 
-            TopP, 
-            ReasoningEffort,
-            FrequencyPenalty,
-            PresencePenalty,
-            MaxTokens,
-            HashCode.Combine(Seed, N, Stop));
+    public override int GetHashCode()
+    {
+        // Fold Stop's elements (Equals uses SequenceEqual on it); hashing the list reference would
+        // give equal-content instances different hashes and break the Equals/GetHashCode contract.
+        var hash = new HashCode();
+        hash.Add(Temperature);
+        hash.Add(TopP);
+        hash.Add(ReasoningEffort);
+        hash.Add(FrequencyPenalty);
+        hash.Add(PresencePenalty);
+        hash.Add(MaxTokens);
+        hash.Add(Seed);
+        hash.Add(N);
+        foreach (string stop in Stop ?? [])
+        {
+            hash.Add(stop);
+        }
+        return hash.ToHashCode();
+    }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

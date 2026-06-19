@@ -26,6 +26,9 @@ public class Module : Autofac.Module
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
         builder.RegisterStub<Proxytrace.Application.Auth.ICurrentUserAccessor>();
+        // TestRunnerService enqueues completed groups for anomaly detection; the real pipeline isn't
+        // part of this test module, so stub it (tests asserting detection register their own).
+        builder.RegisterStub<Proxytrace.Application.Anomaly.IAnomalyDetectionService>();
 
         builder.RegisterStub<IAgentNameGenerator>(stub =>
             stub.GenerateNameAsync(Arg.Any<IPromptTemplate>(), Arg.Any<IProject>(), Arg.Any<CancellationToken>())

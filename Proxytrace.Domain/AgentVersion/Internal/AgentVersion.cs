@@ -75,8 +75,10 @@ internal record AgentVersion : DomainEntity<IAgentVersion>, IAgentVersion
         int next = existing.Count == 0
             ? 1
             : existing.Max(v => v.VersionNumber) + 1;
+        // ProjectId is denormalised at creation and never changes on re-parent (see IAgentVersion):
+        // moves are constrained to the same project, so it is intentionally not reassigned here.
         return await ApplyAsync(
-            this with { AgentId = targetAgent.Id, ProjectId = targetAgent.Project.Id, VersionNumber = next },
+            this with { AgentId = targetAgent.Id, VersionNumber = next },
             cancellationToken);
     }
 

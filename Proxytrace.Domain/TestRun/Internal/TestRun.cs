@@ -48,6 +48,9 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
+        foreach (var result in Group.Validate(validationContext))
+            yield return result;
+
         foreach (var result in Endpoint.Validate(validationContext))
             yield return result;
 
@@ -62,6 +65,14 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
 
     public Task<ITestRun> SetTestResult(ITestResult testResult, CancellationToken cancellationToken = default)
     {
+        // A case can still finish in-flight after the run reached a terminal state (e.g. during
+        // cooperative cancellation). Never resurrect a terminal run or overwrite its CompletedAt:
+        // drop the late result and return the run unchanged rather than transitioning it back.
+        if (IsTerminalState(Status))
+        {
+            return Task.FromResult<ITestRun>(this);
+        }
+
         IReadOnlyList<ITestResult> updatedResults =
         [
             ..TestResults.Where(x => x.TestCase.Id != testResult.TestCase.Id),

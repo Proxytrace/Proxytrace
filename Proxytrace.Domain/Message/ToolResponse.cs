@@ -78,8 +78,18 @@ public sealed record ToolResponse : IDomainObject
            Success == other.Success;
 
     /// <inheritdoc />
-    public override int GetHashCode() 
-        => HashCode.Combine(Id, Results, Error, Success);
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Id);
+        foreach (Content result in Results)
+        {
+            hash.Add(result);
+        }
+        hash.Add(Error);
+        hash.Add(Success);
+        return hash.ToHashCode();
+    }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

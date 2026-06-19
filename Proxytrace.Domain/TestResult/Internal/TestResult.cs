@@ -12,7 +12,7 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
 {
     public ITestCase TestCase { get; init; }
     public AssistantMessage ActualResponse { get; init; }
-    public bool Passed => Evaluations.All(x => x.Passed);
+    public bool Passed => this.IsPass();
     public IReadOnlyCollection<IEvaluation> Evaluations { get; init; }
     public TimeSpan Latency { get; init; }
     public TokenUsage? Usage { get; init; }

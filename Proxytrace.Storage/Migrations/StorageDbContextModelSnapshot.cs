@@ -484,6 +484,59 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("ModelProviderEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Notification.NotificationEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("TargetKind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ProjectId", "Status");
+
+                    b.HasIndex("TargetKind", "TargetId");
+
+                    b.ToTable("NotificationEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1152,6 +1205,14 @@ namespace Proxytrace.Storage.Migrations
                         .HasForeignKey("Provider")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Notification.NotificationEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", b =>

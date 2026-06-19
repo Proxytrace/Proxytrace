@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Proxytrace.Domain.Evaluation;
@@ -49,21 +50,32 @@ internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvalu
         Stopwatch sw = Stopwatch.StartNew();
         var expectedOutput = testResult.TestCase.ExpectedOutput;
         var actualOutput = testResult.ActualResponse;
-        var pairs = expectedOutput.Contents.Zip(actualOutput.Contents, (e, a) => (Expected: e, Actual: a));
-        var differences = pairs.Where(p => !p.Expected.Equals(p.Actual)).ToArray();
 
         EvaluationScore score;
         string? reasoning = null;
-        if (differences.Length > 0)
+        if (expectedOutput.Contents.Count != actualOutput.Contents.Count)
         {
+            // An exact match requires the same number of content parts. Zip alone would silently
+            // truncate to the shorter sequence, passing a partial or padded response.
             score = EvaluationScore.Terrible;
-            reasoning = string.Join(
-                Environment.NewLine,
-                differences.Select(d => $"Expected '{d.Expected}' but got '{d.Actual}'"));
+            reasoning =
+                $"Expected {expectedOutput.Contents.Count} content part(s) but got {actualOutput.Contents.Count}.";
         }
         else
         {
-            score = EvaluationScore.Acceptable;
+            var pairs = expectedOutput.Contents.Zip(actualOutput.Contents, (e, a) => (Expected: e, Actual: a));
+            var differences = pairs.Where(p => !p.Expected.Equals(p.Actual)).ToArray();
+            if (differences.Length > 0)
+            {
+                score = EvaluationScore.Terrible;
+                reasoning = string.Join(
+                    Environment.NewLine,
+                    differences.Select(d => $"Expected '{d.Expected}' but got '{d.Actual}'"));
+            }
+            else
+            {
+                score = EvaluationScore.Acceptable;
+            }
         }
 
         IEvaluation evaluation = evaluationFactory(
@@ -72,5 +84,14 @@ internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvalu
             sw.Elapsed,
             reasoning: reasoning);
         return Task.FromResult<IEvaluation?>(evaluation);
+    }
+
+    public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        foreach (var result in base.Validate(validationContext))
+            yield return result;
+
+        foreach (var result in Project.Validate(validationContext))
+            yield return result;
     }
 }

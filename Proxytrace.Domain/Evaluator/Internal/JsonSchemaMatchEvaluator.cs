@@ -93,6 +93,9 @@ internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchema
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
+        foreach (var result in Project.Validate(validationContext))
+            yield return result;
+
         yield return Validation.NotNullOrWhiteSpace(JsonSchema);
         yield return Validation.Json(JsonSchema);
     }

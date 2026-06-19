@@ -956,6 +956,54 @@ export type TestRunEvent =
   | RunCompleteEvent
   | GroupRunCompleteEvent;
 
+/* ── Notifications ── */
+export enum NotificationKind { Anomaly = 'Anomaly', ProposalReady = 'ProposalReady' }
+export enum NotificationSeverity { Info = 'Info', Warning = 'Warning', Critical = 'Critical' }
+export enum NotificationStatus { Unread = 'Unread', Read = 'Read', Dismissed = 'Dismissed' }
+export enum NotificationTargetKind {
+  TestRunGroup = 'TestRunGroup',
+  Agent = 'Agent',
+  OptimizationProposal = 'OptimizationProposal',
+}
+
+export interface NotificationDto {
+  id: string;
+  kind: NotificationKind;
+  severity: NotificationSeverity;
+  title: string;
+  message: string;
+  status: NotificationStatus;
+  projectId: string | null;
+  targetKind: NotificationTargetKind | null;
+  targetId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationCreatedEvent {
+  type: 'notification-created';
+  id: string;
+  projectId: string | null;
+  kind: NotificationKind;
+  severity: NotificationSeverity;
+  title: string;
+  message: string;
+  status: NotificationStatus;
+  targetKind: NotificationTargetKind | null;
+  targetId: string | null;
+  createdAt: string;
+}
+
+export interface NotificationStatusChangedEvent {
+  type: 'notification-status-changed';
+  id: string;
+  projectId: string | null;
+  status: NotificationStatus;
+  updatedAt: string;
+}
+
+export type NotificationEvent = NotificationCreatedEvent | NotificationStatusChangedEvent;
+
 /* ── Application Errors (Error Log) ── */
 export enum ApplicationErrorLevel {
   Error = 'Error',

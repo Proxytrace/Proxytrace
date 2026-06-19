@@ -20,6 +20,7 @@ hooks in `frontend/src/api/event-stream.ts`.
 | `/api/agents/{id}/theories/stream` | one agent | `theory-changed` | `TheoryStatusChangedEvent` | Theory moves through Proposed→Validating→Validated/Invalidated → board columns |
 | `/api/test-runs/{id}/stream` | one run | `test-case-started`, `inference-done`, `evaluation-arrived`, `test-result-arrived`, `run-complete`* | `TestRunEvent` subtypes | Live single-run progress (per-case, per-evaluator) |
 | `/api/test-run-groups/{id}/stream` | one group (all its runs) | the five run events above + `group-run-complete`* | `TestRunEvent` subtypes | Live multi-endpoint comparison run |
+| `/api/notifications/stream?projectId=` | per project (global broadcaster, server-filtered per connection) | `notification-created`, `notification-status-changed` | `NotificationEvent` subtypes | Anomaly detection raised an alert / a notification was read or dismissed → the top-bar notifications inbox (`NotificationsMenu`, mounted in `Shell`). The broadcaster is global, but the controller writes a frame only when `evt.ProjectId == projectId` or the event is global (null project), so another project's notification content never reaches the connection. |
 
 `*` = **terminal** event. The client closes the `EventSource` on the terminal event and the run/group
 views are **pure-SSE (no polling)**; on terminal they invalidate the relevant TanStack queries to
@@ -48,6 +49,9 @@ in `frontend/src/api/models.ts`.
   - `ProposalCreatedEvent` — `+ Kind, Priority, Rationale, CreatedAt`
   - `ProposalStatusChangedEvent` — `+ Kind, Status, AdoptedAt?, AdoptedAgentVersionId?, AdoptedAgentVersionNumber?, AdoptedManually?, UpdatedAt` (published by `ProposalsController.UpdateStatus` and `ProposalAdoptionService`)
 - **`TheoryStatusChangedEvent`** — `Id, AgentId, Kind, Status, Source, Priority, Rationale, ResultingProposalId?, UpdatedAt`
+- **Notification events** (`NotificationEvent` carries `Id`, `ProjectId?`):
+  - `NotificationCreatedEvent` — `+ Kind, Severity, Title, Message, Status, TargetKind?, TargetId?, CreatedAt` (published by `DashboardNotificationChannel`)
+  - `NotificationStatusChangedEvent` — `+ Status, UpdatedAt` (published by `NotificationsController` on mark-read / dismiss)
 - **Run events** (`TestRunEvent` carries `RunId`, `GroupId`):
   - `TestCaseStartedEvent` — `+ TestCaseId`
   - `InferenceDoneEvent` — `+ TestCaseId`

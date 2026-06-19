@@ -93,10 +93,8 @@ namespace Proxytrace.Domain.Tools
 
         /// <inheritdoc />
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            JsonDocument.Parse(JsonSchema).Dispose();
-            return Arguments.SelectMany(argument => argument.Validate(validationContext));
-        }
+            => Validation.Json(JsonSchema).AsEnumerable()
+                .Concat(Arguments.SelectMany(argument => argument.Validate(validationContext)));
 
         /// <inheritdoc />
         public IEnumerator<IToolArgument> GetEnumerator()
