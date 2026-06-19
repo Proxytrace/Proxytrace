@@ -7,10 +7,17 @@ A **Test Run** executes a [test suite](/guide/test-suites-and-cases) against a s
 
 1. Choose the suite to run.
 2. Choose the agent (and version) to run it against.
-3. Start the run.
+3. Pick the model endpoints to run against — select **one to three** to compare models side by
+   side in a single run.
+4. Start the run.
 
 Each case in the suite is executed against the agent, and every attached
 [evaluator](/guide/evaluators) scores the result.
+
+::: tip Up to three endpoints
+A suite runs against **at most three model endpoints** at once. Once three are selected the
+remaining endpoints are disabled — deselect one to choose a different model.
+:::
 
 ## Watching progress
 
@@ -58,7 +65,7 @@ Schedules live on the **Scheduled** tab of the Runs page:
 2. Click **New schedule** and fill in:
    - a **name** for the schedule,
    - the **suite** to run,
-   - the **endpoints** (models) to run it against,
+   - the **endpoints** (models) to run it against — **one to three**, the same cap as a manual run,
    - the **frequency** — **Hourly** at a chosen minute, **Daily** or **Weekly** at a chosen time of
      day, or a **Custom** "every N minutes/hours/days" interval. Times are **UTC**, and the dialog
      **previews the exact next run** date and time as you choose so there are no surprises,

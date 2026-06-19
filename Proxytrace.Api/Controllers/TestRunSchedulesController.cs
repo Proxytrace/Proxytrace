@@ -90,6 +90,9 @@ public class TestRunSchedulesController : ControllerBase
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
 
+        if (request.ModelEndpointIds.Count > ITestRunGroup.MaxModelEndpoints)
+            return BadRequest($"A schedule can target at most {ITestRunGroup.MaxModelEndpoints} model endpoints.");
+
         if (request.IntervalMinutes < 1)
             return BadRequest("Interval must be at least one minute.");
 
@@ -117,6 +120,9 @@ public class TestRunSchedulesController : ControllerBase
 
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
+
+        if (request.ModelEndpointIds.Count > ITestRunGroup.MaxModelEndpoints)
+            return BadRequest($"A schedule can target at most {ITestRunGroup.MaxModelEndpoints} model endpoints.");
 
         if (request.IntervalMinutes < 1)
             return BadRequest("Interval must be at least one minute.");

@@ -70,8 +70,9 @@ public sealed class AnomalyDetectorTests
     [TestMethod]
     public void Detect_WhenPassRateDropsBeyondThreshold_RaisesWarning()
     {
+        // 30-point drop: past the warning threshold (0.2) but below the critical one (0.4).
         var result = Detector().Detect(Input(false,
-            Run(currentPassRate: 0.5, baselinePassRate: 0.9)));
+            Run(currentPassRate: 0.6, baselinePassRate: 0.9)));
 
         result.Should().ContainSingle();
         result[0].Severity.Should().Be(NotificationSeverity.Warning);

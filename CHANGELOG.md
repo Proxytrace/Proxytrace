@@ -53,6 +53,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **A suite now runs against at most three model endpoints at once.** Both manual runs and
+  scheduled runs are capped at three endpoints per run, so a model comparison stays focused (and
+  bounded in cost). Endpoints are now picked from a **searchable multi-select** (replacing the old
+  stacked checkbox list, which scaled poorly with many models) — type to filter, selected models
+  show as chips, and the picker disables further options once three are selected. The API rejects
+  any attempt to exceed the limit.
+
 - **One consistent left-hand list across the workspace.** Agents, Evaluators, Test Suites, Test
   Runs, and the Evaluator Playground now share a single left-column design — the same framed panel,
   the same header layout (title, count, create, search, filters), the same column width, and the

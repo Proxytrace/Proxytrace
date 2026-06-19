@@ -84,6 +84,15 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         return suite;
     }
 
+    private async Task<IReadOnlyList<IModelEndpoint>> CreateEndpoints(IServiceProvider services, int count)
+    {
+        var generator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var endpoints = new List<IModelEndpoint>();
+        for (var i = 0; i < count; i++)
+            endpoints.Add(await generator.CreateAsync(CancellationToken));
+        return endpoints;
+    }
+
     private static void RegisterLicense(ContainerBuilder builder, bool agenticEnabled)
     {
         var license = Substitute.For<ILicenseService>();
@@ -130,6 +139,36 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         testRun.TestResults.Should().HaveCount(1);
         testRun.TestResults[0].Evaluations.Should().ContainSingle()
             .Which.Score.Should().Be(EvaluationScore.Acceptable);
+    }
+
+    [TestMethod]
+    public async Task RunInForeground_WithThreeEndpoints_CreatesGroupWithThreeRuns()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config => RegisterFakeModelClient(config, expectedOutput));
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoints = await CreateEndpoints(services, 3);
+
+        var group = await runner.RunInForegroundAsync(suite, endpoints, cancellationToken: CancellationToken);
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        var runs = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+        runs.Should().HaveCount(3);
+    }
+
+    [TestMethod]
+    public async Task RunInForeground_WithMoreThanThreeEndpoints_Throws()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config => RegisterFakeModelClient(config, expectedOutput));
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoints = await CreateEndpoints(services, 4);
+
+        await FluentActions
+            .Invoking(() => runner.RunInForegroundAsync(suite, endpoints, cancellationToken: CancellationToken))
+            .Should().ThrowAsync<ArgumentException>();
     }
 
     [TestMethod]

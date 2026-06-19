@@ -90,6 +90,39 @@ public sealed class TestRunSchedulesControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Create_MoreThanThreeEndpoints_ReturnsBadRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+
+        var result = await controller.Create(
+            new CreateTestRunScheduleRequest(
+                "Nightly", suite.Id,
+                [Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()], 60, true),
+            CancellationToken);
+
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task Update_MoreThanThreeEndpoints_ReturnsBadRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var schedule = await services.GetRequiredService<IDomainEntityGenerator<ITestRunSchedule>>().CreateAsync(CancellationToken);
+
+        var result = await controller.Update(
+            schedule.Id,
+            new UpdateTestRunScheduleRequest(
+                "Renamed",
+                [Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()], 30, false),
+            CancellationToken);
+
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
     public async Task Create_Valid_ThenListReturnsScheduleWithEmptyRecentRuns()
     {
         IServiceProvider services = GetServices();

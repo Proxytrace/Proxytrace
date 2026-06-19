@@ -40,7 +40,10 @@ A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEval
 `ITestRunnerService` executes it:
 
 - `RunInBackgroundAsync(suite, endpoints)` — creates a **`TestRunGroup`** with one **`TestRun`**
-  per endpoint (model comparison), queues them, returns immediately.
+  per endpoint (model comparison), queues them, returns immediately. A suite may target **at most
+  `ITestRunGroup.MaxModelEndpoints` (3) endpoints** — a hard cap enforced in `CreateGroup` (throws),
+  in the controllers (400), and in `TestRunSchedule.Validate` for schedules; the UI caps selection
+  at 3 to match.
 - `RunInForegroundAsync(...)` — synchronous single run; used internally (A/B validation) and in
   tests. Takes `customAgent` and an `isSystemTestRun` flag that **hides internal A/B runs** from
   the user's run list.
@@ -48,7 +51,8 @@ A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEval
   streams over SSE via `ITestResultBroadcaster`.
 
 Runs can be kicked off **manually** (the API/UI) or on a **schedule**. A `TestRunSchedule` (a
-domain entity binding a suite to a fixed set of endpoints + a cadence) is polled by
+domain entity binding a suite to a fixed set of endpoints — capped at 3, like manual runs — + a
+cadence) is polled by
 `TestRunSchedulerService` — a `BackgroundService` on a ~60s `PeriodicTimer`, disabled in kiosk —
 which fires `RunInBackgroundAsync(suite, endpoints, scheduleId)` for each due/enabled/licensed
 schedule (skipping any whose prior run is still in flight, then advancing `NextRunAt` so missed

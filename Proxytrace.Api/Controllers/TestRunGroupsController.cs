@@ -95,6 +95,9 @@ public class TestRunGroupsController : ControllerBase
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
 
+        if (request.ModelEndpointIds.Count > ITestRunGroup.MaxModelEndpoints)
+            return BadRequest($"A test suite can be run against at most {ITestRunGroup.MaxModelEndpoints} model endpoints.");
+
         var endpointList = await Task.WhenAll(
             request.ModelEndpointIds.Select(id => endpoints.GetAsync(id, cancellationToken)));
 

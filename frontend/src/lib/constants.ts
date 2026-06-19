@@ -16,6 +16,12 @@ export const FOCUS_RING =
 /** Short prefix length for displaying truncated entity IDs. */
 export const ID_SHORT_LEN = 8;
 
+/**
+ * Hard cap on the number of model endpoints a single suite run (or schedule) may target.
+ * Mirrors the backend invariant (`ITestRunGroup.MaxModelEndpoints`); the API rejects more.
+ */
+export const MAX_RUN_ENDPOINTS = 3;
+
 // Features that fetch list data use pageSize=200 intentionally to avoid
 // implementing paginated views for low-volume lists. A future migration
 // should add server-side pagination and use the <Pagination> component

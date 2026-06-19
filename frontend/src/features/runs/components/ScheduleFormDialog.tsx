@@ -5,6 +5,7 @@ import type {
   TestSuiteListItemDto,
 } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
+import { MAX_RUN_ENDPOINTS } from '../../../lib/constants';
 import {
   cadenceToSchedule,
   scheduleToCadence,
@@ -18,7 +19,7 @@ import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Switch } from '../../../components/ui/Switch';
-import { RowButton } from '../../../components/ui/RowButton';
+import { MultiCombobox } from '../../../components/ui/MultiCombobox';
 import { ScheduleCadenceField } from './ScheduleCadenceField';
 
 interface Props {
@@ -57,15 +58,6 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
     schedule ? scheduleToCadence(schedule.intervalMinutes, schedule.anchorAt) : initialCadence(),
   );
   const [enabled, setEnabled] = useState(schedule?.isEnabled ?? true);
-
-  function toggle(id: string) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   const trimmedName = name.trim();
   const valid =
@@ -141,35 +133,21 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
         )}
 
         <FormField label="Model endpoints">
-          <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto" data-testid="schedule-endpoint-list">
-            {endpoints.map((ep: ModelEndpointDto) => {
-              const mc = modelColor(ep.modelName);
-              const isOn = selected.has(ep.id);
-              return (
-                <RowButton
-                  key={ep.id}
-                  onClick={() => toggle(ep.id)}
-                  aria-pressed={isOn}
-                  data-testid={`schedule-endpoint-${ep.id}`}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-md bg-card-2"
-                  style={isOn ? { boxShadow: `inset 0 0 0 1.5px color-mix(in srgb, ${mc} 30%, transparent)` } : undefined}
-                >
-                  <span
-                    aria-hidden
-                    className="w-3.5 h-3.5 rounded-[4px] shrink-0 border"
-                    style={{ borderColor: isOn ? mc : 'var(--text-muted)', background: isOn ? mc : 'transparent' }}
-                  />
-                  <span className="mono text-body-sm font-semibold flex-1 truncate" style={{ color: isOn ? mc : 'var(--text-secondary)' }}>
-                    {ep.modelName}
-                  </span>
-                  <span className="text-body-sm text-muted">{ep.providerName}</span>
-                </RowButton>
-              );
-            })}
-            {endpoints.length === 0 && (
-              <div className="text-center text-muted text-body py-4">No endpoints configured. Add providers first.</div>
-            )}
-          </div>
+          <MultiCombobox
+            values={Array.from(selected)}
+            onChange={ids => setSelected(new Set(ids))}
+            items={endpoints as ModelEndpointDto[]}
+            itemKey={ep => ep.id}
+            itemLabel={ep => ep.modelName}
+            itemMeta={ep => ep.providerName}
+            itemColor={ep => modelColor(ep.modelName)}
+            maxSelected={MAX_RUN_ENDPOINTS}
+            placeholder="Select model endpoints…"
+            searchPlaceholder="Search models…"
+            emptyText="No endpoints configured. Add providers first."
+            aria-label="Model endpoints"
+            data-testid="schedule-endpoints"
+          />
         </FormField>
 
         <ScheduleCadenceField cadence={cadence} onChange={setCadence} />

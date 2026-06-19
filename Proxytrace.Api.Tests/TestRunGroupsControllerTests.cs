@@ -69,6 +69,22 @@ public sealed class TestRunGroupsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Create_MoreThanThreeEndpoints_ReturnsBadRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+
+        var result = await controller.Create(
+            new CreateTestRunGroupRequest(
+                suite.Id,
+                [Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()]),
+            CancellationToken);
+
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
     public async Task Optimize_Unknown_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

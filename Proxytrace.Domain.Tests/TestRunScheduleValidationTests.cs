@@ -186,6 +186,46 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         action.Should().Throw<Exception>();
     }
 
+    [TestMethod]
+    public async Task CreateNew_WithThreeEndpoints_CreatesSchedule()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoints = await CreateEndpoints(services, 3);
+
+        var schedule = factory("Nightly", suite, endpoints, TimeSpan.FromHours(1), true, DateTimeOffset.UtcNow);
+
+        schedule.Endpoints.Should().HaveCount(3);
+    }
+
+    [TestMethod]
+    public async Task CreateNew_WithMoreThanThreeEndpoints_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoints = await CreateEndpoints(services, 4);
+
+        var action = () => factory("Nightly", suite, endpoints, TimeSpan.FromHours(1), true, DateTimeOffset.UtcNow);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task Update_WithMoreThanThreeEndpoints_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var schedule = await CreateSchedule(services, interval: TimeSpan.FromHours(1));
+        var endpoints = await CreateEndpoints(services, 4);
+
+        await FluentActions
+            .Invoking(() => schedule.Update(
+                "Nightly", endpoints, TimeSpan.FromHours(1), true, schedule.AnchorAt, DateTimeOffset.UtcNow,
+                CancellationToken))
+            .Should().ThrowAsync<Exception>();
+    }
+
     // ── RecordFired ───────────────────────────────────────────────────────────
 
     [TestMethod]
@@ -322,5 +362,14 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
 
         var schedule = factory("Nightly", suite, [endpoint], interval, true, DateTimeOffset.UtcNow);
         return await repo.AddAsync(schedule, CancellationToken);
+    }
+
+    private async Task<IReadOnlyList<IModelEndpoint>> CreateEndpoints(IServiceProvider services, int count)
+    {
+        var generator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var endpoints = new List<IModelEndpoint>();
+        for (var i = 0; i < count; i++)
+            endpoints.Add(await generator.CreateAsync(CancellationToken));
+        return endpoints;
     }
 }

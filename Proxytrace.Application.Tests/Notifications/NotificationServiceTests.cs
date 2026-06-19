@@ -37,7 +37,7 @@ public sealed class NotificationServiceTests : BaseTest<Module>
 
         var service = services.GetRequiredService<INotificationService>();
         var request = new NotificationRequest(
-            NotificationKind.Anomaly, NotificationSeverity.Warning, "title", "message", projectId: null);
+            NotificationKind.Anomaly, NotificationSeverity.Warning, "title", "message", ProjectId: null);
 
         await service.NotifyAsync(request, CancellationToken);
 

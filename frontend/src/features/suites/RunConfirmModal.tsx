@@ -18,18 +18,9 @@ interface Props {
 export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Props) {
   const navigate = useNavigate();
   const { data: modelsData = [] } = useModelEndpoints();
-  const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
+  const [selectedEndpoints, setSelectedEndpoints] = useState<string[]>([]);
   const c = agentColor(suite.agentId);
-  const isMulti = selectedEndpoints.size > 1;
-
-  function toggle(id: string) {
-    setSelectedEndpoints(s => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  }
+  const isMulti = selectedEndpoints.length > 1;
 
   return (
     <Modal onClose={onClose} maxWidth={480}>
@@ -55,9 +46,9 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Pro
           selectedEndpoints={selectedEndpoints}
           loading={loading}
           isMulti={isMulti}
-          onToggle={toggle}
+          onChange={setSelectedEndpoints}
           onCancel={onClose}
-          onSubmit={() => onSubmit(Array.from(selectedEndpoints))}
+          onSubmit={() => onSubmit(selectedEndpoints)}
         />
       )}
     </Modal>
@@ -68,14 +59,14 @@ interface DoneStateProps {
   suite: TestSuiteListItemDto;
   agentColor: string;
   isMulti: boolean;
-  selectedEndpoints: Set<string>;
+  selectedEndpoints: string[];
   modelsData: ModelEndpointDto[];
   onNavigate: () => void;
 }
 
 function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsData, onNavigate }: DoneStateProps) {
   const selectedModelName =
-    modelsData.find(ep => selectedEndpoints.has(ep.id))?.modelName ?? 'selected model';
+    modelsData.find(ep => selectedEndpoints.includes(ep.id))?.modelName ?? 'selected model';
 
   return (
     <div className="py-[10px] text-center">
@@ -90,8 +81,8 @@ function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsDat
       <p className="text-body text-muted leading-[1.6] mb-6">
         Running <strong className="text-primary">{suite.testCaseCount} test cases</strong>
         {isMulti ? (
-          <> across <strong style={{ color: c }}>{selectedEndpoints.size} models</strong> in parallel</>
-        ) : selectedEndpoints.size === 1 ? (
+          <> across <strong style={{ color: c }}>{selectedEndpoints.length} models</strong> in parallel</>
+        ) : selectedEndpoints.length === 1 ? (
           <> against <strong style={{ color: c }}>{selectedModelName}</strong></>
         ) : null}
         .

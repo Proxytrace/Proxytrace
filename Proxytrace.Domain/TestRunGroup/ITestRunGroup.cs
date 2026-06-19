@@ -8,6 +8,12 @@ namespace Proxytrace.Domain.TestRunGroup;
 /// </summary>
 public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
 {
+    /// <summary>
+    /// Hard cap on the number of model endpoints a single suite run (or schedule) may target.
+    /// Enforced in the domain (<c>TestRunSchedule</c>), the runner service, and the API.
+    /// </summary>
+    public const int MaxModelEndpoints = 3;
+
     /// <summary>The test suite executed by all runs in this group.</summary>
     ITestSuite Suite { get; }
 

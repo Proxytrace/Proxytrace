@@ -111,6 +111,11 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         Guid? scheduleId,
         CancellationToken cancellationToken)
     {
+        if (endpoints.Count > ITestRunGroup.MaxModelEndpoints)
+            throw new ArgumentException(
+                $"A test suite can be run against at most {ITestRunGroup.MaxModelEndpoints} model endpoints.",
+                nameof(endpoints));
+
         ITestRunGroup group = createTestRunGroup(suite, isSystemRun, scheduleId);
         group = await testRunGroupRepository.AddAsync(group, cancellationToken);
 

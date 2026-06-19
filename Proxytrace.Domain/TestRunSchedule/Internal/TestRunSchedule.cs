@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
 
 namespace Proxytrace.Domain.TestRunSchedule.Internal;
@@ -108,6 +109,11 @@ internal record TestRunSchedule : DomainEntity<ITestRunSchedule>, ITestRunSchedu
 
         if (Endpoints.Count == 0)
             yield return new ValidationResult("A schedule must target at least one endpoint.", [nameof(Endpoints)]);
+
+        if (Endpoints.Count > ITestRunGroup.MaxModelEndpoints)
+            yield return new ValidationResult(
+                $"A schedule can target at most {ITestRunGroup.MaxModelEndpoints} model endpoints.",
+                [nameof(Endpoints)]);
 
         foreach (var result in Suite.Validate(validationContext))
             yield return result;
