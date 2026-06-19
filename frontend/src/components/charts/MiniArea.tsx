@@ -26,7 +26,9 @@ export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 
     const padY = 4;
     const stepX = w / (data.length - 1);
     const pts = data.map((v, i) => ({ x: i * stepX, y: padY + (1 - (v - min) / range) * (height - padY * 2), v }));
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG path commands
     const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG path commands
     const area = `${line} L ${w} ${height} L 0 ${height} Z`;
     return { line, area, pts };
   }, [data, w, height]);

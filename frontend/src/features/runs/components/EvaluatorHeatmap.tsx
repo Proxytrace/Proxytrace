@@ -3,6 +3,7 @@ import type { TestRunGroupDto } from '../../../api/models';
 import { buildEvaluatorHeatmap, scoreBucketColor, SCORE_LEVELS } from '../comparison';
 import type { LiveProgress } from '../live';
 import { EVALUATOR_KIND_COLOR } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
 import { ModelTag } from './ModelTag';
 import { DistributionBar } from './DistributionBar';
@@ -14,7 +15,7 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
   const hasJudgements = rows.some(r => r.cells.some(c => c.total > 0));
   if (rows.length === 0 || !hasJudgements) return null;
 
-  const gridCols = `minmax(160px,1.4fr) repeat(${runs.length}, minmax(120px,1fr))`;
+  const gridCols = cn(`minmax(160px,1.4fr) repeat(${runs.length}, minmax(120px,1fr))`);
 
   return (
     <Card padding="none" data-testid="evaluator-heatmap">

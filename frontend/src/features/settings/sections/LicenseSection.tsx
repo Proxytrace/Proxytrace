@@ -8,6 +8,7 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { AlertTriangleIcon, CrownIcon, ResetIcon, SparklesIcon, TrashIcon } from '../../../components/icons';
 import { fmtDate } from '../../../lib/format';
+import { cn } from '../../../lib/cn';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatusCell } from '../components/StatusCell';
 
@@ -36,10 +37,10 @@ export function LicenseSection() {
   const isPaid = license.tier !== 'free';
   const sourceNote = licenseSourceNote(license.source);
   const statusTone =
-    license.status === 'active' ? 'text-success'
-    : license.status === 'free' ? 'text-secondary'
-    : license.status === 'grace' ? 'text-warn'
-    : 'text-danger';
+    license.status === 'active' ? cn('text-success')
+    : license.status === 'free' ? cn('text-secondary')
+    : license.status === 'grace' ? cn('text-warn')
+    : cn('text-danger');
 
   return (
     <div className="w-full min-w-0 flex flex-col" data-testid="settings-license">

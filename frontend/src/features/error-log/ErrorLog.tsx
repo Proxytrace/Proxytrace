@@ -28,6 +28,7 @@ export default function ErrorLog() {
   const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('errorLog.pageSize', PAGE_SIZE);
   // Guard against a stale/garbage stored value — only accept a known option.
   const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- filter state token, not UI copy
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [search, setSearch] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRange>(ALL_TIME);
@@ -36,6 +37,7 @@ export default function ErrorLog() {
   // Deep link from an error toast: `?error=<id>` fetches that captured error and pre-selects it.
   // A manual row click (`selected`) always wins; closing the detail clears both.
   const [searchParams, setSearchParams] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
   const deepLinkId = searchParams.get('error');
   const { data: deepLinkedError } = useErrorLogEntry(selected ? null : deepLinkId);
   const activeError = selected ?? deepLinkedError ?? null;
@@ -44,6 +46,7 @@ export default function ErrorLog() {
     setSelected(null);
     if (deepLinkId) {
       const next = new URLSearchParams(searchParams);
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
       next.delete('error');
       setSearchParams(next, { replace: true });
     }

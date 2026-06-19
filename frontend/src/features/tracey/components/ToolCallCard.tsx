@@ -15,7 +15,9 @@ function classify(statusType: string, isError: boolean | undefined): ToolStatus 
 }
 
 function formatDuration(ms: number): string {
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical duration readout
   if (ms < 1000) return `${Math.round(ms)} ms`;
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical duration readout
   return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`;
 }
 

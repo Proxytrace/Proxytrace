@@ -18,6 +18,7 @@ export default function Agents() {
   // Selection lives in ?id= (survives refresh); ?tool= is a transient deep-link from a trace.
   const [selectedId, setSelectedId] = useSelectedId();
   const [searchParams] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- query-string param key
   const highlightTool = searchParams.get('tool');
 
   const { allAgents, isLoading } = useAgents();
@@ -41,6 +42,7 @@ export default function Agents() {
   // The list rows are light; the detail panel needs the full agent (system message, tools, params).
   const { agent: selectedAgent } = useAgentDetail(selected?.id ?? null);
 
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- query-string param key
   const handleSelect = (id: string) => setSelectedId(id, ['tool']);
 
   const delAgent = useDeleteAgent(id => {
@@ -86,6 +88,7 @@ export default function Agents() {
                 size="sm"
                 className="mb-2"
                 data-testid="agents-back-to-list"
+                // eslint-disable-next-line lingui/no-unlocalized-strings -- query-string param key
                 onClick={() => setSelectedId(null, ['tool'])}
                 leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
               >

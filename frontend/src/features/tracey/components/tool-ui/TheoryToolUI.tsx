@@ -26,6 +26,7 @@ function isCancelled(value: unknown): value is { cancelled: true } {
  */
 export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('theory', result, status, isError);
 
   if (isCancelled(result)) {

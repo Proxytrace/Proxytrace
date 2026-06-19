@@ -23,8 +23,11 @@ export function MatrixView({ group, live }: {
   const { t } = useLingui();
   const runs = group.runs;
   const [searchParams, setSearchParams] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
   const caseParam = searchParams.get('case');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- filter state token, not UI copy
   const [filter, setFilter] = useState<MatrixFilter>('all');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- sort state token, not UI copy
   const [sort, setSort] = useState<MatrixSort>('order');
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
@@ -43,6 +46,7 @@ export function MatrixView({ group, live }: {
 
   const clearCaseParam = () => setSearchParams(prev => {
     const next = new URLSearchParams(prev);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
     next.delete('case');
     return next;
   }, { replace: true });
@@ -51,7 +55,7 @@ export function MatrixView({ group, live }: {
   const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort, active), [allRows, filter, sort, active]);
 
   const multi = runs.length > 1;
-  const gridCols = `minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`;
+  const gridCols = cn(`minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`);
   const selIdx = openCase ? rows.findIndex(r => r.caseId === openCase.caseId) : -1;
 
   return (
@@ -106,8 +110,8 @@ export function MatrixView({ group, live }: {
               const passes = withResult.filter(c => c.pass === true).length;
               const total = withResult.length;
               const isSelected = openCase?.caseId === row.caseId;
-              const stripe = row.divergent ? 'shadow-[inset_3px_0_0_var(--warn)]' : '';
-              const selBg = isSelected ? 'bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]' : '';
+              const stripe = row.divergent ? cn('shadow-[inset_3px_0_0_var(--warn)]') : '';
+              const selBg = isSelected ? cn('bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]') : '';
               const avg = row.cells.map(c => c.result?.durationMs).filter((d): d is number => d != null);
               const avgMs = avg.length ? avg.reduce((a, b) => a + b, 0) / avg.length : null;
 
@@ -187,11 +191,11 @@ export function MatrixView({ group, live }: {
 }
 
 function verdictDotClass(pass: boolean | null | undefined): string {
-  return pass === true ? 'bg-success' : pass === false ? 'bg-danger' : 'bg-[var(--text-muted)]';
+  return pass === true ? cn('bg-success') : pass === false ? cn('bg-danger') : cn('bg-[var(--text-muted)]');
 }
 
 function divChipClass(divergent: boolean, passes: number, total: number): string {
-  if (divergent) return 'bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn';
-  if (passes === total) return 'text-muted';
-  return 'bg-[color-mix(in_srgb,var(--danger)_18%,transparent)] text-danger';
+  if (divergent) return cn('bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn');
+  if (passes === total) return cn('text-muted');
+  return cn('bg-[color-mix(in_srgb,var(--danger)_18%,transparent)] text-danger');
 }

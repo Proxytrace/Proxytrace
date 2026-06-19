@@ -53,6 +53,7 @@ export function MultiCombobox<T>({
   emptyText,
   invalid,
   disabled,
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
   inputSize = 'md',
   'aria-label': ariaLabel,
   'data-testid': testId,
@@ -82,7 +83,7 @@ export function MultiCombobox<T>({
     else if (!limitReached) onChange([...values, key]);
   };
 
-  const sizeCls = inputSize === 'sm' ? 'px-2 py-1 text-body-sm' : 'px-2.5 py-1.5 text-title';
+  const sizeCls = inputSize === 'sm' ? cn('px-2 py-1 text-body-sm') : cn('px-2.5 py-1.5 text-title');
 
   return (
     <Popover.Root
@@ -150,6 +151,7 @@ export function MultiCombobox<T>({
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
             />
             <Input
+              // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
               inputSize="sm"
               autoFocus
               value={query}

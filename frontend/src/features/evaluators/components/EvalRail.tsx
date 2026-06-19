@@ -29,7 +29,9 @@ interface Props {
 
 const FILTER_OPTIONS: { key: TypeFilter; label: MessageDescriptor; category: TypeCategory | null }[] = [
   { key: 'all', label: msg`All`, category: null },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- TypeCategory enum token, not UI copy
   { key: 'llm', label: msg`LLM`, category: 'llm' },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- TypeCategory enum token, not UI copy
   { key: 'rule', label: msg`Rule`, category: 'rule' },
   { key: 'numeric', label: msg`Num`, category: 'numeric' },
 ];
@@ -37,6 +39,7 @@ const FILTER_OPTIONS: { key: TypeFilter; label: MessageDescriptor; category: Typ
 export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, sparklineById, avgScoreById }: Props) {
   const { t, i18n } = useLingui();
   const [q, setQ] = useState('');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- TypeFilter enum token, not UI copy
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   const filtered = evaluators.filter(e => {
@@ -51,6 +54,7 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
 
   return (
     <ListRail
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- data-testid value, not UI copy
       railTestId="evaluator-rail"
       title={t`Evaluators`}
       count={evaluators.length}

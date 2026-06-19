@@ -11,6 +11,7 @@ import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
 import { FormField } from '../../../components/ui/FormField';
 import { ZapIcon, ClockIcon } from '../../../components/icons';
 import { fmtRelative } from '../../../lib/format';
+import { cn } from '../../../lib/cn';
 import { useReindex, useSearchSettings, useSearchStatus, useUpdateSearchSettings } from '../hooks/useSearchIndexing';
 import { StatusCell } from '../components/StatusCell';
 import { ToggleRow } from '../components/ToggleRow';
@@ -117,7 +118,7 @@ export function SearchIndexingSection() {
               <StatusCell
                 label={t`State`}
                 value={status?.isReindexing ? t`Reindexing` : t`Idle`}
-                valueClassName={status?.isReindexing ? 'text-accent' : 'text-success'}
+                valueClassName={status?.isReindexing ? cn('text-accent') : cn('text-success')}
                 testId="index-status"
               />
             </div>

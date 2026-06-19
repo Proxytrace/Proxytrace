@@ -20,6 +20,7 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
 
   useEffect(() => {
     const el = listRef.current?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- scrollIntoView option token, not UI copy
     el?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 

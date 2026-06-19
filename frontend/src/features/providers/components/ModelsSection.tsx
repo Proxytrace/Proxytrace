@@ -5,9 +5,10 @@ import { Button, IconButton } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { TrashIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
 import { useDeleteModel } from '../hooks/useProviderMutations';
 
-const GRID = 'grid grid-cols-[2fr_1fr_1fr_auto]';
+const GRID = cn('grid grid-cols-[2fr_1fr_1fr_auto]');
 
 interface ModelsSectionProps {
   providerId: string;

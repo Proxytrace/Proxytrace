@@ -27,6 +27,7 @@ export function SuiteList({ suites, isLoading, selectedId, highlightId, onSelect
 
   return (
     <ListRail
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- data-testid value, not UI copy
       listTestId="suite-list"
       title={t`Test suites`}
       count={suites.length}

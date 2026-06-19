@@ -10,10 +10,10 @@ import { Select } from '../../../components/ui/Select';
 import { PROVIDER_KIND_OPTIONS } from '../providerMeta';
 import { useCreateProvider } from '../hooks/useProviderMutations';
 
-const FIELDS: { label: MessageDescriptor; key: 'name' | 'endpoint' | 'upstreamApiKey'; placeholder: string; type: string; mono: boolean }[] = [
-  { label: msg`Provider name`, key: 'name', placeholder: 'e.g. OpenAI', type: 'text', mono: false },
-  { label: msg`Endpoint URL`, key: 'endpoint', placeholder: 'https://api.openai.com/v1', type: 'text', mono: true },
-  { label: msg`Upstream API key`, key: 'upstreamApiKey', placeholder: 'sk-…', type: 'password', mono: true },
+const FIELDS: { label: MessageDescriptor; key: 'name' | 'endpoint' | 'upstreamApiKey'; placeholder: MessageDescriptor; type: string; mono: boolean }[] = [
+  { label: msg`Provider name`, key: 'name', placeholder: msg`e.g. OpenAI`, type: 'text', mono: false },
+  { label: msg`Endpoint URL`, key: 'endpoint', placeholder: msg`https://api.openai.com/v1`, type: 'text', mono: true },
+  { label: msg`Upstream API key`, key: 'upstreamApiKey', placeholder: msg`sk-…`, type: 'password', mono: true },
 ];
 
 interface AddProviderModalProps {
@@ -49,7 +49,7 @@ export function AddProviderModal({ onClose, onCreated }: AddProviderModalProps) 
               type={f.type}
               value={form[f.key]}
               onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-              placeholder={f.placeholder}
+              placeholder={i18n._(f.placeholder)}
               className={f.mono ? 'font-mono' : undefined}
             />
           </FormField>

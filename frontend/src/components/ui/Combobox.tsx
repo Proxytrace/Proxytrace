@@ -39,6 +39,7 @@ export function Combobox<T>({
   searchPlaceholder,
   invalid,
   disabled,
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
   inputSize = 'md',
   'aria-label': ariaLabel,
   'data-testid': testId,
@@ -61,7 +62,7 @@ export function Combobox<T>({
     setQuery('');
   };
 
-  const sizeCls = inputSize === 'sm' ? 'px-2.5 py-1.5 text-body-sm' : 'px-3 py-2 text-title';
+  const sizeCls = inputSize === 'sm' ? cn('px-2.5 py-1.5 text-body-sm') : cn('px-3 py-2 text-title');
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -92,6 +93,7 @@ export function Combobox<T>({
           <div className="relative mb-1">
             <SearchIcon size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
             <Input
+              // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
               inputSize="sm"
               autoFocus
               value={query}

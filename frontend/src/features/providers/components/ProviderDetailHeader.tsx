@@ -103,6 +103,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
           size="sm"
           variant="ghost"
           leftIcon={<CopyIcon size={12} />}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
           onClick={() => { navigator.clipboard.writeText(provider.upstreamApiKey); toast(t`Upstream key copied`, 'success'); }}
         >
           <Trans>Copy</Trans>

@@ -11,6 +11,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `list_proposals` tool result. */
 export const ProposalListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('proposal-list', result, status, isError);
   const proposals = data ?? [];
   return (

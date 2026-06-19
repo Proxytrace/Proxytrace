@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { ToolSpecDto } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { Widget } from './Widget';
 import { ToolInspector } from './ToolInspector';
 
@@ -28,7 +29,7 @@ export function ToolsWidget({ tools, highlightTool, className }: Props) {
         </span>
       }
       className={className}
-      bodyClassName="p-0"
+      bodyClassName={cn('p-0')}
     >
       <div className="flex flex-col" data-testid="tools-list">
         {tools.map((tool, ti) => (

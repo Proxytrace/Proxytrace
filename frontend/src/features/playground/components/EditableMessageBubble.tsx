@@ -60,6 +60,7 @@ export function EditableMessageBubble(props: Props) {
 
   const isEmpty = !message.content.trim() && (!message.toolRequests || message.toolRequests.length === 0);
   const toolLabel = message.role === 'tool' && message.toolCallId
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical badge (role marker + tool-call id)
     ? `TOOL · ${message.toolCallId.slice(0, 10)}`
     : undefined;
 

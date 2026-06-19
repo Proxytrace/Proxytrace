@@ -61,7 +61,7 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
                   <div className="flex items-start justify-between gap-1.5">
                     <span className="text-title font-semibold leading-tight truncate">{a.name}</span>
                     {a.toolCount > 0 && (
-                      <span className="text-[9.5px] px-1.5 py-px bg-card rounded-sm text-muted font-mono shrink-0">{a.toolCount}t</span>
+                      <span className="text-[9.5px] px-1.5 py-px bg-card rounded-sm text-muted font-mono shrink-0"><Trans>{a.toolCount}t</Trans></span>
                     )}
                   </div>
                   <div><Pill label={a.endpointName} color={c} size="sm" /></div>

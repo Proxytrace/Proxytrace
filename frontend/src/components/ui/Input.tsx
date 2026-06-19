@@ -12,11 +12,12 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 }
 
 const SIZE_CLS: Record<Size, string> = {
-  sm: 'px-2.5 py-1.5 text-body-sm',
-  md: 'px-3 py-2 text-title',
+  sm: cn('px-2.5 py-1.5 text-body-sm'),
+  md: cn('px-3 py-2 text-title'),
 };
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
   { inputSize = 'md', invalid, leftAddon, rightAddon, className, ...rest },
   ref,
 ) {

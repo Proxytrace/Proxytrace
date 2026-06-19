@@ -23,8 +23,8 @@ interface SelectProps {
 }
 
 const SIZE_CLS: Record<Size, string> = {
-  sm: 'px-2.5 py-1.5 text-body-sm',
-  md: 'px-3 py-2 text-title',
+  sm: cn('px-2.5 py-1.5 text-body-sm'),
+  md: cn('px-3 py-2 text-title'),
 };
 
 interface OptionData {
@@ -60,6 +60,7 @@ function collectOptions(children: React.ReactNode): OptionData[] {
 export function Select({
   value,
   onValueChange,
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
   inputSize = 'md',
   invalid,
   disabled,

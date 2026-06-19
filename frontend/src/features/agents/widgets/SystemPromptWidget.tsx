@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { CopyIcon, CheckIcon, GitCompareIcon, ChevronDownIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
+import { cn } from '../../../lib/cn';
 import { useAgentVersions } from '../hooks/useAgentVersions';
 import { Widget } from './Widget';
 import { SystemPromptDiffDialog } from './SystemPromptDiffDialog';
@@ -42,6 +43,7 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
 
   const meta = isEmpty ? null : (
     <span className="text-body-sm text-muted">
+      {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version sigil, not UI copy */}
       {!isLatest && <span className="font-mono font-semibold text-secondary">v{activeVersion} · </span>}
       <Plural value={wordCount} one="# word" other="# words" /> · <Plural value={lineCount} one="# line" other="# lines" />
     </span>
@@ -82,7 +84,7 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
       title={t`System Prompt`}
       right={right}
       className={className}
-      bodyClassName="p-0"
+      bodyClassName={cn('p-0')}
     >
       {isEmpty ? (
         <div data-testid="agent-system-prompt" className="px-4 py-5 text-muted italic text-body"><Trans>(no system prompt)</Trans></div>

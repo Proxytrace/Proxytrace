@@ -23,13 +23,15 @@ const ALL_ITEMS: SlashItem[] = [
 ];
 
 /** Shared footprint for the composer's primary control, so Send and Stop occupy the same slot. */
-const COMPOSER_BTN_CLS =
-  'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md transition-[background,color,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40';
+const COMPOSER_BTN_CLS = cn(
+  'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md transition-[background,color,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40',
+);
 // Send: the gold primary CTA. Stop: neutral halt control (gold fill is reserved for the one
 // primary action per DESIGN.md, and a halt reads better as a calm neutral square).
-const SEND_BTN_CLS =
-  'bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]';
-const STOP_BTN_CLS = 'border border-border bg-card-2 text-primary hover:bg-card';
+const SEND_BTN_CLS = cn(
+  'bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]',
+);
+const STOP_BTN_CLS = cn('border border-border bg-card-2 text-primary hover:bg-card');
 
 function matches(item: SlashItem, query: string): boolean {
   if (!query) return true;
@@ -154,8 +156,10 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
           <ComposerPrimitive.Input
             autoFocus
             onKeyDown={onKeyDown}
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- ARIA role token, not UI copy
             aria-haspopup="listbox"
             aria-expanded={open}
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- DOM element id, not UI copy
             aria-controls={open ? 'tracey-slash-menu' : undefined}
             placeholder={t`Ask Tracey…  (/ for tools)`}
             className="max-h-48 min-h-16 w-full resize-none bg-transparent px-1 pt-1 text-body text-primary outline-none placeholder:text-muted"

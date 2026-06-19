@@ -11,6 +11,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `get_run` tool result. */
 export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: run } = useArtifactResult('run', result, status, isError);
   return (
     <EntityCardLink

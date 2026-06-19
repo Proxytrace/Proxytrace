@@ -75,6 +75,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             data={tokenVolume}
             height={140}
             color="var(--accent-primary)"
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
             gradientId="heroVolGrad"
             showAxis
             xLabelFn={xLabelFn}

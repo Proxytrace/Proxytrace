@@ -39,8 +39,10 @@ export function ComposeBox({
   useEffect(() => {
     const ta = taRef.current;
     if (!ta) return;
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS style value, not UI copy
     ta.style.height = 'auto';
     const next = Math.min(220, Math.max(60, ta.scrollHeight));
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS style value, not UI copy
     ta.style.height = `${next}px`;
   }, [text]);
 

@@ -37,8 +37,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         icon={<ClockIcon size={11} />}
         label={t`Avg Latency`}
         value={String(Math.round(summary?.avgLatencyMs ?? 0))}
-        unit="ms"
-        sub={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'}
+        unit={t`ms`}
+        sub={latencyStats ? t`p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'}
         delta="-8%"
         deltaUp={false}
         trace={trends?.latencyMs}
@@ -50,12 +50,12 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         icon={<ZapIcon size={11} />}
         label={t`Throughput`}
         value={telemetry ? String(Math.round(telemetry.tokensPerSecond)) : '—'}
-        unit="t/s"
-        sub={telemetry ? `p95 ${fmtLatency(telemetry.p95Ms)}` : t`awaiting telemetry`}
+        unit={t`t/s`}
+        sub={telemetry ? t`p95 ${fmtLatency(telemetry.p95Ms)}` : t`awaiting telemetry`}
         delta="+18%"
         trace={trends?.throughput}
         traceColor="var(--teal)"
-        traceFormat={v => `${Math.round(v)} t/s`}
+        traceFormat={v => t`${Math.round(v)} t/s`}
       />
       <StatTile
         testId="stat-tile-pass-rate"
@@ -64,7 +64,7 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         value={String(passPct)}
         unit="%"
         sub={t`latest suite run`}
-        delta="+7pt"
+        delta={t`+7pt`}
         trace={trends?.passRate}
         traceColor="var(--success)"
         traceFormat={v => t`${v.toFixed(0)}% pass`}

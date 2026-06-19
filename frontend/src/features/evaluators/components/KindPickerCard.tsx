@@ -10,9 +10,9 @@ import { RowButton } from '../../../components/ui/RowButton';
 
 /** Per-category hover recipe for the kind picker cards (wash + border tint). */
 const HOVER: Record<TypeCategory, string> = {
-  llm: 'hover:bg-[color-mix(in_srgb,var(--accent-primary)_10%,var(--bg-card-2))] hover:border-[color-mix(in_srgb,var(--accent-primary)_44%,transparent)]',
-  rule: 'hover:bg-[color-mix(in_srgb,var(--teal)_10%,var(--bg-card-2))] hover:border-[color-mix(in_srgb,var(--teal)_44%,transparent)]',
-  numeric: 'hover:bg-[color-mix(in_srgb,var(--teal)_10%,var(--bg-card-2))] hover:border-[color-mix(in_srgb,var(--teal)_44%,transparent)]',
+  llm: cn('hover:bg-[color-mix(in_srgb,var(--accent-primary)_10%,var(--bg-card-2))] hover:border-[color-mix(in_srgb,var(--accent-primary)_44%,transparent)]'),
+  rule: cn('hover:bg-[color-mix(in_srgb,var(--teal)_10%,var(--bg-card-2))] hover:border-[color-mix(in_srgb,var(--teal)_44%,transparent)]'),
+  numeric: cn('hover:bg-[color-mix(in_srgb,var(--teal)_10%,var(--bg-card-2))] hover:border-[color-mix(in_srgb,var(--teal)_44%,transparent)]'),
 };
 
 /** A selectable evaluator-kind card in the create modal's first step. */

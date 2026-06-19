@@ -29,7 +29,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
       title={t`Version history`}
       right={versions.length > 0 && <span className="text-body-sm text-muted">{versions.length}</span>}
       className={className}
-      bodyClassName="p-4"
+      bodyClassName={cn('p-4')}
     >
       {isLoading && <p className="text-body-sm text-muted"><Trans>Loading…</Trans></p>}
       {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted"><Trans>No versions yet.</Trans></p>}
@@ -80,7 +80,8 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                       className="font-mono text-title font-bold shrink-0"
                       style={isCurrent || isSelected ? { color: c } : undefined}
                     >
-                      v{v.versionNumber}
+                      {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version sigil, not UI copy */}
+                      {`v${v.versionNumber}`}
                     </span>
                     {isCurrent && (
                       <span

@@ -27,12 +27,15 @@ import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import { LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon } from '../icons';
 import {
-  navGroups, navItems, NAV_ICONS, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL,
+  navGroups, navItems, NAV_ICONS, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL, type HealthStatus,
 } from './shellNav';
 
 // The Tracey chat stack (assistant-ui + ai SDK + tools + docs index) is heavy; loading it
 // lazily keeps it out of the main chunk so first paint of every page is faster.
 const TraceyHost = lazy(() => import('../../features/tracey/TraceyHost'));
+
+// Layout variant token (not UI copy) — typed so the literal is recognized as non-copy.
+const SEARCH_WIDTH: 'auto' | 'fixed' = 'fixed';
 
 export function Shell() {
   const { t, i18n } = useLingui();
@@ -54,22 +57,25 @@ export function Shell() {
   const { interactive } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard shortcut key, not UI copy
   useGlobalShortcut('k', focusSearch);
 
-  const healthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
-  const pageLabel = [...navItems]
+  const healthStatus: HealthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
+  const activeNavEntry = [...navItems]
     .sort((a, b) => b.to.length - a.to.length)
-    .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label ?? 'Dashboard';
+    .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'));
+  const pageLabel = activeNavEntry ? i18n._(activeNavEntry.label) : t`Dashboard`;
   const currentUser = useCurrentUser();
   // Role is only populated in local-auth mode; OIDC users won't see admin-only nav (the backend
   // still enforces authorization regardless).
   const isAdmin = currentUser?.role === 'Admin';
-  const userName = currentUser?.email ?? 'User';
+  const userName = currentUser?.email ?? t`User`;
   const userInitials = userName
     .split(/[@.\s_-]+/)
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase())
     .join('')
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- avatar initials fallback, not UI copy
     .slice(0, 2) || 'U';
 
   return (
@@ -101,8 +107,10 @@ export function Shell() {
           {!navCollapsed && (
             <div className="ml-[10px]">
               <div className="font-bold text-sm tracking-[-0.02em] leading-none">
+                {/* eslint-disable-next-line lingui/no-unlocalized-strings -- brand name, not translated */}
                 <span className="text-primary">proxy</span><span className="text-accent">trace</span>
               </div>
+              {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version identifier, not UI copy */}
               <div className="font-mono text-[10.5px] text-muted mt-0.5">{`v${__APP_VERSION__}`}</div>
             </div>
           )}
@@ -132,14 +140,14 @@ export function Shell() {
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
                     key={item.to}
-                    label={item.label}
+                    label={i18n._(item.label)}
                     icon={NAV_ICONS[item.icon]}
                     collapsed={navCollapsed}
                   />
                 ) : (
                   <NavItem
                     key={item.to}
-                    label={item.label}
+                    label={i18n._(item.label)}
                     icon={NAV_ICONS[item.icon]}
                     to={item.to}
                     collapsed={navCollapsed}
@@ -196,7 +204,7 @@ export function Shell() {
           {/* Search needs real width to be usable — below sm it yields to the page title. */}
           <div className="flex-1 min-w-0 hidden sm:block">
             {currentProject?.id ? (
-              <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
+              <UnifiedSearch ref={searchRef} projectId={currentProject.id} width={SEARCH_WIDTH} />
             ) : (
               <div className="flex-1 max-w-[720px] mx-auto" />
             )}

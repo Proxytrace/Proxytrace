@@ -9,6 +9,7 @@ import { buildQuickStartSnippets, type SnippetLanguage } from '../../../lib/inge
 import { Trans, useLingui } from '@lingui/react/macro';
 
 /** Illustrative model id used in the quick-start snippet (the user picks their own). */
+// eslint-disable-next-line lingui/no-unlocalized-strings -- sample model id, not UI copy
 const SAMPLE_MODEL = 'gpt-4o-mini';
 
 /**
@@ -19,6 +20,7 @@ const SAMPLE_MODEL = 'gpt-4o-mini';
  */
 export function TracesEmptyState() {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- code snippet language id, not UI copy
   const [lang, setLang] = useState<SnippetLanguage>('python');
   const { currentProject } = useCurrentProject();
   const proxyBase = useIngestionBase();

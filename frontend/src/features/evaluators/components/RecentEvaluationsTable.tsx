@@ -8,7 +8,7 @@ import type { RecentEvaluationItemDto } from '../../../api/evaluators';
 import type { EvaluationScore } from '../../../api/models';
 import { SCORE_LABEL } from '../evaluatorMeta';
 
-const GRID = 'grid grid-cols-[90px_1fr_70px_70px_70px]';
+const GRID = cn('grid grid-cols-[90px_1fr_70px_70px_70px]');
 
 interface Props {
   rows: RecentEvaluationItemDto[];

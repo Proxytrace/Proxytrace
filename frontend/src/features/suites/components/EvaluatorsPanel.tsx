@@ -26,6 +26,7 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
   // Agentic evaluators require the AgenticEvaluators license feature. Without it, an unattached
   // agentic evaluator can't be attached (locked); an already-attached one stays removable. The
   // backend mirrors this by skipping agentic evaluators during runs on unlicensed installs.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- license feature-flag enum, not UI copy
   const agenticGated = !(license?.features ?? []).includes('AgenticEvaluators');
 
   const q = search.trim().toLowerCase();
@@ -66,10 +67,12 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
               const focused = selectedId === e.id;
               // Lock only unattached agentic evaluators on free tier; a staged one stays removable.
               const locked = agenticGated && e.kind === 'Agentic' && !staged;
-              const dirtyState =
+              /* eslint-disable lingui/no-unlocalized-strings -- dirty-state tokens, not UI copy */
+              const dirtyState: 'added' | 'removed' | null =
                 staged && !wasBaseline ? 'added'
                 : !staged && wasBaseline ? 'removed'
                 : null;
+              /* eslint-enable lingui/no-unlocalized-strings */
               return (
                 <li
                   key={e.id}

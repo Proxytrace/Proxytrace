@@ -38,7 +38,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
   }, [open]);
 
   const current = selectedAgent ?? agents.find(a => a.id === selectedAgentId) ?? null;
-  const subtitle = current ? 'Agent' : (isLoading ? t`Loading…` : t`Pick to start`);
+  const subtitle = current ? t`Agent` : (isLoading ? t`Loading…` : t`Pick to start`);
 
   return (
     <div ref={ref} className={compact ? 'relative inline-flex' : 'relative'}>
@@ -61,6 +61,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         aria-haspopup="listbox"
         aria-expanded={open}
       >
+        {/* eslint-disable-next-line lingui/no-unlocalized-strings -- avatar hash seed token, not UI copy */}
         <AgentAvatar seed={current?.id ?? 'none'} label={current?.name ?? '?'} size={compact ? 26 : 36} />
         {compact ? (
           <span className="text-[12.5px] font-semibold text-primary truncate max-w-[200px]">

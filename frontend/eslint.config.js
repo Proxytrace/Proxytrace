@@ -61,8 +61,9 @@ export default defineConfig([
   {
     // i18n guardrail: every user-facing string must go through the Lingui macros
     // (<Trans>, t``, plural, msg). `no-unlocalized-strings` flags raw strings so they don't slip
-    // back in. Currently 'warn' during the big-bang migration; flip to 'error' once the codebase
-    // is clean (same lifecycle as the no-restricted-syntax rule above).
+    // back in. Now an 'error' — the big-bang migration is complete and the codebase is clean; the
+    // ignore lists + scoped `// eslint-disable-next-line lingui/no-unlocalized-strings -- <reason>`
+    // hatches below cover the non-copy strings the rule cannot classify (enum tokens, keys, etc.).
     // Scope to .tsx (where UI text lives). Plain .ts files are data/config/query-keys whose
     // string literals are not user copy; UI strings that live in .ts label maps are wrapped with
     // the `msg` macro and caught at use sites.
@@ -71,6 +72,12 @@ export default defineConfig([
       'src/**/*.spec.tsx',
       'src/**/*.test.tsx',
     ],
+    languageOptions: {
+      // Type-aware linting (scoped to this block only) so `no-unlocalized-strings` can recognise
+      // string-literal-union-typed values — enum props like <Badge tone="success">, toast('error'),
+      // DOM event names — as non-copy by their type, instead of hand-listing every callsite.
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
     plugins: { lingui },
     rules: {
       // Catch a <Trans> wrapping a single child that needs no translation, nested <Trans>, etc.
@@ -78,18 +85,62 @@ export default defineConfig([
       'lingui/no-single-tag-to-translate': 'warn',
       'lingui/t-call-in-function': 'error',
       'lingui/no-unlocalized-strings': [
-        'warn',
+        'error',
         {
-          // Strings with no letters at all (numbers, punctuation, css-ish tokens) aren't copy.
-          ignore: ['^[^A-Za-z]*$'],
-          // Enum-ish props on our own components carry tokens, not user copy. (DOM text attributes
-          // like aria-label / placeholder are intentionally NOT ignored — they are UI text.)
+          ignore: [
+            // Strings with no letters at all (numbers, punctuation, css-ish tokens) aren't copy.
+            '^[^A-Za-z]*$',
+            // CSS values: var()/color-mix() expressions, custom-property names and inline-style
+            // fragments. A string starting with these tokens is a style value, never UI copy.
+            '^var\\(', '^color-mix\\(', '^--[a-z]', '^\\d+px ',
+            // Intl.DateTimeFormat / NumberFormat option values (object-literal values, not copy).
+            '^(2-digit|numeric|long|short|narrow|digital)$',
+            // Route paths / query-string fragments handed to the router (to=, navigate()).
+            '^/[a-z]', '^\\?[a-z]',
+            // External URLs and email-ish tokens (links, demo data) — never UI copy.
+            '^https?://', '^mailto:', '@[a-z0-9.-]+\\.[a-z]{2,}$',
+            // Technical identifiers that surface as-is and are never translated:
+            // snake_case API field names (input_tokens, finish_reason), dotted storage / query
+            // keys (dashboard.range, trace.id, chat.completion). Both shapes are machine tokens.
+            '^[a-z][a-z0-9]*(_[a-z0-9]+)+$', '^[a-z][a-zA-Z0-9]*(\\.[a-z][a-zA-Z0-9]*)+$',
+            // CSS grid track sizes, percentile/metric tags and HTTP status buckets.
+            '^\\d+(\\.\\d+)?fr$', '^p\\d{1,3}$', '^\\dxx$',
+          ],
+          // Enum-ish props on our own components carry tokens, not user copy, plus structural/DOM
+          // attributes that are never translatable (CSS classes, ids, router targets, SVG geometry)
+          // and the property keys of our style-token maps (their values are Tailwind class strings).
+          // `ignoreNames` matches JSX attribute names, object-property keys and ignored variable
+          // names. (DOM text attributes like aria-label / placeholder / title are intentionally NOT
+          // listed — they ARE UI text.)
           ignoreNames: [
+            // component enum props
             'variant', 'tone', 'side', 'align', 'placement', 'color', 'size', 'icon',
             'status', 'kind', 'mode', 'type', 'role', 'testId', 'autoComplete', 'key',
+            'as', 'padding', 'direction', 'justify', 'severity', 'tab', 'layout', 'shape',
+            'elevation', 'trend', 'trendDirection', 'trendDir', 'language', 'lang', 'level',
+            'density', 'weight', 'format', 'state', 'connection',
+            // structural / non-copy attributes
+            'className', 'class', 'to', 'path', 'data-testid', 'htmlFor', 'id', 'name',
+            'htmlType', 'inputMode', 'enterKeyHint', 'autoCapitalize', 'spellCheck',
+            // style-token-map keys: values are Tailwind class lists / CSS colours, not copy
+            'bg', 'fg', 'border', 'accentText', 'accentBg', 'bodyBg', 'hover', 'dot', 'ring',
+            'outline', 'cursor', 'chip', 'track', 'fillClass', 'textClass', 'barClass',
+            // inline-SVG geometry (never copy)
+            'd', 'fill', 'stroke', 'viewBox', 'points', 'transform', 'gradientUnits',
+            'gradientTransform', 'stopColor', 'clipPath', 'fillRule', 'clipRule',
+            'strokeWidth', 'strokeLinecap', 'strokeLinejoin', 'cx', 'cy', 'x1', 'x2', 'y1', 'y2',
+            'preserveAspectRatio', 'xmlns',
           ],
-          // Utility calls whose string args are class names / log lines / storage keys, not copy.
-          ignoreFunctions: ['cn', 'clsx', 'cva', 'console.*', 'localStorage.*', 'sessionStorage.*'],
+          // Calls whose string args are class names / log lines / storage keys / DOM plumbing /
+          // navigation targets / formatter options — never user copy.
+          ignoreFunctions: [
+            'cn', 'clsx', 'cva', 'console.*', 'localStorage.*', 'sessionStorage.*',
+            'navigate', '*.addEventListener', '*.removeEventListener', 'addEventListener',
+            'removeEventListener', '*.matchMedia', 'matchMedia', '*.getItem', '*.setItem',
+            '*.removeItem', '*.querySelector', '*.querySelectorAll', '*.getAttribute',
+            '*.setAttribute', '*.getElementById', 'getComputedStyle', 'Intl.*',
+          ],
+          useTsTypes: true,
         },
       ],
     },

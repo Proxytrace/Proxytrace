@@ -16,10 +16,10 @@ interface Props {
 
 const MENU_WIDTH = 260;
 
-const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; description: MessageDescriptor }[] = [
-  { value: 'user', label: 'User', accent: 'var(--teal)', description: msg`Message from the human` },
-  { value: 'assistant', label: 'Assistant', accent: 'var(--accent-hover)', description: msg`Reply from the model` },
-  { value: 'system', label: 'System', accent: 'var(--text-secondary)', description: msg`System instruction` },
+const ROLE_OPTIONS: { value: PlaygroundRole; label: MessageDescriptor; accent: string; description: MessageDescriptor }[] = [
+  { value: 'user', label: msg`User`, accent: 'var(--teal)', description: msg`Message from the human` },
+  { value: 'assistant', label: msg`Assistant`, accent: 'var(--accent-hover)', description: msg`Reply from the model` },
+  { value: 'system', label: msg`System`, accent: 'var(--text-secondary)', description: msg`System instruction` },
 ];
 
 export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
@@ -79,6 +79,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
             : 'border-border text-muted',
         )}
         leftIcon={<PlusIcon size={13} strokeWidth={2.4} />}
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- ARIA role token, not UI copy
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
@@ -95,7 +96,9 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
           <div className="px-[10px] pt-[2px] pb-[6px] text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
             <Trans>New message role</Trans>
           </div>
-          {ROLE_OPTIONS.map(opt => (
+          {ROLE_OPTIONS.map(opt => {
+            const label = i18n._(opt.label);
+            return (
             <RowButton
               key={opt.value}
               role="menuitem"
@@ -111,14 +114,15 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
                   border: `1px solid color-mix(in srgb, ${opt.accent} 22%, transparent)`,
                 }}
               >
-                {opt.label[0]}
+                {label[0]}
               </span>
               <span className="flex flex-col min-w-0">
-                <span className="text-[12.5px] text-primary font-semibold">{opt.label}</span>
+                <span className="text-[12.5px] text-primary font-semibold">{label}</span>
                 <span className="text-[10.5px] text-muted">{i18n._(opt.description)}</span>
               </span>
             </RowButton>
-          ))}
+            );
+          })}
           {onLoadFromTrace && (
             <>
               <div className="my-[4px] mx-[10px] border-t border-border" />

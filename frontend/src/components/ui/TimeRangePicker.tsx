@@ -130,6 +130,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
               <Input
                 id={`${testId}-from`}
                 type="datetime-local"
+                // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
                 inputSize="sm"
                 value={draft.from}
                 onChange={e => setDraft(d => ({ ...d, from: e.target.value }))}
@@ -142,6 +143,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
               <Input
                 id={`${testId}-to`}
                 type="datetime-local"
+                // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
                 inputSize="sm"
                 value={draft.to}
                 onChange={e => setDraft(d => ({ ...d, to: e.target.value }))}

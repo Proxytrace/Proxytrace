@@ -10,6 +10,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `get_agent_stats` tool result (30-day window). */
 export const AgentStatsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('agent-stats', result, status, isError);
   if (state !== 'ready' || !data) {
     return (

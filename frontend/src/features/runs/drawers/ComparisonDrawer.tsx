@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { fmtDuration, fmtTokens, fmtCost } from '../../../lib/format';
 import { modelColor } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
 import { compositeColor, fixtureSummary } from '../results';
 import { useComparisonFixtures } from '../hooks/useComparisonFixtures';
@@ -43,10 +44,10 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
   const borderCls = focused
     ? ''
     : failed
-      ? 'border-[color-mix(in_srgb,var(--danger)_50%,transparent)]'
+      ? cn('border-[color-mix(in_srgb,var(--danger)_50%,transparent)]')
       : allPass
-        ? 'border-[color-mix(in_srgb,var(--success)_35%,transparent)]'
-        : 'border-hairline';
+        ? cn('border-[color-mix(in_srgb,var(--success)_35%,transparent)]')
+        : cn('border-hairline');
 
   return (
     <div
@@ -68,7 +69,7 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
           <span className="text-muted">·</span>
           <span className="mono text-secondary">{fmtDuration(fixture.runtime.total)}</span>
           <span className="text-muted">·</span>
-          <span className="mono text-secondary">{fmtTokens(tokensOut)} out</span>
+          <span className="mono text-secondary">{fmtTokens(tokensOut)} <Trans>out</Trans></span>
           <span className="text-muted">·</span>
           <span className="mono text-secondary">{fmtCost(cost)}</span>
         </div>
@@ -99,7 +100,7 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
 
   return (
     <DrawerShell
-      widthClass="w-[min(95vw,1200px)]"
+      widthClass={cn('w-[min(95vw,1200px)]')}
       caseId={caseId}
       caseSummary={caseSummary}
       caseIdx={caseIdx}

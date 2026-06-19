@@ -42,7 +42,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         <div className="flex items-center gap-1.5 mb-2.5 min-w-0">
           <Pill label={group.agentName} color={c} />
           {group.isSystemRun && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-accent-subtle text-accent shrink-0">A/B</span>
+            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-accent-subtle text-accent shrink-0"><Trans>A/B</Trans></span>
           )}
           {runCount > 1 && (
             <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0"><Trans>{runCount} models</Trans></span>

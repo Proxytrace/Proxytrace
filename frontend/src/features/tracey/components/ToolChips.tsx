@@ -1,9 +1,11 @@
 import { useComposerRuntime } from '@assistant-ui/react';
 import { Badge } from '../../../components/ui/Badge';
+import { cn } from '../../../lib/cn';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 
-const RING =
-  'rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]';
+const RING = cn(
+  'rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
+);
 
 /** Chips above the composer that surface available quick-actions; clicking prefills the composer. */
 export function ToolChips() {

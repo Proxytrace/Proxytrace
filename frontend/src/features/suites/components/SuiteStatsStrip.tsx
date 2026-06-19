@@ -32,16 +32,16 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }:
             valueClass={passRateTextClass(stats?.passRate ?? null)}
             big
           />
-          <Metric label={t`Runs`} value={runCount.toLocaleString()} valueClass="text-primary" />
+          <Metric label={t`Runs`} value={runCount.toLocaleString()} valueClass={cn('text-primary')} />
           <Metric
             label={t`Avg duration`}
             value={stats?.avgDurationMs != null ? fmtDuration(stats.avgDurationMs) : dash}
-            valueClass="text-teal"
+            valueClass={cn('text-teal')}
           />
           <Metric
             label={t`Total cost`}
             value={stats?.totalCost != null ? fmtCost(stats.totalCost) : dash}
-            valueClass="text-warn"
+            valueClass={cn('text-warn')}
           />
         </div>
 

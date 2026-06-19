@@ -10,8 +10,9 @@ import { tierBadge, type TierTone } from './licenseUtils';
 // tier chip instead leads with a tier icon (crown for Enterprise, sparkles for
 // Free) and carries no status dot. Geometry matches the health pill so the two
 // align, but fill + icon set them apart.
-const CHIP_BASE =
-  'inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0';
+const CHIP_BASE = cn(
+  'inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
+);
 
 const TONE_CLS: Record<TierTone, string> = {
   // Enterprise, active — the gold premium marque: a warm accent gradient,

@@ -14,6 +14,7 @@ function isCancelled(value: unknown): value is { cancelled: true } {
  */
 export const StartTestRunToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: group } = useArtifactResult('test-run-group', result, status, isError);
 
   if (isCancelled(result)) {

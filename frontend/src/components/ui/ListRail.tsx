@@ -12,9 +12,11 @@ import { PlusIcon, SearchLineIcon, XIcon } from '../icons';
  * One width token across Agents / Evaluators / Suites / Runs so the left column is
  * identical everywhere (DESIGN.md "List rail").
  */
+// eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind class string, not UI copy
 export const LIST_RAIL_COLS = 'grid-cols-[minmax(248px,320px)_minmax(0,1fr)]';
 
 /** Shared shell card classes — the framed panel of every rail. */
+// eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind class string, not UI copy
 export const RAIL_CARD_CLS = 'flex flex-col min-h-0 overflow-hidden bg-card rounded-lg shadow-[var(--shadow-card)]';
 
 interface CreateSlot { onClick: () => void; label?: string; testId?: string }
@@ -69,6 +71,7 @@ export function RailHeader({ title, count, subtitle, leading, create, search }: 
       {search && (
         <Input
           leftAddon={<SearchLineIcon size={12} />}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
           inputSize="sm"
           rightAddon={search.value ? (
             <IconButton size="sm" onClick={() => search.onChange('')} aria-label={t`Clear search`}>

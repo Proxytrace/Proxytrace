@@ -1,5 +1,6 @@
 import { Plural, useLingui } from '@lingui/react/macro';
 import { DataTable, type DataColumn } from '../../../../components/ui/DataTable';
+import { cn } from '../../../../lib/cn';
 import type { TableArtifact as TableArtifactData } from '../../tracey-artifacts';
 
 type Row = { __i: number; cells: (string | number)[] };
@@ -34,7 +35,7 @@ export function TableArtifact({ artifact }: { artifact: TableArtifactData }) {
     return {
       key: String(ci),
       label,
-      width: num ? 'minmax(72px, max-content)' : 'minmax(0, 1fr)',
+      width: num ? cn('minmax(72px, max-content)') : cn('minmax(0, 1fr)'),
       className: num ? 'text-right font-mono tabular-nums text-secondary' : '',
       render: (row) => <span className="block truncate">{row.cells[ci]}</span>,
     };

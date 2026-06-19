@@ -27,7 +27,7 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
             <SparklesIcon size={16} />
           </span>
           <div>
-            <div className="text-h2 font-semibold leading-tight text-primary">Tracey AI</div>
+            <div className="text-h2 font-semibold leading-tight text-primary"><Trans>Tracey AI</Trans></div>
             <div className="text-body-sm text-muted"><Trans>Your in-app assistant</Trans></div>
           </div>
         </div>

@@ -93,7 +93,8 @@ export function SetupWizard() {
           <div className="flex items-center gap-3">
             <BrandMark size={36} />
             <div>
-              <div className="font-bold text-[15px] tracking-[-0.01em] text-primary leading-tight">Proxytrace</div>
+              {/* eslint-disable-next-line lingui/no-unlocalized-strings -- brand name */}
+            <div className="font-bold text-[15px] tracking-[-0.01em] text-primary leading-tight">Proxytrace</div>
               <div className="text-body-sm text-muted"><Trans>Agent observability platform</Trans></div>
             </div>
           </div>

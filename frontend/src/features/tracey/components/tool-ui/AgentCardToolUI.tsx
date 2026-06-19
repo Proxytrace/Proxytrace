@@ -30,6 +30,7 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 /** Inline renderer for the `get_agent` tool result. */
 export const AgentCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: agent } = useArtifactResult('agent', result, status, isError);
   const promptPreview = agent?.systemMessage.trim() ?? '';
   return (

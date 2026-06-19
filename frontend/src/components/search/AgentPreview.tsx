@@ -23,7 +23,7 @@ export function AgentPreview({ id, hit }: Props) {
       <MetaGrid entries={[
         [t`Project`,  a.projectName],
         [t`Endpoint`, a.endpointName],
-        ['Tools',    String(a.tools?.length ?? 0)],
+        [t`Tools`,   String(a.tools?.length ?? 0)],
       ]} />
       {a.systemMessage && (
         <PreviewSection title={t`System prompt`}>
@@ -33,7 +33,7 @@ export function AgentPreview({ id, hit }: Props) {
         </PreviewSection>
       )}
       {a.tools && a.tools.length > 0 && (
-        <PreviewSection title="Tools">
+        <PreviewSection title={t`Tools`}>
           <div className="flex flex-wrap gap-1.5">
             {a.tools.map(t => (
               <span

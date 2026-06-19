@@ -21,10 +21,10 @@ export function AgentCallPreview({ id, hit }: Props) {
   return (
     <>
       <MetaGrid entries={[
-        ['Agent',  call.agentName ?? '—'],
+        [t`Agent`,  call.agentName ?? '—'],
         [t`Model`,  call.model],
         [t`Status`, String(call.httpStatus)],
-        ['Tokens', t`${call.inputTokens} in · ${call.outputTokens} out`],
+        [t`Tokens`, t`${call.inputTokens} in · ${call.outputTokens} out`],
       ]} />
       <ConversationView messages={fromAgentCall(call)} />
     </>

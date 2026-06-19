@@ -21,12 +21,12 @@ const COLUMN_ICON: Record<TheoryStatus, React.ReactNode> = {
 
 // Tone → top-border accent class. Mirrors the CSS vars behind {@link TONE_BG}.
 const TONE_TOP_BORDER: Record<DisplayTone, string> = {
-  accent: 'border-t-[var(--accent-primary)]',
-  success: 'border-t-[var(--success)]',
-  danger: 'border-t-[var(--danger)]',
-  teal: 'border-t-[var(--teal)]',
-  muted: 'border-t-[var(--text-muted)]',
-  secondary: 'border-t-[var(--text-secondary)]',
+  accent: cn('border-t-[var(--accent-primary)]'),
+  success: cn('border-t-[var(--success)]'),
+  danger: cn('border-t-[var(--danger)]'),
+  teal: cn('border-t-[var(--teal)]'),
+  muted: cn('border-t-[var(--text-muted)]'),
+  secondary: cn('border-t-[var(--text-secondary)]'),
 };
 
 export function TheoryColumn({ column, count, children }: Props) {

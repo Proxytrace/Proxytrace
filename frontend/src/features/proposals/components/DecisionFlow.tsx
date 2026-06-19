@@ -145,7 +145,7 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
             <span className={cn('mono text-h2 font-semibold', transition.deltaPt > 0 ? 'text-success' : 'text-secondary')}>{transition.toPct}%</span>
             {transition.deltaPt !== 0 && (
               <span className={cn('mono rounded-full px-2 py-[1px] text-body-sm font-semibold', transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
-                {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}pt
+                {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}<Trans>pt</Trans>
               </span>
             )}
           </>

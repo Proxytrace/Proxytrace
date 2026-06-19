@@ -94,8 +94,8 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
 
       <Collapsible
         title={<span className="text-body-sm font-medium"><Trans>Theory & A/B test details</Trans></span>}
-        headerClassName="text-secondary hover:text-primary transition-colors py-1 cursor-pointer"
-        contentClassName="flex flex-col gap-3 mt-2"
+        headerClassName={cn('text-secondary hover:text-primary transition-colors py-1 cursor-pointer')}
+        contentClassName={cn('flex flex-col gap-3 mt-2')}
       >
         <div className="flex flex-col gap-1.5">
           <span className="text-caption text-muted">

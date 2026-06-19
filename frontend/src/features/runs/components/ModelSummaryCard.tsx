@@ -3,6 +3,7 @@ import type { LeaderboardEntry } from '../comparison';
 import { passRateColor } from '../results';
 import { TestRunStatus } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { fmtDuration, fmtCost, fmtTokens } from '../../../lib/format';
 import { TargetIcon, ZapIcon, CoinsIcon, ArrowDownIcon } from '../../../components/icons';
 import { Card } from '../../../components/ui/Card';
@@ -59,7 +60,7 @@ export function ModelSummaryCard({ entry, multi }: { entry: LeaderboardEntry; mu
         {multi && entry.deltaVsBest !== null && entry.deltaVsBest > 0 && (
           <div className="mt-2.5 flex items-center gap-1.5 text-caption text-muted">
             <ArrowDownIcon size={10} />
-            <span className="mono text-danger font-semibold">−{entry.deltaVsBest}pt</span>
+            <span className="mono text-danger font-semibold">−{entry.deltaVsBest}<Trans>pt</Trans></span>
             <span><Trans>vs best</Trans></span>
           </div>
         )}
@@ -69,9 +70,9 @@ export function ModelSummaryCard({ entry, multi }: { entry: LeaderboardEntry; mu
 }
 
 const WINNER_TONE = {
-  best: 'bg-[color-mix(in_srgb,var(--success)_16%,transparent)] text-success',
-  fast: 'bg-[color-mix(in_srgb,var(--teal)_16%,transparent)] text-teal',
-  cheap: 'bg-[color-mix(in_srgb,var(--accent-primary)_16%,transparent)] text-accent',
+  best: cn('bg-[color-mix(in_srgb,var(--success)_16%,transparent)] text-success'),
+  fast: cn('bg-[color-mix(in_srgb,var(--teal)_16%,transparent)] text-teal'),
+  cheap: cn('bg-[color-mix(in_srgb,var(--accent-primary)_16%,transparent)] text-accent'),
 } as const;
 
 function WinnerBadge({ tone, label, icon }: { tone: keyof typeof WINNER_TONE; label: string; icon: React.ReactNode }) {

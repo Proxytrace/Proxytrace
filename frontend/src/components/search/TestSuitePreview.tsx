@@ -21,7 +21,7 @@ export function TestSuitePreview({ id, hit }: Props) {
   return (
     <>
       <MetaGrid entries={[
-        ['Agent',      s.agentName],
+        [t`Agent`,     s.agentName],
         [t`Test cases`, String(s.testCases?.length ?? 0)],
         [t`Pass rate`,  s.passRate != null ? `${(s.passRate * 100).toFixed(0)}%` : '—'],
         [t`Total runs`, String(s.totalRuns)],
@@ -34,7 +34,7 @@ export function TestSuitePreview({ id, hit }: Props) {
         </PreviewSection>
       )}
       {s.evaluators && s.evaluators.length > 0 && (
-        <PreviewSection title="Evaluators">
+        <PreviewSection title={t`Evaluators`}>
           <div className="flex flex-wrap gap-1.5">
             {s.evaluators.map(e => (
               <span

@@ -11,6 +11,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `get_trace` tool result. */
 export const TraceCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: trace } = useArtifactResult('trace', result, status, isError);
   return (
     <EntityCardLink

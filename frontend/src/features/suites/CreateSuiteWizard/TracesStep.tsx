@@ -62,6 +62,7 @@ interface Props {
 
 export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }: Props) {
   const { i18n, t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- range filter token, not UI copy
   const [range, setRange] = useState<string>('7d');
   const [search, setSearch] = useState<string>('');
   const [focusedIdState, setFocusedIdState] = useState<string | null>(null);

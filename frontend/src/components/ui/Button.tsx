@@ -25,26 +25,33 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLS: Record<ButtonVariant, string> = {
-  primary:
+  primary: cn(
     'bg-[image:var(--grad-accent)] text-accent-ink shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)] active:bg-[image:none] active:bg-[var(--accent-press)] active:shadow-[inset_0_2px_4px_rgba(80,50,10,0.3)] disabled:opacity-40 disabled:cursor-not-allowed',
-  secondary:
+  ),
+  secondary: cn(
     'bg-card-2 text-secondary border border-border hover:text-primary hover:bg-[var(--bg-wash-active)] disabled:opacity-40 disabled:cursor-not-allowed',
-  ghost:
+  ),
+  ghost: cn(
     'text-secondary hover:text-primary hover:bg-[var(--bg-wash-hover)] border border-transparent disabled:opacity-40 disabled:cursor-not-allowed',
-  danger:
+  ),
+  danger: cn(
     'bg-danger text-white shadow-[var(--shadow-btn-danger)] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
-  dangerOutline:
+  ),
+  dangerOutline: cn(
     'bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle disabled:opacity-40 disabled:cursor-not-allowed',
-  success:
+  ),
+  success: cn(
     'bg-[image:var(--grad-success)] text-white shadow-[var(--shadow-btn-success)] hover:opacity-92 disabled:opacity-40 disabled:cursor-not-allowed',
-  link:
+  ),
+  link: cn(
     'bg-transparent text-accent hover:text-accent-hover hover:underline shadow-none gap-1 disabled:opacity-40 disabled:cursor-not-allowed',
+  ),
 };
 
 const SIZE_CLS: Record<ButtonSize, string> = {
-  sm: 'px-2.5 py-1.5 text-body-sm gap-1.5 rounded-md',
-  md: 'px-3.5 py-2 text-title gap-2 rounded-md',
-  lg: 'px-5 py-2.5 text-title gap-2 rounded-md',
+  sm: cn('px-2.5 py-1.5 text-body-sm gap-1.5 rounded-md'),
+  md: cn('px-3.5 py-2 text-title gap-2 rounded-md'),
+  lg: cn('px-5 py-2.5 text-title gap-2 rounded-md'),
 };
 
 /** Variants that mutate server state — tagged `data-write` so kiosk mode can disable them. */

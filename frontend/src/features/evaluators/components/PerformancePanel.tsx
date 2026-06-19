@@ -7,6 +7,7 @@ import { EvaluatorKind, type EvaluatorDetailDto, type EvaluatorOverviewDto } fro
 import { KIND_CATEGORY, passFractionSeries } from '../evaluatorMeta';
 import { categoryColorVar, categoryText } from '../categoryClasses';
 import { StatCell } from './StatCell';
+import { cn } from '../../../lib/cn';
 
 const RANGES: RangeKey[] = ['1h', '24h', '7d', '30d'];
 
@@ -52,9 +53,9 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
           valueClass={categoryText[cat]}
           big
         />
-        <StatCell label={t`Evaluations`} value={(summary?.totalEvaluations ?? 0).toLocaleString()} sub={t`executed`} valueClass="text-primary" />
-        <StatCell label={t`Pass rate`} value={summary?.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—'} sub={t`score ≥ acceptable`} valueClass="text-success" />
-        <StatCell label={t`Avg latency`} value={summary?.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} sub={t`per evaluation`} valueClass="text-teal" last />
+        <StatCell label={t`Evaluations`} value={(summary?.totalEvaluations ?? 0).toLocaleString()} sub={t`executed`} valueClass={cn('text-primary')} />
+        <StatCell label={t`Pass rate`} value={summary?.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—'} sub={t`score ≥ acceptable`} valueClass={cn('text-success')} />
+        <StatCell label={t`Avg latency`} value={summary?.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} sub={t`per evaluation`} valueClass={cn('text-teal')} last />
       </div>
 
       <div className="px-[18px] py-3.5">
@@ -65,6 +66,7 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
             width={860}
             height={130}
             color={categoryColorVar[cat]}
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
             gradientId={`evalTrend-${e.id.slice(0, 8)}`}
             showAxis={false}
             showEndMarker

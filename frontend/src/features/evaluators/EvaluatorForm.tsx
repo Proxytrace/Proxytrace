@@ -56,12 +56,14 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
       {kind === EvaluatorKind.Agentic && <FinalPromptPreview rubric={form.systemMessage} />}
       {kind === EvaluatorKind.JsonSchemaMatch && (
         <FormField label={t`JSON Schema`}>
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- sample JSON schema placeholder, not UI copy */}
           <Textarea data-testid="evaluator-form-jsonschema" value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} />
           <SchemaFromExample onGenerate={schema => setForm({ ...form, jsonSchema: schema })} />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (
         <FormField label={t`Extraction pattern (regex)`}>
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- sample regex pattern placeholder, not UI copy */}
           <Input data-testid="evaluator-form-extractionpattern" value={form.extractionPattern} onChange={e => setForm({ ...form, extractionPattern: e.target.value })} placeholder="score: (\d+)" />
         </FormField>
       )}
@@ -100,6 +102,7 @@ function OutputContractPanel() {
   );
 }
 
+// eslint-disable-next-line lingui/no-unlocalized-strings -- default prompt content, not UI chrome
 const APPENDED_SCHEMA_INSTRUCTION = `Respond only in JSON format that adheres to the following JSON schema definition:
 {
   "type": "object",
@@ -112,7 +115,8 @@ const APPENDED_SCHEMA_INSTRUCTION = `Respond only in JSON format that adheres to
 }`;
 
 function FinalPromptPreview({ rubric }: { rubric: string }) {
-  const body = `${rubric.trim() || '<your rubric goes here>'}\n\n${APPENDED_SCHEMA_INSTRUCTION}`;
+  const { t } = useLingui();
+  const body = `${rubric.trim() || t`<your rubric goes here>`}\n\n${APPENDED_SCHEMA_INSTRUCTION}`;
   return (
     <details className="group">
       <summary className="cursor-pointer text-[12px] font-medium text-accent select-none py-1">

@@ -17,6 +17,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
         value={agent.endpointId}
         onChange={id => {
           if (id !== agent.endpointId) {
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
             mutation.mutate(id, { onSuccess: () => toast(t`Endpoint updated`, 'success') });
           }
         }}
@@ -30,6 +31,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
           </span>
         )}
         placeholder={agent.endpointName}
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- size token, not UI copy
         inputSize="sm"
         aria-label={t`Agent endpoint`}
         data-testid="agent-endpoint"

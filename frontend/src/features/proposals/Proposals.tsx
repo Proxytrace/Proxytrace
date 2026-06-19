@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { SparklesIcon } from '../../components/icons';
 import { useSelectedId } from '../../hooks/useSelectedId';
 import { agentColor } from '../../lib/colors';
@@ -34,6 +34,7 @@ export default function Proposals() {
   const [selectedId, setSelectedId] = useSelectedId();
   // Agent filter lives in ?agentId= — shareable, survives refresh, and is the deep-link
   // target from agent/theory cards elsewhere in the app.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- query-param key, not UI copy
   const [agentFilter, setAgentFilter] = useSelectedId('agentId');
 
   const agentOptions = useMemo<FilterDropdownOption[]>(() => {
@@ -90,7 +91,7 @@ export default function Proposals() {
             width={240}
           />
           <span className="text-body-sm text-muted">
-            {visibleTheories.length} theor{visibleTheories.length === 1 ? 'y' : 'ies'}
+            <Plural value={visibleTheories.length} one="# theory" other="# theories" />
           </span>
         </div>
       )}

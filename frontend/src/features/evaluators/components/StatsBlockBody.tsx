@@ -4,6 +4,7 @@ import { fmtPct, fmtTokens, fmtLatency } from '../../../lib/format';
 import { EvaluatorKind, type EvaluatorOverviewDto } from '../../../api/models';
 import { SCORE_ORDER, fmtEur } from '../evaluatorMeta';
 import { StatsBlockKpi, EmptyChart } from './StatsBlockKpi';
+import { cn } from '../../../lib/cn';
 
 function fmtScore(v: number | null | undefined): string {
   if (v == null) return '—';
@@ -12,8 +13,8 @@ function fmtScore(v: number | null | undefined): string {
 
 const sanitize = (color: string) => color.replace(/[^a-zA-Z0-9]/g, '');
 
-const sectionCls = 'bg-card rounded-lg shadow-[var(--shadow-card)] px-[18px] py-4';
-const sectionLabelCls = 'text-[12px] text-muted uppercase tracking-[0.06em] font-semibold mb-3';
+const sectionCls = cn('bg-card rounded-lg shadow-[var(--shadow-card)] px-[18px] py-4');
+const sectionLabelCls = cn('text-[12px] text-muted uppercase tracking-[0.06em] font-semibold mb-3');
 
 /** Renders the loaded stats block: KPI strip, trend + distribution charts, and (for LLM judges) cost. */
 export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kind: EvaluatorKind; color: string }) {
@@ -52,6 +53,7 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
               width={420}
               height={140}
               color={color}
+              // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
               gradientId={`evalTrend-${sanitize(color)}`}
               showAxis={false}
               showEndMarker
@@ -84,6 +86,7 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
                 width={860}
                 height={140}
                 color={color}
+                // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
                 gradientId={`evalCost-${sanitize(color)}`}
                 showAxis={false}
                 showEndMarker

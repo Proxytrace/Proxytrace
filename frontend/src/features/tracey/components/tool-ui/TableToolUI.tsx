@@ -8,6 +8,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `show_table` tool. */
 export const TableToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('table', result, status, isError);
   if (state !== 'ready' || !data) {
     return <ToolUIFrame state={state} pendingLabel={t`Building table…`} testId="tracey-table" />;

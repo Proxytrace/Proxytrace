@@ -9,9 +9,11 @@ import { agentColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
 import type { RangeKey } from '../../../lib/time-range';
 import type { TokenAgentShare } from '../dashboardMeta';
+import { cn } from '../../../lib/cn';
 
-const ROW_CLS =
-  'group w-full flex items-center gap-3.5 min-w-0 rounded-md px-2 py-1 -mx-2 cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]';
+const ROW_CLS = cn(
+  'group w-full flex items-center gap-3.5 min-w-0 rounded-md px-2 py-1 -mx-2 cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
+);
 
 interface TokenByAgentSectionProps {
   share: TokenAgentShare;

@@ -25,6 +25,7 @@ const KEPT: MessageDescriptor[] = [
   msg`Projects, Users & API keys`,
 ];
 
+// eslint-disable-next-line lingui/no-unlocalized-strings -- kiosk/danger confirmation must match backend
 const CONFIRM_PHRASE = 'delete all non-model data';
 
 /** Destructive workspace-wide maintenance: wipe runtime/trace data while keeping configuration. */
@@ -35,6 +36,7 @@ export function DangerZoneSection() {
 
   const cleanup = useCleanupNonModelData(() => {
     setConfirm(false);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
     toast(t`Non-model data deleted`, 'success');
   });
 
