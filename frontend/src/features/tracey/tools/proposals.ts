@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { proposalsApi } from '../../../api/proposals';
 import { theoriesApi } from '../../../api/theories';
 import { Priority, ProposalStatus, TheorySource } from '../../../api/models';
-import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest } from './shared';
 import { clip } from './run-analysis';
 
 /** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
@@ -32,12 +32,17 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
   return {
     list_proposals: tool({
       description:
-        'List optimization proposals. Returns a compact index (id, kind, status, priority, agent) ' +
-        'plus a reference; the full list is rendered to the user. To inspect one, call get_proposal.',
-      parameters: empty,
+        'List optimization proposals. Pass agentId to list only that agent\'s proposals (use this ' +
+        'when reviewing or optimizing one agent); omit it for the whole project. Returns a compact ' +
+        'index (id, kind, status, priority, agent) plus a reference; the full list is rendered to ' +
+        'the user. To inspect one, call get_proposal.',
+      parameters: z.object({
+        agentId: z.string().optional().describe('Restrict to the proposals for this agent (an id from list_agents).'),
+      }),
       confirm: false,
-      execute: async () => {
-        const items = await proposalsApi.getAll({ projectId });
+      execute: async ({ agentId }) => {
+        if (agentId !== undefined && !isEntityId(agentId)) return { notFound: agentId };
+        const items = await proposalsApi.getAll({ projectId, agentId });
         return store('proposal-list', items, listDigest(items, 25, (p) => ({
           id: p.id, kind: p.kind, status: p.status, priority: p.priority, agentName: p.agentName,
         })));
@@ -49,10 +54,8 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
         'priority, expected pass-rate delta) plus a reference; the full proposal is rendered to the user.',
       parameters: z.object({ proposalId: z.string().describe('The id of the optimization proposal to fetch.') }),
       confirm: false,
-      // The proposals API has no single-get; resolve from the list.
       execute: async ({ proposalId }) => {
-        const all = await proposalsApi.getAll({ projectId });
-        const proposal = all.find(p => p.id === proposalId);
+        const proposal = await ignore404(() => proposalsApi.get(proposalId, { silentStatuses: [404] }));
         if (!proposal) return { notFound: proposalId };
         return store('proposal', proposal, {
           id: proposal.id,
@@ -75,6 +78,7 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
       }),
       confirm: false,
       execute: async ({ agentId }) => {
+        if (agentId !== undefined && !isEntityId(agentId)) return { notFound: agentId };
         const items = await theoriesApi.getAll({ projectId, agentId });
         return store('theory-list', items, listDigest(items, 20, (t) => ({
           id: t.id,

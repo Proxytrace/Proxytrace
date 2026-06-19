@@ -86,6 +86,19 @@ public class ProposalsController : ControllerBase
     }
 
     /// <summary>
+    /// Returns a single optimization proposal by id, or 404 if it does not exist.
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<OptimizationProposalDto>> Get(Guid id, CancellationToken cancellationToken)
+    {
+        var proposal = await repository.FindAsync(id, cancellationToken);
+        if (proposal is null)
+            return NotFound();
+
+        return Ok(mapper.ToDto(proposal));
+    }
+
+    /// <summary>
     /// Test-only: seeds an optimization proposal directly, bypassing the optimizer pipeline.
     /// Supports SystemPrompt, ModelSwitch and ToolUpdate proposals. A minimal A/B test run is
     /// created for the agent's endpoint to satisfy the proposal's mandatory evidence reference.

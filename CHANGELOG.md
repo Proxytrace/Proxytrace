@@ -133,6 +133,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Tracey reliably optimizes an agent you name.** Asked to "optimize the X agent", Tracey used to
+  trip twice: she passed the typed agent *name* where an agent *id* was required (a guaranteed
+  "not found"), and then listed *every* suite in the project with no way to tell which belonged to
+  the agent (the suite index carried only id and name, not the agent). Now she resolves the name to
+  an id first, and listing suites takes an optional agent filter with each row carrying its agent —
+  so she finds the right agent and the right suite to validate the optimization against instead of
+  guessing. Tracey can also now narrow **runs** and **proposals** to a single agent (previously only
+  traces and theories could be filtered), so she pulls just that agent's evidence instead of the
+  whole project's. If a name still slips into an id filter (suites, runs, proposals, or theories), it
+  now degrades to a clean "not found" the assistant can recover from instead of a raw `400 Bad
+  Request` error toast.
 - **Tracey no longer goes silent after a page reload.** The in-app assistant kept the app's JWT in
   memory only, but its chat transport sent a placeholder `Authorization` header when that token was
   absent — which is the case after every browser reload (the session is restored from the cookie, not

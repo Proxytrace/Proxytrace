@@ -90,6 +90,16 @@ export async function ignore404<T>(read: () => Promise<T>): Promise<T | undefine
 }
 
 /**
+ * Canonical GUID shape — what every Proxytrace entity id is. The model sometimes passes a *name*
+ * where an id is required (e.g. an `agentId` filter set to "tracey"). For by-id GETs that hit a
+ * `{id:guid}` route a non-id just 404s (handled by {@link ignore404}), but an id-typed *query
+ * filter* binds to `[FromQuery] Guid?` and a non-GUID trips a raw 400 + error toast before the
+ * action runs. Guard such filters with this and short-circuit to a graceful `{ notFound }` instead.
+ */
+const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isEntityId = (value: string): boolean => GUID_RE.test(value.trim());
+
+/**
  * Build a capped list digest for the model: the total count, the first `max` mapped rows, and —
  * only when rows were dropped — a note telling the model the user's card still shows everything.
  * Every `list_*` digest goes through this so a large project can't flood the context.

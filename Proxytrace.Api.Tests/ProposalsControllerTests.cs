@@ -285,6 +285,32 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         artifact.Adoption.AdoptedAt.Should().BeNull();
     }
 
+    [TestMethod]
+    public async Task Get_Unknown_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.Get(Guid.NewGuid(), CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task Get_ExistingProposal_ReturnsDto()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var proposal = await SeedSystemPromptProposalAsync(services);
+
+        var result = await controller.Get(proposal.Id, CancellationToken);
+
+        var dto = result.Result.Should().BeOfType<OkObjectResult>()
+            .Subject.Value.Should().BeOfType<OptimizationProposalDto>().Subject;
+        dto.Id.Should().Be(proposal.Id);
+        dto.AgentId.Should().Be(proposal.Agent.Id);
+    }
+
     private async Task<IOptimizationProposal> SeedSystemPromptProposalAsync(
         IServiceProvider services, string proposedPrompt = "proposed")
     {

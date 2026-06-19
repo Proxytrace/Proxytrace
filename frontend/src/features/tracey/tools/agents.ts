@@ -27,7 +27,12 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
       description:
         'Get a single agent by id. Returns a curated summary (name, endpoint, tool count, system ' +
         'prompt preview) plus a reference; the full agent is rendered to the user as a card.',
-      parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch.') }),
+      parameters: z.object({
+        agentId: z.string().describe(
+          'The id of the agent to fetch — an id from list_agents, NOT the agent\'s name. ' +
+          'If you only have a name, call list_agents first and use the matching row\'s id.',
+        ),
+      }),
       confirm: false,
       execute: async ({ agentId }) => {
         const agent = await ignore404(() => agentsApi.get(agentId, { silentStatuses: [404] }));

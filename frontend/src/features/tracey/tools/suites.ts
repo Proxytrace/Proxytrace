@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testCasesApi } from '../../../api/test-cases';
-import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest } from './shared';
 
 /** The compact suite digest returned by the read + curation tools (the card shows everything). */
 const suiteDigest = (suite: { id: string; name: string; agentName: string; testCases: unknown[]; passRate: number | null }) => ({
@@ -17,12 +17,22 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
   return {
     list_suites: tool({
-      description: 'List the project\'s test suites. Returns a compact index; the full list renders to the user.',
-      parameters: empty,
+      description:
+        'List test suites. Pass agentId to list only the suites that benchmark that agent (use this when ' +
+        'optimizing or curating for a specific agent); omit it for all of the project\'s suites. Returns a ' +
+        'compact index — each row carries the suite\'s agent — and the full list renders to the user.',
+      parameters: z.object({
+        agentId: z.string().optional().describe('Restrict to the suites that benchmark this agent.'),
+      }),
       confirm: false,
-      execute: async () => {
-        const items = (await testSuitesApi.list({ projectId })).items;
-        return store('suite-list', items, listDigest(items, 25, (s) => ({ id: s.id, name: s.name })));
+      execute: async ({ agentId }) => {
+        if (agentId !== undefined && !isEntityId(agentId)) return { notFound: agentId };
+        const items = (await testSuitesApi.list({ projectId, agentId })).items;
+        return store(
+          'suite-list',
+          items,
+          listDigest(items, 25, (s) => ({ id: s.id, name: s.name, agentId: s.agentId, agentName: s.agentName })),
+        );
       },
     }),
     get_suite: tool({

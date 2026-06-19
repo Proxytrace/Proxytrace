@@ -14,10 +14,13 @@ that tool renders shows the live result.
 
 ## Preconditions (check before theorizing)
 
-1. **The agent exists.** Resolve it with `get_agent` (or `list_agents` if the user named it
-   loosely). If it doesn't exist, say so and stop.
-2. **The agent has a test suite.** Call `list_suites` and find the one whose `agentId` matches
-   the target agent. A theory is validated against a suite, so this is required.
+1. **The agent exists.** The user names the agent ("the Tracey agent"), so resolve that name to an
+   id with `list_agents` FIRST, then `get_agent` with the matched id — never pass the typed name as
+   `agentId` (it is a name, not an id, and 404s). If nothing matches, say so and stop; if several
+   match, disambiguate with `ask_questions`.
+2. **The agent has a test suite.** Call `list_suites({ agentId })` with the target agent's id — it
+   returns only that agent's suites (each row also carries `agentId`/`agentName`). A theory is
+   validated against a suite, so this is required.
    - If there is **no** suite for the agent, explain that optimization needs a test suite to
      measure against, point them to create one, and stop. Do not submit a theory without a suite.
    - If there are several, ask the user which suite to validate against with `ask_questions`.
@@ -32,7 +35,7 @@ relevant prior attempts in your rationale.
 
 Don't guess. Look at how the agent is actually doing before proposing a change:
 
-- `list_runs` → pick the latest completed run, then `get_run_failures` — the failing cases with
+- `list_runs({ agentId })` → pick the latest completed run, then `get_run_failures` — the failing cases with
   each evaluator's verdict and reasoning. This is your primary evidence: read the actual
   responses and the reasoning, and name the failure pattern (wrong format? ignored constraint?
   missing knowledge? tone?).

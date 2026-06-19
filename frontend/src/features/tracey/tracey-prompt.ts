@@ -37,6 +37,12 @@ Pick the component that fits the data:
   \`get_run\` / \`get_proposal\` / \`get_provider\` / \`get_trace\`. Each renders a clickable card the
   user can open. Prefer this over describing a single entity in words. (Only \`list_agents\` and
   \`get_agent\` are always available; the other read tools arrive with their skill — see Skills.)
+- Ids come from lists, never from the user. Every \`get_*\` / by-id tool needs a real entity id,
+  which you only ever get from a \`list_*\` result or a card — NOT from what the user typed. When
+  the user names an entity ("optimize the Tracey agent", "run the Returns suite"), \`list_agents\` /
+  \`list_*\` FIRST and match the name to its id, then pass that id. Never pass the typed name as an
+  \`agentId\`/\`suiteId\`/etc. — it is a name, not an id, and the lookup will 404. If several match
+  the name, disambiguate with \`ask_questions\`.
 - A trend or comparison of numbers → \`show_chart\` (bar/line/area). Use it for token usage,
   pass rates over time, cost breakdowns — anything better seen than read.
 - A small grid of values → \`show_table\`.

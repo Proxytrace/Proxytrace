@@ -3,19 +3,24 @@ import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
-import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest } from './shared';
 import { clip, compareRuns, failingResults } from './run-analysis';
 import { isRunTerminal } from './await';
 
 export const createRunTools: ToolFactory = (_ctx, store) => ({
   list_runs: tool({
     description:
-      'List recent test runs. Returns a compact index (id, suite, agent, status, pass rate) plus ' +
-      'a reference; the full list is rendered to the user. To inspect one run, call get_run.',
-    parameters: empty,
+      'List recent test runs, newest first. Pass agentId to list only that agent\'s runs (use this ' +
+      'when optimizing or inspecting one agent); omit it for the whole project. Returns a compact ' +
+      'index (id, suite, agent, status, pass rate) plus a reference; the full list is rendered to ' +
+      'the user. To inspect one run, call get_run.',
+    parameters: z.object({
+      agentId: z.string().optional().describe('Restrict to the runs of this agent (an id from list_agents).'),
+    }),
     confirm: false,
-    execute: async () => {
-      const items = (await testRunsApi.list({})).items;
+    execute: async ({ agentId }) => {
+      if (agentId !== undefined && !isEntityId(agentId)) return { notFound: agentId };
+      const items = (await testRunsApi.list({ agentId })).items;
       return store('run-list', items, listDigest(items, 20, (r) => ({
         id: r.id, suiteName: r.suiteName, agentName: r.agentName, status: r.status, passRate: r.passRate,
       })));
