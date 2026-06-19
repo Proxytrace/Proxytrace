@@ -37,6 +37,17 @@ function statusVariant(item: AwaitResult) {
  * progress — this card only summarizes what the wait returned.
  */
 export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
+  // User hit Stop while the wait was polling: the poll aborts, but the test run / theory keeps
+  // running on the backend — so this is a calm "stopped", not a red error.
+  if (status.type === 'incomplete' && status.reason === 'cancelled') {
+    return (
+      <ToolUIFrame state="ready" icon={<ClockIcon size={14} />} title="Wait stopped" testId="tracey-await-card">
+        <span className="text-body-sm text-muted">
+          You stopped before these finished — they keep running in the background.
+        </span>
+      </ToolUIFrame>
+    );
+  }
   if (isError || status.type === 'incomplete') {
     return <ToolUIFrame state="error" testId="tracey-await-card" />;
   }

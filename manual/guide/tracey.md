@@ -71,6 +71,13 @@ slash command — send it as-is to invoke that tool directly.
 Tracey **streams** her replies as they are generated and renders them as Markdown (headings,
 lists, tables, and code blocks).
 
+While Tracey is thinking or replying, the **send** button turns into a **Stop** button — press it
+to cancel the response. Stopping halts her generation immediately (the in-flight model call is
+cancelled, not left running in the background) and ends the turn. If she was waiting on a
+long-running action you started — a test run or an optimization theory — stopping only ends her
+*waiting*; that action keeps running on the server, and you'll still find its result on the Runs or
+Proposals page.
+
 ## Inline components
 
 Tracey renders rich UI **directly in the chat thread** rather than dumping raw numbers:

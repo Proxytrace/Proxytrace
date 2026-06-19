@@ -11,6 +11,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Stop Tracey mid-reply.** While Tracey is thinking or replying, her **send** button now becomes a
+  **Stop** button — pressing it cancels the response. The in-flight model call is torn down (not left
+  running in the background), so a long or off-track answer can be halted immediately. If she was
+  waiting on a long-running action you started (a test run or optimization theory), stopping only ends
+  her wait — that action keeps running on the server and its result still lands on the Runs/Proposals
+  page.
+
 - **Jump from an error toast to the captured error.** When a backend request fails, the red error
   toast is now clickable for admins — selecting it opens the **Error Log** with that exact error
   already selected, so you go straight from "something broke" to its full stacktrace. The toast

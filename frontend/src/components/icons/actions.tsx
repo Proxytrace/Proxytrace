@@ -124,6 +124,15 @@ export function SearchLineIcon(props: IconProps) {
   );
 }
 
+/** Filled rounded square — stop / halt a running action (e.g. a streaming Tracey turn). */
+export function StopIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <rect x="6" y="6" width="12" height="12" rx="2.5" />
+    </svg>
+  );
+}
+
 /** Closed padlock — marks license-gated nav entries and upgrade affordances. */
 export function LockIcon(props: IconProps) {
   return (

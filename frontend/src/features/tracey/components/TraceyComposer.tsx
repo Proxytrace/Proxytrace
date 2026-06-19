@@ -1,8 +1,8 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
-import { ComposerPrimitive, useComposer, useComposerRuntime } from '@assistant-ui/react';
+import { ComposerPrimitive, ThreadPrimitive, useComposer, useComposerRuntime } from '@assistant-ui/react';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 import { TRACEY_TOOLS_META } from '../tracey-tools';
-import { ArrowUpIcon, MessagePlusIcon, SparklesIcon } from '../../../components/icons';
+import { ArrowUpIcon, MessagePlusIcon, SparklesIcon, StopIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
 import { SlashMenu, type SlashItem } from './SlashMenu';
@@ -20,6 +20,15 @@ const ALL_ITEMS: SlashItem[] = [
   ...QUICK_ACTIONS.map((action): SlashItem => ({ kind: 'action', action })),
   ...TRACEY_TOOLS_META.map((t): SlashItem => ({ kind: 'tool', name: t.name, description: t.description })),
 ];
+
+/** Shared footprint for the composer's primary control, so Send and Stop occupy the same slot. */
+const COMPOSER_BTN_CLS =
+  'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md transition-[background,color,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40';
+// Send: the gold primary CTA. Stop: neutral halt control (gold fill is reserved for the one
+// primary action per DESIGN.md, and a halt reads better as a calm neutral square).
+const SEND_BTN_CLS =
+  'bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]';
+const STOP_BTN_CLS = 'border border-border bg-card-2 text-primary hover:bg-card';
 
 function matches(item: SlashItem, query: string): boolean {
   if (!query) return true;
@@ -157,13 +166,31 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
               >
                 <MessagePlusIcon size={16} />
               </IconButton>
-              <ComposerPrimitive.Send
-                aria-label="Send"
-                title="Send"
-                className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-md bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] transition-[background,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] hover:bg-[image:var(--grad-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ArrowUpIcon size={16} />
-              </ComposerPrimitive.Send>
+              {/* While a turn streams/runs tools the send button becomes a Stop button.
+                  ComposerPrimitive.Cancel cancels the run, which aborts the AI SDK signal we
+                  forward into streamText + every tool's execute — so the upstream LLM call (and
+                  any in-flight await_actions poll) tears down, and the server's RequestAborted
+                  cancellation token fires on the proxied call. */}
+              <ThreadPrimitive.If running={false}>
+                <ComposerPrimitive.Send
+                  aria-label="Send"
+                  title="Send"
+                  data-testid="tracey-send-btn"
+                  className={cn(COMPOSER_BTN_CLS, SEND_BTN_CLS)}
+                >
+                  <ArrowUpIcon size={16} />
+                </ComposerPrimitive.Send>
+              </ThreadPrimitive.If>
+              <ThreadPrimitive.If running>
+                <ComposerPrimitive.Cancel
+                  aria-label="Stop"
+                  title="Stop generating"
+                  data-testid="tracey-stop-btn"
+                  className={cn(COMPOSER_BTN_CLS, STOP_BTN_CLS)}
+                >
+                  <StopIcon size={13} />
+                </ComposerPrimitive.Cancel>
+              </ThreadPrimitive.If>
             </div>
           </div>
         </ComposerPrimitive.Root>

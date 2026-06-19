@@ -80,7 +80,7 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens/duration/`stoppedEarly` (step budget hit) + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
-| `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
+| `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu; its **send button toggles to a Stop button** via `ThreadPrimitive.If running` + `ComposerPrimitive.Cancel` while a turn runs — see "Stopping a turn"), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
 | `api/tracey.ts` | `getSession()` → `{ model, agentId }` for `GET /api/tracey/session`. |
 
 ## How a turn flows
@@ -103,6 +103,28 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
 6. On the stream's **finish** part, `toUIMessageStream({ messageMetadata })` writes
    `metadata.custom = { traceConversationId, usage, durationMs }`, which drives `MessageStatusBar`.
+
+## Stopping a turn (the cancel chain)
+
+While a turn is running, `TraceyComposer`'s gold **Send** button is replaced by a neutral **Stop**
+button (`ComposerPrimitive.Cancel`, gated by `ThreadPrimitive.If running` — the same `running`
+signal that drives the "Thinking…" indicator). Pressing it cancels the run, and that one action
+propagates the whole way down both planes:
+
+- assistant-ui `cancel()` aborts the AI SDK run's `AbortController`. That signal arrives as
+  `options.abortSignal` in `TraceyTransport.sendMessages`, where it is forwarded **both** to
+  `streamText({ abortSignal })` (reasoning plane) **and** to every tool's `execute` via the SDK
+  tool adapter (data plane — see `buildAiTools`).
+- Aborting `streamText` aborts the underlying `fetch` to `/api/tracey/{projectId}/openai/v1`, which
+  closes the connection. On the server, `TraceyChatController.Forward`'s action `CancellationToken`
+  is `HttpContext.RequestAborted`; it is threaded into the upstream `client.SendAsync` and the
+  SSE relay's `ReadLineAsync`, so the **upstream provider call is torn down** rather than left
+  generating in the background. (A cancelled stream throws `OperationCanceledException` before the
+  finish line, so a stopped turn is not ingested as a partial trace.)
+- A long-running `await_actions` wait honors the same signal (abort-aware sleep + the poll GET's
+  `signal`), so Stop ends the polling immediately instead of waiting out the 10-minute cap. The
+  backend run/theory itself keeps going — only Tracey's *wait* is cancelled — so `AwaitActionsToolUI`
+  renders a calm "Wait stopped" state for `status.reason === 'cancelled'` (not a red error).
 
 ## Progressive tool disclosure (skills gate tools)
 
@@ -281,7 +303,8 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
   Failures are captured **per handle** (a bad id or network error lands in `errors`), so one bad
   handle can't lose the other results.
 - The wait honors the turn's **abort signal**: hitting Stop cancels the polling immediately
-  instead of letting it run to the cap in the background.
+  instead of letting it run to the cap in the background (see "Stopping a turn"). The card then
+  shows a neutral "Wait stopped" state — the backend run/theory keeps going regardless.
 - `confirm: false`. Its inline card (`AwaitActionsToolUI`) lists the awaited handles with a
   spinner while waiting and one status row per action when done (timed-out → warn, failed handle →
   danger); the per-item **live** cards (`StartTestRunToolUI`, `TheoryToolUI`) still stream the
