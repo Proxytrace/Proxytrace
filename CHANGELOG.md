@@ -11,6 +11,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Cached-input tokens are now tracked and priced separately.** Many providers serve part of a
+  prompt from their cache at a much lower rate. Proxytrace now captures how many of each call's input
+  tokens were cache-served (from both the ingestion proxy and Playground/test-run/evaluator calls),
+  fetches the cheaper **cached-input price** from the model-price catalog alongside the input/output
+  prices, and factors it into every cost estimate — so the numbers reflect what you actually pay. A
+  muted **"(N% cached)"** hint now appears next to the input-token figures across Traces, the
+  dashboard, the Playground, agent and run summaries, and the LLM-judge cost panels. Calls with no
+  cached price keep costing exactly as before.
+
 - **Connect external AI agents over MCP.** Proxytrace now hosts a built-in
   [Model Context Protocol](https://modelcontextprotocol.io) server at `/mcp`, so external agents
   (Claude Desktop, Cursor, your own scripts) can use Proxytrace the way the built-in Tracey assistant
@@ -169,6 +178,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   record's string representation.
 
 ### Fixed
+
+- **Test suites can be deleted again.** Deleting a suite that had been run (or that had an
+  optimization theory) failed with a foreign-key error: the run groups, runs, A/B-test proposals and
+  theories that referenced it blocked the delete. Removing a suite now cascades to all of them — its
+  run groups, runs, schedules, theories, and the proposals produced from those runs are removed with
+  it — so a suite you no longer want always deletes cleanly.
 
 - **Tracey reliably optimizes an agent you name.** Asked to "optimize the X agent", Tracey used to
   trip twice: she passed the typed agent *name* where an agent *id* was required (a guaranteed

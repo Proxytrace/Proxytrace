@@ -102,7 +102,7 @@ internal class SetupService : ISetupService
 
             // Prices are resolved by the refresher below (and the periodic refresh) — never entered manually.
             var endpoint = await endpoints.AddAsync(
-                createEndpoint(model, provider, inputTokenCost: null, outputTokenCost: null),
+                createEndpoint(model, provider, inputTokenCost: null, outputTokenCost: null, cachedInputTokenCost: null),
                 cancellationToken);
 
             // No Proxytrace API key is created here: clients keep their upstream provider key

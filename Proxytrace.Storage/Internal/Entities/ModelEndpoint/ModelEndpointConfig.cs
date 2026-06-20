@@ -30,6 +30,7 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
     {
         builder.Property(e => e.InputTokenCost).HasPrecision(18, 6).IsRequired(false);
         builder.Property(e => e.OutputTokenCost).HasPrecision(18, 6).IsRequired(false);
+        builder.Property(e => e.CachedInputTokenCost).HasPrecision(18, 6).IsRequired(false);
 
         builder
             .HasOne<ModelEntity>()
@@ -52,7 +53,7 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
     {
         var model = await models.GetAsync(stored.Model, cancellationToken);
         var provider = await providers.GetAsync(stored.Provider, cancellationToken);
-        return factory(model, provider, stored.InputTokenCost, stored.OutputTokenCost, stored);
+        return factory(model, provider, stored.InputTokenCost, stored.OutputTokenCost, stored.CachedInputTokenCost, stored);
     }
 
     public Task<ModelEndpointEntity> Map(IModelEndpoint domain, CancellationToken cancellationToken = default)
@@ -63,6 +64,7 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
             Provider = domain.Provider.Id,
             InputTokenCost = domain.InputTokenCost,
             OutputTokenCost = domain.OutputTokenCost,
+            CachedInputTokenCost = domain.CachedInputTokenCost,
             IsArchived = domain.IsArchived,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

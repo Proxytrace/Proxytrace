@@ -127,10 +127,10 @@ describe('computeModelSplit', () => {
 
   it('returns top-3 sorted by tokens', () => {
     const data: ModelBreakdownDto[] = [
-      { endpointId: 'e-a', modelName: 'a', totalInputTokens: 10, totalOutputTokens: 10, callCount: 1, avgDurationMs: 0 },
-      { endpointId: 'e-b', modelName: 'b', totalInputTokens: 100, totalOutputTokens: 100, callCount: 1, avgDurationMs: 0 },
-      { endpointId: 'e-c', modelName: 'c', totalInputTokens: 50, totalOutputTokens: 50, callCount: 1, avgDurationMs: 0 },
-      { endpointId: 'e-d', modelName: 'd', totalInputTokens: 5, totalOutputTokens: 5, callCount: 1, avgDurationMs: 0 },
+      { endpointId: 'e-a', modelName: 'a', totalInputTokens: 10, totalOutputTokens: 10, totalCachedInputTokens: 0, callCount: 1, avgDurationMs: 0 },
+      { endpointId: 'e-b', modelName: 'b', totalInputTokens: 100, totalOutputTokens: 100, totalCachedInputTokens: 0, callCount: 1, avgDurationMs: 0 },
+      { endpointId: 'e-c', modelName: 'c', totalInputTokens: 50, totalOutputTokens: 50, totalCachedInputTokens: 0, callCount: 1, avgDurationMs: 0 },
+      { endpointId: 'e-d', modelName: 'd', totalInputTokens: 5, totalOutputTokens: 5, totalCachedInputTokens: 0, callCount: 1, avgDurationMs: 0 },
     ];
     const { models, total } = computeModelSplit(data);
     expect(models).toHaveLength(3);
@@ -175,9 +175,9 @@ describe('computeTokenAgentShare', () => {
 
   it('totals per agent, sorts desc, and computes share', () => {
     const raw: AgentTokenUsageDto[] = [
-      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 5 },
-      { agentId: 'a2', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 20, outputTokens: 10 },
-      { agentId: 'a1', bucketStart: '2024-01-01T01:00:00+00:00', inputTokens: 5, outputTokens: 0 },
+      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 5, cachedInputTokens: 0 },
+      { agentId: 'a2', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 20, outputTokens: 10, cachedInputTokens: 0 },
+      { agentId: 'a1', bucketStart: '2024-01-01T01:00:00+00:00', inputTokens: 5, outputTokens: 0, cachedInputTokens: 0 },
     ];
     const { agents: list, total } = computeTokenAgentShare(raw, agents);
     expect(total).toBe(50);
@@ -190,8 +190,8 @@ describe('computeTokenAgentShare', () => {
 
   it('excludes system agents', () => {
     const raw: AgentTokenUsageDto[] = [
-      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 0 },
-      { agentId: 'sys', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 99, outputTokens: 0 },
+      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 0, cachedInputTokens: 0 },
+      { agentId: 'sys', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 99, outputTokens: 0, cachedInputTokens: 0 },
     ];
     const { agents: list, total } = computeTokenAgentShare(raw, agents);
     expect(total).toBe(10);

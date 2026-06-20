@@ -16,6 +16,7 @@ public sealed record AgentCallListItem(
     int ToolCount,
     ulong? InputTokens,
     ulong? OutputTokens,
+    ulong? CachedInputTokens,
     double? LatencyMs,
     int HttpStatus,
     string? FinishReason,

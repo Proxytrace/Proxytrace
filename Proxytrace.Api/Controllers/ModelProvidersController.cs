@@ -219,7 +219,7 @@ public class ModelProvidersController : ControllerBase
 
         IModel model = await modelRepository.GetOrCreateAsync(request.ModelName, cancellationToken);
 
-        var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost);
+        var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost, cachedInputTokenCost: null);
         var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);
         return CreatedAtAction(nameof(GetModels), new { providerId }, mapper.ToEndpointDto(saved));
     }
@@ -253,7 +253,11 @@ public class ModelProvidersController : ControllerBase
         if (existing.Provider.Id != providerId)
             return NotFound("Model endpoint not found.");
 
-        var updated = updateEndpoint(existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost, existing);
+        // Cached-input price is auto-fetched only (not user-editable) — preserve the existing value
+        // so a manual input/output edit never wipes it.
+        var updated = updateEndpoint(
+            existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost,
+            existing.CachedInputTokenCost, existing);
         var saved = await endpointRepository.UpdateAsync(updated, cancellationToken);
         return mapper.ToEndpointDto(saved);
     }

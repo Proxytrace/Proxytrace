@@ -13,6 +13,7 @@ internal record TestResultEntity : Entity
     public required long DurationMs { get; init; }
     public required long? InputTokens { get; init; }
     public required long? OutputTokens { get; init; }
+    public required long? CachedInputTokens { get; init; }
 }
 
 /// <summary>
@@ -26,6 +27,7 @@ internal record StoredEvaluation
     public string? ErrorMessage { get; init; }
     public long? InputTokens { get; init; }
     public long? OutputTokens { get; init; }
+    public long? CachedInputTokens { get; init; }
     public long LatencyMicroseconds { get; init; }
     public decimal? Cost { get; init; }
 }

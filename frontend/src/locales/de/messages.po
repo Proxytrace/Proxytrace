@@ -181,6 +181,14 @@ msgstr "{0} · {1} Runs"
 msgid "{0} · {1} runs · last {2}"
 msgstr "{0} · {1} Runs · zuletzt {2}"
 
+#. placeholder {0}: fmtTokens(summary.inputTokens)
+msgid "{0} · {cached}% cached"
+msgstr "{0} · {cached}% zwischengespeichert"
+
+#. placeholder {0}: fmt(inT)
+msgid "{0} · {cachedShare}% cached"
+msgstr "{0} · {cachedShare}% zwischengespeichert"
+
 #. placeholder {0}: modelSplit.models.length
 msgid "{0} active"
 msgstr "{0} aktiv"
@@ -236,6 +244,13 @@ msgstr "{0} Eingabe · {1} Ausgabe"
 #. placeholder {3}: fmtCost(trace.costEur)
 msgid "{0} in · {1} out · {2} · {3}"
 msgstr "{0} Eingabe · {1} Ausgabe · {2} · {3}"
+
+#. placeholder {0}: fmtTokens(stats.inputTokens)
+#. placeholder {0}: fmtTokens(sum.totalInputTokens)
+#. placeholder {1}: fmtTokens(stats.outputTokens)
+#. placeholder {1}: fmtTokens(sum.totalOutputTokens)
+msgid "{0} in · {1} out · {cached}% cached"
+msgstr "{0} rein · {1} raus · {cached}% zwischengespeichert"
 
 #. placeholder {0}: cell.total
 msgid "{0} judged"
@@ -461,6 +476,9 @@ msgstr "{passed}/{total} bestanden · {failed} fehlgeschlagen"
 msgid "{passPercent}% pass"
 msgstr "{passPercent}% bestanden"
 
+msgid "{pct}% cached"
+msgstr "{pct}% zwischengespeichert"
+
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# Proposal bereit} other {# Proposals bereit}}"
 
@@ -483,6 +501,9 @@ msgstr "{runCount} Modelle"
 
 msgid "{sizeB} B"
 msgstr "{sizeB} B"
+
+msgid "{tok} · {cached}% cached"
+msgstr "{tok} · {cached}% zwischengespeichert"
 
 msgid "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
 msgstr "{toolCallCount, plural, one {# Tool-Aufruf} other {# Tool-Aufrufe}}"
@@ -956,6 +977,12 @@ msgstr "Diagramm wird erstellt…"
 
 msgid "Building table…"
 msgstr "Tabelle wird erstellt…"
+
+msgid "Cached"
+msgstr "Im Cache"
+
+msgid "Cached / 1M €"
+msgstr "Zwischengespeichert / 1 Mio. €"
 
 msgid "Calls"
 msgstr "Aufrufe"
@@ -1910,6 +1937,9 @@ msgstr "Input-Tokens"
 
 msgid "Input tokens (prompt)"
 msgstr "Input-Tokens (Prompt)"
+
+msgid "Input tokens (prompt) · {cachedShare}% served from cache"
+msgstr "Eingabetokens (Prompt) · {cachedShare}% aus dem Cache bereitgestellt"
 
 msgid "Inputs the agent has historically struggled with — track improvements over time."
 msgstr "Inputs, mit denen der Agent in der Vergangenheit Schwierigkeiten hatte — Verbesserungen im Laufe der Zeit verfolgen."

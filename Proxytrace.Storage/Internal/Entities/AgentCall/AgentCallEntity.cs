@@ -13,6 +13,7 @@ internal record AgentCallEntity : Entity
     public required AssistantMessage? Response { get; init; }
     public required ulong? InputTokens { get; init; }
     public required ulong? OutputTokens { get; init; }
+    public required ulong? CachedInputTokens { get; init; }
     public required double? LatencyMs { get; init; }
     public required int HttpStatus { get; init; }
     public required string? FinishReason { get; init; }

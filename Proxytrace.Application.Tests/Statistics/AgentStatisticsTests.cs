@@ -48,8 +48,8 @@ public sealed class AgentStatisticsTests : BaseTest<Module>
         var from = DateTimeOffset.UtcNow.AddDays(-1);
         var to = DateTimeOffset.UtcNow;
 
-        var summary = new AgentTimeSummary(5, 10, 20, 1.5m, 30);
-        IReadOnlyList<AgentTimeSeriesPoint> series = [new AgentTimeSeriesPoint(to, 1, 5, 10, 0.5m, 30)];
+        var summary = new AgentTimeSummary(5, 10, 20, 4, 1.5m, 30);
+        IReadOnlyList<AgentTimeSeriesPoint> series = [new AgentTimeSeriesPoint(to, 1, 5, 10, 2, 0.5m, 30)];
         callStats.GetAgentWindowAsync(agentId, from, to, StatisticsBucket.Daily, Arg.Any<CancellationToken>())
             .Returns((series, summary));
 

@@ -13,18 +13,21 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
     public IModelProvider Provider { get; }
     public decimal? InputTokenCost { get; }
     public decimal? OutputTokenCost { get; }
+    public decimal? CachedInputTokenCost { get; }
 
     public ModelEndpoint(
         IModel model,
         IModelProvider provider,
         decimal? inputTokenCost,
         decimal? outputTokenCost,
+        decimal? cachedInputTokenCost,
         IRepository<IModelEndpoint> repository) : base(repository)
     {
         Model = model;
         Provider = provider;
         InputTokenCost = inputTokenCost;
         OutputTokenCost = outputTokenCost;
+        CachedInputTokenCost = cachedInputTokenCost;
     }
 
     public ModelEndpoint(
@@ -32,6 +35,7 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         IModelProvider provider,
         decimal? inputTokenCost,
         decimal? outputTokenCost,
+        decimal? cachedInputTokenCost,
         IDomainEntityData existing,
         IRepository<IModelEndpoint> repository)
         : base(existing, repository)
@@ -40,13 +44,27 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         Provider = provider;
         InputTokenCost = inputTokenCost;
         OutputTokenCost = outputTokenCost;
+        CachedInputTokenCost = cachedInputTokenCost;
     }
 
-    public decimal? CalculateCost(TokenUsage usage) 
-        => this is { InputTokenCost: not null, OutputTokenCost: not null }
-            ? (InputTokenCost.Value * usage.InputTokenCount + OutputTokenCost.Value * usage.OutputTokenCount) /
-              1_000_000m
-            : null;
+    /// <summary>
+    /// Computes the EUR cost of a usage. The cached input subset is priced at
+    /// <see cref="CachedInputTokenCost"/> (falling back to <see cref="InputTokenCost"/> when no
+    /// cached price is configured); the remaining input at <see cref="InputTokenCost"/>. Returns
+    /// <c>null</c> when either input or output price is unknown.
+    /// </summary>
+    public decimal? CalculateCost(TokenUsage usage)
+    {
+        if (InputTokenCost is not { } inputCost || OutputTokenCost is not { } outputCost)
+            return null;
+
+        ulong cached = Math.Min(usage.CachedInputTokenCount, usage.InputTokenCount);
+        ulong uncachedInput = usage.InputTokenCount - cached;
+        decimal cachedCost = CachedInputTokenCost ?? inputCost;
+
+        return (inputCost * uncachedInput + cachedCost * cached + outputCost * usage.OutputTokenCount) /
+               1_000_000m;
+    }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -65,8 +83,14 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         if (OutputTokenCost.HasValue)
             yield return Validation.Positive(OutputTokenCost.Value, nameof(OutputTokenCost));
 
+        if (CachedInputTokenCost.HasValue)
+            yield return Validation.Positive(CachedInputTokenCost.Value, nameof(CachedInputTokenCost));
+
         if (InputTokenCost.HasValue && OutputTokenCost.HasValue)
             yield return Validation.LessThanOrEqual(InputTokenCost.Value, OutputTokenCost.Value, nameof(InputTokenCost));
+
+        if (CachedInputTokenCost.HasValue && InputTokenCost.HasValue)
+            yield return Validation.LessThanOrEqual(CachedInputTokenCost.Value, InputTokenCost.Value, nameof(CachedInputTokenCost));
     }
 }
 

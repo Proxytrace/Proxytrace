@@ -5,7 +5,7 @@ import { fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { TRACE_GRID_CLS, toolCount } from '../tracesMeta';
-import { MessagePreviewCell, TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
+import { MessagePreviewCell, TokenCell, CachedCell, ToolsCell, LatencyCell } from './TraceTableCells';
 
 interface Props {
   trace: AgentCallListItemDto;
@@ -37,6 +37,7 @@ export function FlatTraceRow({ trace, selected, onClick }: Props) {
       <StatusDot httpStatus={trace.httpStatus} />
       <span className="@max-2xl:hidden"><ToolsCell count={toolCount(trace)} /></span>
       <span className="@max-2xl:hidden"><TokenCell trace={trace} /></span>
+      <span className="@max-2xl:hidden"><CachedCell cachedInput={trace.cachedInputTokens} input={trace.inputTokens} /></span>
       <span className="@max-2xl:hidden"><LatencyCell ms={trace.durationMs} /></span>
       <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(trace.createdAt)}</span>
     </div>

@@ -9,6 +9,7 @@ public sealed record ToolRequestEvent(string Id, string Name, string Arguments) 
 public sealed record DoneEvent(
     ulong InputTokens,
     ulong OutputTokens,
+    ulong CachedInputTokens,
     long LatencyMs,
     decimal? CostEur,
     string? FinishReason) : PlaygroundEvent;

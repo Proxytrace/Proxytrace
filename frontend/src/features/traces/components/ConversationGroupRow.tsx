@@ -7,7 +7,7 @@ import { tracePreview } from '../../../lib/trace';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { TRACE_GRID_CLS, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
-import { TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
+import { TokenCell, CachedCell, ToolsCell, LatencyCell } from './TraceTableCells';
 import { Trans, Plural } from '@lingui/react/macro';
 
 interface Props {
@@ -21,6 +21,8 @@ interface Props {
 export function ConversationGroupRow({ group, expanded, onToggle, selectedId, onSelectTrace }: Props) {
   const { turns, conversationId } = group;
   const totalTokens = turns.reduce((n, t) => n + t.inputTokens + t.outputTokens, 0);
+  const totalInput = turns.reduce((n, t) => n + t.inputTokens, 0);
+  const totalCachedInput = turns.reduce((n, t) => n + t.cachedInputTokens, 0);
   const totalMs = turns.reduce((n, t) => n + t.durationMs, 0);
   const totalTools = turns.reduce((n, t) => n + toolCount(t), 0);
   const agentName = turns[0].agentName;
@@ -79,6 +81,8 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           <span className="text-muted ml-[5px] text-caption"><Trans>total</Trans></span>
         </span>
 
+        <span className="@max-2xl:hidden"><CachedCell cachedInput={totalCachedInput} input={totalInput} /></span>
+
         <span className="@max-2xl:hidden"><LatencyCell ms={totalMs} /></span>
 
         <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turns[0].createdAt)}</span>
@@ -115,6 +119,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           <StatusDot httpStatus={turn.httpStatus} />
           <span className="@max-2xl:hidden"><ToolsCell count={toolCount(turn)} /></span>
           <span className="@max-2xl:hidden"><TokenCell trace={turn} /></span>
+          <span className="@max-2xl:hidden"><CachedCell cachedInput={turn.cachedInputTokens} input={turn.inputTokens} /></span>
           <span className="@max-2xl:hidden"><LatencyCell ms={turn.durationMs} /></span>
           <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turn.createdAt)}</span>
         </div>

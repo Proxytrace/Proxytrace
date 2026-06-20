@@ -111,6 +111,26 @@ The `AddTestRunScheduling` migration adds the `TestRunScheduleEntity` table and 
 `TestRunGroupEntity.ScheduleId` column + FK (`OnDelete(Restrict)`) linking a run group back to the
 schedule that triggered it.
 
+The `AddCachedInputTokens` migration adds four **nullable** columns for the cached-input-token
+feature, all backward-compatible (existing rows read as no cache): `AgentCallEntity.CachedInputTokens`
+(`numeric(20,0)`) and `TestResultEntity.CachedInputTokens` / `TestRunStatsEntity.CachedInputTokens`
+(`bigint`) record the cached subset of the input tokens (cached ≤ input), while
+`ModelEndpointEntity.CachedInputTokenCost` (`numeric(18,6)`) holds the per-endpoint cached-input price
+(EUR / 1M tokens), auto-fetched from the LiteLLM catalog (the resolver reads `cache_read_input_token_cost`).
+`IModelEndpoint.CalculateCost` prices the cached subset at this rate, falling back to the input rate when
+it is null. The cached price is **not** user-editable — the pricing editor's update request omits it, and
+the controller preserves the auto-fetched value on a manual input/output edit.
+
+The `CascadeSuiteDelete` migration flips two foreign keys from `Restrict` to `Cascade` so a test
+suite can be deleted once it has been used: `OptimizationTheoryEntity.Suite → TestSuiteEntity` and
+`OptimizationProposalEntity.ABTestRun → TestRunEntity`. Previously these `Restrict` FKs blocked the
+delete — directly (a theory pinned the suite) and transitively (the suite → run group → test run
+cascade hit a proposal that pinned the run). With both as `Cascade`, deleting a suite removes its
+run groups, runs, schedules, theories, and the proposals produced from those runs. Note the wider
+effect: deleting an individual test run now also deletes any proposal that used it as its A/B run.
+The `Restrict` semantics were not enforced by the in-memory provider, so this class of bug only
+surfaces on PostgreSQL — unit tests cannot reproduce it.
+
 ## Quick start
 
 Bring up a PostgreSQL instance (the repo's `docker-compose.yml` ships one) and run the API:

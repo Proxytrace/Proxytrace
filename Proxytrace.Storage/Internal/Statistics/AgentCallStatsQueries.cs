@@ -36,6 +36,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 Count = (long)g.Count(),
                 Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                Cached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
                 AvgLatency = g.Average(c => c.LatencyMs ?? 0d),
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -44,6 +45,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             TotalCalls: agg?.Count ?? 0L,
             TotalInputTokens: agg?.Input ?? 0L,
             TotalOutputTokens: agg?.Output ?? 0L,
+            TotalCachedInputTokens: agg?.Cached ?? 0L,
             AvgLatencyMs: agg?.AvgLatency ?? 0d,
             OverallPassRate: null);
     }
@@ -78,6 +80,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 g.Key.EndpointId,
                 Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                Cached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
             })
             .ToListAsync(cancellationToken);
 
@@ -86,7 +89,8 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 BucketStart: bucket.BucketStartFromIndex(r.Bucket),
                 EndpointId: r.EndpointId,
                 InputTokens: r.Input,
-                OutputTokens: r.Output))
+                OutputTokens: r.Output,
+                CachedInputTokens: r.Cached))
             .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.EndpointId)
             .ToArray();
@@ -261,6 +265,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 CallCount = g.Count(),
                 TotalInput = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 TotalOutput = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                TotalCached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
                 AvgLatency = g.Average(c => c.LatencyMs ?? 0d),
             })
             .ToListAsync(cancellationToken);
@@ -275,6 +280,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 CallCount: r.CallCount,
                 TotalInputTokens: r.TotalInput,
                 TotalOutputTokens: r.TotalOutput,
+                TotalCachedInputTokens: r.TotalCached,
                 AvgDurationMs: r.AvgLatency))
             .OrderBy(s => s.ModelName)
             .ToArray();
@@ -308,6 +314,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 EndpointId = g.Key,
                 TotalInput = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 TotalOutput = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                TotalCached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
             })
             .ToListAsync(cancellationToken);
 
@@ -323,7 +330,12 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                     return new CostEstimateStat(r.EndpointId, null, null, null);
                 }
 
-                decimal? input = endpoint.InputTokenCost is { } ic ? ic * r.TotalInput : null;
+                // Cached input is a subset of the input tokens, priced at the cheaper cached rate
+                // (falling back to the input rate when no cached price is configured).
+                long cached = Math.Min(r.TotalCached, r.TotalInput);
+                decimal? input = endpoint.InputTokenCost is { } ic
+                    ? ic * (r.TotalInput - cached) + (endpoint.CachedInputTokenCost ?? ic) * cached
+                    : null;
                 decimal? output = endpoint.OutputTokenCost is { } oc ? oc * r.TotalOutput : null;
                 decimal? total = (input ?? 0m) + (output ?? 0m);
                 return new CostEstimateStat(r.EndpointId, input, output, total);
@@ -342,7 +354,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         var rows = await q
             .Join(context.Set<AgentVersionEntity>().AsNoTracking(),
                 c => c.AgentVersionId, v => v.Id,
-                (c, v) => new { c.CreatedAt, v.AgentId, c.InputTokens, c.OutputTokens })
+                (c, v) => new { c.CreatedAt, v.AgentId, c.InputTokens, c.OutputTokens, c.CachedInputTokens })
             .GroupBy(x => new
             {
                 Bucket = (int)Math.Floor((x.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
@@ -354,6 +366,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 g.Key.AgentId,
                 Input = g.Sum(x => (long?)x.InputTokens ?? 0L),
                 Output = g.Sum(x => (long?)x.OutputTokens ?? 0L),
+                Cached = g.Sum(x => (long?)x.CachedInputTokens ?? 0L),
             })
             .ToListAsync(cancellationToken);
 
@@ -362,7 +375,8 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 BucketStart: bucket.BucketStartFromIndex(r.Bucket),
                 AgentId: r.AgentId,
                 InputTokens: r.Input,
-                OutputTokens: r.Output))
+                OutputTokens: r.Output,
+                CachedInputTokens: r.Cached))
             .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.AgentId)
             .ToArray();
@@ -544,6 +558,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 Count = g.Count(),
                 Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                Cached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
                 LatencySum = g.Sum(c => c.LatencyMs ?? 0d),
             })
             .ToListAsync(cancellationToken);
@@ -551,9 +566,10 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
             context, grouped.Select(r => r.EndpointId).Distinct().ToArray(), cancellationToken);
 
-        decimal CostOf(Guid endpointId, long input, long output)
+        decimal CostOf(Guid endpointId, long input, long output, long cached)
             => endpoints.TryGetValue(endpointId, out IModelEndpoint? e)
-                ? e.CalculateCost(new TokenUsage((ulong)Math.Max(input, 0L), (ulong)Math.Max(output, 0L))) ?? 0m
+                ? e.CalculateCost(new TokenUsage(
+                    (ulong)Math.Max(input, 0L), (ulong)Math.Max(output, 0L), (ulong)Math.Max(cached, 0L))) ?? 0m
                 : 0m;
 
         AgentTimeSeriesPoint[] series = grouped
@@ -567,7 +583,8 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                     TraceCount: count,
                     InputTokens: g.Sum(r => r.Input),
                     OutputTokens: g.Sum(r => r.Output),
-                    CostEur: g.Sum(r => CostOf(r.EndpointId, r.Input, r.Output)),
+                    CachedInputTokens: g.Sum(r => r.Cached),
+                    CostEur: g.Sum(r => CostOf(r.EndpointId, r.Input, r.Output, r.Cached)),
                     AvgLatencyMs: count == 0 ? 0d : g.Sum(r => r.LatencySum) / count);
             })
             .ToArray();
@@ -577,7 +594,8 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             TotalTraces: totalTraces,
             TotalInputTokens: grouped.Sum(r => r.Input),
             TotalOutputTokens: grouped.Sum(r => r.Output),
-            TotalCostEur: grouped.Sum(r => CostOf(r.EndpointId, r.Input, r.Output)),
+            TotalCachedInputTokens: grouped.Sum(r => r.Cached),
+            TotalCostEur: grouped.Sum(r => CostOf(r.EndpointId, r.Input, r.Output, r.Cached)),
             AvgLatencyMs: totalTraces == 0 ? 0d : grouped.Sum(r => r.LatencySum) / totalTraces);
 
         return (series, summary);

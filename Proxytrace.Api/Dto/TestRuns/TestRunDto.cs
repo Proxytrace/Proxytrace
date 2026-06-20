@@ -31,6 +31,7 @@ public record TestRunDto(
     double? CostUsd,
     long? TokensIn,
     long? TokensOut,
+    long? CachedTokensIn,
     IReadOnlyList<RunEvaluatorDto> Evaluators,
     DateTimeOffset StartedAt,
     DateTimeOffset? CompletedAt,

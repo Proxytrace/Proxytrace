@@ -200,7 +200,8 @@ internal class ModelClient : IModelClient
             {
                 usage = new TokenUsage(
                     (ulong)response.Usage.InputTokenCount.Value,
-                    (ulong)response.Usage.OutputTokenCount.Value);
+                    (ulong)response.Usage.OutputTokenCount.Value,
+                    (ulong)(response.Usage.CachedInputTokenCount ?? 0));
             }
 
             completion = completionFactory(message, usage, latency);
@@ -266,7 +267,8 @@ internal class ModelClient : IModelClient
                 {
                     usage = new TokenUsage(
                         (ulong)uc.Details.InputTokenCount.Value,
-                        (ulong)uc.Details.OutputTokenCount.Value);
+                        (ulong)uc.Details.OutputTokenCount.Value,
+                        (ulong)(uc.Details.CachedInputTokenCount ?? 0));
                 }
             }
 

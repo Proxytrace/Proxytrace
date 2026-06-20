@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowDownToLineIcon, ArrowUpFromLineIcon, ClockIcon, CoinsIcon, CheckIcon } from '../../../components/icons';
 import type { PlaygroundStats } from '../state/types';
+import { cachedPct } from '../../../lib/format';
 import { KpiCell } from './KpiCell';
 
 interface Props {
@@ -60,14 +61,15 @@ export function CompletionStats({ stats, streaming }: Props) {
   const outT = stats?.outputTokens ?? 0;
   const lat = stats?.latencyMs ?? 0;
   const cost = stats?.costEur ?? null;
+  const cachedShare = cachedPct(stats?.cachedInputTokens ?? 0, inT);
 
   return (
     <div data-testid="completion-stats" className="flex items-center gap-[6px] flex-wrap">
       <KpiCell
         icon={<ArrowDownToLineIcon size={13} strokeWidth={2.2} />}
         label={t`Input`}
-        value={stats ? fmt(inT) : '…'}
-        tooltip={t`Input tokens (prompt)`}
+        value={stats ? (cachedShare !== null ? t`${fmt(inT)} · ${cachedShare}% cached` : fmt(inT)) : '…'}
+        tooltip={cachedShare !== null ? t`Input tokens (prompt) · ${cachedShare}% served from cache` : t`Input tokens (prompt)`}
       />
       <KpiCell
         icon={<ArrowUpFromLineIcon size={13} strokeWidth={2.2} />}

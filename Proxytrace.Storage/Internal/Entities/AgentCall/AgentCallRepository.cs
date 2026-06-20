@@ -95,6 +95,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
                 e.EndpointId,
                 e.InputTokens,
                 e.OutputTokens,
+                e.CachedInputTokens,
                 e.LatencyMs,
                 e.HttpStatus,
                 e.FinishReason,
@@ -125,7 +126,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             endpointsById.TryGetValue(r.EndpointId, out var endpoint);
 
             decimal? cost = endpoint is not null && r.InputTokens.HasValue && r.OutputTokens.HasValue
-                ? endpoint.CalculateCost(new TokenUsage(r.InputTokens.Value, r.OutputTokens.Value))
+                ? endpoint.CalculateCost(new TokenUsage(r.InputTokens.Value, r.OutputTokens.Value, r.CachedInputTokens ?? 0))
                 : null;
 
             return new AgentCallListItem(
@@ -138,6 +139,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
                 ToolCount: r.ResponseToolRequestCount,
                 InputTokens: r.InputTokens,
                 OutputTokens: r.OutputTokens,
+                CachedInputTokens: r.CachedInputTokens,
                 LatencyMs: r.LatencyMs,
                 HttpStatus: r.HttpStatus,
                 FinishReason: r.FinishReason,
@@ -157,6 +159,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         Guid EndpointId,
         ulong? InputTokens,
         ulong? OutputTokens,
+        ulong? CachedInputTokens,
         double? LatencyMs,
         int HttpStatus,
         string? FinishReason,

@@ -1,6 +1,7 @@
 import { Trans } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { fmtTokens } from '../../../lib/format';
+import { CachedTokensHint } from '../../../components/ui/CachedTokensHint';
 import { type RangeKey } from '../../../lib/time-range';
 import type { EvaluatorOverviewDto } from '../../../api/models';
 import { type TypeCategory, fmtEur } from '../evaluatorMeta';
@@ -36,6 +37,9 @@ export function CostPanel({ overview, category, modelName, range }: Props) {
             <div className="text-[10px] text-muted uppercase tracking-[0.07em] mb-1"><Trans>Input tokens</Trans></div>
             <div className="text-[16px] font-mono text-primary font-semibold">
               {s?.inputTokens != null ? fmtTokens(s.inputTokens) : '—'}
+              {s?.inputTokens != null && s.cachedInputTokens != null && (
+                <CachedTokensHint cachedInput={s.cachedInputTokens} input={s.inputTokens} className="text-[11px]" />
+              )}
             </div>
           </div>
           <div className="px-3 py-2.5 bg-card-2 rounded-md">

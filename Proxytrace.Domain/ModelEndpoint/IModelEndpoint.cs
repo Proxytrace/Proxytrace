@@ -29,19 +29,28 @@ public interface IModelEndpoint : IDomainEntity, IArchivable
     /// </summary>
     decimal? OutputTokenCost { get; }
 
+    /// <summary>
+    /// Price of 1M cached input tokens (EUR), or <c>null</c> if not configured. Cached input is the
+    /// cheaper, provider-cache-served subset of the input tokens; when null the cached portion is
+    /// priced at <see cref="InputTokenCost"/>.
+    /// </summary>
+    decimal? CachedInputTokenCost { get; }
+
     /// <summary>Factory delegate for creating a new model endpoint.</summary>
     public delegate IModelEndpoint CreateNew(
         IModel model,
         IModelProvider provider,
         decimal? inputTokenCost,
-        decimal? outputTokenCost);
+        decimal? outputTokenCost,
+        decimal? cachedInputTokenCost);
 
     /// <summary>Factory delegate for reconstituting an existing model endpoint from persistence.</summary>
     public delegate IModelEndpoint CreateExisting(
-        IModel model, 
-        IModelProvider provider, 
+        IModel model,
+        IModelProvider provider,
         decimal? inputTokenCost,
-        decimal? outputTokenCost, 
+        decimal? outputTokenCost,
+        decimal? cachedInputTokenCost,
         IDomainEntityData existing);
 
     /// <summary>

@@ -138,4 +138,68 @@ public sealed class OpenAiCallParserTests : BaseTest<Module>
         toolRequests[1].Name.Should().Be("list_runs");
         toolRequests[1].Arguments.Should().Be("{\"b\":2}");
     }
+
+    private const string BufferedResponseWithCachedTokens = """
+        {
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Hi"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 1000, "completion_tokens": 50, "total_tokens": 1050, "prompt_tokens_details": {"cached_tokens": 800}}
+        }
+        """;
+
+    [TestMethod]
+    public async Task TryParse_BufferedResponseWithCachedTokens_CapturesCachedInputSubset()
+    {
+        IServiceProvider services = GetServices();
+        var parser = services.GetRequiredService<IOpenAiCallParser>();
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().GetOrCreateAsync(CancellationToken);
+
+        ParseResult? result = await parser.TryParse(
+            provider, RequestBody, BufferedResponseWithCachedTokens,
+            TimeSpan.FromMilliseconds(50), HttpStatusCode.OK, CancellationToken);
+
+        ICompletion completion = result?.Response ?? throw new InvalidOperationException("No completion");
+        completion.Usage.Should().NotBeNull();
+        completion.Usage!.InputTokenCount.Should().Be(1000);
+        completion.Usage.OutputTokenCount.Should().Be(50);
+        completion.Usage.CachedInputTokenCount.Should().Be(800);
+    }
+
+    private const string BufferedResponseAnthropicCached = """
+        {
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Hi"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 1000, "completion_tokens": 50, "cache_read_input_tokens": 600}
+        }
+        """;
+
+    [TestMethod]
+    public async Task TryParse_AnthropicStyleCacheReadField_IsCapturedAsCachedInput()
+    {
+        IServiceProvider services = GetServices();
+        var parser = services.GetRequiredService<IOpenAiCallParser>();
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().GetOrCreateAsync(CancellationToken);
+
+        ParseResult? result = await parser.TryParse(
+            provider, RequestBody, BufferedResponseAnthropicCached,
+            TimeSpan.FromMilliseconds(50), HttpStatusCode.OK, CancellationToken);
+
+        ICompletion completion = result?.Response ?? throw new InvalidOperationException("No completion");
+        completion.Usage!.CachedInputTokenCount.Should().Be(600);
+    }
+
+    [TestMethod]
+    public async Task TryParse_UsageWithoutCachedDetails_ReportsZeroCached()
+    {
+        IServiceProvider services = GetServices();
+        var parser = services.GetRequiredService<IOpenAiCallParser>();
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().GetOrCreateAsync(CancellationToken);
+
+        // EmptyStreamedCompletion's usage carries prompt_tokens but no cached details.
+        ParseResult? result = await parser.TryParse(
+            provider, RequestWithTrailingToolResult, EmptyStreamedCompletion,
+            TimeSpan.FromMilliseconds(50), HttpStatusCode.OK, CancellationToken);
+
+        ICompletion completion = result?.Response ?? throw new InvalidOperationException("No completion");
+        completion.Usage!.InputTokenCount.Should().Be(6230);
+        completion.Usage.CachedInputTokenCount.Should().Be(0);
+    }
 }

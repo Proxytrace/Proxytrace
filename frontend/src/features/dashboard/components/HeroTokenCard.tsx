@@ -7,6 +7,7 @@ import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import type { SummaryDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
+import { CachedTokensHint } from '../../../components/ui/CachedTokensHint';
 import { bucketAxisLabel, rangeWindowLabel, type RangeKey, type StatisticsBucket } from '../../../lib/time-range';
 import { RANGES, splitTokenStr, type ModelSplit } from '../dashboardMeta';
 
@@ -54,7 +55,10 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             </span>
           </div>
           <div className="mt-1.5 flex gap-2.5 text-[10.5px] font-mono text-muted items-center flex-wrap">
-            <span><Trans><span className="text-secondary font-semibold">{(summary?.totalInputTokens ?? 0).toLocaleString()}</span> in</Trans></span>
+            <span>
+              <Trans><span className="text-secondary font-semibold">{(summary?.totalInputTokens ?? 0).toLocaleString()}</span> in</Trans>
+              <CachedTokensHint cachedInput={summary?.totalCachedInputTokens ?? 0} input={summary?.totalInputTokens ?? 0} />
+            </span>
             <span className="text-border">/</span>
             <span><Trans><span className="text-secondary font-semibold">{(summary?.totalOutputTokens ?? 0).toLocaleString()}</span> out</Trans></span>
             <span className="text-border">/</span>

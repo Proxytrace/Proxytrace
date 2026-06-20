@@ -181,6 +181,14 @@ msgstr "{0} · {1} Run"
 msgid "{0} · {1} runs · last {2}"
 msgstr "{0} · {1} run · ultimi {2}"
 
+#. placeholder {0}: fmtTokens(summary.inputTokens)
+msgid "{0} · {cached}% cached"
+msgstr "{0} · {cached}% in cache"
+
+#. placeholder {0}: fmt(inT)
+msgid "{0} · {cachedShare}% cached"
+msgstr "{0} · {cachedShare}% in cache"
+
 #. placeholder {0}: modelSplit.models.length
 msgid "{0} active"
 msgstr "{0} attivi"
@@ -236,6 +244,13 @@ msgstr "{0} in · {1} out"
 #. placeholder {3}: fmtCost(trace.costEur)
 msgid "{0} in · {1} out · {2} · {3}"
 msgstr "{0} in · {1} out · {2} · {3}"
+
+#. placeholder {0}: fmtTokens(stats.inputTokens)
+#. placeholder {0}: fmtTokens(sum.totalInputTokens)
+#. placeholder {1}: fmtTokens(stats.outputTokens)
+#. placeholder {1}: fmtTokens(sum.totalOutputTokens)
+msgid "{0} in · {1} out · {cached}% cached"
+msgstr "{0} in · {1} out · {cached}% in cache"
 
 #. placeholder {0}: cell.total
 msgid "{0} judged"
@@ -461,6 +476,9 @@ msgstr "{passed}/{total} superati · {failed} falliti"
 msgid "{passPercent}% pass"
 msgstr "{passPercent}% superati"
 
+msgid "{pct}% cached"
+msgstr "{pct}% in cache"
+
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# Proposal pronta} other {# Proposals pronte}}"
 
@@ -483,6 +501,9 @@ msgstr "{runCount} models"
 
 msgid "{sizeB} B"
 msgstr "{sizeB} B"
+
+msgid "{tok} · {cached}% cached"
+msgstr "{tok} · {cached}% in cache"
 
 msgid "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
 msgstr "{toolCallCount, plural, one {# Tool call} other {# Tool calls}}"
@@ -956,6 +977,12 @@ msgstr "Creazione grafico…"
 
 msgid "Building table…"
 msgstr "Creazione tabella…"
+
+msgid "Cached"
+msgstr "In cache"
+
+msgid "Cached / 1M €"
+msgstr "In cache / 1M €"
 
 msgid "Calls"
 msgstr "Chiamate"
@@ -1910,6 +1937,9 @@ msgstr "Token di input"
 
 msgid "Input tokens (prompt)"
 msgstr "Token di input (Prompt)"
+
+msgid "Input tokens (prompt) · {cachedShare}% served from cache"
+msgstr "Token di input (Prompt) · {cachedShare}% serviti dalla cache"
 
 msgid "Inputs the agent has historically struggled with — track improvements over time."
 msgstr "Input con cui l'Agent ha storicamente avuto difficoltà — monitora i miglioramenti nel tempo."

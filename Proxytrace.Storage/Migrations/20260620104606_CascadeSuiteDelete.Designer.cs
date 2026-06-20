@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Proxytrace.Storage;
@@ -11,9 +12,11 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260620104606_CascadeSuiteDelete")]
+    partial class CascadeSuiteDelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,9 +82,6 @@ namespace Proxytrace.Storage.Migrations
 
                     b.Property<Guid>("AgentVersionId")
                         .HasColumnType("uuid");
-
-                    b.Property<decimal?>("CachedInputTokens")
-                        .HasColumnType("numeric(20,0)");
 
                     b.Property<Guid?>("ConversationId")
                         .HasColumnType("uuid");
@@ -418,10 +418,6 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<decimal?>("CachedInputTokenCost")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -804,9 +800,6 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("AgentId")
                         .HasColumnType("uuid");
 
-                    b.Property<long?>("CachedInputTokens")
-                        .HasColumnType("bigint");
-
                     b.Property<decimal?>("Cost")
                         .HasColumnType("numeric");
 
@@ -898,9 +891,6 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<string>("ActualResponse")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<long?>("CachedInputTokens")
-                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");

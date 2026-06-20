@@ -48,7 +48,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     {
         var svc = Build(out var runStats, out var callStats, out _);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
-            .Returns(new StatisticsSummary(TotalCalls: 5, TotalInputTokens: 10, TotalOutputTokens: 20, AvgLatencyMs: 100, OverallPassRate: 0.5));
+            .Returns(new StatisticsSummary(TotalCalls: 5, TotalInputTokens: 10, TotalOutputTokens: 20, TotalCachedInputTokens: 4, AvgLatencyMs: 100, OverallPassRate: 0.5));
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
             .Returns([]);
 
@@ -63,7 +63,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     {
         var svc = Build(out var runStats, out var callStats, out _);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
-            .Returns(new StatisticsSummary(0, 0, 0, 0, 0));
+            .Returns(new StatisticsSummary(0, 0, 0, 0, 0, 0));
         var now = DateTimeOffset.UtcNow;
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
             .Returns([
@@ -82,7 +82,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     {
         var svc = Build(out var runStats, out var callStats, out var agents);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
-            .Returns(new StatisticsSummary(0, 0, 0, 0, 0));
+            .Returns(new StatisticsSummary(0, 0, 0, 0, 0, 0));
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
             .Returns([]);
 
@@ -137,7 +137,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
 
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>()).Returns([]);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromResult(Track(new StatisticsSummary(0, 0, 0, 0, null))));
+            .Returns(_ => Task.FromResult(Track(new StatisticsSummary(0, 0, 0, 0, 0, null))));
         callStats.GetLiveTelemetryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track(new LiveTelemetry(0, 0, 0, 0, 0, string.Empty))));
         callStats.GetCallTrendsAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
@@ -175,7 +175,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         var svc = Build(out _, out var callStats, out _);
         var bucketStart = DateTimeOffset.UtcNow;
         callStats.GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
-            .Returns([new TokenUsageStat(bucketStart, Guid.NewGuid(), 1, 2)]);
+            .Returns([new TokenUsageStat(bucketStart, Guid.NewGuid(), 1, 2, 0)]);
 
         var result = await svc.GetTokenUsageAsync(new StatisticsFilter(), StatisticsBucket.Daily, CancellationToken);
 

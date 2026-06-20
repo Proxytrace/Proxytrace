@@ -55,12 +55,13 @@ internal sealed class StatsTools
             view.Summary.TotalCalls,
             view.Summary.TotalInputTokens,
             view.Summary.TotalOutputTokens,
+            view.Summary.TotalCachedInputTokens,
             view.Summary.AvgLatencyMs,
             view.Summary.OverallPassRate);
         var models = view.ModelBreakdown
             .Select(r => new ModelBreakdownDto(
                 r.EndpointId, r.ModelName, r.CallCount,
-                r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0))
+                r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.TotalCachedInputTokens ?? 0, r.AvgDurationMs ?? 0))
             .ToArray();
 
         return new McpDashboardDto(summary, models);
@@ -96,10 +97,10 @@ internal sealed class StatsTools
     }
 
     private static AgentTimeSummaryDto ToDto(AgentTimeSummary s) =>
-        new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCostEur, s.AvgLatencyMs);
+        new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCachedInputTokens, s.TotalCostEur, s.AvgLatencyMs);
 
     private static AgentTimeSeriesPointDto ToDto(AgentTimeSeriesPoint p) =>
-        new(p.BucketStart, p.TraceCount, p.InputTokens, p.OutputTokens, p.CostEur, p.AvgLatencyMs);
+        new(p.BucketStart, p.TraceCount, p.InputTokens, p.OutputTokens, p.CachedInputTokens, p.CostEur, p.AvgLatencyMs);
 
     private static AgentPassRatePointDto ToDto(AgentPassRatePoint p) =>
         new(p.BucketStart, p.Passed, p.TestCases);

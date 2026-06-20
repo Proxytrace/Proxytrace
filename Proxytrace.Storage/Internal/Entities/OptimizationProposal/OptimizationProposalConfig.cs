@@ -56,7 +56,10 @@ internal class OptimizationProposalConfig :
             .HasOne<TestRunEntity>()
             .WithMany()
             .HasForeignKey(e => e.ABTestRun)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Cascade: a suite delete cascades suite -> run group -> test run, and this A/B run is one
+            // of those. Restrict here blocked the whole suite delete (the proposal pinned the run).
+            // Deleting the run that produced a proposal removes the proposal with it.
+            .OnDelete(DeleteBehavior.Cascade);
 
         // SetNull (not Restrict): versions cascade-delete with their agent, and the proposal
         // cascades from the same agent — a Restrict here would make agent deletion order-dependent.

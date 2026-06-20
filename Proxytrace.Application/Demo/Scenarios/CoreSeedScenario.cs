@@ -103,11 +103,11 @@ internal sealed class CoreSeedScenario : IDemoScenario
         var claudeSonnet = await models.AddAsync(modelFactory("claude-sonnet-4.5"), cancellationToken);
 
         var gpt4oEndpoint = await endpoints.AddAsync(endpointFactory(gpt4o, openAiProvider,
-            inputTokenCost: 0.0000025m, outputTokenCost: 0.00001m), cancellationToken);
+            inputTokenCost: 0.0000025m, outputTokenCost: 0.00001m, cachedInputTokenCost: 0.00000125m), cancellationToken);
         var gpt4oMiniEndpoint = await endpoints.AddAsync(endpointFactory(gpt4oMini, openAiProvider,
-            inputTokenCost: 0.00000015m, outputTokenCost: 0.0000006m), cancellationToken);
+            inputTokenCost: 0.00000015m, outputTokenCost: 0.0000006m, cachedInputTokenCost: 0.000000075m), cancellationToken);
         var claudeEndpoint = await endpoints.AddAsync(endpointFactory(claudeSonnet, anthropicProvider,
-            inputTokenCost: 0.000003m, outputTokenCost: 0.000015m), cancellationToken);
+            inputTokenCost: 0.000003m, outputTokenCost: 0.000015m, cachedInputTokenCost: 0.0000003m), cancellationToken);
 
         // The demo (DEMO-NO-KEY) endpoints above back the seeded historical traces, stats and
         // proposals (consumed by later scenarios via DemoSeedContext) and stay in place. When a real
@@ -128,7 +128,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 resolved.Kind), cancellationToken);
             var realModel = await models.AddAsync(modelFactory(resolved.Model), cancellationToken);
             var realEndpoint = await endpoints.AddAsync(endpointFactory(
-                realModel, realProvider, resolved.InputTokenCost, resolved.OutputTokenCost), cancellationToken);
+                realModel, realProvider, resolved.InputTokenCost, resolved.OutputTokenCost, cachedInputTokenCost: null), cancellationToken);
 
             systemEndpoint = realEndpoint;
             supportEndpoint = realEndpoint;
@@ -247,9 +247,12 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 var response = new AssistantMessage(
                     [Content.FromText(s.assistant)],
                     []);
+                // Vary a cached-input share deterministically by prompt size (0%–80%) so the demo
+                // shows the cache-hit column/KPI with realistic spread.
+                var cachedIn = (ulong)(s.inTok * ((s.inTok % 9) / 10.0));
                 var completion = completionFactory(
                     response,
-                    new TokenUsage(s.inTok, s.outTok),
+                    new TokenUsage(s.inTok, s.outTok, cachedIn),
                     TimeSpan.FromMilliseconds(s.latencyMs));
 
                 await agentCallFactory(

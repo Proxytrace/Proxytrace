@@ -4,7 +4,7 @@ import { passRateColor } from '../results';
 import { TestRunStatus } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
-import { fmtDuration, fmtCost, fmtTokens } from '../../../lib/format';
+import { fmtDuration, fmtCost, fmtTokens, cachedPct } from '../../../lib/format';
 import { TargetIcon, ZapIcon, CoinsIcon, ArrowDownIcon } from '../../../components/icons';
 import { Card } from '../../../components/ui/Card';
 import { Spinner } from '../../../components/ui/Spinner';
@@ -54,7 +54,16 @@ export function ModelSummaryCard({ entry, multi }: { entry: LeaderboardEntry; mu
         <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-hairline">
           <MiniStat label={t`Duration`} value={pendingRun ? '—' : fmtDuration(run.durationMs)} accent={multi && entry.isFastest} />
           <MiniStat label={t`Cost`} value={fmtCost(entry.costUsd)} accent={multi && entry.isCheapest} />
-          <MiniStat label={t`Tokens`} value={entry.tokensIn != null ? `${fmtTokens(entry.tokensIn)}/${fmtTokens(entry.tokensOut ?? 0)}` : '—'} />
+          <MiniStat
+            label={t`Tokens`}
+            value={entry.tokensIn != null
+              ? (() => {
+                  const tok = `${fmtTokens(entry.tokensIn)}/${fmtTokens(entry.tokensOut ?? 0)}`;
+                  const cached = cachedPct(entry.cachedTokensIn ?? 0, entry.tokensIn);
+                  return cached !== null ? t`${tok} · ${cached}% cached` : tok;
+                })()
+              : '—'}
+          />
         </div>
 
         {multi && entry.deltaVsBest !== null && entry.deltaVsBest > 0 && (

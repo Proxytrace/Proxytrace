@@ -64,12 +64,13 @@ internal sealed class ModelPriceRefresher : IModelPriceRefresher
                 // Always refresh the price of an existing endpoint from the resolved value.
                 IModelEndpoint updated = updateEndpoint(
                     existingEndpoint.Model, existingEndpoint.Provider,
-                    pm.Price.InputTokenCost, pm.Price.OutputTokenCost, existingEndpoint);
+                    pm.Price.InputTokenCost, pm.Price.OutputTokenCost, pm.Price.CachedInputTokenCost, existingEndpoint);
                 await endpointRepository.UpdateAsync(updated, cancellationToken);
             }
             else
             {
-                IModelEndpoint endpoint = createEndpoint(pm.Model, provider, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
+                IModelEndpoint endpoint = createEndpoint(
+                    pm.Model, provider, pm.Price.InputTokenCost, pm.Price.OutputTokenCost, pm.Price.CachedInputTokenCost);
                 await endpointRepository.AddAsync(endpoint, cancellationToken);
             }
         }
@@ -84,7 +85,9 @@ internal sealed class ModelPriceRefresher : IModelPriceRefresher
     {
         if (price.InputTokenCost is { } input && input <= 0) return false;
         if (price.OutputTokenCost is { } output && output <= 0) return false;
+        if (price.CachedInputTokenCost is { } cached && cached <= 0) return false;
         if (price.InputTokenCost is { } i && price.OutputTokenCost is { } o && i > o) return false;
+        if (price.CachedInputTokenCost is { } c && price.InputTokenCost is { } ci && c > ci) return false;
         return true;
     }
 

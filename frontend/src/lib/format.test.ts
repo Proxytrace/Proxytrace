@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fmtLatency, fmtTokens, fmtDuration, fmtPct, fmtPct100, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort } from './format'
+import { fmtLatency, fmtTokens, fmtDuration, fmtPct, fmtPct100, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort, cachedPct } from './format'
 
 describe('fmtLatency', () => {
   it('formats sub-second as ms', () => expect(fmtLatency(250)).toBe('250ms'))
@@ -10,6 +10,15 @@ describe('fmtTokens', () => {
   it('passes through small numbers', () => expect(fmtTokens(500)).toBe('500'))
   it('formats thousands with k', () => expect(fmtTokens(1500)).toBe('1.5k'))
   it('formats millions with M', () => expect(fmtTokens(1_500_000)).toBe('1.5M'))
+})
+
+describe('cachedPct', () => {
+  it('returns null when no cached tokens', () => expect(cachedPct(0, 1000)).toBeNull())
+  it('returns null when no input tokens', () => expect(cachedPct(0, 0)).toBeNull())
+  it('computes whole-percent share', () => expect(cachedPct(800, 1000)).toBe(80))
+  it('rounds to nearest percent', () => expect(cachedPct(666, 1000)).toBe(67))
+  it('clamps cached over input to 100%', () => expect(cachedPct(1500, 1000)).toBe(100))
+  it('returns null when share rounds to zero', () => expect(cachedPct(1, 100000)).toBeNull())
 })
 
 describe('fmtDuration', () => {

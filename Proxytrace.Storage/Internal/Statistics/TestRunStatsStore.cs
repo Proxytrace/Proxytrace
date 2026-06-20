@@ -156,6 +156,7 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
             Passed = stats.Passed,
             InputTokens = (long?)stats.Usage?.InputTokenCount,
             OutputTokens = (long?)stats.Usage?.OutputTokenCount,
+            CachedInputTokens = (long?)stats.Usage?.CachedInputTokenCount,
             TotalDurationMicroseconds = stats.TotalDuration.HasValue ? (long?)stats.TotalDuration.Value.TotalMicroseconds : null,
             Cost = stats.Cost,
             RunCompletedAt = stats.RunCompletedAt,
@@ -166,7 +167,7 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
     private static TestRunStats ToDto(TestRunStatsEntity entity)
     {
         TokenUsage? usage = entity.InputTokens.HasValue && entity.OutputTokens.HasValue
-            ? new TokenUsage((ulong)entity.InputTokens.Value, (ulong)entity.OutputTokens.Value)
+            ? new TokenUsage((ulong)entity.InputTokens.Value, (ulong)entity.OutputTokens.Value, (ulong)(entity.CachedInputTokens ?? 0))
             : null;
 
         TimeSpan? duration = entity.TotalDurationMicroseconds.HasValue

@@ -11,6 +11,7 @@ internal record TestRunStatsEntity : Entity
     public required int Passed { get; init; }
     public long? InputTokens { get; init; }
     public long? OutputTokens { get; init; }
+    public long? CachedInputTokens { get; init; }
     public long? TotalDurationMicroseconds { get; init; }
     public decimal? Cost { get; init; }
     public required DateTimeOffset RunCompletedAt { get; init; }

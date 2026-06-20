@@ -15,6 +15,7 @@ public record StatisticsSummary(
     long TotalCalls,
     long TotalInputTokens,
     long TotalOutputTokens,
+    long TotalCachedInputTokens,
     double AvgLatencyMs,
     double? OverallPassRate);
 
@@ -22,7 +23,8 @@ public record TokenUsageStat(
     DateTimeOffset BucketStart,
     Guid EndpointId,
     long? InputTokens,
-    long? OutputTokens);
+    long? OutputTokens,
+    long? CachedInputTokens);
 
 public record LatencyStat(
     Guid EndpointId,
@@ -51,6 +53,7 @@ public record ModelBreakdownStat(
     int CallCount,
     long? TotalInputTokens,
     long? TotalOutputTokens,
+    long? TotalCachedInputTokens,
     double? AvgDurationMs);
 
 public record AgentBreakdownStat(
@@ -75,7 +78,8 @@ public record AgentTokenUsageStat(
     DateTimeOffset BucketStart,
     Guid AgentId,
     long InputTokens,
-    long OutputTokens);
+    long OutputTokens,
+    long CachedInputTokens);
 
 /// <summary>
 /// Bucketed trend series powering the dashboard stat-tile sparklines.
@@ -123,6 +127,7 @@ public record AgentTimeSeriesPoint(
     int TraceCount,
     long InputTokens,
     long OutputTokens,
+    long CachedInputTokens,
     decimal CostEur,
     double AvgLatencyMs);
 
@@ -148,6 +153,7 @@ public record AgentTimeSummary(
     int TotalTraces,
     long TotalInputTokens,
     long TotalOutputTokens,
+    long TotalCachedInputTokens,
     decimal TotalCostEur,
     double AvgLatencyMs);
 
@@ -164,6 +170,7 @@ public record EvaluatorSummary(
     double? OverallPassRate,
     long? InputTokens,
     long? OutputTokens,
+    long? CachedInputTokens,
     decimal? TotalCost,
     double? AvgLatencyMs);
 
@@ -171,6 +178,7 @@ public record EvaluatorCostPoint(
     DateTimeOffset BucketStart,
     long InputTokens,
     long OutputTokens,
+    long CachedInputTokens,
     decimal Cost,
     double AvgLatencyMs);
 

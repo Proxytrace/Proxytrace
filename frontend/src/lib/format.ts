@@ -9,6 +9,17 @@ export function fmtTokens(n: number): string {
   return String(n);
 }
 
+/**
+ * Share of the input tokens served from the provider cache, as a whole percentage (0–100), or
+ * `null` when there is no input or no cached portion to report. Drives the "(N% cached)" hint shown
+ * beside input-token figures. Clamps a cached count larger than the input to 100%.
+ */
+export function cachedPct(cachedInput: number, input: number): number | null {
+  if (input <= 0 || cachedInput <= 0) return null;
+  const pct = Math.round((Math.min(cachedInput, input) / input) * 100);
+  return pct > 0 ? pct : null;
+}
+
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
 /**

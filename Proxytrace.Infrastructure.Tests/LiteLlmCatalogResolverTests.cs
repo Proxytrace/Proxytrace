@@ -17,7 +17,7 @@ public sealed class LiteLlmCatalogResolverTests
         """
         {
           "sample_spec": { "input_cost_per_token": 0.0, "output_cost_per_token": 0.0 },
-          "gpt-4o": { "input_cost_per_token": 0.0000025, "output_cost_per_token": 0.00001 },
+          "gpt-4o": { "input_cost_per_token": 0.0000025, "output_cost_per_token": 0.00001, "cache_read_input_token_cost": 0.00000125 },
           "azure/gpt-4o": { "input_cost_per_token": 0.000003, "output_cost_per_token": 0.00001 }
         }
         """;
@@ -33,6 +33,22 @@ public sealed class LiteLlmCatalogResolverTests
 
         price.InputTokenCost.Should().Be(2.25m);
         price.OutputTokenCost.Should().Be(9.0m);
+        // cache_read_input_token_cost 0.00000125 USD/token → 0.00000125 * 1M * 0.9 = 1.125 EUR/1M.
+        price.CachedInputTokenCost.Should().Be(1.125m);
+    }
+
+    [TestMethod]
+    public async Task Resolve_ModelWithoutCachedPrice_LeavesCachedNull()
+    {
+        var fx = Substitute.For<IFxRateProvider>();
+        fx.GetUsdToEurAsync(Arg.Any<CancellationToken>()).Returns(1.0m);
+        var sut = new LiteLlmCatalogResolver(new HttpClient(new StubHandler(HttpStatusCode.OK, Catalog)), new PricingOptions(), fx, Substitute.For<IAsyncLock>());
+
+        // azure/gpt-4o has input/output but no cache_read_input_token_cost.
+        var price = await sut.ResolveAsync(["azure/gpt-4o"], TestContext.CancellationToken);
+
+        price.InputTokenCost.Should().Be(3.0m);
+        price.CachedInputTokenCost.Should().BeNull();
     }
 
     [TestMethod]

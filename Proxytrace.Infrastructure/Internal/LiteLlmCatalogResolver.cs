@@ -17,7 +17,7 @@ internal sealed class LiteLlmCatalogResolver
     private readonly PricingOptions options;
     private readonly IFxRateProvider fxRateProvider;
     private readonly IAsyncLock gate;
-    private IReadOnlyDictionary<string, (decimal? Input, decimal? Output)>? cache;
+    private IReadOnlyDictionary<string, (decimal? Input, decimal? Output, decimal? CachedInput)>? cache;
 
     public LiteLlmCatalogResolver(
         HttpClient http,
@@ -40,10 +40,10 @@ internal sealed class LiteLlmCatalogResolver
         IReadOnlyList<string> candidateModelNames,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyDictionary<string, (decimal? Input, decimal? Output)> catalog =
+        IReadOnlyDictionary<string, (decimal? Input, decimal? Output, decimal? CachedInput)> catalog =
             await GetCatalogAsync(cancellationToken);
 
-        (decimal? Input, decimal? Output)? entry = null;
+        (decimal? Input, decimal? Output, decimal? CachedInput)? entry = null;
         foreach (string name in candidateModelNames)
         {
             if (catalog.TryGetValue(name, out var found))
@@ -57,15 +57,18 @@ internal sealed class LiteLlmCatalogResolver
             return ModelPrice.Unknown;
 
         decimal? fx = await fxRateProvider.GetUsdToEurAsync(cancellationToken);
-        return fx is null 
-            ? ModelPrice.Unknown 
-            : new ModelPrice(ToEurPer1M(entry.Value.Input, fx.Value), ToEurPer1M(entry.Value.Output, fx.Value));
+        return fx is null
+            ? ModelPrice.Unknown
+            : new ModelPrice(
+                ToEurPer1M(entry.Value.Input, fx.Value),
+                ToEurPer1M(entry.Value.Output, fx.Value),
+                ToEurPer1M(entry.Value.CachedInput, fx.Value));
     }
 
     private static decimal? ToEurPer1M(decimal? usdPerToken, decimal fx)
         => usdPerToken * 1_000_000m * fx;
 
-    private async Task<IReadOnlyDictionary<string, (decimal?, decimal?)>> GetCatalogAsync(
+    private async Task<IReadOnlyDictionary<string, (decimal?, decimal?, decimal?)>> GetCatalogAsync(
         CancellationToken cancellationToken)
     {
         if (cache is not null)
@@ -78,10 +81,10 @@ internal sealed class LiteLlmCatalogResolver
         return cache;
     }
 
-    private async Task<IReadOnlyDictionary<string, (decimal?, decimal?)>> FetchAsync(
+    private async Task<IReadOnlyDictionary<string, (decimal?, decimal?, decimal?)>> FetchAsync(
         CancellationToken cancellationToken)
     {
-        var result = new Dictionary<string, (decimal?, decimal?)>(StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, (decimal?, decimal?, decimal?)>(StringComparer.OrdinalIgnoreCase);
         try
         {
             using HttpResponseMessage response = await http.GetAsync(options.LiteLlmFeedUrl, cancellationToken);
@@ -96,7 +99,8 @@ internal sealed class LiteLlmCatalogResolver
                     continue;
                 result[prop.Name] = (
                     ReadDecimal(prop.Value, "input_cost_per_token"),
-                    ReadDecimal(prop.Value, "output_cost_per_token"));
+                    ReadDecimal(prop.Value, "output_cost_per_token"),
+                    ReadDecimal(prop.Value, "cache_read_input_token_cost"));
             }
         }
         catch

@@ -55,6 +55,7 @@ internal sealed class PlaygroundService : IPlaygroundService
 
         ulong inputTokens = 0;
         ulong outputTokens = 0;
+        ulong cachedInputTokens = 0;
         long latencyMs = 0;
         string? finishReason = null;
         string? streamError = null;
@@ -106,6 +107,7 @@ internal sealed class PlaygroundService : IPlaygroundService
                     case Completed done:
                         inputTokens = done.Usage?.InputTokenCount ?? 0;
                         outputTokens = done.Usage?.OutputTokenCount ?? 0;
+                        cachedInputTokens = done.Usage?.CachedInputTokenCount ?? 0;
                         latencyMs = (long)done.Latency.TotalMilliseconds;
                         finishReason = done.FinishReason;
                         break;
@@ -126,10 +128,10 @@ internal sealed class PlaygroundService : IPlaygroundService
         decimal? cost = null;
         if (endpoint.InputTokenCost is not null && endpoint.OutputTokenCost is not null && (inputTokens > 0 || outputTokens > 0))
         {
-            cost = endpoint.CalculateCost(new TokenUsage(inputTokens, outputTokens));
+            cost = endpoint.CalculateCost(new TokenUsage(inputTokens, outputTokens, cachedInputTokens));
         }
 
-        yield return new DoneEvent(inputTokens, outputTokens, latencyMs, cost, finishReason);
+        yield return new DoneEvent(inputTokens, outputTokens, cachedInputTokens, latencyMs, cost, finishReason);
     }
 
     /// <summary>
