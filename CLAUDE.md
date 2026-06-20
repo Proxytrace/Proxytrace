@@ -42,6 +42,10 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
   string; keep glossary/technical terms English. After adding labels run `npm run i18n:extract` then
   `npm run i18n:translate`, and commit the updated `frontend/src/locales/**` catalogs. See
   [`docs/i18n.md`](docs/i18n.md).
+- **File issues for stumbles** — when you hit a bug, technical debt, or other problem that is out of
+  scope for your current task, open a corresponding issue in the GitHub repository (`proxytrace/proxytrace`)
+  instead of silently working around it or letting it slide. Give the issue a clear title and enough
+  context (what, where, why it matters) for someone to pick it up later, then carry on with your task.
 - **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
   [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the
