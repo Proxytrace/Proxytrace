@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
 import { Trans } from '@lingui/react/macro';
 import { LocaleSync } from './i18n/LocaleSync';
+import { dynamicActivate, DEFAULT_LOCALE } from './i18n';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { TooltipProvider } from './components/ui/Tooltip';
@@ -260,6 +261,12 @@ function AppRoutes() {
 }
 
 function KioskShell({ interactive }: { interactive: boolean }) {
+  useEffect(() => {
+    // A kiosk has no account and no language picker (LocaleSync + the picker are both off here), so
+    // pin the UI to the source language (English) regardless of the machine's browser/cache locale —
+    // a public demo must read consistently. Not cached: this is implicit to kiosk, not a preference.
+    void dynamicActivate(DEFAULT_LOCALE);
+  }, []);
   useEffect(() => {
     // The `kiosk` body class drives the read-only [data-write] kill-switch (index.css). Only
     // apply it for a read-only kiosk; an interactive kiosk leaves write controls live.

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
 import { Menu } from '../ui/Menu';
-import { CheckIcon } from '../icons';
+import { CheckIcon, LocaleFlag } from '../icons';
 import { useMe } from '../../hooks/useMe';
 import { useKiosk } from '../../contexts/KioskContext';
 import { usersApi } from '../../api/users';
@@ -41,23 +41,22 @@ export function LanguageMenuItems() {
 
   return (
     <>
-      <div className="px-3.5 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-        <Trans>Language</Trans>
-      </div>
-      {SUPPORTED_LOCALES.map(locale => (
-        <Menu.Item
-          key={locale}
-          data-testid={`lang-option-${locale}`}
-          icon={
-            <span className="flex w-[15px] justify-center">
-              {locale === active ? <CheckIcon size={15} /> : null}
-            </span>
-          }
-          onSelect={() => void change(locale)}
-        >
-          {LOCALE_NAMES[locale]}
-        </Menu.Item>
-      ))}
+      <Menu.Group data-testid="language-menu-group">
+        <Menu.Label>
+          <Trans>Language</Trans>
+        </Menu.Label>
+        {SUPPORTED_LOCALES.map(locale => (
+          <Menu.Item
+            key={locale}
+            data-testid={`lang-option-${locale}`}
+            icon={<LocaleFlag locale={locale} />}
+            onSelect={() => void change(locale)}
+          >
+            <span className="flex-1">{LOCALE_NAMES[locale]}</span>
+            {locale === active ? <CheckIcon size={14} className="ml-2 shrink-0 text-accent" /> : null}
+          </Menu.Item>
+        ))}
+      </Menu.Group>
       <Menu.Separator />
     </>
   );

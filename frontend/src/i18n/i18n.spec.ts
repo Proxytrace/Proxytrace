@@ -49,7 +49,7 @@ describe('i18n locale helpers', () => {
   })
 
   it('resolveInitialLocale falls back to the default for an unsupported browser language', () => {
-    vi.stubGlobal('navigator', { language: 'fr-FR' })
+    vi.stubGlobal('navigator', { language: 'ja-JP' })
     expect(resolveInitialLocale()).toBe(DEFAULT_LOCALE)
   })
 })
