@@ -83,6 +83,7 @@ export function usePlaygroundStream({
             stats: {
               inputTokens: e.inputTokens,
               outputTokens: e.outputTokens,
+              cachedInputTokens: e.cachedInputTokens,
               latencyMs: e.latencyMs,
               costEur: e.costEur,
               finishReason: e.finishReason,

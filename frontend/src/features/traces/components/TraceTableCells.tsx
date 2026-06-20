@@ -2,7 +2,7 @@
 // Each is a tiny presentational component (< 20 lines) with no state.
 
 import { agentColor, modelColor } from '../../../lib/colors';
-import { fmtLatency, fmtTokens } from '../../../lib/format';
+import { fmtLatency, fmtTokens, cachedPct } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { latencyBarPct } from '../tracesMeta';
@@ -41,6 +41,14 @@ export function TokenCell({ trace }: { trace: AgentCallListItemDto }) {
       <span className="text-muted ml-[5px] text-caption">{fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}</span>
     </span>
   );
+}
+
+/** Share of the input tokens served from the provider cache, as a percent. Muted dash when none. */
+export function CachedCell({ cachedInput, input }: { cachedInput: number; input: number }) {
+  const pct = cachedPct(cachedInput, input);
+  return pct !== null
+    ? <span className="mono text-body-sm text-secondary">{pct}%</span>
+    : <span className="text-muted text-body-sm">—</span>;
 }
 
 export function ToolsCell({ count }: { count: number }) {

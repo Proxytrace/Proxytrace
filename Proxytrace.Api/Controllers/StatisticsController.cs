@@ -52,14 +52,14 @@ public class StatisticsController : ControllerBase
         DashboardView view = await dashboard.GetDashboardViewAsync(filter, resolvedRecentTraceCount, resolvedAgentLimit, cancellationToken);
 
         return new DashboardViewDto(
-            Summary: new SummaryDto(view.Summary.TotalCalls, view.Summary.TotalInputTokens, view.Summary.TotalOutputTokens, view.Summary.AvgLatencyMs, view.Summary.OverallPassRate),
+            Summary: new SummaryDto(view.Summary.TotalCalls, view.Summary.TotalInputTokens, view.Summary.TotalOutputTokens, view.Summary.TotalCachedInputTokens, view.Summary.AvgLatencyMs, view.Summary.OverallPassRate),
             LiveTelemetry: new LiveTelemetryDto(view.LiveTelemetry.TracesPerMinute, view.LiveTelemetry.TokensPerSecond, view.LiveTelemetry.QueueDepth, view.LiveTelemetry.ErrorRate, view.LiveTelemetry.P95Ms, view.LiveTelemetry.ProxyVersion),
             Trends: new DashboardTrendsDto(view.Trends.Traces, view.Trends.LatencyMs, view.Trends.Throughput, view.Trends.PassRate),
             AgentBreakdown: view.AgentBreakdown.Select(r => new AgentBreakdownDto(r.AgentId, r.CallCount)).ToArray(),
             Latency: view.Latency.Select(r => new LatencyDto(r.EndpointId, r.P50Ms, r.P95Ms, r.P99Ms, r.MinMs, r.MaxMs, r.SampleCount)).ToArray(),
-            ModelBreakdown: view.ModelBreakdown.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray(),
-            TokenUsage: view.TokenUsage.Select(r => new TokenUsageDto(r.BucketStart, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0)).ToArray(),
-            TokenUsageByAgent: view.TokenUsageByAgent.Select(r => new AgentTokenUsageDto(r.BucketStart, r.AgentId, r.InputTokens, r.OutputTokens)).ToArray(),
+            ModelBreakdown: view.ModelBreakdown.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.TotalCachedInputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray(),
+            TokenUsage: view.TokenUsage.Select(r => new TokenUsageDto(r.BucketStart, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0, r.CachedInputTokens ?? 0)).ToArray(),
+            TokenUsageByAgent: view.TokenUsageByAgent.Select(r => new AgentTokenUsageDto(r.BucketStart, r.AgentId, r.InputTokens, r.OutputTokens, r.CachedInputTokens)).ToArray(),
             TokenBucket: view.TokenBucket switch
             {
                 StatisticsBucket.FiveMinutes => "fiveMinutes",
@@ -93,10 +93,10 @@ public class StatisticsController : ControllerBase
     }
 
     private static AgentTimeSummaryDto ToDto(AgentTimeSummary s) =>
-        new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCostEur, s.AvgLatencyMs);
+        new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCachedInputTokens, s.TotalCostEur, s.AvgLatencyMs);
 
     private static AgentTimeSeriesPointDto ToDto(AgentTimeSeriesPoint p) =>
-        new(p.BucketStart, p.TraceCount, p.InputTokens, p.OutputTokens, p.CostEur, p.AvgLatencyMs);
+        new(p.BucketStart, p.TraceCount, p.InputTokens, p.OutputTokens, p.CachedInputTokens, p.CostEur, p.AvgLatencyMs);
 
     private static AgentPassRatePointDto ToDto(AgentPassRatePoint p) =>
         new(p.BucketStart, p.Passed, p.TestCases);

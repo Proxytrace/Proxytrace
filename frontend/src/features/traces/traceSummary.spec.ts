@@ -14,6 +14,7 @@ function trace(over: Partial<AgentCallListItemDto> & Pick<AgentCallListItemDto, 
     toolCount: 0,
     inputTokens: 10,
     outputTokens: 5,
+    cachedInputTokens: 0,
     durationMs: 200,
     httpStatus: 200,
     finishReason: 'stop',
@@ -32,6 +33,7 @@ describe('summarizeTraces', () => {
       count: 0,
       inputTokens: 0,
       outputTokens: 0,
+      cachedInputTokens: 0,
       totalCostEur: null,
       avgLatencyMs: 0,
       latencyStdDevMs: 0,
@@ -40,14 +42,15 @@ describe('summarizeTraces', () => {
     });
   });
 
-  it('sums input and output tokens', () => {
+  it('sums input, output, and cached input tokens', () => {
     const s = summarizeTraces([
-      trace({ id: 'a', inputTokens: 100, outputTokens: 20 }),
-      trace({ id: 'b', inputTokens: 50, outputTokens: 5 }),
+      trace({ id: 'a', inputTokens: 100, outputTokens: 20, cachedInputTokens: 60 }),
+      trace({ id: 'b', inputTokens: 50, outputTokens: 5, cachedInputTokens: 10 }),
     ]);
     expect(s.count).toBe(2);
     expect(s.inputTokens).toBe(150);
     expect(s.outputTokens).toBe(25);
+    expect(s.cachedInputTokens).toBe(70);
   });
 
   it('sums only non-null costs and keeps the total', () => {

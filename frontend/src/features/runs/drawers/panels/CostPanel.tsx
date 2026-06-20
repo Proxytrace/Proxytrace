@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/react/macro';
 import { fmtTokens } from '../../../../lib/format';
+import { CachedTokensHint } from '../../../../components/ui/CachedTokensHint';
 import type { EndpointUsageDto } from '../../../../api/models';
 
 export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
@@ -35,6 +36,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
             </div>
             <span className="mono text-body-sm text-muted text-right whitespace-nowrap">
               {fmtTokens(ep.tokIn)}→{fmtTokens(ep.tokOut)}
+              <CachedTokensHint cachedInput={ep.cachedTokIn} input={ep.tokIn} />
             </span>
             <span className="mono text-body-sm text-secondary text-right">{ep.calls}×</span>
             <span className="mono text-body font-semibold text-primary text-right">${ep.costUsd.toFixed(4)}</span>

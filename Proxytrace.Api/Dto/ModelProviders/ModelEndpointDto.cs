@@ -7,6 +7,9 @@ public record ModelEndpointDto(
     string ProviderName,
     decimal? InputTokenCost,
     decimal? OutputTokenCost,
+    // Cached-input price is auto-fetched from the LiteLLM catalog and surfaced read-only — it is not
+    // part of the create/update pricing requests below.
+    decimal? CachedInputTokenCost,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 

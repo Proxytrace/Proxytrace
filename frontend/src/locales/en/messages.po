@@ -181,6 +181,14 @@ msgstr "{0} · {1} runs"
 msgid "{0} · {1} runs · last {2}"
 msgstr "{0} · {1} runs · last {2}"
 
+#. placeholder {0}: fmtTokens(summary.inputTokens)
+msgid "{0} · {cached}% cached"
+msgstr "{0} · {cached}% cached"
+
+#. placeholder {0}: fmt(inT)
+msgid "{0} · {cachedShare}% cached"
+msgstr "{0} · {cachedShare}% cached"
+
 #. placeholder {0}: modelSplit.models.length
 msgid "{0} active"
 msgstr "{0} active"
@@ -236,6 +244,13 @@ msgstr "{0} in · {1} out"
 #. placeholder {3}: fmtCost(trace.costEur)
 msgid "{0} in · {1} out · {2} · {3}"
 msgstr "{0} in · {1} out · {2} · {3}"
+
+#. placeholder {0}: fmtTokens(stats.inputTokens)
+#. placeholder {0}: fmtTokens(sum.totalInputTokens)
+#. placeholder {1}: fmtTokens(stats.outputTokens)
+#. placeholder {1}: fmtTokens(sum.totalOutputTokens)
+msgid "{0} in · {1} out · {cached}% cached"
+msgstr "{0} in · {1} out · {cached}% cached"
 
 #. placeholder {0}: cell.total
 msgid "{0} judged"
@@ -461,6 +476,9 @@ msgstr "{passed}/{total} passed · {failed} failed"
 msgid "{passPercent}% pass"
 msgstr "{passPercent}% pass"
 
+msgid "{pct}% cached"
+msgstr "{pct}% cached"
+
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 
@@ -483,6 +501,9 @@ msgstr "{runCount} models"
 
 msgid "{sizeB} B"
 msgstr "{sizeB} B"
+
+msgid "{tok} · {cached}% cached"
+msgstr "{tok} · {cached}% cached"
 
 msgid "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
 msgstr "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
@@ -956,6 +977,12 @@ msgstr "Building chart…"
 
 msgid "Building table…"
 msgstr "Building table…"
+
+msgid "Cached"
+msgstr "Cached"
+
+msgid "Cached / 1M €"
+msgstr "Cached / 1M €"
 
 msgid "Calls"
 msgstr "Calls"
@@ -1910,6 +1937,9 @@ msgstr "Input tokens"
 
 msgid "Input tokens (prompt)"
 msgstr "Input tokens (prompt)"
+
+msgid "Input tokens (prompt) · {cachedShare}% served from cache"
+msgstr "Input tokens (prompt) · {cachedShare}% served from cache"
 
 msgid "Inputs the agent has historically struggled with — track improvements over time."
 msgstr "Inputs the agent has historically struggled with — track improvements over time."

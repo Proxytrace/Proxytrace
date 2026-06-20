@@ -3,7 +3,7 @@ import type { AgentOverviewDto } from '../../../api/models';
 import { Sparkline } from '../../../components/charts';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { cn } from '../../../lib/cn';
-import { fmtLatency, fmtTokens, fmtCost } from '../../../lib/format';
+import { fmtLatency, fmtTokens, fmtCost, cachedPct } from '../../../lib/format';
 import { rangeWindowLabel, type RangeKey } from '../../../lib/time-range';
 import { summarizePassRate, passRateColor, passRateDelta } from '../passRate';
 import { RangeTabs } from './RangeTabs';
@@ -86,7 +86,14 @@ export function PerformanceCard({ overview, isLoading, range, onRangeChange, cla
     {
       label: t`Tokens`,
       value: sum ? fmtTokens(sum.totalInputTokens + sum.totalOutputTokens) : '—',
-      sub: sum ? t`${fmtTokens(sum.totalInputTokens)} in · ${fmtTokens(sum.totalOutputTokens)} out` : win,
+      sub: sum
+        ? (() => {
+            const cached = cachedPct(sum.totalCachedInputTokens, sum.totalInputTokens);
+            return cached !== null
+              ? t`${fmtTokens(sum.totalInputTokens)} in · ${fmtTokens(sum.totalOutputTokens)} out · ${cached}% cached`
+              : t`${fmtTokens(sum.totalInputTokens)} in · ${fmtTokens(sum.totalOutputTokens)} out`;
+          })()
+        : win,
       spark: ts.map(p => p.inputTokens + p.outputTokens),
       sparkColor: 'var(--teal)',
     },

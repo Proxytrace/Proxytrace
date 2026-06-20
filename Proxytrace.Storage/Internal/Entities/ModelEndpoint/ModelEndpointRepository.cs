@@ -61,7 +61,7 @@ internal class ModelEndpointRepository : ArchivableRepository<IModelEndpoint, Mo
             return await mapper.Map(endpointEntity, cancellationToken);
         }
 
-        var endpoint = createNewEndpoint(modelEntity, provider, null, null);
+        var endpoint = createNewEndpoint(modelEntity, provider, null, null, null);
         return await AddAsync(endpoint, cancellationToken);
     }
 

@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import type { AgentCallDto, MessageDto } from '../../../api/models';
 import { useAgentSuites } from '../hooks/usePromoteTrace';
 import { agentColor, modelColor } from '../../../lib/colors';
-import { fmtLatency, fmtTokens, fmtRelative } from '../../../lib/format';
+import { fmtLatency, fmtTokens, fmtRelative, cachedPct } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import {
   PlusIcon, ChevronRightIcon, ClockIcon, CoinsIcon,
-  ArrowDownToLineIcon, ArrowUpFromLineIcon, SigmaIcon,
+  ArrowDownToLineIcon, ArrowUpFromLineIcon, ServerIcon,
 } from '../../../components/icons';
 import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
 import { CopyButton } from '../../../components/ui/CopyButton';
@@ -76,6 +76,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const statusColor = statusOk ? 'var(--success)' : statusErr ? 'var(--danger)' : 'var(--warn)';
   const statusLabel = statusOk ? t`OK` : statusErr ? t`ERROR` : t`RATE_LIMIT`;
   const tokTotal = trace.inputTokens + trace.outputTokens;
+  const cachePct = cachedPct(trace.cachedInputTokens, trace.inputTokens);
 
   const allMessages: MessageDto[] = [...trace.request, ...(trace.response ? [trace.response] : [])];
   const toolCallCount = allMessages.reduce((n, m) => n + (m.toolRequests?.length ?? 0), 0);
@@ -182,7 +183,12 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'} valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
           <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} color="var(--teal)" />
           <DrawerStat label={t`Output`} value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} color="var(--success)" />
-          <DrawerStat label={t`Total`} value={fmtTokens(tokTotal)} icon={<SigmaIcon size={15} strokeWidth={2.2} />} color="var(--accent-primary)" />
+          <DrawerStat
+            label={t`Cached`}
+            value={cachePct !== null ? `${cachePct}%` : '—'}
+            icon={<ServerIcon size={15} strokeWidth={2.2} />}
+            color="var(--accent-primary)"
+          />
           <DrawerStat
             label={t`Cost`}
             // eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy

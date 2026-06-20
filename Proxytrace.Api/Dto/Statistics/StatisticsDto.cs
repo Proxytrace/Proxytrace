@@ -25,14 +25,15 @@ public record SummaryDto(
     long TotalCalls,
     long TotalInputTokens,
     long TotalOutputTokens,
+    long TotalCachedInputTokens,
     double AvgLatencyMs,
     double? OverallPassRate);
 
-public record TokenUsageDto(DateTimeOffset BucketStart, Guid EndPointId, long InputTokens, long OutputTokens);
+public record TokenUsageDto(DateTimeOffset BucketStart, Guid EndPointId, long InputTokens, long OutputTokens, long CachedInputTokens);
 
 public record LatencyDto(Guid EndpointId, double P50Ms, double P95Ms, double P99Ms, double MinMs, double MaxMs, int SampleCount);
 
-public record ModelBreakdownDto(Guid EndpointId, string ModelName, int CallCount, long TotalInputTokens, long TotalOutputTokens, double AvgDurationMs);
+public record ModelBreakdownDto(Guid EndpointId, string ModelName, int CallCount, long TotalInputTokens, long TotalOutputTokens, long TotalCachedInputTokens, double AvgDurationMs);
 
 public record AgentBreakdownDto(Guid AgentId, int CallCount);
 
@@ -44,7 +45,7 @@ public record LiveTelemetryDto(
     double P95Ms,
     string ProxyVersion);
 
-public record AgentTokenUsageDto(DateTimeOffset BucketStart, Guid AgentId, long InputTokens, long OutputTokens);
+public record AgentTokenUsageDto(DateTimeOffset BucketStart, Guid AgentId, long InputTokens, long OutputTokens, long CachedInputTokens);
 
 public record DashboardTrendsDto(
     IReadOnlyList<double> Traces,
@@ -57,6 +58,7 @@ public record AgentTimeSeriesPointDto(
     int TraceCount,
     long InputTokens,
     long OutputTokens,
+    long CachedInputTokens,
     decimal CostEur,
     double AvgLatencyMs);
 
@@ -82,6 +84,7 @@ public record AgentTimeSummaryDto(
     int TotalTraces,
     long TotalInputTokens,
     long TotalOutputTokens,
+    long TotalCachedInputTokens,
     decimal TotalCostEur,
     double AvgLatencyMs);
 
@@ -98,6 +101,7 @@ public record EvaluatorSummaryDto(
     double? OverallPassRate,
     long? InputTokens,
     long? OutputTokens,
+    long? CachedInputTokens,
     decimal? TotalCost,
     double? AvgLatencyMs);
 
@@ -114,6 +118,7 @@ public record EvaluatorCostPointDto(
     DateTimeOffset BucketStart,
     long InputTokens,
     long OutputTokens,
+    long CachedInputTokens,
     decimal Cost,
     double AvgLatencyMs);
 

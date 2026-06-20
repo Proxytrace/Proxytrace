@@ -74,7 +74,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             var evaluator = await evaluators.GetAsync(e.EvaluatorId, cancellationToken);
             TimeSpan evalLatency = TimeSpan.FromMicroseconds(e.LatencyMicroseconds);
             TokenUsage? evalUsage = e.InputTokens.HasValue && e.OutputTokens.HasValue
-                ? new TokenUsage((ulong)e.InputTokens.Value, (ulong)e.OutputTokens.Value)
+                ? new TokenUsage((ulong)e.InputTokens.Value, (ulong)e.OutputTokens.Value, (ulong)(e.CachedInputTokens ?? 0))
                 : null;
 
             if (!string.IsNullOrWhiteSpace(e.ErrorMessage))
@@ -88,7 +88,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
         }
 
         TokenUsage? usage = stored.InputTokens.HasValue && stored.OutputTokens.HasValue
-            ? new TokenUsage((ulong)stored.InputTokens.Value, (ulong)stored.OutputTokens.Value)
+            ? new TokenUsage((ulong)stored.InputTokens.Value, (ulong)stored.OutputTokens.Value, (ulong)(stored.CachedInputTokens ?? 0))
             : null;
 
         return factory(
@@ -115,6 +115,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
                     ErrorMessage = e.ErrorMessage,
                     InputTokens = (long?)e.TokenUsage?.InputTokenCount,
                     OutputTokens = (long?)e.TokenUsage?.OutputTokenCount,
+                    CachedInputTokens = (long?)e.TokenUsage?.CachedInputTokenCount,
                     LatencyMicroseconds = (long)e.Latency.TotalMicroseconds,
                     Cost = e.Cost,
                 })
@@ -122,6 +123,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             DurationMs = (long)domain.Latency.TotalMicroseconds,
             InputTokens = (long?)domain.Usage?.InputTokenCount,
             OutputTokens = (long?)domain.Usage?.OutputTokenCount,
+            CachedInputTokens = (long?)domain.Usage?.CachedInputTokenCount,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

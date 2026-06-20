@@ -1,6 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { AreaChart, BarChart } from '../../../components/charts';
-import { fmtPct, fmtTokens, fmtLatency } from '../../../lib/format';
+import { fmtPct, fmtTokens, fmtLatency, cachedPct } from '../../../lib/format';
 import { EvaluatorKind, type EvaluatorOverviewDto } from '../../../api/models';
 import { SCORE_ORDER, fmtEur } from '../evaluatorMeta';
 import { StatsBlockKpi, EmptyChart } from './StatsBlockKpi';
@@ -74,7 +74,16 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
         <section className={sectionCls}>
           <div className={sectionLabelCls}><Trans>Cost (LLM judge)</Trans></div>
           <div className="grid grid-cols-3 gap-3.5">
-            <StatsBlockKpi label={t`Input tokens`} value={summary.inputTokens != null ? fmtTokens(summary.inputTokens) : '—'} color={color} />
+            <StatsBlockKpi
+              label={t`Input tokens`}
+              value={summary.inputTokens != null
+                ? (() => {
+                    const cached = cachedPct(summary.cachedInputTokens ?? 0, summary.inputTokens);
+                    return cached !== null ? t`${fmtTokens(summary.inputTokens)} · ${cached}% cached` : fmtTokens(summary.inputTokens);
+                  })()
+                : '—'}
+              color={color}
+            />
             <StatsBlockKpi label={t`Output tokens`} value={summary.outputTokens != null ? fmtTokens(summary.outputTokens) : '—'} color={color} />
             <StatsBlockKpi label={t`Total cost`} value={fmtEur(summary.totalCost)} color={color} />
           </div>

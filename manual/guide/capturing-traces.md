@@ -37,6 +37,11 @@ Typical things you can do:
   current page, total tokens (with the input/output split), total cost, average latency (with
   its ± spread), and the error rate (share of non-2xx calls). It rolls up only the traces on
   the *current page* and recomputes as you page, filter, or change the time range.
+- **Cached input.** Many providers serve part of a prompt from cache at a much lower rate.
+  Wherever input tokens are shown — the page summary, each row's token cell, and the trace
+  detail panel — Proxytrace adds a muted **"(N% cached)"** hint showing what share of the input
+  was cache-served. The cached portion is priced at the provider's cheaper cached-input rate (when
+  it's known), so the displayed **cost** already reflects the discount.
 - **Agent filter** (the *Agent:* dropdown in the toolbar) focuses the table on one agent. Only
   agents that actually have traces in the selected time range are listed.
 - **Search** matches anywhere inside captured message content (and the response), not just

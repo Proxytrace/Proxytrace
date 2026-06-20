@@ -8,7 +8,10 @@ import { TrashIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import { useDeleteModel } from '../hooks/useProviderMutations';
 
-const GRID = cn('grid grid-cols-[2fr_1fr_1fr_auto]');
+// Last column is a FIXED width (not `auto`): the header's action cell is empty while each row's is
+// an icon button, so `auto` would resolve to different widths and shift every fr column out of
+// alignment between header and body.
+const GRID = cn('grid grid-cols-[2fr_1fr_1fr_1fr_48px]');
 
 interface ModelsSectionProps {
   providerId: string;
@@ -40,7 +43,7 @@ export function ModelsSection({ models, reloading, onReload }: ModelsSectionProp
       {models.length > 0 && (
         <div className="bg-card-2 rounded-lg border border-hairline overflow-hidden">
           <div className={`${GRID} px-4 py-2.5 text-caption font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline`}>
-            <span><Trans>Model</Trans></span><span><Trans>Input / 1M €</Trans></span><span><Trans>Output / 1M €</Trans></span><span />
+            <span><Trans>Model</Trans></span><span><Trans>Input / 1M €</Trans></span><span><Trans>Output / 1M €</Trans></span><span><Trans>Cached / 1M €</Trans></span><span />
           </div>
           {models.map((m, i) => (
             <div key={m.id} data-testid={`model-row-${m.id}`} className={i < models.length - 1 ? 'border-b border-hairline' : ''}>
@@ -48,6 +51,7 @@ export function ModelsSection({ models, reloading, onReload }: ModelsSectionProp
                 <span className="font-mono text-body text-primary">{m.modelName}</span>
                 <span className="text-body text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
                 <span className="text-body text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
+                <span className="text-body text-secondary">{m.cachedInputTokenCost != null ? m.cachedInputTokenCost.toFixed(4) : '—'}</span>
                 <div className="flex items-center gap-1">
                   <IconButton aria-label={t`Delete model`} danger onClick={() => setToDelete(m)}>
                     <TrashIcon size={13} />

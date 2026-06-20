@@ -67,6 +67,7 @@ public record EndpointUsageDto(
     double PricingOut,
     ulong? TokIn,
     ulong? TokOut,
+    ulong? CachedTokIn,
     int Calls,
     long Latency,
     double CostUsd

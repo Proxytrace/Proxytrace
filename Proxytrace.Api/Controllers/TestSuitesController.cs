@@ -207,11 +207,12 @@ public class TestSuitesController : ControllerBase
         return mapper.ToDto(saved);
     }
 
+    // Deleting a suite cascades to its run groups, runs, schedules, theories, and the proposals
+    // produced from those runs (see the storage FK config) — so the delete always succeeds. The
+    // DbUpdateExceptionMapper middleware still maps any unforeseen constraint to a friendly 409.
     [HttpDelete("{id:guid}")]
-    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        => this.DeleteOrConflictAsync(
-            () => suiteRepository.RemoveAsync(id, cancellationToken),
-            "This test suite is still referenced by an optimization theory. Remove the theory before deleting the suite.");
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        => await suiteRepository.RemoveAsync(id, cancellationToken) ? NoContent() : NotFound();
 
     /// <summary>
     /// Creates a new test suite by promoting a curated selection of traced agent calls.

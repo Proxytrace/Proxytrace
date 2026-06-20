@@ -47,8 +47,8 @@ internal class OpenAiCallParser : IOpenAiCallParser
         }
 
         var model = ParseModel(requestBody);
-        var (inputTokens, outputTokens, finishReason) = ParseUsage(responseBody);
-        var usage = TokenUsage.Create(inputTokens ?? 0, outputTokens ?? 0);
+        var (inputTokens, outputTokens, cachedInputTokens, finishReason) = ParseUsage(responseBody);
+        var usage = TokenUsage.Create(inputTokens ?? 0, outputTokens ?? 0, cachedInputTokens ?? 0);
         var errorMessage = (int)httpStatus >= 400 ? ParseErrorMessage(responseBody) : null;
         var systemMessage = ParseSystemMessage(requestBody);
         if(systemMessage is null)
@@ -540,11 +540,11 @@ internal class OpenAiCallParser : IOpenAiCallParser
         return "unknown";
     }
 
-    private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ParseUsage(string? responseBody)
+    private static (ulong? inputTokens, ulong? outputTokens, ulong? cachedInputTokens, string? finishReason) ParseUsage(string? responseBody)
     {
         if (responseBody is null)
         {
-            return (null, null, null);
+            return (null, null, null, null);
         }
 
         if (LooksLikeSse(responseBody))
@@ -557,7 +557,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
             using var doc = JsonDocument.Parse(responseBody);
             return ExtractUsageFromElement(doc.RootElement);
         }
-        catch { return (null, null, null); }
+        catch { return (null, null, null, null); }
     }
 
     /// <summary>
@@ -592,10 +592,11 @@ internal class OpenAiCallParser : IOpenAiCallParser
         return false;
     }
 
-    private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ParseUsageFromSse(string responseBody)
+    private static (ulong? inputTokens, ulong? outputTokens, ulong? cachedInputTokens, string? finishReason) ParseUsageFromSse(string responseBody)
     {
         ulong? inputTokens = null;
         ulong? outputTokens = null;
+        ulong? cachedInputTokens = null;
         string? finishReason = null;
 
         foreach (var line in responseBody.Split('\n'))
@@ -609,34 +610,38 @@ internal class OpenAiCallParser : IOpenAiCallParser
             try
             {
                 using var doc = JsonDocument.Parse(trimmed["data: ".Length..]);
-                var (pt, ct, fr) = ExtractUsageFromElement(doc.RootElement);
+                var (pt, ct, cached, fr) = ExtractUsageFromElement(doc.RootElement);
                 inputTokens ??= pt;
                 outputTokens ??= ct;
+                cachedInputTokens ??= cached;
                 finishReason ??= fr;
             }
             catch { /* skip malformed chunk */ }
         }
 
-        return (inputTokens, outputTokens, finishReason);
+        return (inputTokens, outputTokens, cachedInputTokens, finishReason);
     }
 
-    private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ExtractUsageFromElement(JsonElement root)
+    private static (ulong? inputTokens, ulong? outputTokens, ulong? cachedInputTokens, string? finishReason) ExtractUsageFromElement(JsonElement root)
     {
         ulong? inputTokens = null;
         ulong? outputTokens = null;
+        ulong? cachedInputTokens = null;
         string? finishReason = null;
 
         if (root.TryGetProperty("usage", out var usage))
         {
-            if (usage.TryGetProperty("prompt_tokens", out var pt))
+            if (usage.TryGetProperty("prompt_tokens", out var pt) && pt.ValueKind == JsonValueKind.Number)
             {
                 inputTokens = pt.GetUInt64();
             }
 
-            if (usage.TryGetProperty("completion_tokens", out var ct))
+            if (usage.TryGetProperty("completion_tokens", out var ct) && ct.ValueKind == JsonValueKind.Number)
             {
                 outputTokens = ct.GetUInt64();
             }
+
+            cachedInputTokens = ExtractCachedInputTokens(usage);
         }
 
         if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
@@ -648,7 +653,31 @@ internal class OpenAiCallParser : IOpenAiCallParser
             }
         }
 
-        return (inputTokens, outputTokens, finishReason);
+        return (inputTokens, outputTokens, cachedInputTokens, finishReason);
+    }
+
+    /// <summary>
+    /// Cached-input tokens served from the provider's prompt cache — a subset of the input tokens.
+    /// Primary: OpenAI's <c>usage.prompt_tokens_details.cached_tokens</c>; fallback: an
+    /// Anthropic-style top-level <c>usage.cache_read_input_tokens</c>.
+    /// </summary>
+    private static ulong? ExtractCachedInputTokens(JsonElement usage)
+    {
+        if (usage.TryGetProperty("prompt_tokens_details", out var details)
+            && details.ValueKind == JsonValueKind.Object
+            && details.TryGetProperty("cached_tokens", out var cached)
+            && cached.ValueKind == JsonValueKind.Number)
+        {
+            return cached.GetUInt64();
+        }
+
+        if (usage.TryGetProperty("cache_read_input_tokens", out var anthropicCached)
+            && anthropicCached.ValueKind == JsonValueKind.Number)
+        {
+            return anthropicCached.GetUInt64();
+        }
+
+        return null;
     }
 
     private static string? ParseErrorMessage(string? responseBody)

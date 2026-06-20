@@ -26,6 +26,7 @@ function stubAgentCall(request: MessageDto[], response?: MessageDto): AgentCallD
     tools: [],
     inputTokens: 100,
     outputTokens: 50,
+    cachedInputTokens: 0,
     durationMs: 300,
     httpStatus: 200,
     finishReason: 'stop',

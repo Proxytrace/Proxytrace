@@ -114,6 +114,7 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
         var withTokens = matching.Where(x => x.Eval is { InputTokens: not null, OutputTokens: not null }).ToArray();
         long? inputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.InputTokens ?? 0) : null;
         long? outputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.OutputTokens ?? 0) : null;
+        long? cachedInputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.CachedInputTokens ?? 0) : null;
 
         var withCost = matching.Where(x => x.Eval.Cost.HasValue).ToArray();
         decimal? totalCost = withCost.Length > 0 ? withCost.Sum(x => x.Eval.Cost ?? 0) : null;
@@ -128,6 +129,7 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             OverallPassRate: passRate,
             InputTokens: inputTokens,
             OutputTokens: outputTokens,
+            CachedInputTokens: cachedInputTokens,
             TotalCost: totalCost,
             AvgLatencyMs: avgLatencyMs);
 
@@ -154,6 +156,7 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
                 BucketStart: g.Key,
                 InputTokens: g.Sum(x => x.Eval.InputTokens ?? 0),
                 OutputTokens: g.Sum(x => x.Eval.OutputTokens ?? 0),
+                CachedInputTokens: g.Sum(x => x.Eval.CachedInputTokens ?? 0),
                 Cost: g.Sum(x => x.Eval.Cost ?? 0m),
                 AvgLatencyMs: g.Average(x => x.Eval.LatencyMicroseconds / 1_000.0)))
             .ToArray();

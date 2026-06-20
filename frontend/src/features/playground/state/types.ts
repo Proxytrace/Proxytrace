@@ -44,6 +44,7 @@ export interface PlaygroundOverrides {
 export interface PlaygroundStats {
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
   latencyMs: number;
   costEur: number | null;
   finishReason: string | null;

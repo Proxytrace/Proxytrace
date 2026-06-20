@@ -46,6 +46,7 @@ public sealed class TestRunDtoMapper
             CostUsd: (double?)totals.CostUsd,
             TokensIn: totals.TokensIn,
             TokensOut: totals.TokensOut,
+            CachedTokensIn: totals.CachedTokensIn,
             Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, e.Name)).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
@@ -202,6 +203,7 @@ public sealed class TestRunDtoMapper
             PricingOut: (double)(run.Endpoint.OutputTokenCost ?? 0),
             TokIn: result.Usage?.InputTokenCount,
             TokOut: result.Usage?.OutputTokenCount,
+            CachedTokIn: result.Usage?.CachedInputTokenCount,
             Calls: 1,
             Latency: (long)result.Latency.TotalMilliseconds,
             CostUsd: result.Usage is { } usage ? (double)(run.Endpoint.CalculateCost(usage) ?? 0m) : 0)

@@ -61,6 +61,7 @@ export interface LeaderboardEntry {
   costUsd: number | null;
   tokensIn: number | null;
   tokensOut: number | null;
+  cachedTokensIn: number | null;
   /** Winners among the group's *completed* runs (always set; render only when multi-model). */
   isBest: boolean;
   isFastest: boolean;
@@ -85,6 +86,7 @@ export function buildLeaderboard(runs: TestRunDto[], complete: boolean): Leaderb
     costUsd: run.costUsd,
     tokensIn: run.tokensIn,
     tokensOut: run.tokensOut,
+    cachedTokensIn: run.cachedTokensIn,
   }));
 
   // Winners are computed only once the whole group has settled — otherwise badges flip

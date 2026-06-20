@@ -58,7 +58,9 @@ internal class OptimizationTheoryConfig :
             .HasOne<TestSuiteEntity>()
             .WithMany()
             .HasForeignKey(e => e.Suite)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Cascade: deleting a suite removes the theories generated against it. The suite is the
+            // theory's reason to exist; without it the theory is orphaned. See AbTestRun below.
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .HasOne<OptimizationProposalEntity>()

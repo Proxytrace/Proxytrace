@@ -26,6 +26,11 @@ internal record ModelEndpointEntity : Entity, IArchivableEntity
     /// </summary>
     public required decimal? OutputTokenCost { get; init; }
 
+    /// <summary>
+    /// <see cref="Proxytrace.Domain.ModelEndpoint.IModelEndpoint.CachedInputTokenCost"/>
+    /// </summary>
+    public required decimal? CachedInputTokenCost { get; init; }
+
     /// <inheritdoc />
     public bool IsArchived { get; init; }
 }

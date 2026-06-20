@@ -47,6 +47,7 @@ public class PlaygroundController : ControllerBase
                     {
                         inputTokens = d.InputTokens,
                         outputTokens = d.OutputTokens,
+                        cachedInputTokens = d.CachedInputTokens,
                         latencyMs = d.LatencyMs,
                         costEur = d.CostEur,
                         finishReason = d.FinishReason,

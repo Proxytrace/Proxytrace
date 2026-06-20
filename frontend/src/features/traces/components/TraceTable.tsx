@@ -38,7 +38,7 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
               key={label}
               className={cn(
                 'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]',
-                i === 7 && 'text-right',
+                i === COL_HEADERS.length - 1 && 'text-right',
                 COL_VIS_CLS[i],
               )}
             >

@@ -18,7 +18,7 @@ internal static class EvaluatorStatsDtoMapper
         new(s.EvaluatorId, s.Points.Select(ToDto).ToArray());
 
     private static EvaluatorSummaryDto ToDto(EvaluatorSummary s) =>
-        new(s.TotalEvaluations, s.AvgScore, s.OverallPassRate, s.InputTokens, s.OutputTokens, s.TotalCost, s.AvgLatencyMs);
+        new(s.TotalEvaluations, s.AvgScore, s.OverallPassRate, s.InputTokens, s.OutputTokens, s.CachedInputTokens, s.TotalCost, s.AvgLatencyMs);
 
     private static EvaluatorPassRatePointDto ToDto(EvaluatorPassRatePoint p) =>
         new(p.BucketStart, p.Passed, p.Total);
@@ -27,5 +27,5 @@ internal static class EvaluatorStatsDtoMapper
         new(b.Score, b.Count);
 
     private static EvaluatorCostPointDto ToDto(EvaluatorCostPoint p) =>
-        new(p.BucketStart, p.InputTokens, p.OutputTokens, p.Cost, p.AvgLatencyMs);
+        new(p.BucketStart, p.InputTokens, p.OutputTokens, p.CachedInputTokens, p.Cost, p.AvgLatencyMs);
 }

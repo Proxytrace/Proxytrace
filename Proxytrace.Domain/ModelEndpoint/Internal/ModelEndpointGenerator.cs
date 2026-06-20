@@ -33,7 +33,8 @@ internal class ModelEndpointGenerator : DomainEntityGenerator<IModelEndpoint>
             model: model,
             provider: provider,
             inputTokenCost: inputTokenCost,
-            outputTokenCost: inputTokenCost * random.Decimal(5, 10));
+            outputTokenCost: inputTokenCost * random.Decimal(5, 10),
+            cachedInputTokenCost: inputTokenCost * random.Decimal(0, 1));
     }
 }
 

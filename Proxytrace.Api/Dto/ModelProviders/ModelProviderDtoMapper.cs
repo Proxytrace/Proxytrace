@@ -31,5 +31,5 @@ public sealed class ModelProviderDtoMapper
     }
 
     public ModelEndpointDto ToEndpointDto(IModelEndpoint e) =>
-        new(e.Id, e.Model.Name, e.Provider.Id, e.Provider.Name, e.InputTokenCost, e.OutputTokenCost, e.CreatedAt, e.UpdatedAt);
+        new(e.Id, e.Model.Name, e.Provider.Id, e.Provider.Name, e.InputTokenCost, e.OutputTokenCost, e.CachedInputTokenCost, e.CreatedAt, e.UpdatedAt);
 }

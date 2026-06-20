@@ -83,6 +83,8 @@ export interface AgentCallDto {
   tools: ToolSpecDto[];
   inputTokens: number;
   outputTokens: number;
+  /** Cached subset of {@link inputTokens} (cached ≤ input), served from the provider cache. */
+  cachedInputTokens: number;
   durationMs: number;
   httpStatus: number;
   finishReason: string | null;
@@ -110,6 +112,8 @@ export interface AgentCallListItemDto {
   toolCount: number;
   inputTokens: number;
   outputTokens: number;
+  /** Cached subset of {@link inputTokens}. */
+  cachedInputTokens: number;
   durationMs: number;
   httpStatus: number;
   finishReason: string | null;
@@ -190,6 +194,7 @@ export interface SummaryDto {
   totalCalls: number;
   totalInputTokens: number;
   totalOutputTokens: number;
+  totalCachedInputTokens: number;
   avgLatencyMs: number;
   overallPassRate: number | null;
 }
@@ -199,6 +204,7 @@ export interface ModelBreakdownDto {
   callCount: number;
   totalInputTokens: number;
   totalOutputTokens: number;
+  totalCachedInputTokens: number;
   avgDurationMs: number;
 }
 export interface AgentBreakdownDto {
@@ -218,6 +224,7 @@ export interface AgentTokenUsageDto {
   agentId: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
 }
 export interface DashboardTrendsDto {
   traces: number[];
@@ -239,6 +246,7 @@ export interface TokenUsageDto {
   endPointId: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
 }
 export interface PassRateDto {
   suiteId: string;
@@ -265,6 +273,7 @@ export interface AgentTimeSeriesPointDto {
   traceCount: number;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
   costEur: number;
   avgLatencyMs: number;
 }
@@ -290,6 +299,7 @@ export interface AgentTimeSummaryDto {
   totalTraces: number;
   totalInputTokens: number;
   totalOutputTokens: number;
+  totalCachedInputTokens: number;
   totalCostEur: number;
   avgLatencyMs: number;
 }
@@ -371,6 +381,7 @@ export interface EvaluatorSummaryDto {
   overallPassRate: number | null;
   inputTokens: number | null;
   outputTokens: number | null;
+  cachedInputTokens: number | null;
   totalCost: number | null;
   avgLatencyMs: number | null;
 }
@@ -379,6 +390,7 @@ export interface EvaluatorCostPointDto {
   bucketStart: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
   cost: number;
   avgLatencyMs: number;
 }
@@ -442,6 +454,7 @@ export interface TestRunDto {
   costUsd: number | null;
   tokensIn: number | null;
   tokensOut: number | null;
+  cachedTokensIn: number | null;
   evaluators: RunEvaluatorDto[];
   startedAt: string;
   completedAt: string | null;
@@ -604,6 +617,8 @@ export interface ModelEndpointDto {
   providerName: string;
   inputTokenCost: number | null;
   outputTokenCost: number | null;
+  /** Cached-input price (EUR / 1M tokens); auto-fetched from the LiteLLM catalog, read-only. */
+  cachedInputTokenCost: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -734,6 +749,7 @@ export interface EndpointUsageDto {
   pricingOut: number;
   tokIn: number;
   tokOut: number;
+  cachedTokIn: number;
   calls: number;
   latency: number;
   costUsd: number;

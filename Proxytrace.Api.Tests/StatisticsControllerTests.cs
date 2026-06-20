@@ -23,14 +23,14 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var date = DateOnly.FromDateTime(DateTime.UtcNow);
         dashboard.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new DashboardView(
-                Summary: new StatisticsSummary(TotalCalls: 42, TotalInputTokens: 100, TotalOutputTokens: 200, AvgLatencyMs: 12.5, OverallPassRate: 0.95),
+                Summary: new StatisticsSummary(TotalCalls: 42, TotalInputTokens: 100, TotalOutputTokens: 200, TotalCachedInputTokens: 40, AvgLatencyMs: 12.5, OverallPassRate: 0.95),
                 LiveTelemetry: new LiveTelemetry(TracesPerMinute: 1, TokensPerSecond: 2, QueueDepth: 3, ErrorRate: 0.1, P95Ms: 55, ProxyVersion: "v1"),
                 Trends: new DashboardTrends([1], [2], [3], [4]),
                 AgentBreakdown: [new AgentBreakdownStat(agentId, 7)],
                 Latency: [new LatencyStat(endpointId, 10, 20, 30, 1, 100, 50)],
-                ModelBreakdown: [new ModelBreakdownStat(endpointId, "gpt-4o", CallCount: 3, TotalInputTokens: null, TotalOutputTokens: null, AvgDurationMs: null)],
-                TokenUsage: [new TokenUsageStat(date.ToDateTime(TimeOnly.MinValue), endpointId, InputTokens: 10, OutputTokens: 20)],
-                TokenUsageByAgent: [new AgentTokenUsageStat(date.ToDateTime(TimeOnly.MinValue), agentId, InputTokens: 5, OutputTokens: 6)],
+                ModelBreakdown: [new ModelBreakdownStat(endpointId, "gpt-4o", CallCount: 3, TotalInputTokens: null, TotalOutputTokens: null, TotalCachedInputTokens: null, AvgDurationMs: null)],
+                TokenUsage: [new TokenUsageStat(date.ToDateTime(TimeOnly.MinValue), endpointId, InputTokens: 10, OutputTokens: 20, CachedInputTokens: 4)],
+                TokenUsageByAgent: [new AgentTokenUsageStat(date.ToDateTime(TimeOnly.MinValue), agentId, InputTokens: 5, OutputTokens: 6, CachedInputTokens: 2)],
                 TokenBucket: StatisticsBucket.Hourly,
                 RecentTraces: [],
                 Agents: [],
@@ -60,7 +60,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var dashboard = Substitute.For<IDashboardStatistics>();
         dashboard.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new DashboardView(
-                new StatisticsSummary(0, 0, 0, 0, null),
+                new StatisticsSummary(0, 0, 0, 0, 0, null),
                 new LiveTelemetry(0, 0, 0, 0, 0, "v"),
                 new DashboardTrends([], [], [], []),
                 [], [], [], [], [],
@@ -95,8 +95,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var suiteId = Guid.NewGuid();
         agentStatistics.GetAgentOverviewAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
             .Returns(new AgentOverviewStat(
-                Summary: new AgentTimeSummary(10, 100, 200, 5.5m, 12.5),
-                TimeSeries: [new AgentTimeSeriesPoint(bucketStart, 1, 10, 20, 0.5m, 50)],
+                Summary: new AgentTimeSummary(10, 100, 200, 40, 5.5m, 12.5),
+                TimeSeries: [new AgentTimeSeriesPoint(bucketStart, 1, 10, 20, 4, 0.5m, 50)],
                 PassRateTrend: [new AgentPassRatePoint(bucketStart, 4, 5)],
                 SuitePassRates: [new AgentSuitePassRate(suiteId, "Suite A", bucketStart, 3, 3)],
                 Counts: new AgentEntityCounts(SuiteCount: 2, TestCaseCount: 6, OpenProposalCount: 1, TotalProposalCount: 4)));

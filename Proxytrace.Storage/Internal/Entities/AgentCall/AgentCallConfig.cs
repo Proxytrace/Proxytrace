@@ -105,7 +105,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             stored.Response is not null
                 ? completionFactory(
                     stored.Response,
-                    usage: TokenUsage.Create(stored.InputTokens, stored.OutputTokens),
+                    usage: TokenUsage.Create(stored.InputTokens, stored.OutputTokens, stored.CachedInputTokens),
                     latency: TimeSpan.FromMilliseconds(stored.LatencyMs ?? 0))
                 : null;
         var modelParameters = AgentConfig.ToDomain(stored.ModelParameters, modelParametersFactory);
@@ -133,6 +133,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             Response = domain.Response?.Response,
             InputTokens = domain.Response?.Usage?.InputTokenCount,
             OutputTokens = domain.Response?.Usage?.OutputTokenCount,
+            CachedInputTokens = domain.Response?.Usage?.CachedInputTokenCount,
             LatencyMs = domain.Response?.Latency.TotalMilliseconds,
             HttpStatus = (int)domain.HttpStatus,
             FinishReason = domain.FinishReason,

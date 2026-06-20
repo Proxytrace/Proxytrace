@@ -4,6 +4,8 @@ export interface TraceSummaryStats {
   count: number;
   inputTokens: number;
   outputTokens: number;
+  /** Cached subset of {@link inputTokens} across the page. */
+  cachedInputTokens: number;
   /** Sum of `costEur` over traces that have a cost; null when none do. */
   totalCostEur: number | null;
   avgLatencyMs: number;
@@ -24,6 +26,7 @@ const EMPTY: TraceSummaryStats = {
   count: 0,
   inputTokens: 0,
   outputTokens: 0,
+  cachedInputTokens: 0,
   totalCostEur: null,
   avgLatencyMs: 0,
   latencyStdDevMs: 0,
@@ -41,6 +44,7 @@ export function summarizeTraces(traces: AgentCallListItemDto[]): TraceSummarySta
 
   let inputTokens = 0;
   let outputTokens = 0;
+  let cachedInputTokens = 0;
   let costSum = 0;
   let hasCost = false;
   let latencySum = 0;
@@ -49,6 +53,7 @@ export function summarizeTraces(traces: AgentCallListItemDto[]): TraceSummarySta
   for (const t of traces) {
     inputTokens += t.inputTokens;
     outputTokens += t.outputTokens;
+    cachedInputTokens += t.cachedInputTokens;
     if (t.costEur != null) {
       costSum += t.costEur;
       hasCost = true;
@@ -69,6 +74,7 @@ export function summarizeTraces(traces: AgentCallListItemDto[]): TraceSummarySta
     count,
     inputTokens,
     outputTokens,
+    cachedInputTokens,
     totalCostEur: hasCost ? costSum : null,
     avgLatencyMs,
     latencyStdDevMs,
