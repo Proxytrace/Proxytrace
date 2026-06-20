@@ -191,6 +191,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **The Playground agent picker only lists real agents.** The agent select-box no longer offers
+  internal system agents (such as the built-in Tracey agent) — it shows only the user-facing agents
+  you can actually run in the Playground.
+
 - **Test suites can be deleted again.** Deleting a suite that had been run (or that had an
   optimization theory) failed with a foreign-key error: the run groups, runs, A/B-test proposals and
   theories that referenced it blocked the delete. Removing a suite now cascades to all of them — its
