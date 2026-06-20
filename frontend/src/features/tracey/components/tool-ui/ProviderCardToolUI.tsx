@@ -9,6 +9,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `get_provider` tool result. */
 export const ProviderCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: provider } = useArtifactResult('provider', result, status, isError);
   return (
     <EntityCardLink

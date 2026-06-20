@@ -32,6 +32,7 @@ export default function Evaluators() {
   const [selectedId, setSelectedId] = useSelectedId();
   const { currentProjectId } = useCurrentProject();
 
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
   const [range, setRange] = useState<RangeKey>('7d');
   const [showNew, setShowNew] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);

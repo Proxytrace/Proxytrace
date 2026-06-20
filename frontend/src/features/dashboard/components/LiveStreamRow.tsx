@@ -8,11 +8,13 @@ import { modelColor, statusColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
 import type { TraceRow } from '../../../lib/trace';
+import { cn } from '../../../lib/cn';
 
 // Shared grid template — header row and every data row align to this. Columns are
 // fixed-width (not auto) so the header grid and each row's grid compute identical
 // tracks; auto tracks would size to each grid's own content and drift out of line.
 // Columns: dot · message · turns · model · status · tokens · latency.
+// eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind grid-template class, not UI copy
 export const LIVE_STREAM_GRID = 'grid grid-cols-[14px_minmax(0,1fr)_64px_104px_56px_60px_64px] gap-5';
 
 interface Props {
@@ -23,7 +25,7 @@ interface Props {
 }
 
 export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
-  const rowCls = `w-full text-left ${LIVE_STREAM_GRID} items-center py-[7px] px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)] ${isLast ? '' : 'border-b border-border-subtle'}`;
+  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-[7px] px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]', isLast ? '' : 'border-b border-border-subtle');
 
   if (row.type === 'flat') {
     const t = row.trace;

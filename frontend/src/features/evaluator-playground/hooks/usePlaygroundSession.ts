@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLingui } from '@lingui/react/macro';
-import { msg } from '@lingui/core/macro';
 import { type EvaluationResultDto, type MessageDto } from '../../../api/models';
 import { evaluatorTestBenchApi } from '../../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../../api/query-keys';
+import { runLabel } from '../testBenchMeta';
 
 /** One verdict in the history list (newest first): the logged baseline or a live re-score. */
 export interface SessionRun {
@@ -122,11 +122,7 @@ export function usePlaygroundSession(evaluatorId: string, selectedCaseId: string
     run: runMutation.mutate,
     runPending: runMutation.isPending,
     runError: runMutation.isError,
-    runLabel: runMutation.isPending
-      ? i18n._(msg`Running…`)
-      : runs.length > 0
-        ? i18n._(msg`Re-run`)
-        : i18n._(msg`Run evaluator`),
+    runLabel: i18n._(runLabel(runMutation.isPending, runs.length > 0)),
     runDisabled: effectiveCaseId == null || payloadQuery.isLoading || runMutation.isPending,
     runs,
     currentRun,

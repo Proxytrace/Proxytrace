@@ -21,6 +21,7 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
   const { show: toast } = useToast();
 
   const save = useUpdateTestCaseExpected(testCase.id, () => {
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
     toast(t`Expected output updated`, 'success');
     setEditing(false);
   });

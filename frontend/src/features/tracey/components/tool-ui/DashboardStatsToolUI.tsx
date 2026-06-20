@@ -10,6 +10,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `get_dashboard_stats` tool result. */
 export const DashboardStatsToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('dashboard-stats', result, status, isError);
   if (state !== 'ready' || !data) {
     return (

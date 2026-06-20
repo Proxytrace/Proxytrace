@@ -17,7 +17,7 @@ interface NotificationRowProps {
 }
 
 export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }: NotificationRowProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { id, title, message, severity, status, createdAt, targetKind, targetId } = notification;
   const route = targetRoute(targetKind, targetId);
   const isUnread = status === NotificationStatus.Unread;
@@ -37,7 +37,7 @@ export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }:
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <Badge label={severityLabel(severity)} variant={severityBadgeVariant(severity)} size="sm" />
+          <Badge label={i18n._(severityLabel(severity))} variant={severityBadgeVariant(severity)} size="sm" />
           <span data-testid={`notification-title-${id}`} className="text-body-sm font-semibold text-primary truncate">
             {title}
           </span>

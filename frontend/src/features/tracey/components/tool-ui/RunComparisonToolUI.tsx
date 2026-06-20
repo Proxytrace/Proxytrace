@@ -19,6 +19,7 @@ const MOVEMENT_LABEL: Record<Exclude<CaseMovement, 'still-passing'>, { label: Me
 /** Inline renderer for the `compare_runs` tool result: per-case movement between two runs. */
 export const RunComparisonToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t, i18n } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('run-comparison', result, status, isError);
   const moved = (data?.cases ?? []).filter((c) => c.movement !== 'still-passing');
   return (

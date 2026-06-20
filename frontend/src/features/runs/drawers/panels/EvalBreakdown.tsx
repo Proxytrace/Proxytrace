@@ -4,6 +4,7 @@ import { CheckIcon, XIcon } from '../../../../components/icons';
 import { modelColor } from '../../../../lib/colors';
 import type { TestRunDto, TestCaseFixtureDto } from '../../../../api/models';
 import { isDivergent, scoreLabel } from '../../results';
+import { cn } from '../../../../lib/cn';
 import { SECTION_LABEL } from './constants';
 
 export function EvalBreakdown({ runs, fixtures }: { runs: TestRunDto[]; fixtures: (TestCaseFixtureDto | undefined)[] }) {
@@ -12,7 +13,7 @@ export function EvalBreakdown({ runs, fixtures }: { runs: TestRunDto[]; fixtures
   fixtures.forEach(f => f?.evaluators.forEach(e => { if (!names.includes(e.evaluatorName)) names.push(e.evaluatorName); }));
   if (names.length === 0) return null;
 
-  const gridCols = `minmax(140px,1.4fr) repeat(${runs.length}, minmax(84px,1fr))`;
+  const gridCols = cn(`minmax(140px,1.4fr) repeat(${runs.length}, minmax(84px,1fr))`);
 
   return (
     <section>
@@ -33,7 +34,7 @@ export function EvalBreakdown({ runs, fixtures }: { runs: TestRunDto[]; fixtures
             const cells = fixtures.map(f => f?.evaluators.find(e => e.evaluatorName === name) ?? null);
             const divergent = isDivergent(cells.flatMap(c => (c ? [c.pass] : [])));
             const rowCls = divergent
-              ? 'bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]'
+              ? cn('bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]')
               : '';
             return (
               <Fragment key={name}>

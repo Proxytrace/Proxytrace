@@ -2,6 +2,8 @@
 // Maps a theory (+ its resulting proposal, if any) to an ordered list of lifecycle stages with a
 // state and a short status label. The component renders each stage's body by key.
 
+import { msg, plural } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { OptimizationProposalDto, TheoryDto } from '../../api/models';
 import { ProposalStatus, TheoryStatus } from '../../api/models';
 import type { DisplayTone } from './shared';
@@ -14,7 +16,7 @@ export type FlowState = 'complete' | 'current' | 'pending' | 'rejected';
 export interface FlowStage {
   key: FlowStageKey;
   title: string;
-  statusLabel: string;
+  statusLabel: MessageDescriptor;
   state: FlowState;
 }
 
@@ -36,22 +38,22 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
     key: 'abTest',
     title: 'A/B validation',
     ...(validated
-      ? { state: 'complete' as const, statusLabel: 'Improvement confirmed' }
+      ? { state: 'complete' as const, statusLabel: msg`Improvement confirmed` }
       : invalidated
-        ? { state: 'rejected' as const, statusLabel: 'No improvement' }
+        ? { state: 'rejected' as const, statusLabel: msg`No improvement` }
         : validating
-          ? { state: 'current' as const, statusLabel: 'In flight' }
-          : { state: 'pending' as const, statusLabel: 'Not yet tested' }),
+          ? { state: 'current' as const, statusLabel: msg`In flight` }
+          : { state: 'pending' as const, statusLabel: msg`Not yet tested` }),
   };
 
   const proposalStage: FlowStage = {
     key: 'proposal',
     title: 'Proposal',
     ...(validated
-      ? { state: 'complete' as const, statusLabel: 'Draft created' }
+      ? { state: 'complete' as const, statusLabel: msg`Draft created` }
       : invalidated
-        ? { state: 'rejected' as const, statusLabel: 'None generated' }
-        : { state: 'pending' as const, statusLabel: 'Pending validation' }),
+        ? { state: 'rejected' as const, statusLabel: msg`None generated` }
+        : { state: 'pending' as const, statusLabel: msg`Pending validation` }),
   };
 
   const outcome: FlowStage = { key: 'outcome', title: 'Outcome', ...outcomeState(status, proposal) };
@@ -62,27 +64,27 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
       title: 'Evidence',
       state: 'complete',
       statusLabel: hasEvidence
-        ? `${theory.evidenceTestRunIds.length} failing run${theory.evidenceTestRunIds.length !== 1 ? 's' : ''}`
-        : 'Submitted directly',
+        ? msg`${plural(theory.evidenceTestRunIds.length, { one: '# failing run', other: '# failing runs' })}`
+        : msg`Submitted directly`,
     },
-    { key: 'theory', title: 'Theory', state: 'complete', statusLabel: 'Hypothesised' },
+    { key: 'theory', title: 'Theory', state: 'complete', statusLabel: msg`Hypothesised` },
     abTest,
     proposalStage,
     outcome,
   ];
 }
 
-function outcomeState(status: TheoryStatus, proposal: OptimizationProposalDto | null): { state: FlowState; statusLabel: string } {
+function outcomeState(status: TheoryStatus, proposal: OptimizationProposalDto | null): { state: FlowState; statusLabel: MessageDescriptor } {
   if (status === TheoryStatus.Invalidated) {
-    return { state: 'rejected', statusLabel: 'Auto-rejected by A/B' };
+    return { state: 'rejected', statusLabel: msg`Auto-rejected by A/B` };
   }
   if (status === TheoryStatus.Validated) {
     switch (proposal?.status) {
-      case ProposalStatus.Accepted: return { state: 'current', statusLabel: 'Awaiting adoption' };
-      case ProposalStatus.Adopted: return { state: 'complete', statusLabel: 'Adopted' };
-      case ProposalStatus.Rejected: return { state: 'rejected', statusLabel: 'Dismissed' };
-      default: return { state: 'current', statusLabel: 'Pending review' };
+      case ProposalStatus.Accepted: return { state: 'current', statusLabel: msg`Awaiting adoption` };
+      case ProposalStatus.Adopted: return { state: 'complete', statusLabel: msg`Adopted` };
+      case ProposalStatus.Rejected: return { state: 'rejected', statusLabel: msg`Dismissed` };
+      default: return { state: 'current', statusLabel: msg`Pending review` };
     }
   }
-  return { state: 'pending', statusLabel: 'Awaiting decision' };
+  return { state: 'pending', statusLabel: msg`Awaiting decision` };
 }

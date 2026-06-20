@@ -14,6 +14,7 @@ interface Props {
 
 export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- tab state token, not UI copy
   const [tab, setTab] = useState<'result' | 'error'>('result');
   const [resultText, setResultText] = useState('{}');
   const [errorText, setErrorText] = useState('');
@@ -80,6 +81,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
           rows={6}
           value={resultText}
           onChange={e => { setResultText(e.target.value); setValidationError(null); }}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- sample JSON placeholder, not UI copy
           placeholder='{"result": "..."}'
         />
       ) : (

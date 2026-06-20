@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { i18n } from '../../i18n';
 import { setupApi } from '../../api/setup';
 import { ModelProviderKind } from '../../api/models';
 import type { LicenseDto } from '../../api/license';
@@ -8,6 +9,9 @@ import { FEATURE_LABELS } from '../../components/license/licenseUtils';
 
 /** Free tier locks every enterprise feature; derive the count so a new feature can't stale this. */
 const ENTERPRISE_FEATURE_COUNT = Object.keys(FEATURE_LABELS).length;
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 function mockFetch(body: unknown, status = 200) {
   return vi.fn().mockResolvedValue({
@@ -149,22 +153,25 @@ describe('buildTierSummary', () => {
 
   it('free tier lists limits and locks all enterprise features', () => {
     const summary = buildTierSummary(freeLicense);
+    const included = summary.included.map(line => i18n._(line));
+    const locked = summary.locked.map(line => i18n._(line));
     expect(summary.isFree).toBe(true);
-    expect(summary.tierLabel).toBe('Free');
-    expect(summary.included.join(' ')).toContain('1 project');
-    expect(summary.included.join(' ')).toContain('traces per month');
-    expect(summary.locked).toContain('Optimization proposals');
-    expect(summary.locked).toContain('SSO / OIDC sign-in');
-    expect(summary.locked).toContain('Tracey AI assistant');
+    expect(i18n._(summary.tierLabel)).toBe('Free');
+    expect(included.join(' ')).toContain('1 project');
+    expect(included.join(' ')).toContain('traces per month');
+    expect(locked).toContain('Optimization proposals');
+    expect(locked).toContain('SSO / OIDC sign-in');
+    expect(locked).toContain('Tracey AI assistant');
     expect(summary.locked).toHaveLength(ENTERPRISE_FEATURE_COUNT);
   });
 
   it('enterprise tier includes granted features and locks nothing', () => {
     const summary = buildTierSummary(enterpriseLicense);
+    const included = summary.included.map(line => i18n._(line));
     expect(summary.isFree).toBe(false);
-    expect(summary.tierLabel).toBe('Enterprise');
-    expect(summary.included).toContain('Optimization proposals');
-    expect(summary.included).toContain('Unlimited projects, agents & test suites');
+    expect(i18n._(summary.tierLabel)).toBe('Enterprise');
+    expect(included).toContain('Optimization proposals');
+    expect(included).toContain('Unlimited projects, agents & test suites');
     expect(summary.locked).toHaveLength(0);
   });
 

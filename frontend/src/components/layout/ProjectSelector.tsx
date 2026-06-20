@@ -37,6 +37,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
           className={`flex items-center gap-[10px] rounded-lg p-1 hover:bg-white/[.04] transition-colors ${collapsed ? 'justify-center' : 'justify-start'}`}
         >
           <Avatar
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- avatar initials placeholder, not UI copy
             initials={currentProject ? projectInitials(name) : 'DP'}
             color={color}
             className="w-7 h-7 rounded-md text-xs font-semibold"

@@ -1,6 +1,7 @@
 import { Trans } from '@lingui/react/macro';
 import type { ModelParametersDto } from '../../api/models';
 
+/* eslint-disable lingui/no-unlocalized-strings -- OpenAI API field names, not UI copy */
 const FIELD_LABELS: Record<keyof ModelParametersDto, string> = {
   temperature: 'temperature',
   topP: 'top_p',
@@ -12,6 +13,7 @@ const FIELD_LABELS: Record<keyof ModelParametersDto, string> = {
   stop: 'stop',
   n: 'n',
 };
+/* eslint-enable lingui/no-unlocalized-strings */
 
 const FIELD_ORDER: (keyof ModelParametersDto)[] = [
   'temperature',

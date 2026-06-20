@@ -30,8 +30,10 @@ export default function Dashboard() {
   const qc = useQueryClient();
   // Range selector persists across refresh / navigation. Defaults to the all-time bucket
   // until the user picks a window.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
   const [storedRange, setRange] = useLocalStorageState<RangeKey>('dashboard.range', 'all');
   // Guard against a stale/garbage stored value — only accept a known key.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
   const range = RANGE_KEYS.includes(storedRange) ? storedRange : 'all';
   // Memoize so `from` is stable across renders; recomputing `new Date()` each
   // render would churn every queryKey below and cause an infinite refetch loop.

@@ -54,6 +54,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
   const passTone: DisplayTone = !hasResults ? 'muted' : passRate >= 80 ? 'success' : passRate >= 50 ? 'accent' : 'danger';
   const deltaTone: DisplayTone | null = deltaPts == null || deltaPts === 0
     ? null
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- DisplayTone token, not UI copy
     : deltaPts > 0 ? 'success' : 'danger';
 
   return (
@@ -95,7 +96,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
               <span
                 className={cn('mono text-body-sm font-semibold', TONE_TEXT[deltaTone])}
               >
-                {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
+                {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}<Trans>pt</Trans>
               </span>
             )}
             {!deltaTone && deltaPts == null && (

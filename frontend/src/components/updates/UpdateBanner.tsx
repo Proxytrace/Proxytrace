@@ -4,6 +4,7 @@ import { useUpdateStatus } from '../../api/updates';
 import { IconButton } from '../ui/Button';
 import { ArrowUpFromLineIcon, XIcon } from '../icons';
 
+// eslint-disable-next-line lingui/no-unlocalized-strings -- localStorage key, not UI copy
 const DISMISSED_KEY = 'proxytrace-update-dismissed';
 
 /**

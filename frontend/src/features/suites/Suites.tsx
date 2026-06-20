@@ -42,6 +42,7 @@ export default function Suites() {
 
   // Deep-link from the agent detail view: ?agentId pre-filters, ?suiteId scrolls + highlights.
   const [searchParams] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key, not UI copy
   const initialAgentFilter = searchParams.get('agentId') ?? '';
   const highlightSuiteId = useSuiteFocus(!isLoading);
 

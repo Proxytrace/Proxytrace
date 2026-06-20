@@ -10,6 +10,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `list_theories` tool result: past hypotheses + their A/B outcomes. */
 export const TheoryListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('theory-list', result, status, isError);
   const theories = data ?? [];
   return (

@@ -24,8 +24,11 @@ const SECTION_HINTS: Record<SectionKey, MessageDescriptor> = {
 
 const REASONING_OPTIONS: { value: 'low' | 'medium' | 'high' | null; label: MessageDescriptor }[] = [
   { value: null, label: msg`Off` },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- reasoning-effort API enum token, not UI copy
   { value: 'low', label: msg`Low` },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- reasoning-effort API enum token, not UI copy
   { value: 'medium', label: msg`Medium` },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- reasoning-effort API enum token, not UI copy
   { value: 'high', label: msg`High` },
 ];
 
@@ -233,11 +236,13 @@ function ReasoningEffortControl({ overrides, onChange }: ReasoningEffortControlP
     <div className="flex flex-col gap-[5px]">
       <span className="text-[10.5px] text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Reasoning effort</Trans></span>
       <SegmentedControl
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- "off" sentinel maps null reasoning effort, not UI copy
         value={overrides.parameters.reasoningEffort ?? 'off'}
         onChange={v => onChange({
           ...overrides,
           parameters: { ...overrides.parameters, reasoningEffort: v === 'off' ? null : v },
         })}
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- "off" sentinel maps null reasoning effort, not UI copy
         segments={REASONING_OPTIONS.map(opt => ({ value: opt.value ?? 'off', label: i18n._(opt.label) }))}
       />
     </div>

@@ -12,14 +12,14 @@ type ToastType = ToastItem['type'];
 //   success -> var(--success), error -> var(--danger), info -> var(--accent-primary).
 // Border keeps the identical 32% color-mix so pixels are unchanged.
 const TOAST_BORDER: Record<ToastType, string> = {
-  success: 'border-[color-mix(in_srgb,var(--success)_32%,transparent)]',
-  error: 'border-[color-mix(in_srgb,var(--danger)_32%,transparent)]',
-  info: 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]',
+  success: cn('border-[color-mix(in_srgb,var(--success)_32%,transparent)]'),
+  error: cn('border-[color-mix(in_srgb,var(--danger)_32%,transparent)]'),
+  info: cn('border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'),
 };
 const TOAST_TEXT: Record<ToastType, string> = {
-  success: 'text-success',
-  error: 'text-danger',
-  info: 'text-accent',
+  success: cn('text-success'),
+  error: cn('text-danger'),
+  info: cn('text-accent'),
 };
 
 let globalShow: ((message: string, type: ToastItem['type'], options?: ErrorToastOptions) => void) | null = null;

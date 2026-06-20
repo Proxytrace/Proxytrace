@@ -35,6 +35,7 @@ export function SchemaFromExample({ onGenerate }: Props) {
           className="mono text-[12px]"
           value={example}
           onChange={e => { setExample(e.target.value); setError(null); }}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- sample JSON data placeholder, not UI copy
           placeholder='{"city": "Vienna", "tempC": 21.5, "sunny": true}'
           rows={5}
           invalid={!!error}

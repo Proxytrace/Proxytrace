@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cn } from '../../lib/cn';
 import { FOCUS_RING } from '../../lib/constants';
 
 export interface Segment<T extends string> {
@@ -28,8 +29,8 @@ export function SegmentedControl<T extends string>({ value, onChange, segments, 
         const active = seg.value === value;
         const iconOnly = seg.label === undefined;
         const stateCls = active
-          ? 'bg-card text-primary shadow-[var(--shadow-pill)]'
-          : 'text-muted hover:text-secondary';
+          ? cn('bg-card text-primary shadow-[var(--shadow-pill)]')
+          : cn('text-muted hover:text-secondary');
         return (
           <button
             key={seg.value}

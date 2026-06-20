@@ -47,7 +47,9 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
     <div className={cn('flex flex-col gap-3', fill && 'flex-1 min-h-0')}>
       <FilterTabs
         options={[
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- mode token, not UI copy
           { label: t`Text response`, value: 'text' },
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- mode token, not UI copy
           { label: t`Tool request`, value: 'tool' },
         ]}
         value={mode}

@@ -3,23 +3,24 @@
 Resume notes for the multilingual feature. Branch: **`feature/translations`** (nothing committed yet).
 Full system reference: [`docs/i18n.md`](docs/i18n.md). This file tracks what's done and what's left.
 
-## Status snapshot (as of last session)
+## Status snapshot (updated)
 
-The i18n **system is complete and working**; the remaining work is finishing the string sweep,
-filling German, and tightening guardrails.
+The i18n **system is complete and working**. The **string sweep is finished** and the lint guardrail
+is now a hard **error** (TODO 2 & 4 done). The `.ts` label maps are translatable (TODO 3 done). The
+only remaining functional gap is **filling German** (TODO 1 — blocked on a translation API key).
 
 Current verification (run from `frontend/`):
 
 | Check | Command | State |
 |-------|---------|-------|
 | Build | `npm run build` | ✅ green |
-| Lint  | `npm run lint` | ✅ exit 0, **0 errors**, ~1368 `no-unlocalized` **warnings** left |
+| Lint  | `npm run lint` | ✅ exit 0 — `no-unlocalized-strings` is now **`error`**, **0** violations |
 | Tests | `npm test` | ✅ 612 pass / 1 fail (pre-existing `tracey-tools.spec.ts > list_theories`, unrelated to i18n) |
-| Catalog | `npm run i18n:check` | ❌ 1316 German strings untranslated (expected — see TODO 1) |
+| Catalog | `npm run i18n:check` | ❌ German strings untranslated (expected — see TODO 1, needs API key) |
 | Backend | `dotnet test` (Domain/Api/Storage user tests) | ✅ green |
 
-**1321 English source strings** are extracted into `frontend/src/locales/en/messages.po`.
-German (`de`) has only 5 seeded translations; the rest fall back to English at runtime.
+English source strings are extracted into `frontend/src/locales/en/messages.po`.
+German (`de`) still falls back to English at runtime until TODO 1 runs.
 
 ## What's already done
 
@@ -43,46 +44,40 @@ German (`de`) has only 5 seeded translations; the rest fall back to English at r
 
 ## TODO (pick up here)
 
-### 1. Fill German translations (highest impact — German UI is mostly English right now)
-Needs an OpenAI-compatible endpoint + key (can be Proxytrace's own proxy).
+### 1. Fill German translations — ⏳ BLOCKED (needs a translation API key)
+The only remaining functional gap. Needs an OpenAI-compatible endpoint + key (can be Proxytrace's
+own proxy). Not runnable in environments without `I18N_TRANSLATE_API_KEY`.
 ```bash
 cd frontend
 export I18N_TRANSLATE_API_KEY=...        # required
 export I18N_TRANSLATE_BASE_URL=...       # optional (defaults to OpenAI)
 export I18N_TRANSLATE_MODEL=...          # optional (default gpt-4o-mini)
-npm run i18n:translate                    # fills the 1316 empty msgstr in de/messages.po
+npm run i18n:translate                    # fills the empty msgstr in de/messages.po
 npm run i18n:check                        # should then pass
 ```
 After: spot-check `src/locales/de/messages.po` that glossary terms stayed English; commit the catalog.
 
-### 2. Finish `features/tracey/`
-The Tracey subagent hit a session limit mid-run, so some chat-UI strings are still raw (it has the
-most remaining warnings, ~145, though some are false-positives). It correctly touched only
-`tool-ui/*` renderers — **do NOT** wrap `tracey-tools.ts`, system prompts, or `knowledge/*` (those
-are LLM-facing). Read `frontend/docs/TRACEY.md` first. Find leftovers:
-```bash
-cd frontend && npm run lint 2>&1 | grep -A1 "features/tracey" | grep no-unlocalized
-```
+### 2. Finish `features/tracey/` — ✅ DONE
+All tracey chat/tool-UI **rendering** strings are wrapped; `tracey-tools.ts`, system prompts and
+`knowledge/*` were left untouched (LLM-facing). No `no-unlocalized` violations remain in `features/tracey`.
 
-### 3. Wrap the spec-blocked helper maps
-These render English but aren't translatable yet — each has a `*.spec.ts`/`*.test.ts` asserting
-string equality, so converting the map to `msg` (`MessageDescriptor`) also requires updating the
-spec to resolve via `i18n._()` (or assert on `.id`). Files:
-- `src/components/license/licenseUtils.ts` — `TIER_LABEL`, `FEATURE_LABELS`, `upgradeCopy`, `licenseSourceNote` (`licenseUtils.test.ts`; also consumed by `UpgradeModal.tsx`, `setup/setupMeta.ts`, `LicenseBadge.tsx`)
-- `src/features/setup/setupMeta.ts` — tier summary + provider presets (`Setup.spec.ts`)
-- `src/features/notifications/notificationsMeta.ts` — `SEVERITY_LABEL` (`notificationsMeta.spec.ts`)
-- `src/features/providers/providerMeta.ts` — `PROVIDER_KIND_OPTIONS`/`kindLabel` (`providerMeta.spec.ts`; mostly brand names)
-- `src/features/admin/users.ts` (`authSourceLabel`), `src/features/admin/invitesMeta.ts` (`inviteStatus`)
-- `src/features/proposals/decisionFlow.ts` (`statusLabel`), `src/features/proposals/validatedView.ts` (`adoptionLabel`), `src/features/proposals/handoffDoc.ts`
-- `src/features/suites/suiteWindow.ts` (`suiteWindowLabel`), `src/features/evaluator-playground/{testBenchMeta.ts runLabel, jsonSchemaInference.ts}`
-- `src/lib/scheduleCadence.ts` — `WEEKDAY_LABELS` (consumed by `runs/components/ScheduleCadenceField.tsx`)
+### 3. Wrap the spec-blocked helper maps — ✅ DONE
+Each label map below was converted to `msg` (`MessageDescriptor`), its consumers resolve with
+`i18n._()`, and the spec was updated (import shared `i18n`, `beforeAll` activates an empty `en`
+catalog, assert `i18n._(label)`). Done: `licenseUtils.ts`, `setupMeta.ts`, `notificationsMeta.ts`,
+`providerMeta.ts`, `admin/users.ts`, `suiteWindow.ts`, `testBenchMeta.ts`, `scheduleCadence.ts`,
+`proposals/decisionFlow.ts`, `proposals/validatedView.ts`.
+Intentionally left English-by-design: `admin/invitesMeta.ts` `inviteStatus` (an enum **token** that
+is `===`-compared, not rendered copy — the table renders a separate `<Trans>`), and
+`proposals/handoffDoc.ts` (builds a downloaded/copied markdown artifact, not on-screen chrome).
+(`jsonSchemaInference.ts` from the original list does not exist.)
 
-### 4. Flip the lint rule `warn` → `error`
-In `frontend/eslint.config.js`, after the sweep is clean: change `'lingui/no-unlocalized-strings'`
-to `'error'`. First drive the warning count to zero — for genuine non-copy strings the rule
-misfires on, either extend `ignoreNames`/`ignoreFunctions` or add
-`// eslint-disable-next-line lingui/no-unlocalized-strings -- <reason>`. ~1368 warnings today are a
-mix of false-positives + items 2 & 3 above.
+### 4. Flip the lint rule `warn` → `error` — ✅ DONE
+`frontend/eslint.config.js` now sets `'lingui/no-unlocalized-strings': 'error'` with **0** violations.
+The config carries tuned `ignore` / `ignoreNames` / `ignoreFunctions` lists (CSS values, route paths,
+URLs, snake_case/dotted machine keys, grid `fr` units, enum/SVG/structural attrs, class & DOM helper
+calls) plus `useTsTypes`; class strings go through `cn()`; the irreducible non-copy tokens carry
+scoped `// eslint-disable-next-line lingui/no-unlocalized-strings -- <reason>` hatches.
 
 ### 5. e2e test (deferred)
 Add a Playwright spec (use the `create-e2e-test` skill): log in → account menu → switch to German →

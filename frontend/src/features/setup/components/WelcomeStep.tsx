@@ -76,6 +76,7 @@ export function WelcomeStep() {
 }
 
 function TierPanel({ tier }: { tier: ReturnType<typeof buildTierSummary> }) {
+  const { i18n } = useLingui();
   const TierIcon = tier.isFree ? SparklesIcon : CrownIcon;
   return (
     <div
@@ -85,22 +86,22 @@ function TierPanel({ tier }: { tier: ReturnType<typeof buildTierSummary> }) {
       <div className="flex items-center gap-2">
         <TierIcon size={14} className="text-accent" />
         <span className="text-title font-semibold text-primary">
-          <Trans>This installation: {tier.tierLabel}</Trans>
+          <Trans>This installation: {i18n._(tier.tierLabel)}</Trans>
         </span>
       </div>
 
       <ul className="flex flex-col gap-1.5">
         {tier.included.map(line => (
-          <li key={line} className="flex items-start gap-2 text-body text-secondary">
+          <li key={line.id} className="flex items-start gap-2 text-body text-secondary">
             <CheckIcon size={13} strokeWidth={2.5} className="text-success mt-0.5 shrink-0" />
-            <span>{line}</span>
+            <span>{i18n._(line)}</span>
           </li>
         ))}
         {tier.locked.map(line => (
-          <li key={line} className="flex items-start gap-2 text-body text-muted">
+          <li key={line.id} className="flex items-start gap-2 text-body text-muted">
             <LockIcon size={13} className="mt-0.5 shrink-0" />
             <span>
-              {line}
+              {i18n._(line)}
               <span className="text-caption text-muted ml-1.5 uppercase"><Trans>Enterprise</Trans></span>
             </span>
           </li>

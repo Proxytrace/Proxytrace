@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { cn } from '../../lib/cn';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useEvaluatorList } from './hooks/useEvaluatorList';
@@ -11,7 +12,7 @@ import { VerdictColumn } from './components/VerdictColumn';
 
 // First column shares the locked ListRail left bound (minmax(248px,320px)); the playground keeps
 // its own 3-column page (rail · bench · verdict) — see DESIGN.md "List rail" exception.
-const GRID = 'flex-1 min-h-0 grid grid-cols-[minmax(248px,320px)_minmax(0,1fr)_360px] gap-3';
+const GRID = cn('flex-1 min-h-0 grid grid-cols-[minmax(248px,320px)_minmax(0,1fr)_360px] gap-3');
 
 /**
  * Evaluator Playground — "Guided Rail": pick a judge and one of its past

@@ -26,12 +26,12 @@ interface Props {
 
 export function PromoteModal({ trace, suites, onClose }: Props) {
   const aColor = agentColor(trace.agentId ?? trace.id);
-  const agentLabel = trace.agentName ?? 'Agent';
 
   const [suiteId, setSuiteId] = useState<string>(suites[0]?.id ?? '');
   const [expected, setExpected] = useState(() => expectedFromResponse(trace.response ?? null));
   const { show: toast } = useToast();
   const { t } = useLingui();
+  const agentLabel = trace.agentName ?? t`Agent`;
 
   const inputMessages = trace.request.filter(m => m.role !== 'system');
   const hasSystem = trace.request.some(m => m.role === 'system');
@@ -40,6 +40,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   const selectedSuite = suites.find(s => s.id === suiteId) ?? null;
 
   const addCase = usePromoteTrace((suiteName) => {
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
     toast(t`Added to ${suiteName}`, 'success');
     onClose();
   });

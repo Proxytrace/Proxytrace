@@ -18,6 +18,7 @@ interface GetStartedStepProps {
 
 export function GetStartedStep({ projectName, modelName, error, loading, onGetStarted }: GetStartedStepProps) {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- code snippet language id, not UI copy
   const [lang, setLang] = useState<SnippetLanguage>('python');
 
   const proxyBase = useIngestionBase();

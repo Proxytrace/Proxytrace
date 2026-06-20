@@ -19,7 +19,9 @@ function fmtCost(eur: number | null) {
 }
 
 function fmtLatency(ms: number) {
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact latency unit readout
   if (ms < 1000) return `${ms}ms`;
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact latency unit readout
   return `${(ms / 1000).toFixed(2)}s`;
 }
 

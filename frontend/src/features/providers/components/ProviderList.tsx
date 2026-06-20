@@ -18,7 +18,7 @@ interface ProviderListProps {
 }
 
 export function ProviderList({ providers, loading, selectedId, onSelect }: ProviderListProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   return (
     <Card elevation="raised" padding="sm" className="overflow-y-auto flex flex-col gap-1" data-testid="provider-list">
       {loading && <SkeletonList rows={5} height={52} gap={6} />}
@@ -48,7 +48,7 @@ export function ProviderList({ providers, loading, selectedId, onSelect }: Provi
             <div className="min-w-0 flex-1">
               <div className="text-title font-semibold text-primary overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
               <div className="mt-0.5">
-                <ColoredBadge color={kindColor(p.kind)} label={kindLabel(p.kind)} />
+                <ColoredBadge color={kindColor(p.kind)} label={i18n._(kindLabel(p.kind))} />
               </div>
             </div>
           </RowButton>

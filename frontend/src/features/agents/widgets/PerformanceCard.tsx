@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentOverviewDto } from '../../../api/models';
 import { Sparkline } from '../../../components/charts';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { cn } from '../../../lib/cn';
 import { fmtLatency, fmtTokens, fmtCost } from '../../../lib/format';
 import { rangeWindowLabel, type RangeKey } from '../../../lib/time-range';
 import { summarizePassRate, passRateColor, passRateDelta } from '../passRate';
@@ -27,7 +28,7 @@ interface Kpi {
 
 function KpiCell({ kpi }: { kpi: Kpi }) {
   const hasSpark = kpi.spark.length >= 2 && kpi.spark.some(v => v > 0);
-  const deltaColor = kpi.delta == null ? '' : kpi.delta >= 0 ? 'text-success' : 'text-danger';
+  const deltaColor = kpi.delta == null ? '' : kpi.delta >= 0 ? cn('text-success') : cn('text-danger');
   return (
     <div className="flex-1 min-w-[210px] border-l border-t border-hairline px-4 py-3 flex flex-col gap-1.5">
       <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">{kpi.label}</span>
@@ -45,6 +46,7 @@ function KpiCell({ kpi }: { kpi: Kpi }) {
       <span className="text-caption text-muted truncate">
         {kpi.delta != null && (
           <span className={`font-semibold ${deltaColor}`}>
+            {/* eslint-disable-next-line lingui/no-unlocalized-strings -- compact metric unit suffix (percentage points) */}
             {kpi.delta >= 0 ? '↑' : '↓'} {Math.abs(kpi.delta)}pt
           </span>
         )}

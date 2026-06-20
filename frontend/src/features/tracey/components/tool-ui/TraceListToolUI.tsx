@@ -11,6 +11,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `find_traces` tool result. */
 export const TraceListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('trace-list', result, status, isError);
   const traces = data ?? [];
   return (

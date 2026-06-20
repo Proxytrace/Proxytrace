@@ -52,7 +52,7 @@ interface UserRowProps {
 }
 
 function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProjects }: UserRowProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const guarded = isSelf || locked;
   const guardReason = isSelf
     ? t`You cannot change your own account.`
@@ -77,7 +77,7 @@ function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProject
         </div>
       </td>
       <td className="py-2">
-        <Badge label={authSourceLabel(user)} variant={user.isExternal ? 'accent' : 'neutral'} />
+        <Badge label={i18n._(authSourceLabel(user))} variant={user.isExternal ? 'accent' : 'neutral'} />
       </td>
       <td className="py-2 text-muted">{new Date(user.createdAt).toLocaleDateString()}</td>
       <td className="py-2">

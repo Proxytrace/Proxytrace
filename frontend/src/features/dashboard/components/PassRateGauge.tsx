@@ -12,17 +12,17 @@ interface PassRateGaugeProps {
 }
 
 const GAUGE_STATS: { l: MessageDescriptor; c: string }[] = [
-  { l: msg`last run`, c: 'text-success' },
-  { l: msg`best`, c: 'text-primary' },
-  { l: msg`target`, c: 'text-muted' },
+  { l: msg`last run`, c: cn('text-success') },
+  { l: msg`best`, c: cn('text-primary') },
+  { l: msg`target`, c: cn('text-muted') },
 ];
 
 export function PassRateGauge({ summary }: PassRateGaugeProps) {
-  const { i18n } = useLingui();
+  const { i18n, t } = useLingui();
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
 
   const statValues = [
-    '+7pt',
+    t`+7pt`,
     `${Math.max(passPct, 85)}%`,
     '90%',
   ];

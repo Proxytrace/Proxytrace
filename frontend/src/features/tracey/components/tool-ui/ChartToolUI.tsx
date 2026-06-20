@@ -23,6 +23,7 @@ function ChartSkeleton() {
 /** Inline renderer for the `show_chart` tool. */
 export const ChartToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('chart', result, status, isError);
   if (state !== 'ready' || !data) {
     return (

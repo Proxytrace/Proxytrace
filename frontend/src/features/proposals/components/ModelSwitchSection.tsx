@@ -4,7 +4,7 @@ import { cn } from '../../../lib/cn';
 import { modelColor } from '../../../lib/colors';
 
 interface ModelBoxProps {
-  label: string;
+  label: 'From' | 'To';
   name: string;
   color: string;
   tint: string;

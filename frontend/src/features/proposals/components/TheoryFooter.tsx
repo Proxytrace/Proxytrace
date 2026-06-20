@@ -70,7 +70,7 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
                 transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
               )}
             >
-              {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}pt
+              {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}<Trans>pt</Trans>
             </span>
           )}
         </div>

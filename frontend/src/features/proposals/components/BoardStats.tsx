@@ -12,7 +12,7 @@ export function BoardStats({ stats }: Props) {
     { label: t`Theories`, value: String(stats.theories), tone: 'primary' },
     { label: t`Tested`, value: String(stats.tested), tone: 'primary' },
     { label: t`Win rate`, value: stats.winRate != null ? `${stats.winRate}%` : '—', tone: 'success' },
-    { label: t`Proven gain`, value: stats.provenGainPt > 0 ? `+${stats.provenGainPt}pt` : '0pt', tone: 'success' },
+    { label: t`Proven gain`, value: stats.provenGainPt > 0 ? t`+${stats.provenGainPt}pt` : t`0pt`, tone: 'success' },
   ];
 
   return (

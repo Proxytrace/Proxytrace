@@ -40,7 +40,7 @@ export function ProviderStep({
   onTestConnection,
   onKeyDown,
 }: ProviderStepProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const preset = presetById(presetId);
 
   return (
@@ -62,13 +62,13 @@ export function ProviderStep({
                   : 'border-border bg-card-2 text-secondary hover:text-primary hover:bg-card',
               )}
             >
-              {p.label}
+              {i18n._(p.label)}
             </RowButton>
           );
         })}
       </div>
 
-      <p className="text-body-sm text-muted leading-relaxed -mt-1">{preset.hint}</p>
+      <p className="text-body-sm text-muted leading-relaxed -mt-1">{i18n._(preset.hint)}</p>
 
       <FormField label={t`Provider name`}>
         <Input

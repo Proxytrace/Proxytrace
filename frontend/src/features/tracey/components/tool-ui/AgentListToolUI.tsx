@@ -10,6 +10,7 @@ import { useArtifactResult } from '../../useArtifact';
 /** Inline renderer for the `list_agents` tool result. */
 export const AgentListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('agent-list', result, status, isError);
   const agents = data ?? [];
   return (

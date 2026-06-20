@@ -40,6 +40,7 @@ export function TraceToolbar({
       <FilterDropdown
         label={t`Agent:`}
         testId="traces-agent-filter"
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- filter sentinel value, not UI copy
         value={agentFilter || '__all'}
         active={!!agentFilter}
         accent={agentFilter ? agentColor(agentFilter) : undefined}

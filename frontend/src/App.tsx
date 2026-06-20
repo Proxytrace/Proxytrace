@@ -25,6 +25,7 @@ import { useAppConfig } from './hooks/useAppConfig';
 import { RequiresFeature } from './components/license/RequiresFeature';
 import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
 import { setErrorLogNavigator } from './lib/errorLogNav';
+import { cn } from './lib/cn';
 // Settings sections are small and admin-only — eagerly imported (no separate chunk needed).
 import { GeneralSection } from './features/settings/sections/GeneralSection';
 import { MembersSection } from './features/settings/sections/MembersSection';
@@ -263,8 +264,9 @@ function KioskShell({ interactive }: { interactive: boolean }) {
     // The `kiosk` body class drives the read-only [data-write] kill-switch (index.css). Only
     // apply it for a read-only kiosk; an interactive kiosk leaves write controls live.
     if (interactive) return;
-    document.body.classList.add('kiosk');
-    return () => document.body.classList.remove('kiosk');
+    const kioskClass = cn('kiosk');
+    document.body.classList.add(kioskClass);
+    return () => document.body.classList.remove(kioskClass);
   }, [interactive]);
   return (
     <KioskContext.Provider value={{ enabled: true, interactive }}>

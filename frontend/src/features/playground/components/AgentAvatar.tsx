@@ -17,6 +17,7 @@ function gradientFor(seed: string): string {
   const h = hash(seed);
   const hue1 = h % 360;
   const hue2 = (hue1 + 40 + ((h >> 8) % 60)) % 360;
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS gradient value, not UI copy
   return `linear-gradient(135deg, hsl(${hue1} 65% 52%), hsl(${hue2} 70% 38%))`;
 }
 

@@ -13,6 +13,7 @@ import { fmtDate } from '../../../lib/format';
 import { ingestionUrl } from '../../../lib/ingestion';
 import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import useToast from '../../../hooks/useToast';
+import { cn } from '../../../lib/cn';
 import { maskKey } from '../providerMeta';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
 
@@ -43,6 +44,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
       render: k => (
         <div className="flex items-center gap-1.5 min-w-0">
           <code className="font-mono text-body text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy */}
           <IconButton aria-label={t`Copy key`} onClick={() => { navigator.clipboard.writeText(k.keyValue); toast(t`API key copied`, 'success'); }}>
             <CopyIcon size={13} />
           </IconButton>
@@ -56,6 +58,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
         return (
           <div className="flex items-center gap-1.5 min-w-0">
             <code className="font-mono text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap flex-1">{url}</code>
+            {/* eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy */}
             <IconButton aria-label={t`Copy ingestion URL`} onClick={() => { navigator.clipboard.writeText(url); toast(t`Ingestion URL copied`, 'success'); }}>
               <CopyIcon size={13} />
             </IconButton>
@@ -64,7 +67,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
       },
     },
     { key: 'created', label: t`Created`, width: '1fr', render: k => <span className="text-body text-muted">{fmtDate(k.createdAt)}</span> },
-    { key: 'delete', label: '', width: 'auto', render: k => <IconButton data-testid={`key-delete-btn-${k.id}`} aria-label={t`Delete key`} danger onClick={() => setToDelete(k)}><TrashIcon size={13} /></IconButton> },
+    { key: 'delete', label: '', width: cn('auto'), render: k => <IconButton data-testid={`key-delete-btn-${k.id}`} aria-label={t`Delete key`} danger onClick={() => setToDelete(k)}><TrashIcon size={13} /></IconButton> },
   ];
 
   return (
@@ -95,6 +98,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
               <code className="font-mono text-body-sm text-secondary break-all">{ingestionUrl(created.projectName, proxyBase)}</code>
             </div>
           </div>
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy */}
           <Button variant="success" size="sm" leftIcon={<CopyIcon size={12} />} onClick={() => { navigator.clipboard.writeText(created.keyValue); toast(t`API key copied`, 'success'); }}><Trans>Copy</Trans></Button>
           <IconButton aria-label={t`Dismiss`} onClick={() => setCreated(null)}><XIcon size={14} /></IconButton>
         </div>

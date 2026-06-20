@@ -8,6 +8,7 @@ import App from './App';
 import { i18n, dynamicActivate, resolveInitialLocale } from './i18n';
 
 const rootElement = document.getElementById('root');
+// eslint-disable-next-line lingui/no-unlocalized-strings -- thrown developer error, not UI copy
 if (!rootElement) throw new Error('Root element #root not found');
 
 // Activate the best-effort locale (cache → browser → English) before first paint; the

@@ -49,8 +49,11 @@ interface MetadataProps {
 export function TraceMetadataTab({ trace }: MetadataProps) {
   const rows: [string, string][] = [
     ['trace.id', trace.id],
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- API field name, not UI copy
     ['provider', trace.provider],
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- API field name, not UI copy
     ['model', trace.model],
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- API field name, not UI copy
     ['agent', trace.agentName ?? '—'],
     ['http_status', String(trace.httpStatus)],
     ['finish_reason', trace.finishReason ?? '—'],

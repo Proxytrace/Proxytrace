@@ -66,6 +66,7 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
   return (
     <div ref={wrapRef} className="relative flex-1 min-w-0">
       <Input
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
         inputSize="sm"
         aria-label={t`Tool name`}
         role="combobox"

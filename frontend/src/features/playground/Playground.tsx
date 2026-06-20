@@ -168,6 +168,7 @@ export default function Playground() {
               title={t`Load from trace or test case`}
               aria-label={t`Load from trace or test case`}
               aria-expanded={showSeed}
+              // eslint-disable-next-line lingui/no-unlocalized-strings -- ARIA role token, not UI copy
               aria-haspopup="listbox"
             >
               <SearchIcon size={13} strokeWidth={2.2} />
@@ -177,6 +178,7 @@ export default function Playground() {
                 <UnifiedSearch
                   projectId={currentProject.id}
                   kinds={['agentCall', 'testCase']}
+                  // eslint-disable-next-line lingui/no-unlocalized-strings -- layout-mode token, not UI copy
                   width="auto"
                   autoFocus
                   showShortcut={false}

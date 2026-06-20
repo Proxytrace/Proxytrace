@@ -38,6 +38,7 @@ function EvaluationBadge({ evaluation }: { evaluation: EvaluationResultDto }) {
 /** Inline renderer for the `get_run_failures` tool result: the run's failing cases in detail. */
 export const RunFailuresToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('run-failures', result, status, isError);
   return (
     <ToolUIFrame

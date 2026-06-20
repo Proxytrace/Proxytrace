@@ -11,6 +11,7 @@ import { USER_ROLES } from '../users';
 export function InviteUserForm() {
   const { t } = useLingui();
   const [email, setEmail] = useState('');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- UserRole enum token, not UI copy
   const [role, setRole] = useState<UserRole>('Member');
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);

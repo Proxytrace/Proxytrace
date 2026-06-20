@@ -3,6 +3,7 @@ import { BeakerIcon, CpuIcon, PlayIcon, ZapIcon } from '../../../components/icon
 import { Card } from '../../../components/ui/Card';
 import type { TheoryDto } from '../../../api/models';
 import { ProposalKind } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { KIND_META } from '../shared';
 import { theoryShortId } from '../theoryBoard';
 import { TheoryFooter } from './TheoryFooter';
@@ -24,18 +25,18 @@ const KIND_ICON: Record<ProposalKind, React.ReactNode> = {
 // Kind → leaf Tailwind classes (DESIGN tokens), instead of threading the CSS-var color string
 // into inline styles. accent-primary / success / teal mirror KIND_META.
 const KIND_BAR: Record<ProposalKind, string> = {
-  [ProposalKind.SystemPrompt]: 'bg-accent',
-  [ProposalKind.Tool]: 'bg-success',
-  [ProposalKind.ModelSwitch]: 'bg-teal',
+  [ProposalKind.SystemPrompt]: cn('bg-accent'),
+  [ProposalKind.Tool]: cn('bg-success'),
+  [ProposalKind.ModelSwitch]: cn('bg-teal'),
 };
 
 const KIND_PILL: Record<ProposalKind, string> = {
   [ProposalKind.SystemPrompt]:
-    'bg-[color-mix(in_srgb,var(--accent-primary)_9%,transparent)] text-accent border-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)]',
+    cn('bg-[color-mix(in_srgb,var(--accent-primary)_9%,transparent)] text-accent border-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)]'),
   [ProposalKind.Tool]:
-    'bg-[color-mix(in_srgb,var(--success)_9%,transparent)] text-success border-[color-mix(in_srgb,var(--success)_20%,transparent)]',
+    cn('bg-[color-mix(in_srgb,var(--success)_9%,transparent)] text-success border-[color-mix(in_srgb,var(--success)_20%,transparent)]'),
   [ProposalKind.ModelSwitch]:
-    'bg-[color-mix(in_srgb,var(--teal)_9%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_20%,transparent)]',
+    cn('bg-[color-mix(in_srgb,var(--teal)_9%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_20%,transparent)]'),
 };
 
 export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting }: Props) {

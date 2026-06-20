@@ -103,7 +103,7 @@ function ListCardSkeleton({
       padding="none"
       className="my-1"
       data-testid={testId}
-      aria-busy="true"
+      aria-busy={true}
       aria-label={pendingLabel}
     >
       <div className="flex items-center gap-2 border-b border-hairline px-3 py-2.5">

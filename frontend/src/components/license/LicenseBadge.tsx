@@ -10,8 +10,9 @@ import { tierBadge, type TierTone } from './licenseUtils';
 // tier chip instead leads with a tier icon (crown for Enterprise, sparkles for
 // Free) and carries no status dot. Geometry matches the health pill so the two
 // align, but fill + icon set them apart.
-const CHIP_BASE =
-  'inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0';
+const CHIP_BASE = cn(
+  'inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
+);
 
 const TONE_CLS: Record<TierTone, string> = {
   // Enterprise, active — the gold premium marque: a warm accent gradient,
@@ -43,31 +44,32 @@ const TONE_CLS: Record<TierTone, string> = {
  * that links to the upgrade page so the current tier is always communicated.
  */
 export function LicenseBadge() {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { data } = useLicense();
   if (!data) return null;
 
   const badge = tierBadge(data.status, data.tier);
+  const label = i18n._(badge.label);
   // Free carries the "upgrade" sparkle; every licensed tier wears the crown.
   const Icon = badge.linkToUpgrade ? SparklesIcon : CrownIcon;
 
   const chip = (
     <span className={cn(CHIP_BASE, TONE_CLS[badge.tone])}>
       <Icon size={13} aria-hidden />
-      {badge.label}
+      {label}
     </span>
   );
 
   if (badge.linkToUpgrade) {
     return (
-      <Link to="/upgrade" data-testid="license-badge" aria-label={t`${badge.label} tier — upgrade`}>
+      <Link to="/upgrade" data-testid="license-badge" aria-label={t`${label} tier — upgrade`}>
         {chip}
       </Link>
     );
   }
 
   return (
-    <span data-testid="license-badge" aria-label={t`${badge.label} tier`}>
+    <span data-testid="license-badge" aria-label={t`${label} tier`}>
       {chip}
     </span>
   );

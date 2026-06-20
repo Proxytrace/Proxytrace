@@ -21,9 +21,11 @@ import { useDeleteTestRunGroup } from './hooks/useDeleteTestRunGroup';
 export default function Runs() {
   const { t } = useLingui();
   const [searchParams] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
   const runParam = searchParams.get('run');
 
   const [agentFilter, setAgentFilter] = useState('');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- tab state token, not UI copy
   const [tab, setTab] = useState<'runs' | 'scheduled'>('runs');
   // Selected group lives in ?id= (survives refresh); ?run= is a one-shot deep-link
   // into a specific run that resolves to its owning group, then yields to ?id=.
@@ -68,7 +70,9 @@ export default function Runs() {
 
   // Recent-run deep-link from a schedule card: select the group and surface the Runs tab.
   const selectRunFromSchedule = (groupId: string) => {
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key + tab state token
     setSelectedGroupId(groupId, ['run']);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- tab state token, not UI copy
     setTab('runs');
   };
 
@@ -78,7 +82,9 @@ export default function Runs() {
         value={tab}
         onChange={v => setTab(v as 'runs' | 'scheduled')}
         items={[
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- tab value token + test id, not UI copy
           { value: 'runs', label: t`Runs`, 'data-testid': 'runs-tab' },
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- tab value token + test id, not UI copy
           { value: 'scheduled', label: t`Scheduled`, 'data-testid': 'schedules-tab' },
         ]}
       />
@@ -101,6 +107,7 @@ export default function Runs() {
             groups={groups}
             isLoading={isLoading}
             selectedId={selectedGroup?.id ?? null}
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
             onSelect={id => setSelectedGroupId(id, ['run'])}
             onDelete={id => setDeleteGroupId(id)}
             agentFilter={{
@@ -123,6 +130,7 @@ export default function Runs() {
               size="sm"
               className="self-start shrink-0"
               data-testid="runs-back-to-list"
+              // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
               onClick={() => setSelectedGroupId(null, ['run'])}
               leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
             >

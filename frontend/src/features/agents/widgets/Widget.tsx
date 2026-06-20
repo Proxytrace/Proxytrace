@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { Modal } from '../../../components/overlays/Modal';
 import { IconButton } from '../../../components/ui/Button';
+import { cn } from '../../../lib/cn';
 import { ExpandIcon, ChevronDownIcon } from '../../../components/icons';
 
 interface WidgetProps {
@@ -27,7 +28,7 @@ export function Widget({
   collapsible = false,
   defaultCollapsed = false,
   className,
-  bodyClassName = 'p-4',
+  bodyClassName = cn('p-4'),
   accent,
   children,
 }: WidgetProps) {

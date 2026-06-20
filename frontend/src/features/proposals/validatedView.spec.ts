@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { i18n } from '../../i18n';
 import type { AbTestRunSummaryDto, OptimizationProposalDto, TheoryDto } from '../../api/models';
 import { Priority, ProposalKind, ProposalStatus, TestRunStatus, TheorySource, TheoryStatus } from '../../api/models';
 import { adoptionLabel, buildGainSummary, formatDeltaPt } from './validatedView';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 function makeTheory(overrides: Partial<TheoryDto> = {}): TheoryDto {
   return {
@@ -114,7 +118,7 @@ describe('adoptionLabel', () => {
       adoptedAgentVersionNumber: 4,
       adoptedManually: false,
     });
-    expect(adoptionLabel(proposal)).toBe('Adopted in v4');
+    expect(i18n._(adoptionLabel(proposal))).toBe('Adopted in v4');
   });
 
   it('says marked adopted for manual confirmations', () => {
@@ -123,10 +127,10 @@ describe('adoptionLabel', () => {
       adoptedAt: '2026-06-12T00:00:00Z',
       adoptedManually: true,
     });
-    expect(adoptionLabel(proposal)).toBe('Marked adopted');
+    expect(i18n._(adoptionLabel(proposal))).toBe('Marked adopted');
   });
 
   it('falls back to a plain label without version or manual flag', () => {
-    expect(adoptionLabel(makeProposal({ status: ProposalStatus.Adopted }))).toBe('Adopted');
+    expect(i18n._(adoptionLabel(makeProposal({ status: ProposalStatus.Adopted })))).toBe('Adopted');
   });
 });

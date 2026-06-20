@@ -72,8 +72,8 @@ export const REVIEW_META: Record<ProposalStatus, ReviewMeta> = {
  * Human label for how (and where) an adopted proposal went live: the detected agent version
  * when auto-detected, "Marked adopted" when a human confirmed it manually.
  */
-export function adoptionLabel(proposal: OptimizationProposalDto): string {
-  if (proposal.adoptedAgentVersionNumber != null) return `Adopted in v${proposal.adoptedAgentVersionNumber}`;
-  if (proposal.adoptedManually) return 'Marked adopted';
-  return 'Adopted';
+export function adoptionLabel(proposal: OptimizationProposalDto): MessageDescriptor {
+  if (proposal.adoptedAgentVersionNumber != null) return msg`Adopted in v${proposal.adoptedAgentVersionNumber}`;
+  if (proposal.adoptedManually) return msg`Marked adopted`;
+  return msg`Adopted`;
 }

@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { NotificationSeverity, NotificationTargetKind } from '../../api/models';
+import { i18n } from '../../i18n';
 import { severityBadgeVariant, severityLabel, targetRoute } from './notificationsMeta';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 describe('notificationsMeta', () => {
   it('maps severity to a badge variant', () => {
@@ -10,7 +14,7 @@ describe('notificationsMeta', () => {
   });
 
   it('labels severity', () => {
-    expect(severityLabel(NotificationSeverity.Critical)).toBe('Critical');
+    expect(i18n._(severityLabel(NotificationSeverity.Critical))).toBe('Critical');
   });
 
   it('builds deep-link routes for each target kind', () => {

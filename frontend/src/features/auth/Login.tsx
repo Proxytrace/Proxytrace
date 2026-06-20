@@ -27,6 +27,7 @@ function OidcLogin() {
       <div className="flex items-center gap-3">
         <BrandMark size={36} />
         <span className="text-2xl font-bold tracking-[-0.02em] leading-none">
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- brand wordmark */}
           <span className="text-primary">proxy</span><span className="text-accent">trace</span>
         </span>
       </div>

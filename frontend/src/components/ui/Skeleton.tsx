@@ -10,9 +10,9 @@ interface SkeletonProps {
 }
 
 const SHAPE_CLS: Record<SkeletonVariant, string> = {
-  text: 'rounded-sm',
-  block: 'rounded-md',
-  circle: 'rounded-full',
+  text: cn('rounded-sm'),
+  block: cn('rounded-md'),
+  circle: cn('rounded-full'),
 };
 
 export function Skeleton({ width, height, variant = 'block', className }: SkeletonProps) {

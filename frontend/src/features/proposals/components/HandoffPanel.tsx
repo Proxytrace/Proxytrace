@@ -27,7 +27,7 @@ export function HandoffPanel({ proposal }: Props) {
   if (proposal.status === ProposalStatus.Adopted) {
     return (
       <p className="text-body-sm text-success m-0" data-testid="proposal-adoption-summary">
-        {adoptionLabel(proposal)}
+        {i18n._(adoptionLabel(proposal))}
         {proposal.adoptedAt ? ` · ${new Date(proposal.adoptedAt).toLocaleString()}` : ''}
       </p>
     );
@@ -44,8 +44,10 @@ export function HandoffPanel({ proposal }: Props) {
   function downloadDoc() {
     const blob = new Blob([buildHandoffMarkdown(proposal)], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- DOM tag name
     const anchor = document.createElement('a');
     anchor.href = url;
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- download filename, not UI copy
     anchor.download = `proposal-handoff-${proposal.id.slice(0, 8)}.md`;
     anchor.click();
     URL.revokeObjectURL(url);

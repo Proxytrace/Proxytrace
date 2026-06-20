@@ -49,13 +49,13 @@ export function ToolUIFrame({
   if (state === 'pending') {
     if (pendingSkeleton) {
       return (
-        <Card elevation="flat" padding="md" className="my-1" data-testid={testId} aria-busy="true">
+        <Card elevation="flat" padding="md" className="my-1" data-testid={testId} aria-busy={true}>
           {pendingSkeleton}
         </Card>
       );
     }
     return (
-      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId} aria-busy="true">
+      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId} aria-busy={true}>
         <Spinner size={12} />
         <span className="text-body-sm text-muted">{resolvedPendingLabel}</span>
       </Card>

@@ -42,6 +42,7 @@ interface Props {
 export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const navigate = useNavigate();
   const { t, i18n } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- Tab id token (display label from TAB_LABELS)
   const [tab, setTab] = useState<Tab>('Messages');
   const [promoting, setPromoting] = useState(false);
   const [prevTraceId, setPrevTraceId] = useState(trace.id);
@@ -49,6 +50,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   // Reset tab when trace changes (derived state pattern per BEST_PRACTICES §4)
   if (prevTraceId !== trace.id) {
     setPrevTraceId(trace.id);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- Tab id token (display label from TAB_LABELS)
     setTab('Messages');
     setPromoting(false);
   }
@@ -183,6 +185,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           <DrawerStat label={t`Total`} value={fmtTokens(tokTotal)} icon={<SigmaIcon size={15} strokeWidth={2.2} />} color="var(--accent-primary)" />
           <DrawerStat
             label={t`Cost`}
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy
             valueTestId={`trace-cost-${trace.id}`}
             value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}

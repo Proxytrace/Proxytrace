@@ -10,7 +10,9 @@ interface Props {
 
 function summary(params: ModelParametersDto): string {
   const parts: string[] = [];
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical readout (param name + value)
   if (params.temperature != null) parts.push(`temp ${params.temperature}`);
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical readout (token count)
   if (params.maxTokens != null) parts.push(`${params.maxTokens.toLocaleString()} tok`);
   return parts.join(' · ');
 }

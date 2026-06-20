@@ -18,7 +18,7 @@ interface ProviderDetailHeaderProps {
 }
 
 export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHeaderProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { show: toast } = useToast();
   const [editingKind, setEditingKind] = useState(false);
   const [editKindValue, setEditKindValue] = useState<ModelProviderKind>(provider.kind);
@@ -44,7 +44,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
                 className="px-1 py-0.5"
                 onClick={() => { setEditKindValue(provider.kind); setEditingKind(true); }}
               >
-                <ColoredBadge color={kindColor(provider.kind)} label={kindLabel(provider.kind)} />
+                <ColoredBadge color={kindColor(provider.kind)} label={i18n._(kindLabel(provider.kind))} />
               </Button>
             ) : (
               <div className="flex items-center gap-1.5">
@@ -55,7 +55,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
                     onValueChange={v => setEditKindValue(v as ModelProviderKind)}
                     className="h-7 py-0"
                   >
-                    {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{i18n._(o.label)}</option>)}
                   </Select>
                 </div>
                 <Button
@@ -103,6 +103,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
           size="sm"
           variant="ghost"
           leftIcon={<CopyIcon size={12} />}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
           onClick={() => { navigator.clipboard.writeText(provider.upstreamApiKey); toast(t`Upstream key copied`, 'success'); }}
         >
           <Trans>Copy</Trans>

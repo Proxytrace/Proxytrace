@@ -4,6 +4,7 @@ import type { AgentVersionDto } from '../../../api/models';
 import { Modal } from '../../../components/overlays/Modal';
 import { Select } from '../../../components/ui/Select';
 import { ChevronRightIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
 import { diffLines, type DiffKind } from '../diffLines';
 
 interface Props {
@@ -14,9 +15,9 @@ interface Props {
 }
 
 const ROW_CLS: Record<DiffKind, string> = {
-  same: 'text-secondary',
-  add: 'bg-success-subtle text-success',
-  del: 'bg-danger-subtle text-danger',
+  same: cn('text-secondary'),
+  add: cn('bg-success-subtle text-success'),
+  del: cn('bg-danger-subtle text-danger'),
 };
 
 const SIGN: Record<DiffKind, string> = { same: ' ', add: '+', del: '-' };
@@ -41,8 +42,10 @@ export function SystemPromptDiffDialog({ versions, initialBase, initialCompare, 
   return (
     <Modal title={t`System Prompt diff`} onClose={onClose} maxWidth={860}>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
+        {/* eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy */}
         <VersionSelect label={t`Base`} value={base} onChange={setBase} options={ordered} testid="diff-base-select" />
         <ChevronRightIcon size={16} className="text-muted shrink-0 mt-5" />
+        {/* eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy */}
         <VersionSelect label={t`Compare`} value={compare} onChange={setCompare} options={ordered} testid="diff-compare-select" />
         <div className="ml-auto flex items-center gap-3 text-body-sm shrink-0 self-end pb-1.5">
           <span className="text-success font-semibold"><Trans>+{added} added</Trans></span>

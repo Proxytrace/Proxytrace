@@ -52,7 +52,8 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
                 className="px-2 py-px rounded-sm text-body-sm font-semibold font-mono shrink-0"
                 style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
               >
-                v{latestVersion}
+                {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version sigil, not UI copy */}
+                {`v${latestVersion}`}
               </span>
             )}
             {proposals > 0 && (

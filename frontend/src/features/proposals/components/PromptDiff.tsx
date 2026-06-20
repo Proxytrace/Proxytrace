@@ -8,19 +8,19 @@ type DiffKind = 'same' | 'add' | 'del';
 // Per-line diff styling. Each branch is a static token, selected by the
 // (data-driven) line kind — byte-identical to the previous inline values.
 const LINE_TEXT: Record<DiffKind, string> = {
-  add: 'text-success',
-  del: 'text-danger',
-  same: 'text-secondary',
+  add: cn('text-success'),
+  del: cn('text-danger'),
+  same: cn('text-secondary'),
 };
 const LINE_BG: Record<DiffKind, string> = {
-  add: 'bg-[color-mix(in_srgb,var(--success)_8%,transparent)]',
-  del: 'bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]',
+  add: cn('bg-[color-mix(in_srgb,var(--success)_8%,transparent)]'),
+  del: cn('bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]'),
   same: '',
 };
 const SIGIL_TEXT: Record<DiffKind, string> = {
-  add: 'text-success',
-  del: 'text-danger',
-  same: 'text-muted',
+  add: cn('text-success'),
+  del: cn('text-danger'),
+  same: cn('text-muted'),
 };
 
 interface PromptDiffProps {

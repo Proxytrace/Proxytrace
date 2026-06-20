@@ -36,6 +36,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
   onSelect,
   placeholder,
   autoFocus = false,
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- layout variant token, not UI copy
   width = 'fixed',
   showRecents = true,
   recentLimit = 6,
@@ -105,11 +106,11 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
   }
 
   const dropdownWidthCls = width === 'fixed'
-    ? 'left-1/2 -translate-x-1/2 w-[80vw]'
-    : 'left-0 right-0';
+    ? cn('left-1/2 -translate-x-1/2 w-[80vw]')
+    : cn('left-0 right-0');
 
-  const wrapperWidthCls = width === 'fixed' ? 'flex-1 max-w-[720px] mx-auto' : 'w-full';
-  const inputBgCls = width === 'fixed' ? 'bg-white/[.03]' : 'bg-card-2';
+  const wrapperWidthCls = width === 'fixed' ? cn('flex-1 max-w-[720px] mx-auto') : cn('w-full');
+  const inputBgCls = width === 'fixed' ? cn('bg-white/[.03]') : cn('bg-card-2');
 
   return (
     <div ref={wrapperRef} className={cn('relative', wrapperWidthCls, className)}>
@@ -143,6 +144,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
         ) : showShortcut ? (
           <span className="flex gap-[3px]">
             <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">⌘</kbd>
+            {/* eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard key label, not UI copy */}
             <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">K</kbd>
           </span>
         ) : null}
@@ -209,6 +211,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
           <div className="border-t border-white/[.06] px-4 py-2 flex items-center gap-4 text-[11px] text-white/40 bg-black/20">
             <span className="flex items-center gap-1.5"><kbd className="px-[5px] py-[1px] bg-white/10 rounded font-mono text-[10px]">↑↓</kbd> <Trans>navigate</Trans></span>
             <span className="flex items-center gap-1.5"><kbd className="px-[5px] py-[1px] bg-white/10 rounded font-mono text-[10px]">↵</kbd> {onSelect ? <Trans>pick</Trans> : <Trans>open</Trans>}</span>
+            {/* eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard key label, not UI copy */}
             <span className="flex items-center gap-1.5"><kbd className="px-[5px] py-[1px] bg-white/10 rounded font-mono text-[10px]">esc</kbd> <Trans>close</Trans></span>
             <span className="ml-auto">{hits.length > 0 ? (isRecentMode ? <Trans>{hits.length} recent</Trans> : <Plural value={hits.length} one="# result" other="# results" />) : ''}</span>
           </div>

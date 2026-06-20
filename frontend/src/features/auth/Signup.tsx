@@ -14,6 +14,7 @@ import { passwordIsValid } from '../../auth/password';
 export default function Signup() {
   const { t } = useLingui();
   const [params] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- query-string param key, not UI copy
   const token = params.get('token') ?? '';
   const navigate = useNavigate();
   const { setToken } = useLocalAuth();

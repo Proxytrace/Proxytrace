@@ -5,6 +5,7 @@ import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { IconButton } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
+import { cn } from '../../../lib/cn';
 import type { PlaygroundToolOverride } from '../state/types';
 
 interface Props {
@@ -14,12 +15,12 @@ interface Props {
 
 // JSON-schema type → tinted pill classes (semantic tokens; see BEST_PRACTICES §5.1).
 const TYPE_CLASSES: Record<string, string> = {
-  string: 'bg-[color-mix(in_srgb,var(--teal)_12%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_28%,transparent)]',
-  number: 'bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]',
-  integer: 'bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]',
-  boolean: 'bg-accent-subtle text-accent-hover border-[color-mix(in_srgb,var(--accent-primary)_28%,transparent)]',
-  array: 'bg-success-subtle text-success border-[color-mix(in_srgb,var(--success)_28%,transparent)]',
-  object: 'bg-[var(--border-subtle)] text-secondary border-border',
+  string: cn('bg-[color-mix(in_srgb,var(--teal)_12%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_28%,transparent)]'),
+  number: cn('bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]'),
+  integer: cn('bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]'),
+  boolean: cn('bg-accent-subtle text-accent-hover border-[color-mix(in_srgb,var(--accent-primary)_28%,transparent)]'),
+  array: cn('bg-success-subtle text-success border-[color-mix(in_srgb,var(--success)_28%,transparent)]'),
+  object: cn('bg-[var(--border-subtle)] text-secondary border-border'),
 };
 
 function typeClass(type: string): string {
