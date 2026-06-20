@@ -220,7 +220,8 @@ internal sealed class Module : Autofac.Module
                 services
                     .AddMcpServer()
                     .WithHttpTransport(options => options.Stateless = true)
-                    .WithToolsFromAssembly(typeof(Module).Assembly));
+                    .WithToolsFromAssembly(typeof(Module).Assembly)
+                    .WithPromptsFromAssembly(typeof(Module).Assembly));
         }
 
         ConfigureAuth(builder, configuration, kiosk);

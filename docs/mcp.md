@@ -76,8 +76,20 @@ Application services/repositories/DTO mappers the controllers use and returning 
 store, no digests). Adding a tool: add a `[McpServerTool]`-attributed method on a `[McpServerToolType]`
 class in that folder — `WithToolsFromAssembly` discovers it; the type is registered in Autofac by the
 reflection scan in `Module.cs`. Current surface: agents, traces, suites (+curation), runs (+start/
-cancel), proposals (+status, gated), theories (gated, read), statistics. See
-`manual/guide/mcp-server.md` for the full tool list.
+cancel, **`get_run_failures`**, **`compare_runs`**), proposals (+status, gated), theories (gated, read
+**+ `submit_theory`**), statistics (**+ `get_agent_overview`**). See `manual/guide/mcp-server.md` for the
+full tool list.
+
+## Prompts (workflows)
+
+The server also exposes MCP **prompts** — reusable workflows an MCP client surfaces (e.g. as slash
+commands). A prompt returns a playbook that drives the model through the tools in the right order; they
+mirror the Tracey assistant's skills, retargeted to the MCP tool surface (no cards/confirmation/await).
+They are **static** `[McpServerPrompt]` methods on `[McpServerPromptType]` classes in
+`Proxytrace.Api/Mcp/Prompts/`, registered via `WithPromptsFromAssembly` and served over the same
+`/mcp` endpoint. Current set: `optimize_agent`, `curate_suite`, `run_tests`, `review_proposals`,
+`project_insights`. Adding one: add a `[McpServerPrompt]`-attributed static method returning the
+playbook string.
 
 ## Tests
 

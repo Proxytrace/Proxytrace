@@ -15,7 +15,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   [Model Context Protocol](https://modelcontextprotocol.io) server at `/mcp`, so external agents
   (Claude Desktop, Cursor, your own scripts) can use Proxytrace the way the built-in Tracey assistant
   does — listing and reading agents, traces, suites, runs, proposals and statistics, curating suites
-  from captured traces, and starting test runs. It authenticates with a Proxytrace **API key** (minted
+  from captured traces, starting test runs, analysing run failures, and submitting A/B-tested
+  optimization theories. It also ships **guided workflows** (MCP prompts an agent surfaces as slash
+  commands — `optimize_agent`, `curate_suite`, `run_tests`, `review_proposals`, `project_insights`)
+  that walk an external agent through the same playbooks the built-in Tracey assistant uses. It
+  authenticates with a Proxytrace **API key** (minted
   on the Providers page): the key's project becomes the agent's working context. API keys now carry
   explicit **capabilities** — *Ingestion proxy*, *MCP read*, *MCP write* — chosen when the key is
   created, so an agent key can be made read-only and a proxy key can't drive MCP (least privilege).

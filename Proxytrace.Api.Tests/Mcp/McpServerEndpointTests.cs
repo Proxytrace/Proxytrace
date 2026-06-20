@@ -47,6 +47,24 @@ public sealed class McpServerEndpointTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task ListPrompts_OverHttp_ExposesWorkflowPromptsAndReturnsContent()
+    {
+        await using var app = await StartHostAsync();
+        var seed = await SeedAsync(app);
+
+        await using var client = await ConnectAsync(app, seed.KeyValue);
+
+        var prompts = await client.ListPromptsAsync(cancellationToken: CancellationToken);
+        var names = prompts.Select(p => p.Name).ToArray();
+        names.Should().Contain("optimize_agent");
+        names.Should().Contain("curate_suite");
+        names.Should().Contain("review_proposals");
+
+        var result = await client.GetPromptAsync("optimize_agent", null, cancellationToken: CancellationToken);
+        result.Messages.Should().NotBeEmpty();
+    }
+
+    [TestMethod]
     public async Task Connect_WithUnknownApiKey_IsRejected()
     {
         await using var app = await StartHostAsync();

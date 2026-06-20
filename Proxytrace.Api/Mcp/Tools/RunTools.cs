@@ -9,6 +9,22 @@ using Proxytrace.Domain.TestSuite;
 
 namespace Proxytrace.Api.Mcp.Tools;
 
+/// <summary>One evaluator's verdict on a failing test case.</summary>
+internal sealed record McpEvaluationDto(string Evaluator, bool Passed, string? Reasoning, string? Score);
+
+/// <summary>A failing case in a run: the actual response plus every evaluator's verdict.</summary>
+internal sealed record McpRunFailureDto(Guid TestCaseId, string ActualResponse, string? OverallScore, IReadOnlyList<McpEvaluationDto> Evaluations);
+
+/// <summary>Case-by-case comparison of two runs of a suite.</summary>
+internal sealed record McpRunComparisonDto(
+    int FixedCount,
+    int RegressedCount,
+    int UnchangedCount,
+    IReadOnlyList<Guid> Fixed,
+    IReadOnlyList<Guid> Regressed,
+    double BaselinePassRate,
+    double NewPassRate);
+
 /// <summary>
 /// MCP tools for listing, starting and cancelling test runs (run groups) in the current project.
 /// </summary>
@@ -92,6 +108,72 @@ internal sealed class RunTools
         var group = await RequireGroupAsync(runGroupId, cancellationToken);
         var cancelled = await runner.CancelAsync(group, cancellationToken);
         return await ToDtoAsync(cancelled, cancellationToken);
+    }
+
+    [McpServerTool(Name = "get_run_failures")]
+    [Description("Analyze the failing cases of a single run, with each evaluator's verdict and reasoning and " +
+                 "the actual response — the primary evidence for an optimization theory. Pass a run id from a " +
+                 "run group's `runs` (get_test_run). The run must belong to the current project.")]
+    public async Task<IReadOnlyList<McpRunFailureDto>> GetRunFailures(
+        [Description("The run id (GUID) — a single run from a run group's `runs`, via get_test_run.")] Guid runId,
+        [Description("Maximum number of failing cases to return (1-50, default 20).")] int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var run = await RequireRunAsync(runId, cancellationToken);
+        limit = Math.Clamp(limit, 1, 50);
+        return run.TestResults
+            .Where(r => !r.Passed)
+            .Take(limit)
+            .Select(r => new McpRunFailureDto(
+                r.TestCase.Id,
+                Truncate(r.ActualResponse.GetText(), 800),
+                r.OverallScore?.ToString(),
+                r.Evaluations
+                    .Select(e => new McpEvaluationDto(e.Evaluator.Name, e.Passed, e.Reasoning, e.Score?.ToString()))
+                    .ToArray()))
+            .ToArray();
+    }
+
+    [McpServerTool(Name = "compare_runs")]
+    [Description("Compare two runs of the same suite case-by-case: which cases were fixed (fail→pass), which " +
+                 "regressed (pass→fail), and the pass rates. Both runs must belong to the current project.")]
+    public async Task<McpRunComparisonDto> CompareRuns(
+        [Description("The baseline run id (GUID).")] Guid baselineRunId,
+        [Description("The new run id (GUID) to compare against the baseline.")] Guid newRunId,
+        CancellationToken cancellationToken)
+    {
+        var baseline = await RequireRunAsync(baselineRunId, cancellationToken);
+        var candidate = await RequireRunAsync(newRunId, cancellationToken);
+
+        var basePass = baseline.TestResults.ToDictionary(r => r.TestCase.Id, r => r.Passed);
+        var newPass = candidate.TestResults.ToDictionary(r => r.TestCase.Id, r => r.Passed);
+        var common = basePass.Keys.Where(newPass.ContainsKey).ToArray();
+        var fixedCases = common.Where(id => !basePass[id] && newPass[id]).ToArray();
+        var regressedCases = common.Where(id => basePass[id] && !newPass[id]).ToArray();
+
+        return new McpRunComparisonDto(
+            fixedCases.Length,
+            regressedCases.Length,
+            common.Length - fixedCases.Length - regressedCases.Length,
+            fixedCases,
+            regressedCases,
+            PassRate(baseline),
+            PassRate(candidate));
+    }
+
+    private static double PassRate(ITestRun run)
+        => run.TestResults.Count == 0 ? 0 : run.TestResults.Count(r => r.Passed) / (double)run.TestResults.Count;
+
+    private static string Truncate(string text, int max)
+        => text.Length <= max ? text : text[..max] + "…";
+
+    private async Task<ITestRun> RequireRunAsync(Guid runId, CancellationToken cancellationToken)
+    {
+        var p = await project.GetProjectAsync(cancellationToken);
+        var run = await runs.FindAsync(runId, cancellationToken);
+        if (run is null || run.Group.Suite.Agent.Project.Id != p.Id)
+            throw new McpException($"Run '{runId}' was not found in this project.");
+        return run;
     }
 
     private async Task<ITestRunGroup> RequireGroupAsync(Guid runGroupId, CancellationToken cancellationToken)

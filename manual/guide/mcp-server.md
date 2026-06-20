@@ -75,10 +75,27 @@ All tools operate within the connecting key's project.
 | Agents | `list_agents`, `get_agent` |
 | Traces | `list_traces`, `get_trace` |
 | Test suites | `list_suites`, `get_suite`, `create_suite_from_traces`, `add_trace_to_suite` |
-| Test runs | `list_test_runs`, `get_test_run`, `start_test_run`, `cancel_test_run` |
+| Test runs | `list_test_runs`, `get_test_run`, `start_test_run`, `cancel_test_run`, `get_run_failures`, `compare_runs` |
 | Proposals | `list_proposals`, `get_proposal`, `get_proposal_artifact`, `set_proposal_status` |
-| Theories | `list_theories`, `get_theory` |
-| Statistics | `get_dashboard` |
+| Theories | `list_theories`, `get_theory`, `submit_theory` |
+| Statistics | `get_dashboard`, `get_agent_overview` |
+
+## Workflows
+
+The server also ships **workflows** — guided playbooks the MCP protocol calls *prompts*. Most clients
+surface them as slash commands (e.g. `/optimize_agent`); selecting one walks the agent through the
+right tools in order. They mirror the in-app [Tracey](./tracey) assistant's skills:
+
+| Workflow | What it does |
+|----------|--------------|
+| `optimize_agent` | Gather evidence from runs and traces, then submit one A/B-tested optimization theory. |
+| `curate_suite` | Build or grow a benchmark test suite from captured traces. |
+| `run_tests` | Run a suite against its agent and review the failures. |
+| `review_proposals` | Review open optimization proposals and approve / reject / mark adopted. |
+| `project_insights` | Survey the project's usage, cost, pass rates and notable traces. |
+
+The optimization and curation workflows need a key with **MCP write**; the read-only ones work with
+**MCP read**.
 
 ::: warning Writes have real effects
 Write tools act immediately — there is no confirmation step. In particular, `start_test_run` makes

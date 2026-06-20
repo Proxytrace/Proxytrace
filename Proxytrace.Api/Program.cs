@@ -1,6 +1,7 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 using Proxytrace.Api.Auth.Mcp;
 using Proxytrace.Api.Kiosk;
@@ -13,10 +14,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterModule<Module>());
-
-// The MCP server is hosted only outside kiosk mode (kiosk has no accounts/API keys and its
-// read-only middleware 403s the POST anyway). Matches the registration guard in Module.cs.
-var kioskEnabled = builder.Configuration.GetSection("Kiosk").Get<KioskOptions>()?.Enabled ?? false;
 
 builder.Services.AddCors(options =>
 {
@@ -32,13 +29,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthorization(options =>
 {
     // The MCP endpoint authenticates only via the McpApiKey scheme: a browser JWT/cookie must not
-    // reach it, and an MCP API key is not valid for the rest of the API.
-    if (!kioskEnabled)
-    {
-        options.AddPolicy("Mcp", policy => policy
-            .AddAuthenticationSchemes(McpApiKeyAuthenticationHandler.SchemeName)
-            .RequireAuthenticatedUser());
-    }
+    // reach it, and an MCP API key is not valid for the rest of the API. The policy is harmless when
+    // unused — it is only ever evaluated if the /mcp endpoint is mapped (non-kiosk).
+    options.AddPolicy("Mcp", policy => policy
+        .AddAuthenticationSchemes(McpApiKeyAuthenticationHandler.SchemeName)
+        .RequireAuthenticatedUser());
 });
 
 builder.Services.AddControllers(options =>
@@ -72,6 +67,10 @@ if (builder.Environment.IsDevelopment())
 }
 
 var app = builder.Build();
+
+// Resolve the kiosk decision from the container (the Module is the single source of truth — it reads
+// appsettings.local.json, which builder.Configuration does not). Re-reading config here would diverge.
+var kioskEnabled = app.Services.GetRequiredService<KioskOptions>().Enabled;
 
 if (app.Environment.IsDevelopment())
 {
