@@ -11,6 +11,7 @@ using Proxytrace.Api.Auth.Mcp;
 using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Middleware;
 using Proxytrace.Api.Middleware.Exceptions;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
@@ -107,6 +108,12 @@ internal sealed class Module : Autofac.Module
             .RegisterInstance(errorLogCleanupConfiguration)
             .SingleInstance();
 
+        var auditLogCleanupConfiguration = configuration.GetSection("AuditLogCleanup")
+            .Get<AuditLogCleanupConfiguration>() ?? new AuditLogCleanupConfiguration();
+        builder
+            .RegisterInstance(auditLogCleanupConfiguration)
+            .SingleInstance();
+
         var priceRefreshConfiguration = configuration.GetSection("Pricing")
             .Get<PriceRefreshConfiguration>() ?? new PriceRefreshConfiguration();
         builder
@@ -183,6 +190,12 @@ internal sealed class Module : Autofac.Module
         builder.RegisterType<CurrentUserAccessor>()
             .As<ICurrentUserAccessor>()
             .InstancePerLifetimeScope();
+
+        // Synchronous, DB-free actor snapshot for audit capture (the singleton audit logger can't take
+        // a scoped ICurrentUserAccessor). Reads the request context via IHttpContextAccessor.
+        builder.RegisterType<HttpContextAuditActorAccessor>()
+            .As<IAuditActorAccessor>()
+            .SingleInstance();
 
         builder.RegisterAssemblyTypes(typeof(Module).Assembly)
             .Where(t => typeof(IExceptionMapper).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)

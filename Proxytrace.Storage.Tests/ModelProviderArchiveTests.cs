@@ -69,4 +69,20 @@ public sealed class ModelProviderArchiveTests : BaseTest<Module>
 
         archived.Should().BeFalse();
     }
+
+    [TestMethod]
+    public async Task ArchiveAsync_AlreadyArchived_ReturnsFalse()
+    {
+        // A repeated archive is a no-op and must report no state transition (false), so callers can
+        // 404 and skip auditing rather than recording a phantom deletion on the second delete.
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IModelProviderRepository>();
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+
+        var first = await repository.ArchiveAsync(provider.Id, CancellationToken);
+        var second = await repository.ArchiveAsync(provider.Id, CancellationToken);
+
+        first.Should().BeTrue();
+        second.Should().BeFalse();
+    }
 }

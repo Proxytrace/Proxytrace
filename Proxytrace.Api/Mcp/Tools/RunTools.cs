@@ -1,8 +1,11 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.TestRun;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
@@ -37,6 +40,7 @@ internal sealed class RunTools
     private readonly ITestSuiteRepository suites;
     private readonly ITestRunnerService runner;
     private readonly TestRunDtoMapper mapper;
+    private readonly ILogger<Audit> audit;
 
     public RunTools(
         IMcpProjectAccessor project,
@@ -44,7 +48,8 @@ internal sealed class RunTools
         ITestRunRepository runs,
         ITestSuiteRepository suites,
         ITestRunnerService runner,
-        TestRunDtoMapper mapper)
+        TestRunDtoMapper mapper,
+        ILogger<Audit> audit)
     {
         this.project = project;
         this.groups = groups;
@@ -52,6 +57,7 @@ internal sealed class RunTools
         this.suites = suites;
         this.runner = runner;
         this.mapper = mapper;
+        this.audit = audit;
     }
 
     [McpServerTool(Name = "list_test_runs")]
@@ -95,6 +101,7 @@ internal sealed class RunTools
 
         var group = await runner.RunInBackgroundAsync(
             suite, [suite.Agent.Endpoint], cancellationToken: cancellationToken);
+        audit.LogAudit(AuditAction.TestRunStarted, nameof(ITestRunGroup), group.Id, suite.Name, projectId: p.Id);
         return await ToDtoAsync(group, cancellationToken);
     }
 

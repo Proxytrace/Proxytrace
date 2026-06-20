@@ -1,10 +1,14 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestRun;
@@ -35,6 +39,7 @@ public class ProposalsController : ControllerBase
     private readonly ITestRun.CreateNew createRun;
     private readonly OptimizationProposalDtoMapper mapper;
     private readonly IProposalBroadcaster proposalBroadcaster;
+    private readonly ILogger<Audit> audit;
 
     public ProposalsController(
         IOptimizationProposalRepository repository,
@@ -50,7 +55,8 @@ public class ProposalsController : ControllerBase
         ITestRunGroup.CreateNew createGroup,
         ITestRun.CreateNew createRun,
         OptimizationProposalDtoMapper mapper,
-        IProposalBroadcaster proposalBroadcaster)
+        IProposalBroadcaster proposalBroadcaster,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.createModelSwitchNew = createModelSwitchNew;
@@ -66,6 +72,7 @@ public class ProposalsController : ControllerBase
         this.createRun = createRun;
         this.mapper = mapper;
         this.proposalBroadcaster = proposalBroadcaster;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -247,6 +254,10 @@ public class ProposalsController : ControllerBase
         }
 
         proposalBroadcaster.Publish(ProposalStatusChangedEvent.Create(updated));
+        audit.LogAudit(
+            AuditAction.ProposalStatusChanged, nameof(IOptimizationProposal), updated.Id, updated.Agent.Name,
+            projectId: updated.Agent.Project.Id,
+            details: JsonSerializer.Serialize(new { from = existing.Status.ToString(), to = updated.Status.ToString() }));
         return Ok(mapper.ToDto(updated));
     }
 

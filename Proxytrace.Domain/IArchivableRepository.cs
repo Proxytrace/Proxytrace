@@ -8,8 +8,10 @@ namespace Proxytrace.Domain;
 public interface IArchivableRepository<T> : IRepository<T> where T : class, IArchivable
 {
     /// <summary>
-    /// Archives the entity with the given <paramref name="id"/> (idempotent). Returns
-    /// <c>false</c> if no such entity exists, <c>true</c> otherwise.
+    /// Archives the entity with the given <paramref name="id"/>. Returns <c>true</c> only when this
+    /// call actually transitioned a live row to archived; returns <c>false</c> when no such entity
+    /// exists <em>or</em> it was already archived (a no-op). Callers can therefore treat a repeated
+    /// delete as "nothing changed" — e.g. return 404 and skip auditing.
     /// </summary>
     Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default);
 }

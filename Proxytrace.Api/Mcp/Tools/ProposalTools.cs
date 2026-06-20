@@ -1,8 +1,12 @@
 using System.ComponentModel;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Licensing;
 
@@ -20,19 +24,22 @@ internal sealed class ProposalTools
     private readonly OptimizationProposalDtoMapper mapper;
     private readonly IProposalBroadcaster broadcaster;
     private readonly ILicenseService license;
+    private readonly ILogger<Audit> audit;
 
     public ProposalTools(
         IMcpProjectAccessor project,
         IOptimizationProposalRepository repository,
         OptimizationProposalDtoMapper mapper,
         IProposalBroadcaster broadcaster,
-        ILicenseService license)
+        ILicenseService license,
+        ILogger<Audit> audit)
     {
         this.project = project;
         this.repository = repository;
         this.mapper = mapper;
         this.broadcaster = broadcaster;
         this.license = license;
+        this.audit = audit;
     }
 
     [McpServerTool(Name = "list_proposals")]
@@ -95,6 +102,10 @@ internal sealed class ProposalTools
         }
 
         broadcaster.Publish(ProposalStatusChangedEvent.Create(updated));
+        audit.LogAudit(
+            AuditAction.ProposalStatusChanged, nameof(IOptimizationProposal), updated.Id, updated.Agent.Name,
+            projectId: updated.Agent.Project.Id,
+            details: JsonSerializer.Serialize(new { from = existing.Status.ToString(), to = updated.Status.ToString() }));
         return mapper.ToDto(updated);
     }
 

@@ -31,6 +31,14 @@ internal class EvaluatorRepository : ArchivableRepository<IEvaluator, EvaluatorE
         return await Map(stored, cancellationToken);
     }
 
+    public async Task<Guid?> GetProjectIdAsync(Guid evaluatorId, CancellationToken cancellationToken = default)
+        => await contextFactory()
+            .Set<EvaluatorEntity>()
+            .AsNoTracking()
+            .Where(e => e.Id == evaluatorId)
+            .Select(e => (Guid?)e.Project)
+            .FirstOrDefaultAsync(cancellationToken);
+
     /// <summary>
     /// Detaches the evaluator from every test suite on archive so future suite runs stop using it.
     /// Past test results keep resolving it by id (the row stays), so history is preserved.

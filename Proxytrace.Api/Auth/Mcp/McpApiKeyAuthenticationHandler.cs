@@ -17,6 +17,9 @@ internal sealed class McpApiKeyAuthenticationHandler : AuthenticationHandler<Aut
 {
     public const string SchemeName = "McpApiKey";
 
+    /// <summary>Request-item key under which the authenticated API key's id is stashed (for audit attribution).</summary>
+    public const string ApiKeyIdItemKey = "Proxytrace.ApiKeyId";
+
     private const string BearerPrefix = "Bearer ";
 
     private readonly IApiKeyRepository apiKeys;
@@ -68,6 +71,9 @@ internal sealed class McpApiKeyAuthenticationHandler : AuthenticationHandler<Aut
         // Attribute the call to the key's owner: stashing their id makes ICurrentUserAccessor resolve
         // the owner inside the tools, exactly as a JWT-authenticated request would.
         Context.Items[CurrentUserAccessor.UserIdItemKey] = apiKey.Owner.Id;
+
+        // Also stash the key id so audit capture can attribute the action to the specific API key.
+        Context.Items[ApiKeyIdItemKey] = apiKey.Id;
 
         var claims = new[]
         {

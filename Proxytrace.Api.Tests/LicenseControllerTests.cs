@@ -34,7 +34,8 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             licenseService,
             keyManager ?? Substitute.For<ILicenseKeyManager>(),
             setup,
-            quotaGuard);
+            quotaGuard,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 
         var identity = authenticatedAsAdmin
             ? new ClaimsIdentity([new Claim(ClaimTypes.Role, nameof(UserRole.Admin))], "test")

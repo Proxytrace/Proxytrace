@@ -334,5 +334,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<ModelProviderDtoMapper>(),
         services.GetRequiredService<IModelPriceRefresher>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
-        services.GetRequiredService<IRepository<IUser>>());
+        services.GetRequiredService<IRepository<IUser>>(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

@@ -52,6 +52,7 @@ const Login = lazy(() => import('./features/auth/Login'));
 const Signup = lazy(() => import('./features/auth/Signup'));
 const Users = lazy(() => import('./features/admin/Users'));
 const ErrorLog = lazy(() => import('./features/error-log/ErrorLog'));
+const AuditLog = lazy(() => import('./features/audit-log/AuditLog'));
 
 // A 402 license rejection is surfaced as an upgrade dialog rather than the
 // generic error toast / page crash. Routing it from both caches catches every
@@ -245,6 +246,7 @@ function AppRoutes() {
             <Route path="users" element={wrap(<Users />)} />
             <Route path="license" element={<LicenseSection />} />
             <Route path="error-log" element={wrap(<ErrorLog />)} />
+            <Route path="audit-log" element={wrap(<AuditLog />)} />
             <Route path="danger" element={<DangerZoneSection />} />
           </Route>
         )}
@@ -253,6 +255,8 @@ function AppRoutes() {
         {isAdmin && <Route path="error-log" element={<Navigate to="/settings/error-log" replace />} />}
         {isAdmin && <Route path="admin/users" element={<Navigate to="/settings/users" replace />} />}
         {isAdmin && <Route path="admin/invites" element={<Navigate to="/settings/users" replace />} />}
+        {/* Project-scoped audit log — visible to all members (admin global view is /settings/audit-log). */}
+        <Route path="audit-log" element={wrap(<AuditLog projectScoped />)} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

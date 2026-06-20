@@ -103,6 +103,11 @@ export const QUERY_KEYS = {
   /** Prefix matching every error-log query — use for invalidation. */
   errorLogRoot: ['error-log'] as const,
 
+  auditLog: (filter: object) => ['audit-log', filter] as const,
+  auditLogEntry: (id: string) => ['audit-log', 'entry', id] as const,
+  /** Prefix matching every audit-log query — use for invalidation. */
+  auditLogRoot: ['audit-log'] as const,
+
   notifications: (projectId?: string) => ['notifications', projectId ?? null] as const,
   /** Prefix matching every notifications query — use for invalidation. */
   notificationsRoot: ['notifications'] as const,

@@ -53,6 +53,11 @@ The boundary is sharp: **domain layer references the full entity, storage layer 
 - **1:N** — domain holds the parent as `IModelEndpoint SystemEndpoint { get; }`; storage holds `Guid SystemEndpoint`; mapper resolves the parent via the parent's repository in `Map(stored, ct)`. Configure with `HasOne<ModelEndpointEntity>().WithMany().HasForeignKey(e => e.SystemEndpoint).OnDelete(DeleteBehavior.Restrict)`.
 - **N:M** — domain holds `IReadOnlyCollection<IEvaluator> Evaluators { get; }`; storage uses a junction entity (e.g. `TestSuiteEvaluatorEntity` with `TestSuiteId`/`EvaluatorId`) and a navigation collection on the parent storage entity. Junction entities have **no domain counterpart** and are registered explicitly in `Proxytrace.Storage.Module`. The custom repository overrides `UpdateRelationsAsync` to sync the junction rows during `Update` (see `TestSuiteRepository`).
 - **Delete behavior** — `Restrict` for optional references, `Cascade` for owned children.
+- **FK-free (denormalized snapshot)** — an *append-only audit/history* entity deliberately holds
+  **no** FKs: it stores referenced ids as plain `Guid?` columns plus snapshot labels, so the row
+  survives deletion of what it refers to. `AuditLogEntry` is the reference example (`ActorUserId`,
+  `ProjectId`, `TargetId` are plain columns — no `HasOne`/`HasForeignKey`); see
+  [`audit-log.md`](audit-log.md).
 
 ## Soft-delete (archive)
 

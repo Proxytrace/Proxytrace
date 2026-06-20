@@ -1,18 +1,22 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Api.Dto.ModelProviders;
 using Proxytrace.Api.Dto.Projects;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 
 namespace Proxytrace.Api.Controllers;
@@ -36,6 +40,7 @@ public class ModelProvidersController : ControllerBase
     private readonly IModelPriceRefresher priceRefresher;
     private readonly ICurrentUserAccessor currentUser;
     private readonly IRepository<IUser> users;
+    private readonly ILogger<Audit> audit;
 
     public ModelProvidersController(
         IModelProviderRepository providerRepository,
@@ -51,13 +56,15 @@ public class ModelProvidersController : ControllerBase
         ModelProviderDtoMapper mapper,
         IModelPriceRefresher priceRefresher,
         ICurrentUserAccessor currentUser,
-        IRepository<IUser> users)
+        IRepository<IUser> users,
+        ILogger<Audit> audit)
     {
         this.providerRepository = providerRepository;
         this.apiKeyRepository = apiKeyRepository;
         this.projectRepository = projectRepository;
         this.endpointRepository = endpointRepository;
         this.modelRepository = modelRepository;
+        this.audit = audit;
         this.createProvider = createProvider;
         this.updateProvider = updateProvider;
         this.createApiKey = createApiKey;
@@ -126,6 +133,7 @@ public class ModelProvidersController : ControllerBase
         var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
         await priceRefresher.RefreshProviderAsync(saved, cancellationToken);
+        audit.LogAudit(AuditAction.ProviderConfigCreated, nameof(IModelProvider), saved.Id, saved.Name);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, mapper.ToDto(saved));
     }
 
@@ -141,6 +149,7 @@ public class ModelProvidersController : ControllerBase
             return NotFound();
         var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
+        audit.LogAudit(AuditAction.ProviderConfigUpdated, nameof(IModelProvider), saved.Id, saved.Name);
         return mapper.ToDto(saved);
     }
 
@@ -152,8 +161,15 @@ public class ModelProvidersController : ControllerBase
         // provider's endpoints to every AgentCall/TestRun that referenced them, silently destroying
         // history. Archiving hides the provider + its endpoints from listings while preserving that
         // history. Contract unchanged (204/404), so the frontend needs no change.
-        var archived = await providerRepository.ArchiveAsync(id, cancellationToken);
-        return archived ? NoContent() : NotFound();
+        var provider = await providerRepository.FindAsync(id, cancellationToken);
+        if (provider is null)
+            return NotFound();
+        // Audit only a real state transition: ArchiveAsync returns false for an already-archived
+        // provider, so a repeated delete is a 404 no-op and records no phantom deletion.
+        if (!await providerRepository.ArchiveAsync(id, cancellationToken))
+            return NotFound();
+        audit.LogAudit(AuditAction.ProviderConfigDeleted, nameof(IModelProvider), id, provider.Name);
+        return NoContent();
     }
 
     // ── Model Endpoints ───────────────────────────────────────────────────────
@@ -221,6 +237,7 @@ public class ModelProvidersController : ControllerBase
 
         var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost, cachedInputTokenCost: null);
         var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);
+        audit.LogAudit(AuditAction.EndpointConfigCreated, nameof(IModelEndpoint), saved.Id, saved.Model.Name);
         return CreatedAtAction(nameof(GetModels), new { providerId }, mapper.ToEndpointDto(saved));
     }
 
@@ -231,8 +248,15 @@ public class ModelProvidersController : ControllerBase
         // Soft-delete: archiving hides the endpoint from pickers but keeps the row, so agents that
         // still reference it (and their captured calls / test runs) keep resolving. See
         // ArchivableRepository.
-        var archived = await endpointRepository.ArchiveAsync(endpointId, cancellationToken);
-        return archived ? NoContent() : NotFound();
+        var endpoint = await endpointRepository.FindAsync(endpointId, cancellationToken);
+        if (endpoint is null)
+            return NotFound();
+        // Audit only a real state transition: a repeated delete of an already-archived endpoint
+        // returns false (404 no-op) and records no phantom deletion.
+        if (!await endpointRepository.ArchiveAsync(endpointId, cancellationToken))
+            return NotFound();
+        audit.LogAudit(AuditAction.EndpointConfigDeleted, nameof(IModelEndpoint), endpointId, endpoint.Model.Name);
+        return NoContent();
     }
 
     [HttpPut("{providerId:guid}/models/{endpointId:guid}")]
@@ -259,6 +283,7 @@ public class ModelProvidersController : ControllerBase
             existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost,
             existing.CachedInputTokenCost, existing);
         var saved = await endpointRepository.UpdateAsync(updated, cancellationToken);
+        audit.LogAudit(AuditAction.EndpointConfigUpdated, nameof(IModelEndpoint), saved.Id, saved.Model.Name);
         return mapper.ToEndpointDto(saved);
     }
 
@@ -309,6 +334,13 @@ public class ModelProvidersController : ControllerBase
             : ApiKeyScopes.Ingestion;
         var key = createApiKey(request.Name, keyValue, project, provider, scopes, owner);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
+        audit.LogAudit(
+            AuditAction.ApiKeyMinted,
+            nameof(IApiKey),
+            saved.Id,
+            saved.Name,
+            projectId: project.Id,
+            details: JsonSerializer.Serialize(new { scopes = scopes.ToString(), ownerEmail = owner.Email }));
         return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));
     }
 
@@ -320,7 +352,11 @@ public class ModelProvidersController : ControllerBase
         if (key is null || key.Provider.Id != providerId)
             return NotFound();
         var removed = await apiKeyRepository.RemoveAsync(keyId, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        if (!removed)
+            return NotFound();
+
+        audit.LogAudit(AuditAction.ApiKeyDeleted, nameof(IApiKey), keyId, key.Name, projectId: key.Project.Id);
+        return NoContent();
     }
 
 }

@@ -231,5 +231,6 @@ public sealed class UsersControllerTests : BaseTest<Module>
         services.GetRequiredService<IRepository<IUser>>(),
         services.GetRequiredService<IProjectRepository>(),
         services.GetRequiredService<IUserAdministrationService>(),
-        services.GetRequiredService<ICurrentUserAccessor>());
+        services.GetRequiredService<ICurrentUserAccessor>(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

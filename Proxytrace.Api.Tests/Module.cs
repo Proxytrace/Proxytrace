@@ -1,4 +1,5 @@
 using Autofac;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
@@ -33,6 +34,13 @@ public sealed class Module : Autofac.Module
             => Task.FromResult<IUser?>(null);
     }
 
+    // The real HttpContextAuditActorAccessor needs IHttpContextAccessor (registered by the API host,
+    // not the test container). Stub it to the System actor, mirroring StubCurrentUserAccessor.
+    private sealed class StubAuditActorAccessor : IAuditActorAccessor
+    {
+        public AuditActor GetCurrentActor() => AuditActor.System;
+    }
+
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
@@ -46,6 +54,9 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterInstance<ICurrentUserAccessor>(new StubCurrentUserAccessor())
+            .SingleInstance();
+
+        builder.RegisterInstance<IAuditActorAccessor>(new StubAuditActorAccessor())
             .SingleInstance();
 
         // Register a default stub factory — tests override this via GetServices(action).

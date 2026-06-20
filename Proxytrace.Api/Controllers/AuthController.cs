@@ -1,10 +1,14 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Auth;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Setup;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Invite;
 using Proxytrace.Domain.User;
 
@@ -24,6 +28,7 @@ public class AuthController : ControllerBase
     private readonly ICurrentUserAccessor currentUser;
     private readonly IStreamTicketService streamTickets;
     private readonly IConfiguration config;
+    private readonly ILogger<Audit> audit;
 
     public AuthController(
         AuthOptions options,
@@ -35,7 +40,8 @@ public class AuthController : ControllerBase
         IPasswordPolicy policy,
         ICurrentUserAccessor currentUser,
         IStreamTicketService streamTickets,
-        IConfiguration config)
+        IConfiguration config,
+        ILogger<Audit> audit)
     {
         this.options = options;
         this.setup = setup;
@@ -47,6 +53,7 @@ public class AuthController : ControllerBase
         this.currentUser = currentUser;
         this.streamTickets = streamTickets;
         this.config = config;
+        this.audit = audit;
     }
 
     [HttpGet("mode")]
@@ -70,6 +77,7 @@ public class AuthController : ControllerBase
         var result = await legacyClaim.ClaimAsync(req.Email, req.Password, ct);
         if (result is null) return Conflict("No eligible legacy account.");
         SessionCookie.Append(Response, result.Token, result.ExpiresAt);
+        audit.LogAudit(AuditAction.LegacyAccountClaimed, nameof(IUser), result.User.Id, result.User.Email);
         return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
@@ -85,6 +93,7 @@ public class AuthController : ControllerBase
 
         var result = await setup.CreateFirstAdminAsync(req.Email, req.Password, ct);
         SessionCookie.Append(Response, result.Token, result.ExpiresAt);
+        audit.LogAudit(AuditAction.AdminBootstrapped, nameof(IUser), result.UserId, req.Email);
         return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
@@ -109,8 +118,15 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<TokenResponse>> Login([FromBody] LoginRequest req, CancellationToken ct)
     {
         var result = await login.LoginAsync(req.Email, req.Password, ct);
-        if (result is null) return Unauthorized();
+        if (result is null)
+        {
+            // No user context on a failed login (pre-auth, anonymous) — recorded as the System actor
+            // with the submitted email as the target so brute-force/credential-stuffing is visible.
+            audit.LogAudit(AuditAction.LoginFailed, nameof(IUser), targetLabel: req.Email, outcome: AuditOutcome.Failure);
+            return Unauthorized();
+        }
         SessionCookie.Append(Response, result.Token, result.ExpiresAt);
+        audit.LogAudit(AuditAction.UserLoggedIn, nameof(IUser), result.User.Id, result.User.Email);
         return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
@@ -121,7 +137,12 @@ public class AuthController : ControllerBase
     [RequireLocalMode]
     public IActionResult Logout()
     {
+        // Only audit a logout that actually ended a session — a spurious anonymous call records
+        // nothing. The actor (who logged out) is enriched from the session cookie's context.
+        var hadSession = Request.Cookies.ContainsKey(SessionCookie.Name);
         SessionCookie.Delete(Response);
+        if (hadSession)
+            audit.LogAudit(AuditAction.UserLoggedOut, nameof(IUser));
         return NoContent();
     }
 
@@ -146,6 +167,7 @@ public class AuthController : ControllerBase
 
         var user = await invites.ConsumeAsync(req.Token, req.Password, ct);
         if (user is null) return StatusCode(410, "Invite invalid, expired, or already used.");
+        audit.LogAudit(AuditAction.UserSignedUp, nameof(IUser), user.Id, user.Email);
 
         LoginResult? session = await login.LoginAsync(user.Email, req.Password, ct);
         if (session is null) return NotFound();
@@ -172,6 +194,9 @@ public class AuthController : ControllerBase
         if (me is null) return Unauthorized();
 
         var invite = await invites.CreateAsync(req.Email, req.Role, me, ct);
+        audit.LogAudit(
+            AuditAction.UserInvited, nameof(IInvite), invite.Id, req.Email,
+            details: JsonSerializer.Serialize(new { role = req.Role.ToString() }));
         return new CreateInviteResponse(invite.Token, BuildInviteUrl(invite.Token), invite.ExpiresAt);
     }
 
@@ -195,7 +220,12 @@ public class AuthController : ControllerBase
     [HttpDelete("invites/{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var removed = await inviteRepo.RemoveAsync(id, ct);
-        return removed ? NoContent() : NotFound();
+        var invite = await inviteRepo.FindAsync(id, ct);
+        if (invite is null)
+            return NotFound();
+        if (!await inviteRepo.RemoveAsync(id, ct))
+            return NotFound();
+        audit.LogAudit(AuditAction.InviteRevoked, nameof(IInvite), id, invite.Email);
+        return NoContent();
     }
 }

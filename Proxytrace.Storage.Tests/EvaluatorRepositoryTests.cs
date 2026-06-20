@@ -221,7 +221,7 @@ public sealed class EvaluatorArchiveTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task ArchiveAsync_AlreadyArchived_IsIdempotent()
+    public async Task ArchiveAsync_AlreadyArchived_ReturnsFalseButStaysArchived()
     {
         IServiceProvider services = GetServices();
         var repository = services.GetRequiredService<IEvaluatorRepository>();
@@ -231,10 +231,14 @@ public sealed class EvaluatorArchiveTests : BaseTest<Module>
         var project = await projectGenerator.CreateAsync(CancellationToken);
         var evaluator = await repository.AddAsync(exactFactory(project), CancellationToken);
 
-        await repository.ArchiveAsync(evaluator.Id, CancellationToken);
+        var first = await repository.ArchiveAsync(evaluator.Id, CancellationToken);
         var second = await repository.ArchiveAsync(evaluator.Id, CancellationToken);
 
-        second.Should().BeTrue();
+        // Only the first call transitions the row; a repeated archive is a no-op (false) so callers
+        // can 404 and skip auditing. The row itself stays archived and resolvable by id.
+        first.Should().BeTrue();
+        second.Should().BeFalse();
+        (await repository.GetAsync(evaluator.Id, CancellationToken)).IsArchived.Should().BeTrue();
     }
 }
 

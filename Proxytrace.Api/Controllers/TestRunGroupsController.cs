@@ -1,12 +1,16 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Api.Json;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestRun;
@@ -28,6 +32,8 @@ public class TestRunGroupsController : ControllerBase
     private readonly ITestResultBroadcaster broadcaster;
     private readonly IOptimizerService optimizerService;
     private readonly TestRunDtoMapper runMapper;
+    private readonly IAgentRepository agentRepository;
+    private readonly ILogger<Audit> audit;
 
     public TestRunGroupsController(
         ITestRunGroupRepository groupRepository,
@@ -37,7 +43,9 @@ public class TestRunGroupsController : ControllerBase
         ITestRunnerService runner,
         ITestResultBroadcaster broadcaster,
         IOptimizerService optimizerService,
-        TestRunDtoMapper runMapper)
+        TestRunDtoMapper runMapper,
+        IAgentRepository agentRepository,
+        ILogger<Audit> audit)
     {
         this.groupRepository = groupRepository;
         this.runRepository = runRepository;
@@ -47,6 +55,8 @@ public class TestRunGroupsController : ControllerBase
         this.broadcaster = broadcaster;
         this.optimizerService = optimizerService;
         this.runMapper = runMapper;
+        this.agentRepository = agentRepository;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -103,6 +113,9 @@ public class TestRunGroupsController : ControllerBase
 
         var group = await runner.RunInBackgroundAsync(
             suite, endpointList, cancellationToken: cancellationToken);
+
+        var projectId = await agentRepository.GetProjectIdAsync(suite.Agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestRunStarted, nameof(ITestRunGroup), group.Id, suite.Name, projectId: projectId);
 
         return AcceptedAtAction(nameof(Get), new { id = group.Id }, await ToDtoAsync(group, cancellationToken));
     }

@@ -1,11 +1,15 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Projects;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
@@ -26,6 +30,7 @@ public class ProjectsController : ControllerBase
     private readonly IProject.CreateExisting createExisting;
     private readonly ITraceyAgentProvisioner traceyProvisioner;
     private readonly IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner;
+    private readonly ILogger<Audit> audit;
 
     public ProjectsController(
         IProjectRepository repository,
@@ -35,7 +40,8 @@ public class ProjectsController : ControllerBase
         IProject.CreateNew createNew,
         IProject.CreateExisting createExisting,
         ITraceyAgentProvisioner traceyProvisioner,
-        IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner)
+        IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.endpointRepository = endpointRepository;
@@ -45,6 +51,7 @@ public class ProjectsController : ControllerBase
         this.createExisting = createExisting;
         this.traceyProvisioner = traceyProvisioner;
         this.defaultEvaluatorProvisioner = defaultEvaluatorProvisioner;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -84,6 +91,7 @@ public class ProjectsController : ControllerBase
         var saved = await repository.AddAsync(project, cancellationToken);
         await traceyProvisioner.EnsureTraceyAgentAsync(saved, cancellationToken);
         await defaultEvaluatorProvisioner.EnsureDefaultEvaluatorsAsync(saved, cancellationToken);
+        audit.LogAudit(AuditAction.ProjectCreated, nameof(IProject), saved.Id, saved.Name, projectId: saved.Id);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
 
@@ -107,8 +115,27 @@ public class ProjectsController : ControllerBase
         if (members is null)
             return BadRequest("One or more memberIds reference unknown users.");
 
+        // Snapshot the prior member set BEFORE createExisting (which may mutate existing.Members in
+        // place) so we can audit any membership delta this PUT applies.
+        var priorMembers = existing.Members.ToDictionary(m => m.Id, m => m.Email);
+        var priorName = existing.Name;
+
         var updated = createExisting(request.Name, endpoint, members, existing);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
+
+        // A no-op PUT that leaves the name unchanged records nothing.
+        if (!string.Equals(priorName, saved.Name, StringComparison.Ordinal))
+            audit.LogAudit(
+                AuditAction.ProjectRenamed, nameof(IProject), id, saved.Name, projectId: id,
+                details: JsonSerializer.Serialize(new { from = priorName, to = saved.Name }));
+
+        // Membership can also change through this PUT body (not only the dedicated add/remove
+        // endpoints), so audit the delta here too, matching those endpoints' events.
+        var savedMemberIds = saved.Members.Select(m => m.Id).ToHashSet();
+        foreach (var added in saved.Members.Where(m => !priorMembers.ContainsKey(m.Id)))
+            audit.LogAudit(AuditAction.ProjectMemberAdded, nameof(IUser), added.Id, added.Email, projectId: id);
+        foreach (var (removedId, removedEmail) in priorMembers.Where(p => !savedMemberIds.Contains(p.Key)))
+            audit.LogAudit(AuditAction.ProjectMemberRemoved, nameof(IUser), removedId, removedEmail, projectId: id);
         return ToDto(saved);
     }
 
@@ -116,7 +143,8 @@ public class ProjectsController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var project = await repository.FindAsync(id, cancellationToken);
+        if (project is null)
             return NotFound();
 
         // Every project carries a built-in Tracey system agent, auto-provisioned on creation. It is
@@ -133,7 +161,11 @@ public class ProjectsController : ControllerBase
         try
         {
             var removed = await repository.RemoveAsync(id, cancellationToken);
-            return removed ? NoContent() : NotFound();
+            if (!removed)
+                return NotFound();
+
+            audit.LogAudit(AuditAction.ProjectDeleted, nameof(IProject), id, project.Name, projectId: id);
+            return NoContent();
         }
         catch (DbUpdateException)
         {
@@ -174,6 +206,7 @@ public class ProjectsController : ControllerBase
         var members = project.Members.Append(user).ToArray();
         var updated = createExisting(project.Name, project.SystemEndpoint, members, project);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
+        audit.LogAudit(AuditAction.ProjectMemberAdded, nameof(IUser), userId, user.Email, projectId: id);
         return ToDto(saved);
     }
 
@@ -188,12 +221,14 @@ public class ProjectsController : ControllerBase
         if (project is null)
             return NotFound();
 
-        if (project.Members.All(m => m.Id != userId))
+        var member = project.Members.FirstOrDefault(m => m.Id == userId);
+        if (member is null)
             return ToDto(project);
 
         var members = project.Members.Where(m => m.Id != userId).ToArray();
         var updated = createExisting(project.Name, project.SystemEndpoint, members, project);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
+        audit.LogAudit(AuditAction.ProjectMemberRemoved, nameof(IUser), userId, member.Email, projectId: id);
         return ToDto(saved);
     }
 

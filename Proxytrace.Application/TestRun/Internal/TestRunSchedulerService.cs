@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.AuditLog;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestRunSchedule;
@@ -19,6 +22,8 @@ internal sealed class TestRunSchedulerService : BackgroundService
     private readonly ILicenseService license;
     private readonly TestRunSchedulerConfiguration configuration;
     private readonly ILogger<TestRunSchedulerService> logger;
+    private readonly IAgentRepository agents;
+    private readonly ILogger<Audit> audit;
 
     public TestRunSchedulerService(
         ITestRunScheduleRepository schedules,
@@ -26,7 +31,9 @@ internal sealed class TestRunSchedulerService : BackgroundService
         ITestRunnerService runner,
         ILicenseService license,
         TestRunSchedulerConfiguration configuration,
-        ILogger<TestRunSchedulerService> logger)
+        ILogger<TestRunSchedulerService> logger,
+        IAgentRepository agents,
+        ILogger<Audit> audit)
     {
         this.schedules = schedules;
         this.groups = groups;
@@ -34,6 +41,8 @@ internal sealed class TestRunSchedulerService : BackgroundService
         this.license = license;
         this.configuration = configuration;
         this.logger = logger;
+        this.agents = agents;
+        this.audit = audit;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -79,9 +88,13 @@ internal sealed class TestRunSchedulerService : BackgroundService
                     continue;
                 }
 
-                await runner.RunInBackgroundAsync(
+                var group = await runner.RunInBackgroundAsync(
                     schedule.Suite, schedule.Endpoints.ToArray(), schedule.Id, cancellationToken);
                 await schedule.RecordFired(now, cancellationToken);
+
+                // Scheduled fire: no request context, so this is attributed to the System actor.
+                var projectId = await agents.GetProjectIdAsync(schedule.Suite.Agent.Id, cancellationToken);
+                audit.LogAudit(AuditAction.TestRunStarted, nameof(ITestRunGroup), group.Id, schedule.Suite.Name, projectId: projectId);
             }
             catch (Exception ex)
             {

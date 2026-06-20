@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Users;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
@@ -18,17 +21,20 @@ public class UsersController : ControllerBase
     private readonly IProjectRepository projects;
     private readonly IUserAdministrationService administration;
     private readonly ICurrentUserAccessor currentUser;
+    private readonly ILogger<Audit> audit;
 
     public UsersController(
         IRepository<IUser> repository,
         IProjectRepository projects,
         IUserAdministrationService administration,
-        ICurrentUserAccessor currentUser)
+        ICurrentUserAccessor currentUser,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.projects = projects;
         this.administration = administration;
         this.currentUser = currentUser;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -99,7 +105,10 @@ public class UsersController : ControllerBase
         if (actingUser is null)
             return Unauthorized();
         var updated = await administration.ChangeRoleAsync(actingUser.Id, id, request.Role, cancellationToken);
-        return updated is null ? NotFound() : ToDto(updated);
+        if (updated is null)
+            return NotFound();
+        audit.LogAudit(AuditAction.UserRoleChanged, nameof(IUser), id, updated.Email);
+        return ToDto(updated);
     }
 
     [HttpDelete("{id:guid}")]
@@ -109,8 +118,14 @@ public class UsersController : ControllerBase
         var actingUser = await currentUser.GetCurrentUserAsync(cancellationToken);
         if (actingUser is null)
             return Unauthorized();
+        var target = await repository.FindAsync(id, cancellationToken);
+        if (target is null)
+            return NotFound();
         var removed = await administration.RemoveAsync(actingUser.Id, id, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        if (!removed)
+            return NotFound();
+        audit.LogAudit(AuditAction.UserDeleted, nameof(IUser), id, target.Email);
+        return NoContent();
     }
 
     private static UserDto ToDto(IUser u) =>

@@ -1,9 +1,13 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.License;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Licensing;
 using Proxytrace.Application.Setup;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.User;
 using Proxytrace.Licensing;
 using Proxytrace.Licensing.Exceptions;
@@ -18,17 +22,20 @@ public class LicenseController : ControllerBase
     private readonly ILicenseKeyManager keyManager;
     private readonly ISetupService setup;
     private readonly ITraceQuotaGuard quotaGuard;
+    private readonly ILogger<Audit> audit;
 
     public LicenseController(
         ILicenseService licenseService,
         ILicenseKeyManager keyManager,
         ISetupService setup,
-        ITraceQuotaGuard quotaGuard)
+        ITraceQuotaGuard quotaGuard,
+        ILogger<Audit> audit)
     {
         this.licenseService = licenseService;
         this.keyManager = keyManager;
         this.setup = setup;
         this.quotaGuard = quotaGuard;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -83,7 +90,14 @@ public class LicenseController : ControllerBase
 
         // An invalid key throws InvalidLicenseException → 422 via the exception mapper.
         await keyManager.SetAsync(request.License, cancellationToken);
-        return Map(licenseService.Current);
+
+        var current = licenseService.Current;
+        audit.LogAudit(
+            AuditAction.LicenseSet,
+            targetType: "License",
+            targetLabel: current.Tier.ToString(),
+            details: JsonSerializer.Serialize(new { tier = current.Tier.ToString(), customerEmail = current.CustomerEmail }));
+        return Map(current);
     }
 
     /// <summary>
@@ -98,6 +112,7 @@ public class LicenseController : ControllerBase
             return Conflict("The license is managed by the deployment and cannot be changed here.");
 
         await keyManager.RemoveAsync(cancellationToken);
+        audit.LogAudit(AuditAction.LicenseRemoved, targetType: "License");
         return Map(licenseService.Current);
     }
 

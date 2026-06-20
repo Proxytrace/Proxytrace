@@ -25,7 +25,9 @@ const ROUTES = [
   { path: '/settings/users', label: 'settings users' },
   { path: '/settings/license', label: 'settings license' },
   { path: '/settings/error-log', label: 'settings error log' },
+  { path: '/settings/audit-log', label: 'settings audit log' },
   { path: '/settings/danger', label: 'settings danger zone' },
+  { path: '/audit-log', label: 'audit log (project-scoped)' },
 ];
 
 for (const { path, label } of ROUTES) {

@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Agent;
 using Proxytrace.Application.Anomaly;
 using Proxytrace.Application.Anomaly.Internal;
+using Proxytrace.Application.AuditLog;
+using Proxytrace.Application.AuditLog.Internal;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Internal;
 using Proxytrace.Application.Auth.Local;
@@ -338,6 +340,53 @@ public sealed class Module : Autofac.Module
                     new ErrorLogChannelLoggerProvider(sp.GetRequiredService<IErrorLogChannel>()));
                 services.AddHostedService(sp => sp.GetRequiredService<ErrorLogWriter>());
                 services.AddHostedService(sp => sp.GetRequiredService<ErrorLogCleanupService>());
+            });
+        }
+
+        // Audit log pipeline: a custom ILoggerProvider captures typed audit events logged through
+        // ILogger<Audit> into a lossless unbounded channel; AuditWriter drains it to the AuditLogEntry
+        // table; AuditLogCleanupService applies age-based retention. The actor is enriched from the
+        // request context via IAuditActorAccessor (supplied by the API layer; absent host => System).
+        builder.RegisterType<AuditChannel>()
+            .As<IAuditChannel>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(IAuditChannel));
+
+        builder.Register(_ => new AuditLogCleanupConfiguration())
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AuditLogCleanupConfiguration));
+
+        builder.RegisterType<AuditWriter>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AuditWriter));
+
+        builder.RegisterType<AuditLogCleanupService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AuditLogCleanupService));
+
+        const string auditLogKey = "Proxytrace.Application.AuditLog.Registered";
+        if (!builder.Properties.ContainsKey(auditLogKey))
+        {
+            builder.Properties[auditLogKey] = true;
+            builder.RegisterServiceCollection(services =>
+            {
+                // IAuditActorAccessor is resolved optionally: it is registered by the API layer over
+                // IHttpContextAccessor; non-HTTP hosts (tests, kiosk) have none and audit falls back
+                // to the System actor.
+                services.AddSingleton<ILoggerProvider>(sp =>
+                    new AuditChannelLoggerProvider(
+                        sp.GetRequiredService<IAuditChannel>(),
+                        sp.GetService<IAuditActorAccessor>()));
+                services.AddHostedService(sp => sp.GetRequiredService<AuditWriter>());
+                services.AddHostedService(sp => sp.GetRequiredService<AuditLogCleanupService>());
+
+                // Pin the audit category enabled regardless of appsettings LogLevel configuration so
+                // audit capture can never be silenced by log-level tuning.
+                services.AddLogging(b => b.AddFilter<AuditChannelLoggerProvider>(
+                    typeof(Audit).FullName, LogLevel.Information));
             });
         }
 

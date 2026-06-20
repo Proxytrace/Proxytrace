@@ -1,12 +1,16 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Json;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AgentVersion;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Paging;
@@ -31,6 +35,7 @@ public class AgentsController : ControllerBase
     private readonly IAgent.CreateNew createAgent;
     private readonly IPromptTemplate.Create createPromptTemplate;
     private readonly IModelParameters.Create createModelParameters;
+    private readonly ILogger<Audit> audit;
 
     public AgentsController(
         IAgentRepository repository,
@@ -43,7 +48,8 @@ public class AgentsController : ControllerBase
         AgentDtoMapper agentDtoMapper,
         IAgent.CreateNew createAgent,
         IPromptTemplate.Create createPromptTemplate,
-        IModelParameters.Create createModelParameters)
+        IModelParameters.Create createModelParameters,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.endpoints = endpoints;
@@ -56,6 +62,7 @@ public class AgentsController : ControllerBase
         this.createAgent = createAgent;
         this.createPromptTemplate = createPromptTemplate;
         this.createModelParameters = createModelParameters;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -200,9 +207,12 @@ public class AgentsController : ControllerBase
 
         // Soft-delete: archiving hides the agent and frees its license slot, but keeps the row so its
         // captured calls, suites, versions and any agentic evaluators still resolve. See
-        // ArchivableRepository.
-        var archived = await repository.ArchiveAsync(id, cancellationToken);
-        return archived ? NoContent() : NotFound();
+        // ArchivableRepository. Audit only a real state transition — a repeated delete of an
+        // already-archived agent is a no-op (404) and must not record a phantom deletion.
+        if (!await repository.ArchiveAsync(id, cancellationToken))
+            return NotFound();
+        audit.LogAudit(AuditAction.AgentDeleted, nameof(IAgent), id, agent.Name, projectId: agent.Project.Id);
+        return NoContent();
     }
 
     [HttpPatch("{id:guid}/endpoint")]
@@ -213,7 +223,14 @@ public class AgentsController : ControllerBase
     {
         IAgent agent = await repository.GetAsync(id, cancellationToken);
         IModelEndpoint endpoint = await endpoints.GetAsync(request.EndpointId, cancellationToken);
+        // ChangeEndpoint is a no-op (no persist) when the endpoint is unchanged — mirror that here so a
+        // same-endpoint PATCH records no phantom "endpoint changed" audit event.
+        var changed = endpoint.Id != agent.Endpoint.Id;
         await agent.ChangeEndpoint(endpoint, cancellationToken);
+        if (changed)
+            audit.LogAudit(
+                AuditAction.AgentEndpointChanged, nameof(IAgent), id, agent.Name, projectId: agent.Project.Id,
+                details: JsonSerializer.Serialize(new { endpointId = endpoint.Id, model = endpoint.Model.Name }));
         return NoContent();
     }
 

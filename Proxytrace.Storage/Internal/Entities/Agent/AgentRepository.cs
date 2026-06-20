@@ -225,4 +225,12 @@ internal class AgentRepository : ArchivableRepository<IAgent, AgentEntity>, IAge
 
         return await Map(stored, cancellationToken);
     }
+
+    public async Task<Guid?> GetProjectIdAsync(Guid agentId, CancellationToken cancellationToken = default)
+        => await contextFactory()
+            .Set<AgentEntity>()
+            .AsNoTracking()
+            .Where(e => e.Id == agentId)
+            .Select(e => (Guid?)e.Project)
+            .FirstOrDefaultAsync(cancellationToken);
 }

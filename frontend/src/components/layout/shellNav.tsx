@@ -4,12 +4,12 @@ import type { LicenseFeature } from '../../api/license';
 import { cn } from '../../lib/cn';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon, AlertTriangleIcon,
+  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon, AlertTriangleIcon, ClockIcon,
 } from '../icons';
 
 type NavIconName =
   | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
-  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey' | 'alert';
+  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey' | 'alert' | 'history';
 
 export interface NavEntry {
   label: MessageDescriptor;
@@ -35,6 +35,7 @@ export const navGroups: NavGroup[] = [
       { label: msg`Traces`, icon: 'activity', to: '/traces' },
       // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
       { label: msg`Tracey AI`, icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
+      { label: msg`Audit Log`, icon: 'history', to: '/audit-log' },
     ],
   },
   {
@@ -78,6 +79,7 @@ export const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   settings: <SettingsIcon size={16} />,
   tracey: <MessageSparkleIcon size={16} />,
   alert: <AlertTriangleIcon size={16} />,
+  history: <ClockIcon size={16} />,
 };
 
 export type HealthStatus = 'online' | 'offline' | 'connecting';

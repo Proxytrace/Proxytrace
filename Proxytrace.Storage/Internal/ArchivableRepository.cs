@@ -38,8 +38,10 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
             if (existing is null)
                 return false;
 
+            // Already archived: report no state transition (false), so a repeated delete is a true
+            // no-op — callers return 404 and skip auditing rather than recording a phantom deletion.
             if (existing.IsArchived)
-                return true;
+                return false;
 
             await ArchiveRelationsAsync(context, id, cancellationToken);
 

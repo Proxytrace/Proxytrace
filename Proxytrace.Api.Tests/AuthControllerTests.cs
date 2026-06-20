@@ -214,7 +214,8 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<IPasswordPolicy>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),
-        new ConfigurationBuilder().Build())
+        new ConfigurationBuilder().Build(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance)
     {
         ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
     };

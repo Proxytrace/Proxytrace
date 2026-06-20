@@ -74,6 +74,14 @@ internal static class JwtBearerEventsFactory
             {
                 identity.AddClaim(new Claim(ClaimTypes.Role, user.Role.ToString()));
             }
+
+            // Normalize the resolved user's email onto the "email" claim so downstream consumers
+            // (e.g. audit actor enrichment) find it regardless of OIDC's configurable EmailClaimType
+            // (with MapInboundClaims=false the raw token may carry it under upn/preferred_username/…).
+            if (identity != null && !identity.HasClaim(c => c.Type == "email" || c.Type == ClaimTypes.Email))
+            {
+                identity.AddClaim(new Claim("email", user.Email));
+            }
         },
     };
 
@@ -104,6 +112,7 @@ internal static class JwtBearerEventsFactory
         var identity = new ClaimsIdentity(JwtBearerDefaults.AuthenticationScheme);
         identity.AddClaim(new Claim("sub", user.Id.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Role, user.Role.ToString()));
+        identity.AddClaim(new Claim("email", user.Email));
         context.Principal = new ClaimsPrincipal(identity);
         context.Success();
     }

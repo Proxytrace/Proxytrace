@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Api.Evaluators;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Project;
@@ -30,6 +33,7 @@ public class EvaluatorsController : ControllerBase
     private readonly EvaluatorBuilder evaluatorBuilder;
     private readonly EvaluatorDtoMapper evaluatorMapper;
     private readonly ITransaction transaction;
+    private readonly ILogger<Audit> audit;
 
     public EvaluatorsController(
         IEvaluatorRepository evaluatorRepository,
@@ -41,8 +45,10 @@ public class EvaluatorsController : ControllerBase
         IEvaluatorStatsReader evaluatorStats,
         EvaluatorBuilder evaluatorBuilder,
         EvaluatorDtoMapper evaluatorMapper,
-        ITransaction transaction)
+        ITransaction transaction,
+        ILogger<Audit> audit)
     {
+        this.audit = audit;
         this.evaluatorRepository = evaluatorRepository;
         this.projectRepository = projectRepository;
         this.agenticPresets = agenticPresets;
@@ -157,7 +163,12 @@ public class EvaluatorsController : ControllerBase
     public async Task<ActionResult<EvaluatorDetailDto>> Create(
         [FromBody] CreateEvaluatorRequest request,
         CancellationToken cancellationToken)
-        => await transaction.InvokeAsync<ActionResult<EvaluatorDetailDto>>(async () =>
+    {
+        // Emit the audit only AFTER the transaction commits — LogAudit is a fire-and-forget write to a
+        // decoupled channel, so emitting inside the lambda would leave a phantom audit row if the commit
+        // then fails. Capture the payload here and log once InvokeAsync has returned (committed).
+        (Guid Id, string Name, Guid ProjectId)? created = null;
+        var result = await transaction.InvokeAsync<ActionResult<EvaluatorDetailDto>>(async () =>
         {
             var project = await projectRepository.FindAsync(request.ProjectId, cancellationToken);
             if (project is null)
@@ -165,15 +176,23 @@ public class EvaluatorsController : ControllerBase
 
             var evaluator = await evaluatorBuilder.BuildAsync(request, project, cancellationToken);
             var saved = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
+            created = (saved.Id, saved.Name, project.Id);
             return CreatedAtAction(nameof(Get), new { id = saved.Id }, evaluatorMapper.ToDto(saved));
         });
+
+        if (created is { } c)
+            audit.LogAudit(AuditAction.EvaluatorCreated, nameof(IEvaluator), c.Id, c.Name, projectId: c.ProjectId);
+        return result;
+    }
 
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<EvaluatorDetailDto>> Update(
         Guid id,
         [FromBody] UpdateEvaluatorRequest request,
         CancellationToken cancellationToken)
-        => await transaction.InvokeAsync<ActionResult<EvaluatorDetailDto>>(async () =>
+    {
+        (Guid Id, string Name, Guid ProjectId)? updated = null;
+        var result = await transaction.InvokeAsync<ActionResult<EvaluatorDetailDto>>(async () =>
         {
             var existing = await evaluatorRepository.FindAsync(id, cancellationToken);
             if (existing is null)
@@ -181,16 +200,31 @@ public class EvaluatorsController : ControllerBase
 
             var evaluator = await evaluatorBuilder.BuildAsync(request, existing, cancellationToken);
             var saved = await evaluatorRepository.UpdateAsync(evaluator, cancellationToken);
+            updated = (saved.Id, saved.Name, saved.Project.Id);
             return evaluatorMapper.ToDto(saved);
         });
+
+        if (updated is { } u)
+            audit.LogAudit(AuditAction.EvaluatorUpdated, nameof(IEvaluator), u.Id, u.Name, projectId: u.ProjectId);
+        return result;
+    }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
+        var evaluator = await evaluatorRepository.FindAsync(id, cancellationToken);
+        if (evaluator is null)
+            return NotFound();
+
         // Soft-delete: archiving hides the evaluator and detaches it from suites, but keeps the row
         // so historical test results still resolve it. See ArchivableRepository.
         var archived = await evaluatorRepository.ArchiveAsync(id, cancellationToken);
-        return archived ? NoContent() : NotFound();
+        if (!archived)
+            return NotFound();
+
+        var projectId = await evaluatorRepository.GetProjectIdAsync(id, cancellationToken);
+        audit.LogAudit(AuditAction.EvaluatorDeleted, nameof(IEvaluator), id, evaluator.Name, projectId: projectId);
+        return NoContent();
     }
 
     [HttpGet("{id:guid}/recent-evaluations")]

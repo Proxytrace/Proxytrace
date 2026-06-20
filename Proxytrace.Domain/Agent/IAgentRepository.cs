@@ -71,4 +71,10 @@ public interface IAgentRepository : IArchivableRepository<IAgent>
     /// Returns all agents belonging to the project identified by <paramref name="projectId"/>.
     /// </summary>
     Task<IReadOnlyList<IAgent>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the id of the project the agent belongs to, or <see langword="null"/> if the agent does
+    /// not exist. A cheap FK projection (no full agent load) used to attribute audit events to a project.
+    /// </summary>
+    Task<Guid?> GetProjectIdAsync(Guid agentId, CancellationToken cancellationToken = default);
 }

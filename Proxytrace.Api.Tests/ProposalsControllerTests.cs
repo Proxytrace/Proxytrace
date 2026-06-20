@@ -337,5 +337,6 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         services.GetRequiredService<Proxytrace.Domain.TestRunGroup.ITestRunGroup.CreateNew>(),
         services.GetRequiredService<Proxytrace.Domain.TestRun.ITestRun.CreateNew>(),
         services.GetRequiredService<OptimizationProposalDtoMapper>(),
-        services.GetRequiredService<IProposalBroadcaster>());
+        services.GetRequiredService<IProposalBroadcaster>(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

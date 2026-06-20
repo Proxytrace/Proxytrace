@@ -1050,3 +1050,85 @@ export interface ApplicationErrorFilter {
   /** Inclusive upper time bound (ISO 8601). Errors at or before this instant. */
   to?: string;
 }
+
+/* ── Audit Log ── */
+export enum AuditAction {
+  TestRunStarted = 'TestRunStarted',
+  ApiKeyMinted = 'ApiKeyMinted',
+  ApiKeyDeleted = 'ApiKeyDeleted',
+  ProjectDeleted = 'ProjectDeleted',
+  ProjectMemberAdded = 'ProjectMemberAdded',
+  ProjectMemberRemoved = 'ProjectMemberRemoved',
+  LicenseSet = 'LicenseSet',
+  LicenseRemoved = 'LicenseRemoved',
+  TestSuiteDeleted = 'TestSuiteDeleted',
+  EvaluatorDeleted = 'EvaluatorDeleted',
+  TestCaseDeleted = 'TestCaseDeleted',
+  ProviderConfigCreated = 'ProviderConfigCreated',
+  ProviderConfigUpdated = 'ProviderConfigUpdated',
+  EndpointConfigCreated = 'EndpointConfigCreated',
+  EndpointConfigUpdated = 'EndpointConfigUpdated',
+  ProviderConfigDeleted = 'ProviderConfigDeleted',
+  EndpointConfigDeleted = 'EndpointConfigDeleted',
+  UserRoleChanged = 'UserRoleChanged',
+  UserDeleted = 'UserDeleted',
+  AgentDeleted = 'AgentDeleted',
+  ProjectCreated = 'ProjectCreated',
+  ProjectRenamed = 'ProjectRenamed',
+  AgentEndpointChanged = 'AgentEndpointChanged',
+  EvaluatorCreated = 'EvaluatorCreated',
+  EvaluatorUpdated = 'EvaluatorUpdated',
+  TestSuiteCreated = 'TestSuiteCreated',
+  TestSuiteUpdated = 'TestSuiteUpdated',
+  TestCaseCreated = 'TestCaseCreated',
+  UserInvited = 'UserInvited',
+  InviteRevoked = 'InviteRevoked',
+  UserSignedUp = 'UserSignedUp',
+  UserLoggedIn = 'UserLoggedIn',
+  LoginFailed = 'LoginFailed',
+  UserLoggedOut = 'UserLoggedOut',
+  AdminBootstrapped = 'AdminBootstrapped',
+  LegacyAccountClaimed = 'LegacyAccountClaimed',
+  ProposalStatusChanged = 'ProposalStatusChanged',
+}
+
+export enum AuditActorType {
+  User = 'User',
+  ApiKey = 'ApiKey',
+  System = 'System',
+}
+
+export enum AuditOutcome {
+  Success = 'Success',
+  Failure = 'Failure',
+}
+
+export interface AuditLogEntryDto {
+  id: string;
+  action: AuditAction;
+  actorType: AuditActorType;
+  actorUserId: string | null;
+  actorEmail: string | null;
+  actorApiKeyId: string | null;
+  projectId: string | null;
+  targetType: string;
+  targetId: string | null;
+  targetLabel: string | null;
+  details: string | null;
+  outcome: AuditOutcome;
+  createdAt: string;
+}
+
+export interface AuditLogFilter {
+  page: number;
+  pageSize: number;
+  action?: AuditAction;
+  actor?: string;
+  projectId?: string;
+  targetType?: string;
+  targetId?: string;
+  /** Inclusive lower time bound (ISO 8601). */
+  from?: string;
+  /** Inclusive upper time bound (ISO 8601). */
+  to?: string;
+}

@@ -167,5 +167,7 @@ public sealed class TestRunGroupsControllerTests : BaseTest<Module>
         services.GetRequiredService<ITestRunnerService>(),
         services.GetRequiredService<ITestResultBroadcaster>(),
         services.GetRequiredService<IOptimizerService>(),
-        services.GetRequiredService<TestRunDtoMapper>());
+        services.GetRequiredService<TestRunDtoMapper>(),
+        services.GetRequiredService<Proxytrace.Domain.Agent.IAgentRepository>(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

@@ -1,9 +1,12 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
@@ -30,6 +33,7 @@ internal sealed class SuiteTools
     private readonly ITestSuite.CreateExisting createSuiteExisting;
     private readonly TestSuiteDtoMapper mapper;
     private readonly ILicenseService license;
+    private readonly ILogger<Audit> audit;
 
     public SuiteTools(
         IMcpProjectAccessor project,
@@ -43,7 +47,8 @@ internal sealed class SuiteTools
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting,
         TestSuiteDtoMapper mapper,
-        ILicenseService license)
+        ILicenseService license,
+        ILogger<Audit> audit)
     {
         this.project = project;
         this.suites = suites;
@@ -57,6 +62,7 @@ internal sealed class SuiteTools
         this.createSuiteExisting = createSuiteExisting;
         this.mapper = mapper;
         this.license = license;
+        this.audit = audit;
     }
 
     [McpServerTool(Name = "list_suites")]
@@ -121,6 +127,7 @@ internal sealed class SuiteTools
         }
 
         var suite = await suites.AddAsync(createSuite(name, agent, [defaultEvaluator], cases), cancellationToken);
+        audit.LogAudit(AuditAction.TestSuiteCreated, nameof(ITestSuite), suite.Id, suite.Name, projectId: p.Id);
         return mapper.ToDto(suite);
     }
 
@@ -146,6 +153,7 @@ internal sealed class SuiteTools
         var updatedCases = suite.TestCases.Append(saved).ToArray();
         var updated = createSuiteExisting(suite.Name, suite.Agent, suite.Evaluators, updatedCases, suite);
         var savedSuite = await suites.UpdateAsync(updated, cancellationToken);
+        audit.LogAudit(AuditAction.TestCaseCreated, nameof(ITestCase), saved.Id, projectId: p.Id);
         return mapper.ToDto(savedSuite);
     }
 

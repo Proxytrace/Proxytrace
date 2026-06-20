@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestCase;
@@ -32,6 +35,7 @@ public class TestSuitesController : ControllerBase
     private readonly TestSuiteDtoMapper mapper;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly ILicenseService license;
+    private readonly ILogger<Audit> audit;
 
     public TestSuitesController(
         ITestSuiteRepository suiteRepository,
@@ -46,8 +50,10 @@ public class TestSuitesController : ControllerBase
         ITestSuite.CreateExisting createSuiteExisting,
         TestSuiteDtoMapper mapper,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
-        ILicenseService license)
+        ILicenseService license,
+        ILogger<Audit> audit)
     {
+        this.audit = audit;
         this.suiteRepository = suiteRepository;
         this.agentRepository = agentRepository;
         this.agentCallRepository = agentCallRepository;
@@ -177,6 +183,8 @@ public class TestSuitesController : ControllerBase
 
         var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
+        var projectId = await agentRepository.GetProjectIdAsync(agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestSuiteCreated, nameof(ITestSuite), savedSuite.Id, savedSuite.Name, projectId: projectId);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, mapper.ToDto(savedSuite));
     }
 
@@ -204,6 +212,8 @@ public class TestSuitesController : ControllerBase
 
         var updated = createSuiteExisting(existing.Name, agent, evaluators, testCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
+        var projectId = await agentRepository.GetProjectIdAsync(agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestSuiteUpdated, nameof(ITestSuite), saved.Id, saved.Name, projectId: projectId);
         return mapper.ToDto(saved);
     }
 
@@ -212,7 +222,18 @@ public class TestSuitesController : ControllerBase
     // DbUpdateExceptionMapper middleware still maps any unforeseen constraint to a friendly 409.
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        => await suiteRepository.RemoveAsync(id, cancellationToken) ? NoContent() : NotFound();
+    {
+        var suite = await suiteRepository.FindAsync(id, cancellationToken);
+        if (suite is null)
+            return NotFound();
+
+        if (!await suiteRepository.RemoveAsync(id, cancellationToken))
+            return NotFound();
+
+        var projectId = await agentRepository.GetProjectIdAsync(suite.Agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestSuiteDeleted, nameof(ITestSuite), id, suite.Name, projectId: projectId);
+        return NoContent();
+    }
 
     /// <summary>
     /// Creates a new test suite by promoting a curated selection of traced agent calls.
@@ -265,6 +286,8 @@ public class TestSuitesController : ControllerBase
 
         var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
+        var projectId = await agentRepository.GetProjectIdAsync(agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestSuiteCreated, nameof(ITestSuite), savedSuite.Id, savedSuite.Name, projectId: projectId);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, mapper.ToDto(savedSuite));
     }
 
@@ -286,6 +309,8 @@ public class TestSuitesController : ControllerBase
         var updatedCases = existing.TestCases.Append(saved).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
+        var projectId = await agentRepository.GetProjectIdAsync(existing.Agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestCaseCreated, nameof(ITestCase), saved.Id, projectId: projectId);
         return mapper.ToDto(savedSuite);
     }
 
@@ -298,9 +323,15 @@ public class TestSuitesController : ControllerBase
         var existing = await suiteRepository.FindAsync(id, cancellationToken);
         if (existing is null)
             return NotFound();
+        if (existing.TestCases.All(tc => tc.Id != caseId))
+            return mapper.ToDto(existing); // nothing to remove
+
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
+
+        var projectId = await agentRepository.GetProjectIdAsync(existing.Agent.Id, cancellationToken);
+        audit.LogAudit(AuditAction.TestCaseDeleted, nameof(ITestCase), caseId, projectId: projectId);
         return mapper.ToDto(saved);
     }
 

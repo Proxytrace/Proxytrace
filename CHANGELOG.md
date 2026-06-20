@@ -11,6 +11,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Audit log of system actions.** Proxytrace now keeps a durable, user-attributed record of
+  significant actions — authentication events (sign-in, failed sign-in, sign-out, first-admin setup,
+  legacy-account claim), user invites/sign-ups/role changes/deletions, project create/rename/delete
+  and membership changes, agent endpoint changes and deletions, test-suite / test-case / evaluator
+  creation, update and deletion, test runs started (manual, scheduled, or via MCP), optimization
+  proposal status changes, API keys minted and deleted, provider/endpoint configuration changes, and
+  license changes. Each entry captures **who** performed it (the signed-in user, the owner of the API
+  key used, or the system for scheduled work), **what** was acted on, and **when** — and entries are
+  kept even after the thing they refer to is deleted. Admins see the full trail under
+  **Settings → Audit log**; project members see their own project's trail (but not instance-wide
+  actions). The log is lossless and retained for 365 days by default.
+
 - **Cached-input tokens are now tracked and priced separately.** Many providers serve part of a
   prompt from their cache at a much lower rate. Proxytrace now captures how many of each call's input
   tokens were cache-served (from both the ingestion proxy and Playground/test-run/evaluator calls),

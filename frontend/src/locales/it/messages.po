@@ -511,6 +511,9 @@ msgstr "{toolCallCount, plural, one {# Tool call} other {# Tool calls}}"
 msgid "{total, plural, one {error} other {errors}}"
 msgstr "{total, plural, one {errore} other {errori}}"
 
+msgid "{total, plural, one {event} other {events}}"
+msgstr "{total, plural, one {evento} other {eventi}}"
+
 msgid "{traces, plural, one {# trace} other {# traces}}"
 msgstr "{traces, plural, one {# Trace} other {# Traces}}"
 
@@ -667,9 +670,18 @@ msgstr "Testing A/B"
 msgid "Acceptable"
 msgstr "Accettabile"
 
+msgid "Account Claimed"
+msgstr "Account reclamato"
+
 #. placeholder {0}: selectedEndpoints.length
 msgid "across <0>{0, plural, one {# model} other {# models}}</0> in parallel"
 msgstr "su <0>{0, plural, one {# model} other {# models}}</0> in parallelo"
+
+msgid "Action"
+msgstr "Azione"
+
+msgid "Action:"
+msgstr "Azione:"
 
 msgid "Activate a license key"
 msgstr "Attiva una chiave di licenza"
@@ -679,6 +691,21 @@ msgstr "Attiva licenza"
 
 msgid "Active"
 msgstr "Attivo"
+
+msgid "Actor"
+msgstr "Attore"
+
+msgid "Actor API key ID"
+msgstr "ID API key dell'attore"
+
+msgid "Actor email"
+msgstr "Email dell'attore"
+
+msgid "Actor type"
+msgstr "Tipo di attore"
+
+msgid "Actor user ID"
+msgstr "ID utente dell'attore"
 
 msgid "Actual"
 msgstr "Reale"
@@ -732,6 +759,9 @@ msgstr "Aggiunge questo Trace come un singolo caso di test alla Suite selezionat
 msgid "Admin already exists."
 msgstr "Admin già esiste."
 
+msgid "Admin Created"
+msgstr "Admin creato"
+
 msgid "Adopted"
 msgstr "Adottato"
 
@@ -751,8 +781,14 @@ msgstr "Chiamate dell'Agent"
 msgid "Agent calls (traces)"
 msgstr "Chiamate dell'Agent (Traces)"
 
+msgid "Agent Deleted"
+msgstr "Agent eliminato"
+
 msgid "Agent endpoint"
 msgstr "Endpoint dell'Agent"
+
+msgid "Agent Endpoint Changed"
+msgstr "Endpoint di Agent modificato"
 
 msgid "Agent has no tools."
 msgstr "L'Agent non ha Tool."
@@ -787,6 +823,9 @@ msgstr "Gli Agent vengono rilevati automaticamente quando instradi il traffico a
 msgid "All"
 msgstr "Tutti"
 
+msgid "All actions"
+msgstr "Tutte le azioni"
+
 msgid "All agents"
 msgstr "Tutti gli agent"
 
@@ -803,6 +842,9 @@ msgstr "Tutti i project"
 
 msgid "All runs"
 msgstr "Tutti i Run"
+
+msgid "All security and lifecycle events across the workspace."
+msgstr "Tutti gli eventi di sicurezza e ciclo di vita nell'area di lavoro."
 
 msgid "All suites"
 msgstr "Tutte le Suite"
@@ -834,8 +876,17 @@ msgstr "Endpoint di Anthropic compatibile con OpenAI — usa la tua normale API 
 msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
 msgstr "Qualsiasi server compatibile con OpenAI: vLLM, Ollama, LiteLLM, OpenRouter, un gateway, …"
 
+msgid "API Key"
+msgstr "API key"
+
 msgid "API key copied"
 msgstr "API key copiata"
+
+msgid "API Key Created"
+msgstr "API key creata"
+
+msgid "API Key Deleted"
+msgstr "API key eliminata"
 
 msgid "Application errors and critical failures will appear here as they occur."
 msgstr "Gli errori dell'applicazione e i guasti critici appariranno qui quando si verificano."
@@ -891,6 +942,9 @@ msgstr "Allegato a"
 
 msgid "Audit log"
 msgstr "Registro di audit"
+
+msgid "Audit Log"
+msgstr "Audit Log"
 
 #. placeholder {0}: auth.error.message
 msgid "Auth error: {0}"
@@ -1569,6 +1623,15 @@ msgstr "Latenza end-to-end"
 msgid "Endpoint"
 msgstr "Endpoint"
 
+msgid "Endpoint Config Created"
+msgstr "Configurazione Endpoint creata"
+
+msgid "Endpoint Config Deleted"
+msgstr "Configurazione di Endpoint eliminata"
+
+msgid "Endpoint Config Updated"
+msgstr "Configurazione Endpoint aggiornata"
+
 msgid "Endpoint updated"
 msgstr "Endpoint aggiornato"
 
@@ -1620,6 +1683,12 @@ msgstr "Evaluator"
 msgid "Evaluator breakdown"
 msgstr "Ripartizione di Evaluator"
 
+msgid "Evaluator Created"
+msgstr "Evaluator creato"
+
+msgid "Evaluator Deleted"
+msgstr "Evaluator eliminato"
+
 msgid "Evaluator error"
 msgstr "Errore di Evaluator"
 
@@ -1631,6 +1700,9 @@ msgstr "Playground di Evaluator"
 
 msgid "Evaluator Playground"
 msgstr "Playground di Evaluator"
+
+msgid "Evaluator Updated"
+msgstr "Evaluator aggiornato"
 
 msgid "Evaluators"
 msgstr "Evaluators"
@@ -1707,6 +1779,9 @@ msgstr "FALLISCE"
 msgid "Failed"
 msgstr "Fallito"
 
+msgid "Failed Sign-In"
+msgstr "Accesso non riuscito"
+
 msgid "Failed to add test case"
 msgstr "Impossibile aggiungere il test case"
 
@@ -1732,6 +1807,9 @@ msgstr "Casi in errore"
 #. placeholder {0}: data.suiteName ?? data.agentName
 msgid "Failing cases · {0}"
 msgstr "Casi in errore · {0}"
+
+msgid "Failure"
+msgstr "Errore"
 
 msgid "Failure Cases"
 msgstr "Casi di errore"
@@ -1969,6 +2047,9 @@ msgstr "Invita un User"
 msgid "Invite expired or already used"
 msgstr "Invito scaduto o già usato"
 
+msgid "Invite Revoked"
+msgstr "Invito revocato"
+
 msgid "Irreversible, workspace-wide maintenance actions."
 msgstr "Azioni di manutenzione irreversibili, a livello di workspace."
 
@@ -2086,8 +2167,14 @@ msgstr "Licenza attivata."
 msgid "License key"
 msgstr "Chiave di licenza"
 
+msgid "License Removed"
+msgstr "Licenza rimossa"
+
 msgid "License server unreachable — running on cached license. Enterprise features stay active for {remaining, plural, one {# more day} other {# more days}}."
 msgstr "Server di licenza non raggiungibile — in esecuzione con licenza nella cache. Le funzionalità Enterprise restano attive per {remaining, plural, one {# giorno in più} other {# giorni in più}}."
+
+msgid "License Set"
+msgstr "Licenza impostata"
 
 #. placeholder {0}: license.customerEmail
 msgid "Licensed to <0>{0}</0>"
@@ -2248,6 +2335,12 @@ msgstr "Scrittura MCP — consenti agli agenti di curare Suite, avviare Run e mo
 
 msgid "Medium"
 msgstr "Medio"
+
+msgid "Member Added"
+msgstr "Member aggiunto"
+
+msgid "Member Removed"
+msgstr "Member rimosso"
 
 msgid "Members"
 msgstr "Member"
@@ -2434,6 +2527,9 @@ msgstr "Nessun A/B test collegato"
 msgid "No additional configuration."
 msgstr "Nessuna configurazione aggiuntiva."
 
+msgid "No additional details for this event."
+msgstr "Nessun dettaglio aggiuntivo per questo evento."
+
 msgid "No agent token data"
 msgstr "Nessun dato del token dell'Agent"
 
@@ -2454,6 +2550,9 @@ msgstr "Nessun Agent ancora"
 
 msgid "No API keys yet"
 msgstr "Nessuna API key ancora"
+
+msgid "No audit events"
+msgstr "Nessun evento di audit"
 
 msgid "No cases match this filter."
 msgstr "Nessun caso corrisponde a questo filtro."
@@ -3065,8 +3164,20 @@ msgstr "Trace precedente"
 msgid "Project"
 msgstr "Progetto"
 
+msgid "Project Created"
+msgstr "Progetto creato"
+
+msgid "Project Deleted"
+msgstr "Project eliminato"
+
+msgid "Project ID"
+msgstr "ID del Project"
+
 msgid "Project name"
 msgstr "Nome del progetto"
+
+msgid "Project Renamed"
+msgstr "Progetto rinominato"
 
 msgid "Projects"
 msgstr "Progetti"
@@ -3108,6 +3219,9 @@ msgstr "La Proposal non è ancora stata sottoposta a benchmark rispetto a un Tes
 msgid "Proposal not found."
 msgstr "Proposal non trovata."
 
+msgid "Proposal Status Changed"
+msgstr "Stato della Proposal modificato"
+
 msgid "Proposals"
 msgstr "Proposal"
 
@@ -3132,6 +3246,15 @@ msgstr "Fornisci risultato"
 
 msgid "Provider"
 msgstr "Provider"
+
+msgid "Provider Config Created"
+msgstr "Configurazione Provider creata"
+
+msgid "Provider Config Deleted"
+msgstr "Configurazione di Provider eliminata"
+
+msgid "Provider Config Updated"
+msgstr "Configurazione Provider aggiornata"
 
 msgid "Provider kind"
 msgstr "Tipo di Provider"
@@ -3524,6 +3647,12 @@ msgstr "Cerca agenti…"
 msgid "Search all past evaluations…"
 msgstr "Cerca in tutte le valutazioni passate…"
 
+msgid "Search audit log by actor email"
+msgstr "Cerca nell'audit log per email dell'attore"
+
+msgid "Search by actor email…"
+msgstr "Cerca per email dell'attore…"
+
 msgid "Search by trace ID, content, or model…"
 msgstr "Cerca per ID Trace, contenuto o modello…"
 
@@ -3577,6 +3706,12 @@ msgstr "Ricerca trace in corso…"
 
 msgid "Searching…"
 msgstr "Ricerca in corso…"
+
+msgid "Security and lifecycle events for this project."
+msgstr "Eventi di sicurezza e ciclo di vita per questo project."
+
+msgid "Security and lifecycle events will appear here as they occur."
+msgstr "Gli eventi di sicurezza e ciclo di vita appariranno qui man mano che si verificano."
 
 msgid "See what your AI agents actually do — and make them better. Setup takes about two minutes."
 msgstr "Scopri cosa fanno davvero i tuoi AI agents — e migliorali. La configurazione richiede circa due minuti."
@@ -3722,6 +3857,12 @@ msgstr "Accedi per continuare."
 msgid "Sign-in"
 msgstr "Accesso"
 
+msgid "Signed In"
+msgstr "Accesso effettuato"
+
+msgid "Signed Out"
+msgstr "Disconnessione effettuata"
+
 msgid "significant"
 msgstr "significativo"
 
@@ -3825,6 +3966,9 @@ msgstr "Inviato tramite {sourceLabel} · validato con {suite}"
 msgid "Submitting theory…"
 msgstr "Invio della theory…"
 
+msgid "Success"
+msgstr "Operazione riuscita"
+
 msgid "Suite"
 msgstr "Suite"
 
@@ -3894,8 +4038,17 @@ msgstr "Parla con {agentName}"
 msgid "target"
 msgstr "obiettivo"
 
+msgid "Target"
+msgstr "Destinazione"
+
 msgid "Target agent"
 msgstr "Agent target"
+
+msgid "Target ID"
+msgstr "ID della destinazione"
+
+msgid "Target type"
+msgstr "Tipo di destinazione"
 
 msgid "Temperature"
 msgstr "Temperatura"
@@ -3911,6 +4064,12 @@ msgstr "Caso di test"
 
 msgid "Test Case"
 msgstr "Caso di test"
+
+msgid "Test Case Created"
+msgstr "Test Case creato"
+
+msgid "Test Case Deleted"
+msgstr "Test Case eliminato"
 
 msgid "Test case matrix"
 msgstr "Matrice dei casi di test"
@@ -3937,6 +4096,9 @@ msgstr "Run di test {0}"
 msgid "Test run cancelled."
 msgstr "Run di test annullato."
 
+msgid "Test Run Started"
+msgstr "Test Run avviata"
+
 msgid "Test runs"
 msgstr "Run di test"
 
@@ -3948,6 +4110,15 @@ msgstr "Run di test e gruppi di run di test"
 
 msgid "Test suite"
 msgstr "Suite di test"
+
+msgid "Test Suite Created"
+msgstr "Test Suite creata"
+
+msgid "Test Suite Deleted"
+msgstr "Test Suite eliminato"
+
+msgid "Test Suite Updated"
+msgstr "Test Suite aggiornata"
 
 msgid "Test suites"
 msgstr "Suite di test"
@@ -4323,8 +4494,20 @@ msgstr "User"
 msgid "USER"
 msgstr "USER"
 
+msgid "User Deleted"
+msgstr "User eliminato"
+
+msgid "User Invited"
+msgstr "User invitato"
+
 msgid "User menu ({userName})"
 msgstr "Menu User ({userName})"
+
+msgid "User Role Changed"
+msgstr "Ruolo di User modificato"
+
+msgid "User Signed Up"
+msgstr "User registrato"
 
 msgid "Users"
 msgstr "User"

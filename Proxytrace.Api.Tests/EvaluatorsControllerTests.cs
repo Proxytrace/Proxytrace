@@ -238,5 +238,6 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<IEvaluatorStatsReader>(),
         services.GetRequiredService<EvaluatorBuilder>(),
         services.GetRequiredService<EvaluatorDtoMapper>(),
-        services.GetRequiredService<ITransaction>());
+        services.GetRequiredService<ITransaction>(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }
