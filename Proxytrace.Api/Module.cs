@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Kiosk;
+using Proxytrace.Api.Auth.Mcp;
 using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Middleware;
 using Proxytrace.Api.Middleware.Exceptions;
@@ -199,6 +201,29 @@ internal sealed class Module : Autofac.Module
         builder.RegisterType<TestSuiteDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<EvaluatorBuilder>().AsSelf().SingleInstance();
 
+        builder.RegisterType<Mcp.McpProjectAccessor>()
+            .As<Mcp.IMcpProjectAccessor>()
+            .InstancePerLifetimeScope();
+
+        // MCP server: external agents call Proxytrace functionality over /mcp, authenticated by a
+        // Proxytrace API key whose project scopes the call. Disabled in kiosk (no accounts/keys, and
+        // KioskReadOnlyMiddleware 403s the POST anyway). The SDK instantiates the tool classes per
+        // invocation from this container, so register them AsSelf.
+        if (!kiosk.Enabled)
+        {
+            builder.RegisterAssemblyTypes(typeof(Module).Assembly)
+                .Where(t => t.GetCustomAttribute<ModelContextProtocol.Server.McpServerToolTypeAttribute>() is not null)
+                .AsSelf()
+                .InstancePerLifetimeScope();
+
+            builder.RegisterServiceCollection(services =>
+                services
+                    .AddMcpServer()
+                    .WithHttpTransport(options => options.Stateless = true)
+                    .WithToolsFromAssembly(typeof(Module).Assembly)
+                    .WithPromptsFromAssembly(typeof(Module).Assembly));
+        }
+
         ConfigureAuth(builder, configuration, kiosk);
 
         SearchConfiguration searchConfiguration =
@@ -243,7 +268,12 @@ internal sealed class Module : Autofac.Module
             {
                 services
                     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer();
+                    .AddJwtBearer()
+                    // Additional scheme for the MCP endpoint only (pinned via the "Mcp" policy in
+                    // Program.cs). The default scheme stays JwtBearer, so every existing [Authorize]
+                    // controller is unaffected.
+                    .AddScheme<AuthenticationSchemeOptions, McpApiKeyAuthenticationHandler>(
+                        McpApiKeyAuthenticationHandler.SchemeName, _ => { });
 
                 if (authOptions.Mode == AuthMode.Local)
                 {

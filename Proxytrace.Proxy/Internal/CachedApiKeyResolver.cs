@@ -55,6 +55,13 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
         IApiKey? apiKey = await apiKeys.FindByKeyAsync(rawKey, cancellationToken);
         if (apiKey is not null)
         {
+            // A key without the Ingestion scope (e.g. an MCP-only key) must not authenticate at the
+            // ingestion proxy — least privilege keeps an MCP credential from also proxying LLM traffic.
+            if (!apiKey.Scopes.HasFlag(ApiKeyScopes.Ingestion))
+            {
+                return null;
+            }
+
             // Slugify the path slug before comparing: the URL segment keeps its original casing,
             // so match canonical slug to canonical slug rather than rejecting "/Development".
             return !string.IsNullOrEmpty(projectSlug) && apiKey.Project.Name.ToSlug() != projectSlug.ToSlug()

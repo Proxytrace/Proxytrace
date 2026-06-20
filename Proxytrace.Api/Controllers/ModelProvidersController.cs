@@ -13,6 +13,7 @@ using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Application.Auth;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -33,6 +34,8 @@ public class ModelProvidersController : ControllerBase
     private readonly IModelEndpoint.CreateExisting updateEndpoint;
     private readonly ModelProviderDtoMapper mapper;
     private readonly IModelPriceRefresher priceRefresher;
+    private readonly ICurrentUserAccessor currentUser;
+    private readonly IRepository<IUser> users;
 
     public ModelProvidersController(
         IModelProviderRepository providerRepository,
@@ -46,7 +49,9 @@ public class ModelProvidersController : ControllerBase
         IModelEndpoint.CreateNew createEndpoint,
         IModelEndpoint.CreateExisting updateEndpoint,
         ModelProviderDtoMapper mapper,
-        IModelPriceRefresher priceRefresher)
+        IModelPriceRefresher priceRefresher,
+        ICurrentUserAccessor currentUser,
+        IRepository<IUser> users)
     {
         this.providerRepository = providerRepository;
         this.apiKeyRepository = apiKeyRepository;
@@ -60,6 +65,8 @@ public class ModelProvidersController : ControllerBase
         this.updateEndpoint = updateEndpoint;
         this.mapper = mapper;
         this.priceRefresher = priceRefresher;
+        this.currentUser = currentUser;
+        this.users = users;
     }
 
     [HttpGet]
@@ -275,12 +282,28 @@ public class ModelProvidersController : ControllerBase
         if (project is null)
             return BadRequest($"Project {request.ProjectId} not found.");
 
+        // The key acts as a user; every MCP call made with it is attributed to that owner. An explicit
+        // userId assigns the key to that user, otherwise it is owned by the admin creating it.
+        IUser? owner = request.UserId.HasValue
+            ? await users.FindAsync(request.UserId.Value, cancellationToken)
+            : await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (owner is null)
+            return BadRequest(request.UserId.HasValue
+                ? $"User {request.UserId} not found."
+                : "No authenticated user is available to own the key.");
+
         // The proxy bearer credential must be unguessable, so derive it from a CSPRNG (256 bits,
         // url-safe base64) rather than Guid.NewGuid, which carries no cryptographic-strength contract.
         Span<byte> keyBytes = stackalloc byte[32];
         RandomNumberGenerator.Fill(keyBytes);
         var keyValue = $"proxytrace-{Convert.ToBase64String(keyBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')}";
-        var key = createApiKey(request.Name, keyValue, project, provider);
+
+        // Least privilege: a key grants only the scopes explicitly requested; an unspecified set falls
+        // back to Ingestion-only so a key is never silently MCP-capable.
+        var scopes = request.Scopes is { Count: > 0 }
+            ? request.Scopes.Aggregate(ApiKeyScopes.None, (acc, s) => acc | s)
+            : ApiKeyScopes.Ingestion;
+        var key = createApiKey(request.Name, keyValue, project, provider, scopes, owner);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
         return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));
     }

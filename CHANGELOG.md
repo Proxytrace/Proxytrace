@@ -11,6 +11,21 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Connect external AI agents over MCP.** Proxytrace now hosts a built-in
+  [Model Context Protocol](https://modelcontextprotocol.io) server at `/mcp`, so external agents
+  (Claude Desktop, Cursor, your own scripts) can use Proxytrace the way the built-in Tracey assistant
+  does — listing and reading agents, traces, suites, runs, proposals and statistics, curating suites
+  from captured traces, starting test runs, analysing run failures, and submitting A/B-tested
+  optimization theories. It also ships **guided workflows** (MCP prompts an agent surfaces as slash
+  commands — `optimize_agent`, `curate_suite`, `run_tests`, `review_proposals`, `project_insights`)
+  that walk an external agent through the same playbooks the built-in Tracey assistant uses. It
+  authenticates with a Proxytrace **API key** (minted
+  on the Providers page): the key's project becomes the agent's working context. API keys now carry
+  explicit **capabilities** — *Ingestion proxy*, *MCP read*, *MCP write* — chosen when the key is
+  created, so an agent key can be made read-only and a proxy key can't drive MCP (least privilege).
+  Each key also has an **owner** (a user, chosen at creation): every MCP call is attributed to that
+  user. See the **MCP Server** guide for client setup and the full tool list.
+
 - **Multilingual UI with per-user language.** Proxytrace can now display its interface in multiple
   languages, starting with **German** alongside English. Each user picks their own language from a
   grouped **Language** section in the account menu (top-right) — each option shown with its country

@@ -201,7 +201,22 @@ public sealed class CachedApiKeyResolverTests
         TimeSpan ttl)
         => new(apiKeys, providers, projects, new MemoryCache(new MemoryCacheOptions()), ttl);
 
-    private static IApiKey ProxytraceKey(string projectName = "Some Project")
+    [TestMethod]
+    public async Task ResolveAsync_ProxytraceKey_WithoutIngestionScope_Rejected()
+    {
+        // An MCP-only key (no Ingestion scope) must not authenticate at the ingestion proxy.
+        IApiKey apiKey = ProxytraceKey(scopes: ApiKeyScopes.McpRead | ApiKeyScopes.McpWrite);
+        var apiKeys = Substitute.For<IApiKeyRepository>();
+        var providers = Substitute.For<IModelProviderRepository>();
+        var projects = Substitute.For<IProjectRepository>();
+        apiKeys.FindByKeyAsync("mcp-only", Arg.Any<CancellationToken>()).Returns(apiKey);
+
+        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+
+        (await resolver.ResolveAsync("mcp-only", projectSlug: null, CancellationToken.None)).Should().BeNull();
+    }
+
+    private static IApiKey ProxytraceKey(string projectName = "Some Project", ApiKeyScopes scopes = ApiKeyScopes.Ingestion)
     {
         var apiKey = Substitute.For<IApiKey>();
         var provider = Provider();
@@ -210,6 +225,7 @@ public sealed class CachedApiKeyResolverTests
         project.Name.Returns(projectName);
         apiKey.Provider.Returns(provider);
         apiKey.Project.Returns(project);
+        apiKey.Scopes.Returns(scopes);
         return apiKey;
     }
 

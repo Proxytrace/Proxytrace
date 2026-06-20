@@ -15,6 +15,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
 | [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |
 | [`docs/sse-events.md`](docs/sse-events.md) | Adding/changing a real-time stream (SSE broadcasters, event payloads, client hooks) |
+| [`docs/mcp.md`](docs/mcp.md) | Touching the MCP server (the `/mcp` endpoint, `McpApiKey` auth scheme, MCP tools) |
 | [`docs/releasing.md`](docs/releasing.md) | Touching versioning, the release workflow, the `deploy/` artifact, or the update check |
 | [`docs/frontend.md`](docs/frontend.md) | Any frontend change — links the mandatory DESIGN.md + BEST_PRACTICES.md |
 | [`docs/i18n.md`](docs/i18n.md) | Adding any user-facing UI string, or touching the translation system / per-user language |

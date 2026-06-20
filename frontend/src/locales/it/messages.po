@@ -978,6 +978,9 @@ msgstr "Risposta del candidato"
 msgid "Canonical happy-path traces — the behavior you expect to never break."
 msgstr "Trace canoniche del percorso felice — il comportamento che ti aspetti non si rompa mai."
 
+msgid "Capabilities"
+msgstr "Funzionalità"
+
 msgid "Capture everything"
 msgstr "Cattura tutto"
 
@@ -1130,7 +1133,7 @@ msgid "Copy handoff doc"
 msgstr "Copia documento di handoff"
 
 msgid "Copy ingestion URL"
-msgstr "Copia URL di ingestion"
+msgstr "Copia URL di acquisizione"
 
 msgid "Copy invite link"
 msgstr "Copia link di invito"
@@ -1140,6 +1143,9 @@ msgstr "Copia JSON"
 
 msgid "Copy key"
 msgstr "Copia chiave"
+
+msgid "Copy MCP endpoint"
+msgstr "Copia endpoint MCP"
 
 msgid "Copy message"
 msgstr "Copia messaggio"
@@ -1877,11 +1883,14 @@ msgstr "Configurazione di indexing per il progetto attivo."
 msgid "Info"
 msgstr "Info"
 
+msgid "Ingestion proxy"
+msgstr "Proxy di ingestione"
+
+msgid "Ingestion proxy — authenticate clients at the Proxytrace proxy"
+msgstr "Proxy di ingestione — autentica i client sul proxy Proxytrace"
+
 msgid "Ingestion URL"
 msgstr "URL di ingestion"
-
-msgid "Ingestion URL copied"
-msgstr "URL di ingestion copiato"
 
 msgid "Input"
 msgstr "Input"
@@ -1961,8 +1970,8 @@ msgstr "Chiave \"{0}\" creata — copiala subito"
 msgid "Key name"
 msgstr "Nome della chiave"
 
-msgid "Keys that authenticate clients at the Proxytrace proxy."
-msgstr "Chiavi che autenticano i client sul Proxytrace proxy."
+msgid "Keys that authenticate clients at the proxy and the MCP server."
+msgstr "Chiavi che autenticano i client al Proxy e al server MCP."
 
 msgid "kind"
 msgstr "kind"
@@ -2191,6 +2200,21 @@ msgstr "Token massimi"
 
 msgid "Maximum of {maxSelected} selected."
 msgstr "Massimo di {maxSelected} selezionati."
+
+msgid "MCP endpoint"
+msgstr "endpoint MCP"
+
+msgid "MCP read"
+msgstr "Lettura MCP"
+
+msgid "MCP read — let external agents read this project over the MCP server"
+msgstr "Lettura MCP — consenti agli agenti esterni di leggere questo progetto tramite il server MCP"
+
+msgid "MCP write"
+msgstr "Scrittura MCP"
+
+msgid "MCP write — let agents curate suites, start runs and change proposals"
+msgstr "Scrittura MCP — consenti agli agenti di curare Suite, avviare Run e modificare Proposal"
 
 msgid "Medium"
 msgstr "Medio"
@@ -2821,6 +2845,9 @@ msgstr "Token di output (generati)"
 
 msgid "Overview"
 msgstr "Panoramica"
+
+msgid "Owner"
+msgstr "Proprietario"
 
 #. placeholder {0}: fmtLatency(telemetry.p95Ms)
 msgid "p95 {0}"
@@ -3593,6 +3620,9 @@ msgstr "Invia un messaggio per vedere le metriche di completamento."
 
 msgid "Send a user message…"
 msgstr "Invia un messaggio utente…"
+
+msgid "Send an MCP-enabled key as the bearer token."
+msgstr "Invia una chiave abilitata per MCP come bearer token."
 
 msgid "Send error"
 msgstr "Errore di invio"
@@ -4474,3 +4504,6 @@ msgstr "L'endpoint compatibile con OpenAI del tuo progetto"
 
 msgid "Your rubric must produce one of these 5 scores; reasoning is optional."
 msgstr "La tua rubric deve produrre uno di questi 5 punteggi; il reasoning è facoltativo."
+
+msgid "Yourself (creator)"
+msgstr "Tu stesso (creatore)"

@@ -978,6 +978,9 @@ msgstr "Candidate response"
 msgid "Canonical happy-path traces — the behavior you expect to never break."
 msgstr "Canonical happy-path traces — the behavior you expect to never break."
 
+msgid "Capabilities"
+msgstr "Capabilities"
+
 msgid "Capture everything"
 msgstr "Capture everything"
 
@@ -1140,6 +1143,9 @@ msgstr "Copy JSON"
 
 msgid "Copy key"
 msgstr "Copy key"
+
+msgid "Copy MCP endpoint"
+msgstr "Copy MCP endpoint"
 
 msgid "Copy message"
 msgstr "Copy message"
@@ -1877,11 +1883,14 @@ msgstr "Indexing configuration for the active project."
 msgid "Info"
 msgstr "Info"
 
+msgid "Ingestion proxy"
+msgstr "Ingestion proxy"
+
+msgid "Ingestion proxy — authenticate clients at the Proxytrace proxy"
+msgstr "Ingestion proxy — authenticate clients at the Proxytrace proxy"
+
 msgid "Ingestion URL"
 msgstr "Ingestion URL"
-
-msgid "Ingestion URL copied"
-msgstr "Ingestion URL copied"
 
 msgid "Input"
 msgstr "Input"
@@ -1961,8 +1970,8 @@ msgstr "Key \"{0}\" created — copy it now"
 msgid "Key name"
 msgstr "Key name"
 
-msgid "Keys that authenticate clients at the Proxytrace proxy."
-msgstr "Keys that authenticate clients at the Proxytrace proxy."
+msgid "Keys that authenticate clients at the proxy and the MCP server."
+msgstr "Keys that authenticate clients at the proxy and the MCP server."
 
 msgid "kind"
 msgstr "kind"
@@ -2191,6 +2200,21 @@ msgstr "Max tokens"
 
 msgid "Maximum of {maxSelected} selected."
 msgstr "Maximum of {maxSelected} selected."
+
+msgid "MCP endpoint"
+msgstr "MCP endpoint"
+
+msgid "MCP read"
+msgstr "MCP read"
+
+msgid "MCP read — let external agents read this project over the MCP server"
+msgstr "MCP read — let external agents read this project over the MCP server"
+
+msgid "MCP write"
+msgstr "MCP write"
+
+msgid "MCP write — let agents curate suites, start runs and change proposals"
+msgstr "MCP write — let agents curate suites, start runs and change proposals"
 
 msgid "Medium"
 msgstr "Medium"
@@ -2821,6 +2845,9 @@ msgstr "Output tokens (generated)"
 
 msgid "Overview"
 msgstr "Overview"
+
+msgid "Owner"
+msgstr "Owner"
 
 #. placeholder {0}: fmtLatency(telemetry.p95Ms)
 msgid "p95 {0}"
@@ -3593,6 +3620,9 @@ msgstr "Send a message to see completion metrics."
 
 msgid "Send a user message…"
 msgstr "Send a user message…"
+
+msgid "Send an MCP-enabled key as the bearer token."
+msgstr "Send an MCP-enabled key as the bearer token."
 
 msgid "Send error"
 msgstr "Send error"
@@ -4474,3 +4504,6 @@ msgstr "Your project's OpenAI-compatible endpoint"
 
 msgid "Your rubric must produce one of these 5 scores; reasoning is optional."
 msgstr "Your rubric must produce one of these 5 scores; reasoning is optional."
+
+msgid "Yourself (creator)"
+msgstr "Yourself (creator)"

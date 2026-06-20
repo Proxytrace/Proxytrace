@@ -16,8 +16,14 @@ docker compose up --build      # API on :5100, frontend on :5101
 ```
 
 In this shape the **frontend is served by a separate nginx container**
-(`frontend/Dockerfile` + `frontend/nginx.conf`), which proxies `/api` to the API container.
-A **Redis** event broker carries real-time updates between the ingestion proxy and the app.
+(`frontend/Dockerfile` + `frontend/nginx.conf`), which proxies `/api` **and `/mcp`** to the API
+container. A **Redis** event broker carries real-time updates between the ingestion proxy and the app.
+
+::: tip Custom reverse proxy
+If you put your own reverse proxy in front of Proxytrace, forward **`/mcp`** to the API just like
+`/api` (disable response buffering — the MCP server uses Streamable HTTP). Without it, external agents
+can't reach the [MCP server](/guide/mcp-server).
+:::
 
 ### Tuning trace ingestion throughput
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Proxytrace.Storage;
@@ -11,9 +12,11 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260620082514_AddApiKeyScopes")]
+    partial class AddApiKeyScopes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -216,9 +219,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid>("Owner")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("Project")
                         .HasColumnType("uuid");
 
@@ -237,8 +237,6 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("ApiKey")
                         .IsUnique();
-
-                    b.HasIndex("Owner");
 
                     b.HasIndex("Project");
 
@@ -1186,12 +1184,6 @@ namespace Proxytrace.Storage.Migrations
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ApiKey.ApiKeyEntity", b =>
                 {
-                    b.HasOne("Proxytrace.Storage.Internal.Entities.User.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("Owner")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", null)
                         .WithMany()
                         .HasForeignKey("Project")

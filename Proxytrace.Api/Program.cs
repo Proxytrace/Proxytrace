@@ -1,9 +1,12 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
+using Proxytrace.Api.Auth.Mcp;
 using Proxytrace.Api.Kiosk;
 using Proxytrace.Api.Middleware;
+using Proxytrace.Application.Demo;
 using Module = Proxytrace.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +26,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // The MCP endpoint authenticates only via the McpApiKey scheme: a browser JWT/cookie must not
+    // reach it, and an MCP API key is not valid for the rest of the API. The policy is harmless when
+    // unused — it is only ever evaluated if the /mcp endpoint is mapped (non-kiosk).
+    options.AddPolicy("Mcp", policy => policy
+        .AddAuthenticationSchemes(McpApiKeyAuthenticationHandler.SchemeName)
+        .RequireAuthenticatedUser());
+});
 
 builder.Services.AddControllers(options =>
         options.Filters.Add<Proxytrace.Api.Auth.Licensing.LicenseEnforcementFilter>())
@@ -57,6 +68,10 @@ if (builder.Environment.IsDevelopment())
 
 var app = builder.Build();
 
+// Resolve the kiosk decision from the container (the Module is the single source of truth — it reads
+// appsettings.local.json, which builder.Configuration does not). Re-reading config here would diverge.
+var kioskEnabled = app.Services.GetRequiredService<KioskOptions>().Enabled;
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -72,6 +87,13 @@ app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();
+
+// MCP server (Streamable HTTP, stateless). Authenticated per-request by an API key whose project
+// scopes the call (see McpApiKeyAuthenticationHandler + IMcpProjectAccessor). Omitted in kiosk.
+if (!kioskEnabled)
+{
+    app.MapMcp("/mcp").RequireAuthorization("Mcp");
+}
 // The bundled VitePress manual lives under wwwroot/docs. Existing files (e.g.
 // /docs/guide/x.html) are served by the static middleware above. A bare directory
 // request like /docs or /docs/ has no file to match and UseDefaultFiles is skipped

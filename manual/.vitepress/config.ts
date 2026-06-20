@@ -39,6 +39,7 @@ export default defineConfig({
             { text: 'Dashboard', link: '/guide/dashboard' },
             { text: 'Notifications', link: '/guide/notifications' },
             { text: 'Tracey (AI Assistant)', link: '/guide/tracey' },
+            { text: 'MCP Server', link: '/guide/mcp-server' },
           ],
         },
       ],
