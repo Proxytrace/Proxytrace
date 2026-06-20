@@ -1,11 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## What Proxytrace Is
-
-Proxytrace is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
-
 ## AI Assistant Docs
 
 Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** working in that area — do not rely on this file alone:
@@ -43,17 +37,10 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
   `npm run i18n:translate`, and commit the updated `frontend/src/locales/**` catalogs. See
   [`docs/i18n.md`](docs/i18n.md).
 - **File issues for stumbles** — when you hit a bug, technical debt, or other problem that is out of
-  scope for your current task, open a corresponding issue in the GitHub repository (`proxytrace/proxytrace`)
-  instead of silently working around it or letting it slide. Give the issue a clear title and enough
-  context (what, where, why it matters) for someone to pick it up later, then carry on with your task.
+  scope for your current task, capture it as a GitHub issue instead of silently working around it or
+  letting it slide. Invoke the `file-issue` skill (`.claude/skills/file-issue/SKILL.md`) — it covers
+  dedup, title/body quality, and labels — then carry on with your task.
 - **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
   [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the
   GitHub release notes verbatim — see [`docs/releasing.md`](docs/releasing.md)).
-
-## Reference Implementations
-
-When implementing a new entity, the existing ones are the source of truth (details in [`docs/domain-entities.md`](docs/domain-entities.md)):
-- **No relationships:** `User`
-- **1:N relationship:** `Project` references one `IModelEndpoint` (`SystemEndpoint`)
-- **N:M relationship:** `TestSuite` holds `IReadOnlyCollection<IEvaluator>`, junction is `TestSuiteEvaluatorEntity`, custom `TestSuiteRepository` overrides `UpdateRelationsAsync`
