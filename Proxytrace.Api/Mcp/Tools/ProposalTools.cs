@@ -1,0 +1,116 @@
+using System.ComponentModel;
+using ModelContextProtocol;
+using ModelContextProtocol.Server;
+using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Application.Streaming;
+using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Licensing;
+
+namespace Proxytrace.Api.Mcp.Tools;
+
+/// <summary>
+/// MCP tools for reviewing and acting on optimization proposals in the current project. Gated by the
+/// <see cref="LicenseFeature.OptimizationProposals"/> license feature, mirroring the REST controller.
+/// </summary>
+[McpServerToolType]
+internal sealed class ProposalTools
+{
+    private readonly IMcpProjectAccessor project;
+    private readonly IOptimizationProposalRepository repository;
+    private readonly OptimizationProposalDtoMapper mapper;
+    private readonly IProposalBroadcaster broadcaster;
+    private readonly ILicenseService license;
+
+    public ProposalTools(
+        IMcpProjectAccessor project,
+        IOptimizationProposalRepository repository,
+        OptimizationProposalDtoMapper mapper,
+        IProposalBroadcaster broadcaster,
+        ILicenseService license)
+    {
+        this.project = project;
+        this.repository = repository;
+        this.mapper = mapper;
+        this.broadcaster = broadcaster;
+        this.license = license;
+    }
+
+    [McpServerTool(Name = "list_proposals")]
+    [Description("List the optimization proposals in the current project (most recent first), with their " +
+                 "kind, status and expected pass-rate delta.")]
+    public async Task<IReadOnlyList<OptimizationProposalDto>> ListProposals(CancellationToken cancellationToken)
+    {
+        EnsureFeature();
+        var p = await project.GetProjectAsync(cancellationToken);
+        var proposals = await repository.GetByProjectAsync(p.Id, cancellationToken);
+        return proposals.Select(mapper.ToDto).ToArray();
+    }
+
+    [McpServerTool(Name = "get_proposal")]
+    [Description("Get a single optimization proposal by id. It must belong to the current project.")]
+    public async Task<OptimizationProposalDto> GetProposal(
+        [Description("The proposal id (GUID), from list_proposals.")] Guid proposalId,
+        CancellationToken cancellationToken)
+    {
+        var proposal = await RequireProposalAsync(proposalId, cancellationToken);
+        return mapper.ToDto(proposal);
+    }
+
+    [McpServerTool(Name = "get_proposal_artifact")]
+    [Description("Get the machine-readable handoff package for applying a proposal's change to the agent's " +
+                 "actual implementation. The proposal must belong to the current project.")]
+    public async Task<ProposalArtifactDto> GetProposalArtifact(
+        [Description("The proposal id (GUID), from list_proposals.")] Guid proposalId,
+        CancellationToken cancellationToken)
+    {
+        var proposal = await RequireProposalAsync(proposalId, cancellationToken);
+        return mapper.ToArtifactDto(proposal);
+    }
+
+    [McpServerTool(Name = "set_proposal_status")]
+    [Description("Approve, reject or mark-adopted an optimization proposal. Valid transitions: Draft->Accepted, " +
+                 "Draft->Rejected, Accepted->Adopted. The proposal must belong to the current project.")]
+    public async Task<OptimizationProposalDto> SetProposalStatus(
+        [Description("The proposal id (GUID), from list_proposals.")] Guid proposalId,
+        [Description("The target status: Accepted, Rejected or Adopted.")] ProposalStatus status,
+        CancellationToken cancellationToken)
+    {
+        project.RequireWriteScope();
+        var existing = await RequireProposalAsync(proposalId, cancellationToken);
+
+        IOptimizationProposal updated;
+        switch (status)
+        {
+            case ProposalStatus.Accepted when existing.Status == ProposalStatus.Draft:
+                updated = await existing.Accept(cancellationToken);
+                break;
+            case ProposalStatus.Rejected when existing.Status == ProposalStatus.Draft:
+                updated = await existing.Reject(cancellationToken);
+                break;
+            case ProposalStatus.Adopted when existing.Status == ProposalStatus.Accepted:
+                updated = await existing.MarkAdopted(null, manual: true, cancellationToken);
+                break;
+            default:
+                throw new McpException($"Cannot change proposal status from {existing.Status} to {status}.");
+        }
+
+        broadcaster.Publish(ProposalStatusChangedEvent.Create(updated));
+        return mapper.ToDto(updated);
+    }
+
+    private async Task<IOptimizationProposal> RequireProposalAsync(Guid proposalId, CancellationToken cancellationToken)
+    {
+        EnsureFeature();
+        var p = await project.GetProjectAsync(cancellationToken);
+        var proposal = await repository.FindAsync(proposalId, cancellationToken);
+        if (proposal is null || proposal.Agent.Project.Id != p.Id)
+            throw new McpException($"Proposal '{proposalId}' was not found in this project.");
+        return proposal;
+    }
+
+    private void EnsureFeature()
+    {
+        if (!license.IsFeatureEnabled(LicenseFeature.OptimizationProposals))
+            throw new McpException("Optimization proposals are not available on the current license tier.");
+    }
+}

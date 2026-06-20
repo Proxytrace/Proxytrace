@@ -5,8 +5,10 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
+using Proxytrace.Domain.User;
 using Proxytrace.Storage.Internal.Entities.ModelProvider;
 using Proxytrace.Storage.Internal.Entities.Project;
+using Proxytrace.Storage.Internal.Entities.User;
 
 namespace Proxytrace.Storage.Internal.Entities.ApiKey;
 
@@ -15,15 +17,18 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
     private readonly IApiKey.CreateExisting factory;
     private readonly IRepository<IProject> projects;
     private readonly IRepository<IModelProvider> providers;
+    private readonly IRepository<IUser> users;
 
     public ApiKeyConfig(
         IApiKey.CreateExisting factory,
         IRepository<IProject> projects,
-        IRepository<IModelProvider> providers)
+        IRepository<IModelProvider> providers,
+        IRepository<IUser> users)
     {
         this.factory = factory;
         this.projects = projects;
         this.providers = providers;
+        this.users = users;
     }
 
     public override void Configure(EntityTypeBuilder<ApiKeyEntity> builder)
@@ -31,6 +36,10 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
         builder.HasIndex(e => e.ApiKey).IsUnique();
         builder.Property(e => e.Name).HasMaxLength(256).IsRequired();
         builder.Property(e => e.ApiKey).HasMaxLength(512).IsRequired();
+
+        // SQL default backfills pre-scopes keys to Ingestion-only, so existing ingestion keys do not
+        // silently gain MCP capabilities (least privilege). New keys always set Scopes explicitly.
+        builder.Property(e => e.Scopes).HasDefaultValue(Domain.ApiKey.ApiKeyScopes.Ingestion);
 
         builder
             .HasOne<ProjectEntity>()
@@ -43,13 +52,21 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
             .WithMany()
             .HasForeignKey(e => e.Provider)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // The key acts as its owner; it cannot outlive them, so deleting a user removes their keys.
+        builder
+            .HasOne<UserEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public async Task<IApiKey> Map(ApiKeyEntity stored, CancellationToken cancellationToken = default)
     {
         var project = await projects.GetAsync(stored.Project, cancellationToken);
         var provider = await providers.GetAsync(stored.Provider, cancellationToken);
-        return factory(stored.Name, stored.ApiKey, project, provider, stored);
+        var owner = await users.GetAsync(stored.Owner, cancellationToken);
+        return factory(stored.Name, stored.ApiKey, project, provider, stored.Scopes, owner, stored);
     }
 
     public Task<ApiKeyEntity> Map(IApiKey domain, CancellationToken cancellationToken = default)
@@ -60,6 +77,8 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
             ApiKey = domain.ApiKey,
             Project = domain.Project.Id,
             Provider = domain.Provider.Id,
+            Scopes = domain.Scopes,
+            Owner = domain.Owner.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

@@ -22,8 +22,13 @@ public sealed class ModelProviderDtoMapper
     public ModelProviderDto ToRedactedDto(IModelProvider p) =>
         new(p.Id, p.Name, p.Endpoint.ToString(), string.Empty, p.Kind, p.CreatedAt, p.UpdatedAt);
 
-    public ApiKeyDto ToKeyDto(IApiKey k) =>
-        new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, k.CreatedAt);
+    public ApiKeyDto ToKeyDto(IApiKey k)
+    {
+        var scopes = new[] { ApiKeyScopes.Ingestion, ApiKeyScopes.McpRead, ApiKeyScopes.McpWrite }
+            .Where(s => k.Scopes.HasFlag(s))
+            .ToArray();
+        return new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, scopes, k.Owner.Id, k.Owner.Email, k.CreatedAt);
+    }
 
     public ModelEndpointDto ToEndpointDto(IModelEndpoint e) =>
         new(e.Id, e.Model.Name, e.Provider.Id, e.Provider.Name, e.InputTokenCost, e.OutputTokenCost, e.CreatedAt, e.UpdatedAt);

@@ -607,6 +607,7 @@ export interface ModelEndpointDto {
   createdAt: string;
   updatedAt: string;
 }
+export type ApiKeyScope = 'Ingestion' | 'McpRead' | 'McpWrite';
 export interface ApiKeyDto {
   id: string;
   name: string;
@@ -615,6 +616,9 @@ export interface ApiKeyDto {
   projectName: string;
   providerId: string;
   providerName: string;
+  scopes: ApiKeyScope[];
+  ownerId: string;
+  ownerEmail: string;
   createdAt: string;
 }
 export interface ProjectMemberDto {
@@ -672,7 +676,7 @@ export interface CreateProviderRequest {
   upstreamApiKey: string;
   kind: ModelProviderKind;
 }
-export interface CreateApiKeyRequest { name: string; projectId: string; }
+export interface CreateApiKeyRequest { name: string; projectId: string; scopes?: ApiKeyScope[]; userId?: string; }
 
 /* ── Fixture ── */
 export interface TestCaseMessageFixtureDto {

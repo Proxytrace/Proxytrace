@@ -25,4 +25,14 @@ internal record ApiKeyEntity : Entity
     /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.Provider"/>
     /// </summary>
     public required Guid Provider { get; init; }
+
+    /// <summary>
+    /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.Scopes"/>
+    /// </summary>
+    public required ApiKeyScopes Scopes { get; init; }
+
+    /// <summary>
+    /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.Owner"/>
+    /// </summary>
+    public required Guid Owner { get; init; }
 }

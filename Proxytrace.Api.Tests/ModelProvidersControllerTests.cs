@@ -6,9 +6,11 @@ using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Api.Dto.ModelProviders;
+using Proxytrace.Application.Auth;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
+using Proxytrace.Domain.User;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
@@ -171,10 +173,11 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         var controller = ResolveController(services);
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
         var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var owner = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
 
         var result = await controller.CreateKey(
             provider.Id,
-            new CreateApiKeyRequest("dev-key", project.Id),
+            new CreateApiKeyRequest("dev-key", project.Id, UserId: owner.Id),
             CancellationToken);
 
         var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
@@ -182,6 +185,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         dto.Should().NotBeNull();
         dto.Name.Should().Be("dev-key");
         dto.ProjectId.Should().Be(project.Id);
+        dto.OwnerId.Should().Be(owner.Id);
     }
 
     [TestMethod]
@@ -328,5 +332,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<IModelEndpoint.CreateNew>(),
         services.GetRequiredService<IModelEndpoint.CreateExisting>(),
         services.GetRequiredService<ModelProviderDtoMapper>(),
-        services.GetRequiredService<IModelPriceRefresher>());
+        services.GetRequiredService<IModelPriceRefresher>(),
+        services.GetRequiredService<ICurrentUserAccessor>(),
+        services.GetRequiredService<IRepository<IUser>>());
 }

@@ -96,6 +96,16 @@ The `AddUserLanguage` migration adds a non-nullable `UserEntity.Language` column
 of `'en'` (configured via `HasDefaultValue("en")` in `UserConfig`), which backfills existing rows to
 English — see [`i18n.md`](i18n.md).
 
+The `AddApiKeyScopes` migration adds a non-nullable `ApiKeyEntity.Scopes` column (an `ApiKeyScopes`
+flags enum stored as `int`) with a SQL default of `1` (`Ingestion`), backfilling existing keys to
+ingestion-only so no legacy key silently gains MCP capabilities — see [`mcp.md`](mcp.md).
+
+The `AddApiKeyOwner` migration adds a non-nullable `ApiKeyEntity.Owner` FK to `UserEntity`
+(`OnDelete: Cascade` — a key cannot outlive its owner). Since there is no sensible owner to backfill
+onto pre-existing keys, the migration first **deletes all existing `ApiKeyEntity` rows** (installations
+were test-only at the time); admins re-mint keys, choosing an owner. Every MCP call is attributed to
+the key's owner — see [`mcp.md`](mcp.md).
+
 The `AddTestRunScheduling` migration adds the `TestRunScheduleEntity` table and its
 `TestRunScheduleEndpointEntity` join table (the endpoints a schedule runs against), plus a nullable
 `TestRunGroupEntity.ScheduleId` column + FK (`OnDelete(Restrict)`) linking a run group back to the

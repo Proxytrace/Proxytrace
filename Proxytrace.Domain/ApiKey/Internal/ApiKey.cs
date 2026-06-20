@@ -3,6 +3,7 @@ using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
+using Proxytrace.Domain.User;
 
 namespace Proxytrace.Domain.ApiKey.Internal;
 
@@ -14,18 +15,24 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
     string IApiKey.ApiKey => apiKey;
     public IProject Project { get; }
     public IModelProvider Provider { get; }
+    public ApiKeyScopes Scopes { get; }
+    public IUser Owner { get; }
 
     public ApiKey(
         string name,
         string apiKey,
         IProject project,
         IModelProvider provider,
+        ApiKeyScopes scopes,
+        IUser owner,
         IRepository<IApiKey> repository) : base(repository)
     {
         Name = name;
         this.apiKey = apiKey;
         Project = project;
         Provider = provider;
+        Scopes = scopes;
+        Owner = owner;
     }
 
     public ApiKey(
@@ -33,6 +40,8 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         string apiKey,
         IProject project,
         IModelProvider provider,
+        ApiKeyScopes scopes,
+        IUser owner,
         IDomainEntityData existing,
         IRepository<IApiKey> repository) : base(existing, repository)
     {
@@ -40,6 +49,8 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         this.apiKey = apiKey;
         Project = project;
         Provider = provider;
+        Scopes = scopes;
+        Owner = owner;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -51,5 +62,11 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
 
         yield return Validation.NotNullOrWhiteSpace(Name);
         yield return Validation.NotNullOrWhiteSpace(apiKey);
+        yield return Validation.NotNull(Owner);
+
+        if (Scopes == ApiKeyScopes.None)
+        {
+            yield return new ValidationResult("An API key must grant at least one scope.", [nameof(Scopes)]);
+        }
     }
 }

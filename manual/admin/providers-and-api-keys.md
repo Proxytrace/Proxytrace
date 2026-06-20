@@ -75,11 +75,24 @@ the provider — the project is taken from the **project slug in the request pat
 same upstream key can be reused across projects, disambiguated by the path. If the same string
 is valid as both a Proxytrace key and an upstream key, the Proxytrace key wins.
 
+Each key also carries explicit **capabilities** (least privilege), chosen when you create it:
+
+- **Ingestion proxy** — authenticate clients at the OpenAI-compatible proxy (the classic use).
+- **MCP read** — read the key's project over the [MCP server](/guide/mcp-server) (`list_*`/`get_*` tools).
+- **MCP write** — additionally curate suites, start/cancel runs and change proposals over MCP.
+
+A key works only on the surfaces it was granted: an ingestion-only key cannot drive MCP, and an
+MCP-only key cannot proxy LLM traffic. Keys issued before this feature are **ingestion-only**.
+
 ### Issuing a key
 
 1. Open **Providers**.
 2. Select the provider the key should route to.
-3. Generate the key and distribute it to the client team. Treat it as a secret.
+3. Tick the **capabilities** the key needs (Ingestion proxy is on by default; add MCP read/write to let
+   an external agent use the [MCP server](/guide/mcp-server)).
+4. Choose the **owner** — the user every MCP call made with the key is attributed to. Leave it as
+   *Yourself (creator)* or assign the key to a specific teammate.
+5. Generate the key and distribute it to the client team. Treat it as a secret.
 
 Clients then set this key plus the proxy base URL in their OpenAI-compatible client — see
 [Proxy Setup](/guide/proxy-setup).
