@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { XIcon, ArrowUpRightIcon } from '../icons';
 import ToastContext, { type ErrorToastOptions, type ToastItem } from '../../contexts/ToastContext';
 import { cn } from '../../lib/cn';
@@ -11,14 +12,14 @@ type ToastType = ToastItem['type'];
 //   success -> var(--success), error -> var(--danger), info -> var(--accent-primary).
 // Border keeps the identical 32% color-mix so pixels are unchanged.
 const TOAST_BORDER: Record<ToastType, string> = {
-  success: 'border-[color-mix(in_srgb,var(--success)_32%,transparent)]',
-  error: 'border-[color-mix(in_srgb,var(--danger)_32%,transparent)]',
-  info: 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]',
+  success: cn('border-[color-mix(in_srgb,var(--success)_32%,transparent)]'),
+  error: cn('border-[color-mix(in_srgb,var(--danger)_32%,transparent)]'),
+  info: cn('border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'),
 };
 const TOAST_TEXT: Record<ToastType, string> = {
-  success: 'text-success',
-  error: 'text-danger',
-  info: 'text-accent',
+  success: cn('text-success'),
+  error: cn('text-danger'),
+  info: cn('text-accent'),
 };
 
 let globalShow: ((message: string, type: ToastItem['type'], options?: ErrorToastOptions) => void) | null = null;
@@ -29,6 +30,7 @@ export function showToast(message: string, type: ToastItem['type'] = 'info', opt
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useLingui();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
 
@@ -56,18 +58,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ show }}>
       {children}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[100] pointer-events-none">
-        {toasts.map(t => {
-          if (t.type !== 'error') {
+        {toasts.map(toast => {
+          if (toast.type !== 'error') {
             return (
               <div
-                key={t.id}
+                key={toast.id}
                 className={cn(
                   'fade-up bg-card rounded-md px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)] border',
-                  TOAST_BORDER[t.type],
-                  TOAST_TEXT[t.type],
+                  TOAST_BORDER[toast.type],
+                  TOAST_TEXT[toast.type],
                 )}
               >
-                {t.message}
+                {toast.message}
               </div>
             );
           }
@@ -75,14 +77,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           // The message becomes a deep-link into the Error Log when the backend captured this
           // error (errorId) and the current user can view the Error Log (an admin navigator is
           // registered). Otherwise it's plain text.
-          const deepLinkId = t.errorId && canViewErrorLog() ? t.errorId : null;
+          const deepLinkId = toast.errorId && canViewErrorLog() ? toast.errorId : null;
 
           return (
             <div
-              key={t.id}
+              key={toast.id}
               className={cn(
                 'fade-up bg-card rounded-lg px-4 py-3 shadow-[var(--shadow-float)] pointer-events-auto max-w-[420px] border',
-                TOAST_BORDER[t.type],
+                TOAST_BORDER[toast.type],
               )}
             >
               <div className="flex items-start gap-2">
@@ -91,40 +93,40 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     type="button"
                     onClick={() => {
                       navigateToErrorLog(deepLinkId);
-                      dismiss(t.id);
+                      dismiss(toast.id);
                     }}
                     data-testid="error-toast-view-btn"
-                    aria-label="View this error in the Error Log"
+                    aria-label={t`View this error in the Error Log`}
                     className={cn(
                       'flex-1 min-w-0 text-left inline-flex items-start gap-1.5 text-[14px] font-semibold leading-snug cursor-pointer',
                       'rounded-sm hover:underline underline-offset-2 transition-colors',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
-                      TOAST_TEXT[t.type],
+                      TOAST_TEXT[toast.type],
                     )}
                   >
-                    <span className="min-w-0">{t.message}</span>
+                    <span className="min-w-0">{toast.message}</span>
                     <ArrowUpRightIcon size={13} strokeWidth={1.75} className="shrink-0 mt-0.5" />
                   </button>
                 ) : (
-                  <span className={cn('flex-1 text-[14px] font-semibold min-w-0 leading-snug', TOAST_TEXT[t.type])}>
-                    {t.message}
+                  <span className={cn('flex-1 text-[14px] font-semibold min-w-0 leading-snug', TOAST_TEXT[toast.type])}>
+                    {toast.message}
                   </span>
                 )}
                 <button
-                  onClick={() => dismiss(t.id)}
+                  onClick={() => dismiss(toast.id)}
                   className="text-muted hover:text-primary transition-colors leading-none cursor-pointer shrink-0 mt-0.5"
-                  aria-label="Dismiss"
+                  aria-label={t`Dismiss`}
                 >
                   <XIcon size={16} strokeWidth={1.5} />
                 </button>
               </div>
-              {isDev && t.stacktrace && (
+              {isDev && toast.stacktrace && (
                 <details className="mt-2">
                   <summary className="text-body-sm text-muted cursor-pointer hover:text-secondary transition-colors select-none">
-                    Stacktrace
+                    <Trans>Stacktrace</Trans>
                   </summary>
                   <pre className="mt-1 text-body-sm text-muted font-mono whitespace-pre-wrap overflow-x-auto max-h-[200px] overflow-y-auto">
-                    {t.stacktrace}
+                    {toast.stacktrace}
                   </pre>
                 </details>
               )}

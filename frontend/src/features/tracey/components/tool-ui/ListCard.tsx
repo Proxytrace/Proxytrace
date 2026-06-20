@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Trans } from '@lingui/react/macro';
 import { Card } from '../../../../components/ui/Card';
 import { Badge } from '../../../../components/ui/Badge';
 import { Skeleton } from '../../../../components/ui/Skeleton';
@@ -62,7 +63,7 @@ export function ListCard({
             to={viewAllTo}
             className="ml-auto inline-flex items-center gap-1 rounded-sm text-body-sm text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
           >
-            View all
+            <Trans>View all</Trans>
             <ArrowUpRightIcon size={13} />
           </Link>
         )}
@@ -79,7 +80,7 @@ export function ListCard({
           to={viewAllTo}
           className="block border-t border-hairline px-3 py-2 text-center text-body-sm text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
         >
-          +{hidden} more
+          <Trans>+{hidden} more</Trans>
         </Link>
       )}
     </Card>
@@ -102,7 +103,7 @@ function ListCardSkeleton({
       padding="none"
       className="my-1"
       data-testid={testId}
-      aria-busy="true"
+      aria-busy={true}
       aria-label={pendingLabel}
     >
       <div className="flex items-center gap-2 border-b border-hairline px-3 py-2.5">

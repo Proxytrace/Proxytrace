@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { SystemPromptDetailsDto } from '../../../api/models';
 import { cn } from '../../../lib/cn';
 import { buildPromptDiff } from '../proposalsMeta';
@@ -7,19 +8,19 @@ type DiffKind = 'same' | 'add' | 'del';
 // Per-line diff styling. Each branch is a static token, selected by the
 // (data-driven) line kind — byte-identical to the previous inline values.
 const LINE_TEXT: Record<DiffKind, string> = {
-  add: 'text-success',
-  del: 'text-danger',
-  same: 'text-secondary',
+  add: cn('text-success'),
+  del: cn('text-danger'),
+  same: cn('text-secondary'),
 };
 const LINE_BG: Record<DiffKind, string> = {
-  add: 'bg-[color-mix(in_srgb,var(--success)_8%,transparent)]',
-  del: 'bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]',
+  add: cn('bg-[color-mix(in_srgb,var(--success)_8%,transparent)]'),
+  del: cn('bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]'),
   same: '',
 };
 const SIGIL_TEXT: Record<DiffKind, string> = {
-  add: 'text-success',
-  del: 'text-danger',
-  same: 'text-muted',
+  add: cn('text-success'),
+  del: cn('text-danger'),
+  same: cn('text-muted'),
 };
 
 interface PromptDiffProps {
@@ -35,7 +36,7 @@ function PromptDiffView({ before, after }: PromptDiffProps) {
   return (
     <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle" data-testid="prompt-diff">
       <div className="flex items-center gap-2.5 px-3.5 py-2 border-b border-hairline bg-card-2/30">
-        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">System prompt</span>
+        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]"><Trans>System prompt</Trans></span>
         <span className="mono text-body-sm text-success">+{adds}</span>
         <span className="mono text-body-sm text-danger">−{dels}</span>
       </div>

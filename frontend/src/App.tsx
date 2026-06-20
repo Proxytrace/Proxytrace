@@ -2,6 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, usePa
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
+import { Trans } from '@lingui/react/macro';
+import { LocaleSync } from './i18n/LocaleSync';
+import { dynamicActivate, DEFAULT_LOCALE } from './i18n';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { TooltipProvider } from './components/ui/Tooltip';
@@ -23,6 +26,7 @@ import { useAppConfig } from './hooks/useAppConfig';
 import { RequiresFeature } from './components/license/RequiresFeature';
 import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
 import { setErrorLogNavigator } from './lib/errorLogNav';
+import { cn } from './lib/cn';
 // Settings sections are small and admin-only — eagerly imported (no separate chunk needed).
 import { GeneralSection } from './features/settings/sections/GeneralSection';
 import { MembersSection } from './features/settings/sections/MembersSection';
@@ -73,7 +77,7 @@ queryClient.prefetchQuery({ queryKey: QUERY_KEYS.appConfig, queryFn: configApi.g
 function PageLoader() {
   return (
     <div className="flex items-center justify-center flex-1 text-muted text-[13px]">
-      Loading…
+      <Trans>Loading…</Trans>
     </div>
   );
 }
@@ -96,7 +100,7 @@ function OidcAuthGate({ children }: { children: React.ReactNode }) {
   if (auth.error) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-danger">
-        Auth error: {auth.error.message}
+        <Trans>Auth error: {auth.error.message}</Trans>
       </div>
     );
   }
@@ -199,6 +203,7 @@ function AppRoutes() {
   return (
     <>
     <ErrorLogNavBridge enabled={isAdmin} />
+    <LocaleSync />
     <Routes>
       {authMode.mode === 'local' && <Route path="/signup" element={wrap(<Signup />)} />}
       <Route
@@ -257,11 +262,18 @@ function AppRoutes() {
 
 function KioskShell({ interactive }: { interactive: boolean }) {
   useEffect(() => {
+    // A kiosk has no account and no language picker (LocaleSync + the picker are both off here), so
+    // pin the UI to the source language (English) regardless of the machine's browser/cache locale —
+    // a public demo must read consistently. Not cached: this is implicit to kiosk, not a preference.
+    void dynamicActivate(DEFAULT_LOCALE);
+  }, []);
+  useEffect(() => {
     // The `kiosk` body class drives the read-only [data-write] kill-switch (index.css). Only
     // apply it for a read-only kiosk; an interactive kiosk leaves write controls live.
     if (interactive) return;
-    document.body.classList.add('kiosk');
-    return () => document.body.classList.remove('kiosk');
+    const kioskClass = cn('kiosk');
+    document.body.classList.add(kioskClass);
+    return () => document.body.classList.remove(kioskClass);
   }, [interactive]);
   return (
     <KioskContext.Provider value={{ enabled: true, interactive }}>
@@ -282,7 +294,7 @@ function ModeShell() {
   if (error || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-danger">
-        Could not detect auth mode.
+        <Trans>Could not detect auth mode.</Trans>
       </div>
     );
   }

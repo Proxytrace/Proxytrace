@@ -1,5 +1,6 @@
 import { useState, useMemo, Fragment } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunGroupDto } from '../../api/models';
 import { FOCUS_RING } from '../../lib/constants';
 import { cn } from '../../lib/cn';
@@ -19,10 +20,14 @@ export function MatrixView({ group, live }: {
   group: TestRunGroupDto;
   live?: LiveProgress;
 }) {
+  const { t } = useLingui();
   const runs = group.runs;
   const [searchParams, setSearchParams] = useSearchParams();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
   const caseParam = searchParams.get('case');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- filter state token, not UI copy
   const [filter, setFilter] = useState<MatrixFilter>('all');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- sort state token, not UI copy
   const [sort, setSort] = useState<MatrixSort>('order');
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
@@ -41,6 +46,7 @@ export function MatrixView({ group, live }: {
 
   const clearCaseParam = () => setSearchParams(prev => {
     const next = new URLSearchParams(prev);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
     next.delete('case');
     return next;
   }, { replace: true });
@@ -49,7 +55,7 @@ export function MatrixView({ group, live }: {
   const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort, active), [allRows, filter, sort, active]);
 
   const multi = runs.length > 1;
-  const gridCols = `minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`;
+  const gridCols = cn(`minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`);
   const selIdx = openCase ? rows.findIndex(r => r.caseId === openCase.caseId) : -1;
 
   return (
@@ -57,11 +63,11 @@ export function MatrixView({ group, live }: {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-h2 font-semibold">Test case matrix</span>
+          <span className="text-h2 font-semibold"><Trans>Test case matrix</Trans></span>
           <span className="text-body-sm text-muted">
             {multi
-              ? <>{counts.all} cases × {runs.length} models — divergent rows striped</>
-              : `${counts.all} cases × 1 model`}
+              ? <Trans>{counts.all} cases × {runs.length} models — divergent rows striped</Trans>
+              : <Trans>{counts.all} cases × 1 model</Trans>}
           </span>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -69,29 +75,29 @@ export function MatrixView({ group, live }: {
             value={filter}
             onChange={setFilter}
             segments={[
-              { value: 'all', label: 'All', count: counts.all },
-              ...(multi ? [{ value: 'divergent' as const, label: 'Divergent', count: counts.divergent }] : []),
-              { value: 'failing', label: 'Failing', count: counts.failing },
-              { value: 'passing', label: 'Passing', count: counts.passing },
+              { value: 'all', label: t`All`, count: counts.all },
+              ...(multi ? [{ value: 'divergent' as const, label: t`Divergent`, count: counts.divergent }] : []),
+              { value: 'failing', label: t`Failing`, count: counts.failing },
+              { value: 'passing', label: t`Passing`, count: counts.passing },
             ]}
           />
           <SegmentedControl
             value={sort}
             onChange={setSort}
-            segments={[{ value: 'order', label: 'Order' }, { value: 'worst', label: 'Worst' }]}
+            segments={[{ value: 'order', label: t`Order` }, { value: 'worst', label: t`Worst` }]}
           />
         </div>
       </div>
 
       {/* Matrix */}
       {rows.length === 0 ? (
-        <div className="py-[60px] text-center text-muted text-body">No cases match this filter.</div>
+        <div className="py-[60px] text-center text-muted text-body"><Trans>No cases match this filter.</Trans></div>
       ) : (
         <div className="flex-1 min-h-0 overflow-auto">
           <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]">Test case</div>
-            <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right">Lat</div>
+            <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]"><Trans>Test case</Trans></div>
+            <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right"><Trans>Lat</Trans></div>
             {runs.map(run => (
               <div key={run.id} data-testid={`matrix-col-${run.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center">
                 <ModelTag name={run.endpointName} size="xs" />
@@ -104,8 +110,8 @@ export function MatrixView({ group, live }: {
               const passes = withResult.filter(c => c.pass === true).length;
               const total = withResult.length;
               const isSelected = openCase?.caseId === row.caseId;
-              const stripe = row.divergent ? 'shadow-[inset_3px_0_0_var(--warn)]' : '';
-              const selBg = isSelected ? 'bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]' : '';
+              const stripe = row.divergent ? cn('shadow-[inset_3px_0_0_var(--warn)]') : '';
+              const selBg = isSelected ? cn('bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]') : '';
               const avg = row.cells.map(c => c.result?.durationMs).filter((d): d is number => d != null);
               const avgMs = avg.length ? avg.reduce((a, b) => a + b, 0) / avg.length : null;
 
@@ -119,7 +125,7 @@ export function MatrixView({ group, live }: {
                     onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary })}
                     data-testid={`matrix-row-${row.caseId}`}
                     className={cn('px-4 py-2.5 flex items-center gap-2.5 min-w-0 hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', stripe, selBg, FOCUS_RING)}
-                    title={`Compare all models — ${row.summary}`}
+                    title={t`Compare all models — ${row.summary}`}
                   >
                     {multi ? (
                       <span className={cn('mono text-caption font-bold px-1 py-0.5 rounded-sm shrink-0', divChipClass(row.divergent, passes, total))}>{passes}/{total}</span>
@@ -151,7 +157,7 @@ export function MatrixView({ group, live }: {
             })}
 
             {/* Footer: pass rate + avg latency per model */}
-            <div className="sticky bottom-0 z-20 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary">Pass rate</div>
+            <div className="sticky bottom-0 z-20 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary"><Trans>Pass rate</Trans></div>
             <div className="sticky bottom-0 z-20 bg-card border-t border-hairline" />
             {runs.map(run => {
               const pr = passRatePercent(run.passedCases, run.passedCases + run.failedCases);
@@ -185,11 +191,11 @@ export function MatrixView({ group, live }: {
 }
 
 function verdictDotClass(pass: boolean | null | undefined): string {
-  return pass === true ? 'bg-success' : pass === false ? 'bg-danger' : 'bg-[var(--text-muted)]';
+  return pass === true ? cn('bg-success') : pass === false ? cn('bg-danger') : cn('bg-[var(--text-muted)]');
 }
 
 function divChipClass(divergent: boolean, passes: number, total: number): string {
-  if (divergent) return 'bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn';
-  if (passes === total) return 'text-muted';
-  return 'bg-[color-mix(in_srgb,var(--danger)_18%,transparent)] text-danger';
+  if (divergent) return cn('bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn');
+  if (passes === total) return cn('text-muted');
+  return cn('bg-[color-mix(in_srgb,var(--danger)_18%,transparent)] text-danger');
 }

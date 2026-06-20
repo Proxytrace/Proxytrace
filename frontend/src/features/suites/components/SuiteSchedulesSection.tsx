@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
 import { useFeature } from '../../../api/license';
 import { showUpgradeModal } from '../../../components/license/UpgradeModal';
@@ -21,6 +22,7 @@ interface Props { suiteId: string; suiteName: string; agentId: string; }
  * `ScheduledTestRuns` feature like the rest of scheduling.
  */
 export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
+  const { t } = useLingui();
   const licensed = useFeature('ScheduledTestRuns');
   const navigate = useNavigate();
   const { schedules, isLoading } = useTestRunSchedules(agentId);
@@ -56,7 +58,7 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
     <div className="flex flex-col gap-2" data-testid="suite-schedules-section">
       <div className="flex items-center justify-between">
         <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
-          {activeCount} active · {suiteSchedules.length} total
+          <Trans>{activeCount} active · {suiteSchedules.length} total</Trans>
         </span>
         <Button
           variant="secondary"
@@ -65,7 +67,7 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
           leftIcon={licensed ? <ClockIcon size={13} /> : <LockIcon size={13} />}
           data-testid="suite-schedule-create-btn"
         >
-          {licensed ? 'New schedule' : 'Upgrade to schedule'}
+          {licensed ? <Trans>New schedule</Trans> : <Trans>Upgrade to schedule</Trans>}
         </Button>
       </div>
 
@@ -73,7 +75,7 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
 
       {!isLoading && suiteSchedules.length === 0 && (
         <div data-testid="suite-schedules-empty-state">
-          <EmptyState title="No schedules" description="Run this suite on a recurring cadence." />
+          <EmptyState title={t`No schedules`} description={t`Run this suite on a recurring cadence.`} />
         </div>
       )}
 
@@ -105,8 +107,8 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
 
       {deleteTarget && (
         <ConfirmDialog
-          title={`Delete schedule "${deleteTarget.name}"?`}
-          message="This stops future runs. Existing runs it produced are kept."
+          title={t`Delete schedule "${deleteTarget.name}"?`}
+          message={t`This stops future runs. Existing runs it produced are kept.`}
           onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })}
           onCancel={() => setDeleteTarget(null)}
           loading={remove.isPending}

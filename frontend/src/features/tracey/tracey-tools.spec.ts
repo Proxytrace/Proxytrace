@@ -362,11 +362,14 @@ describe('tracey entity-fetch tools', () => {
     }]);
     const ctx = makeCtx();
 
-    const result = await exec(createTraceyTools(ctx).list_theories, { agentId: 'a1' }, ctx) as {
+    // agentId must be a real entity id — list_theories guards with isEntityId (a non-GUID would
+    // trip the backend's `[FromQuery] Guid?` 400), short-circuiting to notFound before the API call.
+    const agentId = '11111111-1111-1111-1111-111111111111';
+    const result = await exec(createTraceyTools(ctx).list_theories, { agentId }, ctx) as {
       kind: string; summary: { count: number; items: { id: string; status: string }[] };
     };
 
-    expect(theoriesApi.getAll).toHaveBeenCalledWith({ projectId: 'proj-1', agentId: 'a1' });
+    expect(theoriesApi.getAll).toHaveBeenCalledWith({ projectId: 'proj-1', agentId });
     expect(result.kind).toBe('theory-list');
     expect(result.summary.items[0]).toMatchObject({ id: 'th1', status: 'Invalidated' });
   });

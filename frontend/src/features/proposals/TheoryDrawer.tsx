@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { Drawer } from '../../components/overlays/Drawer';
 import type { OptimizationProposalDto, ProposalStatus, TheoryDto } from '../../api/models';
 import { TheoryStatus } from '../../api/models';
@@ -23,10 +24,11 @@ interface Props {
  * test validates it, the body leads with the concrete change and its effective gain instead.
  */
 export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending, onClose }: Props) {
+  const { i18n } = useLingui();
   const body = { theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending };
   return (
     <Drawer
-      title={`${theoryShortId(theory.id)} · ${KIND_META[theory.kind].label}`}
+      title={`${theoryShortId(theory.id)} · ${i18n._(KIND_META[theory.kind].label)}`}
       subtitle={theory.agentName}
       onClose={onClose}
     >

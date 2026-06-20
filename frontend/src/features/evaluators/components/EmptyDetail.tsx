@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { PlusIcon } from '../../../components/icons';
 import { FlaskIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
@@ -11,16 +12,16 @@ export function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: (
       </div>
       <div>
         <div className="text-[14px] font-semibold text-secondary">
-          {hasAny ? 'Select an evaluator' : 'No evaluators yet'}
+          {hasAny ? <Trans>Select an evaluator</Trans> : <Trans>No evaluators yet</Trans>}
         </div>
         <div className="text-[12px] mt-1 max-w-[320px]">
           {hasAny
-            ? 'Pick one from the list to view its definition, attached suites, and performance.'
-            : 'Create your first evaluator to start scoring agent responses.'}
+            ? <Trans>Pick one from the list to view its definition, attached suites, and performance.</Trans>
+            : <Trans>Create your first evaluator to start scoring agent responses.</Trans>}
         </div>
       </div>
       <Button variant="primary" className="mt-1" leftIcon={<PlusIcon size={13} />} onClick={onCreate}>
-        New evaluator
+        <Trans>New evaluator</Trans>
       </Button>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -8,7 +9,9 @@ import { USER_ROLES } from '../users';
 
 /** Admin form to invite a new local user by email; surfaces the share link on success. */
 export function InviteUserForm() {
+  const { t } = useLingui();
   const [email, setEmail] = useState('');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- UserRole enum token, not UI copy
   const [role, setRole] = useState<UserRole>('Member');
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -35,7 +38,7 @@ export function InviteUserForm() {
       >
         <div className="w-64">
           <Input
-            placeholder="Email"
+            placeholder={t`Email`}
             type="email"
             data-testid="invite-email-input"
             value={email}
@@ -57,16 +60,16 @@ export function InviteUserForm() {
           </Select>
         </div>
         <Button type="submit" loading={create.isPending} data-testid="invite-create-btn">
-          Create invite
+          <Trans>Create invite</Trans>
         </Button>
       </form>
 
       {createdUrl && (
         <div className="flex items-center gap-2 rounded border border-border bg-surface p-3 text-sm">
-          <span className="text-muted">Share this link:</span>
+          <span className="text-muted"><Trans>Share this link:</Trans></span>
           <code className="flex-1 truncate">{createdUrl}</code>
           <Button variant="secondary" size="sm" onClick={copy}>
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </Button>
         </div>
       )}

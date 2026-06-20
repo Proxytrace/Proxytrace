@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ActivityIcon } from '../../../../components/icons';
 import { StatusDot } from '../../../../components/ui/StatusDot';
 import { Pill } from '../../../../components/ui/Pill';
@@ -9,6 +10,8 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_trace` tool result. */
 export const TraceCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: trace } = useArtifactResult('trace', result, status, isError);
   return (
     <EntityCardLink
@@ -18,7 +21,7 @@ export const TraceCardToolUI: ToolCallMessagePartComponent = ({ result, status, 
       icon={<ActivityIcon size={14} />}
       color={modelColor(trace?.model ?? '')}
       testId="tracey-trace-card"
-      pendingLabel="Loading trace…"
+      pendingLabel={t`Loading trace…`}
     >
       {trace && (
         <div className="flex flex-col gap-2">
@@ -28,8 +31,9 @@ export const TraceCardToolUI: ToolCallMessagePartComponent = ({ result, status, 
             <Pill label={trace.provider} color={providerColor(trace.provider)} size="sm" />
           </div>
           <div className="font-mono text-body-sm tabular-nums text-muted">
-            {fmtTokens(trace.inputTokens)} in · {fmtTokens(trace.outputTokens)} out ·{' '}
-            {fmtDuration(trace.durationMs)} · {fmtCost(trace.costEur)}
+            <Trans>
+              {fmtTokens(trace.inputTokens)} in · {fmtTokens(trace.outputTokens)} out · {fmtDuration(trace.durationMs)} · {fmtCost(trace.costEur)}
+            </Trans>
           </div>
         </div>
       )}

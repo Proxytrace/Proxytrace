@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useSetLicense, useValidateLicense } from '../../api/license';
 import type { ValidateLicenseResultDto } from '../../api/license';
 import { Button } from '../ui/Button';
@@ -13,6 +14,7 @@ import { fmtDate } from '../../lib/format';
  * stores and applies the key without a restart.
  */
 export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
+  const { t } = useLingui();
   const [key, setKey] = useState('');
   const [preview, setPreview] = useState<ValidateLicenseResultDto | null>(null);
   const validate = useValidateLicense();
@@ -26,7 +28,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
   const onActivate = () =>
     apply.mutate(trimmed, {
       onSuccess: () => {
-        showToast('License activated.', 'success');
+        showToast(t`License activated.`, 'success');
         setKey('');
         setPreview(null);
         onApplied?.();
@@ -43,25 +45,25 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
           setKey(e.target.value);
           setPreview(null);
         }}
-        placeholder="Paste your license key (JWT) here"
+        placeholder={t`Paste your license key (JWT) here`}
         className="font-mono text-body-sm"
         data-testid="license-key-input"
-        aria-label="License key"
+        aria-label={t`License key`}
       />
 
       {preview && (preview.valid ? (
         <div className="flex items-center gap-1.5 text-body-sm text-success" data-testid="license-validate-ok">
           <CheckIcon size={12} strokeWidth={2.5} />
           <span>
-            Valid {preview.tier === 'enterprise' ? 'Enterprise' : 'Free'} license
-            {preview.customerEmail ? ` for ${preview.customerEmail}` : ''}
-            {preview.expiresAt ? `, valid until ${fmtDate(preview.expiresAt)}` : ''}
+            {t`Valid ${preview.tier === 'enterprise' ? 'Enterprise' : 'Free'} license`}
+            {preview.customerEmail ? t` for ${preview.customerEmail}` : ''}
+            {preview.expiresAt ? t`, valid until ${fmtDate(preview.expiresAt)}` : ''}
           </span>
         </div>
       ) : (
         <div className="flex items-center gap-1.5 text-body-sm text-danger" data-testid="license-validate-error">
           <AlertTriangleIcon size={12} />
-          <span>{preview.reason ?? 'This license key is not valid.'}</span>
+          <span>{preview.reason ?? t`This license key is not valid.`}</span>
         </div>
       ))}
 
@@ -74,7 +76,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
           onClick={onValidate}
           data-testid="license-validate-btn"
         >
-          Validate
+          <Trans>Validate</Trans>
         </Button>
         <Button
           size="sm"
@@ -84,7 +86,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
           onClick={onActivate}
           data-testid="license-activate-btn"
         >
-          Activate license
+          <Trans>Activate license</Trans>
         </Button>
       </div>
     </div>

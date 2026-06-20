@@ -4,6 +4,7 @@ import { projectsApi } from "../api/projects";
 import { QUERY_KEYS } from "../api/query-keys";
 import ProjectContext, { type ProjectContextValue } from "./ProjectContext";
 
+// eslint-disable-next-line lingui/no-unlocalized-strings -- localStorage key, not UI copy
 const STORAGE_KEY = "proxytrace:current-project-id";
 
 function readStored(): string | null {
@@ -23,6 +24,7 @@ function writeStored(id: string | null) {
   }
 }
 
+/* eslint-disable lingui/no-unlocalized-strings -- react-query cache key identifiers, not UI copy */
 const PROJECT_SCOPED_KEYS = new Set([
   "agents",
   "agent-calls",
@@ -36,6 +38,7 @@ const PROJECT_SCOPED_KEYS = new Set([
   "statistics-agent-breakdown",
   "provider-keys",
 ]);
+/* eslint-enable lingui/no-unlocalized-strings */
 
 export default function ProjectProvider({
   children,

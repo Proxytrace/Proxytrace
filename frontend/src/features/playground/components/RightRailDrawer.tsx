@@ -2,6 +2,9 @@
  * The slide-out drawer panel of the RightRail: displays the active section header
  * and its body (system prompt editor, parameter sliders, or tool editor).
  */
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { XIcon } from '../../../components/icons';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -13,18 +16,21 @@ import { SECTION_TITLES, type SectionKey } from '../playgroundMeta';
 import { ToolEditor } from './ToolEditor';
 import { ParameterSlider } from './ParameterSlider';
 
-const SECTION_HINTS: Record<SectionKey, string> = {
-  system: 'Instructions sent to the model before user messages.',
-  parameters: 'Sampling and budget controls.',
-  tools: 'Tool specifications offered to the model.',
+const SECTION_HINTS: Record<SectionKey, MessageDescriptor> = {
+  system: msg`Instructions sent to the model before user messages.`,
+  parameters: msg`Sampling and budget controls.`,
+  tools: msg`Tool specifications offered to the model.`,
 };
 
-const REASONING_OPTIONS = [
-  { value: null, label: 'Off' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-] as const;
+const REASONING_OPTIONS: { value: 'low' | 'medium' | 'high' | null; label: MessageDescriptor }[] = [
+  { value: null, label: msg`Off` },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- reasoning-effort API enum token, not UI copy
+  { value: 'low', label: msg`Low` },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- reasoning-effort API enum token, not UI copy
+  { value: 'medium', label: msg`Medium` },
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- reasoning-effort API enum token, not UI copy
+  { value: 'high', label: msg`High` },
+];
 
 interface Props {
   active: SectionKey;
@@ -43,6 +49,7 @@ export function RightRailDrawer({
   onChange,
   onClose,
 }: Props) {
+  const { t, i18n } = useLingui();
   const systemPromptModified = defaultSystemPrompt != null && overrides.systemPrompt !== defaultSystemPrompt;
 
   const setParamRaw = (key: keyof ModelParametersDto, value: string) => {
@@ -59,21 +66,21 @@ export function RightRailDrawer({
     <div className="w-[340px] rounded-lg flex flex-col overflow-hidden mr-[8px] fade-up bg-card border border-border shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-[8px] px-[14px] py-[10px] border-b border-border">
         <div className="flex flex-col min-w-0">
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">Settings</span>
-          <span className="text-[13px] font-semibold text-primary truncate">{SECTION_TITLES[active]}</span>
+          <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Settings</Trans></span>
+          <span className="text-[13px] font-semibold text-primary truncate">{i18n._(SECTION_TITLES[active])}</span>
         </div>
         <IconButton
           className="ml-auto"
           onClick={onClose}
-          title="Close"
-          aria-label="Close settings"
+          title={t`Close`}
+          aria-label={t`Close settings`}
         >
           <XIcon size={13} strokeWidth={2.4} />
         </IconButton>
       </header>
 
       <div className="px-[14px] py-[12px] overflow-y-auto flex-1 flex flex-col gap-[10px]">
-        <p className="text-[11px] text-muted leading-[1.5]">{SECTION_HINTS[active]}</p>
+        <p className="text-[11px] text-muted leading-[1.5]">{i18n._(SECTION_HINTS[active])}</p>
         {active === 'system' && (
           <SystemSection
             overrides={overrides}
@@ -112,6 +119,7 @@ interface SystemSectionProps {
 }
 
 function SystemSection({ overrides, defaultSystemPrompt, systemPromptModified, onChange }: SystemSectionProps) {
+  const { t } = useLingui();
   return (
     <div className="flex flex-col gap-[6px]">
       <Textarea
@@ -119,14 +127,14 @@ function SystemSection({ overrides, defaultSystemPrompt, systemPromptModified, o
         rows={10}
         value={overrides.systemPrompt}
         onChange={e => onChange({ ...overrides, systemPrompt: e.target.value })}
-        placeholder="System instructions sent to the agent"
-        aria-label="System prompt"
+        placeholder={t`System instructions sent to the agent`}
+        aria-label={t`System prompt`}
       />
       <div className="flex justify-between text-[10.5px] text-muted mono">
-        <span>{overrides.systemPrompt.length} chars</span>
+        <span><Trans>{overrides.systemPrompt.length} chars</Trans></span>
         {systemPromptModified && defaultSystemPrompt != null && (
           <Button variant="link" onClick={() => onChange({ ...overrides, systemPrompt: defaultSystemPrompt })}>
-            Reset
+            <Trans>Reset</Trans>
           </Button>
         )}
       </div>
@@ -149,10 +157,11 @@ function ParametersSection({
   setParam,
   setParamRaw,
 }: ParametersSectionProps) {
+  const { t } = useLingui();
   return (
     <div className="flex flex-col gap-[14px]">
       <ParameterSlider
-        label="Temperature"
+        label={t`Temperature`}
         value={overrides.parameters.temperature}
         defaultValue={defaultParameters?.temperature ?? null}
         min={0} max={2} step={0.01}
@@ -160,21 +169,21 @@ function ParametersSection({
         testId="parameter-slider-temperature"
       />
       <ParameterSlider
-        label="Top-P"
+        label={t`Top-P`}
         value={overrides.parameters.topP}
         defaultValue={defaultParameters?.topP ?? null}
         min={0} max={1} step={0.01}
         onChange={v => setParam('topP', v)}
       />
       <ParameterSlider
-        label="Freq Penalty"
+        label={t`Freq Penalty`}
         value={overrides.parameters.frequencyPenalty}
         defaultValue={defaultParameters?.frequencyPenalty ?? null}
         min={-2} max={2} step={0.01}
         onChange={v => setParam('frequencyPenalty', v)}
       />
       <ParameterSlider
-        label="Pres Penalty"
+        label={t`Pres Penalty`}
         value={overrides.parameters.presencePenalty}
         defaultValue={defaultParameters?.presencePenalty ?? null}
         min={-2} max={2} step={0.01}
@@ -183,7 +192,7 @@ function ParametersSection({
 
       <div className="grid grid-cols-3 gap-[6px]">
         <label className="flex flex-col gap-[3px]">
-          <span className="text-[10.5px] text-muted">Max tokens</span>
+          <span className="text-[10.5px] text-muted"><Trans>Max tokens</Trans></span>
           <Input
             type="number" min={1} step={1}
             value={overrides.parameters.maxTokens ?? ''}
@@ -192,7 +201,7 @@ function ParametersSection({
           />
         </label>
         <label className="flex flex-col gap-[3px]">
-          <span className="text-[10.5px] text-muted">Seed</span>
+          <span className="text-[10.5px] text-muted"><Trans>Seed</Trans></span>
           <Input
             type="number" step={1}
             value={overrides.parameters.seed ?? ''}
@@ -201,7 +210,7 @@ function ParametersSection({
           />
         </label>
         <label className="flex flex-col gap-[3px]">
-          <span className="text-[10.5px] text-muted">N</span>
+          <span className="text-[10.5px] text-muted"><Trans>N</Trans></span>
           <Input
             type="number" min={1} step={1}
             value={overrides.parameters.n ?? ''}
@@ -222,16 +231,19 @@ interface ReasoningEffortControlProps {
 }
 
 function ReasoningEffortControl({ overrides, onChange }: ReasoningEffortControlProps) {
+  const { i18n } = useLingui();
   return (
     <div className="flex flex-col gap-[5px]">
-      <span className="text-[10.5px] text-muted uppercase tracking-[0.06em] font-semibold">Reasoning effort</span>
+      <span className="text-[10.5px] text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Reasoning effort</Trans></span>
       <SegmentedControl
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- "off" sentinel maps null reasoning effort, not UI copy
         value={overrides.parameters.reasoningEffort ?? 'off'}
         onChange={v => onChange({
           ...overrides,
           parameters: { ...overrides.parameters, reasoningEffort: v === 'off' ? null : v },
         })}
-        segments={REASONING_OPTIONS.map(opt => ({ value: opt.value ?? 'off', label: opt.label }))}
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- "off" sentinel maps null reasoning effort, not UI copy
+        segments={REASONING_OPTIONS.map(opt => ({ value: opt.value ?? 'off', label: i18n._(opt.label) }))}
       />
     </div>
   );

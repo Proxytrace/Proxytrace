@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { SearchHit } from '../../api/search';
 import { useAgentPreview } from './hooks/useSearchPreviewQuery';
 import { MetaGrid, PreviewLoading } from './SearchPreviewPrimitives';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function AgentPreview({ id, hit }: Props) {
+  const { t } = useLingui();
   const q = useAgentPreview(id);
   if (q.isLoading) return <PreviewLoading />;
   if (q.isError || !q.data) return <GenericBody hit={hit} />;
@@ -19,19 +21,19 @@ export function AgentPreview({ id, hit }: Props) {
   return (
     <>
       <MetaGrid entries={[
-        ['Project',  a.projectName],
-        ['Endpoint', a.endpointName],
-        ['Tools',    String(a.tools?.length ?? 0)],
+        [t`Project`,  a.projectName],
+        [t`Endpoint`, a.endpointName],
+        [t`Tools`,   String(a.tools?.length ?? 0)],
       ]} />
       {a.systemMessage && (
-        <PreviewSection title="System prompt">
+        <PreviewSection title={t`System prompt`}>
           <pre className="text-[11.5px] text-white/75 leading-relaxed whitespace-pre-wrap break-words m-0 font-sans">
             {truncate(a.systemMessage, 600)}
           </pre>
         </PreviewSection>
       )}
       {a.tools && a.tools.length > 0 && (
-        <PreviewSection title="Tools">
+        <PreviewSection title={t`Tools`}>
           <div className="flex flex-wrap gap-1.5">
             {a.tools.map(t => (
               <span

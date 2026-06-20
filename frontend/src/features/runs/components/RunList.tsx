@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunGroupListItemDto } from '../../../api/models';
 import { cn } from '../../../lib/cn';
 import { FOCUS_RING } from '../../../lib/constants';
@@ -21,15 +22,17 @@ interface Props {
  * here (no create action) and aren't searched — both header slots collapse; the filter band holds
  * the agent filter + the A/B-runs toggle. The page owns the Runs/Scheduled tabs above this. */
 export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, agentFilter, showSystem, onToggleSystem }: Props) {
+  const { t } = useLingui();
   return (
     <ListRail
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy
       listTestId="run-list"
-      title="Runs"
+      title={t`Runs`}
       count={groups.length}
       filter={
         <div className="flex items-center gap-2">
           <FilterDropdown
-            label="Agent"
+            label={t`Agent`}
             value={agentFilter.value}
             options={agentFilter.options}
             onChange={agentFilter.onChange}
@@ -43,21 +46,21 @@ export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, age
             type="button"
             onClick={onToggleSystem}
             aria-pressed={showSystem}
-            title="Show ephemeral A/B validation runs"
+            title={t`Show ephemeral A/B validation runs`}
             className={cn(
               'shrink-0 rounded-md px-2.5 py-1 text-body-sm font-medium cursor-pointer transition-colors duration-[var(--motion-fast)]',
               FOCUS_RING,
               showSystem ? 'bg-accent-subtle text-accent' : 'bg-card-2 text-muted hover:text-secondary',
             )}
           >
-            A/B runs
+            <Trans>A/B runs</Trans>
           </button>
         </div>
       }
       loading={isLoading}
       skeletonHeight={110}
       isEmpty={groups.length === 0}
-      empty={<EmptyState title="No test runs yet" description="Run a suite to get started." />}
+      empty={<EmptyState title={t`No test runs yet`} description={t`Run a suite to get started.`} />}
     >
       <div className="flex flex-col gap-2">
         {groups.map(group => (

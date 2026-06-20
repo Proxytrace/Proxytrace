@@ -14,16 +14,16 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const ELEVATION_CLS: Record<CardElevation, string> = {
-  flat: 'bg-card border border-hairline rounded-lg',
-  raised: 'bg-card rounded-lg shadow-[var(--shadow-card)]',
-  floating: 'bg-surface-2 rounded-xl shadow-[var(--shadow-float)] border border-border',
+  flat: cn('bg-card border border-hairline rounded-lg'),
+  raised: cn('bg-card rounded-lg shadow-[var(--shadow-card)]'),
+  floating: cn('bg-surface-2 rounded-xl shadow-[var(--shadow-float)] border border-border'),
 };
 
 const PADDING_CLS: Record<CardPadding, string> = {
   none: '',
-  sm: 'p-3',
-  md: 'p-4',
-  lg: 'p-5',
+  sm: cn('p-3'),
+  md: cn('p-4'),
+  lg: cn('p-5'),
 };
 
 export function Card({

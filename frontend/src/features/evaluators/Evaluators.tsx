@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useSelectedId } from '../../hooks/useSelectedId';
 import { EvaluatorKind, type EvaluatorDetailDto } from '../../api/models';
@@ -25,11 +26,13 @@ import {
 
 export default function Evaluators() {
   const navigate = useNavigate();
+  const { t, i18n } = useLingui();
   // Selection lives in ?id= (survives refresh, shareable). The default (first
   // evaluator) is derived below, not written to the URL.
   const [selectedId, setSelectedId] = useSelectedId();
   const { currentProjectId } = useCurrentProject();
 
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
   const [range, setRange] = useState<RangeKey>('7d');
   const [showNew, setShowNew] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);
@@ -149,14 +152,14 @@ export default function Evaluators() {
 
       {editTarget && (
         <Modal
-          title={`Edit ${META[editTarget.kind]?.label ?? 'Evaluator'}`}
+          title={t`Edit ${META[editTarget.kind] ? i18n._(META[editTarget.kind].label) : 'Evaluator'}`}
           onClose={() => setEditTargetId(null)}
           maxWidth={520}
           footer={
             <ModalFooter
               onCancel={() => setEditTargetId(null)}
               onSubmit={submitUpdate}
-              submitLabel={updateEval.isPending ? 'Saving…' : 'Save'}
+              submitLabel={updateEval.isPending ? t`Saving…` : t`Save`}
               loading={updateEval.isPending}
             />
           }
@@ -167,20 +170,20 @@ export default function Evaluators() {
 
       {deleteTarget && (
         <Modal
-          title={`Delete "${deleteTarget.name}"`}
+          title={t`Delete "${deleteTarget.name}"`}
           onClose={() => setDeleteTargetId(null)}
           footer={
             <ModalFooter
               onCancel={() => setDeleteTargetId(null)}
               onSubmit={submitDelete}
-              submitLabel={deleteEval.isPending ? 'Deleting…' : 'Delete'}
+              submitLabel={deleteEval.isPending ? t`Deleting…` : t`Delete`}
               loading={deleteEval.isPending}
               danger
             />
           }
         >
           <p className="text-[13px] text-secondary m-0">
-            This will permanently remove <strong>{deleteTarget.name}</strong> and detach it from all test suites.
+            <Trans>This will permanently remove <strong>{deleteTarget.name}</strong> and detach it from all test suites.</Trans>
           </p>
         </Modal>
       )}

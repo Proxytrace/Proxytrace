@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useLingui } from '@lingui/react/macro';
 import { type EvaluationResultDto, type MessageDto } from '../../../api/models';
 import { evaluatorTestBenchApi } from '../../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../../api/query-keys';
@@ -25,6 +26,7 @@ export type PlaygroundSession = ReturnType<typeof usePlaygroundSession>;
  * target changes (derive-on-change, no effect — BEST_PRACTICES §4.1).
  */
 export function usePlaygroundSession(evaluatorId: string, selectedCaseId: string | null) {
+  const { i18n } = useLingui();
   const [actualOverride, setActualOverride] = useState<string | null>(null);
   const [runs, setRuns] = useState<SessionRun[]>([]);
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export function usePlaygroundSession(evaluatorId: string, selectedCaseId: string
     run: runMutation.mutate,
     runPending: runMutation.isPending,
     runError: runMutation.isError,
-    runLabel: runLabel(runMutation.isPending, runs.length > 0),
+    runLabel: i18n._(runLabel(runMutation.isPending, runs.length > 0)),
     runDisabled: effectiveCaseId == null || payloadQuery.isLoading || runMutation.isPending,
     runs,
     currentRun,

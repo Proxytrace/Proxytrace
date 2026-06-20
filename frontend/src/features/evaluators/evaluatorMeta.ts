@@ -1,31 +1,33 @@
+import { msg } from "@lingui/core/macro";
+import type { MessageDescriptor } from "@lingui/core";
 import { EvaluatorKind, EvaluationScore } from "../../api/models";
 
 export interface EvaluatorMeta {
-  label: string;
-  short: string;
-  desc: string;
+  label: MessageDescriptor;
+  short: MessageDescriptor;
+  desc: MessageDescriptor;
 }
 
 export const META: Record<EvaluatorKind, EvaluatorMeta> = {
   [EvaluatorKind.Agentic]: {
-    label: "LLM Judge",
-    short: "LLM judge",
-    desc: "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric.",
+    label: msg`LLM Judge`,
+    short: msg`LLM judge`,
+    desc: msg`A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric.`,
   },
   [EvaluatorKind.ExactMatch]: {
-    label: "Exact Match",
-    short: "Rule",
-    desc: "Passes when the agent response exactly matches the expected output.",
+    label: msg`Exact Match`,
+    short: msg`Rule`,
+    desc: msg`Passes when the agent response exactly matches the expected output.`,
   },
   [EvaluatorKind.JsonSchemaMatch]: {
-    label: "JSON Schema Match",
-    short: "Rule",
-    desc: "Validates the agent response against a JSON Schema definition.",
+    label: msg`JSON Schema Match`,
+    short: msg`Rule`,
+    desc: msg`Validates the agent response against a JSON Schema definition.`,
   },
   [EvaluatorKind.NumericMatch]: {
-    label: "Numeric Match",
-    short: "Numeric",
-    desc: "Extract a number from the response and check it within a tolerance.",
+    label: msg`Numeric Match`,
+    short: msg`Numeric`,
+    desc: msg`Extract a number from the response and check it within a tolerance.`,
   },
 };
 
@@ -72,14 +74,14 @@ export const KIND_CATEGORY: Record<EvaluatorKind, TypeCategory> = {
 };
 
 export interface TypeMeta {
-  label: string;
-  short: string;
+  label: MessageDescriptor;
+  short: MessageDescriptor;
 }
 
 export const TYPE_META: Record<TypeCategory, TypeMeta> = {
-  llm: { label: "LLM-as-judge", short: "LLM judge" },
-  rule: { label: "Rule-based", short: "Rule" },
-  numeric: { label: "Numeric extract", short: "Numeric" },
+  llm: { label: msg`LLM-as-judge`, short: msg`LLM judge` },
+  rule: { label: msg`Rule-based`, short: msg`Rule` },
+  numeric: { label: msg`Numeric extract`, short: msg`Numeric` },
 };
 
 /** Ordered categories used for grouping the rail and for the type filter. */
@@ -95,12 +97,12 @@ export const SCORE_ORDER: EvaluationScore[] = [
   EvaluationScore.Excellent,
 ];
 
-export const SCORE_LABEL: Record<EvaluationScore, string> = {
-  [EvaluationScore.Terrible]: "Terrible",
-  [EvaluationScore.Bad]: "Bad",
-  [EvaluationScore.Acceptable]: "Acceptable",
-  [EvaluationScore.Good]: "Good",
-  [EvaluationScore.Excellent]: "Excellent",
+export const SCORE_LABEL: Record<EvaluationScore, MessageDescriptor> = {
+  [EvaluationScore.Terrible]: msg`Terrible`,
+  [EvaluationScore.Bad]: msg`Bad`,
+  [EvaluationScore.Acceptable]: msg`Acceptable`,
+  [EvaluationScore.Good]: msg`Good`,
+  [EvaluationScore.Excellent]: msg`Excellent`,
 };
 
 // ── Pure derivations ─────────────────────────────────────────────────────────
@@ -148,7 +150,7 @@ export function tailAvgPassFraction(
 
 export interface ScoreBucketRow {
   score: EvaluationScore;
-  label: string;
+  label: MessageDescriptor;
   count: number;
 }
 

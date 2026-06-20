@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Button } from '../../../components/ui/Button';
 import { CopyButton } from '../../../components/ui/CopyButton';
 import { SkeletonList } from '../../../components/ui/Skeleton';
@@ -6,6 +7,7 @@ import { inviteStatus } from '../invitesMeta';
 
 /** Lists invites that are still pending (not yet redeemed or expired) with a copy/revoke action. */
 export function PendingInvitesTable() {
+  const { t } = useLingui();
   const { data, isLoading } = useInvites();
   const revoke = useRevokeInvite();
 
@@ -20,10 +22,10 @@ export function PendingInvitesTable() {
     <table className="w-full text-sm" data-testid="invite-list">
       <thead className="text-muted">
         <tr className="border-b border-border">
-          <th className="py-2 text-left">Email</th>
-          <th className="py-2 text-left">Role</th>
-          <th className="py-2 text-left">Status</th>
-          <th className="py-2 text-left">Expires</th>
+          <th className="py-2 text-left"><Trans>Email</Trans></th>
+          <th className="py-2 text-left"><Trans>Role</Trans></th>
+          <th className="py-2 text-left"><Trans>Status</Trans></th>
+          <th className="py-2 text-left"><Trans>Expires</Trans></th>
           <th />
         </tr>
       </thead>
@@ -32,13 +34,13 @@ export function PendingInvitesTable() {
           <tr key={i.id} data-testid={`invite-row-${i.id}`} className="border-b border-border/50">
             <td className="py-2">{i.email}</td>
             <td className="py-2">{i.role}</td>
-            <td className="py-2" data-testid={`invite-status-${i.id}`}>Pending</td>
+            <td className="py-2" data-testid={`invite-status-${i.id}`}><Trans>Pending</Trans></td>
             <td className="py-2">{new Date(i.expiresAt).toLocaleString()}</td>
             <td className="py-2">
               <div className="flex items-center justify-end gap-2">
                 <CopyButton
                   text={i.url}
-                  label="Copy invite link"
+                  label={t`Copy invite link`}
                   data-testid={`invite-copy-btn-${i.id}`}
                 />
                 <Button
@@ -48,7 +50,7 @@ export function PendingInvitesTable() {
                   onClick={() => revoke.mutate(i.id)}
                   className="text-danger hover:text-danger text-body-sm"
                 >
-                  Revoke
+                  <Trans>Revoke</Trans>
                 </Button>
               </div>
             </td>
@@ -57,7 +59,7 @@ export function PendingInvitesTable() {
         {pending.length === 0 && (
           <tr>
             <td colSpan={5} className="py-6 text-center text-muted">
-              No pending invites.
+              <Trans>No pending invites.</Trans>
             </td>
           </tr>
         )}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { Collapsible } from '../../../components/ui/Collapsible';
@@ -30,12 +31,15 @@ interface Props {
  * behind a collapsed section.
  */
 export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending }: Props) {
+  const { t, i18n } = useLingui();
   const review = REVIEW_META[proposal?.status ?? ProposalStatus.Draft];
   const reviewable = proposal?.status === ProposalStatus.Draft;
   // A reset re-runs validation from scratch; refused server-side once a proposal is promoted or
   // adopted, so hide it there.
   const canReset = proposal?.status !== ProposalStatus.Accepted && proposal?.status !== ProposalStatus.Adopted;
   const gain = buildGainSummary(theory, proposal);
+  const sourceLabel = i18n._(THEORY_SOURCE_LABEL[theory.source]);
+  const suite = suiteName ?? t`a suite`;
 
   return (
     <div className="flex flex-col gap-4" data-testid="validated-proposal">
@@ -50,18 +54,18 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
               onClick={() => onSetStatus(ProposalStatus.Accepted)}
               data-testid="proposal-promote-btn"
             >
-              Promote
+              <Trans>Promote</Trans>
             </Button>
             <Button
               variant="secondary" size="sm" disabled={actionPending}
               onClick={() => onSetStatus(ProposalStatus.Rejected)}
               data-testid="proposal-dismiss-btn"
             >
-              Dismiss
+              <Trans>Dismiss</Trans>
             </Button>
           </>
         ) : (
-          <p className="text-body-sm text-secondary m-0">{review.description}</p>
+          <p className="text-body-sm text-secondary m-0">{i18n._(review.description)}</p>
         )}
         {canReset && (
           <Button
@@ -71,7 +75,7 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
             onClick={onReset}
             data-testid="proposal-reset-btn"
           >
-            Reset to Proposed
+            <Trans>Reset to Proposed</Trans>
           </Button>
         )}
       </div>
@@ -80,22 +84,22 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-h2 font-semibold text-primary m-0">Proposed change</h3>
+          <h3 className="text-h2 font-semibold text-primary m-0"><Trans>Proposed change</Trans></h3>
           <span className={cn('inline-flex items-center rounded-sm px-2 py-[2px] text-caption font-semibold', TONE_SUBTLE_BG['accent'], TONE_TEXT['accent'])}>
-            {KIND_META[theory.kind].label}
+            {i18n._(KIND_META[theory.kind].label)}
           </span>
         </div>
         <ChangeSections details={theory.details} />
       </section>
 
       <Collapsible
-        title={<span className="text-body-sm font-medium">Theory & A/B test details</span>}
-        headerClassName="text-secondary hover:text-primary transition-colors py-1 cursor-pointer"
-        contentClassName="flex flex-col gap-3 mt-2"
+        title={<span className="text-body-sm font-medium"><Trans>Theory & A/B test details</Trans></span>}
+        headerClassName={cn('text-secondary hover:text-primary transition-colors py-1 cursor-pointer')}
+        contentClassName={cn('flex flex-col gap-3 mt-2')}
       >
         <div className="flex flex-col gap-1.5">
           <span className="text-caption text-muted">
-            Submitted via {THEORY_SOURCE_LABEL[theory.source]} · validated against {suiteName ?? 'a suite'}
+            <Trans>Submitted via {sourceLabel} · validated against {suite}</Trans>
           </span>
           <p className="text-body text-secondary leading-relaxed m-0">{theory.rationale}</p>
         </div>
@@ -107,7 +111,7 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
             to={`/runs?run=${theory.abTestRunId}`}
             className="inline-flex items-center gap-1 self-start text-body-sm text-secondary hover:text-primary transition-colors"
           >
-            View A/B run <ExternalLinkIcon size={11} />
+            <Trans>View A/B run</Trans> <ExternalLinkIcon size={11} />
           </Link>
         ) : null}
       </Collapsible>

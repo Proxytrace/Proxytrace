@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { RowButton } from '../../../components/ui/RowButton';
 import type { EvaluationScore, EvaluatorScoreBucketDto } from '../../../api/models';
@@ -16,6 +17,7 @@ interface Props {
 
 /** Horizontal bar chart of evaluation scores. Each bar filters the recent-evaluations table. */
 export function ScoreDistributionPanel({ buckets, category, totalRuns, range, selectedScore, onSelectScore }: Props) {
+  const { i18n } = useLingui();
   const data = fullScoreDistribution(buckets);
   const total = data.reduce((a, b) => a + b.count, 0);
   const max = Math.max(...data.map(d => d.count), 1);
@@ -25,16 +27,16 @@ export function ScoreDistributionPanel({ buckets, category, totalRuns, range, se
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">Score distribution</span>
-        <span className="text-[11px] text-muted">{range} · {totalRuns.toLocaleString()} runs</span>
+        <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Score distribution</Trans></span>
+        <span className="text-[11px] text-muted"><Trans>{range} · {totalRuns.toLocaleString()} runs</Trans></span>
         {selectedScore && (
-          <span className="ml-auto text-[10px] text-muted">Click a score to filter · selected highlights below</span>
+          <span className="ml-auto text-[10px] text-muted"><Trans>Click a score to filter · selected highlights below</Trans></span>
         )}
       </header>
       <div className="px-[18px] py-4">
         {empty ? (
           <div className="h-24 flex items-center justify-center text-muted text-[11.5px] border border-dashed border-border rounded-md">
-            No data in range
+            <Trans>No data in range</Trans>
           </div>
         ) : (
           <div className="flex flex-col gap-[3px]">
@@ -55,7 +57,7 @@ export function ScoreDistributionPanel({ buckets, category, totalRuns, range, se
                     selectedScore && !isActive && 'opacity-55',
                   )}
                 >
-                  <span className={cn('overflow-hidden text-ellipsis whitespace-nowrap text-left', isActive ? 'text-primary font-semibold' : 'text-secondary')}>{d.label}</span>
+                  <span className={cn('overflow-hidden text-ellipsis whitespace-nowrap text-left', isActive ? 'text-primary font-semibold' : 'text-secondary')}>{i18n._(d.label)}</span>
                   <div className="h-3 bg-[rgba(255,255,255,0.03)] rounded-[4px] overflow-hidden">
                     <div
                       className="h-full rounded-[4px] transition-[width] duration-300 ease-[var(--ease-standard)]"

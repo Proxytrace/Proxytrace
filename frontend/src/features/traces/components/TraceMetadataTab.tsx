@@ -2,6 +2,7 @@ import type { AgentCallDto } from '../../../api/models';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
 import { ModelParametersGrid } from '../../../components/ui/ModelParametersGrid';
 import { fmtDate } from '../../../lib/format';
+import { Trans } from '@lingui/react/macro';
 
 // ── Raw JSON tab ───────────────────────────────────────────────────────────────
 
@@ -48,8 +49,11 @@ interface MetadataProps {
 export function TraceMetadataTab({ trace }: MetadataProps) {
   const rows: [string, string][] = [
     ['trace.id', trace.id],
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- API field name, not UI copy
     ['provider', trace.provider],
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- API field name, not UI copy
     ['model', trace.model],
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- API field name, not UI copy
     ['agent', trace.agentName ?? '—'],
     ['http_status', String(trace.httpStatus)],
     ['finish_reason', trace.finishReason ?? '—'],
@@ -77,7 +81,7 @@ export function TraceMetadataTab({ trace }: MetadataProps) {
         ))}
       </div>
       <div className="text-caption text-muted uppercase tracking-[0.08em] font-semibold mt-[6px]">
-        Model parameters
+        <Trans>Model parameters</Trans>
       </div>
       <ModelParametersGrid params={trace.modelParameters} />
     </>

@@ -133,7 +133,7 @@ public class AuthController : ControllerBase
     {
         var me = await currentUser.GetCurrentUserAsync(ct);
         if (me is null) return Unauthorized();
-        return new MeDto(me.Id, me.Email, me.Role);
+        return new MeDto(me.Id, me.Email, me.Role, me.Language);
     }
 
     [HttpPost("signup")]

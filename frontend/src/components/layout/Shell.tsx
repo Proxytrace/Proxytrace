@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useCurrentUser } from '../../auth/useCurrentUser';
+import { LanguageMenuItems } from './LanguageMenuItems';
 import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
 import { isNavEntryLocked } from './navGating';
@@ -25,14 +27,18 @@ import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import { LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon } from '../icons';
 import {
-  navGroups, navItems, NAV_ICONS, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL,
+  navGroups, navItems, NAV_ICONS, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL, type HealthStatus,
 } from './shellNav';
 
 // The Tracey chat stack (assistant-ui + ai SDK + tools + docs index) is heavy; loading it
 // lazily keeps it out of the main chunk so first paint of every page is faster.
 const TraceyHost = lazy(() => import('../../features/tracey/TraceyHost'));
 
+// Layout variant token (not UI copy) — typed so the literal is recognized as non-copy.
+const SEARCH_WIDTH: 'auto' | 'fixed' = 'fixed';
+
 export function Shell() {
+  const { t, i18n } = useLingui();
   // Start collapsed on narrow viewports (laptops below 1280px) so page content gets the width;
   // the user can still expand manually. Initial-render check only — no resize listener, so a
   // deliberate toggle is never fought.
@@ -51,22 +57,25 @@ export function Shell() {
   const { interactive } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard shortcut key, not UI copy
   useGlobalShortcut('k', focusSearch);
 
-  const healthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
-  const pageLabel = [...navItems]
+  const healthStatus: HealthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
+  const activeNavEntry = [...navItems]
     .sort((a, b) => b.to.length - a.to.length)
-    .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label ?? 'Dashboard';
+    .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'));
+  const pageLabel = activeNavEntry ? i18n._(activeNavEntry.label) : t`Dashboard`;
   const currentUser = useCurrentUser();
   // Role is only populated in local-auth mode; OIDC users won't see admin-only nav (the backend
   // still enforces authorization regardless).
   const isAdmin = currentUser?.role === 'Admin';
-  const userName = currentUser?.email ?? 'User';
+  const userName = currentUser?.email ?? t`User`;
   const userInitials = userName
     .split(/[@.\s_-]+/)
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase())
     .join('')
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- avatar initials fallback, not UI copy
     .slice(0, 2) || 'U';
 
   return (
@@ -98,8 +107,10 @@ export function Shell() {
           {!navCollapsed && (
             <div className="ml-[10px]">
               <div className="font-bold text-sm tracking-[-0.02em] leading-none">
+                {/* eslint-disable-next-line lingui/no-unlocalized-strings -- brand name, not translated */}
                 <span className="text-primary">proxy</span><span className="text-accent">trace</span>
               </div>
+              {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version identifier, not UI copy */}
               <div className="font-mono text-[10.5px] text-muted mt-0.5">{`v${__APP_VERSION__}`}</div>
             </div>
           )}
@@ -111,13 +122,13 @@ export function Shell() {
           className={`flex-1 flex flex-col overflow-y-auto ${navCollapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
         >
           {navGroups.map((group, gIdx) => (
-            <div key={group.label ?? `__g${gIdx}`} className="flex flex-col gap-[2px]">
+            <div key={gIdx} className="flex flex-col gap-[2px]">
               {gIdx > 0 && (
                 <div className={`my-1.5 border-t border-hairline ${navCollapsed ? 'mx-1' : 'mx-2'}`} />
               )}
               {!navCollapsed && group.label && (
                 <div className="px-[6px] pt-1 pb-[4px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
-                  {group.label}
+                  {i18n._(group.label)}
                 </div>
               )}
               {group.items
@@ -129,14 +140,14 @@ export function Shell() {
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
                     key={item.to}
-                    label={item.label}
+                    label={i18n._(item.label)}
                     icon={NAV_ICONS[item.icon]}
                     collapsed={navCollapsed}
                   />
                 ) : (
                   <NavItem
                     key={item.to}
-                    label={item.label}
+                    label={i18n._(item.label)}
                     icon={NAV_ICONS[item.icon]}
                     to={item.to}
                     collapsed={navCollapsed}
@@ -153,11 +164,11 @@ export function Shell() {
             href="/docs/"
             target="_blank"
             rel="noopener noreferrer"
-            title={navCollapsed ? 'Documentation' : undefined}
+            title={navCollapsed ? t`Documentation` : undefined}
             className={`nav-item${navCollapsed ? ' justify-center' : ''}`}
           >
             <span className="flex shrink-0"><ExternalLinkIcon size={16} /></span>
-            {!navCollapsed && <span className="flex-1 text-left">Documentation</span>}
+            {!navCollapsed && <span className="flex-1 text-left"><Trans>Documentation</Trans></span>}
           </a>
         </div>
 
@@ -179,7 +190,7 @@ export function Shell() {
         >
           <IconButton
             onClick={() => (isMobile ? setMobileNavOpen(v => !v) : setCollapsed(c => !c))}
-            aria-label="Toggle sidebar"
+            aria-label={t`Toggle sidebar`}
           >
             <LayoutSidebarIcon size={16} />
           </IconButton>
@@ -193,7 +204,7 @@ export function Shell() {
           {/* Search needs real width to be usable — below sm it yields to the page title. */}
           <div className="flex-1 min-w-0 hidden sm:block">
             {currentProject?.id ? (
-              <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
+              <UnifiedSearch ref={searchRef} projectId={currentProject.id} width={SEARCH_WIDTH} />
             ) : (
               <div className="flex-1 max-w-[720px] mx-auto" />
             )}
@@ -201,7 +212,7 @@ export function Shell() {
           <div className="flex-1 sm:hidden" />
 
           <div
-            title={HEALTH_LABEL[healthStatus]}
+            title={i18n._(HEALTH_LABEL[healthStatus])}
             className={cn(
               'flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
               HEALTH_PILL[healthStatus],
@@ -215,7 +226,7 @@ export function Shell() {
               )}
             />
             {/* Dot-only below lg — the label is redundant with the color + title on tight topbars. */}
-            <span className="hidden lg:inline">{HEALTH_LABEL[healthStatus]}</span>
+            <span className="hidden lg:inline">{i18n._(HEALTH_LABEL[healthStatus])}</span>
           </div>
 
           <span className="hidden sm:contents"><LicenseBadge /></span>
@@ -227,18 +238,19 @@ export function Shell() {
               <IconButton
                 data-testid="user-menu-trigger"
                 title={userName}
-                aria-label={`User menu (${userName})`}
+                aria-label={t`User menu (${userName})`}
               >
                 <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
               </IconButton>
             }
           >
+            <LanguageMenuItems />
             <Menu.Item
               data-testid="logout-btn"
               icon={<LogOutIcon size={15} />}
               onSelect={() => currentUser?.signOut()}
             >
-              Logout
+              <Trans>Logout</Trans>
             </Menu.Item>
           </Menu>
         </header>
@@ -257,7 +269,7 @@ export function Shell() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center flex-1 text-muted text-[13px]">
-                Loading…
+                <Trans>Loading…</Trans>
               </div>
             }
           >

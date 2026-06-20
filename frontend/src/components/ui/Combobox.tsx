@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import * as Popover from '@radix-ui/react-popover';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../lib/cn';
 import { Input } from './Input';
 import { ChevronDownIcon, SearchIcon } from '../icons';
@@ -34,14 +35,18 @@ export function Combobox<T>({
   itemKey,
   itemLabel,
   renderItem,
-  placeholder = 'Select…',
-  searchPlaceholder = 'Search…',
+  placeholder,
+  searchPlaceholder,
   invalid,
   disabled,
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
   inputSize = 'md',
   'aria-label': ariaLabel,
   'data-testid': testId,
 }: ComboboxProps<T>) {
+  const { t } = useLingui();
+  const placeholderText = placeholder ?? t`Select…`;
+  const searchPlaceholderText = searchPlaceholder ?? t`Search…`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -57,7 +62,7 @@ export function Combobox<T>({
     setQuery('');
   };
 
-  const sizeCls = inputSize === 'sm' ? 'px-2.5 py-1.5 text-body-sm' : 'px-3 py-2 text-title';
+  const sizeCls = inputSize === 'sm' ? cn('px-2.5 py-1.5 text-body-sm') : cn('px-3 py-2 text-title');
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -71,7 +76,7 @@ export function Combobox<T>({
           className={cn(formInputCls, sizeCls, 'flex items-center justify-between gap-2 text-left cursor-pointer')}
         >
           <span className={cn('truncate', !selected && 'text-muted')}>
-            {selected ? itemLabel(selected) : placeholder}
+            {selected ? itemLabel(selected) : placeholderText}
           </span>
           <ChevronDownIcon size={13} className="shrink-0 text-muted" />
         </button>
@@ -88,17 +93,18 @@ export function Combobox<T>({
           <div className="relative mb-1">
             <SearchIcon size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
             <Input
+              // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
               inputSize="sm"
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholderText}
               className="pl-8"
             />
           </div>
           <div role="listbox" className="max-h-[240px] overflow-y-auto">
             {matches.length === 0 ? (
-              <div className="px-2.5 py-2 text-body-sm text-muted">No matches.</div>
+              <div className="px-2.5 py-2 text-body-sm text-muted"><Trans>No matches.</Trans></div>
             ) : (
               matches.map(item => {
                 const key = itemKey(item);

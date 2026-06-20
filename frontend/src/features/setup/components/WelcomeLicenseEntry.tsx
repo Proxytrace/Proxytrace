@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { useLicense } from '../../../api/license';
 import { LicenseKeyForm } from '../../../components/license/LicenseKeyForm';
 import { Button } from '../../../components/ui/Button';
@@ -25,9 +26,9 @@ export function WelcomeLicenseEntry() {
         <div className="flex items-start gap-1.5 text-body-sm text-danger" data-testid="setup-welcome-license-invalid">
           <AlertTriangleIcon size={12} className="mt-0.5 shrink-0" />
           <span>
-            The configured license could not be validated
-            {license.invalidReason ? ` — ${license.invalidReason}` : ''}. Paste a valid key
-            below, or continue on the Free tier.
+            <Trans>The configured license could not be validated</Trans>
+            {license.invalidReason ? ` — ${license.invalidReason}` : ''}
+            <Trans>. Paste a valid key below, or continue on the Free tier.</Trans>
           </span>
         </div>
       )}
@@ -43,7 +44,7 @@ export function WelcomeLicenseEntry() {
           className="self-start"
           data-testid="setup-welcome-license-toggle"
         >
-          Have a license key?
+          <Trans>Have a license key?</Trans>
         </Button>
       )}
     </div>

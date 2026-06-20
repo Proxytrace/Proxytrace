@@ -11,6 +11,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Multilingual UI with per-user language.** Proxytrace can now display its interface in multiple
+  languages, starting with **German** alongside English. Each user picks their own language from a
+  grouped **Language** section in the account menu (top-right) — each option shown with its country
+  flag — and the choice is saved to their account so it follows them across devices and browsers. Technical terms that AI engineers expect in English — Tool, User, Assistant,
+  Trace, Token, Prompt, Agent, and the like — are deliberately kept untranslated. English remains the
+  source language, and new translations are produced by an audience-aware translation tool, so more
+  languages can be added without code changes.
+
 - **Stop Tracey mid-reply.** While Tracey is thinking or replying, her **send** button now becomes a
   **Stop** button — pressing it cancels the response. The in-flight model call is torn down (not left
   running in the background), so a long or off-track answer can be halted immediately. If she was

@@ -12,5 +12,8 @@ public record UserDto(
 
 public record UpdateUserRoleRequest(UserRole Role);
 
+/// <summary>Self-service UI language change for the current user (BCP-47 culture code).</summary>
+public record UpdateMyLanguageRequest(string Language);
+
 /// <summary>Lightweight project reference for the user-centric project assignment editor.</summary>
 public record UserProjectDto(Guid Id, string Name);

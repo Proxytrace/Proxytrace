@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { Card } from '../../../../components/ui/Card';
 import { Spinner } from '../../../../components/ui/Spinner';
 import type { ToolUIState } from './tool-ui-state';
@@ -36,31 +37,34 @@ export function ToolUIFrame({
   accentBar,
   hoverColor,
   cornerAccessory,
-  pendingLabel = 'Working…',
+  pendingLabel,
   pendingSkeleton,
-  errorLabel = 'Tracey couldn’t load this.',
+  errorLabel,
   testId,
   children,
 }: ToolUIFrameProps) {
+  const { t } = useLingui();
+  const resolvedPendingLabel = pendingLabel ?? t`Working…`;
+  const resolvedErrorLabel = errorLabel ?? t`Tracey couldn’t load this.`;
   if (state === 'pending') {
     if (pendingSkeleton) {
       return (
-        <Card elevation="flat" padding="md" className="my-1" data-testid={testId} aria-busy="true">
+        <Card elevation="flat" padding="md" className="my-1" data-testid={testId} aria-busy={true}>
           {pendingSkeleton}
         </Card>
       );
     }
     return (
-      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId} aria-busy="true">
+      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId} aria-busy={true}>
         <Spinner size={12} />
-        <span className="text-body-sm text-muted">{pendingLabel}</span>
+        <span className="text-body-sm text-muted">{resolvedPendingLabel}</span>
       </Card>
     );
   }
   if (state === 'error') {
     return (
       <Card elevation="flat" padding="sm" className="my-1" data-testid={testId}>
-        <span className="text-body-sm text-danger">{errorLabel}</span>
+        <span className="text-body-sm text-danger">{resolvedErrorLabel}</span>
       </Card>
     );
   }

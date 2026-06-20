@@ -57,6 +57,44 @@ public sealed class UsersControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task UpdateMyLanguage_Valid_PersistsAndReturnsNoContent()
+    {
+        ICurrentUserAccessor accessor = null!;
+        IServiceProvider services = GetServices(builder => accessor = RegisterAccessor(builder));
+        var user = await CreateUserAsync(services, UserRole.Member);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(user);
+        var controller = ResolveController(services);
+
+        var result = await controller.UpdateMyLanguage(new UpdateMyLanguageRequest("de"), CancellationToken);
+
+        result.Should().BeOfType<NoContentResult>();
+        var reloaded = await services.GetRequiredService<IRepository<IUser>>().GetAsync(user.Id, CancellationToken);
+        reloaded.Language.Should().Be("de");
+    }
+
+    [TestMethod]
+    public async Task UpdateMyLanguage_Unsupported_ReturnsBadRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.UpdateMyLanguage(new UpdateMyLanguageRequest("xx"), CancellationToken);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task UpdateMyLanguage_NoCurrentUser_ReturnsUnauthorized()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.UpdateMyLanguage(new UpdateMyLanguageRequest("de"), CancellationToken);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [TestMethod]
     public async Task Get_Unknown_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

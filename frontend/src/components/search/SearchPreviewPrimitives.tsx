@@ -1,3 +1,5 @@
+import { Trans } from '@lingui/react/macro';
+
 // ---------------------------------------------------------------------------
 // PreviewLoading: spinner / inline loading indicator
 // ---------------------------------------------------------------------------
@@ -6,7 +8,7 @@ export function PreviewLoading() {
   return (
     <div className="flex items-center gap-2 text-[11.5px] text-white/40">
       <span className="size-[6px] rounded-full bg-accent pulse-dot" />
-      Loading preview…
+      <Trans>Loading preview…</Trans>
     </div>
   );
 }

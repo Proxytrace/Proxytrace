@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Drawer } from '../../../components/overlays/Drawer';
 import { Pill } from '../../../components/ui/Pill';
 import { CodeBlock } from '../../../components/ui/CodeBlock';
@@ -20,6 +21,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function ErrorLogDetail({ error, onClose }: ErrorLogDetailProps) {
+  const { t } = useLingui();
   return (
     <Drawer title={error.message} subtitle={fmtDate(error.createdAt)} onClose={onClose}>
       <div data-testid="error-log-detail" className="flex items-center gap-2">
@@ -29,14 +31,14 @@ export function ErrorLogDetail({ error, onClose }: ErrorLogDetailProps) {
         )}
       </div>
 
-      <Field label="Source" value={error.category} />
+      <Field label={t`Source`} value={error.category} />
 
       {error.stackTrace ? (
         <div data-testid="error-log-stacktrace">
-          <CodeBlock heading="Stacktrace" content={error.stackTrace} maxLines={20} />
+          <CodeBlock heading={t`Stacktrace`} content={error.stackTrace} maxLines={20} />
         </div>
       ) : (
-        <div className="text-[13px] text-muted">No stacktrace captured for this entry.</div>
+        <div className="text-[13px] text-muted"><Trans>No stacktrace captured for this entry.</Trans></div>
       )}
     </Drawer>
   );

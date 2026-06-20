@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans } from '@lingui/react/macro';
 import { useLicense } from '../../api/license';
 import { LockIcon } from '../icons';
 
@@ -19,10 +20,10 @@ export function QuotaBanner() {
     >
       <LockIcon size={14} />
       <span>
-        Monthly trace quota reached — new traces are being dropped until the quota resets next month.
+        <Trans>Monthly trace quota reached — new traces are being dropped until the quota resets next month.</Trans>
       </span>
       <Link to="/upgrade" className="ml-auto underline underline-offset-2 hover:text-primary">
-        View plans
+        <Trans>View plans</Trans>
       </Link>
     </div>
   );

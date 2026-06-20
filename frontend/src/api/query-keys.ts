@@ -37,6 +37,8 @@ export const QUERY_KEYS = {
   health: ['health'] as const,
   authMode: ['auth-mode'] as const,
   appConfig: ['app-config'] as const,
+  /** The current authenticated user (id, email, role, UI language). */
+  me: ['me'] as const,
   setupStatus: ['setup-status'] as const,
   invites: ['invites'] as const,
   /** Public invite preview on the signup page, keyed by the invite token. */

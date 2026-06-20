@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { AgentDto } from '../../api/models';
 import { Combobox } from '../../components/ui/Combobox';
 import useModelEndpoints from '../../hooks/useModelEndpoints';
@@ -5,6 +6,7 @@ import useToast from '../../hooks/useToast';
 import { useUpdateAgentEndpoint } from './hooks/useAgents';
 
 export function EndpointSelector({ agent }: { agent: AgentDto }) {
+  const { t } = useLingui();
   const { show: toast } = useToast();
   const { data: endpoints = [] } = useModelEndpoints();
   const mutation = useUpdateAgentEndpoint(agent.id);
@@ -15,7 +17,8 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
         value={agent.endpointId}
         onChange={id => {
           if (id !== agent.endpointId) {
-            mutation.mutate(id, { onSuccess: () => toast('Endpoint updated', 'success') });
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
+            mutation.mutate(id, { onSuccess: () => toast(t`Endpoint updated`, 'success') });
           }
         }}
         items={endpoints}
@@ -28,8 +31,9 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
           </span>
         )}
         placeholder={agent.endpointName}
+        // eslint-disable-next-line lingui/no-unlocalized-strings -- size token, not UI copy
         inputSize="sm"
-        aria-label="Agent endpoint"
+        aria-label={t`Agent endpoint`}
         data-testid="agent-endpoint"
       />
     </div>

@@ -1,5 +1,7 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { fmtDuration, fmtTokens, fmtCost } from '../../../lib/format';
 import { modelColor } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
 import { compositeColor, fixtureSummary } from '../results';
 import { useComparisonFixtures } from '../hooks/useComparisonFixtures';
@@ -34,6 +36,7 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
   isLoading: boolean;
   focused: boolean;
 }) {
+  const { t } = useLingui();
   const mc = modelColor(run.endpointName);
   const { total, allPass, composite, totalCost: cost, tokensOut } = fixtureSummary(fixture);
   const failed = total > 0 && !allPass;
@@ -41,10 +44,10 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
   const borderCls = focused
     ? ''
     : failed
-      ? 'border-[color-mix(in_srgb,var(--danger)_50%,transparent)]'
+      ? cn('border-[color-mix(in_srgb,var(--danger)_50%,transparent)]')
       : allPass
-        ? 'border-[color-mix(in_srgb,var(--success)_35%,transparent)]'
-        : 'border-hairline';
+        ? cn('border-[color-mix(in_srgb,var(--success)_35%,transparent)]')
+        : cn('border-hairline');
 
   return (
     <div
@@ -66,7 +69,7 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
           <span className="text-muted">·</span>
           <span className="mono text-secondary">{fmtDuration(fixture.runtime.total)}</span>
           <span className="text-muted">·</span>
-          <span className="mono text-secondary">{fmtTokens(tokensOut)} out</span>
+          <span className="mono text-secondary">{fmtTokens(tokensOut)} <Trans>out</Trans></span>
           <span className="text-muted">·</span>
           <span className="mono text-secondary">{fmtCost(cost)}</span>
         </div>
@@ -76,19 +79,20 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
 
       {fixture && (
         <>
-          <OutputBlock label="Actual" color={allPass ? 'var(--success)' : 'var(--danger)'} value={fixture.actual} />
+          <OutputBlock label={t`Actual`} color={allPass ? 'var(--success)' : 'var(--danger)'} value={fixture.actual} />
           <EvaluatorList evaluators={fixture.evaluators} />
         </>
       )}
 
       {!isLoading && !fixture && (
-        <span className="text-body-sm text-muted italic">This case was not run for this model.</span>
+        <span className="text-body-sm text-muted italic"><Trans>This case was not run for this model.</Trans></span>
       )}
     </div>
   );
 }
 
 export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, focusRunId, onClose, onPrev, onNext }: Props) {
+  const { t } = useLingui();
   const queries = useComparisonFixtures(runs, caseId);
 
   // Shared context (input + expected) — identical across models for one case.
@@ -96,7 +100,7 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
 
   return (
     <DrawerShell
-      widthClass="w-[min(95vw,1200px)]"
+      widthClass={cn('w-[min(95vw,1200px)]')}
       caseId={caseId}
       caseSummary={caseSummary}
       caseIdx={caseIdx}
@@ -104,19 +108,19 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
       onClose={onClose}
       onPrev={onPrev}
       onNext={onNext}
-      leading={<span className="px-2 py-[2px] rounded-full text-caption font-semibold shrink-0 bg-accent-subtle text-accent">{runs.length} models</span>}
+      leading={<span className="px-2 py-[2px] rounded-full text-caption font-semibold shrink-0 bg-accent-subtle text-accent"><Trans>{runs.length} models</Trans></span>}
     >
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
         {/* Shared input + expected */}
         {shared ? (
           <>
             <section>
-              <div className={SECTION_LABEL}>Input</div>
+              <div className={SECTION_LABEL}><Trans>Input</Trans></div>
               <RoleMessageList messages={shared.input.messages} />
             </section>
             <section>
-              <div className={SECTION_LABEL}>Expected</div>
-              <OutputBlock label="Expected" color="var(--teal)" value={shared.expected} />
+              <div className={SECTION_LABEL}><Trans>Expected</Trans></div>
+              <OutputBlock label={t`Expected`} color="var(--teal)" value={shared.expected} />
             </section>
           </>
         ) : (
@@ -128,7 +132,7 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
 
         {/* Per-model columns */}
         <section>
-          <div className={SECTION_LABEL}>Per-model output</div>
+          <div className={SECTION_LABEL}><Trans>Per-model output</Trans></div>
           <div className="overflow-x-auto">
             <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${runs.length}, minmax(300px, 1fr))` }}>
               {runs.map((run, i) => (

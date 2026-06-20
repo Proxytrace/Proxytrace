@@ -20,10 +20,14 @@ internal class UserConfig : AbstractEntityConfiguration<UserEntity>, IMapper<IUs
         builder.HasIndex(e => e.ExternalSubject)
             .IsUnique()
             .HasFilter("\"ExternalSubject\" IS NOT NULL");
+
+        // Backfills existing rows (and any insert that omits the column) to English. The mapper
+        // always sets Language explicitly, so this only matters for the migration backfill.
+        builder.Property(e => e.Language).HasDefaultValue("en");
     }
 
     public Task<IUser> Map(UserEntity stored, CancellationToken cancellationToken = default)
-        => factory(stored.Email, stored.ExternalSubject, stored.PasswordHash, stored.Role, stored).ToTaskResult();
+        => factory(stored.Email, stored.ExternalSubject, stored.PasswordHash, stored.Role, stored.Language, stored).ToTaskResult();
 
     public Task<UserEntity> Map(IUser domain, CancellationToken cancellationToken = default)
         => new UserEntity
@@ -33,6 +37,7 @@ internal class UserConfig : AbstractEntityConfiguration<UserEntity>, IMapper<IUs
             ExternalSubject = domain.ExternalSubject,
             PasswordHash = domain.PasswordHash,
             Role = domain.Role,
+            Language = domain.Language,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

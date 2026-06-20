@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { ProposalDetailsDto } from '../../../../api/models';
 
 interface TheoryChangePreviewProps {
@@ -21,10 +22,10 @@ export function TheoryChangePreview({ details }: TheoryChangePreviewProps) {
   }
 
   if (details.kind === 'Tool') {
-    const names = details.proposedTools.map((t) => t.name).join(', ');
+    const names = details.proposedTools.map((tool) => tool.name).join(', ');
     return (
       <div className="text-body-sm text-secondary" data-testid="tracey-theory-change">
-        <span className="text-muted">Proposed tools ({details.proposedTools.length}): </span>
+        <span className="text-muted"><Trans>Proposed tools ({details.proposedTools.length}): </Trans></span>
         <span className="font-mono text-primary">{names || '—'}</span>
       </div>
     );
@@ -32,7 +33,7 @@ export function TheoryChangePreview({ details }: TheoryChangePreviewProps) {
 
   return (
     <div data-testid="tracey-theory-change">
-      <div className="mb-1 text-caption text-muted">Proposed system prompt</div>
+      <div className="mb-1 text-caption text-muted"><Trans>Proposed system prompt</Trans></div>
       <pre className="line-clamp-4 whitespace-pre-wrap rounded-sm bg-card-2 p-2 font-mono text-body-sm text-secondary">
         {details.proposedSystemMessage}
       </pre>

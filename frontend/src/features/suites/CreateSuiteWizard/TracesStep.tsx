@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { AgentCallDto } from '../../../api/models';
 import { useSuiteCreateTraces, WIZARD_TRACE_PAGE_SIZE } from '../hooks/useSuiteQueries';
 import { WrenchIcon } from '../../../components/icons';
@@ -14,12 +17,12 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { SearchIcon } from '../../../components/icons';
 import { TracePreviewPanel } from './TracePreviewPanel';
 
-const RANGE_OPTIONS = [
-  { key: '1h',  label: 'Last hour',  hours: 1 },
-  { key: '24h', label: 'Last 24h',   hours: 24 },
-  { key: '7d',  label: 'Last 7 days', hours: 24 * 7 },
-  { key: '30d', label: 'Last 30 days', hours: 24 * 30 },
-  { key: 'all', label: 'All time',   hours: null as number | null },
+const RANGE_OPTIONS: { key: string; label: MessageDescriptor; hours: number | null }[] = [
+  { key: '1h',  label: msg`Last hour`,  hours: 1 },
+  { key: '24h', label: msg`Last 24h`,   hours: 24 },
+  { key: '7d',  label: msg`Last 7 days`, hours: 24 * 7 },
+  { key: '30d', label: msg`Last 30 days`, hours: 24 * 30 },
+  { key: 'all', label: msg`All time`,   hours: null },
 ];
 
 function rangeFrom(rangeKey: string): string | undefined {
@@ -58,6 +61,8 @@ interface Props {
 }
 
 export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }: Props) {
+  const { i18n, t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- range filter token, not UI copy
   const [range, setRange] = useState<string>('7d');
   const [search, setSearch] = useState<string>('');
   const [focusedIdState, setFocusedIdState] = useState<string | null>(null);
@@ -87,6 +92,9 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
 
   const allVisibleSelected = traces.length > 0 && traces.every(t => selected.has(t.id));
 
+  // Hoisted out of the trace `.map` below, where the loop variable `t` shadows the i18n `t`.
+  const usedToolsLabel = t`Used tools`;
+
   return (
     <div data-testid="wizard-step-traces" className="flex flex-col gap-3 min-h-0">
       {/* Toolbar */}
@@ -94,20 +102,20 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
         <div className="flex-1 min-w-[200px]">
           <Input
             leftAddon={<SearchIcon size={13} />}
-            rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}>clear</Button> : undefined}
+            rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}><Trans>clear</Trans></Button> : undefined}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search prompts and responses…"
+            placeholder={t`Search prompts and responses…`}
           />
         </div>
         <FilterDropdown
-          label="Range"
+          label={t`Range`}
           value={range}
-          options={RANGE_OPTIONS.map(r => ({ key: r.key, label: r.label }))}
+          options={RANGE_OPTIONS.map(r => ({ key: r.key, label: i18n._(r.label) }))}
           onChange={setRange}
           active={range !== 'all'}
         />
-        <span className="text-[11.5px] text-muted ml-1">{traces.length} of {allTraces.length} shown</span>
+        <span className="text-[11.5px] text-muted ml-1"><Trans>{traces.length} of {allTraces.length} shown</Trans></span>
         <div className="flex-1" />
         <Button
           variant="secondary"
@@ -116,7 +124,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
           disabled={traces.length === 0}
           onClick={() => (allVisibleSelected ? onClear() : onSelectAll(traces))}
         >
-          {allVisibleSelected ? 'Select none' : 'Select all'}
+          {allVisibleSelected ? <Trans>Select none</Trans> : <Trans>Select all</Trans>}
         </Button>
         <span
           className={cn(
@@ -126,11 +134,11 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
               : 'bg-card text-muted border-border',
           )}
         >
-          {selected.size} selected
+          <Trans>{selected.size} selected</Trans>
         </span>
       </div>
 
-      <p className="text-[11.5px] text-muted m-0">Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking.</p>
+      <p className="text-[11.5px] text-muted m-0"><Trans>Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking.</Trans></p>
 
       {/* Two-column body */}
       <div className="grid gap-3 min-h-0 grid-cols-[minmax(0,1fr)_420px] h-[520px]">
@@ -147,8 +155,8 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
 
             {!isLoading && traces.length === 0 && (
               <EmptyState
-                title="No matching traces"
-                description={search ? 'Try clearing the search or widening the time range.' : 'No successful traces found in this range.'}
+                title={t`No matching traces`}
+                description={search ? t`Try clearing the search or widening the time range.` : t`No successful traces found in this range.`}
               />
             )}
 
@@ -183,14 +191,14 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
                         </span>
                         <span className="text-[11px] font-mono text-muted shrink-0">{fmtLatency(t.durationMs)}</span>
                         {tools && (
-                          <span title="Used tools" className="inline-flex items-center text-accent">
+                          <span title={usedToolsLabel} className="inline-flex items-center text-accent">
                             <WrenchIcon size={11} />
                           </span>
                         )}
                         <span className="text-[11px] font-mono text-muted ml-auto shrink-0">{fmtRelative(t.createdAt)}</span>
                       </div>
                       <div className="mt-[5px] text-[12px] text-secondary truncate min-w-0">
-                        {snippet ? <span className="text-secondary">{snippet}</span> : <span className="text-muted italic">No user message</span>}
+                        {snippet ? <span className="text-secondary">{snippet}</span> : <span className="text-muted italic"><Trans>No user message</Trans></span>}
                       </div>
                     </li>
                   );
@@ -201,7 +209,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
 
           {truncated && (
             <div className="px-3 py-2 text-[11px] text-muted border-t border-hairline bg-card-2 shrink-0">
-              Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to see older calls.
+              <Trans>Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to see older calls.</Trans>
             </div>
           )}
         </div>

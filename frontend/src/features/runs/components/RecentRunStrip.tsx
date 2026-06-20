@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { TestRunGroupListItemDto } from '../../../api/models';
 import { fmtRelative } from '../../../lib/format';
 import { FOCUS_RING } from '../../../lib/constants';
@@ -21,7 +22,7 @@ export function RecentRunStrip({ runs, onSelect }: {
   onSelect: (groupId: string) => void;
 }) {
   if (runs.length === 0) {
-    return <div className="text-caption text-muted">No runs yet</div>;
+    return <div className="text-caption text-muted"><Trans>No runs yet</Trans></div>;
   }
 
   return (

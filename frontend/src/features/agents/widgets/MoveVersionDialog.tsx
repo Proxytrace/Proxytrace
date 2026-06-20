@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentDto, AgentVersionDto } from '../../../api/models';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
 import { Input } from '../../../components/ui/Input';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
+  const { t } = useLingui();
   const [targetAgentId, setTargetAgentId] = useState('');
   const [search, setSearch] = useState('');
   const { data: agents } = useMoveVersionCandidates(sourceAgent.projectId);
@@ -29,35 +31,37 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
 
   return (
     <Modal
-      title={`Move version v${version.versionNumber}`}
+      title={t`Move version v${version.versionNumber}`}
       onClose={onClose}
       size="sm"
       footer={
         <ModalFooter
           onCancel={onClose}
           onSubmit={() => mutation.mutate(targetAgentId)}
-          submitLabel={mutation.isPending ? 'Moving…' : 'Move'}
+          submitLabel={mutation.isPending ? t`Moving…` : t`Move`}
           loading={mutation.isPending}
           disabled={!targetAgentId}
         />
       }
     >
       <p className="text-xs text-muted mb-3">
-        Choose the agent that should own this version. Calls referencing this version follow it.
-        The source agent ({sourceAgent.name}) is deleted if it has no versions left.
+        <Trans>
+          Choose the agent that should own this version. Calls referencing this version follow it.
+          The source agent ({sourceAgent.name}) is deleted if it has no versions left.
+        </Trans>
       </p>
       <label className="block text-sm mb-2">
-        Search
+        <Trans>Search</Trans>
         <Input
           autoFocus
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter agents by name…"
+          placeholder={t`Filter agents by name…`}
           className="mt-1"
         />
       </label>
       <label className="block text-sm">
-        Target agent
+        <Trans>Target agent</Trans>
         {/* eslint-disable-next-line no-restricted-syntax -- multi-row listbox (size=N), not a dropdown Select */}
         <select
           className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
@@ -65,7 +69,7 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
           onChange={(e) => setTargetAgentId(e.target.value)}
           size={Math.min(8, Math.max(2, filtered.length))}
         >
-          {filtered.length === 0 && <option value="">No matches</option>}
+          {filtered.length === 0 && <option value="">{t`No matches`}</option>}
           {filtered.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
@@ -75,7 +79,7 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
       </label>
       {truncated && (
         <p className="text-[11px] text-muted mt-2">
-          Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more.
+          <Trans>Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more.</Trans>
         </p>
       )}
     </Modal>

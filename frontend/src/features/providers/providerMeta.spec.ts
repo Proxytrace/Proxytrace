@@ -1,14 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import { ModelProviderKind } from '../../api/models';
+import { i18n } from '../../i18n';
 import { kindLabel, kindColor, maskKey, isDefaultEndpoint, isAzureEndpoint } from './providerMeta';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 describe('kindLabel', () => {
   it('maps known kinds', () => {
-    expect(kindLabel(ModelProviderKind.OpenAi)).toBe('OpenAI');
-    expect(kindLabel(ModelProviderKind.OpenAiCompatible)).toBe('OpenAI-compatible');
+    expect(i18n._(kindLabel(ModelProviderKind.OpenAi))).toBe('OpenAI');
+    expect(i18n._(kindLabel(ModelProviderKind.OpenAiCompatible))).toBe('OpenAI-compatible');
   });
   it('falls back to Unknown', () => {
-    expect(kindLabel(ModelProviderKind.Unknown)).toBe('Unknown');
+    expect(i18n._(kindLabel(ModelProviderKind.Unknown))).toBe('Unknown');
   });
 });
 

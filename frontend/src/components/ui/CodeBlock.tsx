@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Plural, Trans } from '@lingui/react/macro';
 
 interface CodeBlockProps {
   heading?: string;
@@ -32,7 +33,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
             onClick={copy}
             className={`text-[11px] font-medium px-2 py-[2px] rounded-md border border-border transition-colors ${copied ? 'text-success' : 'text-muted'}`}
           >
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </button>
         </div>
       )}
@@ -52,7 +53,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
             onClick={copy}
             className={`absolute top-2 right-2 text-[11px] font-medium px-[7px] py-[2px] rounded-[5px] border border-border bg-card transition-colors ${copied ? 'text-success' : 'text-muted'}`}
           >
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </button>
         )}
       </div>
@@ -61,7 +62,9 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
           onClick={() => setExpanded(e => !e)}
           className="self-start text-xs font-medium text-accent py-[2px]"
         >
-          {expanded ? 'Show less' : `Show ${lines.length - maxLines} more lines`}
+          {expanded
+            ? <Trans>Show less</Trans>
+            : <Plural value={lines.length - maxLines} one="Show # more line" other="Show # more lines" />}
         </button>
       )}
     </div>

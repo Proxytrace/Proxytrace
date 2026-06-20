@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { fmtTokens } from '../../../../lib/format';
 import type { EndpointUsageDto } from '../../../../api/models';
 
@@ -7,9 +8,9 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
   return (
     <div>
       <div className="flex items-baseline gap-2 mb-2.5">
-        <div className="text-title font-semibold text-secondary">Cost</div>
+        <div className="text-title font-semibold text-secondary"><Trans>Cost</Trans></div>
         <div className="mono text-h2 font-bold text-primary">${totalCost.toFixed(4)}</div>
-        <div className="text-body-sm text-muted">{fmtTokens(totalTok)} tok</div>
+        <div className="text-body-sm text-muted"><Trans>{fmtTokens(totalTok)} tok</Trans></div>
       </div>
       {totalCost > 0 && (
         <div className="flex h-1 rounded-full overflow-hidden mb-2.5">

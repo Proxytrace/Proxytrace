@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
@@ -14,10 +15,10 @@ export function EndpointPicker({ value, onChange, defaultEndpointId }: Props) {
   return (
     <div className="flex flex-col gap-[5px]">
       <div className="flex items-center justify-between">
-        <label className="text-[11px] font-semibold text-muted uppercase tracking-[0.05em]">Endpoint</label>
+        <label className="text-[11px] font-semibold text-muted uppercase tracking-[0.05em]"><Trans>Endpoint</Trans></label>
         {defaultEndpointId && value !== defaultEndpointId && (
           <Button variant="link" className="text-[10.5px]" onClick={() => onChange(defaultEndpointId)}>
-            Reset
+            <Trans>Reset</Trans>
           </Button>
         )}
       </div>

@@ -1,3 +1,5 @@
+import { cn } from '../../lib/cn';
+
 export interface DataColumn<T> {
   key: string;
   label: React.ReactNode;
@@ -21,7 +23,7 @@ export function DataTable<T>({
   columns, rows, rowKey, onRowClick, isSelected, emptyMessage, emptySlot, className = '',
 }: DataTableProps<T>) {
   const gridCols = columns.map(c => c.width).join(' ');
-  const sharedRowClass = `grid w-full text-left px-4 py-[11px] items-center text-[12px] border-b border-hairline`;
+  const sharedRowClass = cn(`grid w-full text-left px-4 py-[11px] items-center text-[12px] border-b border-hairline`);
 
   return (
     <div className={className}>

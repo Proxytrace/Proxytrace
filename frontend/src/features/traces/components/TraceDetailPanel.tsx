@@ -19,8 +19,18 @@ import { PromoteModal } from '../PromoteModal';
 import { DrawerStat } from './DrawerStat';
 import { TraceMessagesTab } from './TraceMessagesTab';
 import { TraceRawJsonTab, TraceMetadataTab } from './TraceMetadataTab';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import { type MessageDescriptor } from '@lingui/core';
 
 type Tab = 'Messages' | 'Tools' | 'Raw JSON' | 'Metadata';
+
+const TAB_LABELS: Record<Tab, MessageDescriptor> = {
+  Messages: msg`Messages`,
+  Tools: msg`Tools`,
+  'Raw JSON': msg`Raw JSON`,
+  Metadata: msg`Metadata`,
+};
 
 interface Props {
   trace: AgentCallDto;
@@ -31,6 +41,8 @@ interface Props {
 
 export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const navigate = useNavigate();
+  const { t, i18n } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- Tab id token (display label from TAB_LABELS)
   const [tab, setTab] = useState<Tab>('Messages');
   const [promoting, setPromoting] = useState(false);
   const [prevTraceId, setPrevTraceId] = useState(trace.id);
@@ -38,6 +50,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   // Reset tab when trace changes (derived state pattern per BEST_PRACTICES §4)
   if (prevTraceId !== trace.id) {
     setPrevTraceId(trace.id);
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- Tab id token (display label from TAB_LABELS)
     setTab('Messages');
     setPromoting(false);
   }
@@ -47,13 +60,13 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const hasResponse = !!trace.response;
   const promoteDisabled = !trace.agentId || !hasResponse || suitesQuery.isLoading || suites.length === 0;
   const promoteTooltip = !trace.agentId
-    ? 'This trace is not linked to an agent and cannot be promoted.'
+    ? t`This trace is not linked to an agent and cannot be promoted.`
     : !hasResponse
-      ? 'This trace has no response and cannot be promoted.'
+      ? t`This trace has no response and cannot be promoted.`
       : suitesQuery.isLoading
-        ? 'Loading test suites…'
+        ? t`Loading test suites…`
         : suites.length === 0
-          ? 'No test suite for this agent yet.'
+          ? t`No test suite for this agent yet.`
           : '';
 
   const aColor = agentColor(trace.agentId ?? trace.id);
@@ -61,7 +74,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const statusOk = trace.httpStatus >= 200 && trace.httpStatus < 300;
   const statusErr = trace.httpStatus >= 500;
   const statusColor = statusOk ? 'var(--success)' : statusErr ? 'var(--danger)' : 'var(--warn)';
-  const statusLabel = statusOk ? 'OK' : statusErr ? 'ERROR' : 'RATE_LIMIT';
+  const statusLabel = statusOk ? t`OK` : statusErr ? t`ERROR` : t`RATE_LIMIT`;
   const tokTotal = trace.inputTokens + trace.outputTokens;
 
   const allMessages: MessageDto[] = [...trace.request, ...(trace.response ? [trace.response] : [])];
@@ -98,7 +111,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
               <span className="mono text-body-title font-semibold">{trace.id.slice(0, 18)}…</span>
-              <CopyButton text={trace.id} label="Copy trace ID" className="shrink-0" />
+              <CopyButton text={trace.id} label={t`Copy trace ID`} className="shrink-0" />
               <span
                 className={cn(
                   'inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-caption font-semibold font-mono',
@@ -117,7 +130,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
                   size="sm"
                   data-testid="trace-detail-agent-name"
                   onClick={() => { onClose(); navigate(`/agents?id=${trace.agentId}`); }}
-                  title="Open agent"
+                  title={t`Open agent`}
                   className="p-0.5 rounded-full"
                 >
                   <ColoredBadge color={aColor} label={trace.agentName} dot size="md" />
@@ -125,17 +138,17 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
               )}
               <ColoredBadge color={mColor} label={trace.model} dot size="md" />
               <span className="text-body-sm text-muted">
-                · {fmtRelative(trace.createdAt)} · {msgCount} msg{msgCount !== 1 ? 's' : ''} · {toolCallCount} tool call{toolCallCount !== 1 ? 's' : ''}
+                · {fmtRelative(trace.createdAt)} · <Plural value={msgCount} one="# msg" other="# msgs" /> · <Plural value={toolCallCount} one="# tool call" other="# tool calls" />
               </span>
             </div>
           </div>
           {onPrev && (
-            <IconButton size="sm" onClick={onPrev} aria-label="Previous trace" className="shrink-0 rotate-180">
+            <IconButton size="sm" onClick={onPrev} aria-label={t`Previous trace`} className="shrink-0 rotate-180">
               <ChevronRightIcon size={14} strokeWidth={2.5} />
             </IconButton>
           )}
           {onNext && (
-            <IconButton size="sm" onClick={onNext} aria-label="Next trace" className="shrink-0">
+            <IconButton size="sm" onClick={onNext} aria-label={t`Next trace`} className="shrink-0">
               <ChevronRightIcon size={14} strokeWidth={2.5} />
             </IconButton>
           )}
@@ -149,16 +162,16 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
               size="sm"
               leftIcon={<PlusIcon strokeWidth={2.5} size={12} />}
             >
-              Promote to test case
+              <Trans>Promote to test case</Trans>
             </Button>
             {trace.agentId && hasResponse && !suitesQuery.isLoading && suites.length === 0 && (
               <Button
                 variant="link"
                 className="text-body-sm"
                 onClick={() => { onClose(); navigate('/suites'); }}
-                title="Create a test suite for this agent"
+                title={t`Create a test suite for this agent`}
               >
-                Create suite →
+                <Trans>Create suite →</Trans>
               </Button>
             )}
           </div>
@@ -166,18 +179,19 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
 
         {/* Stat band */}
         <div className="mx-5 mt-[14px] px-4 py-[14px] bg-card-2 rounded-xl grid grid-cols-5 gap-[14px] shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
-          <DrawerStat label="Latency" value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'} valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
-          <DrawerStat label="Input" value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} color="var(--teal)" />
-          <DrawerStat label="Output" value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} color="var(--success)" />
-          <DrawerStat label="Total" value={fmtTokens(tokTotal)} icon={<SigmaIcon size={15} strokeWidth={2.2} />} color="var(--accent-primary)" />
+          <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'} valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
+          <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} color="var(--teal)" />
+          <DrawerStat label={t`Output`} value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} color="var(--success)" />
+          <DrawerStat label={t`Total`} value={fmtTokens(tokTotal)} icon={<SigmaIcon size={15} strokeWidth={2.2} />} color="var(--accent-primary)" />
           <DrawerStat
-            label="Cost"
+            label={t`Cost`}
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy
             valueTestId={`trace-cost-${trace.id}`}
             value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}
             color="var(--warn)"
             sub={trace.costEur == null
-              ? <Button variant="link" className="text-caption" onClick={() => { onClose(); navigate('/settings/providers'); }} title="Configure pricing for this model endpoint">Set price →</Button>
+              ? <Button variant="link" className="text-caption" onClick={() => { onClose(); navigate('/settings/providers'); }} title={t`Configure pricing for this model endpoint`}><Trans>Set price →</Trans></Button>
               : undefined}
           />
         </div>
@@ -192,7 +206,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             'data-testid': `trace-tab-${t.toLowerCase().replace(/\s+/g, '-')}`,
             label: (
               <span className="inline-flex items-center gap-1.5">
-                {t}
+                {i18n._(TAB_LABELS[t])}
                 {count !== null && (
                   <span className="px-1.5 py-px rounded-full text-caption font-mono font-semibold bg-card-2 text-muted group-data-[state=active]:bg-accent-subtle group-data-[state=active]:text-accent-hover">{count}</span>
                 )}
@@ -211,7 +225,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           )}
           {tab === 'Tools' && (
             invocations.length === 0
-              ? <div className="px-5 py-[40px] text-center text-muted text-body">No tools were invoked in this trace.</div>
+              ? <div className="px-5 py-[40px] text-center text-muted text-body"><Trans>No tools were invoked in this trace.</Trans></div>
               : invocations.map(({ req, result }, i) => (
                 <ToolMessageBubble
                   key={`${req.id}-${i}`}

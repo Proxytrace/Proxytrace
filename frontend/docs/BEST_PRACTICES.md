@@ -275,6 +275,23 @@ DESIGN.md §6 owns *which* tokens; this restates the **hard code rule** because 
 
 ---
 
+## 13a. Internationalization — no hardcoded UI strings
+
+The UI is multilingual (English is the source). **Never ship a bare user-facing string.** Full
+guidance — macros, the dev loop, the translation tool, the glossary — is in
+[`docs/i18n.md`](../../docs/i18n.md). The rules in brief:
+
+- **Wrap every UI string** with a Lingui macro: `<Trans>` for JSX text, `t\`\`` (from `useLingui()`)
+  for `placeholder`/`title`/`aria-label`/other prop strings, `<Plural>` instead of
+  `n > 1 ? 's' : ''`, and `msg\`\`` for strings in label maps (resolve with `i18n._()` at render).
+- **Keep glossary/technical terms English** (Tool, User, Assistant, Trace, Token, Prompt, Agent,
+  Suite, Evaluator, Proposal, …) — the translation tool is told not to translate them.
+- After adding labels: `npm run i18n:extract` → `npm run i18n:translate`, then commit
+  `src/locales/**`. The `lingui/no-unlocalized-strings` ESLint rule flags raw strings (`warn` during
+  migration, `error` once clean).
+
+---
+
 ## 14. Testing
 
 ### 14.1 Unit tests (Vitest)

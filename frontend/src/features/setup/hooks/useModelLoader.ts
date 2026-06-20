@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { setupApi } from '../../../api/setup';
 import type { ModelProviderKind } from '../../../api/models';
 
@@ -16,6 +17,7 @@ interface ModelLoaderParams {
  * re-fetch (the Refresh affordance).
  */
 export function useModelLoader(params: ModelLoaderParams, onFirstModel: (model: string) => void) {
+  const { t } = useLingui();
   const [models, setModels] = useState<string[] | null>(null);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
@@ -40,11 +42,11 @@ export function useModelLoader(params: ModelLoaderParams, onFirstModel: (model: 
       }
     } catch (e) {
       setModels([]);
-      setModelsError(e instanceof Error ? e.message : 'Failed to load models.');
+      setModelsError(e instanceof Error ? e.message : t`Failed to load models.`);
     } finally {
       setModelsLoading(false);
     }
-  }, [models, modelsLoading, providerFilled, providerName, providerEndpoint, providerApiKey, providerKind, onFirstModel]);
+  }, [models, modelsLoading, providerFilled, providerName, providerEndpoint, providerApiKey, providerKind, onFirstModel, t]);
 
   function reset() {
     setModels(null);

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunGroupListItemDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
@@ -17,6 +18,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
   /** Omit to render the card read-only (no delete affordance) — e.g. a suite's run history. */
   onDelete?: () => void;
 }) {
+  const { t } = useLingui();
   const c = agentColor(group.agentId);
   const runCount = group.runs.length;
 
@@ -40,10 +42,10 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         <div className="flex items-center gap-1.5 mb-2.5 min-w-0">
           <Pill label={group.agentName} color={c} />
           {group.isSystemRun && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-accent-subtle text-accent shrink-0">A/B</span>
+            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-accent-subtle text-accent shrink-0"><Trans>A/B</Trans></span>
           )}
           {runCount > 1 && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">{runCount} models</span>
+            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0"><Trans>{runCount} models</Trans></span>
           )}
           <span className="text-caption text-muted ml-auto shrink-0">{fmtRelative(group.createdAt)}</span>
         </div>
@@ -56,7 +58,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
           danger
           onClick={onDelete}
           className={`absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/card:opacity-100 focus-visible:opacity-100 ${FOCUS_RING}`}
-          aria-label="Delete run group"
+          aria-label={t`Delete run group`}
         >
           <TrashIcon size={13} />
         </IconButton>

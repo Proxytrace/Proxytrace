@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { ToolRequestInputDto, ToolSpecDto } from '../../../api/models';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Button, IconButton } from '../../../components/ui/Button';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
+  const { t } = useLingui();
   const mode = value.toolRequests === null ? 'text' : 'tool';
   const rows = value.toolRequests ?? [];
 
@@ -45,8 +47,10 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
     <div className={cn('flex flex-col gap-3', fill && 'flex-1 min-h-0')}>
       <FilterTabs
         options={[
-          { label: 'Text response', value: 'text' },
-          { label: 'Tool request', value: 'tool' },
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- mode token, not UI copy
+          { label: t`Text response`, value: 'text' },
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- mode token, not UI copy
+          { label: t`Tool request`, value: 'tool' },
         ]}
         value={mode}
         onChange={setMode}
@@ -55,8 +59,8 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
       {mode === 'text' ? (
         <Textarea
           data-testid="expected-output-text"
-          aria-label="Expected text response"
-          placeholder="What the agent should respond with…"
+          aria-label={t`Expected text response`}
+          placeholder={t`What the agent should respond with…`}
           className={cn(fill && 'flex-1 min-h-0 resize-none')}
           value={value.content}
           onChange={e => onChange({ ...value, content: e.target.value })}
@@ -65,7 +69,7 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
         <div className={cn('flex flex-col gap-2', fill && 'flex-1 min-h-0 overflow-y-auto')}>
           {rows.length === 0 && (
             <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
-              No tool requests yet.
+              <Trans>No tool requests yet.</Trans>
             </div>
           )}
 
@@ -87,20 +91,20 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
                     onChange={name => setRow(i, { name })}
                     onPickTool={tool => pickTool(i, tool)}
                   />
-                  <IconButton aria-label="Remove tool request" onClick={() => removeRow(i)} className="shrink-0">
+                  <IconButton aria-label={t`Remove tool request`} onClick={() => removeRow(i)} className="shrink-0">
                     <TrashIcon size={14} />
                   </IconButton>
                 </div>
                 <Textarea
                   className={cn('mono text-[12px]', fill && 'flex-1 min-h-0 resize-none')}
-                  aria-label="Tool arguments (JSON)"
+                  aria-label={t`Tool arguments (JSON)`}
                   rows={3}
                   invalid={invalidArgs}
                   value={row.arguments}
                   onChange={e => setRow(i, { arguments: e.target.value })}
                 />
                 {invalidArgs && (
-                  <span className="text-[11px] text-danger shrink-0">Arguments must be valid JSON.</span>
+                  <span className="text-[11px] text-danger shrink-0"><Trans>Arguments must be valid JSON.</Trans></span>
                 )}
               </div>
             );
@@ -113,7 +117,7 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
             leftIcon={<PlusIcon size={13} strokeWidth={2.5} />}
             onClick={addRow}
           >
-            Add tool request
+            <Trans>Add tool request</Trans>
           </Button>
         </div>
       )}

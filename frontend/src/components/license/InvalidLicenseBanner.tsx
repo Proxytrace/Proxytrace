@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans } from '@lingui/react/macro';
 import { useLicense } from '../../api/license';
 import { AlertTriangleIcon } from '../icons';
 
@@ -19,11 +20,11 @@ export function InvalidLicenseBanner() {
     >
       <AlertTriangleIcon size={14} />
       <span>
-        The configured license is invalid — running with Free-tier limits.
+        <Trans>The configured license is invalid — running with Free-tier limits.</Trans>
         {data.invalidReason ? ` (${data.invalidReason})` : ''}
       </span>
       <Link to="/settings/license" className="ml-auto underline underline-offset-2 hover:text-primary">
-        Fix license
+        <Trans>Fix license</Trans>
       </Link>
     </div>
   );

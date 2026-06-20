@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentListItemDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function AgentStep({ agents, value, onChange }: Props) {
+  const { t } = useLingui();
   const [showSystem, setShowSystem] = useState(false);
 
   const hasSystem = useMemo(() => agents.some(a => a.isSystemAgent), [agents]);
@@ -21,20 +23,20 @@ export function AgentStep({ agents, value, onChange }: Props) {
   );
 
   if (agents.length === 0) {
-    return <EmptyState title="No agents available" description="Create an agent before building a test suite." />;
+    return <EmptyState title={t`No agents available`} description={t`Create an agent before building a test suite.`} />;
   }
 
   return (
     <div data-testid="wizard-step-agent" className="max-w-[640px] mx-auto flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[12.5px] text-muted m-0">Which agent should this suite test?</p>
+        <p className="text-[12.5px] text-muted m-0"><Trans>Which agent should this suite test?</Trans></p>
         {hasSystem && (
           <label className="flex items-center gap-2 text-[12px] text-secondary cursor-pointer select-none">
-            System agents
+            <Trans>System agents</Trans>
             <Switch
               checked={showSystem}
               onChange={setShowSystem}
-              aria-label="System agents"
+              aria-label={t`System agents`}
               data-testid="wizard-agent-show-system"
             />
           </label>
@@ -43,8 +45,8 @@ export function AgentStep({ agents, value, onChange }: Props) {
 
       {visible.length === 0 ? (
         <EmptyState
-          title="No agents to show"
-          description="Only system agents exist — turn on “System agents” to select one."
+          title={t`No agents to show`}
+          description={t`Only system agents exist — turn on “System agents” to select one.`}
         />
       ) : (
         <div className="grid grid-cols-2 gap-2">

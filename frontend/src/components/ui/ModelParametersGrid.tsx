@@ -1,5 +1,7 @@
+import { Trans } from '@lingui/react/macro';
 import type { ModelParametersDto } from '../../api/models';
 
+/* eslint-disable lingui/no-unlocalized-strings -- OpenAI API field names, not UI copy */
 const FIELD_LABELS: Record<keyof ModelParametersDto, string> = {
   temperature: 'temperature',
   topP: 'top_p',
@@ -11,6 +13,7 @@ const FIELD_LABELS: Record<keyof ModelParametersDto, string> = {
   stop: 'stop',
   n: 'n',
 };
+/* eslint-enable lingui/no-unlocalized-strings */
 
 const FIELD_ORDER: (keyof ModelParametersDto)[] = [
   'temperature',
@@ -45,7 +48,7 @@ export function ModelParametersGrid({ params }: { params: ModelParametersDto }) 
   if (setFields.length === 0) {
     return (
       <div className="px-3 py-[10px] bg-card-2 rounded-[8px] text-[12px] text-muted italic">
-        Default parameters (none specified)
+        <Trans>Default parameters (none specified)</Trans>
       </div>
     );
   }

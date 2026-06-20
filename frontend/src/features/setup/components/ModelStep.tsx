@@ -1,4 +1,5 @@
 import type { KeyboardEvent } from 'react';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { FormField } from '../../../components/ui/FormField';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -27,13 +28,14 @@ export function ModelStep({
   onReloadModels,
   onKeyDown,
 }: ModelStepProps) {
+  const { t } = useLingui();
   return (
     <div className="flex flex-col gap-4">
-      <FormField label="Default model" error={error ?? undefined}>
+      <FormField label={t`Default model`} error={error ?? undefined}>
         {modelsLoading ? (
           <div className="flex items-center gap-2.5 rounded-md border border-border bg-card-2 px-3 py-2">
             <Spinner size={12} />
-            <span className="text-title text-secondary">Discovering models from your provider…</span>
+            <span className="text-title text-secondary"><Trans>Discovering models from your provider…</Trans></span>
           </div>
         ) : models && models.length > 0 ? (
           <div className="flex items-center gap-2">
@@ -44,7 +46,7 @@ export function ModelStep({
                 ))}
               </Select>
             </div>
-            <IconButton aria-label="Reload models" onClick={onReloadModels} data-testid="setup-model-reload-btn">
+            <IconButton aria-label={t`Reload models`} onClick={onReloadModels} data-testid="setup-model-reload-btn">
               <ResetIcon size={14} />
             </IconButton>
           </div>
@@ -52,15 +54,15 @@ export function ModelStep({
           <div className="flex flex-col gap-2">
             {modelsError ? (
               <span className="text-body-sm text-danger leading-relaxed">
-                Could not list models from the provider: {modelsError}. Enter the model name manually.
+                <Trans>Could not list models from the provider: {modelsError}. Enter the model name manually.</Trans>
               </span>
             ) : models !== null ? (
               <span className="text-body-sm text-muted leading-relaxed">
-                No models were discovered — check the endpoint and API key, or enter the model name manually.
+                <Trans>No models were discovered — check the endpoint and API key, or enter the model name manually.</Trans>
               </span>
             ) : null}
             <Input
-              placeholder="e.g. gpt-4o"
+              placeholder={t`e.g. gpt-4o`}
               value={modelName}
               onChange={e => onModelChange(e.target.value)}
               onKeyDown={onKeyDown}
@@ -69,7 +71,7 @@ export function ModelStep({
               data-testid="setup-model-input"
             />
             <Button variant="secondary" size="sm" className="self-start" onClick={onReloadModels}>
-              Retry discovery
+              <Trans>Retry discovery</Trans>
             </Button>
           </div>
         )}
@@ -77,13 +79,15 @@ export function ModelStep({
 
       {models && models.length > 0 && (
         <p className="text-body-sm text-muted -mt-2">
-          {models.length} {models.length === 1 ? 'model' : 'models'} discovered.
+          <Plural value={models.length} one="# model discovered." other="# models discovered." />
         </p>
       )}
 
       <p className="text-body-sm text-muted leading-relaxed">
-        This becomes your project's default model. All discovered models are added with
-        prices loaded automatically from the catalogue — nothing to type in.
+        <Trans>
+          This becomes your project's default model. All discovered models are added with
+          prices loaded automatically from the catalogue — nothing to type in.
+        </Trans>
       </p>
     </div>
   );

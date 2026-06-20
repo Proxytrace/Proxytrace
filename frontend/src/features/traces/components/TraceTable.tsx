@@ -6,6 +6,8 @@ import { cn } from '../../../lib/cn';
 import { FlatTraceRow } from './FlatTraceRow';
 import { ConversationGroupRow } from './ConversationGroupRow';
 import { TracesEmptyState } from './TracesEmptyState';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { COL_HEADER_LABELS } from '../tracesMeta';
 
 interface Props {
   rows: TraceRow[];
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export function TraceTable({ rows, isFetching, filtered, selectedId, expandedConvs, onSelectTrace, onToggleConv }: Props) {
+  const { i18n } = useLingui();
   return (
     <div
       data-testid="trace-table"
@@ -39,7 +42,7 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
                 COL_VIS_CLS[i],
               )}
             >
-              {label}
+              {i18n._(COL_HEADER_LABELS[i])}
             </span>
           ))}
         </div>
@@ -49,8 +52,8 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
             <div className="p-3"><SkeletonList rows={10} height={36} gap={4} /></div>
           ) : filtered ? (
             <div data-testid="traces-empty-state" className="py-12 flex flex-col items-center gap-1 text-center">
-              <span className="text-secondary text-body">No traces match your filters.</span>
-              <span className="text-muted text-body-sm">Try widening the time range, agent, or search.</span>
+              <span className="text-secondary text-body"><Trans>No traces match your filters.</Trans></span>
+              <span className="text-muted text-body-sm"><Trans>Try widening the time range, agent, or search.</Trans></span>
             </div>
           ) : (
             <TracesEmptyState />

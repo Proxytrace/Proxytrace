@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLingui } from '@lingui/react/macro';
 import { searchApi, type SearchIndexingSettings } from '../../../api/search';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import useToast from '../../../hooks/useToast';
@@ -27,13 +28,14 @@ export function useSearchStatus(projectId: string | null) {
 /** Saves indexing settings; patches the settings cache on success. */
 export function useUpdateSearchSettings() {
   const qc = useQueryClient();
+  const { t } = useLingui();
   const { show: toast } = useToast();
   return useMutation({
     mutationFn: (args: { projectId: string; next: SearchIndexingSettings }) =>
       searchApi.updateSettings(args.projectId, args.next),
     onSuccess: (saved, args) => {
       qc.setQueryData(QUERY_KEYS.searchSettings(args.projectId), saved);
-      toast('Search settings saved', 'success');
+      toast(t`Search settings saved`, 'success');
     },
   });
 }
@@ -41,12 +43,13 @@ export function useUpdateSearchSettings() {
 /** Triggers a reindex; refreshes the status query. */
 export function useReindex() {
   const qc = useQueryClient();
+  const { t } = useLingui();
   const { show: toast } = useToast();
   return useMutation({
     mutationFn: (projectId: string) => searchApi.reindex(projectId),
     onSuccess: (_result, projectId) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.searchStatus(projectId) });
-      toast('Reindex started', 'success');
+      toast(t`Reindex started`, 'success');
     },
   });
 }

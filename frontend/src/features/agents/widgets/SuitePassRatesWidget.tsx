@@ -1,3 +1,4 @@
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { useNavigate } from 'react-router-dom';
 import type { AgentSuitePassRateDto } from '../../../api/models';
 import { fmtRelative } from '../../../lib/format';
@@ -17,19 +18,20 @@ function color(pct: number): string {
 }
 
 export function SuitePassRatesWidget({ suitePassRates, agentId, className }: Props) {
+  const { t } = useLingui();
   const navigate = useNavigate();
   if (suitePassRates.length === 0) {
     return (
-      <Widget title="Suite Pass Rates" className={className}>
-        <div className="text-body text-muted italic">No suite runs yet</div>
+      <Widget title={t`Suite Pass Rates`} className={className}>
+        <div className="text-body text-muted italic"><Trans>No suite runs yet</Trans></div>
       </Widget>
     );
   }
 
   return (
     <Widget
-      title="Suite Pass Rates"
-      right={<span className="text-body-sm text-muted">{suitePassRates.length} suite{suitePassRates.length !== 1 ? 's' : ''}</span>}
+      title={t`Suite Pass Rates`}
+      right={<span className="text-body-sm text-muted"><Plural value={suitePassRates.length} one="# suite" other="# suites" /></span>}
       className={className}
     >
       <div className="flex flex-col gap-3.5">
@@ -41,7 +43,7 @@ export function SuitePassRatesWidget({ suitePassRates, agentId, className }: Pro
               key={s.suiteId}
               data-testid={`suite-pass-rate-${s.suiteId}`}
               onClick={() => navigate(`/suites?agentId=${agentId}&suiteId=${s.suiteId}`)}
-              title={`Open ${s.suiteName}`}
+              title={t`Open ${s.suiteName}`}
               className="flex flex-col gap-1.5 rounded-md px-2 py-2 -mx-2 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
             >
               <div className="flex items-baseline justify-between gap-2 text-body-sm w-full">

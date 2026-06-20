@@ -1,0 +1,4476 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-06-20 08:07+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: it\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. placeholder {0}: preview.customerEmail
+msgid " for {0}"
+msgstr " per {0}"
+
+#. placeholder {0}: fmtDate(preview.expiresAt)
+msgid ", valid until {0}"
+msgstr ", valido fino al {0}"
+
+msgid ". Paste a valid key below, or continue on the Free tier."
+msgstr ". Incolla qui sotto una chiave valida, oppure continua con il piano Free."
+
+#. placeholder {0}: pendingAddTraces.length
+msgid "· +{0} pending"
+msgstr "· +{0} in sospeso"
+
+msgid "\"From\" must be before \"To\"."
+msgstr "\"From\" deve precedere \"To\"."
+
+msgid "(empty — click edit to add content)"
+msgstr "(vuoto — fai clic su modifica per aggiungere contenuto)"
+
+msgid "(empty response)"
+msgstr "(risposta vuota)"
+
+msgid "(empty)"
+msgstr "(vuoto)"
+
+msgid "(no system prompt)"
+msgstr "(nessun System prompt)"
+
+msgid "(unnamed)"
+msgstr "(senza nome)"
+
+msgid "(You)"
+msgstr "(Tu)"
+
+#. placeholder {0}: agents.length
+msgid "{0, plural, one {# agent} other {# agents}}"
+msgstr "{0, plural, one {# agent} other {# agent}}"
+
+#. placeholder {0}: data.unmatched
+msgid "{0, plural, one {# case not comparable (suite changed between runs).} other {# cases not comparable (suite changed between runs).}}"
+msgstr "{0, plural, one {# caso non confrontabile (Suite cambiata tra i Run).} other {# casi non confrontabili (Suite cambiata tra i Run).}}"
+
+#. placeholder {0}: cases.length
+#. placeholder {0}: s.testCaseCount
+#. placeholder {0}: suite.testCases.length
+msgid "{0, plural, one {# case} other {# cases}}"
+msgstr "{0, plural, one {# caso} other {# casi}}"
+
+#. placeholder {0}: artifact.columns.length
+msgid "{0, plural, one {# column} other {# columns}}"
+msgstr "{0, plural, one {# colonna} other {# colonne}}"
+
+#. placeholder {0}: s.evaluators.length
+msgid "{0, plural, one {# evaluator} other {# evaluators}}"
+msgstr "{0, plural, one {# Evaluator} other {# Evaluator}}"
+
+#. placeholder {0}: ids.length
+msgid "{0, plural, one {# failing run motivated this} other {# failing runs motivated this}}"
+msgstr "{0, plural, one {# Run fallito ha motivato questo} other {# Run falliti hanno motivato questo}}"
+
+#. placeholder {0}: theory.evidenceTestRunIds.length
+msgid "{0, plural, one {# failing run} other {# failing runs}}"
+msgstr "{0, plural, one {# Run fallito} other {# Run falliti}}"
+
+#. placeholder {0}: p.memberCount
+msgid "{0, plural, one {# member} other {# members}}"
+msgstr "{0, plural, one {# membro} other {# membri}}"
+
+#. placeholder {0}: messages.length
+msgid "{0, plural, one {# message} other {# messages}}"
+msgstr "{0, plural, one {# messaggio} other {# messaggi}}"
+
+#. placeholder {0}: models.length
+msgid "{0, plural, one {# model discovered.} other {# models discovered.}}"
+msgstr "{0, plural, one {# modello scoperto.} other {# modelli scoperti.}}"
+
+#. placeholder {0}: group.runs.length
+msgid "{0, plural, one {# model} other {# models}}"
+msgstr "{0, plural, one {# modello} other {# modelli}}"
+
+#. placeholder {0}: tool.arguments.length
+msgid "{0, plural, one {# param} other {# params}}"
+msgstr "{0, plural, one {# parametro} other {# parametri}}"
+
+#. placeholder {0}: hits.length
+msgid "{0, plural, one {# result} other {# results}}"
+msgstr "{0, plural, one {# risultato} other {# risultati}}"
+
+#. placeholder {0}: rows.length
+msgid "{0, plural, one {# row} other {# rows}}"
+msgstr "{0, plural, one {# riga} other {# righe}}"
+
+#. placeholder {0}: latencyStats.samples
+msgid "{0, plural, one {# sample} other {# samples}}"
+msgstr "{0, plural, one {# campione} other {# campioni}}"
+
+#. placeholder {0}: suites.length
+msgid "{0, plural, one {# suite for this agent} other {# suites for this agent}}"
+msgstr "{0, plural, one {# Suite per questo agent} other {# Suite per questo agent}}"
+
+#. placeholder {0}: suitePassRates.length
+#. placeholder {0}: suites.length
+msgid "{0, plural, one {# suite} other {# suites}}"
+msgstr "{0, plural, one {# Suite} other {# Suite}}"
+
+#. placeholder {0}: visibleTheories.length
+msgid "{0, plural, one {# theory} other {# theories}}"
+msgstr "{0, plural, one {# teoria} other {# teorie}}"
+
+#. placeholder {0}: a.toolCount
+#. placeholder {0}: agent.toolCount
+#. placeholder {0}: v.tools.length
+msgid "{0, plural, one {# tool} other {# tools}}"
+msgstr "{0, plural, one {# Tool} other {# Tools}}"
+
+#. placeholder {0}: hoverBucket.total
+msgid "{0, plural, one {# trace} other {# traces}}"
+msgstr "{0, plural, one {# Trace} other {# Traces}}"
+
+#. placeholder {0}: turns.length
+msgid "{0, plural, one {# turn} other {# turns}}"
+msgstr "{0, plural, one {# turno} other {# turni}}"
+
+#. placeholder {0}: suite.testCaseCount
+msgid "{0, plural, one {case} other {cases}}"
+msgstr "{0, plural, one {caso} other {casi}}"
+
+#. placeholder {0}: lines.length - maxLines
+msgid "{0, plural, one {Show # more line} other {Show # more lines}}"
+msgstr "{0, plural, one {Mostra # altra riga} other {Mostra # altre righe}}"
+
+#. placeholder {0}: pending.length
+msgid "{0, plural, one {Waiting for # action} other {Waiting for # actions}}"
+msgstr "{0, plural, one {In attesa di # azione} other {In attesa di # azioni}}"
+
+#. placeholder {0}: i18n._(adoptionLabel(proposal))
+msgid "{0} — the change is live in the agent."
+msgstr "{0} — la modifica è ora attiva nell'agent."
+
+#. placeholder {0}: s.n
+#. placeholder {1}: i18n._(s.name)
+#. placeholder {2}: i18n._(s.meaning)
+msgid "{0} · {1} — {2}"
+msgstr "{0} · {1} — {2}"
+
+#. placeholder {0}: suite.agentName
+#. placeholder {1}: suite.testCaseCount
+msgid "{0} · {1} case"
+msgstr "{0} · {1} caso"
+
+#. placeholder {0}: suite.agentName
+#. placeholder {1}: suite.testCaseCount
+msgid "{0} · {1} cases"
+msgstr "{0} · {1} casi"
+
+#. placeholder {0}: suite.agentName
+#. placeholder {1}: suite.totalRuns
+msgid "{0} · {1} runs"
+msgstr "{0} · {1} Run"
+
+#. placeholder {0}: suite.agentName
+#. placeholder {1}: suite.totalRuns
+#. placeholder {2}: fmtRelative(suite.lastRunAt)
+msgid "{0} · {1} runs · last {2}"
+msgstr "{0} · {1} run · ultimi {2}"
+
+#. placeholder {0}: modelSplit.models.length
+msgid "{0} active"
+msgstr "{0} attivi"
+
+#. placeholder {0}: suite.testCases.length
+msgid "{0} cases"
+msgstr "{0} casi"
+
+#. placeholder {0}: counts.all
+#. placeholder {1}: runs.length
+msgid "{0} cases × {1} models — divergent rows striped"
+msgstr "{0} casi × {1} model — righe divergenti a bande"
+
+#. placeholder {0}: counts.all
+msgid "{0} cases × 1 model"
+msgstr "{0} casi × 1 model"
+
+#. placeholder {0}: charCount.toLocaleString()
+#. placeholder {0}: overrides.systemPrompt.length
+#. placeholder {0}: text.length
+msgid "{0} chars"
+msgstr "{0} caratteri"
+
+#. placeholder {0}: hoverBucket.errors
+msgid "{0} err"
+msgstr "{0} err"
+
+#. placeholder {0}: suite.evaluators.length
+msgid "{0} evaluators"
+msgstr "{0} evaluator"
+
+#. placeholder {0}: ab.failedCases
+msgid "{0} failed"
+msgstr "{0} falliti"
+
+#. placeholder {0}: proposal.kind
+#. placeholder {1}: proposal.agentName
+msgid "{0} for {1}"
+msgstr "{0} per {1}"
+
+#. placeholder {0}: call.inputTokens
+#. placeholder {0}: fmtTokens(stats.inputTokens)
+#. placeholder {0}: fmtTokens(sum.totalInputTokens)
+#. placeholder {1}: call.outputTokens
+#. placeholder {1}: fmtTokens(stats.outputTokens)
+#. placeholder {1}: fmtTokens(sum.totalOutputTokens)
+msgid "{0} in · {1} out"
+msgstr "{0} in · {1} out"
+
+#. placeholder {0}: fmtTokens(trace.inputTokens)
+#. placeholder {1}: fmtTokens(trace.outputTokens)
+#. placeholder {2}: fmtDuration(trace.durationMs)
+#. placeholder {3}: fmtCost(trace.costEur)
+msgid "{0} in · {1} out · {2} · {3}"
+msgstr "{0} in · {1} out · {2} · {3}"
+
+#. placeholder {0}: cell.total
+msgid "{0} judged"
+msgstr "{0} valutati"
+
+#. placeholder {0}: data.messages.length
+msgid "{0} messages"
+msgstr "{0} messaggi"
+
+#. placeholder {0}: runs.length
+msgid "{0} models"
+msgstr "{0} model"
+
+#. placeholder {0}: testCase.input.length
+msgid "{0} msg"
+msgstr "{0} msg"
+
+#. placeholder {0}: stats.errorCount.toLocaleString()
+msgid "{0} non-2xx"
+msgstr "{0} non-2xx"
+
+#. placeholder {0}: selectedIds.size
+#. placeholder {0}: stagedIds.size
+#. placeholder {1}: evaluators.length
+msgid "{0} of {1} attached"
+msgstr "{0} di {1} allegati"
+
+#. placeholder {0}: data.failures.length
+#. placeholder {1}: data.totalCases
+#. placeholder {2}: fmtPct100(data.passRate)
+msgid "{0} of {1} cases failing · <0>{2}</0> pass rate"
+msgstr "{0} di {1} casi in errore · <0>{2}</0> tasso di passaggio"
+
+#. placeholder {0}: traces.length
+#. placeholder {1}: allTraces.length
+msgid "{0} of {1} shown"
+msgstr "{0} di {1} mostrati"
+
+#. placeholder {0}: fmtPct100(run.passRate)
+#. placeholder {0}: fmtPct100(suite.passRate)
+msgid "{0} pass"
+msgstr "{0} superato"
+
+#. placeholder {0}: ab.passedCases
+msgid "{0} passed"
+msgstr "{0} superati"
+
+#. placeholder {0}: ab.totalCases - ab.completedCases
+msgid "{0} pending"
+msgstr "{0} in attesa"
+
+#. placeholder {0}: hits.length
+msgid "{0} recent"
+msgstr "{0} recenti"
+
+#. placeholder {0}: (summary?.totalEvaluations ?? 0).toLocaleString()
+msgid "{0} runs · {range}"
+msgstr "{0} run · {range}"
+
+#. placeholder {0}: selected.size
+msgid "{0} selected"
+msgstr "{0} selezionati"
+
+#. placeholder {0}: Math.round(v)
+msgid "{0} t/s"
+msgstr "{0} t/s"
+
+#. placeholder {0}: fmtTokens(totalTok)
+msgid "{0} tok"
+msgstr "{0} tok"
+
+#. placeholder {0}: fmtTokens(v)
+msgid "{0} tokens"
+msgstr "{0} token"
+
+#. placeholder {0}: data.tools.length
+msgid "{0} tools"
+msgstr "{0} tool"
+
+#. placeholder {0}: total.toLocaleString()
+msgid "{0} total"
+msgstr "{0} totali"
+
+#. placeholder {0}: Math.round(v)
+msgid "{0} traces"
+msgstr "{0} trace"
+
+#. placeholder {0}: fmtTokens(limits.MaxTracesPerMonth ?? 10_000)
+#. placeholder {1}: limits.TraceRetentionDays ?? 14
+msgid "{0} traces per month, kept {1} days"
+msgstr "{0} trace al mese, conservate {1} giorni"
+
+#. placeholder {0}: limits.TraceRetentionDays ?? 365
+msgid "{0}-day trace retention"
+msgstr "conservazione trace di {0} giorni"
+
+#. placeholder {0}: m.name
+#. placeholder {1}: fmtTokens(m.tokens)
+#. placeholder {2}: Math.round((m.tokens / modelSplit.total) * 100)
+msgid "{0}: {1} tokens ({2}%)"
+msgstr "{0}: {1} token ({2}%)"
+
+#. placeholder {0}: cell.run.endpointName
+msgid "{0}: {verdict} — click to compare"
+msgstr "{0}: {verdict} — clicca per confrontare"
+
+#. placeholder {0}: evaluation.evaluatorName
+msgid "{0}: error"
+msgstr "{0}: errore"
+
+#. placeholder {0}: cell.run.endpointName
+msgid "{0}: evaluating…"
+msgstr "{0}: in valutazione…"
+
+#. placeholder {0}: cell.run.endpointName
+msgid "{0}: queued"
+msgstr "{0}: in coda"
+
+#. placeholder {0}: evaluator.name
+msgid "{0}’s reasoning"
+msgstr "reasoning di {0}"
+
+#. placeholder {0}: up ? '+' : ''
+msgid "{0}{delta} vs previous"
+msgstr "{0}{delta} rispetto al precedente"
+
+#. placeholder {0}: pass.totalPassed
+#. placeholder {1}: pass.totalCases
+msgid "{0}/{1} cases"
+msgstr "{0}/{1} casi"
+
+#. placeholder {0}: run.passedCases
+#. placeholder {1}: run.totalCases
+#. placeholder {2}: fmtPct100(run.passRate)
+msgid "{0}/{1} passed · {2}"
+msgstr "{0}/{1} superati · {2}"
+
+#. placeholder {0}: run.passedCases
+#. placeholder {1}: run.totalCases
+#. placeholder {2}: fmtCost(run.costUsd)
+#. placeholder {3}: fmtTokens((run.tokensIn ?? 0) + (run.tokensOut ?? 0))
+msgid "{0}/{1} passed · {2} · {3} tok"
+msgstr "{0}/{1} superati · {2} · {3} tok"
+
+#. placeholder {0}: live.tracesPerMinute.toFixed(1)
+#. placeholder {1}: fmtLatency(live.p95Ms)
+#. placeholder {2}: fmtPct(live.errorRate)
+msgid "{0}/min · {1} p95 · {2} errors"
+msgstr "{0}/min · {1} p95 · {2} errori"
+
+#. placeholder {0}: gain.fromPct
+#. placeholder {1}: gain.toPct
+msgid "{0}% → {1}% pass rate"
+msgstr "Tasso di superamento {0}% → {1}%"
+
+#. placeholder {0}: v.toFixed(0)
+msgid "{0}% pass"
+msgstr "{0}% superati"
+
+#. placeholder {0}: a.toolCount
+msgid "{0}t"
+msgstr "{0}t"
+
+#. placeholder {0}: suiteSchedules.length
+msgid "{activeCount} active · {0} total"
+msgstr "{activeCount} attivi · {0} totali"
+
+msgid "{argCount, plural, one {# arg} other {# args}}"
+msgstr "{argCount, plural, one {# argomento} other {# argomenti}}"
+
+msgid "{cat}-based"
+msgstr "basato su {cat}"
+
+msgid "{completed}/{total} cases"
+msgstr "{completed}/{total} casi"
+
+msgid "{count, plural, one {# unsaved change} other {# unsaved changes}}"
+msgstr "{count, plural, one {# modifica non salvata} other {# modifiche non salvate}}"
+
+msgid "{count, plural, one {Run on # endpoint} other {Run on # endpoints}}"
+msgstr "{count, plural, one {Esegui su # endpoint} other {Esegui su # endpoint}}"
+
+msgid "{evaluatorName}’s verdict"
+msgstr "Verdetto di {evaluatorName}"
+
+#. placeholder {0}: theory.agentName
+msgid "{kindLabel} for {0}"
+msgstr "{kindLabel} per {0}"
+
+msgid "{label} (Enterprise)"
+msgstr "{label} (Enterprise)"
+
+msgid "{label} tier"
+msgstr "livello {label}"
+
+msgid "{label} tier — upgrade"
+msgstr "livello {label} — aggiorna"
+
+msgid "{lineCount, plural, one {# line} other {# lines}}"
+msgstr "{lineCount, plural, one {# riga} other {# righe}}"
+
+msgid "{memberCount, plural, one {# member} other {# members}}"
+msgstr "{memberCount, plural, one {# membro} other {# membri}}"
+
+msgid "{msgCount, plural, one {# msg} other {# msgs}}"
+msgstr "{msgCount, plural, one {# msg} other {# msgs}}"
+
+msgid "{n} agents"
+msgstr "{n} Agents"
+
+msgid "{n} projects"
+msgstr "{n} progetti"
+
+msgid "{n} test suites"
+msgstr "{n} test suites"
+
+msgid "{passed}/{total} passed"
+msgstr "{passed}/{total} superati"
+
+msgid "{passed}/{total} passed · {failed} failed"
+msgstr "{passed}/{total} superati · {failed} falliti"
+
+msgid "{passPercent}% pass"
+msgstr "{passPercent}% superati"
+
+msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
+msgstr "{proposals, plural, one {# Proposal pronta} other {# Proposals pronte}}"
+
+#. placeholder {0}: totalRuns.toLocaleString()
+msgid "{range} · {0} runs"
+msgstr "{range} · {0} Runs"
+
+#. placeholder {0}: fmtTokens(share.total)
+msgid "{range} · <0>{0}</0> total"
+msgstr "{range} · <0>{0}</0> totali"
+
+msgid "{resultBytes} B"
+msgstr "{resultBytes} B"
+
+msgid "{runCount, plural, one {run} other {runs}}"
+msgstr "{runCount, plural, one {Run} other {Runs}}"
+
+msgid "{runCount} models"
+msgstr "{runCount} models"
+
+msgid "{sizeB} B"
+msgstr "{sizeB} B"
+
+msgid "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
+msgstr "{toolCallCount, plural, one {# Tool call} other {# Tool calls}}"
+
+msgid "{total, plural, one {error} other {errors}}"
+msgstr "{total, plural, one {errore} other {errori}}"
+
+msgid "{traces, plural, one {# trace} other {# traces}}"
+msgstr "{traces, plural, one {# Trace} other {# Traces}}"
+
+msgid "{unreadCount} new"
+msgstr "{unreadCount} nuovi"
+
+msgid "{v} sample"
+msgstr "{v} campione"
+
+msgid "{v} samples"
+msgstr "{v} campioni"
+
+msgid "{value}% pass rate"
+msgstr "tasso di passaggio {value}%"
+
+msgid "{wordCount, plural, one {# word} other {# words}}"
+msgstr "{wordCount, plural, one {# parola} other {# parole}}"
+
+msgid "{words, plural, one {# word} other {# words}}"
+msgstr "{words, plural, one {# parola} other {# parole}}"
+
+msgid "← Back"
+msgstr "← Indietro"
+
+msgid "← Change"
+msgstr "← Cambia"
+
+msgid "+ added"
+msgstr "+ aggiunto"
+
+msgid "+ Added"
+msgstr "+ Aggiunto"
+
+msgid "+ Pending add"
+msgstr "+ In attesa di aggiunta"
+
+#. placeholder {0}: rest.length
+msgid "+{0} more"
+msgstr "+{0} in più"
+
+#. placeholder {0}: stats.provenGainPt
+msgid "+{0}pt"
+msgstr "+{0}pt"
+
+msgid "+{added} added"
+msgstr "+{added} aggiunti"
+
+msgid "+{hidden} more"
+msgstr "+{hidden} in più"
+
+msgid "+7pt"
+msgstr "+7pt"
+
+#. placeholder {0}: fmtLatency(stats.latencyStdDevMs)
+msgid "± {0}"
+msgstr "± {0}"
+
+#. placeholder {0}: visibleAgents.length
+msgid "<0>{0}</0> detected · tap to inspect"
+msgstr "<0>{0}</0> rilevati · tocca per ispezionare"
+
+#. placeholder {0}: (summary?.totalInputTokens ?? 0).toLocaleString()
+msgid "<0>{0}</0> in"
+msgstr "<0>{0}</0> in"
+
+#. placeholder {0}: (summary?.totalOutputTokens ?? 0).toLocaleString()
+msgid "<0>{0}</0> out"
+msgstr "<0>{0}</0> out"
+
+#. placeholder {0}: (summary?.totalCalls ?? 0).toLocaleString()
+msgid "<0>{0}</0> traces"
+msgstr "<0>{0}</0> tracce"
+
+msgid "<your rubric goes here>"
+msgstr "<inserisci qui la tua rubric>"
+
+msgid "= no change vs previous"
+msgstr "= nessuna modifica rispetto al precedente"
+
+msgid "~ 2 minutes"
+msgstr "~ 2 minuti"
+
+#. placeholder {0}: fmtDuration(etaMs)
+msgid "~{0} left"
+msgstr "~{0} rimanenti"
+
+msgid "~{tokens} tok"
+msgstr "~{tokens} tok"
+
+msgid "− removed"
+msgstr "− rimosso"
+
+msgid "− Removed"
+msgstr "− Rimosso"
+
+msgid "−{removed} removed"
+msgstr "−{removed} rimossi"
+
+msgid "○ Not attached"
+msgstr "○ Non collegato"
+
+msgid "● Attached"
+msgstr "● Collegato"
+
+msgid "0pt"
+msgstr "0pt"
+
+msgid "1 agent"
+msgstr "1 agent"
+
+msgid "1 project"
+msgstr "1 project"
+
+msgid "1 test suite"
+msgstr "1 test suite"
+
+msgid "2 proposals"
+msgstr "2 proposal"
+
+msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
+msgstr "Un modello valutatore assegna un punteggio alle risposte su una scala fissa da 1 a 5 (Terrible → Excellent) con ragionamento opzionale. Scegli un preset o scrivi la tua rubric."
+
+msgid "A proposal is created only once the A/B test shows an improvement."
+msgstr "Una proposal viene creata solo quando l'A/B test mostra un miglioramento."
+
+#. placeholder {0}: proposal ? ` (${theoryShortId(proposal.id).replace('thy_', 'prop_')})` : ''
+msgid "A reviewable draft proposal{0} was created from the winning A/B test."
+msgstr "È stata creata una bozza di proposal revisionabile{0} a partire dall'A/B test vincente."
+
+msgid "A reviewer chose not to apply this change."
+msgstr "Un revisore ha scelto di non applicare questa modifica."
+
+msgid "a suite"
+msgstr "una suite"
+
+msgid "A/B"
+msgstr "A/B"
+
+msgid "A/B in flight"
+msgstr "A/B in corso"
+
+msgid "A/B runs"
+msgstr "Run A/B"
+
+msgid "A/B test"
+msgstr "A/B test"
+
+msgid "A/B test in flight"
+msgstr "A/B test in corso"
+
+msgid "A/B testing"
+msgstr "Testing A/B"
+
+msgid "Acceptable"
+msgstr "Accettabile"
+
+#. placeholder {0}: selectedEndpoints.length
+msgid "across <0>{0, plural, one {# model} other {# models}}</0> in parallel"
+msgstr "su <0>{0, plural, one {# model} other {# models}}</0> in parallelo"
+
+msgid "Activate a license key"
+msgstr "Attiva una chiave di licenza"
+
+msgid "Activate license"
+msgstr "Attiva licenza"
+
+msgid "Active"
+msgstr "Attivo"
+
+msgid "Actual"
+msgstr "Reale"
+
+#. placeholder {0}: selected.size
+msgid "Add {0} to suite"
+msgstr "Aggiungi {0} alla Suite"
+
+msgid "Add a provider to route traffic through Proxytrace."
+msgstr "Aggiungi un Provider per instradare il traffico tramite Proxytrace."
+
+msgid "Add cases from captured traces to seed this suite."
+msgstr "Aggiungi i casi dai Trace acquisiti per popolare questa Suite."
+
+msgid "Add cases from traces"
+msgstr "Aggiungi i casi dai Trace"
+
+msgid "Add from traces"
+msgstr "Aggiungi dai Trace"
+
+msgid "Add member"
+msgstr "Aggiungi Member"
+
+msgid "Add message"
+msgstr "Aggiungi messaggio"
+
+msgid "Add provider"
+msgstr "Aggiungi Provider"
+
+msgid "Add to suite"
+msgstr "Aggiungi alla Suite"
+
+msgid "Add tool request"
+msgstr "Aggiungi richiesta di Tool"
+
+msgid "Add users to this project to grant them access."
+msgstr "Aggiungi User a questo progetto per concedere loro l'accesso."
+
+msgid "Add your first provider to get started."
+msgstr "Aggiungi il tuo primo Provider per iniziare."
+
+msgid "Added to {suiteName}"
+msgstr "Aggiunto a {suiteName}"
+
+msgid "Adding…"
+msgstr "Aggiunta…"
+
+msgid "Adds this trace as a single test case to the selected suite."
+msgstr "Aggiunge questo Trace come un singolo caso di test alla Suite selezionata."
+
+msgid "Admin already exists."
+msgstr "Admin già esiste."
+
+msgid "Adopted"
+msgstr "Adottato"
+
+#. placeholder {0}: proposal.adoptedAgentVersionNumber
+msgid "Adopted in v{0}"
+msgstr "Adottato in v{0}"
+
+msgid "against <0>{selectedModelName}</0>"
+msgstr "contro <0>{selectedModelName}</0>"
+
+msgid "Agent"
+msgstr "Agent"
+
+msgid "Agent calls"
+msgstr "Chiamate dell'Agent"
+
+msgid "Agent calls (traces)"
+msgstr "Chiamate dell'Agent (Traces)"
+
+msgid "Agent endpoint"
+msgstr "Endpoint dell'Agent"
+
+msgid "Agent has no tools."
+msgstr "L'Agent non ha Tool."
+
+msgid "Agent observability platform"
+msgstr "Piattaforma di osservabilità per Agent"
+
+msgid "Agent Playground"
+msgstr "Agent Playground"
+
+msgid "Agent stats · 30d"
+msgstr "Statistiche Agent · 30g"
+
+msgid "Agent:"
+msgstr "Agent:"
+
+msgid "Agentic evaluators"
+msgstr "Evaluator agentici"
+
+msgid "Agentic evaluators require a paid plan"
+msgstr "Gli evaluator agentici richiedono un piano a pagamento"
+
+msgid "Agents"
+msgstr "Agent"
+
+msgid "Agents are auto-created when traces are captured."
+msgstr "Gli Agent vengono creati automaticamente quando le Trace vengono acquisite."
+
+msgid "Agents are detected automatically when you route traffic through the Proxytrace proxy."
+msgstr "Gli Agent vengono rilevati automaticamente quando instradi il traffico attraverso il Proxytrace proxy."
+
+msgid "All"
+msgstr "Tutti"
+
+msgid "All agents"
+msgstr "Tutti gli agent"
+
+#. placeholder {0}: suites.length
+#. placeholder {0}: theories.length
+msgid "All agents ({0})"
+msgstr "Tutti gli agent ({0})"
+
+msgid "All cases passed."
+msgstr "Tutti i casi sono passati."
+
+msgid "All projects"
+msgstr "Tutti i project"
+
+msgid "All runs"
+msgstr "Tutti i Run"
+
+msgid "All suites"
+msgstr "Tutte le Suite"
+
+msgid "All time"
+msgstr "Sempre"
+
+msgid "All users"
+msgstr "Tutti gli User"
+
+msgid "All users are already members."
+msgstr "Tutti gli User sono già Member."
+
+msgid "An unexpected error occurred."
+msgstr "Si è verificato un errore imprevisto."
+
+msgid "Analyzing run…"
+msgstr "Analisi del Run…"
+
+msgid "Anomalies and alerts from your test runs will appear here."
+msgstr "Anomalie e avvisi dei tuoi test run appariranno qui."
+
+msgid "Anthropic"
+msgstr "Anthropic"
+
+msgid "Anthropic’s OpenAI-compatible endpoint — use your regular Anthropic API key."
+msgstr "Endpoint di Anthropic compatibile con OpenAI — usa la tua normale API key di Anthropic."
+
+msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
+msgstr "Qualsiasi server compatibile con OpenAI: vLLM, Ollama, LiteLLM, OpenRouter, un gateway, …"
+
+msgid "API key copied"
+msgstr "API key copiata"
+
+msgid "Application errors and critical failures will appear here as they occur."
+msgstr "Gli errori dell'applicazione e i guasti critici appariranno qui quando si verificano."
+
+msgid "Apply"
+msgstr "Applica"
+
+msgid "Apply this change in your agent's code — Proxytrace flips the proposal to Adopted when the exact change shows up in live traffic. Applied a tweaked variant? Mark it adopted manually."
+msgstr "Applica questa modifica nel codice del tuo Agent — Proxytrace imposta la Proposal su Adottata quando la modifica esatta compare nel traffico live. Hai applicato una variante leggermente modificata? Contrassegnala come adottata manualmente."
+
+msgid "Approximate tokens (chars / 4)"
+msgstr "Token approssimativi (caratteri / 4)"
+
+msgid "Arguments"
+msgstr "Argomenti"
+
+msgid "Arguments must be valid JSON."
+msgstr "Gli argomenti devono essere JSON valido."
+
+msgid "Ask about your agents, suites, runs, or proposals — or have me run a suite, review a proposal, or plot your data."
+msgstr "Chiedimi qualcosa sui tuoi agent, suite, run o proposal — oppure chiedimi di eseguire una suite, rivedere una proposal o tracciare i tuoi dati."
+
+msgid "Ask an admin for a new invite link."
+msgstr "Chiedi a un Admin un nuovo link di invito."
+
+msgid "Ask Tracey…  (/ for tools)"
+msgstr "Chiedi a Tracey…  (/ per Tools)"
+
+msgid "Assistant"
+msgstr "Assistant"
+
+msgid "ASSISTANT"
+msgstr "ASSISTANT"
+
+msgid "at"
+msgstr "a"
+
+msgid "At least one Admin must remain."
+msgstr "Almeno un Admin deve rimanere."
+
+msgid "at minute"
+msgstr "al minuto"
+
+#. placeholder {0}: e.name
+msgid "Attach {0}"
+msgstr "Allega {0}"
+
+msgid "Attach evaluators (optional). They'll score every test run."
+msgstr "Aggiungi evaluator (facoltativo). Valuteranno ogni test run."
+
+msgid "Attached to"
+msgstr "Allegato a"
+
+msgid "Audit log"
+msgstr "Registro di audit"
+
+#. placeholder {0}: auth.error.message
+msgid "Auth error: {0}"
+msgstr "Errore di autenticazione: {0}"
+
+msgid "Auto-approve actions"
+msgstr "Auto-approva azioni"
+
+msgid "Auto-generated"
+msgstr "Generato automaticamente"
+
+#. placeholder {0}: traces.length
+msgid "auto-refresh · {0} most recent"
+msgstr "aggiornamento automatico · {0} più recenti"
+
+msgid "Auto-reindex on change"
+msgstr "Reindicizza automaticamente in caso di modifica"
+
+msgid "Auto-rejected by A/B"
+msgstr "Rifiutato automaticamente dall'A/B"
+
+msgid "Avg"
+msgstr "Media"
+
+msgid "Avg duration"
+msgstr "Durata media"
+
+msgid "Avg latency"
+msgstr "Latenza media"
+
+msgid "Avg Latency"
+msgstr "Latenza media"
+
+msgid "Avg score"
+msgstr "Punteggio medio"
+
+msgid "Awaited actions"
+msgstr "Azioni in attesa"
+
+msgid "Awaiting adoption"
+msgstr "In attesa di adozione"
+
+msgid "Awaiting decision"
+msgstr "In attesa di decisione"
+
+msgid "awaiting telemetry"
+msgstr "in attesa di telemetria"
+
+msgid "Azure"
+msgstr "Azure"
+
+msgid "Azure AI Foundry"
+msgstr "Azure AI Foundry"
+
+msgid "Bad"
+msgstr "Scarso"
+
+msgid "Base"
+msgstr "Base"
+
+msgid "baseline"
+msgstr "baseline"
+
+msgid "Benchmark what matters"
+msgstr "Metti alla prova ciò che conta"
+
+msgid "Benchmarking the change against the current agent…"
+msgstr "Valutazione della modifica rispetto all'Agent corrente…"
+
+msgid "Benchmarks"
+msgstr "Benchmark"
+
+msgid "best"
+msgstr "migliore"
+
+msgid "Best"
+msgstr "Migliore"
+
+msgid "Boundary inputs, unusual conversations, rare tool combinations."
+msgstr "Input limite, conversazioni insolite, rare combinazioni di Tool."
+
+msgid "Building chart…"
+msgstr "Creazione grafico…"
+
+msgid "Building table…"
+msgstr "Creazione tabella…"
+
+msgid "Calls"
+msgstr "Chiamate"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Cancel turn"
+msgstr "Annulla turno"
+
+msgid "Cancelled"
+msgstr "Annullato"
+
+msgid "Candidate edited — "
+msgstr "Candidato modificato — "
+
+msgid "Candidate response"
+msgstr "Risposta del candidato"
+
+msgid "Canonical happy-path traces — the behavior you expect to never break."
+msgstr "Trace canoniche del percorso felice — il comportamento che ti aspetti non si rompa mai."
+
+msgid "Capture everything"
+msgstr "Cattura tutto"
+
+msgid "Captured failing trace cluster"
+msgstr "Cluster di Trace fallite catturate"
+
+msgid "Case · reason"
+msgstr "Caso · motivo"
+
+msgid "Cases"
+msgstr "Casi"
+
+msgid "Change provider kind"
+msgstr "Cambia tipo di Provider"
+
+msgid "Cheap"
+msgstr "Economico"
+
+msgid "Choose a tool or type a name…"
+msgstr "Scegli un Tool o digita un nome…"
+
+msgid "Choose how this evaluator scores agent responses."
+msgstr "Scegli come questo Evaluator assegna un punteggio alle risposte dell'Agent."
+
+#. placeholder {0}: sourceAgent.name
+msgid "Choose the agent that should own this version. Calls referencing this version follow it. The source agent ({0}) is deleted if it has no versions left."
+msgstr "Scegli l'Agent che deve possedere questa versione. Le chiamate che fanno riferimento a questa versione la seguono. L'Agent sorgente ({0}) viene eliminato se non ha più versioni."
+
+msgid "clear"
+msgstr "chiudi"
+
+msgid "Clear"
+msgstr "Chiudi"
+
+msgid "Clear conversation"
+msgstr "Cancella conversazione"
+
+msgid "Clear filter"
+msgstr "Cancella filtro"
+
+msgid "Clear search"
+msgstr "Cancella ricerca"
+
+msgid "Clear the filters to see all evaluators."
+msgstr "Cancella i filtri per vedere tutti gli Evaluator."
+
+msgid "Clear the search to see all agents."
+msgstr "Cancella la ricerca per vedere tutti gli Agent."
+
+msgid "Clear the search to see all cases."
+msgstr "Cancella la ricerca per vedere tutti i casi."
+
+msgid "Clear the search to see all evaluators."
+msgstr "Cancella la ricerca per vedere tutti gli Evaluator."
+
+msgid "Clear the search to see all suites."
+msgstr "Cancella la ricerca per vedere tutti i Suite."
+
+msgid "Clear time filter"
+msgstr "Cancella filtro temporale"
+
+msgid "Click a row to inspect its config."
+msgstr "Fai clic su una riga per ispezionarne la configurazione."
+
+msgid "Click a row to inspect its conversation."
+msgstr "Fai clic su una riga per ispezionarne la conversazione."
+
+msgid "Click a score to filter · selected highlights below"
+msgstr "Fai clic su un punteggio per filtrare · evidenziazioni selezionate sotto"
+
+msgid "Click any row to inspect its conversation."
+msgstr "Fai clic su una riga qualsiasi per ispezionarne la conversazione."
+
+msgid "close"
+msgstr "chiudi"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Close dialog"
+msgstr "Chiudi finestra di dialogo"
+
+msgid "Close settings"
+msgstr "Chiudi impostazioni"
+
+msgid "Collapse"
+msgstr "Comprimi"
+
+msgid "Compare"
+msgstr "Confronta"
+
+#. placeholder {0}: row.summary
+msgid "Compare all models — {0}"
+msgstr "Confronta tutti i model — {0}"
+
+msgid "Comparing runs…"
+msgstr "Confronto dei Run…"
+
+msgid "Completed"
+msgstr "Completato"
+
+#. placeholder {0}: fmtLatency(trace.durationMs)
+msgid "completed in {0}"
+msgstr "completato in {0}"
+
+msgid "Completely wrong / unsafe"
+msgstr "Completamente sbagliato / non sicuro"
+
+msgid "Configure pricing for this model endpoint"
+msgstr "Configura il pricing per questo model Endpoint"
+
+msgid "Configure upstream model providers and manage Proxytrace API keys."
+msgstr "Configura i provider di model upstream e gestisci le API key di Proxytrace."
+
+msgid "Configure your evaluator."
+msgstr "Configura il tuo Evaluator."
+
+msgid "Confirm"
+msgstr "Conferma"
+
+msgid "Confirmed — ready to ship"
+msgstr "Confermato — pronto per la distribuzione"
+
+msgid "Connect your model provider"
+msgstr "Connetti il tuo model Provider"
+
+msgid "Connecting…"
+msgstr "Connessione in corso…"
+
+msgid "Connection failed."
+msgstr "Connessione fallita."
+
+msgid "Connection successful."
+msgstr "Connessione riuscita."
+
+#. placeholder {0}: testCase.input.length
+msgid "Conversation · {0} input · 1 expected"
+msgstr "Conversazione · input di {0} · 1 atteso"
+
+msgid "Copied"
+msgstr "Copiato"
+
+msgid "Copied!"
+msgstr "Copiato!"
+
+msgid "Copy"
+msgstr "Copia"
+
+msgid "Copy handoff doc"
+msgstr "Copia documento di handoff"
+
+msgid "Copy ingestion URL"
+msgstr "Copia URL di ingestion"
+
+msgid "Copy invite link"
+msgstr "Copia link di invito"
+
+msgid "Copy JSON"
+msgstr "Copia JSON"
+
+msgid "Copy key"
+msgstr "Copia chiave"
+
+msgid "Copy message"
+msgstr "Copia messaggio"
+
+msgid "Copy model name"
+msgstr "Copia nome del modello"
+
+msgid "Copy name"
+msgstr "Copia nome"
+
+msgid "Copy proposed prompt"
+msgstr "Copia prompt proposto"
+
+msgid "Copy response"
+msgstr "Copia risposta"
+
+msgid "Copy result"
+msgstr "Copia risultato"
+
+msgid "Copy system prompt"
+msgstr "Copia prompt di sistema"
+
+msgid "Copy tool call"
+msgstr "Copia chiamata Tool"
+
+msgid "Copy tools JSON"
+msgstr "Copia JSON dei Tool"
+
+msgid "Copy trace ID"
+msgstr "Copia ID Trace"
+
+msgid "Cost"
+msgstr "Costo"
+
+msgid "Cost (LLM judge)"
+msgstr "Costo (LLM judge)"
+
+msgid "Cost over time"
+msgstr "Costo nel tempo"
+
+msgid "Could not claim account. Check the email matches your existing user."
+msgstr "Impossibile rivendicare l'account. Verifica che l'email corrisponda al tuo User esistente."
+
+msgid "Could not complete signup. The invite may have expired."
+msgstr "Impossibile completare la registrazione. L'invito potrebbe essere scaduto."
+
+msgid "Could not copy to clipboard."
+msgstr "Impossibile copiare negli appunti."
+
+msgid "Could not create admin."
+msgstr "Impossibile creare Admin."
+
+msgid "Could not detect auth mode."
+msgstr "Impossibile rilevare la modalità di autenticazione."
+
+msgid "Could not list models from the provider: {modelsError}. Enter the model name manually."
+msgstr "Impossibile elencare i modelli dal provider: {modelsError}. Inserisci manualmente il nome del modello."
+
+msgid "Could not load the request for this case."
+msgstr "Impossibile caricare la richiesta per questo caso."
+
+msgid "Couldn’t load this evaluation."
+msgstr "Impossibile caricare questa evaluation."
+
+msgid "Couldn't start Tracey"
+msgstr "Impossibile avviare Tracey"
+
+msgid "Couldn’t submit the theory."
+msgstr "Impossibile inviare la Theory."
+
+msgid "Create"
+msgstr "Crea"
+
+msgid "Create a project first to assign members."
+msgstr "Crea prima un progetto per assegnare i Member."
+
+msgid "Create a project in the Projects section to configure it here."
+msgstr "Crea un progetto nella sezione Projects per configurarlo qui."
+
+msgid "Create a project in the Projects section to configure search indexing."
+msgstr "Crea un progetto nella sezione Projects per configurare l'indicizzazione della ricerca."
+
+msgid "Create a project in the Projects section to manage its members."
+msgstr "Crea un progetto nella sezione Projects per gestirne i Member."
+
+msgid "Create a schedule to run a suite on a recurring cadence."
+msgstr "Crea una pianificazione per eseguire una Suite a cadenza ricorrente."
+
+msgid "Create a test suite for this agent"
+msgstr "Crea una Test Suite per questo Agent"
+
+msgid "Create account"
+msgstr "Crea account"
+
+msgid "Create admin"
+msgstr "Crea Admin"
+
+msgid "Create an agent before building a test suite."
+msgstr "Crea un Agent prima di creare una Test Suite."
+
+msgid "Create an evaluator first, then come back here to probe it against past test results."
+msgstr "Crea prima un evaluator, poi torna qui per provarlo con i risultati storici dei test."
+
+msgid "Create evaluators in the Evaluators tab first."
+msgstr "Crea prima gli evaluator nella scheda Evaluators."
+
+msgid "Create invite"
+msgstr "Crea invito"
+
+msgid "Create one to start evaluating."
+msgstr "Crea uno per iniziare a valutare."
+
+msgid "Create one to start scoring runs."
+msgstr "Crea uno per iniziare a assegnare punteggi alle Runs."
+
+msgid "Create project"
+msgstr "Crea project"
+
+msgid "Create schedule"
+msgstr "Crea schedule"
+
+msgid "Create suite"
+msgstr "Crea suite"
+
+msgid "Create suite →"
+msgstr "Crea suite →"
+
+msgid "Create Test Suite"
+msgstr "Crea Test Suite"
+
+msgid "Create the first admin"
+msgstr "Crea il primo admin"
+
+msgid "Create your account"
+msgstr "Crea il tuo account"
+
+msgid "Create your first evaluator to start scoring agent responses."
+msgstr "Crea il tuo primo evaluator per iniziare a valutare le risposte dell'agent."
+
+msgid "Create your first project to get started."
+msgstr "Crea il tuo primo project per iniziare."
+
+msgid "Create your project"
+msgstr "Crea il tuo project"
+
+msgid "Create, switch, and delete projects across the workspace."
+msgstr "Crea, cambia ed elimina i project in tutto lo workspace."
+
+msgid "Created"
+msgstr "Creato"
+
+#. placeholder {0}: fmtDate(suite.createdAt)
+msgid "created {0}"
+msgstr "creato {0}"
+
+#. placeholder {0}: fmtDate(project.createdAt)
+#. placeholder {1}: fmtDate(project.updatedAt)
+msgid "Created {0} · Updated {1}"
+msgstr "Creato {0} · Aggiornato {1}"
+
+msgid "Creating…"
+msgstr "Creazione…"
+
+msgid "Critical"
+msgstr "Critico"
+
+msgid "Curate real traces into test suites and score them with evaluators on every agent version."
+msgstr "Seleziona Traces reali in Test Suite e valuta ogni versione dell'agent con gli evaluator."
+
+msgid "current"
+msgstr "corrente"
+
+msgid "Current license"
+msgstr "Licenza attuale"
+
+msgid "Custom"
+msgstr "Personalizzato"
+
+msgid "Custom (write your own)"
+msgstr "Personalizzato (scrivi il tuo)"
+
+msgid "Custom evaluators"
+msgstr "Evaluator personalizzati"
+
+msgid "Custom range"
+msgstr "Intervallo personalizzato"
+
+msgid "Custom…"
+msgstr "Personalizzato…"
+
+msgid "Daily"
+msgstr "Giornaliero"
+
+msgid "Danger zone"
+msgstr "Area pericolosa"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Dashboard, agents, test suites & evaluators"
+msgstr "Dashboard, agent, test suite & evaluator"
+
+msgid "days"
+msgstr "giorni"
+
+msgid "Default model"
+msgstr "Modello predefinito"
+
+msgid "Default parameters (none specified)"
+msgstr "Parametri predefiniti (nessuno specificato)"
+
+msgid "Definition"
+msgstr "Definizione"
+
+msgid "Delete"
+msgstr "Elimina"
+
+#. placeholder {0}: deleteTarget.name
+#. placeholder {0}: displayName ?? entityName
+msgid "Delete \"{0}\""
+msgstr "Elimina \"{0}\""
+
+#. placeholder {0}: p.name
+msgid "Delete {0}"
+msgstr "Elimina {0}"
+
+msgid "Delete agent"
+msgstr "Elimina agent"
+
+msgid "Delete all non-model data"
+msgstr "Elimina tutti i dati non-model"
+
+msgid "Delete key"
+msgstr "Elimina chiave"
+
+msgid "Delete model"
+msgstr "Elimina model"
+
+msgid "Delete project"
+msgstr "Elimina project"
+
+msgid "Delete provider"
+msgstr "Elimina provider"
+
+#. placeholder {0}: deleteTarget.suiteName
+msgid "Delete run for \"{0}\"?"
+msgstr "Eliminare run per \"{0}\"?"
+
+msgid "Delete run group"
+msgstr "Elimina gruppo di run"
+
+msgid "Delete schedule"
+msgstr "Elimina pianificazione"
+
+#. placeholder {0}: deleteTarget.name
+msgid "Delete schedule \"{0}\"?"
+msgstr "Eliminare pianificazione \"{0}\"?"
+
+msgid "Delete suite"
+msgstr "Elimina suite"
+
+msgid "Deleting…"
+msgstr "Eliminazione…"
+
+msgid "Description"
+msgstr "Descrizione"
+
+msgid "Destination suite"
+msgstr "Suite di destinazione"
+
+#. placeholder {0}: e.name
+msgid "Detach {0}"
+msgstr "Scollega {0}"
+
+msgid "Details"
+msgstr "Dettagli"
+
+#. placeholder {0}: previous.versionNumber
+msgid "Diff vs v{0}"
+msgstr "Diff vs v{0}"
+
+msgid "Disable schedule"
+msgstr "Disabilita pianificazione"
+
+msgid "Discard"
+msgstr "Annulla"
+
+msgid "Discovering models from your provider…"
+msgstr "Rilevamento dei model dal tuo provider…"
+
+msgid "Dismiss"
+msgstr "Ignora"
+
+msgid "Dismiss update notice"
+msgstr "Ignora avviso di aggiornamento"
+
+msgid "Dismissed"
+msgstr "Ignorato"
+
+msgid "Dismissed — a reviewer chose not to apply this change."
+msgstr "Ignorato — un reviewer ha scelto di non applicare questa modifica."
+
+msgid "Disproven by A/B"
+msgstr "Smentito da A/B"
+
+msgid "Divergent"
+msgstr "Divergente"
+
+msgid "Documentation"
+msgstr "Documentazione"
+
+msgid "Documents"
+msgstr "Documenti"
+
+msgid "Done"
+msgstr "Fatto"
+
+msgid "Download .md"
+msgstr "Scarica .md"
+
+msgid "Draft created"
+msgstr "Bozza creata"
+
+msgid "Drag to reorder"
+msgstr "Trascina per riordinare"
+
+msgid "Duration"
+msgstr "Durata"
+
+msgid "e.g. Customer Support Bot"
+msgstr "es. Customer Support Bot"
+
+msgid "e.g. gpt-4o"
+msgstr "es. gpt-4o"
+
+msgid "e.g. OpenAI"
+msgstr "es. OpenAI"
+
+msgid "e.g. OpenAI Production"
+msgstr "es. OpenAI Production"
+
+msgid "e.g. Production analytics"
+msgstr "es. Analytics di produzione"
+
+msgid "e.g. production-agent"
+msgstr "es. production-agent"
+
+msgid "Edge Cases"
+msgstr "Casi limite"
+
+msgid "Edit"
+msgstr "Modifica"
+
+#. placeholder {0}: META[editTarget.kind] ? i18n._(META[editTarget.kind].label) : 'Evaluator'
+msgid "Edit {0}"
+msgstr "Modifica {0}"
+
+msgid "Edit endpoint"
+msgstr "Modifica endpoint"
+
+msgid "Edit expected output"
+msgstr "Modifica output atteso"
+
+msgid "Edit name"
+msgstr "Modifica nome"
+
+msgid "Edit schedule"
+msgstr "Modifica pianificazione"
+
+msgid "editable"
+msgstr "modificabile"
+
+msgid "Editable"
+msgstr "Modificabile"
+
+msgid "edited"
+msgstr "modificato"
+
+msgid "Effective gain"
+msgstr "Guadagno effettivo"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Enable schedule"
+msgstr "Abilita pianificazione"
+
+msgid "Enabled"
+msgstr "Abilitato"
+
+msgid "End-to-end latency"
+msgstr "Latenza end-to-end"
+
+msgid "Endpoint"
+msgstr "Endpoint"
+
+msgid "Endpoint updated"
+msgstr "Endpoint aggiornato"
+
+msgid "Endpoint URL"
+msgstr "URL dell'Endpoint"
+
+msgid "Enterprise"
+msgstr "Enterprise"
+
+msgid "error"
+msgstr "errore"
+
+msgid "Error"
+msgstr "Errore"
+
+msgid "ERROR"
+msgstr "ERRORE"
+
+msgid "Error log"
+msgstr "Registro errori"
+
+msgid "Error Log"
+msgstr "Registro Errori"
+
+msgid "Error message required"
+msgstr "Il messaggio di errore è obbligatorio"
+
+msgid "error rate"
+msgstr "tasso di errore"
+
+msgid "Error rate"
+msgstr "Tasso di errore"
+
+msgid "Estimated cost in EUR"
+msgstr "Costo stimato in EUR"
+
+msgid "Evaluation pass rate"
+msgstr "Tasso di superamento della valutazione"
+
+msgid "Evaluation started"
+msgstr "Valutazione avviata"
+
+msgid "Evaluations"
+msgstr "Valutazioni"
+
+msgid "Evaluator"
+msgstr "Evaluator"
+
+msgid "Evaluator breakdown"
+msgstr "Ripartizione di Evaluator"
+
+msgid "Evaluator error"
+msgstr "Errore di Evaluator"
+
+msgid "Evaluator name"
+msgstr "Nome di Evaluator"
+
+msgid "Evaluator playground"
+msgstr "Playground di Evaluator"
+
+msgid "Evaluator Playground"
+msgstr "Playground di Evaluator"
+
+msgid "Evaluators"
+msgstr "Evaluators"
+
+msgid "every"
+msgstr "ogni"
+
+msgid "Evidence"
+msgstr "Evidenza"
+
+msgid "Exact match"
+msgstr "Corrispondenza esatta"
+
+msgid "Exact Match"
+msgstr "Corrispondenza esatta"
+
+msgid "Excellent"
+msgstr "Eccellente"
+
+msgid "executed"
+msgstr "eseguito"
+
+msgid "Expand"
+msgstr "Espandi"
+
+msgid "Expand {expandLabel}"
+msgstr "Espandi {expandLabel}"
+
+msgid "Expected"
+msgstr "Atteso"
+
+msgid "Expected · reference"
+msgstr "Atteso · riferimento"
+
+msgid "Expected output"
+msgstr "Output atteso"
+
+msgid "Expected output updated"
+msgstr "Output atteso aggiornato"
+
+msgid "Expected text response"
+msgstr "Risposta testuale attesa"
+
+msgid "Expired / revoked"
+msgstr "Scaduto / revocato"
+
+msgid "Expires"
+msgstr "Scade"
+
+msgid "External"
+msgstr "Esterno"
+
+msgid "Extract a number from the response and check it within a tolerance."
+msgstr "Estrai un numero dalla risposta e verificane il valore entro una tolleranza."
+
+msgid "extract pattern"
+msgstr "estrai pattern"
+
+msgid "Extraction pattern"
+msgstr "Pattern di estrazione"
+
+msgid "Extraction pattern (regex)"
+msgstr "Pattern di estrazione (regex)"
+
+msgid "fail"
+msgstr "fallisce"
+
+msgid "Fail"
+msgstr "Fallisce"
+
+msgid "FAIL"
+msgstr "FALLISCE"
+
+msgid "Failed"
+msgstr "Fallito"
+
+msgid "Failed to add test case"
+msgstr "Impossibile aggiungere il test case"
+
+msgid "Failed to check"
+msgstr "Impossibile verificare"
+
+msgid "Failed to load models."
+msgstr "Impossibile caricare i modelli."
+
+#. placeholder {0}: (settingsError as Error).message
+msgid "Failed to load settings: {0}"
+msgstr "Impossibile caricare le impostazioni: {0}"
+
+msgid "Failed to save"
+msgstr "Impossibile salvare"
+
+msgid "Failing"
+msgstr "Fallimento"
+
+msgid "Failing cases"
+msgstr "Casi in errore"
+
+#. placeholder {0}: data.suiteName ?? data.agentName
+msgid "Failing cases · {0}"
+msgstr "Casi in errore · {0}"
+
+msgid "Failure Cases"
+msgstr "Casi di errore"
+
+msgid "Falls back to the environment-supplied license, or the Free tier."
+msgstr "Torna alla license fornita dall'ambiente, o al piano Free."
+
+msgid "Fast"
+msgstr "Veloce"
+
+msgid "Filter agents by name…"
+msgstr "Filtra gli Agents per nome…"
+
+msgid "Finish"
+msgstr "Termina"
+
+msgid "Finish reason returned by the model"
+msgstr "Motivo di fine restituito dal model"
+
+msgid "Fix license"
+msgstr "Correggi license"
+
+msgid "Fixed"
+msgstr "Corretto"
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Free tier"
+msgstr "Piano Free"
+
+msgid "Freq Penalty"
+msgstr "Freq Penalty"
+
+msgid "Frequency"
+msgstr "Frequenza"
+
+msgid "Friday"
+msgstr "Venerdì"
+
+msgid "From"
+msgstr "Da"
+
+msgid "Full proxy setup guide →"
+msgstr "Guida completa alla configurazione del proxy →"
+
+msgid "Full trace capture through the OpenAI-compatible proxy"
+msgstr "Cattura completa delle trace tramite il proxy compatibile con OpenAI"
+
+msgid "Fully correct"
+msgstr "Completamente corretto"
+
+msgid "Gen"
+msgstr "Gen"
+
+msgid "General"
+msgstr "Generale"
+
+msgid "Generate"
+msgstr "Genera"
+
+msgid "Generate from an example JSON object"
+msgstr "Genera da un oggetto JSON di esempio"
+
+msgid "Generate key"
+msgstr "Genera chiave"
+
+msgid "Generate new key"
+msgstr "Genera nuova chiave"
+
+msgid "Generate one to start proxying requests."
+msgstr "Generane una per iniziare a inoltrare le richieste."
+
+msgid "Generate schema"
+msgstr "Genera schema"
+
+msgid "Get data-driven improvement proposals, validated with A/B runs before you ship them."
+msgstr "Ottieni proposte di miglioramento basate sui dati, validate con A/B runs prima di metterle in produzione."
+
+msgid "Get started"
+msgstr "Inizia"
+
+msgid "Golden Path"
+msgstr "Golden Path"
+
+msgid "Good"
+msgstr "Buono"
+
+msgid "Grace period"
+msgstr "Periodo di grazia"
+
+msgid "Grading rubric"
+msgstr "Rubrica di valutazione"
+
+msgid "Grok models via xAI’s OpenAI-compatible API."
+msgstr "Modelli Grok tramite l'API compatibile con OpenAI di xAI."
+
+msgid "Have a license key?"
+msgstr "Hai una chiave di licenza?"
+
+msgid "Hide"
+msgstr "Nascondi"
+
+msgid "Hide system agents"
+msgstr "Nascondi gli agenti di sistema"
+
+msgid "Hide tools"
+msgstr "Nascondi i Tool"
+
+msgid "Hide traces from system agents"
+msgstr "Nascondi le trace dagli agenti di sistema"
+
+msgid "High"
+msgstr "Alto"
+
+msgid "History"
+msgstr "Cronologia"
+
+msgid "Hourly"
+msgstr "Ogni ora"
+
+msgid "hours"
+msgstr "ore"
+
+msgid "Hover or arrow to preview."
+msgstr "Passa il mouse o usa le frecce per l'anteprima."
+
+msgid "Hover or pick a past evaluation to preview it."
+msgstr "Passa il mouse o scegli una valutazione passata per l'anteprima."
+
+msgid "How can I help?"
+msgstr "Come posso aiutarti?"
+
+msgid "https://api.openai.com/v1"
+msgstr "https://api.openai.com/v1"
+
+msgid "Hypotheses awaiting a test"
+msgstr "Ipotesi in attesa di un test"
+
+msgid "Hypotheses spawned from failing test results, moving through validation — from untested to proven."
+msgstr "Ipotesi generate da risultati di test falliti, che passano attraverso la convalida — da non testate a dimostrate."
+
+msgid "Hypothesised"
+msgstr "Ipotizzato"
+
+msgid "id"
+msgstr "id"
+
+msgid "Idle"
+msgstr "Inattivo"
+
+msgid "Improved"
+msgstr "Migliorato"
+
+msgid "Improved the pass rate."
+msgstr "Migliorato il tasso di superamento."
+
+msgid "Improvement confirmed"
+msgstr "Miglioramento confermato"
+
+msgid "in {win}"
+msgstr "in {win}"
+
+msgid "In flight"
+msgstr "In corso"
+
+msgid "Index status"
+msgstr "Stato dell'index"
+
+msgid "Indexed entity kinds"
+msgstr "Tipi di entità indicizzate"
+
+msgid "Indexing configuration for the active project."
+msgstr "Configurazione di indexing per il progetto attivo."
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Ingestion URL"
+msgstr "URL di ingestion"
+
+msgid "Ingestion URL copied"
+msgstr "URL di ingestion copiato"
+
+msgid "Input"
+msgstr "Input"
+
+#. placeholder {0}: inputMessages.length
+msgid "Input · {0, plural, one {# message} other {# messages}}"
+msgstr "Input · {0, plural, one {# message} other {# messages}}"
+
+msgid "Input / 1M €"
+msgstr "Input / 1M €"
+
+msgid "Input conversation"
+msgstr "Conversazione di input"
+
+msgid "Input tokens"
+msgstr "Token di input"
+
+msgid "Input tokens (prompt)"
+msgstr "Token di input (Prompt)"
+
+msgid "Inputs the agent has historically struggled with — track improvements over time."
+msgstr "Input con cui l'Agent ha storicamente avuto difficoltà — monitora i miglioramenti nel tempo."
+
+msgid "inside noise"
+msgstr "rumore interno"
+
+msgid "Instructions sent to the model before user messages."
+msgstr "Istruzioni inviate al modello prima dei messaggi User."
+
+msgid "Invalid"
+msgstr "Non valido"
+
+msgid "Invalid email or password."
+msgstr "Email o password non valide."
+
+#. placeholder {0}: (e as Error).message
+msgid "Invalid JSON: {0}"
+msgstr "JSON non valido: {0}"
+
+msgid "Invalidated"
+msgstr "Invalidato"
+
+msgid "Invite a user"
+msgstr "Invita un User"
+
+msgid "Invite expired or already used"
+msgstr "Invito scaduto o già usato"
+
+msgid "Irreversible, workspace-wide maintenance actions."
+msgstr "Azioni di manutenzione irreversibili, a livello di workspace."
+
+msgid "JSON"
+msgstr "JSON"
+
+msgid "JSON schema"
+msgstr "Schema JSON"
+
+msgid "JSON Schema"
+msgstr "JSON Schema"
+
+msgid "JSON Schema Match"
+msgstr "Corrispondenza JSON Schema"
+
+msgid "Judge"
+msgstr "Judge"
+
+msgid "Judge model"
+msgstr "Modello Judge"
+
+msgid "Key"
+msgstr "Chiave"
+
+#. placeholder {0}: created.name
+msgid "Key \"{0}\" created — copy it now"
+msgstr "Chiave \"{0}\" creata — copiala subito"
+
+msgid "Key name"
+msgstr "Nome della chiave"
+
+msgid "Keys that authenticate clients at the Proxytrace proxy."
+msgstr "Chiavi che autenticano i client sul Proxytrace proxy."
+
+msgid "kind"
+msgstr "kind"
+
+msgid "Kind"
+msgstr "Kind"
+
+msgid "Label"
+msgstr "Etichetta"
+
+msgid "Language"
+msgstr "Lingua"
+
+msgid "Last"
+msgstr "Ultimo"
+
+msgid "Last 24h"
+msgstr "Ultime 24 ore"
+
+msgid "Last 30 days"
+msgstr "Ultimi 30 giorni"
+
+msgid "Last 7 days"
+msgstr "Ultimi 7 giorni"
+
+msgid "last 8"
+msgstr "ultimi 8"
+
+msgid "Last hour"
+msgstr "Ultima ora"
+
+msgid "Last indexed"
+msgstr "Ultimo indicizzato"
+
+msgid "last run"
+msgstr "ultimo run"
+
+msgid "Last run"
+msgstr "Ultimo run"
+
+#. placeholder {0}: fmtRelative(suite.lastRunAt)
+msgid "last run {0}"
+msgstr "ultimo run {0}"
+
+msgid "Last used"
+msgstr "Ultimo usato"
+
+#. placeholder {0}: fmtRelative(agent.lastUsedAt)
+msgid "last used {0}"
+msgstr "ultimo usato {0}"
+
+msgid "Lat"
+msgstr "Lat"
+
+msgid "Latency"
+msgstr "Latenza"
+
+msgid "Latency distribution"
+msgstr "Distribuzione della latenza"
+
+msgid "Latency stats appear after traces arrive."
+msgstr "Le statistiche di latenza appaiono dopo l'arrivo dei Trace."
+
+msgid "Latest application errors and critical failures captured across the backend."
+msgstr "Gli ultimi errori dell'applicazione e i guasti critici rilevati nel backend."
+
+msgid "latest suite run"
+msgstr "ultimo run suite"
+
+msgid "latest suite run · project-wide"
+msgstr "ultimo run suite · a livello di progetto"
+
+msgid "Level"
+msgstr "Livello"
+
+msgid "License"
+msgstr "Licenza"
+
+msgid "License activated."
+msgstr "Licenza attivata."
+
+msgid "License key"
+msgstr "Chiave di licenza"
+
+msgid "License server unreachable — running on cached license. Enterprise features stay active for {remaining, plural, one {# more day} other {# more days}}."
+msgstr "Server di licenza non raggiungibile — in esecuzione con licenza nella cache. Le funzionalità Enterprise restano attive per {remaining, plural, one {# giorno in più} other {# giorni in più}}."
+
+#. placeholder {0}: license.customerEmail
+msgid "Licensed to <0>{0}</0>"
+msgstr "Concesso in licenza a <0>{0}</0>"
+
+msgid "live"
+msgstr "live"
+
+msgid "LIVE"
+msgstr "LIVE"
+
+msgid "live re-score"
+msgstr "rivalutazione live"
+
+msgid "Live trace stream"
+msgstr "Live trace stream"
+
+msgid "LLM"
+msgstr "LLM"
+
+msgid "LLM calls captured"
+msgstr "Chiamate LLM catturate"
+
+msgid "LLM judge"
+msgstr "LLM judge"
+
+msgid "LLM Judge"
+msgstr "LLM Judge"
+
+msgid "LLM judge cost"
+msgstr "Costo di LLM judge"
+
+msgid "LLM-as-judge"
+msgstr "LLM-as-judge"
+
+msgid "Load from trace"
+msgstr "Carica da trace"
+
+msgid "Load from trace or test case"
+msgstr "Carica da trace o caso di test"
+
+msgid "Loading"
+msgstr "Caricamento"
+
+msgid "Loading agent stats…"
+msgstr "Caricamento statistiche Agent…"
+
+msgid "Loading agent…"
+msgstr "Caricamento Agent…"
+
+msgid "Loading agents…"
+msgstr "Caricamento Agents…"
+
+msgid "Loading dashboard…"
+msgstr "Caricamento Dashboard…"
+
+msgid "Loading preview…"
+msgstr "Caricamento anteprima…"
+
+msgid "Loading proposal…"
+msgstr "Caricamento Proposal…"
+
+msgid "Loading proposals…"
+msgstr "Caricamento Proposals…"
+
+msgid "Loading provider…"
+msgstr "Caricamento Provider…"
+
+msgid "Loading recent…"
+msgstr "Caricamento recenti…"
+
+msgid "Loading run…"
+msgstr "Caricamento Run…"
+
+msgid "Loading runs…"
+msgstr "Caricamento Runs…"
+
+msgid "Loading suite…"
+msgstr "Caricamento Suite…"
+
+msgid "Loading suites…"
+msgstr "Caricamento Suites…"
+
+msgid "Loading test suites…"
+msgstr "Caricamento Test Suite…"
+
+msgid "Loading theories…"
+msgstr "Caricamento Theory…"
+
+msgid "Loading trace…"
+msgstr "Caricamento Trace…"
+
+msgid "Loading…"
+msgstr "Caricamento…"
+
+msgid "Local"
+msgstr "Locale"
+
+msgid "Local authentication was enabled on this install. Confirm your email and choose a password to finish migrating your existing user."
+msgstr "L'autenticazione locale è stata abilitata in questa installazione. Conferma la tua email e scegli una password per completare la migrazione del tuo User esistente."
+
+msgid "Local install needs an administrator account before you can configure providers."
+msgstr "L'installazione locale richiede un account amministratore prima di poter configurare i Provider."
+
+msgid "logged baseline"
+msgstr "baseline registrata"
+
+msgid "Logged evaluation"
+msgstr "Valutazione registrata"
+
+msgid "Logout"
+msgstr "Esci"
+
+msgid "Low"
+msgstr "Basso"
+
+msgid "Manage"
+msgstr "Gestisci"
+
+msgid "Manage roles, project access, and invitations."
+msgstr "Gestisci ruoli, accesso ai progetti e inviti."
+
+msgid "Manage this installation's license key."
+msgstr "Gestisci la chiave di licenza di questa installazione."
+
+msgid "Mark adopted"
+msgstr "Contrassegna come adottato"
+
+msgid "Mark as read"
+msgstr "Segna come letto"
+
+msgid "Marked adopted"
+msgstr "Contrassegnato come adottato"
+
+msgid "Max"
+msgstr "Massimo"
+
+msgid "Max tokens"
+msgstr "Token massimi"
+
+msgid "Maximum of {maxSelected} selected."
+msgstr "Massimo di {maxSelected} selezionati."
+
+msgid "Medium"
+msgstr "Medio"
+
+msgid "Members"
+msgstr "Member"
+
+msgid "Message"
+msgstr "Messaggio"
+
+msgid "Message from the human"
+msgstr "Messaggio dall'umano"
+
+msgid "Messages"
+msgstr "Messaggi"
+
+msgid "Metadata"
+msgstr "Metadati"
+
+msgid "Min"
+msgstr "Min"
+
+msgid "minutes"
+msgstr "minuti"
+
+msgid "Mission Control"
+msgstr "Mission Control"
+
+msgid "mixed"
+msgstr "misto"
+
+msgid "model"
+msgstr "modello"
+
+msgid "Model"
+msgstr "Modello"
+
+msgid "Model change"
+msgstr "cambio di modello"
+
+msgid "Model endpoints"
+msgstr "endpoint del modello"
+
+msgid "Model endpoints to evaluate"
+msgstr "endpoint del modello da valutare"
+
+msgid "Model parameters"
+msgstr "parametri del modello"
+
+msgid "Model Parameters"
+msgstr "Parametri del Modello"
+
+msgid "Model swap"
+msgstr "scambio di modello"
+
+msgid "Model switch"
+msgstr "switch di modello"
+
+msgid "Models"
+msgstr "Modelli"
+
+msgid "Models are discovered from your provider automatically; prices load from the catalogue."
+msgstr "I Modelli vengono rilevati automaticamente dal tuo provider; i prezzi vengono caricati dal catalogo."
+
+msgid "modified"
+msgstr "modificato"
+
+msgid "Modified from agent default"
+msgstr "Modificato rispetto al default dell'Agent"
+
+msgid "Monday"
+msgstr "Lunedì"
+
+msgid "Monthly trace quota reached — new traces are being dropped until the quota resets next month."
+msgstr "Limite mensile di trace raggiunto — nuovi trace vengono scartati finché il limite non si azzera il mese prossimo."
+
+msgid "More actions"
+msgstr "Altre azioni"
+
+msgid "Mostly correct"
+msgstr "Per lo più corretto"
+
+msgid "Mostly wrong"
+msgstr "Per lo più sbagliato"
+
+msgid "Move"
+msgstr "Sposta"
+
+#. placeholder {0}: version.versionNumber
+msgid "Move version v{0}"
+msgstr "Sposta la versione v{0}"
+
+msgid "Move…"
+msgstr "Sposta…"
+
+msgid "Moving…"
+msgstr "Spostando…"
+
+msgid "ms"
+msgstr "ms"
+
+msgid "My judge"
+msgstr "Il mio judge"
+
+msgid "My regression suite"
+msgstr "La mia Suite di regressione"
+
+msgid "N"
+msgstr "N"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Name suite"
+msgstr "Nomina la Suite"
+
+msgid "Name, system endpoint, and lifecycle for the active project."
+msgstr "Nome, endpoint di sistema e ciclo di vita per il progetto attivo."
+
+msgid "navigate"
+msgstr "naviga"
+
+msgid "never"
+msgstr "mai"
+
+msgid "Never"
+msgstr "Mai"
+
+msgid "never run"
+msgstr "mai eseguito"
+
+msgid "New"
+msgstr "Nuovo"
+
+msgid "New conversation"
+msgstr "Nuova conversazione"
+
+msgid "New evaluator"
+msgstr "Nuovo evaluator"
+
+msgid "New message role"
+msgstr "Nuovo ruolo del messaggio"
+
+msgid "New password"
+msgstr "Nuova password"
+
+msgid "New project"
+msgstr "Nuovo progetto"
+
+msgid "New schedule"
+msgstr "Nuova schedulazione"
+
+msgid "New suite"
+msgstr "Nuova suite"
+
+msgid "Next"
+msgstr "Successivo"
+
+#. placeholder {0}: fmtDateTimeShortUtc(schedule.nextRunAt)
+#. placeholder {1}: fmtUntil(schedule.nextRunAt)
+msgid "Next {0} UTC<0> · {1}</0>"
+msgstr "Prossimo {0} UTC<0> · {1}</0>"
+
+msgid "Next →"
+msgstr "Successivo →"
+
+msgid "Next case"
+msgstr "Caso successivo"
+
+msgid "Next run · —"
+msgstr "Prossimo run · —"
+
+#. placeholder {0}: fmtDateTimeShortUtc(next.toISOString())
+#. placeholder {1}: fmtUntil(next.toISOString())
+msgid "Next run · <0>{0} UTC</0> <1>({1})</1>"
+msgstr "Prossimo run · <0>{0} UTC</0> <1>({1})</1>"
+
+msgid "Next trace"
+msgstr "Prossima Trace"
+
+msgid "Nightly regression"
+msgstr "Regressione notturna"
+
+msgid "No A/B test attached"
+msgstr "Nessun A/B test collegato"
+
+msgid "No additional configuration."
+msgstr "Nessuna configurazione aggiuntiva."
+
+msgid "No agent token data"
+msgstr "Nessun dato del token dell'Agent"
+
+msgid "No agents available"
+msgstr "Nessun Agent disponibile"
+
+msgid "No agents in this project yet."
+msgstr "Nessun Agent in questo progetto ancora."
+
+msgid "No agents in this project."
+msgstr "Nessun Agent in questo progetto."
+
+msgid "No agents to show"
+msgstr "Nessun Agent da mostrare"
+
+msgid "No agents yet"
+msgstr "Nessun Agent ancora"
+
+msgid "No API keys yet"
+msgstr "Nessuna API key ancora"
+
+msgid "No cases match this filter."
+msgstr "Nessun caso corrisponde a questo filtro."
+
+msgid "No changes"
+msgstr "Nessuna modifica"
+
+msgid "No data"
+msgstr "Nessun dato"
+
+msgid "No data in range"
+msgstr "Nessun dato nell'intervallo"
+
+msgid "No decision yet — validation must finish first."
+msgstr "Nessuna decisione ancora — la validazione deve prima completarsi."
+
+msgid "no delta predicted"
+msgstr "nessun delta previsto"
+
+msgid "No endpoints available"
+msgstr "Nessun Endpoint disponibile"
+
+msgid "No endpoints configured."
+msgstr "Nessun Endpoint configurato."
+
+msgid "No endpoints configured. Add providers first."
+msgstr "Nessun Endpoint configurato. Aggiungi prima i Provider."
+
+msgid "No errors logged"
+msgstr "Nessun errore registrato"
+
+msgid "No evaluations yet"
+msgstr "Nessuna valutazione ancora"
+
+msgid "No evaluations yet. Attach this evaluator to a suite and run it."
+msgstr "Nessuna valutazione ancora. Collega questo Evaluator a una suite ed eseguilo."
+
+msgid "No evaluators"
+msgstr "Nessun Evaluator"
+
+msgid "No evaluators yet"
+msgstr "Nessun Evaluator ancora"
+
+msgid "No improvement"
+msgstr "Nessun miglioramento"
+
+msgid "No improvement — theory rejected."
+msgstr "Nessun miglioramento — Theory respinta."
+
+msgid "No input messages."
+msgstr "Nessun messaggio di input."
+
+msgid "No matches"
+msgstr "Nessuna corrispondenza"
+
+msgid "No matches for “{debounced}”."
+msgstr "Nessuna corrispondenza per “{debounced}”."
+
+msgid "No matches."
+msgstr "Nessuna corrispondenza."
+
+msgid "No matching evaluations."
+msgstr "Nessuna valutazione corrispondente."
+
+msgid "No matching tools — keep typing for a custom name."
+msgstr "Nessun Tool corrispondente — continua a digitare per un nome personalizzato."
+
+msgid "No matching traces"
+msgstr "Nessun Trace corrispondente"
+
+msgid "No members yet"
+msgstr "Nessun Member ancora"
+
+msgid "No messages."
+msgstr "Nessun messaggio."
+
+msgid "No model activity in range."
+msgstr "Nessuna attività del model nell'intervallo."
+
+msgid "No models were discovered — check the endpoint and API key, or enter the model name manually."
+msgstr "Nessun model è stato rilevato — controlla l'endpoint e l'API key, oppure inserisci manualmente il nome del model."
+
+msgid "No models yet"
+msgstr "Nessun model ancora"
+
+msgid "No new credentials needed — your upstream provider key keeps working. You can still issue dedicated Proxytrace keys later from the Providers page."
+msgstr "Nessuna nuova credenziale necessaria — la tua chiave del provider upstream continua a funzionare. Puoi comunque generare in seguito chiavi Proxytrace dedicate dalla pagina Providers."
+
+msgid "No notifications"
+msgstr "Nessuna notifica"
+
+msgid "No optimization proposals yet."
+msgstr "Nessuna Proposal di ottimizzazione ancora."
+
+msgid "No optimization theories yet"
+msgstr "Nessuna Theory di ottimizzazione ancora"
+
+msgid "No options available."
+msgstr "Nessuna opzione disponibile."
+
+msgid "No output returned."
+msgstr "Nessun output restituito."
+
+msgid "No parameters"
+msgstr "Nessun parametro"
+
+msgid "No pass-rate metrics recorded."
+msgstr "Nessuna metrica di pass rate registrata."
+
+msgid "No past evaluations"
+msgstr "Nessuna valutazione passata"
+
+msgid "No past evaluations yet — search above to load any test case."
+msgstr "Nessuna valutazione passata ancora — cerca sopra per caricare un test case."
+
+msgid "No past evaluations yet."
+msgstr "Nessuna valutazione passata ancora."
+
+msgid "No pending invites."
+msgstr "Nessun invito in sospeso."
+
+msgid "No project"
+msgstr "Nessun project"
+
+msgid "No project selected"
+msgstr "Nessun project selezionato"
+
+msgid "No projects"
+msgstr "Nessun project"
+
+msgid "No projects yet"
+msgstr "Nessun project ancora"
+
+msgid "No proposal generated — the change did not beat the baseline."
+msgstr "Nessuna Proposal generata — la modifica non ha battuto il baseline."
+
+msgid "No providers yet"
+msgstr "Nessun provider ancora"
+
+#. placeholder {0}: i18n._(SCORE_LABEL[scoreFilter])
+msgid "No recent <0>{0}</0> evaluations."
+msgstr "Nessun valutazione recente di <0>{0}</0>."
+
+msgid "No recent items."
+msgstr "Nessun elemento recente."
+
+msgid "No response captured for this call"
+msgstr "Nessuna risposta acquisita per questa chiamata"
+
+msgid "No response captured for this call."
+msgstr "Nessuna risposta acquisita per questa chiamata."
+
+msgid "No rows."
+msgstr "Nessuna riga."
+
+msgid "No runs yet"
+msgstr "Nessun Run ancora"
+
+msgid "No samples"
+msgstr "Nessun sample"
+
+msgid "No scheduled runs"
+msgstr "Nessun Run programmato"
+
+msgid "No schedules"
+msgstr "Nessuna schedulazione"
+
+msgid "No scores yet"
+msgstr "Nessun score ancora"
+
+msgid "No stacktrace captured for this entry."
+msgstr "Nessuno stacktrace acquisito per questa voce."
+
+msgid "No successful traces found in this range."
+msgstr "Nessun Trace riuscito trovato in questo intervallo."
+
+msgid "No suite runs yet"
+msgstr "Nessun Run di Suite ancora"
+
+msgid "No test cases"
+msgstr "Nessun test case"
+
+msgid "no test data"
+msgstr "nessun dato di test"
+
+msgid "No test runs yet"
+msgstr "Nessun run di test ancora"
+
+msgid "No test runs yet."
+msgstr "Nessun run di test ancora."
+
+msgid "No test suite for this agent yet."
+msgstr "Nessuna Test Suite per questo Agent ancora."
+
+msgid "No test suites in this project yet."
+msgstr "Nessuna Test Suite in questo progetto ancora."
+
+msgid "No test suites yet"
+msgstr "Nessuna Test Suite ancora"
+
+msgid "No theories tried yet."
+msgstr "Nessuna Theory provata ancora."
+
+msgid "No token data yet"
+msgstr "Nessun dato sui token ancora"
+
+msgid "No tool additions or removals."
+msgstr "Nessuna aggiunta o rimozione di Tool."
+
+msgid "No tool requests yet."
+msgstr "Nessuna richiesta di Tool ancora."
+
+msgid "No tools defined"
+msgstr "Nessun Tool definito"
+
+msgid "No tools were invoked in this trace."
+msgstr "Nessun Tool è stato invocato in questo Trace."
+
+msgid "No traces in this range"
+msgstr "Nessun Trace in questo intervallo"
+
+msgid "No traces in this range · scroll down to zoom out"
+msgstr "Nessun Trace in questo intervallo · scorri in basso per ridurre lo zoom"
+
+msgid "No traces match your filters."
+msgstr "Nessun Trace corrisponde ai filtri."
+
+msgid "No traces matched."
+msgstr "Nessun Trace corrispondente."
+
+msgid "No traces yet"
+msgstr "Nessun Trace ancora"
+
+msgid "No traces yet."
+msgstr "Nessun Trace ancora."
+
+msgid "No user message"
+msgstr "Nessun messaggio User"
+
+msgid "No users to add"
+msgstr "Nessun User da aggiungere"
+
+msgid "No users yet"
+msgstr "Nessun User ancora"
+
+msgid "no verdict"
+msgstr "nessun verdetto"
+
+msgid "No versions yet."
+msgstr "Nessuna versione ancora."
+
+msgid "No written reasoning."
+msgstr "Nessun ragionamento scritto."
+
+msgid "Non-model data deleted"
+msgstr "Dati non-model eliminati"
+
+msgid "None configured"
+msgstr "Nessuno configurato"
+
+msgid "None generated"
+msgstr "Nessuno generato"
+
+msgid "Not attached to any suite yet."
+msgstr "Non ancora collegato a nessuna Suite."
+
+msgid "Not enough data"
+msgstr "Dati insufficienti"
+
+msgid "Not now"
+msgstr "Non ora"
+
+msgid "Not scored"
+msgstr "Non valutato"
+
+msgid "Not scored yet"
+msgstr "Non ancora valutato"
+
+msgid "Not used by any agent yet."
+msgstr "Non usato ancora da nessun Agent."
+
+msgid "Not valid JSON — showing raw text"
+msgstr "JSON non valido — visualizzazione del testo grezzo"
+
+msgid "Not yet tested"
+msgstr "Non ancora testato"
+
+msgid "Nothing here yet"
+msgstr "Niente ancora qui"
+
+msgid "Nothing here yet."
+msgstr "Niente ancora qui."
+
+msgid "Notifications"
+msgstr "Notifiche"
+
+msgid "Notifications ({unreadCount} unread)"
+msgstr "Notifiche ({unreadCount} non letti)"
+
+msgid "Num"
+msgstr "Num"
+
+msgid "Numeric"
+msgstr "Numerico"
+
+msgid "Numeric extract"
+msgstr "Estrazione numerica"
+
+msgid "Numeric Match"
+msgstr "Corrispondenza numerica"
+
+msgid "Off"
+msgstr "Disattivato"
+
+msgid "Offline"
+msgstr "Offline"
+
+msgid "ok"
+msgstr "ok"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "on this page"
+msgstr "in questa pagina"
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking."
+msgstr "Vengono mostrati solo i Trace riusciti (2xx) — i Trace con errore non sono utili per il benchmarking."
+
+msgid "Only system agents exist — turn on “System agents” to select one."
+msgstr "Esistono solo Agent di sistema — attiva “System agents” per selezionarne uno."
+
+msgid "open"
+msgstr "apri"
+
+msgid "Open"
+msgstr "Apri"
+
+#. placeholder {0}: s.suiteName
+msgid "Open {0}"
+msgstr "Apri {0}"
+
+msgid "Open agent"
+msgstr "Apri Agent"
+
+#. placeholder {0}: a.name
+msgid "Open agent \"{0}\""
+msgstr "Apri Agent \"{0}\""
+
+msgid "Open in playground"
+msgstr "Apri in Playground"
+
+msgid "Open proposals"
+msgstr "Apri proposals"
+
+msgid "Open run"
+msgstr "Apri Run"
+
+#. placeholder {0}: s.name
+msgid "Open suite \"{0}\""
+msgstr "Apri Suite \"{0}\""
+
+msgid "Open this result in the run matrix"
+msgstr "Apri questo risultato nella matrice dei Run"
+
+msgid "Open trace"
+msgstr "Apri Trace"
+
+msgid "OpenAI"
+msgstr "OpenAI"
+
+msgid "OpenAI-compatible"
+msgstr "compatibile con OpenAI"
+
+msgid "Optimization cancelled."
+msgstr "Ottimizzazione annullata."
+
+msgid "Optimization proposals"
+msgstr "Optimization proposals"
+
+msgid "Optimization theories"
+msgstr "Optimization theories"
+
+msgid "Optimization Theories"
+msgstr "Optimization Theories"
+
+msgid "Optimize with evidence"
+msgstr "Ottimizza con prove"
+
+msgid "Optimizer"
+msgstr "Optimizer"
+
+msgid "Order"
+msgstr "Ordine"
+
+msgid "Other"
+msgstr "Altro"
+
+msgid "out"
+msgstr "esci"
+
+msgid "Output"
+msgstr "Output"
+
+msgid "Output / 1M €"
+msgstr "Output / 1M €"
+
+msgid "Output contract"
+msgstr "Contratto di output"
+
+msgid "Output tokens"
+msgstr "Token di output"
+
+msgid "Output tokens (generated)"
+msgstr "Token di output (generati)"
+
+msgid "Overview"
+msgstr "Panoramica"
+
+#. placeholder {0}: fmtLatency(telemetry.p95Ms)
+msgid "p95 {0}"
+msgstr "p95 {0}"
+
+#. placeholder {0}: fmtLatency(latencyStats.p95)
+#. placeholder {1}: fmtLatency(latencyStats.p99)
+msgid "p95 {0} · p99 {1}"
+msgstr "p95 {0} · p99 {1}"
+
+msgid "p95 latency"
+msgstr "latenza p95"
+
+msgid "Parallel · {count} selected"
+msgstr "Parallel · {count} selezionati"
+
+msgid "Parallel evaluation started"
+msgstr "Esecuzione della valutazione parallela avviata"
+
+msgid "Parameter description"
+msgstr "Descrizione del parametro"
+
+msgid "Parameters"
+msgstr "Parametri"
+
+msgid "Partially correct"
+msgstr "Parzialmente corretto"
+
+msgid "pass"
+msgstr "superato"
+
+msgid "Pass"
+msgstr "Superato"
+
+msgid "PASS"
+msgstr "SUPERATO"
+
+msgid "Pass rate"
+msgstr "Tasso di superamento"
+
+msgid "Pass Rate"
+msgstr "Tasso di superamento"
+
+msgid "PASS RATE"
+msgstr "TASSO DI SUPERAMENTO"
+
+msgid "pass rate after change"
+msgstr "tasso di superamento dopo la modifica"
+
+msgid "Pass rate trend"
+msgstr "Andamento del tasso di superamento"
+
+msgid "Passed"
+msgstr "Superato"
+
+msgid "Passes when the agent response exactly matches the expected output."
+msgstr "Passa quando la risposta dell'Agent corrisponde esattamente all'output atteso."
+
+msgid "Passing"
+msgstr "Superando"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "past {range}"
+msgstr "ultimi {range}"
+
+msgid "Past evaluation"
+msgstr "Valutazione precedente"
+
+msgid "Paste the key from your purchase email. It is validated offline, stored in the database, and applied immediately — no restart needed. Without a key, Proxytrace runs on the Free tier."
+msgstr "Incolla la chiave dall'email di acquisto. Viene convalidata offline, salvata nel database e applicata immediatamente — nessun riavvio necessario. Senza una chiave, Proxytrace esegue il piano Free."
+
+msgid "Paste your license key (JWT) here"
+msgstr "Incolla qui la tua chiave di licenza (JWT)"
+
+msgid "Paused"
+msgstr "In pausa"
+
+msgid "pending"
+msgstr "in attesa"
+
+msgid "Pending"
+msgstr "In attesa"
+
+msgid "Pending invites"
+msgstr "Inviti in attesa"
+
+msgid "Pending removal"
+msgstr "In attesa di rimozione"
+
+msgid "Pending review"
+msgstr "In attesa di revisione"
+
+msgid "Pending validation"
+msgstr "In attesa di convalida"
+
+msgid "per call"
+msgstr "per chiamata"
+
+msgid "per evaluation"
+msgstr "per valutazione"
+
+msgid "Per page:"
+msgstr "Per pagina:"
+
+msgid "Per-agent token usage appears once your agents handle traffic."
+msgstr "L'utilizzo di Token per Agent appare quando i tuoi Agent gestiscono il traffico."
+
+msgid "Per-model output"
+msgstr "Output per modello"
+
+msgid "Performance"
+msgstr "Prestazioni"
+
+msgid "pick"
+msgstr "scegli"
+
+msgid "Pick a judge, then a case"
+msgstr "Scegli un judge, poi un caso"
+
+msgid "Pick a preset above or type your own name. You can edit it after."
+msgstr "Scegli un preset sopra oppure digita il tuo nome. Puoi modificarlo dopo."
+
+msgid "Pick a project first."
+msgstr "Scegli prima un progetto."
+
+msgid "Pick a project to chat with Tracey."
+msgstr "Scegli un progetto per chattare con Tracey."
+
+msgid "Pick a project to use the evaluator playground."
+msgstr "Scegli un progetto da usare con il playground dell'evaluator."
+
+msgid "Pick an agent"
+msgstr "Scegli un Agent"
+
+msgid "Pick an agent on the left to start a conversation."
+msgstr "Scegli un Agent a sinistra per iniziare una conversazione."
+
+msgid "Pick endpoint"
+msgstr "Scegli endpoint"
+
+msgid "Pick one from the list to view its definition, attached suites, and performance."
+msgstr "Scegli uno dall'elenco per vedere la sua definizione, i Suite allegati e le prestazioni."
+
+msgid "Pick to start"
+msgstr "Scegli per iniziare"
+
+msgid "Pick your default model"
+msgstr "Scegli il tuo modello predefinito"
+
+msgid "Point your agent at the proxy — one base-URL change — and every request, response, tool call, token and cost is recorded."
+msgstr "Indirizza il tuo Agent al proxy — basta cambiare la base URL — e ogni richiesta, risposta, chiamata a Tool, Token e costo viene registrato."
+
+msgid "Point your client at Proxytrace"
+msgstr "Indirizza il tuo client a Proxytrace"
+
+msgid "Preparing questions…"
+msgstr "Preparazione delle domande…"
+
+msgid "Pres Penalty"
+msgstr "Pres Penalty"
+
+msgid "Preset"
+msgstr "Preset"
+
+msgid "Preset configuration — no user-defined settings."
+msgstr "Configurazione predefinita — nessuna impostazione definita dall'utente."
+
+msgid "Press <0>Enter</0> to continue"
+msgstr "Premi <0>Invio</0> per continuare"
+
+msgid "Preview final prompt sent to judge"
+msgstr "Anteprima del prompt finale inviato al giudice"
+
+msgid "Previous"
+msgstr "Precedente"
+
+msgid "Previous case"
+msgstr "Caso precedente"
+
+msgid "Previous trace"
+msgstr "Trace precedente"
+
+msgid "Project"
+msgstr "Progetto"
+
+msgid "Project name"
+msgstr "Nome del progetto"
+
+msgid "Projects"
+msgstr "Progetti"
+
+#. placeholder {0}: user.email
+msgid "Projects — {0}"
+msgstr "Progetti — {0}"
+
+msgid "Projects group your agents, traces, and benchmarks."
+msgstr "I progetti raggruppano i tuoi Agent, Trace e benchmark."
+
+msgid "Projects, Users & API keys"
+msgstr "Progetti, User e API key"
+
+msgid "Promote"
+msgstr "Promuovi"
+
+msgid "Promote to test case"
+msgstr "Promuovi a test case"
+
+msgid "Promote to Test Case"
+msgstr "Promuovi a Test Case"
+
+msgid "Promoted"
+msgstr "Promosso"
+
+msgid "Promoted — awaiting adoption in your agent."
+msgstr "Promosso — in attesa di adozione nel tuo Agent."
+
+msgid "Promoting…"
+msgstr "Promozione in corso…"
+
+msgid "Prompt rewrite"
+msgstr "Riscrittura del Prompt"
+
+msgid "Proposal has not been benchmarked against a test suite yet."
+msgstr "La Proposal non è ancora stata sottoposta a benchmark rispetto a un Test Suite."
+
+msgid "Proposal not found."
+msgstr "Proposal non trovata."
+
+msgid "Proposals"
+msgstr "Proposal"
+
+msgid "Proposed"
+msgstr "Proposto"
+
+msgid "Proposed change"
+msgstr "Modifica proposta"
+
+msgid "Proposed system prompt"
+msgstr "Prompt di sistema proposto"
+
+#. placeholder {0}: details.proposedTools.length
+msgid "Proposed tools ({0}): "
+msgstr "Tool proposti ({0}): "
+
+msgid "Proven gain"
+msgstr "Guadagno dimostrato"
+
+msgid "Provide result"
+msgstr "Fornisci risultato"
+
+msgid "Provider"
+msgstr "Provider"
+
+msgid "Provider kind"
+msgstr "Tipo di Provider"
+
+msgid "Provider name"
+msgstr "Nome del Provider"
+
+msgid "Providers"
+msgstr "Provider"
+
+msgid "Providers, Models & Endpoints"
+msgstr "Provider, Models e Endpoint"
+
+msgid "proxy"
+msgstr "proxy"
+
+#. placeholder {0}: data.latestVersion
+#. placeholder {1}: data.currentVersion
+msgid "Proxytrace <0>{0}</0> is available — you're running <1>{1}</1>."
+msgstr "Proxytrace <0>{0}</0> è disponibile — stai eseguendo <1>{1}</1>."
+
+msgid "Proxytrace API keys"
+msgstr "API key di Proxytrace"
+
+msgid "Proxytrace speaks the OpenAI protocol — point it at OpenAI or any OpenAI-compatible endpoint."
+msgstr "Proxytrace parla il protocollo OpenAI — puntalo a OpenAI o a qualsiasi endpoint compatibile con OpenAI."
+
+msgid "pt"
+msgstr "pt"
+
+msgid "Pulled from the provider; prices load automatically."
+msgstr "Recuperati dal provider; i prezzi si caricano automaticamente."
+
+msgid "queue depth"
+msgstr "profondità della coda"
+
+msgid "Queued"
+msgstr "In coda"
+
+msgid "Quick actions"
+msgstr "Azioni rapide"
+
+msgid "Quick presets"
+msgstr "Preset rapidi"
+
+msgid "Quick ranges"
+msgstr "Intervalli rapidi"
+
+msgid "Range"
+msgstr "Intervallo"
+
+msgid "RATE_LIMIT"
+msgstr "RATE_LIMIT"
+
+msgid "Raw JSON"
+msgstr "JSON grezzo"
+
+msgid "Re-check now"
+msgstr "Ricontrolla ora"
+
+msgid "Re-run"
+msgstr "Riesegui"
+
+#. placeholder {0}: evaluator.name
+msgid "Re-score with <0>{0}</0> to see how the 1–5 verdict shifts."
+msgstr "Ricalifica con <0>{0}</0> per vedere come cambia il verdetto da 1 a 5."
+
+msgid "Re-scored"
+msgstr "Ricalcolato"
+
+msgid "Re-scored · edited"
+msgstr "Ricalcolato · modificato"
+
+msgid "Reasoning"
+msgstr "Reasoning"
+
+msgid "Reasoning — optional short explanation the judge attaches to the score."
+msgstr "Reasoning — breve spiegazione opzionale che il giudice associa al punteggio."
+
+msgid "Reasoning effort"
+msgstr "Effort del Reasoning"
+
+msgid "Receiving tokens"
+msgstr "Token in arrivo"
+
+msgid "Recent"
+msgstr "Recenti"
+
+msgid "Recent evaluations"
+msgstr "Valutazioni recenti"
+
+msgid "Recent traces"
+msgstr "Traces recenti"
+
+msgid "Regressed"
+msgstr "Peggiorato"
+
+msgid "Regression"
+msgstr "Regressione"
+
+msgid "Reindex now"
+msgstr "Reindicizza ora"
+
+msgid "Reindex started"
+msgstr "Reindicizzazione avviata"
+
+msgid "Reindexing"
+msgstr "Reindicizzazione"
+
+msgid "Reject (error)"
+msgstr "Rifiuta (errore)"
+
+msgid "Rejected"
+msgstr "Rifiutato"
+
+msgid "Release notes"
+msgstr "Note di rilascio"
+
+msgid "Reload models"
+msgstr "Ricarica modelli"
+
+msgid "Reload models & prices"
+msgstr "Ricarica modelli e prezzi"
+
+msgid "Reload to pull this provider's models, or let Proxytrace auto-discover them from traces."
+msgstr "Ricarica per recuperare i modelli di questo provider, oppure lascia che Proxytrace li rilevi automaticamente dai Trace."
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+#. placeholder {0}: m.email
+msgid "Remove {0}"
+msgstr "Rimuovi {0}"
+
+msgid "Remove from staged"
+msgstr "Rimuovi da staged"
+
+msgid "Remove license"
+msgstr "Rimuovi licenza"
+
+msgid "Remove stored license"
+msgstr "Rimuovi licenza salvata"
+
+msgid "Remove stored license?"
+msgstr "Rimuovere la licenza salvata?"
+
+msgid "Remove tool"
+msgstr "Rimuovi Tool"
+
+msgid "Remove tool request"
+msgstr "Rimuovi richiesta Tool"
+
+msgid "Remove user"
+msgstr "Rimuovi User"
+
+msgid "Replaces the schema above — every example key becomes required; loosen by hand if needed."
+msgstr "Sostituisce lo schema sopra — ogni chiave di esempio diventa obbligatoria; allenta a mano se necessario."
+
+msgid "Replaying a logged test result"
+msgstr "Riproduzione di un risultato di test registrato"
+
+msgid "Reply from the model"
+msgstr "Risposta dal modello"
+
+msgid "Req"
+msgstr "Req"
+
+msgid "Request"
+msgstr "Richiesta"
+
+msgid "Request · {model}"
+msgstr "Richiesta · {model}"
+
+msgid "required"
+msgstr "obbligatorio"
+
+msgid "Required"
+msgstr "Obbligatorio"
+
+msgid "Requires Enterprise"
+msgstr "Richiede Enterprise"
+
+msgid "Requires the Enterprise tier. Upgrade to enable LLM-judge evaluators."
+msgstr "Richiede il piano Enterprise. Aggiorna per abilitare gli evaluator LLM-judge."
+
+msgid "Reset"
+msgstr "Ripristina"
+
+msgid "Reset all settings to agent defaults"
+msgstr "Ripristina tutte le impostazioni ai valori predefiniti dell'Agent"
+
+msgid "Reset all to agent defaults"
+msgstr "Ripristina tutto ai valori predefiniti dell'Agent"
+
+msgid "Reset to Proposed"
+msgstr "Ripristina a Proposto"
+
+msgid "Response time"
+msgstr "Tempo di risposta"
+
+msgid "RESULT"
+msgstr "RISULTATO"
+
+msgid "Retry discovery"
+msgstr "Riprova rilevamento"
+
+msgid "Reveal"
+msgstr "Mostra"
+
+msgid "Revoke"
+msgstr "Revoca"
+
+msgid "Role"
+msgstr "Ruolo"
+
+#. placeholder {0}: preview.role
+msgid "Role: <0>{0}</0>"
+msgstr "Ruolo: <0>{0}</0>"
+
+msgid "Route your agent through the proxy and every LLM call lands here automatically. Point your OpenAI client at this project's <0>base_url</0> — keep your existing provider API key — and nothing else changes."
+msgstr "Instrada il tuo Agent attraverso il proxy e ogni chiamata LLM arriverà qui automaticamente. Punta il tuo client OpenAI al <0>base_url</0> di questo progetto — mantieni la tua API key del provider esistente — e non cambia nient'altro."
+
+msgid "Route your agent through the Proxytrace proxy to start capturing traces."
+msgstr "Instrada il tuo Agent attraverso il proxy Proxytrace per iniziare a catturare i Trace."
+
+msgid "Rule"
+msgstr "Regola"
+
+msgid "Rule-based"
+msgstr "Basato su regole"
+
+msgid "Run"
+msgstr "Esegui"
+
+#. placeholder {0}: suite.testCaseCount
+#. placeholder {1}: suite.name
+msgid "Run <0>{0, plural, one {# test case} other {# test cases}}</0> from <1>{1}</1> and compare results."
+msgstr "Esegui <0>{0, plural, one {# test case} other {# test cases}}</0> da <1>{1}</1> e confronta i risultati."
+
+msgid "Run a suite to get started."
+msgstr "Esegui una Suite per iniziare."
+
+msgid "Run cancelled."
+msgstr "Esecuzione annullata."
+
+msgid "Run comparison"
+msgstr "Esegui confronto"
+
+#. placeholder {0}: data.suiteName ?? ''
+msgid "Run comparison · {0}"
+msgstr "Esegui confronto · {0}"
+
+msgid "Run completion on current conversation"
+msgstr "Esegui il completamento sulla conversazione corrente"
+
+msgid "Run evaluator"
+msgstr "Esegui evaluator"
+
+msgid "Run failed."
+msgstr "Run non riuscito."
+
+msgid "Run history"
+msgstr "Cronologia dei Run"
+
+msgid "Run not found."
+msgstr "Run non trovato."
+
+msgid "Run the evaluator to see a 1–5 verdict, the judge’s reasoning, and how edits move the score."
+msgstr "Esegui l'evaluator per vedere un verdetto da 1 a 5, il ragionamento del giudice e come le modifiche spostano il punteggio."
+
+msgid "Run this suite on a recurring cadence."
+msgstr "Esegui questo Suite con cadenza ricorrente."
+
+msgid "Run this suite to build up a history. Each run shows up here, newest first."
+msgstr "Esegui questo Suite per costruire una cronologia. Ogni Run appare qui, dal più recente."
+
+msgid "running"
+msgstr "in esecuzione"
+
+msgid "Running"
+msgstr "In esecuzione"
+
+#. placeholder {0}: suite.testCaseCount
+msgid "Running <0>{0, plural, one {# test case} other {# test cases}}</0>"
+msgstr "In esecuzione <0>{0, plural, one {# test case} other {# test case}}</0>"
+
+msgid "Running A/B test…"
+msgstr "Esecuzione A/B test…"
+
+msgid "Running…"
+msgstr "In esecuzione…"
+
+msgid "Running… {completed}/{total} cases"
+msgstr "In esecuzione… {completed}/{total} casi"
+
+msgid "Runs"
+msgstr "Run"
+
+msgid "Runtime"
+msgstr "Tempo di esecuzione"
+
+msgid "Same version on both sides — nothing to compare."
+msgstr "Stessa versione su entrambi i lati — nulla da confrontare."
+
+msgid "Sample"
+msgstr "Campione"
+
+msgid "Sampling and budget controls."
+msgstr "Controlli di campionamento e budget."
+
+msgid "Saturday"
+msgstr "Sabato"
+
+msgid "Save"
+msgstr "Salva"
+
+msgid "Save changes"
+msgstr "Salva modifiche"
+
+msgid "Save endpoint"
+msgstr "Salva endpoint"
+
+msgid "Save name"
+msgstr "Salva nome"
+
+msgid "Save schedule"
+msgstr "Salva pianificazione"
+
+msgid "Saving…"
+msgstr "Salvataggio…"
+
+msgid "Scheduled"
+msgstr "Pianificato"
+
+msgid "Scheduled runs"
+msgstr "Run pianificati"
+
+msgid "Scheduled test runs"
+msgstr "Run di test pianificati"
+
+msgid "Scheduled test runs are part of the Enterprise tier."
+msgstr "I Run di test pianificati fanno parte del piano Enterprise."
+
+msgid "Schedules"
+msgstr "Pianificazioni"
+
+msgid "Schema is appended automatically — only describe what to grade and what each score means."
+msgstr "Lo schema viene aggiunto automaticamente — descrivi solo cosa valutare e cosa significa ogni punteggio."
+
+msgid "Score"
+msgstr "Punteggio"
+
+#. placeholder {0}: hit.score.toFixed(2)
+msgid "score {0}"
+msgstr "punteggio {0}"
+
+msgid "Score {n} of 5"
+msgstr "Punteggio {n} su 5"
+
+msgid "score ≥ acceptable"
+msgstr "punteggio ≥ accettabile"
+
+msgid "Score distribution"
+msgstr "Distribuzione dei punteggi"
+
+msgid "Score distribution per evaluator, per model"
+msgstr "Distribuzione dei punteggi per evaluator, per modello"
+
+msgid "scoring…"
+msgstr "scoring…"
+
+msgid "Scoring…"
+msgstr "Scoring…"
+
+msgid "Scroll or drag to zoom in · click a bar to focus it"
+msgstr "Scorri o trascina per ingrandire · fai clic su una barra per metterla a fuoco"
+
+msgid "Scroll or drag to zoom in · click a bar to focus it · scroll down to zoom out"
+msgstr "Scorri o trascina per ingrandire · fai clic su una barra per metterla a fuoco · scorri verso il basso per ridurre lo zoom"
+
+msgid "Scroll to latest"
+msgstr "Scorri fino all'ultimo"
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Search agents…"
+msgstr "Cerca agenti…"
+
+msgid "Search all past evaluations…"
+msgstr "Cerca in tutte le valutazioni passate…"
+
+msgid "Search by trace ID, content, or model…"
+msgstr "Cerca per ID Trace, contenuto o modello…"
+
+msgid "Search cases…"
+msgstr "Cerca casi…"
+
+msgid "Search enabled"
+msgstr "Ricerca attivata"
+
+msgid "Search errors by message or stacktrace"
+msgstr "Cerca errori per messaggio o stacktrace"
+
+msgid "Search evaluators…"
+msgstr "Cerca evaluator…"
+
+msgid "Search indexing"
+msgstr "Indicizzazione della ricerca"
+
+msgid "Search message or stacktrace…"
+msgstr "Cerca messaggio o stacktrace…"
+
+msgid "Search models…"
+msgstr "Cerca modelli…"
+
+msgid "Search prompts and responses…"
+msgstr "Cerca prompt e risposte…"
+
+msgid "Search settings saved"
+msgstr "Impostazioni di ricerca salvate"
+
+msgid "Search suites…"
+msgstr "Cerca suite…"
+
+msgid "Search this evaluator's past evaluations…"
+msgstr "Cerca nelle valutazioni passate di questo evaluator…"
+
+msgid "Search traces and test cases…"
+msgstr "Cerca trace e casi di test…"
+
+msgid "Search traces, agents, suites…"
+msgstr "Cerca trace, agenti, suite…"
+
+msgid "Search users by name…"
+msgstr "Cerca utenti per nome…"
+
+msgid "Search…"
+msgstr "Cerca…"
+
+msgid "Searching traces…"
+msgstr "Ricerca trace in corso…"
+
+msgid "Searching…"
+msgstr "Ricerca in corso…"
+
+msgid "See what your AI agents actually do — and make them better. Setup takes about two minutes."
+msgstr "Scopri cosa fanno davvero i tuoi AI agents — e migliorali. La configurazione richiede circa due minuti."
+
+msgid "Seed"
+msgstr "Seed"
+
+msgid "Seed conversation from past trace or test case"
+msgstr "Conversation di seed da una Trace passata o da un caso di test"
+
+msgid "Select a case or trace"
+msgstr "Seleziona un caso o una Trace"
+
+msgid "Select a run to see details."
+msgstr "Seleziona una Run per vedere i dettagli."
+
+msgid "Select a suite"
+msgstr "Seleziona una Suite"
+
+msgid "Select a suite to see details."
+msgstr "Seleziona una Suite per vedere i dettagli."
+
+msgid "Select a trace to preview"
+msgstr "Seleziona una Trace da anteprima"
+
+msgid "Select agent"
+msgstr "Seleziona agent"
+
+msgid "Select all"
+msgstr "Seleziona tutto"
+
+msgid "Select all that apply."
+msgstr "Seleziona tutto ciò che si applica."
+
+msgid "Select an agent to view details."
+msgstr "Seleziona un agent per vedere i dettagli."
+
+msgid "Select an evaluator"
+msgstr "Seleziona un evaluator"
+
+msgid "Select evaluators"
+msgstr "Seleziona evaluator"
+
+msgid "Select model endpoints…"
+msgstr "Seleziona gli endpoint del modello…"
+
+msgid "Select none"
+msgstr "Non selezionare nulla"
+
+#. placeholder {0}: suite.name
+msgid "Select suite {0}"
+msgstr "Seleziona la Suite {0}"
+
+msgid "Select traces"
+msgstr "Seleziona i Trace"
+
+msgid "Select up to {maxSelected}."
+msgstr "Seleziona fino a {maxSelected}."
+
+msgid "Select…"
+msgstr "Seleziona…"
+
+msgid "selected model"
+msgstr "modello selezionato"
+
+msgid "Send"
+msgstr "Invia"
+
+msgid "Send a message to see completion metrics."
+msgstr "Invia un messaggio per vedere le metriche di completamento."
+
+msgid "Send a user message…"
+msgstr "Invia un messaggio utente…"
+
+msgid "Send error"
+msgstr "Errore di invio"
+
+msgid "Send message"
+msgstr "Invia messaggio"
+
+msgid "Send result"
+msgstr "Invia risultato"
+
+msgid "Set a password for your account"
+msgstr "Imposta una password per il tuo account"
+
+msgid "Set password & sign in"
+msgstr "Imposta la password e accedi"
+
+msgid "Set price →"
+msgstr "Imposta prezzo →"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Settings match agent defaults"
+msgstr "Le impostazioni corrispondono ai valori predefiniti dell'Agent"
+
+msgid "Share by segment"
+msgstr "Condividi per segmento"
+
+msgid "Share this link:"
+msgstr "Condividi questo link:"
+
+msgid "Show"
+msgstr "Mostra"
+
+msgid "Show available tools"
+msgstr "Mostra i Tool disponibili"
+
+msgid "Show ephemeral A/B validation runs"
+msgstr "Mostra i Run di validazione A/B effimeri"
+
+msgid "Show less"
+msgstr "Mostra meno"
+
+msgid "Show system agents"
+msgstr "Mostra gli Agent di sistema"
+
+msgid "Show traces from system agents"
+msgstr "Mostra i Trace degli Agent di sistema"
+
+msgid "Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more."
+msgstr "Mostrando i primi {MOVE_CANDIDATE_FETCH_LIMIT} Agent. Affina con la ricerca per trovarne altri."
+
+msgid "Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to see older calls."
+msgstr "Mostrando i primi {WIZARD_TRACE_PAGE_SIZE} Trace — restringi il filtro per vedere le chiamate più vecchie."
+
+#. placeholder {0}: groups.length
+#. placeholder {1}: total.toLocaleString()
+msgid "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
+msgstr "Mostrando i {0} Run più recenti di {1} — apri la pagina Run per l'elenco completo."
+
+msgid "Sign in"
+msgstr "Accedi"
+
+msgid "Sign in to continue."
+msgstr "Accedi per continuare."
+
+msgid "Sign-in"
+msgstr "Accesso"
+
+msgid "significant"
+msgstr "significativo"
+
+msgid "sk-…"
+msgstr "sk-…"
+
+msgid "Snippet length (characters)"
+msgstr "Lunghezza dello snippet (caratteri)"
+
+msgid "Some HTML was removed for safety"
+msgstr "Parte dell'HTML è stata rimossa per sicurezza"
+
+msgid "Something else…"
+msgstr "Qualcos'altro…"
+
+msgid "Something went wrong"
+msgstr "Qualcosa è andato storto"
+
+msgid "Source"
+msgstr "Origine"
+
+msgid "Split by model"
+msgstr "Dividi per modello"
+
+msgid "SSO"
+msgstr "SSO"
+
+msgid "SSO / OIDC sign-in"
+msgstr "Accesso SSO / OIDC"
+
+msgid "Stacktrace"
+msgstr "Stacktrace"
+
+msgid "Start a conversation"
+msgstr "Avvia una conversazione"
+
+msgid "Start new test run"
+msgstr "Avvia un nuovo test run"
+
+msgid "Start run"
+msgstr "Avvia run"
+
+msgid "Starting test run…"
+msgstr "Avvio del test run…"
+
+msgid "State"
+msgstr "Stato"
+
+msgid "Status"
+msgstr "Stato"
+
+#. placeholder {0}: wiz.currentStep + 1
+msgid "Step {0}"
+msgstr "Step {0}"
+
+#. placeholder {0}: currentStep + 1
+#. placeholder {1}: steps.length
+msgid "Step {0} of {1}"
+msgstr "Step {0} di {1}"
+
+#. placeholder {0}: step + 1
+msgid "Step {0} of {total}"
+msgstr "Step {0} di {total}"
+
+msgid "Step 0"
+msgstr "Step 0"
+
+msgid "Step limit reached"
+msgstr "Limite di step raggiunto"
+
+msgid "Still failing"
+msgstr "Ancora in errore"
+
+msgid "Still running"
+msgstr "Ancora in esecuzione"
+
+msgid "Stop"
+msgstr "Interrompi"
+
+msgid "Stop generating"
+msgstr "Interrompi generazione"
+
+msgid "Stored encrypted. Used only to forward proxied requests upstream."
+msgstr "Archiviato in modo criptato. Usato solo per inoltrare le richieste proxate a monte."
+
+msgid "Streaming…"
+msgstr "In streaming…"
+
+msgid "Submit"
+msgstr "Invia"
+
+msgid "Submitted directly"
+msgstr "Inviato direttamente"
+
+msgid "Submitted via {sourceLabel} — no failing runs attached. Validated against {suite}."
+msgstr "Inviato tramite {sourceLabel} — nessun run in errore allegato. Validato con {suite}."
+
+msgid "Submitted via {sourceLabel} · validated against {suite}"
+msgstr "Inviato tramite {sourceLabel} · validato con {suite}"
+
+msgid "Submitting theory…"
+msgstr "Invio della theory…"
+
+msgid "Suite"
+msgstr "Suite"
+
+msgid "Suite name"
+msgstr "Nome della Suite"
+
+msgid "Suite Pass Rates"
+msgstr "Tassi di successo della Suite"
+
+msgid "Suites"
+msgstr "Suite"
+
+msgid "Sunday"
+msgstr "Domenica"
+
+msgid "Swap the base URL for your project’s proxy endpoint — your existing provider API key keeps working."
+msgstr "Sostituisci l'URL di base con l'endpoint proxy del tuo progetto — la tua API key del provider esistente continua a funzionare."
+
+msgid "Switch endpoint"
+msgstr "Cambia endpoint"
+
+msgid "Switch project"
+msgstr "Cambia progetto"
+
+msgid "System"
+msgstr "System"
+
+msgid "SYSTEM"
+msgstr "SYSTEM"
+
+msgid "System agents"
+msgstr "System agent"
+
+msgid "System Agents"
+msgstr "System Agent"
+
+msgid "System endpoint"
+msgstr "Endpoint di System"
+
+msgid "System instruction"
+msgstr "Istruzione di System"
+
+msgid "System instructions sent to the agent"
+msgstr "Istruzioni di System inviate all'Agent"
+
+msgid "System messages excluded"
+msgstr "Messaggi di System esclusi"
+
+msgid "System prompt"
+msgstr "Prompt di System"
+
+msgid "System Prompt"
+msgstr "Prompt di System"
+
+msgid "System Prompt diff"
+msgstr "Diff del Prompt di System"
+
+msgid "System Traces"
+msgstr "Traces di System"
+
+msgid "t/s"
+msgstr "t/s"
+
+msgid "Talk to {agentName}"
+msgstr "Parla con {agentName}"
+
+msgid "target"
+msgstr "obiettivo"
+
+msgid "Target agent"
+msgstr "Agent target"
+
+msgid "Temperature"
+msgstr "Temperatura"
+
+msgid "Terrible"
+msgstr "Terribile"
+
+msgid "Test"
+msgstr "Test"
+
+msgid "Test case"
+msgstr "Caso di test"
+
+msgid "Test Case"
+msgstr "Caso di test"
+
+msgid "Test case matrix"
+msgstr "Matrice dei casi di test"
+
+msgid "Test cases"
+msgstr "Casi di test"
+
+msgid "Test Cases"
+msgstr "Casi di test"
+
+msgid "Test connection"
+msgstr "Verifica connessione"
+
+msgid "Test results"
+msgstr "Risultati dei test"
+
+msgid "Test run"
+msgstr "Run di test"
+
+#. placeholder {0}: id.slice(0, 8)
+msgid "Test run {0}"
+msgstr "Run di test {0}"
+
+msgid "Test run cancelled."
+msgstr "Run di test annullato."
+
+msgid "Test runs"
+msgstr "Run di test"
+
+msgid "Test Runs"
+msgstr "Run di test"
+
+msgid "Test runs & test run groups"
+msgstr "Run di test e gruppi di run di test"
+
+msgid "Test suite"
+msgstr "Suite di test"
+
+msgid "Test suites"
+msgstr "Suite di test"
+
+msgid "Test Suites"
+msgstr "Suite di test"
+
+msgid "Test suites & Test cases"
+msgstr "Suite di test e casi di test"
+
+msgid "Tested"
+msgstr "Testato"
+
+msgid "Text response"
+msgstr "Risposta di testo"
+
+msgid "The A/B test found no improvement, so the theory was rejected automatically — no review needed."
+msgstr "L'A/B test non ha trovato miglioramenti, quindi la Theory è stata rifiutata automaticamente — nessuna revisione necessaria."
+
+msgid "The candidate change has not been benchmarked yet."
+msgstr "La modifica candidata non è ancora stata benchmarkata."
+
+msgid "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
+msgstr "La modifica ha battuto la baseline. Promuovila per ottenere il pacchetto di handoff, oppure scartala."
+
+msgid "The change is live in the agent."
+msgstr "La modifica è attiva nell'Agent."
+
+msgid "The configured license could not be validated"
+msgstr "La licenza configurata non può essere convalidata"
+
+#. placeholder {0}: license.invalidReason ? ` — ${license.invalidReason}` : ''
+msgid "The configured license could not be validated{0}. The installation runs with Free-tier limits until a valid key is activated."
+msgstr "La licenza configurata non può essere convalidata{0}. L'installazione funziona con limiti Free-tier finché non viene attivata una chiave valida."
+
+msgid "The configured license is invalid — running with Free-tier limits."
+msgstr "La licenza configurata non è valida — esecuzione con limiti Free-tier."
+
+msgid "The installation falls back to the environment-supplied license, or the Free tier. Enterprise features stop working immediately if no other license is configured."
+msgstr "L'installazione passa alla licenza fornita dall'ambiente, oppure al Free tier. Le funzionalità Enterprise smettono di funzionare immediatamente se non è configurata alcun'altra licenza."
+
+msgid "The license is fixed by this deployment (demo mode) and cannot be changed here."
+msgstr "La licenza è fissata da questa distribuzione (modalità demo) e non può essere modificata qui."
+
+msgid "The native OpenAI API — works out of the box."
+msgstr "L'API native di OpenAI — funziona subito, senza configurazione."
+
+msgid "The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
+msgstr "Il turn ha raggiunto il budget per Tool-step prima che Tracey potesse rispondere. Chiedile di continuare."
+
+msgid "Theories"
+msgstr "Theory"
+
+msgid "Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate."
+msgstr "Le Theory compaiono qui quando un optimizer, tu o Tracey AI propone una modifica da validare."
+
+msgid "Theory"
+msgstr "Theory"
+
+msgid "Theory & A/B test details"
+msgstr "Dettagli di Theory e A/B test"
+
+msgid "Thinking…"
+msgstr "Elaborazione…"
+
+msgid "This action cannot be undone."
+msgstr "Questa azione non può essere annullata."
+
+msgid "This action cannot be undone. Type <0>{entityName}</0> to confirm."
+msgstr "Questa azione non può essere annullata. Digita <0>{entityName}</0> per confermare."
+
+msgid "This action exceeds a usage limit of your current license tier. Upgrade to Enterprise for unlimited projects, agents, users, and test suites."
+msgstr "Questa azione supera un limite di utilizzo del tuo attuale piano di licenza. Passa a Enterprise per progetti, agenti, utenti e test suite illimitati."
+
+msgid "This becomes your project's default model. All discovered models are added with prices loaded automatically from the catalogue — nothing to type in."
+msgstr "Questo diventa il modello predefinito del tuo progetto. Tutti i model individuati vengono aggiunti con i prezzi caricati automaticamente dal catalogue — non c'è nulla da digitare."
+
+msgid "This case was not run for this model."
+msgstr "Questo case non è stato eseguito per questo model."
+
+msgid "This evaluator hasn’t scored any test results yet — search for a case in the rail to load one."
+msgstr "Questo evaluator non ha ancora assegnato un punteggio ad alcun test result — cerca un case nella rail per caricarne uno."
+
+msgid "This evaluator hasn’t scored this case yet."
+msgstr "Questo evaluator non ha ancora assegnato un punteggio a questo case."
+
+msgid "This evaluator kind returns a score without written reasoning."
+msgstr "Questo tipo di evaluator restituisce un punteggio senza motivazione scritta."
+
+msgid "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock it."
+msgstr "Questa feature fa parte del piano Proxytrace Enterprise. Aggiorna la tua licenza per sbloccarla."
+
+msgid "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more."
+msgstr "Questa feature fa parte del piano Proxytrace Enterprise. Aggiorna la tua licenza per sbloccare le optimization proposals, gli evaluator LLM-judge e altro ancora."
+
+#. placeholder {0}: i18n._(tier.tierLabel)
+msgid "This installation: {0}"
+msgstr "Questa installation: {0}"
+
+msgid "This is an Enterprise feature"
+msgstr "Questa è una feature Enterprise"
+
+msgid "This license key is not valid."
+msgstr "Questa license key non è valida."
+
+msgid "This license was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied license."
+msgstr "Questa license è stata attivata dall'interfaccia ed è salvata nel database. Sopravvive ai riavvii e ha la precedenza su una license fornita dall'ambiente."
+
+msgid "This license was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it."
+msgstr "Questa license è stata fornita tramite la variabile di ambiente PROXYTRACE_LICENSE. Una key attivata qui viene salvata nel database e ha la precedenza su di essa."
+
+msgid "this page"
+msgstr "questa pagina"
+
+msgid "This permanently deletes the run and its results. This action cannot be undone."
+msgstr "Questo elimina definitivamente il run e i suoi risultati. Questa azione non può essere annullata."
+
+msgid "This stops future runs. Existing runs it produced are kept."
+msgstr "Questo interrompe i run futuri. I run esistenti che ha prodotto vengono mantenuti."
+
+msgid "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
+msgstr "Questo interrompe i run futuri. I run esistenti che ha prodotto vengono mantenuti. Questa azione non può essere annullata."
+
+msgid "This trace has no response and cannot be promoted."
+msgstr "Questo trace non ha una response e non può essere promosso."
+
+msgid "This trace is not linked to an agent and cannot be promoted."
+msgstr "Questo trace non è collegato a un agent e non può essere promosso."
+
+#. placeholder {0}: deleteTarget.name
+msgid "This will permanently remove <0>{0}</0> and detach it from all test suites."
+msgstr "Questo rimuoverà definitivamente <0>{0}</0> e lo scollegerà da tutte le test suite."
+
+msgid "Throughput"
+msgstr "Throughput"
+
+msgid "Thursday"
+msgstr "Giovedì"
+
+msgid "Tier"
+msgstr "Tier"
+
+msgid "Time"
+msgstr "Ora"
+
+msgid "To"
+msgstr "A"
+
+msgid "Toggle sidebar"
+msgstr "Toggle sidebar"
+
+msgid "Token usage by agent"
+msgstr "Utilizzo dei Token per agent"
+
+#. placeholder {0}: rangeWindowLabel(range)
+msgid "Token Volume · {0}"
+msgstr "Volume di Token · {0}"
+
+msgid "tokens"
+msgstr "tokens"
+
+msgid "Tokens"
+msgstr "Tokens"
+
+msgid "tokens / sec"
+msgstr "tokens / sec"
+
+msgid "Tokens in"
+msgstr "Token in ingresso"
+
+msgid "Tokens out"
+msgstr "Token in uscita"
+
+msgid "tolerance"
+msgstr "tolleranza"
+
+msgid "Tolerance"
+msgstr "Tolleranza"
+
+msgid "TOOL"
+msgstr "TOOL"
+
+msgid "Tool arguments (JSON)"
+msgstr "Argomenti del Tool (JSON)"
+
+msgid "tool call"
+msgstr "chiamata Tool"
+
+msgid "Tool definition diff"
+msgstr "Differenza nella definizione del Tool"
+
+msgid "Tool execution failed: …"
+msgstr "Esecuzione del Tool fallita: …"
+
+msgid "Tool name"
+msgstr "Nome del Tool"
+
+msgid "Tool request"
+msgstr "Richiesta del Tool"
+
+msgid "Tool requested:"
+msgstr "Tool richiesto:"
+
+msgid "Tool returned a response"
+msgstr "Il Tool ha restituito una risposta"
+
+msgid "Tool specifications offered to the model."
+msgstr "Le specifiche del Tool offerte al modello."
+
+msgid "Tool update"
+msgstr "Aggiornamento del Tool"
+
+msgid "Tools"
+msgstr "Tools"
+
+msgid "Tools available"
+msgstr "Tools disponibili"
+
+msgid "Top-P"
+msgstr "Top-P"
+
+msgid "total"
+msgstr "totale"
+
+msgid "Total"
+msgstr "Totale"
+
+msgid "Total cost"
+msgstr "Costo totale"
+
+msgid "Total runs"
+msgstr "Totale Run"
+
+#. placeholder {0}: stats.inputTokens.toLocaleString()
+#. placeholder {1}: stats.outputTokens.toLocaleString()
+msgid "Total tokens (input {0} · output {1})"
+msgstr "Token totali (input {0} · output {1})"
+
+#. placeholder {0}: trace.model
+msgid "Trace preview · {0}"
+msgstr "Anteprima Trace · {0}"
+
+msgid "traces"
+msgstr "traces"
+
+msgid "Traces"
+msgstr "Traces"
+
+msgid "traces / min"
+msgstr "traces / min"
+
+msgid "Traces guarding against past bugs and previously-fixed issues."
+msgstr "Traces che proteggono da bug passati e problemi già risolti in precedenza."
+
+msgid "Tracey AI"
+msgstr "Tracey AI"
+
+msgid "Tracey AI assistant"
+msgstr "Assistente Tracey AI"
+
+msgid "Tracey couldn’t load this."
+msgstr "Tracey non è riuscita a caricare questo contenuto."
+
+msgid "Tracey produced an empty chart."
+msgstr "Tracey ha prodotto un grafico vuoto."
+
+msgid "Tracey quick actions and tools"
+msgstr "Azioni rapide e Tools di Tracey"
+
+msgid "Tracey's session failed to start. Try again in a moment."
+msgstr "La sessione di Tracey non è riuscita ad avviarsi. Riprova tra un momento."
+
+msgid "Try a different search term."
+msgstr "Prova un termine di ricerca diverso."
+
+msgid "Try again"
+msgstr "Riprova"
+
+msgid "Try clearing the search or widening the time range."
+msgstr "Prova a cancellare la ricerca o ad ampliare l'intervallo di tempo."
+
+msgid "Try widening the time range, agent, or search."
+msgstr "Prova ad ampliare l'intervallo di tempo, Agent o la ricerca."
+
+msgid "TTFT"
+msgstr "TTFT"
+
+msgid "Tuesday"
+msgstr "Martedì"
+
+#. placeholder {0}: turns.length - i
+msgid "Turn {0}"
+msgstr "Turn {0}"
+
+msgid "Turns"
+msgstr "Turni"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Type at least {MIN_QUERY} characters."
+msgstr "Digita almeno {MIN_QUERY} caratteri."
+
+msgid "Type at least 2 characters to search."
+msgstr "Digita almeno 2 caratteri per cercare."
+
+msgid "Type at least 2 characters."
+msgstr "Digita almeno 2 caratteri."
+
+msgid "Type below to send a message, or use Add message to insert turns manually."
+msgstr "Digita qui sotto per inviare un messaggio, oppure usa Aggiungi messaggio per inserire manualmente i turni."
+
+msgid "Type your answer…"
+msgstr "Digita la tua risposta…"
+
+msgid "Unassigned suite"
+msgstr "Suite non assegnata"
+
+msgid "Undo"
+msgstr "Annulla"
+
+msgid "Undo remove"
+msgstr "Annulla rimozione"
+
+msgid "Unknown"
+msgstr "Sconosciuto"
+
+msgid "Unlimited agents"
+msgstr "Agent illimitati"
+
+msgid "Unlimited projects"
+msgstr "Progetti illimitati"
+
+msgid "Unlimited projects, agents & test suites"
+msgstr "Progetti, Agents e test suite illimitati"
+
+msgid "Unlimited test suites"
+msgstr "Test suite illimitate"
+
+msgid "Unlock everything with Enterprise — proxytrace.dev"
+msgstr "Sblocca tutto con Enterprise — proxytrace.dev"
+
+msgid "Unsaved changes."
+msgstr "Modifiche non salvate."
+
+msgid "Update the index automatically when entities are created, updated, or deleted."
+msgstr "Aggiorna automaticamente l'indice quando le entità vengono create, aggiornate o eliminate."
+
+msgid "updated"
+msgstr "aggiornato"
+
+msgid "Upgrade to Enterprise"
+msgstr "Passa a Enterprise"
+
+msgid "Upgrade to schedule"
+msgstr "Passa alla pianificazione"
+
+msgid "Upstream API key"
+msgstr "API key upstream"
+
+msgid "Upstream key copied"
+msgstr "API key upstream copiata"
+
+msgid "Use your resource’s OpenAI-compatible v1 endpoint. Model discovery lists the models you have deployed."
+msgstr "Usa l'endpoint v1 OpenAI-compatible della tua risorsa. La discovery dei modelli elenca i modelli che hai distribuito."
+
+msgid "Used tools"
+msgstr "Tool usati"
+
+msgid "User"
+msgstr "User"
+
+msgid "USER"
+msgstr "USER"
+
+msgid "User menu ({userName})"
+msgstr "Menu User ({userName})"
+
+msgid "Users"
+msgstr "User"
+
+msgid "Users with access to the active project."
+msgstr "Utenti con accesso al progetto attivo."
+
+msgid "UTC"
+msgstr "UTC"
+
+msgid "UTC · proxy"
+msgstr "UTC · proxy"
+
+#. placeholder {0}: preview.tier === 'enterprise' ? 'Enterprise' : 'Free'
+msgid "Valid {0} license"
+msgstr "Licenza {0} valida"
+
+msgid "Validate"
+msgstr "Valida"
+
+msgid "Validated"
+msgstr "Valido"
+
+msgid "Validates the agent response against a JSON Schema definition."
+msgstr "Valida la risposta dell'Agent rispetto a una definizione JSON Schema."
+
+msgid "Validating"
+msgstr "In validazione"
+
+msgid "Value"
+msgstr "Valore"
+
+msgid "variables"
+msgstr "variables"
+
+msgid "Verdict"
+msgstr "Verdetto"
+
+msgid "Version history"
+msgstr "Cronologia versioni"
+
+#. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
+msgid "via {0}"
+msgstr "tramite {0}"
+
+msgid "via {sourceLabel}"
+msgstr "tramite {sourceLabel}"
+
+msgid "via Tracey AI"
+msgstr "tramite Tracey AI"
+
+msgid "View A/B run"
+msgstr "Visualizza Run A/B"
+
+msgid "View all"
+msgstr "Visualizza tutto"
+
+msgid "View all ›"
+msgstr "Visualizza tutto ›"
+
+msgid "View all →"
+msgstr "Visualizza tutto →"
+
+msgid "View details"
+msgstr "Visualizza dettagli"
+
+msgid "View Enterprise plans"
+msgstr "Visualizza i piani Enterprise"
+
+msgid "View ingested trace"
+msgstr "Visualizza il Trace acquisito"
+
+msgid "View plans"
+msgstr "Visualizza i piani"
+
+msgid "View proposal"
+msgstr "Visualizza la proposal"
+
+msgid "View proposals"
+msgstr "Visualizza le proposal"
+
+msgid "View run"
+msgstr "Visualizza Run"
+
+msgid "View Test Runs →"
+msgstr "Visualizza Test Runs →"
+
+msgid "View this error in the Error Log"
+msgstr "Visualizza questo errore nel registro Error Log"
+
+msgid "View tool definition on Agents page"
+msgstr "Visualizza la definizione del tool nella pagina Agents"
+
+msgid "View traces"
+msgstr "Visualizza Traces"
+
+msgid "viewing"
+msgstr "visualizzazione"
+
+msgid "Volume appears once traces are captured."
+msgstr "Il volume appare una volta che le Traces sono state acquisite."
+
+msgid "vs best"
+msgstr "vs il migliore"
+
+msgid "vs prev period"
+msgstr "vs periodo precedente"
+
+msgid "Wait stopped"
+msgstr "Attesa interrotta"
+
+msgid "Waiting for … actions"
+msgstr "In attesa di … azioni"
+
+msgid "Waiting for the model to finish streaming…"
+msgstr "In attesa che il modello finisca lo streaming…"
+
+msgid "Warning"
+msgstr "Avviso"
+
+msgid "Wednesday"
+msgstr "Mercoledì"
+
+msgid "Weekly"
+msgstr "Settimanale"
+
+msgid "Welcome"
+msgstr "Benvenuto"
+
+msgid "Welcome to <0>Proxytrace</0>"
+msgstr "Benvenuto su <0>Proxytrace</0>"
+
+msgid "What the agent should respond with…"
+msgstr "Con cosa dovrebbe rispondere l'Agent…"
+
+msgid "When"
+msgstr "Quando"
+
+msgid "When disabled, search returns no results and indexing pauses."
+msgstr "Quando è disattivato, la ricerca non restituisce risultati e l'indicizzazione si interrompe."
+
+msgid "Which agent should this suite test?"
+msgstr "Quale Agent dovrebbe testare questa Suite?"
+
+msgid "widget"
+msgstr "widget"
+
+msgid "Will be deleted"
+msgstr "Verrà eliminato"
+
+msgid "Will be kept"
+msgstr "Verrà conservato"
+
+msgid "Win rate"
+msgstr "Tasso di vittoria"
+
+msgid "Wipes runtime/trace data while preserving configuration. This action cannot be undone."
+msgstr "Cancella i dati di runtime/trace mantenendo la configurazione. Questa azione non può essere annullata."
+
+msgid "Working…"
+msgstr "Caricamento…"
+
+msgid "Workspace"
+msgstr "Area di lavoro"
+
+msgid "Worst"
+msgstr "Peggiore"
+
+msgid "Writing…"
+msgstr "Scrittura…"
+
+msgid "xAI"
+msgstr "xAI"
+
+msgid "You"
+msgstr "Tu"
+
+msgid "You are a grader. Score how clearly the response answers the user's question. Use the 1–5 scale below; explain briefly in reasoning…"
+msgstr "Sei un valutatore. Assegna un punteggio a quanto chiaramente la risposta risponde alla domanda dell'utente. Usa la scala da 1 a 5 qui sotto; spiega brevemente nel reasoning…"
+
+msgid "You can change the configuration later from the evaluator's settings."
+msgstr "Puoi modificare la configurazione in seguito dalle impostazioni del valutatore."
+
+msgid "You can create the suite without evaluators and attach them later."
+msgstr "Puoi creare la Suite senza Evaluator e aggiungerli in seguito."
+
+msgid "You cannot change your own account."
+msgstr "Non puoi modificare il tuo account."
+
+msgid "You stopped before these finished — they keep running in the background."
+msgstr "Ti sei fermato prima che questi finissero — continuano a essere eseguiti in background."
+
+msgid "You've reached a Free-tier limit"
+msgstr "Hai raggiunto un limite del piano Free"
+
+msgid "you@example.com"
+msgstr "you@example.com"
+
+msgid "Your in-app assistant"
+msgstr "Il tuo assistant in-app"
+
+msgid "Your project's OpenAI base_url"
+msgstr "Il base_url OpenAI del tuo progetto"
+
+msgid "Your project's OpenAI-compatible endpoint"
+msgstr "L'endpoint compatibile con OpenAI del tuo progetto"
+
+msgid "Your rubric must produce one of these 5 scores; reasoning is optional."
+msgstr "La tua rubric deve produrre uno di questi 5 punteggi; il reasoning è facoltativo."

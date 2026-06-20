@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Button, IconButton } from './Button';
 import { Popover } from './Popover';
 import { Input } from './Input';
@@ -46,6 +47,7 @@ function seedDraft(value: TimeRange): Draft {
  * absolute custom range, in a single popover. Pure range logic lives in `../timeRange.ts`.
  */
 export function TimeRangePicker({ value, onChange, testId = 'time-range' }: TimeRangePickerProps) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => seedDraft(value));
 
@@ -101,7 +103,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
         <div className="flex flex-col sm:flex-row" data-testid={`${testId}-popover`}>
           <div className="flex flex-col gap-0.5 p-1.5 sm:w-[176px] border-b sm:border-b-0 sm:border-r border-hairline">
             <span className="px-2 pt-1 pb-1 text-caption font-medium uppercase tracking-wide text-muted">
-              Quick ranges
+              <Trans>Quick ranges</Trans>
             </span>
             {TIME_PRESETS.map(p => {
               const isActive = activePreset === p.preset;
@@ -123,11 +125,12 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
           </div>
 
           <div className="flex flex-col gap-3 p-3 sm:w-[272px]">
-            <span className="text-caption font-medium uppercase tracking-wide text-muted">Custom range</span>
-            <FormField label="From" htmlFor={`${testId}-from`}>
+            <span className="text-caption font-medium uppercase tracking-wide text-muted"><Trans>Custom range</Trans></span>
+            <FormField label={t`From`} htmlFor={`${testId}-from`}>
               <Input
                 id={`${testId}-from`}
                 type="datetime-local"
+                // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
                 inputSize="sm"
                 value={draft.from}
                 onChange={e => setDraft(d => ({ ...d, from: e.target.value }))}
@@ -136,10 +139,11 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
                 data-testid={`${testId}-from`}
               />
             </FormField>
-            <FormField label="To" htmlFor={`${testId}-to`} error={invalid ? '"From" must be before "To".' : undefined}>
+            <FormField label={t`To`} htmlFor={`${testId}-to`} error={invalid ? t`"From" must be before "To".` : undefined}>
               <Input
                 id={`${testId}-to`}
                 type="datetime-local"
+                // eslint-disable-next-line lingui/no-unlocalized-strings -- size variant token, not UI copy
                 inputSize="sm"
                 value={draft.to}
                 onChange={e => setDraft(d => ({ ...d, to: e.target.value }))}
@@ -150,10 +154,10 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
             </FormField>
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button variant="ghost" size="sm" onClick={clear} data-testid={`${testId}-reset`}>
-                Clear
+                <Trans>Clear</Trans>
               </Button>
               <Button variant="primary" size="sm" onClick={applyCustom} disabled={invalid} data-testid={`${testId}-apply`}>
-                Apply
+                <Trans>Apply</Trans>
               </Button>
             </div>
           </div>
@@ -163,7 +167,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
       {active && (
         <IconButton
           size="sm"
-          aria-label="Clear time filter"
+          aria-label={t`Clear time filter`}
           onClick={() => onChange(ALL_TIME)}
           data-testid={`${testId}-clear`}
         >

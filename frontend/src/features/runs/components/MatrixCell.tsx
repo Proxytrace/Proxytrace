@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { MatrixCell } from '../results';
 import { cn } from '../../../lib/cn';
 import { fmtDuration } from '../../../lib/format';
@@ -11,12 +12,13 @@ export function MatrixCellContent({ cell, onCompare }: {
   cell: MatrixCell;
   onCompare: (runId: string) => void;
 }) {
+  const { t } = useLingui();
   if (cell.status === 'done' && cell.result) {
-    const verdict = cell.pass === true ? 'pass' : cell.pass === false ? 'fail' : 'no verdict';
+    const verdict = cell.pass === true ? t`pass` : cell.pass === false ? t`fail` : t`no verdict`;
     return (
       <RowButton
         onClick={() => onCompare(cell.run.id)}
-        title={`${cell.run.endpointName}: ${verdict} — click to compare`}
+        title={t`${cell.run.endpointName}: ${verdict} — click to compare`}
         className={cn('px-3 py-2.5 flex items-center gap-2 hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', FOCUS_RING)}
       >
         {cell.pass === true ? <CheckIcon size={12} strokeWidth={2.5} className="text-success shrink-0" />
@@ -31,7 +33,7 @@ export function MatrixCellContent({ cell, onCompare }: {
     return (
       <span
         data-testid={`matrix-cell-running-${cell.run.id}`}
-        title={`${cell.run.endpointName}: evaluating…`}
+        title={t`${cell.run.endpointName}: evaluating…`}
         className="w-full px-3 py-2.5 flex items-center gap-2 text-muted"
       >
         <span className="pulse-dot w-1.5 h-1.5 rounded-full bg-accent inline-block shrink-0" />
@@ -47,7 +49,7 @@ export function MatrixCellContent({ cell, onCompare }: {
   return (
     <span
       data-testid={`matrix-cell-pending-${cell.run.id}`}
-      title={`${cell.run.endpointName}: queued`}
+      title={t`${cell.run.endpointName}: queued`}
       className="w-full px-3 py-2.5 flex items-center gap-2 text-muted"
     >
       {cell.progress && cell.progress.total > 0

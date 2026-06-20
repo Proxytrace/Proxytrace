@@ -48,6 +48,26 @@ public class UsersController : ControllerBase
         return user is null ? Unauthorized() : ToDto(user);
     }
 
+    /// <summary>
+    /// Self-service: the current user changes their own UI language. Any authenticated user may
+    /// call this (unlike the admin-only role endpoint).
+    /// </summary>
+    [HttpPatch("me")]
+    public async Task<IActionResult> UpdateMyLanguage(
+        [FromBody] UpdateMyLanguageRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!SupportedLanguages.IsSupported(request.Language))
+            return BadRequest($"Unsupported language '{request.Language}'.");
+
+        var user = await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (user is null)
+            return Unauthorized();
+
+        await user.ChangeLanguage(request.Language, cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> Get(Guid id, CancellationToken cancellationToken)
     {

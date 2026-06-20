@@ -1,12 +1,14 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { ModelProviderKind } from '../../api/models';
 
-export const PROVIDER_KIND_OPTIONS: { value: ModelProviderKind; label: string }[] = [
-  { value: ModelProviderKind.OpenAi, label: 'OpenAI' },
-  { value: ModelProviderKind.OpenAiCompatible, label: 'OpenAI-compatible' },
+export const PROVIDER_KIND_OPTIONS: { value: ModelProviderKind; label: MessageDescriptor }[] = [
+  { value: ModelProviderKind.OpenAi, label: msg`OpenAI` },
+  { value: ModelProviderKind.OpenAiCompatible, label: msg`OpenAI-compatible` },
 ];
 
-export function kindLabel(k: ModelProviderKind): string {
-  return PROVIDER_KIND_OPTIONS.find(o => o.value === k)?.label ?? 'Unknown';
+export function kindLabel(k: ModelProviderKind): MessageDescriptor {
+  return PROVIDER_KIND_OPTIONS.find(o => o.value === k)?.label ?? msg`Unknown`;
 }
 
 export function kindColor(k: ModelProviderKind): string {

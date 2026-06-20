@@ -16,6 +16,7 @@ import {
 import useToast from '../../hooks/useToast';
 import { Button, IconButton } from '../../components/ui/Button';
 import { RowButton } from '../../components/ui/RowButton';
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 
 interface Props {
   trace: AgentCallDto;
@@ -25,11 +26,12 @@ interface Props {
 
 export function PromoteModal({ trace, suites, onClose }: Props) {
   const aColor = agentColor(trace.agentId ?? trace.id);
-  const agentLabel = trace.agentName ?? 'Agent';
 
   const [suiteId, setSuiteId] = useState<string>(suites[0]?.id ?? '');
   const [expected, setExpected] = useState(() => expectedFromResponse(trace.response ?? null));
   const { show: toast } = useToast();
+  const { t } = useLingui();
+  const agentLabel = trace.agentName ?? t`Agent`;
 
   const inputMessages = trace.request.filter(m => m.role !== 'system');
   const hasSystem = trace.request.some(m => m.role === 'system');
@@ -38,12 +40,13 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   const selectedSuite = suites.find(s => s.id === suiteId) ?? null;
 
   const addCase = usePromoteTrace((suiteName) => {
-    toast(`Added to ${suiteName}`, 'success');
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
+    toast(t`Added to ${suiteName}`, 'success');
     onClose();
   });
 
   const errorMsg = addCase.isError
-    ? ((addCase.error as Error).message || 'Failed to add test case')
+    ? ((addCase.error as Error).message || t`Failed to add test case`)
     : null;
   const submitDisabled = !suiteId || !expectedValid || addCase.isPending;
 
@@ -65,12 +68,12 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             <PlusIcon strokeWidth={2.5} size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-[16px] font-bold">Promote to Test Case</h2>
-            <p className="text-[12px] text-muted mt-[2px]">Adds this trace as a single test case to the selected suite.</p>
+            <h2 className="text-[16px] font-bold"><Trans>Promote to Test Case</Trans></h2>
+            <p className="text-[12px] text-muted mt-[2px]"><Trans>Adds this trace as a single test case to the selected suite.</Trans></p>
           </div>
           <ColoredBadge color={aColor} label={agentLabel} dot size="md" />
           <span className="mono text-[11px] text-muted">{trace.id.slice(0, 10)}…</span>
-          <IconButton onClick={onClose} aria-label="Close dialog">
+          <IconButton onClick={onClose} aria-label={t`Close dialog`}>
             <XIcon size={14} />
           </IconButton>
         </div>
@@ -82,15 +85,15 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
-                  Input · {inputMessages.length} message{inputMessages.length !== 1 ? 's' : ''}
+                  <Trans>Input · <Plural value={inputMessages.length} one="# message" other="# messages" /></Trans>
                 </span>
                 {hasSystem && (
-                  <span className="text-[10.5px] text-muted italic">System messages excluded</span>
+                  <span className="text-[10.5px] text-muted italic"><Trans>System messages excluded</Trans></span>
                 )}
               </div>
               {inputMessages.length === 0 ? (
                 <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
-                  No input messages.
+                  <Trans>No input messages.</Trans>
                 </div>
               ) : (
                 <div className="flex flex-col gap-[8px]">
@@ -104,9 +107,9 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
-                  Expected output
+                  <Trans>Expected output</Trans>
                 </span>
-                <span className="text-[10.5px] text-muted italic">Editable</span>
+                <span className="text-[10.5px] text-muted italic"><Trans>Editable</Trans></span>
               </div>
               <ExpectedOutputEditor value={expected} tools={trace.tools} onChange={setExpected} />
             </div>
@@ -116,10 +119,10 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
           <div className="w-[360px] shrink-0 flex flex-col min-h-0">
             <div className="px-5 pt-5 pb-3 shrink-0">
               <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
-                Destination suite
+                <Trans>Destination suite</Trans>
               </div>
               <div className="text-[11px] text-muted mt-[3px]">
-                {suites.length} suite{suites.length !== 1 ? 's' : ''} for this agent
+                <Plural value={suites.length} one="# suite for this agent" other="# suites for this agent" />
               </div>
             </div>
 
@@ -153,7 +156,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                         {s.name}
                       </span>
                       <span className="block text-[10.5px] text-muted mt-[2px]">
-                        {s.testCaseCount} case{s.testCaseCount !== 1 ? 's' : ''} · {s.evaluators.length} evaluator{s.evaluators.length !== 1 ? 's' : ''}
+                        <Plural value={s.testCaseCount} one="# case" other="# cases" /> · <Plural value={s.evaluators.length} one="# evaluator" other="# evaluators" />
                       </span>
                     </span>
                   </RowButton>
@@ -166,7 +169,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
               {selectedSuite ? (
                 <SuiteStats suite={selectedSuite} />
               ) : (
-                <div className="text-[12px] text-muted text-center py-2">Select a suite</div>
+                <div className="text-[12px] text-muted text-center py-2"><Trans>Select a suite</Trans></div>
               )}
             </div>
           </div>
@@ -178,7 +181,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             {errorMsg && <span className="text-[var(--danger)]">{errorMsg}</span>}
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button variant="secondary" onClick={onClose}><Trans>Cancel</Trans></Button>
             <Button
               variant="primary"
               data-testid="promote-submit-btn"
@@ -187,7 +190,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
               loading={addCase.isPending}
               leftIcon={!addCase.isPending && <PlusIcon strokeWidth={2.5} size={13} />}
             >
-              {addCase.isPending ? 'Adding…' : 'Add to suite'}
+              {addCase.isPending ? <Trans>Adding…</Trans> : <Trans>Add to suite</Trans>}
             </Button>
           </div>
         </div>
@@ -197,22 +200,23 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
 }
 
 function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
+  const { t } = useLingui();
   const passRateLabel = suite.passRate != null ? fmtPct100(suite.passRate) : '—';
-  const lastRunLabel = suite.lastRunAt ? fmtRelative(suite.lastRunAt) : 'never';
+  const lastRunLabel = suite.lastRunAt ? fmtRelative(suite.lastRunAt) : t`never`;
 
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Cases" value={String(suite.testCaseCount)} accent="var(--accent-primary)" />
-        <Stat label="Pass rate" value={passRateLabel} accent="var(--success)" />
-        <Stat label="Total runs" value={String(suite.totalRuns)} accent="var(--teal)" />
+        <Stat label={t`Cases`} value={String(suite.testCaseCount)} accent="var(--accent-primary)" />
+        <Stat label={t`Pass rate`} value={passRateLabel} accent="var(--success)" />
+        <Stat label={t`Total runs`} value={String(suite.totalRuns)} accent="var(--teal)" />
       </div>
       <div>
         <div className="text-[10px] font-semibold text-muted uppercase tracking-[0.08em] mb-[6px]">
-          Evaluators
+          <Trans>Evaluators</Trans>
         </div>
         {suite.evaluators.length === 0 ? (
-          <div className="text-[11px] text-muted italic">None configured</div>
+          <div className="text-[11px] text-muted italic"><Trans>None configured</Trans></div>
         ) : (
           <div className="flex flex-wrap gap-[5px]">
             {suite.evaluators.map(e => (
@@ -222,7 +226,7 @@ function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
         )}
       </div>
       <div className="flex items-center justify-between text-[10.5px] text-muted">
-        <span>Last run</span>
+        <span><Trans>Last run</Trans></span>
         <span className="text-secondary">{lastRunLabel}</span>
       </div>
     </div>

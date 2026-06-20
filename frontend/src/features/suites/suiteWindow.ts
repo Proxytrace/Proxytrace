@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { rangeFromOpt } from '../../lib/time-range';
 
 export type SuiteWindowKey = 'last' | '7d' | '30d' | 'all';
@@ -20,11 +22,11 @@ export function suiteWindowRange(key: SuiteWindowKey, lastRunAt: string | null):
   return lastRunAt ? { from: lastRunAt, to: now } : { from: now, to: now };
 }
 
-export function suiteWindowLabel(key: SuiteWindowKey): string {
-  if (key === 'last') return 'Last run';
-  if (key === '7d') return 'Last 7 days';
-  if (key === '30d') return 'Last 30 days';
-  return 'All time';
+export function suiteWindowLabel(key: SuiteWindowKey): MessageDescriptor {
+  if (key === 'last') return msg`Last run`;
+  if (key === '7d') return msg`Last 7 days`;
+  if (key === '30d') return msg`Last 30 days`;
+  return msg`All time`;
 }
 
 /** Compact label for the segmented window toggle (the full phrase is shown beside it). */

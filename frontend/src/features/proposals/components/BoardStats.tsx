@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import type { BoardStats as BoardStatsData } from '../theoryBoard';
 
@@ -6,11 +7,12 @@ interface Props {
 }
 
 export function BoardStats({ stats }: Props) {
+  const { t } = useLingui();
   const items: { label: string; value: string; tone: 'primary' | 'success' }[] = [
-    { label: 'Theories', value: String(stats.theories), tone: 'primary' },
-    { label: 'Tested', value: String(stats.tested), tone: 'primary' },
-    { label: 'Win rate', value: stats.winRate != null ? `${stats.winRate}%` : '—', tone: 'success' },
-    { label: 'Proven gain', value: stats.provenGainPt > 0 ? `+${stats.provenGainPt}pt` : '0pt', tone: 'success' },
+    { label: t`Theories`, value: String(stats.theories), tone: 'primary' },
+    { label: t`Tested`, value: String(stats.tested), tone: 'primary' },
+    { label: t`Win rate`, value: stats.winRate != null ? `${stats.winRate}%` : '—', tone: 'success' },
+    { label: t`Proven gain`, value: stats.provenGainPt > 0 ? t`+${stats.provenGainPt}pt` : t`0pt`, tone: 'success' },
   ];
 
   return (

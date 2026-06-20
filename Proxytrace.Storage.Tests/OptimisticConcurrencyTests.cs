@@ -25,7 +25,7 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
 
         var modifier = new ConcurrentModifier(user);
         var factory = services.GetRequiredService<IUser.CreateExisting>();
-        var modified = factory(modifier.Email, modifier.ExternalSubject, modifier.PasswordHash, modifier.Role, modifier);
+        var modified = factory(modifier.Email, modifier.ExternalSubject, modifier.PasswordHash, modifier.Role, modifier.Language, modifier);
 
         await FluentActions.Invoking(() => repo.UpdateAsync(modified, CancellationToken))
             .Should()
@@ -91,9 +91,11 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
         public string? ExternalSubject => user.ExternalSubject;
         public string? PasswordHash => user.PasswordHash;
         public UserRole Role => user.Role;
+        public string Language => user.Language;
 
         public Task<IUser> ChangeRole(UserRole role, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> ChangePasswordHash(string passwordHash, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
+        public Task<IUser> ChangeLanguage(string language, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> ReloadAsync(CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> AddAsync(CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> UpdateAsync(CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
@@ -113,6 +115,7 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
         public string? ExternalSubject => user.ExternalSubject;
         public string? PasswordHash => user.PasswordHash;
         public UserRole Role => user.Role;
+        public string Language => user.Language;
 
         public ConcurrentModifier(IUser user)
         {
@@ -123,6 +126,9 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
             => Task.FromResult<IUser>(this);
 
         public Task<IUser> ChangePasswordHash(string passwordHash, CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task<IUser> ChangeLanguage(string language, CancellationToken cancellationToken = default)
             => Task.FromResult<IUser>(this);
 
         public Task<IUser> ReloadAsync(CancellationToken cancellationToken = default)

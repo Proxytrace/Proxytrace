@@ -101,7 +101,8 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
 ## Reference Implementations
 
 When implementing a new entity, the existing ones are the source of truth:
-- **No relationships:** `User`
+- **No relationships:** `User` (also carries a `Language` UI-preference field — a BCP-47 culture
+  code, default `"en"`, validated against `SupportedLanguages`; see [`i18n.md`](i18n.md))
 - **1:N relationship:** `Project` references one `IModelEndpoint` (`SystemEndpoint`)
 - **N:M relationship:** `TestSuite` holds `IReadOnlyCollection<IEvaluator>`, junction is `TestSuiteEvaluatorEntity`, custom `TestSuiteRepository` overrides `UpdateRelationsAsync`
 - **Soft-delete (archive):** `Evaluator`, `Agent`, `ModelEndpoint`, `ModelProvider` (`IArchivable` + `ArchivableRepository`; list/paged queries exclude archived via the `FilterListQuery` hook + `.ExcludeArchived()`, by-key lookups unfiltered; `Evaluator` detaches suites and `ModelProvider` archives its endpoints in `ArchiveRelationsAsync`, `Agent` guards system agents + license count, `ModelEndpoint.GetOrCreateAsync` un-archives on reuse)

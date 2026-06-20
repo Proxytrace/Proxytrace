@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { type ModelProviderKind, type ProviderDto } from '../../../api/models';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Button } from '../../../components/ui/Button';
@@ -17,6 +18,7 @@ interface ProviderDetailHeaderProps {
 }
 
 export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHeaderProps) {
+  const { t, i18n } = useLingui();
   const { show: toast } = useToast();
   const [editingKind, setEditingKind] = useState(false);
   const [editKindValue, setEditKindValue] = useState<ModelProviderKind>(provider.kind);
@@ -38,11 +40,11 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
                 variant="ghost"
                 size="sm"
                 data-write
-                aria-label="Change provider kind"
+                aria-label={t`Change provider kind`}
                 className="px-1 py-0.5"
                 onClick={() => { setEditKindValue(provider.kind); setEditingKind(true); }}
               >
-                <ColoredBadge color={kindColor(provider.kind)} label={kindLabel(provider.kind)} />
+                <ColoredBadge color={kindColor(provider.kind)} label={i18n._(kindLabel(provider.kind))} />
               </Button>
             ) : (
               <div className="flex items-center gap-1.5">
@@ -53,23 +55,23 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
                     onValueChange={v => setEditKindValue(v as ModelProviderKind)}
                     className="h-7 py-0"
                   >
-                    {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{i18n._(o.label)}</option>)}
                   </Select>
                 </div>
                 <Button
                   data-write size="sm" variant="primary" loading={updateKind.isPending}
                   onClick={() => updateKind.mutate({ provider, kind: editKindValue }, { onSuccess: () => setEditingKind(false) })}
                 >
-                  Save
+                  <Trans>Save</Trans>
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditingKind(false)}>Cancel</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingKind(false)}><Trans>Cancel</Trans></Button>
               </div>
             )}
           </div>
           {!isDefaultEndpoint(provider.kind, provider.endpoint) && (
             <div className="flex items-center gap-1.5 min-w-0">
               {isAzureEndpoint(provider.endpoint) && (
-                <ColoredBadge color="var(--teal)" label="Azure" />
+                <ColoredBadge color="var(--teal)" label={t`Azure`} />
               )}
               <span className="font-mono text-body text-muted truncate" title={provider.endpoint}>
                 {provider.endpoint}
@@ -85,25 +87,26 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
           className="text-danger hover:text-danger"
           onClick={() => setConfirmDelete(true)}
         >
-          Delete provider
+          <Trans>Delete provider</Trans>
         </Button>
       </div>
 
       <div className="mt-4 px-3.5 py-2.5 bg-card-2 rounded-md border border-hairline flex items-center gap-2.5">
-        <span className="text-body-sm text-muted whitespace-nowrap">Upstream API key</span>
+        <span className="text-body-sm text-muted whitespace-nowrap"><Trans>Upstream API key</Trans></span>
         <code className="flex-1 font-mono text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
           {revealKey ? provider.upstreamApiKey : maskKey(provider.upstreamApiKey)}
         </code>
         <Button size="sm" variant="ghost" onClick={() => setRevealKey(v => !v)}>
-          {revealKey ? 'Hide' : 'Reveal'}
+          {revealKey ? <Trans>Hide</Trans> : <Trans>Reveal</Trans>}
         </Button>
         <Button
           size="sm"
           variant="ghost"
           leftIcon={<CopyIcon size={12} />}
-          onClick={() => { navigator.clipboard.writeText(provider.upstreamApiKey); toast('Upstream key copied', 'success'); }}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
+          onClick={() => { navigator.clipboard.writeText(provider.upstreamApiKey); toast(t`Upstream key copied`, 'success'); }}
         >
-          Copy
+          <Trans>Copy</Trans>
         </Button>
       </div>
 

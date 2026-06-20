@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { SearchHit } from '../../api/search';
 import type { TestSuiteMessageDto } from '../../api/models';
 import { useTestCasePreview } from './hooks/useSearchPreviewQuery';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function TestCasePreview({ id, hit }: Props) {
+  const { t } = useLingui();
   const q = useTestCasePreview(id);
   if (q.isLoading) return <PreviewLoading />;
   if (q.isError || !q.data) return <GenericBody hit={hit} />;
@@ -27,8 +29,8 @@ export function TestCasePreview({ id, hit }: Props) {
   return (
     <>
       <MetaGrid entries={[
-        ['Suite', meta.suiteName ?? '—'],
-        ['Agent', meta.agentName ?? '—'],
+        [t`Suite`, meta.suiteName ?? '—'],
+        [t`Agent`, meta.agentName ?? '—'],
       ]} />
       <ConversationView messages={fromSimple(msgs)} />
     </>

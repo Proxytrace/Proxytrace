@@ -58,4 +58,53 @@ public sealed class UserValidationTests : BaseTest<Module>
 
         updated.PasswordHash.Should().Be("new-hash");
     }
+
+    [TestMethod]
+    public void CreateNew_WithoutLanguage_DefaultsToEnglish()
+    {
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var u = factory(ValidEmail, ValidSubject, null, UserRole.Member);
+        u.Language.Should().Be(SupportedLanguages.Default);
+    }
+
+    [TestMethod]
+    public void CreateNew_WithSupportedLanguage_SetsLanguage()
+    {
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var u = factory(ValidEmail, ValidSubject, null, UserRole.Member, "de");
+        u.Language.Should().Be("de");
+    }
+
+    [TestMethod]
+    public void CreateNew_UnsupportedLanguage_Throws()
+    {
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var act = () => factory(ValidEmail, ValidSubject, null, UserRole.Member, "xx");
+        act.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task ChangeLanguage_UpdatesAndPersists()
+    {
+        var services = GetServices();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
+        var u = await gen.CreateAsync(CancellationToken);
+
+        await u.ChangeLanguage("de", CancellationToken);
+
+        var reloaded = await services.GetRequiredService<IRepository<IUser>>().GetAsync(u.Id, CancellationToken);
+        reloaded.Language.Should().Be("de");
+    }
+
+    [TestMethod]
+    public async Task ChangeLanguage_ToUnsupported_Throws()
+    {
+        var services = GetServices();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
+        var u = await gen.CreateAsync(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => u.ChangeLanguage("xx", CancellationToken))
+            .Should().ThrowAsync<Exception>();
+    }
 }

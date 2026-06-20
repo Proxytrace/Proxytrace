@@ -1,6 +1,7 @@
 // Live trace stream section — most recent agent calls, grouped by conversation.
 
 import { useMemo } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -16,6 +17,7 @@ interface LiveTraceStreamProps {
 }
 
 export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStreamProps) {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const rows = useMemo(() => buildRows(traces), [traces]);
 
@@ -25,19 +27,19 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         <div>
           <h3 className="text-h2 font-semibold flex items-center gap-2">
             <span className="size-[7px] rounded-full bg-accent-hover pulse-dot shadow-[0_0_10px_var(--accent-hover)]" />
-            Live trace stream
+            <Trans>Live trace stream</Trans>
           </h3>
           <p className="text-body-sm text-muted mt-[3px] font-mono">
-            auto-refresh · {traces.length} most recent
+            <Trans>auto-refresh · {traces.length} most recent</Trans>
           </p>
         </div>
         <Button variant="link" className="text-body-sm" onClick={() => navigate('/traces')}>
-          View all →
+          <Trans>View all →</Trans>
         </Button>
       </header>
 
       <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-[9.5px] font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
-        <span /><span>Message</span><span className="text-center">Turns</span><span className="text-center">Model</span><span className="text-center">Status</span><span className="text-right">Tokens</span><span className="text-right">Latency</span>
+        <span /><span><Trans>Message</Trans></span><span className="text-center"><Trans>Turns</Trans></span><span className="text-center"><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span>
       </div>
 
       {isLoading ? (
@@ -47,8 +49,8 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
       ) : rows.length === 0 ? (
         <div className="py-10">
           <EmptyState
-            title="No traces yet"
-            description="Route your agent through the Proxytrace proxy to start capturing traces."
+            title={t`No traces yet`}
+            description={t`Route your agent through the Proxytrace proxy to start capturing traces.`}
           />
         </div>
       ) : (

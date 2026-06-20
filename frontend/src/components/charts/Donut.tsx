@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useLingui } from '@lingui/react/macro';
 
 export interface DonutSegment {
   label: string;
@@ -19,6 +20,7 @@ interface DonutProps {
  * so no path math is needed. Empty input renders just the track ring.
  */
 export function Donut({ segments, size = 132, thickness = 16, children }: DonutProps) {
+  const { t } = useLingui();
   const total = segments.reduce((n, s) => n + s.value, 0);
   const r = (size - thickness) / 2;
   const circ = 2 * Math.PI * r;
@@ -26,7 +28,7 @@ export function Donut({ segments, size = 132, thickness = 16, children }: DonutP
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="block -rotate-90" role="img" aria-label="Share by segment">
+      <svg width={size} height={size} className="block -rotate-90" role="img" aria-label={t`Share by segment`}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border-color)" strokeWidth={thickness} />
         {total > 0 &&
           segments.map((s, i) => {

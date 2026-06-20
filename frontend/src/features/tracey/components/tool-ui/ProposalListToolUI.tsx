@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { SparklesIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
@@ -9,18 +10,20 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_proposals` tool result. */
 export const ProposalListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('proposal-list', result, status, isError);
   const proposals = data ?? [];
   return (
     <ListCard
       state={state}
       icon={<SparklesIcon size={14} />}
-      title="Proposals"
+      title={t`Proposals`}
       count={proposals.length}
       shown={Math.min(proposals.length, LIST_CARD_MAX)}
       viewAllTo="/proposals"
-      pendingLabel="Loading proposals…"
-      emptyLabel="No optimization proposals yet."
+      pendingLabel={t`Loading proposals…`}
+      emptyLabel={t`No optimization proposals yet.`}
       testId="tracey-proposal-list"
     >
       {proposals.slice(0, LIST_CARD_MAX).map((proposal) => (

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import type { ProviderDto } from '../../api/models';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { Button } from '../../components/ui/Button';
@@ -36,11 +37,11 @@ export default function Providers() {
     <div className="w-full min-w-0 flex flex-col gap-4">
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-h1 font-semibold m-0 mb-1 text-primary">Providers</h1>
-          <p className="text-body-sm text-muted m-0">Configure upstream model providers and manage Proxytrace API keys.</p>
+          <h1 className="text-h1 font-semibold m-0 mb-1 text-primary"><Trans>Providers</Trans></h1>
+          <p className="text-body-sm text-muted m-0"><Trans>Configure upstream model providers and manage Proxytrace API keys.</Trans></p>
         </div>
         <Button data-testid="provider-create-btn" variant="primary" size="sm" leftIcon={<PlusIcon size={14} />} onClick={() => setShowNewProvider(true)}>
-          Add provider
+          <Trans>Add provider</Trans>
         </Button>
       </div>
 
@@ -64,7 +65,7 @@ export default function Providers() {
           />
         ) : (
           <Card elevation="raised" padding="lg" className="flex items-center justify-center text-muted text-body">
-            Add your first provider to get started.
+            <Trans>Add your first provider to get started.</Trans>
           </Card>
         )}
       </div>

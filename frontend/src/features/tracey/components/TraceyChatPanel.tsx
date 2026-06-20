@@ -1,4 +1,5 @@
 import { useThread } from '@assistant-ui/react';
+import { Trans } from '@lingui/react/macro';
 import { SparklesIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
@@ -26,8 +27,8 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
             <SparklesIcon size={16} />
           </span>
           <div>
-            <div className="text-h2 font-semibold leading-tight text-primary">Tracey AI</div>
-            <div className="text-body-sm text-muted">Your in-app assistant</div>
+            <div className="text-h2 font-semibold leading-tight text-primary"><Trans>Tracey AI</Trans></div>
+            <div className="text-body-sm text-muted"><Trans>Your in-app assistant</Trans></div>
           </div>
         </div>
       </header>
@@ -39,10 +40,10 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
               <div className="text-[13px] text-primary">{pendingConfirmation.summary}</div>
               <div className="mt-2 flex gap-2">
                 <Button variant="primary" size="sm" onClick={() => resolveConfirmation(true)}>
-                  Confirm
+                  <Trans>Confirm</Trans>
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => resolveConfirmation(false)}>
-                  Cancel
+                  <Trans>Cancel</Trans>
                 </Button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { Button } from './ui/Button';
 
 interface Props { children: ReactNode; }
@@ -21,10 +22,10 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex flex-col items-center justify-center flex-1 gap-4 p-[60px] text-center">
           <div className="text-[28px] text-muted">⚠</div>
-          <div className="text-[15px] font-semibold text-primary">Something went wrong</div>
+          <div className="text-[15px] font-semibold text-primary"><Trans>Something went wrong</Trans></div>
           <div className="text-[13px] text-muted max-w-[400px] leading-relaxed">{this.state.error.message}</div>
           <Button variant="secondary" size="sm" onClick={() => this.setState({ error: null })}>
-            Try again
+            <Trans>Try again</Trans>
           </Button>
         </div>
       );

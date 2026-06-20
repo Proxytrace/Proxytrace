@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { Modal } from '../../components/overlays/Modal';
 import { Avatar } from '../../components/ui/Avatar';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -29,6 +30,7 @@ function colorFor(id: string): string {
 }
 
 export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMemberModalProps) {
+  const { t } = useLingui();
   const [query, setQuery] = useState('');
 
   const { data: usersData, isLoading } = useUsers();
@@ -39,12 +41,12 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
   const candidates = q ? withoutExcluded.filter(u => u.email.toLowerCase().includes(q)) : withoutExcluded;
 
   return (
-    <Modal title="Add member" onClose={onCancel}>
+    <Modal title={t`Add member`} onClose={onCancel}>
       <Input
         autoFocus
         value={query}
         onChange={e => setQuery(e.target.value)}
-        placeholder="Search users by name…"
+        placeholder={t`Search users by name…`}
         className="mb-3"
       />
       <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-[10px]" data-testid="add-member-modal">
@@ -52,8 +54,8 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
           <div className="p-2"><SkeletonList rows={6} height={44} gap={4} /></div>
         ) : candidates.length === 0 ? (
           <EmptyState
-            title={query ? 'No matches' : 'No users to add'}
-            description={query ? 'Try a different search term.' : 'All users are already members.'}
+            title={query ? t`No matches` : t`No users to add`}
+            description={query ? t`Try a different search term.` : t`All users are already members.`}
           />
         ) : (
           candidates.map(u => (

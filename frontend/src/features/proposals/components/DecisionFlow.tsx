@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
+import type { I18n } from '@lingui/core';
 import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { OptimizationProposalDto, TheoryDto } from '../../../api/models';
@@ -58,24 +60,28 @@ export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset
 function StageBody({
   stageKey, theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending,
 }: { stageKey: FlowStageKey } & Props) {
+  const { t, i18n } = useLingui();
+  const sourceLabel = i18n._(THEORY_SOURCE_LABEL[theory.source]);
   switch (stageKey) {
-    case 'evidence':
+    case 'evidence': {
+      const suite = suiteName ?? t`a suite`;
       return theory.evidenceTestRunIds.length > 0 ? (
         <EvidenceList ids={theory.evidenceTestRunIds} />
       ) : (
         <p className="text-body-sm text-muted m-0">
-          Submitted via {THEORY_SOURCE_LABEL[theory.source]} — no failing runs attached. Validated against {suiteName ?? 'a suite'}.
+          <Trans>Submitted via {sourceLabel} — no failing runs attached. Validated against {suite}.</Trans>
         </p>
       );
+    }
 
     case 'theory':
       return (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-2 text-caption">
             <span className={cn('inline-flex items-center rounded-sm px-2 py-[2px] font-semibold', TONE_SUBTLE_BG['accent'], TONE_TEXT['accent'])}>
-              {KIND_META[theory.kind].label}
+              {i18n._(KIND_META[theory.kind].label)}
             </span>
-            <span className="text-muted">via {THEORY_SOURCE_LABEL[theory.source]}</span>
+            <span className="text-muted"><Trans>via {sourceLabel}</Trans></span>
           </div>
           <p className="text-body text-secondary leading-relaxed m-0">{theory.rationale}</p>
           <ChangeSections details={theory.details} />
@@ -103,20 +109,21 @@ function StageBody({
 }
 
 function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: OptimizationProposalDto | null }) {
+  const { t } = useLingui();
   if (theory.status === TheoryStatus.Proposed) {
-    return <p className="text-body-sm text-muted m-0">The candidate change has not been benchmarked yet.</p>;
+    return <p className="text-body-sm text-muted m-0"><Trans>The candidate change has not been benchmarked yet.</Trans></p>;
   }
   if (theory.status === TheoryStatus.Validating) {
     return (
       <div className="flex flex-col gap-2">
-        <p className="text-body-sm text-secondary m-0">Benchmarking the change against the current agent…</p>
+        <p className="text-body-sm text-secondary m-0"><Trans>Benchmarking the change against the current agent…</Trans></p>
         <div className="h-[3px] rounded-full overflow-hidden bg-card-2 indeterminate-bar" />
         {theory.abTestRunId && (
           <Link
             to={`/runs?run=${theory.abTestRunId}`}
             className="inline-flex items-center gap-1 self-start text-body-sm text-secondary hover:text-primary transition-colors"
           >
-            View A/B run <ExternalLinkIcon size={11} />
+            <Trans>View A/B run</Trans> <ExternalLinkIcon size={11} />
           </Link>
         )}
       </div>
@@ -127,27 +134,28 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
   }
 
   // Validated/Invalidated without a detailed A/B run summary — fall back to the recorded metrics.
-  const t = passRateTransition(theory);
+  const transition = passRateTransition(theory);
+  const noiseLabel = theory.pValue != null && (isInsideNoise(theory.pValue) ? t`inside noise` : t`significant`);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2.5 rounded-md bg-card-2 px-3.5 py-2.5">
-        {t ? (
+        {transition ? (
           <>
-            <span className="mono text-h2 text-secondary">{t.fromPct}%</span>
+            <span className="mono text-h2 text-secondary">{transition.fromPct}%</span>
             <span className="text-muted">→</span>
-            <span className={cn('mono text-h2 font-semibold', t.deltaPt > 0 ? 'text-success' : 'text-secondary')}>{t.toPct}%</span>
-            {t.deltaPt !== 0 && (
-              <span className={cn('mono rounded-full px-2 py-[1px] text-body-sm font-semibold', t.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
-                {t.deltaPt > 0 ? '+' : '−'}{Math.abs(t.deltaPt)}pt
+            <span className={cn('mono text-h2 font-semibold', transition.deltaPt > 0 ? 'text-success' : 'text-secondary')}>{transition.toPct}%</span>
+            {transition.deltaPt !== 0 && (
+              <span className={cn('mono rounded-full px-2 py-[1px] text-body-sm font-semibold', transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
+                {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}<Trans>pt</Trans>
               </span>
             )}
           </>
         ) : (
-          <span className="text-body-sm text-muted">No pass-rate metrics recorded.</span>
+          <span className="text-body-sm text-muted"><Trans>No pass-rate metrics recorded.</Trans></span>
         )}
         {theory.pValue != null && (
           <span className="mono ml-auto text-caption text-muted">
-            {formatPValue(theory.pValue)} · {isInsideNoise(theory.pValue) ? 'inside noise' : 'significant'}
+            {formatPValue(theory.pValue)} · {noiseLabel}
           </span>
         )}
       </div>
@@ -156,7 +164,7 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
           to={`/runs?run=${theory.abTestRunId}`}
           className="inline-flex items-center gap-1 self-start text-body-sm text-secondary hover:text-primary transition-colors"
         >
-          View A/B run <ExternalLinkIcon size={11} />
+          <Trans>View A/B run</Trans> <ExternalLinkIcon size={11} />
         </Link>
       )}
     </div>
@@ -165,16 +173,16 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
 
 function ProposalBody({ theory, proposal }: { theory: TheoryDto; proposal: OptimizationProposalDto | null }) {
   if (theory.status === TheoryStatus.Invalidated) {
-    return <p className="text-body-sm text-muted m-0">No proposal generated — the change did not beat the baseline.</p>;
+    return <p className="text-body-sm text-muted m-0"><Trans>No proposal generated — the change did not beat the baseline.</Trans></p>;
   }
   if (theory.status === TheoryStatus.Validated) {
     return (
       <p className="text-body-sm text-secondary m-0">
-        A reviewable draft proposal{proposal ? ` (${theoryShortId(proposal.id).replace('thy_', 'prop_')})` : ''} was created from the winning A/B test.
+        <Trans>A reviewable draft proposal{proposal ? ` (${theoryShortId(proposal.id).replace('thy_', 'prop_')})` : ''} was created from the winning A/B test.</Trans>
       </p>
     );
   }
-  return <p className="text-body-sm text-muted m-0">A proposal is created only once the A/B test shows an improvement.</p>;
+  return <p className="text-body-sm text-muted m-0"><Trans>A proposal is created only once the A/B test shows an improvement.</Trans></p>;
 }
 
 function OutcomeBody({
@@ -187,7 +195,8 @@ function OutcomeBody({
   actionPending: boolean;
   resetPending: boolean;
 }) {
-  const context = outcomeContext(theory, proposal);
+  const { i18n } = useLingui();
+  const context = outcomeContext(theory, proposal, i18n);
   const reviewable = theory.status === TheoryStatus.Validated && proposal?.status === ProposalStatus.Draft;
   // A reset re-runs validation from scratch; refused server-side once a proposal is promoted or
   // adopted, so hide it there.
@@ -208,14 +217,14 @@ function OutcomeBody({
             onClick={() => onSetStatus(ProposalStatus.Accepted)}
             data-testid="flow-promote-btn"
           >
-            Promote
+            <Trans>Promote</Trans>
           </Button>
           <Button
             variant="secondary" size="sm" disabled={actionPending}
             onClick={() => onSetStatus(ProposalStatus.Rejected)}
             data-testid="flow-dismiss-btn"
           >
-            Dismiss
+            <Trans>Dismiss</Trans>
           </Button>
         </div>
       )}
@@ -227,7 +236,7 @@ function OutcomeBody({
             onClick={onReset}
             data-testid="flow-reset-btn"
           >
-            Reset to Proposed
+            <Trans>Reset to Proposed</Trans>
           </Button>
         </div>
       )}
@@ -235,15 +244,15 @@ function OutcomeBody({
   );
 }
 
-function outcomeContext(theory: TheoryDto, proposal: OptimizationProposalDto | null): string {
+function outcomeContext(theory: TheoryDto, proposal: OptimizationProposalDto | null, i18n: I18n): React.ReactNode {
   if (theory.status === TheoryStatus.Invalidated) {
-    return 'The A/B test found no improvement, so the theory was rejected automatically — no review needed.';
+    return <Trans>The A/B test found no improvement, so the theory was rejected automatically — no review needed.</Trans>;
   }
   if (theory.status === TheoryStatus.Validated) {
-    if (proposal?.status === ProposalStatus.Accepted) return 'Promoted — awaiting adoption in your agent.';
-    if (proposal?.status === ProposalStatus.Adopted) return `${adoptionLabel(proposal)} — the change is live in the agent.`;
-    if (proposal?.status === ProposalStatus.Rejected) return 'Dismissed — a reviewer chose not to apply this change.';
-    return 'The change beat the baseline. Promote it to get the handoff package, or dismiss it.';
+    if (proposal?.status === ProposalStatus.Accepted) return <Trans>Promoted — awaiting adoption in your agent.</Trans>;
+    if (proposal?.status === ProposalStatus.Adopted) return <Trans>{i18n._(adoptionLabel(proposal))} — the change is live in the agent.</Trans>;
+    if (proposal?.status === ProposalStatus.Rejected) return <Trans>Dismissed — a reviewer chose not to apply this change.</Trans>;
+    return <Trans>The change beat the baseline. Promote it to get the handoff package, or dismiss it.</Trans>;
   }
-  return 'No decision yet — validation must finish first.';
+  return <Trans>No decision yet — validation must finish first.</Trans>;
 }

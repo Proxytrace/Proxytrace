@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import type { UserDto, UserRole } from '../../../api/models';
@@ -17,10 +18,10 @@ export function UsersTable({ users, currentUserEmail, onChangeRole, onDelete, on
     <table className="w-full text-sm" data-testid="user-list">
       <thead className="text-muted">
         <tr className="border-b border-border">
-          <th className="py-2 text-left">Email</th>
-          <th className="py-2 text-left">Role</th>
-          <th className="py-2 text-left">Sign-in</th>
-          <th className="py-2 text-left">Created</th>
+          <th className="py-2 text-left"><Trans>Email</Trans></th>
+          <th className="py-2 text-left"><Trans>Role</Trans></th>
+          <th className="py-2 text-left"><Trans>Sign-in</Trans></th>
+          <th className="py-2 text-left"><Trans>Created</Trans></th>
           <th />
         </tr>
       </thead>
@@ -51,18 +52,19 @@ interface UserRowProps {
 }
 
 function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProjects }: UserRowProps) {
+  const { t, i18n } = useLingui();
   const guarded = isSelf || locked;
   const guardReason = isSelf
-    ? 'You cannot change your own account.'
+    ? t`You cannot change your own account.`
     : locked
-      ? 'At least one Admin must remain.'
+      ? t`At least one Admin must remain.`
       : undefined;
 
   return (
     <tr data-testid={`user-row-${user.id}`} className="border-b border-border/50">
       <td className="py-2">
         <span data-testid={`user-email-${user.id}`}>{user.email}</span>
-        {isSelf && <span className="ml-2 text-muted text-body-sm">(You)</span>}
+        {isSelf && <span className="ml-2 text-muted text-body-sm"><Trans>(You)</Trans></span>}
       </td>
       <td className="py-2">
         <div className="w-32" title={guarded ? guardReason : undefined}>
@@ -75,7 +77,7 @@ function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProject
         </div>
       </td>
       <td className="py-2">
-        <Badge label={authSourceLabel(user)} variant={user.isExternal ? 'accent' : 'neutral'} />
+        <Badge label={i18n._(authSourceLabel(user))} variant={user.isExternal ? 'accent' : 'neutral'} />
       </td>
       <td className="py-2 text-muted">{new Date(user.createdAt).toLocaleDateString()}</td>
       <td className="py-2">
@@ -87,7 +89,7 @@ function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProject
             data-testid={`user-projects-btn-${user.id}`}
             onClick={() => onManageProjects(user)}
           >
-            Projects
+            <Trans>Projects</Trans>
           </Button>
           <Button
             variant="dangerOutline"
@@ -97,7 +99,7 @@ function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProject
             data-testid={`user-delete-btn-${user.id}`}
             onClick={() => onDelete(user)}
           >
-            Delete
+            <Trans>Delete</Trans>
           </Button>
         </div>
       </td>

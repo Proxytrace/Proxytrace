@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import type { AgentCallDto, TestSuiteDto } from '../../api/models';
 import { Card } from '../../components/ui/Card';
 import { Tabs, type TabItem } from '../../components/ui/Tabs';
+import { cn } from '../../lib/cn';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { useTestRunSchedules } from '../runs/hooks/useTestRunSchedules';
 import { useSuiteDetail } from './hooks/useSuiteQueries';
@@ -27,8 +29,8 @@ type Tab = 'cases' | 'evaluators' | 'history' | 'schedules';
 /** List + preview split for the case/evaluator tabs. Always two columns (the suite list/preview are
  * narrow and compress via `minmax(0,1fr)`), so the pane never stacks inside the fixed-height,
  * clipped workspace — only the internal-scroll height is gated to `md:` (below it the page scrolls). */
-const SPLIT = 'grid gap-3 p-5 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:h-full md:min-h-0';
-const PREVIEW = 'rounded-[12px] border border-border bg-card overflow-hidden min-h-0';
+const SPLIT = cn('grid gap-3 p-5 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:h-full md:min-h-0');
+const PREVIEW = cn('rounded-[12px] border border-border bg-card overflow-hidden min-h-0');
 
 interface Props { suiteId: string; projectId?: string; onRun: () => void; onDelete: () => void; }
 
@@ -44,8 +46,11 @@ export function SuiteDetail({ suiteId, projectId, onRun, onDelete }: Props) {
 }
 
 function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSuiteDto; projectId?: string; onRun: () => void; onDelete: () => void }) {
+  const { t } = useLingui();
   const editor = useSuiteEditor(suite);
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- Tab enum token, not UI copy
   const [tab, setTab] = useState<Tab>('cases');
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- SuiteWindowKey enum token, not UI copy
   const [windowKey, setWindowKey] = useState<SuiteWindowKey>('all');
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(suite.testCases[0]?.id ?? null);
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
@@ -95,12 +100,14 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
 
   function discard() { editor.reset(); setAddedTraceObjs(new Map()); }
 
+  /* eslint-disable lingui/no-unlocalized-strings -- Tab value + data-testid tokens, not UI copy */
   const tabItems: TabItem[] = [
-    { value: 'cases', label: 'Test Cases', count: suite.testCases.length, 'data-testid': 'suite-tab-cases' },
-    { value: 'evaluators', label: 'Evaluators', count: suite.evaluators.length, 'data-testid': 'suite-tab-evaluators' },
-    { value: 'history', label: 'History', count: suite.totalRuns || undefined, 'data-testid': 'suite-tab-history' },
-    { value: 'schedules', label: 'Schedules', count: scheduleCount || undefined, 'data-testid': 'suite-tab-schedules' },
+    { value: 'cases', label: t`Test Cases`, count: suite.testCases.length, 'data-testid': 'suite-tab-cases' },
+    { value: 'evaluators', label: t`Evaluators`, count: suite.evaluators.length, 'data-testid': 'suite-tab-evaluators' },
+    { value: 'history', label: t`History`, count: suite.totalRuns || undefined, 'data-testid': 'suite-tab-history' },
+    { value: 'schedules', label: t`Schedules`, count: scheduleCount || undefined, 'data-testid': 'suite-tab-schedules' },
   ];
+  /* eslint-enable lingui/no-unlocalized-strings */
 
   return (
     <div
@@ -135,7 +142,7 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
                 ? <TraceConversationPreview trace={focusedTrace} />
                 : focusedCase
                   ? <EditableTestCasePreview key={focusedCase.id} testCase={focusedCase} tools={agentTools} />
-                  : <PreviewEmpty title="Select a case or trace" description="Click any row to inspect its conversation." />}
+                  : <PreviewEmpty title={t`Select a case or trace`} description={t`Click any row to inspect its conversation.`} />}
             </div>
           </div>
         )}

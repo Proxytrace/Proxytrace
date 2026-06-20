@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -17,6 +18,7 @@ import { SectionHeader } from '../components/SectionHeader';
 
 /** General settings for the active project: rename, system endpoint, delete. */
 export function GeneralSection() {
+  const { t } = useLingui();
   const { currentProjectId } = useCurrentProject();
   const navigate = useNavigate();
 
@@ -37,28 +39,28 @@ export function GeneralSection() {
   if (!currentProjectId) {
     return (
       <EmptyState
-        title="No project selected"
-        description="Create a project in the Projects section to configure it here."
+        title={t`No project selected`}
+        description={t`Create a project in the Projects section to configure it here.`}
       />
     );
   }
 
   return (
     <div className="w-full min-w-0 flex flex-col" data-testid="settings-general">
-      <SectionHeader title="General" subtitle="Name, system endpoint, and lifecycle for the active project." />
+      <SectionHeader title={t`General`} subtitle={t`Name, system endpoint, and lifecycle for the active project.`} />
 
       {isLoading || !project ? (
         <SkeletonList rows={3} height={56} gap={10} />
       ) : (
         <div className="bg-card border border-hairline rounded-[14px] p-5 flex flex-col gap-5 max-w-[760px]">
           {/* Name */}
-          <FormField label="Project name">
+          <FormField label={t`Project name`}>
             {editName ? (
               <div className="flex items-center gap-2">
                 <Input autoFocus value={nameDraft} onChange={e => setNameDraft(e.target.value)} data-testid="project-name-input" />
                 <IconButton
                   data-write
-                  aria-label="Save name"
+                  aria-label={t`Save name`}
                   onClick={() => updateProject.mutate(
                     { id: project.id, req: { name: nameDraft.trim(), systemEndpointId: project.systemEndpointId } },
                     { onSuccess: finishEdit },
@@ -67,14 +69,14 @@ export function GeneralSection() {
                 >
                   <CheckIcon size={14} />
                 </IconButton>
-                <IconButton aria-label="Cancel" onClick={() => { setEditName(false); setNameDraft(project.name); }}>
+                <IconButton aria-label={t`Cancel`} onClick={() => { setEditName(false); setNameDraft(project.name); }}>
                   <XIcon size={14} />
                 </IconButton>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-title text-primary font-semibold" data-testid="project-name">{project.name}</span>
-                <IconButton data-write aria-label="Edit name" onClick={() => { setNameDraft(project.name); setEditName(true); }}>
+                <IconButton data-write aria-label={t`Edit name`} onClick={() => { setNameDraft(project.name); setEditName(true); }}>
                   <EditIcon size={14} />
                 </IconButton>
               </div>
@@ -82,7 +84,7 @@ export function GeneralSection() {
           </FormField>
 
           {/* System endpoint */}
-          <FormField label="System endpoint">
+          <FormField label={t`System endpoint`}>
             {editEndpoint ? (
               <div className="flex items-center gap-2">
                 <div className="flex-1 min-w-0">
@@ -94,7 +96,7 @@ export function GeneralSection() {
                 </div>
                 <IconButton
                   data-write
-                  aria-label="Save endpoint"
+                  aria-label={t`Save endpoint`}
                   onClick={() => updateProject.mutate(
                     { id: project.id, req: { name: project.name, systemEndpointId: endpointDraft } },
                     { onSuccess: finishEdit },
@@ -103,14 +105,14 @@ export function GeneralSection() {
                 >
                   <CheckIcon size={14} />
                 </IconButton>
-                <IconButton aria-label="Cancel" onClick={() => { setEditEndpoint(false); setEndpointDraft(project.systemEndpointId); }}>
+                <IconButton aria-label={t`Cancel`} onClick={() => { setEditEndpoint(false); setEndpointDraft(project.systemEndpointId); }}>
                   <XIcon size={14} />
                 </IconButton>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-title text-primary">{endpointLabel(endpoints, project.systemEndpointId)}</span>
-                <IconButton data-write aria-label="Edit endpoint" onClick={() => { setEndpointDraft(project.systemEndpointId); setEditEndpoint(true); }}>
+                <IconButton data-write aria-label={t`Edit endpoint`} onClick={() => { setEndpointDraft(project.systemEndpointId); setEditEndpoint(true); }}>
                   <EditIcon size={14} />
                 </IconButton>
               </div>
@@ -118,7 +120,7 @@ export function GeneralSection() {
           </FormField>
 
           <div className="text-body-sm text-muted border-t border-hairline pt-4">
-            Created {fmtDate(project.createdAt)} · Updated {fmtDate(project.updatedAt)}
+            <Trans>Created {fmtDate(project.createdAt)} · Updated {fmtDate(project.updatedAt)}</Trans>
           </div>
 
           <div>
@@ -129,7 +131,7 @@ export function GeneralSection() {
               leftIcon={<TrashIcon size={14} />}
               onClick={() => setConfirmDelete(true)}
             >
-              Delete project
+              <Trans>Delete project</Trans>
             </Button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Textarea } from '../../../components/ui/Textarea';
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
+  const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- tab state token, not UI copy
   const [tab, setTab] = useState<'result' | 'error'>('result');
   const [resultText, setResultText] = useState('{}');
   const [errorText, setErrorText] = useState('');
@@ -22,12 +25,12 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       try {
         JSON.parse(resultText);
       } catch (e) {
-        setValidationError(`Invalid JSON: ${(e as Error).message}`);
+        setValidationError(t`Invalid JSON: ${(e as Error).message}`);
         return;
       }
       onSubmit({ content: resultText, success: true });
     } else {
-      if (!errorText.trim()) { setValidationError('Error message required'); return; }
+      if (!errorText.trim()) { setValidationError(t`Error message required`); return; }
       onSubmit({ content: '', success: false, error: errorText });
     }
   };
@@ -44,14 +47,14 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       }}
     >
       <div className="flex items-center gap-2 text-[12px] font-mono">
-        <span className="font-bold text-success">Tool requested:</span>
+        <span className="font-bold text-success"><Trans>Tool requested:</Trans></span>
         <span>{request.name}</span>
         <span className="text-muted text-[10px]">{request.id}</span>
-        <IconButton className="ml-auto" onClick={onCancel} title="Cancel turn" aria-label="Cancel turn"><XIcon size={13} /></IconButton>
+        <IconButton className="ml-auto" onClick={onCancel} title={t`Cancel turn`} aria-label={t`Cancel turn`}><XIcon size={13} /></IconButton>
       </div>
 
       <div>
-        <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.05em] mb-[4px]">Arguments</div>
+        <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.05em] mb-[4px]"><Trans>Arguments</Trans></div>
         <JsonBlock value={parsedArgs} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
       </div>
 
@@ -61,14 +64,14 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
           className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted'}`}
           onClick={() => { setTab('result'); setValidationError(null); }}
         >
-          Provide result
+          <Trans>Provide result</Trans>
         </button>
         {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
           className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'error' ? 'border-danger text-primary' : 'border-transparent text-muted'}`}
           onClick={() => { setTab('error'); setValidationError(null); }}
         >
-          Reject (error)
+          <Trans>Reject (error)</Trans>
         </button>
       </div>
 
@@ -78,6 +81,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
           rows={6}
           value={resultText}
           onChange={e => { setResultText(e.target.value); setValidationError(null); }}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- sample JSON placeholder, not UI copy
           placeholder='{"result": "..."}'
         />
       ) : (
@@ -85,7 +89,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
           rows={4}
           value={errorText}
           onChange={e => { setErrorText(e.target.value); setValidationError(null); }}
-          placeholder="Tool execution failed: …"
+          placeholder={t`Tool execution failed: …`}
         />
       )}
 
@@ -94,9 +98,9 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       )}
 
       <div className="flex items-center justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button variant="ghost" onClick={onCancel}><Trans>Cancel</Trans></Button>
         <Button variant={tab === 'error' ? 'danger' : 'primary'} onClick={submit}>
-          {tab === 'error' ? 'Send error' : 'Send result'}
+          {tab === 'error' ? <Trans>Send error</Trans> : <Trans>Send result</Trans>}
         </Button>
       </div>
     </div>

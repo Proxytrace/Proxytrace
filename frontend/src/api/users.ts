@@ -6,6 +6,8 @@ export const usersApi = {
     api.get<PagedResult<UserDto>>(`/api/users${qs(params ?? {})}`),
   get: (id: string) => api.get<UserDto>(`/api/users/${id}`),
   updateRole: (id: string, role: UserRole) => api.put<UserDto>(`/api/users/${id}/role`, { role }),
+  /** Self-service: change the current user's own UI language (BCP-47 code). */
+  updateMyLanguage: (language: string) => api.patch<void>(`/api/users/me`, { language }),
   delete: (id: string) => api.del(`/api/users/${id}`),
   listProjects: (id: string) => api.get<UserProjectDto[]>(`/api/users/${id}/projects`),
 };

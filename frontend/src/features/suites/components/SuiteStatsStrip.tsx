@@ -1,3 +1,4 @@
+import { Plural, useLingui } from '@lingui/react/macro';
 import type { SuiteRunStatsDto } from '../../../api/models';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { cn } from '../../../lib/cn';
@@ -17,6 +18,7 @@ interface Props {
  * flush — the enclosing workspace card owns the surface, so this only contributes a hairline divider.
  * Metrics are separated by spacing, not borders, and kept to two tight lines to stay shallow. */
 export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }: Props) {
+  const { t, i18n } = useLingui();
   const runCount = stats?.runCount ?? 0;
   const dash = isLoading ? '…' : '—';
 
@@ -25,21 +27,21 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }:
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-x-8 gap-y-2 flex-wrap">
           <Metric
-            label="Pass rate"
+            label={t`Pass rate`}
             value={stats?.passRate != null ? fmtPct100(stats.passRate) : dash}
             valueClass={passRateTextClass(stats?.passRate ?? null)}
             big
           />
-          <Metric label="Runs" value={runCount.toLocaleString()} valueClass="text-primary" />
+          <Metric label={t`Runs`} value={runCount.toLocaleString()} valueClass={cn('text-primary')} />
           <Metric
-            label="Avg duration"
+            label={t`Avg duration`}
             value={stats?.avgDurationMs != null ? fmtDuration(stats.avgDurationMs) : dash}
-            valueClass="text-teal"
+            valueClass={cn('text-teal')}
           />
           <Metric
-            label="Total cost"
+            label={t`Total cost`}
             value={stats?.totalCost != null ? fmtCost(stats.totalCost) : dash}
-            valueClass="text-warn"
+            valueClass={cn('text-warn')}
           />
         </div>
 
@@ -47,10 +49,10 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }:
           <SegmentedControl<SuiteWindowKey>
             value={windowKey}
             onChange={onWindowChange}
-            segments={SUITE_WINDOW_KEYS.map(k => ({ value: k, label: suiteWindowShortLabel(k), ariaLabel: suiteWindowLabel(k) }))}
+            segments={SUITE_WINDOW_KEYS.map(k => ({ value: k, label: suiteWindowShortLabel(k), ariaLabel: i18n._(suiteWindowLabel(k)) }))}
           />
           <span className="text-caption text-muted font-mono">
-            {runCount.toLocaleString()} run{runCount !== 1 ? 's' : ''} · {suiteWindowLabel(windowKey)}
+            {runCount.toLocaleString()} <Plural value={runCount} one="run" other="runs" /> · {i18n._(suiteWindowLabel(windowKey))}
           </span>
         </div>
       </div>

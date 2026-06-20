@@ -3,3 +3,4 @@ export { Svg } from './Svg';
 export * from './directional';
 export * from './actions';
 export * from './glyphs';
+export * from './flags';

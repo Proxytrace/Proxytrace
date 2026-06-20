@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { AgentCallDto, TestCaseDto } from '../../../api/models';
 import { ConversationView } from '../../../components/conversation/ConversationView';
 import { fromAgentCall, fromTestCase } from '../../../components/conversation/adapters';
@@ -13,16 +14,18 @@ function PreviewShell({ label, children }: { label: string; children: React.Reac
 }
 
 export function TestCasePreview({ testCase }: { testCase: TestCaseDto }) {
+  const { t } = useLingui();
   return (
-    <PreviewShell label={`Conversation · ${testCase.input.length} input · 1 expected`}>
+    <PreviewShell label={t`Conversation · ${testCase.input.length} input · 1 expected`}>
       <ConversationView messages={fromTestCase(testCase)} />
     </PreviewShell>
   );
 }
 
 export function TraceConversationPreview({ trace }: { trace: AgentCallDto }) {
+  const { t } = useLingui();
   return (
-    <PreviewShell label={`Trace preview · ${trace.model}`}>
+    <PreviewShell label={t`Trace preview · ${trace.model}`}>
       <ConversationView messages={fromAgentCall(trace)} />
     </PreviewShell>
   );

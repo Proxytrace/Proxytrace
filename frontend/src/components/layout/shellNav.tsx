@@ -1,4 +1,7 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { LicenseFeature } from '../../api/license';
+import { cn } from '../../lib/cn';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
   SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon, AlertTriangleIcon,
@@ -9,7 +12,7 @@ type NavIconName =
   | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey' | 'alert';
 
 export interface NavEntry {
-  label: string;
+  label: MessageDescriptor;
   icon: NavIconName;
   to: string;
   requiresFeature?: LicenseFeature;
@@ -18,39 +21,43 @@ export interface NavEntry {
 }
 
 export interface NavGroup {
-  label: string | null;
+  // Group labels are translated; resolve at render with i18n._(). Item labels stay English
+  // (glossary terms — Traces, Agents, Proposals, …).
+  label: MessageDescriptor | null;
   items: NavEntry[];
 }
 
 export const navGroups: NavGroup[] = [
   {
-    label: 'Overview',
+    label: msg`Overview`,
     items: [
-      { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
-      { label: 'Traces', icon: 'activity', to: '/traces' },
-      { label: 'Tracey AI', icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
+      { label: msg`Dashboard`, icon: 'grid', to: '/dashboard' },
+      { label: msg`Traces`, icon: 'activity', to: '/traces' },
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
+      { label: msg`Tracey AI`, icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
     ],
   },
   {
-    label: 'Agents',
+    label: msg`Agents`,
     items: [
-      { label: 'Agents', icon: 'users', to: '/agents' },
-      { label: 'Agent Playground', icon: 'beaker', to: '/playground' },
-      { label: 'Proposals', icon: 'sparkles', to: '/proposals', requiresFeature: 'OptimizationProposals' },
+      { label: msg`Agents`, icon: 'users', to: '/agents' },
+      { label: msg`Agent Playground`, icon: 'beaker', to: '/playground' },
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
+      { label: msg`Proposals`, icon: 'sparkles', to: '/proposals', requiresFeature: 'OptimizationProposals' },
     ],
   },
   {
-    label: 'Evaluators',
+    label: msg`Evaluators`,
     items: [
-      { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
-      { label: 'Evaluator Playground', icon: 'target', to: '/evaluator-playground' },
+      { label: msg`Evaluators`, icon: 'scale', to: '/evaluators' },
+      { label: msg`Evaluator Playground`, icon: 'target', to: '/evaluator-playground' },
     ],
   },
   {
-    label: 'Benchmarks',
+    label: msg`Benchmarks`,
     items: [
-      { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
-      { label: 'Test Runs', icon: 'play', to: '/runs' },
+      { label: msg`Test Suites`, icon: 'checkbox', to: '/suites' },
+      { label: msg`Test Runs`, icon: 'play', to: '/runs' },
     ],
   },
 ];
@@ -76,19 +83,19 @@ export const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
 export type HealthStatus = 'online' | 'offline' | 'connecting';
 
 export const HEALTH_PILL: Record<HealthStatus, string> = {
-  online: 'bg-success-subtle border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success',
-  offline: 'bg-danger-subtle border-[color-mix(in_srgb,var(--danger)_25%,transparent)] text-danger',
-  connecting: 'bg-warn-subtle border-[color-mix(in_srgb,var(--warn)_25%,transparent)] text-warn',
+  online: cn('bg-success-subtle border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success'),
+  offline: cn('bg-danger-subtle border-[color-mix(in_srgb,var(--danger)_25%,transparent)] text-danger'),
+  connecting: cn('bg-warn-subtle border-[color-mix(in_srgb,var(--warn)_25%,transparent)] text-warn'),
 };
 
 export const HEALTH_DOT: Record<HealthStatus, string> = {
-  online: 'bg-success',
-  offline: 'bg-danger',
-  connecting: 'bg-warn',
+  online: cn('bg-success'),
+  offline: cn('bg-danger'),
+  connecting: cn('bg-warn'),
 };
 
-export const HEALTH_LABEL: Record<HealthStatus, string> = {
-  online: 'Online',
-  offline: 'Offline',
-  connecting: 'Connecting…',
+export const HEALTH_LABEL: Record<HealthStatus, MessageDescriptor> = {
+  online: msg`Online`,
+  offline: msg`Offline`,
+  connecting: msg`Connecting…`,
 };

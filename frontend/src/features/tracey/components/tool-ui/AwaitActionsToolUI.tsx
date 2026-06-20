@@ -1,4 +1,7 @@
 import { type ToolCallMessagePartComponent, useThread } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg, plural } from '@lingui/core/macro';
+import { type I18n, type MessageDescriptor } from '@lingui/core';
 import { ClockIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { Spinner } from '../../../../components/ui/Spinner';
@@ -17,11 +20,12 @@ interface AwaitActionsResult {
   anyTimedOut: boolean;
 }
 
-const KIND_LABEL: Record<AwaitKind, string> = { 'test-run': 'Test run', theory: 'Theory' };
+const KIND_LABEL: Record<AwaitKind, MessageDescriptor> = { 'test-run': msg`Test run`, theory: msg`Theory` };
 
-function rowLabel(item: { kind: AwaitKind; id: string; suiteName?: string; agentName?: string }): string {
+function rowLabel(i18n: I18n, item: { kind: AwaitKind; id: string; suiteName?: string; agentName?: string }): string {
+  const kindLabel = i18n._(KIND_LABEL[item.kind]);
   const detail = [item.suiteName, item.agentName].filter(Boolean).join(' · ');
-  return detail ? `${KIND_LABEL[item.kind]} · ${detail}` : KIND_LABEL[item.kind];
+  return detail ? `${kindLabel} · ${detail}` : kindLabel;
 }
 
 function statusVariant(item: AwaitResult) {
@@ -37,7 +41,8 @@ function statusVariant(item: AwaitResult) {
  * progress — this card only summarizes what the wait returned.
  */
 export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
-  const threadRunning = useThread((t) => t.isRunning);
+  const { t, i18n } = useLingui();
+  const threadRunning = useThread((thread) => thread.isRunning);
   const resolved = result as AwaitActionsResult | undefined;
   // User hit Stop while the wait was polling: the poll aborts, but the test run / theory keeps
   // running on the backend — so this is a calm "stopped", not a red error. Two shapes reach here:
@@ -51,9 +56,9 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
     (status.type !== 'incomplete' && !resolved && !threadRunning);
   if (stopped) {
     return (
-      <ToolUIFrame state="ready" icon={<ClockIcon size={14} />} title="Wait stopped" testId="tracey-await-card">
+      <ToolUIFrame state="ready" icon={<ClockIcon size={14} />} title={t`Wait stopped`} testId="tracey-await-card">
         <span className="text-body-sm text-muted">
-          You stopped before these finished — they keep running in the background.
+          <Trans>You stopped before these finished — they keep running in the background.</Trans>
         </span>
       </ToolUIFrame>
     );
@@ -66,18 +71,21 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
 
   if (!resolved) {
     const pending = (handles ?? []).filter((h): h is { kind: AwaitKind; id: string } => !!h.kind && !!h.id);
+    const waitingTitle = pending.length
+      ? plural(pending.length, { one: 'Waiting for # action', other: 'Waiting for # actions' })
+      : t`Waiting for … actions`;
     return (
       <ToolUIFrame
         state="ready"
         icon={<ClockIcon size={14} />}
-        title={`Waiting for ${pending.length || '…'} action${pending.length === 1 ? '' : 's'}`}
+        title={waitingTitle}
         testId="tracey-await-card"
       >
         <div className="flex flex-col gap-1.5" aria-busy="true">
           {pending.map((handle) => (
             <div key={`${handle.kind}:${handle.id}`} className="flex items-center gap-2 text-body-sm text-muted">
               <Spinner size={12} />
-              <span>{KIND_LABEL[handle.kind]}</span>
+              <span>{i18n._(KIND_LABEL[handle.kind])}</span>
               <span className="truncate font-mono">{handle.id}</span>
             </div>
           ))}
@@ -90,15 +98,15 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
     <ToolUIFrame
       state="ready"
       icon={<ClockIcon size={14} />}
-      title="Awaited actions"
+      title={t`Awaited actions`}
       testId="tracey-await-card"
     >
       <div className="flex flex-col gap-1.5">
         {resolved.results.map((item) => (
           <div key={`${item.kind}:${item.id}`} className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-body-sm text-secondary">{rowLabel(item)}</span>
+            <span className="min-w-0 flex-1 truncate text-body-sm text-secondary">{rowLabel(i18n, item)}</span>
             {item.timedOut ? (
-              <Badge label="Still running" variant="warn" size="sm" />
+              <Badge label={t`Still running`} variant="warn" size="sm" />
             ) : (
               <Badge label={item.status} variant={statusVariant(item)} size="sm" />
             )}
@@ -107,9 +115,9 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
         {(resolved.errors ?? []).map((item) => (
           <div key={`${item.kind}:${item.id}`} className="flex items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-body-sm text-secondary">
-              {KIND_LABEL[item.kind]} <span className="font-mono text-muted">{item.id}</span>
+              {i18n._(KIND_LABEL[item.kind])} <span className="font-mono text-muted">{item.id}</span>
             </span>
-            <Badge label="Failed to check" variant="danger" size="sm" title={item.error} />
+            <Badge label={t`Failed to check`} variant="danger" size="sm" title={item.error} />
           </div>
         ))}
       </div>

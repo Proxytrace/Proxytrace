@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { XIcon, ChevronDownIcon, CheckIcon } from '../../../../components/icons';
 import { RowButton } from '../../../../components/ui/RowButton';
 import { FOCUS_RING } from '../../../../lib/constants';
@@ -38,7 +39,7 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
           )}
           {ev.note && (
             <div className="px-3.5 py-2.5">
-              <div className="text-caption font-semibold text-muted mb-1.5">Reasoning</div>
+              <div className="text-caption font-semibold text-muted mb-1.5"><Trans>Reasoning</Trans></div>
               <div className="text-body text-secondary leading-snug">{ev.note}</div>
             </div>
           )}

@@ -22,8 +22,10 @@ import { useTraceHistogram } from './hooks/useTraceHistogram';
 import { useAutoDefaultRange } from './hooks/useAutoDefaultRange';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useDebounce } from '../../hooks/useDebounce';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 export default function Traces() {
+  const { t } = useLingui();
   const { currentProjectId } = useCurrentProject();
   const [page, setPage] = useState(1);
   const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('traces.pageSize', PAGE_SIZE);
@@ -227,7 +229,7 @@ export default function Traces() {
       {total > 0 && (
         <div data-testid="trace-pagination" className="flex items-center justify-between gap-3 shrink-0">
           <FilterDropdown
-            label="Per page:"
+            label={t`Per page:`}
             value={String(pageSize)}
             active
             direction="up"
@@ -236,7 +238,7 @@ export default function Traces() {
             width={110}
           />
           <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
-          <span className="text-caption text-muted whitespace-nowrap">{total.toLocaleString()} total</span>
+          <span className="text-caption text-muted whitespace-nowrap"><Trans>{total.toLocaleString()} total</Trans></span>
         </div>
       )}
 

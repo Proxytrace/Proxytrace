@@ -8,6 +8,7 @@ import type { AgentCallListItemDto } from '../../../api/models';
 import { TRACE_GRID_CLS, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
 import { TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
+import { Trans, Plural } from '@lingui/react/macro';
 
 interface Props {
   group: ConversationGroup;
@@ -48,7 +49,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
             className="inline-flex items-center text-caption font-semibold px-[6px] py-[1px] rounded-full shrink-0"
             style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
           >
-            {turns.length} turns
+            <Plural value={turns.length} one="# turn" other="# turns" />
           </span>
           <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
             {tracePreview(turns[0]) ?? <span className="text-muted">—</span>}
@@ -68,14 +69,14 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
             ? <StatusDot httpStatus={uniformStatus} />
             : allOk
               ? <><StatusDot httpStatus={200} showLabel={false} /><span className="mono text-body-sm text-success">2xx</span></>
-              : <><StatusDot httpStatus={500} showLabel={false} /><span className="mono text-body-sm text-warn">mixed</span></>}
+              : <><StatusDot httpStatus={500} showLabel={false} /><span className="mono text-body-sm text-warn"><Trans>mixed</Trans></span></>}
         </span>
 
         <span className="@max-2xl:hidden"><ToolsCell count={totalTools} /></span>
 
         <span className="mono text-body-sm @max-2xl:hidden">
           <span className="text-primary">{fmtTokens(totalTokens)}</span>
-          <span className="text-muted ml-[5px] text-caption">total</span>
+          <span className="text-muted ml-[5px] text-caption"><Trans>total</Trans></span>
         </span>
 
         <span className="@max-2xl:hidden"><LatencyCell ms={totalMs} /></span>
@@ -100,7 +101,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           style={{ borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}
         >
           <span className="flex items-center gap-2 min-w-0">
-            <span className="mono text-caption text-muted shrink-0">Turn {turns.length - i}</span>
+            <span className="mono text-caption text-muted shrink-0"><Trans>Turn {turns.length - i}</Trans></span>
             <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
               {tracePreview(turn) ?? <span className="text-muted">—</span>}
             </span>

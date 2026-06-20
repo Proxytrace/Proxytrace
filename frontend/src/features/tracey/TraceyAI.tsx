@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useTraceyChatContext } from './tracey-chat-context';
 import { TraceyChatPanel } from './components/TraceyChatPanel';
@@ -8,6 +9,7 @@ export default function TraceyAI() {
   // between routes — this page only renders the (already-running) runtime.
   const chat = useTraceyChatContext();
   const { activate } = chat;
+  const { t } = useLingui();
 
   // Provision the session only once the user actually opens Tracey (it has backend side
   // effects). It stays active afterward, so the conversation persists across navigation.
@@ -16,7 +18,7 @@ export default function TraceyAI() {
   if (chat.status === 'no-project') {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <EmptyState title="No project selected" description="Pick a project to chat with Tracey." />
+        <EmptyState title={t`No project selected`} description={t`Pick a project to chat with Tracey.`} />
       </div>
     );
   }
@@ -24,8 +26,8 @@ export default function TraceyAI() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <EmptyState
-          title="Couldn't start Tracey"
-          description="Tracey's session failed to start. Try again in a moment."
+          title={t`Couldn't start Tracey`}
+          description={t`Tracey's session failed to start. Try again in a moment.`}
         />
       </div>
     );

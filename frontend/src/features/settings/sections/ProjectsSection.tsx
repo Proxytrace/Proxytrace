@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import type { ProjectListItemDto } from '../../../api/models';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { Button, IconButton } from '../../../components/ui/Button';
@@ -21,6 +22,7 @@ import { SectionHeader } from '../components/SectionHeader';
  * (ProjectProvider) — the project the project-scoped sections (General/Members/Search) act on.
  */
 export function ProjectsSection() {
+  const { t } = useLingui();
   const { projects, currentProjectId, setCurrentProjectId, isLoading } = useCurrentProject();
   const { data: endpoints = [] } = useModelEndpoints();
 
@@ -33,8 +35,8 @@ export function ProjectsSection() {
   return (
     <div className="w-full min-w-0 flex flex-col" data-testid="settings-projects">
       <SectionHeader
-        title="Projects"
-        subtitle="Create, switch, and delete projects across the workspace."
+        title={t`Projects`}
+        subtitle={t`Create, switch, and delete projects across the workspace.`}
         action={
           <Button
             variant="primary"
@@ -43,7 +45,7 @@ export function ProjectsSection() {
             leftIcon={<PlusIcon size={14} />}
             onClick={() => setShowNew(true)}
           >
-            New project
+            <Trans>New project</Trans>
           </Button>
         }
       />
@@ -52,7 +54,7 @@ export function ProjectsSection() {
         {isLoading ? (
           <SkeletonList rows={4} height={52} gap={8} />
         ) : projects.length === 0 ? (
-          <EmptyState title="No projects yet" description="Create your first project to get started." />
+          <EmptyState title={t`No projects yet`} description={t`Create your first project to get started.`} />
         ) : (
           <div className="border border-hairline rounded-[12px] overflow-hidden" data-testid="project-list">
             {projects.map(p => {
@@ -73,18 +75,18 @@ export function ProjectsSection() {
                     <span className="flex flex-col min-w-0">
                       <span className="text-title font-semibold text-primary truncate">{p.name}</span>
                       <span className="text-body-sm text-muted">
-                        {p.memberCount} {p.memberCount === 1 ? 'member' : 'members'}
+                        <Plural value={p.memberCount} one="# member" other="# members" />
                       </span>
                     </span>
                   </RowButton>
                   {active && (
                     <span data-testid={`project-active-${p.id}`}>
-                      <Badge variant="accent" label="Active" />
+                      <Badge variant="accent" label={t`Active`} />
                     </span>
                   )}
                   <IconButton
                     data-write
-                    aria-label={`Delete ${p.name}`}
+                    aria-label={t`Delete ${p.name}`}
                     data-testid={`project-delete-btn-${p.id}`}
                     className="text-muted hover:text-danger"
                     onClick={() => setRemoving(p)}

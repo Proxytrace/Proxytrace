@@ -61,6 +61,7 @@ function LineArea({
     return <circle cx={scale.xCenter(0)} cy={scale.y(values[0])} r={3.5} fill={ACCENT} />;
   }
   const pts = values.map((v, i) => `${scale.xCenter(i)},${scale.y(v)}`);
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG path command, not UI copy
   const line = `M${pts.join(' L')}`;
   const last = values.length - 1;
   return (

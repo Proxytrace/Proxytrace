@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { type TheoryDto } from '../../../../api/models';
 import { useArtifactResult } from '../../useArtifact';
 import { ToolUIFrame } from './ToolUIFrame';
@@ -24,12 +25,14 @@ function isCancelled(value: unknown): value is { cancelled: true } {
  * duplicate/quota outcome renders a quiet one-line note instead.
  */
 export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('theory', result, status, isError);
 
   if (isCancelled(result)) {
     return (
       <ToolUIFrame state="ready" testId="tracey-theory-card">
-        <span className="text-body-sm text-muted">Optimization cancelled.</span>
+        <span className="text-body-sm text-muted"><Trans>Optimization cancelled.</Trans></span>
       </ToolUIFrame>
     );
   }
@@ -43,11 +46,11 @@ export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isE
   }
 
   if (state !== 'ready') {
-    return <ToolUIFrame state={state} pendingLabel="Submitting theory…" testId="tracey-theory-card" />;
+    return <ToolUIFrame state={state} pendingLabel={t`Submitting theory…`} testId="tracey-theory-card" />;
   }
 
   if (!isTheory(data)) {
-    return <ToolUIFrame state="error" errorLabel="Couldn’t submit the theory." testId="tracey-theory-card" />;
+    return <ToolUIFrame state="error" errorLabel={t`Couldn’t submit the theory.`} testId="tracey-theory-card" />;
   }
 
   return <LiveTheoryCard initial={data} />;

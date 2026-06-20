@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { Popover } from '../../components/ui/Popover';
 import { IconButton } from '../../components/ui/Button';
@@ -17,6 +18,7 @@ import { NotificationRow } from './components/NotificationRow';
  * updates apply on every page, not just the dashboard.
  */
 export function NotificationsMenu() {
+  const { t } = useLingui();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const { currentProjectId } = useCurrentProject();
@@ -45,7 +47,7 @@ export function NotificationsMenu() {
       trigger={
         <IconButton
           data-testid="notifications-menu-trigger"
-          aria-label={hasUnread ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+          aria-label={hasUnread ? t`Notifications (${unreadCount} unread)` : t`Notifications`}
           className="relative"
         >
           <BellIcon size={16} />
@@ -63,13 +65,13 @@ export function NotificationsMenu() {
     >
       <div data-testid="notifications-panel" className="flex flex-col max-h-[440px]">
         <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-border-subtle shrink-0">
-          <span className="text-title font-semibold text-primary">Notifications</span>
+          <span className="text-title font-semibold text-primary"><Trans>Notifications</Trans></span>
           {hasUnread && (
             <span
               data-testid="notifications-unread-count"
               className="text-caption font-semibold text-accent-hover tabular-nums"
             >
-              {unreadCount} new
+              <Trans>{unreadCount} new</Trans>
             </span>
           )}
         </div>
@@ -86,9 +88,9 @@ export function NotificationsMenu() {
             className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center"
           >
             <BellIcon size={22} className="text-muted" />
-            <span className="text-body-sm font-semibold text-primary">No notifications</span>
+            <span className="text-body-sm font-semibold text-primary"><Trans>No notifications</Trans></span>
             <span className="text-body-sm text-muted">
-              Anomalies and alerts from your test runs will appear here.
+              <Trans>Anomalies and alerts from your test runs will appear here.</Trans>
             </span>
           </div>
         ) : (

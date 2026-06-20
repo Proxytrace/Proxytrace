@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { Button } from '../ui/Button';
 import { CheckIcon } from '../icons';
 import { cn } from '../../lib/cn';
@@ -20,7 +21,7 @@ interface StepWizardProps {
   hideSubmit?: boolean;
 }
 
-export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAdvance = true, submitLabel = 'Create', loading, hideSubmit }: StepWizardProps) {
+export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAdvance = true, submitLabel, loading, hideSubmit }: StepWizardProps) {
   const isLast = currentStep === steps.length - 1;
 
   return (
@@ -77,21 +78,21 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
       {/* Navigation */}
       <div className="flex justify-between items-center pt-1">
         <Button variant="ghost" onClick={onBack} disabled={currentStep === 0}>
-          ← Back
+          <Trans>← Back</Trans>
         </Button>
         <div className="flex items-center gap-3">
           <span className="text-[11px] text-muted hidden sm:inline">
-            Step {currentStep + 1} of {steps.length}
+            <Trans>Step {currentStep + 1} of {steps.length}</Trans>
           </span>
           {isLast ? (
             !hideSubmit && (
               <Button variant="primary" onClick={onSubmit} disabled={!canAdvance} loading={loading}>
-                {submitLabel}
+                {submitLabel ?? <Trans>Create</Trans>}
               </Button>
             )
           ) : (
             <Button variant="primary" onClick={onNext} disabled={!canAdvance}>
-              Next →
+              <Trans>Next →</Trans>
             </Button>
           )}
         </div>

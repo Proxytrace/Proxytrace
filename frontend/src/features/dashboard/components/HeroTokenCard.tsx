@@ -1,5 +1,6 @@
 // Hero token-volume card with area chart and model split bar.
 
+import { Trans, useLingui } from '@lingui/react/macro';
 import { AreaChart } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
@@ -22,6 +23,7 @@ interface HeroTokenCardProps {
 }
 
 export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, modelSplit, range, onRangeChange }: HeroTokenCardProps) {
+  const { t } = useLingui();
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
   const { num: tokenNum, suffix: tokenSuffix } = splitTokenStr(totalTokens);
 
@@ -40,7 +42,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       <div className="relative flex items-start justify-between">
         <div>
           <div className="text-[9px] text-muted tracking-[0.16em] uppercase font-bold font-mono mb-1">
-            Token Volume · {rangeWindowLabel(range)}
+            <Trans>Token Volume · {rangeWindowLabel(range)}</Trans>
           </div>
           <div className="flex items-baseline gap-2.5 flex-wrap">
             <span
@@ -52,11 +54,11 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             </span>
           </div>
           <div className="mt-1.5 flex gap-2.5 text-[10.5px] font-mono text-muted items-center flex-wrap">
-            <span><span className="text-secondary font-semibold">{(summary?.totalInputTokens ?? 0).toLocaleString()}</span> in</span>
+            <span><Trans><span className="text-secondary font-semibold">{(summary?.totalInputTokens ?? 0).toLocaleString()}</span> in</Trans></span>
             <span className="text-border">/</span>
-            <span><span className="text-secondary font-semibold">{(summary?.totalOutputTokens ?? 0).toLocaleString()}</span> out</span>
+            <span><Trans><span className="text-secondary font-semibold">{(summary?.totalOutputTokens ?? 0).toLocaleString()}</span> out</Trans></span>
             <span className="text-border">/</span>
-            <span><span className="text-secondary font-semibold">{(summary?.totalCalls ?? 0).toLocaleString()}</span> traces</span>
+            <span><Trans><span className="text-secondary font-semibold">{(summary?.totalCalls ?? 0).toLocaleString()}</span> traces</Trans></span>
           </div>
         </div>
         <SegmentedControl
@@ -73,15 +75,16 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             data={tokenVolume}
             height={140}
             color="var(--accent-primary)"
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
             gradientId="heroVolGrad"
             showAxis
             xLabelFn={xLabelFn}
             tooltipLabelFn={tooltipLabelFn}
-            formatValue={v => `${fmtTokens(v)} tokens`}
+            formatValue={v => t`${fmtTokens(v)} tokens`}
           />
         ) : (
           <div className="h-[140px] flex items-center justify-center">
-            <EmptyState title="No token data yet" description="Volume appears once traces are captured." />
+            <EmptyState title={t`No token data yet`} description={t`Volume appears once traces are captured.`} />
           </div>
         )}
       </div>
@@ -89,8 +92,8 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       {/* Model split */}
       <div className="relative flex flex-col gap-[5px] pt-2 border-t border-border-subtle">
         <div className="flex items-center justify-between">
-          <div className="text-caption text-muted tracking-[0.14em] uppercase font-mono font-bold">Split by model</div>
-          <div className="text-[10.5px] text-muted font-mono">{modelSplit.models.length} active</div>
+          <div className="text-caption text-muted tracking-[0.14em] uppercase font-mono font-bold"><Trans>Split by model</Trans></div>
+          <div className="text-[10.5px] text-muted font-mono"><Trans>{modelSplit.models.length} active</Trans></div>
         </div>
         {modelSplit.models.length > 0 ? (
           <>
@@ -98,7 +101,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
               {modelSplit.models.map(m => (
                 <div
                   key={m.name}
-                  title={`${m.name}: ${fmtTokens(m.tokens)} tokens (${Math.round((m.tokens / modelSplit.total) * 100)}%)`}
+                  title={t`${m.name}: ${fmtTokens(m.tokens)} tokens (${Math.round((m.tokens / modelSplit.total) * 100)}%)`}
                   style={{ flexGrow: m.tokens / modelSplit.total, background: modelColor(m.name) }}
                 />
               ))}
@@ -114,7 +117,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             </div>
           </>
         ) : (
-          <div className="text-body-sm text-muted font-mono py-1">No model activity in range.</div>
+          <div className="text-body-sm text-muted font-mono py-1"><Trans>No model activity in range.</Trans></div>
         )}
       </div>
     </div>

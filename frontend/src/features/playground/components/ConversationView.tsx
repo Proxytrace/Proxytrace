@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { SparklesIcon } from '../../../components/icons';
 import { EditableMessageBubble } from './EditableMessageBubble';
 import { AddMessageBar } from './AddMessageBar';
@@ -89,23 +90,23 @@ export function ConversationView({
           </div>
           <div>
             <div className="text-[15px] font-semibold text-primary">
-              {agentName ? `Talk to ${agentName}` : 'Start a conversation'}
+              {agentName ? <Trans>Talk to {agentName}</Trans> : <Trans>Start a conversation</Trans>}
             </div>
             <div className="text-[12.5px] text-muted mt-[2px]">
-              Type below to send a message, or use Add message to insert turns manually.
+              <Trans>Type below to send a message, or use Add message to insert turns manually.</Trans>
             </div>
           </div>
           {trimmed && (
             <div
               className="rounded-[10px] text-left p-[12px] text-[12px] leading-[1.55] text-secondary bg-[rgba(255,255,255,0.02)] border border-border"
             >
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mb-[4px]">System prompt</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mb-[4px]"><Trans>System prompt</Trans></div>
               <div className="whitespace-pre-wrap">{trimmed.length > 380 ? trimmed.slice(0, 377) + '…' : trimmed}</div>
             </div>
           )}
           {tools && tools.length > 0 && (
             <div className="flex flex-col gap-[6px]">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted text-left">Tools available</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted text-left"><Trans>Tools available</Trans></div>
               <div className="flex flex-wrap gap-[6px] justify-start">
                 {tools.map(t => (
                   <span

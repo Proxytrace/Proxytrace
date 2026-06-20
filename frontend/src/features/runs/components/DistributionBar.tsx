@@ -1,10 +1,11 @@
+import { Trans } from '@lingui/react/macro';
 import type { HeatmapCell } from '../comparison';
 import { SCORE_BUCKETS, scoreBucketColor } from '../comparison';
 import { passRateColor } from '../results';
 
 /** Stacked score-distribution bar for one evaluator × one model, with judged count + pass rate. */
 export function DistributionBar({ cell }: { cell: HeatmapCell }) {
-  if (cell.total === 0) return <span className="text-body-sm text-muted italic">pending</span>;
+  if (cell.total === 0) return <span className="text-body-sm text-muted italic"><Trans>pending</Trans></span>;
 
   return (
     <div>
@@ -25,7 +26,7 @@ export function DistributionBar({ cell }: { cell: HeatmapCell }) {
         })}
       </div>
       <div className="flex justify-between text-caption text-muted">
-        <span>{cell.total} judged</span>
+        <span><Trans>{cell.total} judged</Trans></span>
         <span className="mono font-bold" style={{ color: passRateColor(cell.passRate) }}>
           {cell.passRate === null ? '—' : `${cell.passRate}%`}
         </span>

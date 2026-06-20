@@ -1,3 +1,4 @@
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { TestRunGroupDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { fmtRelative } from '../../../lib/format';
@@ -19,6 +20,7 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
   onCancel: () => void;
   cancelPending: boolean;
 }) {
+  const { t } = useLingui();
   const c = agentColor(group.agentId);
   const sc = runStatusColor(group.status);
   const active = group.runs.some(r => isActive(r.status));
@@ -39,7 +41,7 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
           {active && (
             <span className="inline-flex items-center gap-1.5 text-caption text-muted shrink-0">
               <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-accent inline-block" />
-              live
+              <Trans>live</Trans>
             </span>
           )}
         </div>
@@ -49,7 +51,7 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
           <span>·</span>
           <span>{fmtRelative(group.createdAt)}</span>
           <span>·</span>
-          <span>{group.runs.length === 1 ? '1 model' : `${group.runs.length} models`}</span>
+          <span><Plural value={group.runs.length} one="# model" other="# models" /></span>
         </div>
 
         {active && (
@@ -68,10 +70,10 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
             loading={cancelPending}
             data-testid={`run-cancel-btn-${group.id}`}
           >
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
         )}
-        <IconButton danger onClick={onDelete} aria-label="Delete run group" title="Delete run group"><TrashIcon size={14} /></IconButton>
+        <IconButton danger onClick={onDelete} aria-label={t`Delete run group`} title={t`Delete run group`}><TrashIcon size={14} /></IconButton>
       </div>
     </div>
   );

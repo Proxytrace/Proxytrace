@@ -1,5 +1,6 @@
 import { fmtTokens, fmtLatency, fmtPct, fmtCostEur } from '../../../lib/format';
 import type { TraceSummaryStats } from '../traceSummary';
+import { useLingui } from '@lingui/react/macro';
 
 interface StatTileProps {
   label: string;
@@ -24,6 +25,7 @@ interface Props {
 
 /** Compact stats band for the traces currently on the page (the current pagination slice). */
 export function TraceSummary({ stats }: Props) {
+  const { t } = useLingui();
   if (stats.count === 0) return null;
 
   const totalTokens = stats.inputTokens + stats.outputTokens;
@@ -33,25 +35,25 @@ export function TraceSummary({ stats }: Props) {
       data-testid="trace-summary"
       className="fade-up grid gap-2 shrink-0 [animation-delay:40ms] grid-cols-[repeat(auto-fit,minmax(150px,1fr))]"
     >
-      <StatTile testId="trace-summary-count" label="Traces" value={stats.count.toLocaleString()} sub="on this page" />
+      <StatTile testId="trace-summary-count" label={t`Traces`} value={stats.count.toLocaleString()} sub={t`on this page`} />
       <StatTile
         testId="trace-summary-tokens"
-        label="Tokens"
+        label={t`Tokens`}
         value={fmtTokens(totalTokens)}
-        sub={`${fmtTokens(stats.inputTokens)} in · ${fmtTokens(stats.outputTokens)} out`}
+        sub={t`${fmtTokens(stats.inputTokens)} in · ${fmtTokens(stats.outputTokens)} out`}
       />
-      <StatTile testId="trace-summary-cost" label="Cost" value={fmtCostEur(stats.totalCostEur)} sub="this page" />
+      <StatTile testId="trace-summary-cost" label={t`Cost`} value={fmtCostEur(stats.totalCostEur)} sub={t`this page`} />
       <StatTile
         testId="trace-summary-latency"
-        label="Avg latency"
+        label={t`Avg latency`}
         value={fmtLatency(stats.avgLatencyMs)}
-        sub={`± ${fmtLatency(stats.latencyStdDevMs)}`}
+        sub={t`± ${fmtLatency(stats.latencyStdDevMs)}`}
       />
       <StatTile
         testId="trace-summary-errorrate"
-        label="Error rate"
+        label={t`Error rate`}
         value={fmtPct(stats.errorRate)}
-        sub={`${stats.errorCount.toLocaleString()} non-2xx`}
+        sub={t`${stats.errorCount.toLocaleString()} non-2xx`}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { fmtUntil, fmtDateTimeShortUtc } from '../../../lib/format';
@@ -22,6 +23,7 @@ export function ScheduleCard({ schedule, onToggle, onEdit, onDelete, onSelectRun
   onSelectRun: (groupId: string) => void;
   toggling: boolean;
 }) {
+  const { t } = useLingui();
   const c = agentColor(schedule.agentId);
 
   return (
@@ -44,11 +46,11 @@ export function ScheduleCard({ schedule, onToggle, onEdit, onDelete, onSelectRun
             <span aria-hidden>·</span>
             {schedule.isEnabled ? (
               <span data-testid={`schedule-next-run-${schedule.id}`}>
-                Next {fmtDateTimeShortUtc(schedule.nextRunAt)} UTC
-                <span className="text-muted"> · {fmtUntil(schedule.nextRunAt)}</span>
+                <Trans>Next {fmtDateTimeShortUtc(schedule.nextRunAt)} UTC
+                <span className="text-muted"> · {fmtUntil(schedule.nextRunAt)}</span></Trans>
               </span>
             ) : (
-              <span>Paused</span>
+              <span><Trans>Paused</Trans></span>
             )}
           </div>
         </div>
@@ -58,13 +60,13 @@ export function ScheduleCard({ schedule, onToggle, onEdit, onDelete, onSelectRun
             checked={schedule.isEnabled}
             onChange={onToggle}
             disabled={toggling}
-            aria-label={schedule.isEnabled ? 'Disable schedule' : 'Enable schedule'}
+            aria-label={schedule.isEnabled ? t`Disable schedule` : t`Enable schedule`}
             data-testid={`schedule-toggle-${schedule.id}`}
           />
-          <IconButton onClick={onEdit} aria-label="Edit schedule" data-testid={`schedule-edit-btn-${schedule.id}`}>
+          <IconButton onClick={onEdit} aria-label={t`Edit schedule`} data-testid={`schedule-edit-btn-${schedule.id}`}>
             <EditIcon size={14} />
           </IconButton>
-          <IconButton danger onClick={onDelete} aria-label="Delete schedule" data-testid={`schedule-delete-btn-${schedule.id}`}>
+          <IconButton danger onClick={onDelete} aria-label={t`Delete schedule`} data-testid={`schedule-delete-btn-${schedule.id}`}>
             <TrashIcon size={14} />
           </IconButton>
         </div>

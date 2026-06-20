@@ -1,6 +1,8 @@
 // Pure derive/format helpers for the traces UI. No JSX, no I/O — unit-tested
 // in tracesMeta.spec.ts.
 
+import { msg } from '@lingui/core/macro';
+import { type MessageDescriptor } from '@lingui/core';
 import type { AgentCallListItemDto } from '../../api/models';
 import { ALL_TIME, type TimeRange, type TimeRangePreset } from '../../lib/timeRange';
 
@@ -45,6 +47,11 @@ export const COL_WIDTHS = ['minmax(170px,2fr)', 'minmax(96px,1fr)', 'minmax(104p
 export const GRID_TEMPLATE = COL_WIDTHS.join(' ');
 
 export const COL_HEADERS = ['Message', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Latency', 'Time'] as const;
+
+/** Translatable header labels, index-aligned with {@link COL_HEADERS}; resolve at render with i18n._(). */
+export const COL_HEADER_LABELS: readonly MessageDescriptor[] = [
+  msg`Message`, msg`Agent`, msg`Model`, msg`Status`, msg`Tools`, msg`Tokens`, msg`Latency`, msg`Time`,
+];
 
 // ── Narrow-list (mobile) column collapse ───────────────────────────────────────
 // On a list narrower than the @2xl container breakpoint (phones), only Message /

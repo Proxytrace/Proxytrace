@@ -1,3 +1,4 @@
+import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { useNavigate } from 'react-router-dom';
 import type { AgentDto, AgentOverviewDto } from '../../../api/models';
 import { Button, IconButton } from '../../../components/ui/Button';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function AgentHeader({ agent, overview, onDelete, className }: Props) {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const { latestVersion } = useAgentVersions(agent.id);
   const c = agentColor(agent.id);
@@ -50,7 +52,8 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
                 className="px-2 py-px rounded-sm text-body-sm font-semibold font-mono shrink-0"
                 style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
               >
-                v{latestVersion}
+                {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version sigil, not UI copy */}
+                {`v${latestVersion}`}
               </span>
             )}
             {proposals > 0 && (
@@ -62,7 +65,7 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
                 leftIcon={<SparklesIcon size={11} />}
                 className="rounded-full text-accent bg-accent-subtle hover:text-accent-hover shadow-[var(--shadow-pill)]"
               >
-                {proposals} proposal{proposals > 1 ? 's' : ''} ready
+                <Plural value={proposals} one="# proposal ready" other="# proposals ready" />
               </Button>
             )}
           </div>
@@ -80,11 +83,11 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
             </span>
             <span>{agent.projectName}</span>
             <span aria-hidden>·</span>
-            <span>{traces} trace{traces === 1 ? '' : 's'}</span>
+            <span><Plural value={traces} one="# trace" other="# traces" /></span>
             {agent.lastUsedAt && (
               <>
                 <span aria-hidden>·</span>
-                <span>last used {fmtRelative(agent.lastUsedAt)}</span>
+                <span><Trans>last used {fmtRelative(agent.lastUsedAt)}</Trans></span>
               </>
             )}
           </div>
@@ -98,14 +101,14 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
             onClick={() => navigate(`/suites?agentId=${agent.id}`)}
             data-testid="agent-run-btn"
           >
-            Run
+            <Trans>Run</Trans>
           </Button>
           <AgentActionsMenu agentId={agent.id} />
           <IconButton
             danger
             onClick={onDelete}
-            title="Delete agent"
-            aria-label="Delete agent"
+            title={t`Delete agent`}
+            aria-label={t`Delete agent`}
             data-testid="agent-delete-btn"
           >
             <TrashIcon size={14} />

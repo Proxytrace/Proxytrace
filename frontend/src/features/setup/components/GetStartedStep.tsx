@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Button } from '../../../components/ui/Button';
 import { CodeBlock } from '../../../components/ui/CodeBlock';
 import { Tabs } from '../../../components/ui/Tabs';
@@ -16,6 +17,8 @@ interface GetStartedStepProps {
 }
 
 export function GetStartedStep({ projectName, modelName, error, loading, onGetStarted }: GetStartedStepProps) {
+  const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- code snippet language id, not UI copy
   const [lang, setLang] = useState<SnippetLanguage>('python');
 
   const proxyBase = useIngestionBase();
@@ -25,7 +28,7 @@ export function GetStartedStep({ projectName, modelName, error, loading, onGetSt
 
   return (
     <div className="flex flex-col gap-5" data-testid="setup-get-started">
-      <CodeBlock heading="Your project's OpenAI-compatible endpoint" content={baseUrl} maxLines={1} />
+      <CodeBlock heading={t`Your project's OpenAI-compatible endpoint`} content={baseUrl} maxLines={1} />
 
       <div className="flex flex-col gap-2">
         <Tabs
@@ -37,8 +40,10 @@ export function GetStartedStep({ projectName, modelName, error, loading, onGetSt
       </div>
 
       <p className="text-body-sm text-muted leading-relaxed">
-        No new credentials needed — your upstream provider key keeps working. You can still
-        issue dedicated Proxytrace keys later from the Providers page.
+        <Trans>
+          No new credentials needed — your upstream provider key keeps working. You can still
+          issue dedicated Proxytrace keys later from the Providers page.
+        </Trans>
       </p>
 
       {error && <p className="text-body text-danger">{error}</p>}
@@ -53,7 +58,7 @@ export function GetStartedStep({ projectName, modelName, error, loading, onGetSt
         className="btn-sheen"
         onClick={onGetStarted}
       >
-        Get started
+        <Trans>Get started</Trans>
       </Button>
     </div>
   );

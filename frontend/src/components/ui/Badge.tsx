@@ -27,8 +27,8 @@ const VARIANT_TOKEN: Record<Exclude<BadgeVariant, 'tinted'>, { bg: string; fg: s
 };
 
 const SIZE_CLS: Record<BadgeSize, string> = {
-  sm: 'px-2 py-[2px] text-caption gap-1',
-  md: 'px-2.5 py-[3px] text-body-sm gap-1.5',
+  sm: cn('px-2 py-[2px] text-caption gap-1'),
+  md: cn('px-2.5 py-[3px] text-body-sm gap-1.5'),
 };
 
 export function Badge({
@@ -50,6 +50,7 @@ export function Badge({
         fg: tintColor,
         border: `color-mix(in srgb, ${tintColor} 32%, transparent)`,
       }
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- BadgeVariant token, not UI copy
     : VARIANT_TOKEN[variant === 'tinted' ? 'neutral' : variant];
 
   const style: React.CSSProperties = {
@@ -61,7 +62,7 @@ export function Badge({
 
   if (selected) {
     style.outline = `2px solid ${palette.fg}`;
-    style.outlineOffset = '1px';
+    style.outlineOffset = cn('1px');
   }
   if (onClick) style.cursor = 'pointer';
 

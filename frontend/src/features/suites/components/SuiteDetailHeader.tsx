@@ -1,3 +1,4 @@
+import { Trans, Plural } from '@lingui/react/macro';
 import type { TestSuiteDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { fmtRelative, fmtDate } from '../../../lib/format';
@@ -21,20 +22,20 @@ export function SuiteDetailHeader({ suite, onRun, onDelete }: { suite: TestSuite
           <Pill label={suite.agentName} color={c} />
         </div>
         <div className="flex items-center gap-2 text-body-sm text-muted flex-wrap">
-          <span>{suite.testCases.length} case{suite.testCases.length !== 1 ? 's' : ''}</span>
+          <span><Plural value={suite.testCases.length} one="# case" other="# cases" /></span>
           <span aria-hidden>·</span>
-          <span>created {fmtDate(suite.createdAt)}</span>
+          <span><Trans>created {fmtDate(suite.createdAt)}</Trans></span>
           <span aria-hidden>·</span>
-          <span>{suite.lastRunAt ? `last run ${fmtRelative(suite.lastRunAt)}` : 'never run'}</span>
+          <span>{suite.lastRunAt ? <Trans>last run {fmtRelative(suite.lastRunAt)}</Trans> : <Trans>never run</Trans>}</span>
         </div>
       </div>
 
       <div className="flex gap-1.5 shrink-0">
         <Button variant="primary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onRun} data-testid="suite-run-btn">
-          Run
+          <Trans>Run</Trans>
         </Button>
         <Button variant="dangerOutline" size="sm" onClick={onDelete} leftIcon={<TrashIcon size={13} />} data-testid="suite-detail-delete-btn">
-          Delete
+          <Trans>Delete</Trans>
         </Button>
       </div>
     </div>

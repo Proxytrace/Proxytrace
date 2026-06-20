@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
 import { useFeature } from '../../../api/license';
 import { Button } from '../../../components/ui/Button';
@@ -22,6 +23,7 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
   agentFilter: string;
   onSelectRun: (groupId: string) => void;
 }) {
+  const { t } = useLingui();
   const licensed = useFeature('ScheduledTestRuns');
   const { schedules, isLoading } = useTestRunSchedules(agentFilter);
   const { create, update, remove } = useTestRunScheduleMutations();
@@ -76,10 +78,10 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
   return (
     <div className="flex flex-col gap-3" data-testid="schedules-section">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-h2 font-semibold text-primary">Scheduled runs</h2>
+        <h2 className="text-h2 font-semibold text-primary"><Trans>Scheduled runs</Trans></h2>
         {licensed ? (
           <Button variant="primary" size="sm" onClick={openCreate} leftIcon={<PlusIcon size={14} />} data-testid="schedule-create-btn">
-            New schedule
+            <Trans>New schedule</Trans>
           </Button>
         ) : (
           <Button
@@ -89,7 +91,7 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
             leftIcon={<LockIcon size={14} />}
             data-testid="schedule-upgrade-btn"
           >
-            Upgrade to schedule
+            <Trans>Upgrade to schedule</Trans>
           </Button>
         )}
       </div>
@@ -99,10 +101,10 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
       {!isLoading && schedules.length === 0 && (
         <div data-testid="schedules-empty-state">
           <EmptyState
-            title="No scheduled runs"
+            title={t`No scheduled runs`}
             description={licensed
-              ? 'Create a schedule to run a suite on a recurring cadence.'
-              : 'Scheduled test runs are part of the Enterprise tier.'}
+              ? t`Create a schedule to run a suite on a recurring cadence.`
+              : t`Scheduled test runs are part of the Enterprise tier.`}
           />
         </div>
       )}
@@ -134,8 +136,8 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
 
       {deleteTarget && (
         <ConfirmDialog
-          title={`Delete schedule "${deleteTarget.name}"?`}
-          message="This stops future runs. Existing runs it produced are kept. This action cannot be undone."
+          title={t`Delete schedule "${deleteTarget.name}"?`}
+          message={t`This stops future runs. Existing runs it produced are kept. This action cannot be undone.`}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
           loading={remove.isPending}

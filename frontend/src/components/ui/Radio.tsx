@@ -44,6 +44,7 @@ interface RadioProps {
  */
 export function Radio({ value, label, disabled: ownDisabled }: RadioProps) {
   const ctx = useContext(RadioGroupContext);
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- thrown developer error, not UI copy
   if (!ctx) throw new Error('Radio must be used within a RadioGroup');
   const disabled = ownDisabled || ctx.disabled;
   const checked = ctx.value === value;

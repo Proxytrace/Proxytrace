@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { tint } from '../../../lib/colors';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -15,6 +16,7 @@ export function RunHistoryTimeline({ runs, currentId, onSelect }: {
   currentId: string;
   onSelect: (id: string) => void;
 }) {
+  const { t } = useLingui();
   return (
     <div className="flex flex-col">
       {runs.map((r, i) => {
@@ -39,10 +41,10 @@ export function RunHistoryTimeline({ runs, currentId, onSelect }: {
               <div className="flex items-center gap-2">
                 <ScoreChip score={r.result.score} />
                 <span className={cn('text-[11.5px] font-semibold', on ? 'text-primary' : 'text-secondary')}>
-                  {r.kind === 'logged' ? 'Logged evaluation' : r.edited ? 'Re-scored · edited' : 'Re-scored'}
+                  {r.kind === 'logged' ? <Trans>Logged evaluation</Trans> : r.edited ? <Trans>Re-scored · edited</Trans> : <Trans>Re-scored</Trans>}
                 </span>
                 <span className="ml-auto text-[10px] text-muted font-mono">
-                  {r.at != null ? runTime(r.at) : 'baseline'}
+                  {r.at != null ? runTime(r.at) : t`baseline`}
                 </span>
               </div>
               {r.result.reasoning && (

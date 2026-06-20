@@ -67,5 +67,26 @@ function MenuSeparator() {
   return <DropdownMenu.Separator className="my-1 h-px bg-hairline" />;
 }
 
+interface MenuGroupProps {
+  children: ReactNode;
+  'data-testid'?: string;
+}
+
+/** Groups related items under a shared `Menu.Label` (role=group, aria-labelledby). */
+function MenuGroup({ children, 'data-testid': testId }: MenuGroupProps) {
+  return <DropdownMenu.Group data-testid={testId}>{children}</DropdownMenu.Group>;
+}
+
+/** Eyebrow heading for a `Menu.Group`. Not focusable; labels the group for assistive tech. */
+function MenuLabel({ children }: { children: ReactNode }) {
+  return (
+    <DropdownMenu.Label className="select-none px-3.5 pt-1.5 pb-1 text-caption font-semibold uppercase tracking-[0.08em] text-muted">
+      {children}
+    </DropdownMenu.Label>
+  );
+}
+
 Menu.Item = MenuItem;
 Menu.Separator = MenuSeparator;
+Menu.Group = MenuGroup;
+Menu.Label = MenuLabel;

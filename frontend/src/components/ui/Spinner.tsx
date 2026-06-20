@@ -1,3 +1,5 @@
+import { useLingui } from '@lingui/react/macro';
+
 interface SpinnerProps {
   size?: 12 | 16 | 24 | 32;
   color?: string;
@@ -5,11 +7,12 @@ interface SpinnerProps {
 }
 
 export function Spinner({ size = 16, color, className = '' }: SpinnerProps) {
+  const { t } = useLingui();
   const border = Math.max(1.5, size / 10);
   return (
     <span
       role="status"
-      aria-label="Loading"
+      aria-label={t`Loading`}
       className={`inline-block rounded-full animate-spin ${className}`}
       style={{
         width: size,

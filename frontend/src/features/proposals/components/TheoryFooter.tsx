@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowUpRightIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { TheoryDto } from '../../../api/models';
@@ -15,6 +16,7 @@ interface Props {
 
 /** Status-specific bottom row of a {@link TheoryCard}: agent, A/B progress, transition, or promote. */
 export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
+  const { t, i18n } = useLingui();
   // agentColor is a runtime, hash-derived color → inline style is the sanctioned use (DESIGN §6).
   const aColor = agentColor(theory.agentId);
   const agentPill = (
@@ -31,7 +33,7 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
     return (
       <div className="flex items-center gap-2">
         {agentPill}
-        <span className="ml-auto text-caption text-muted">via {THEORY_SOURCE_LABEL[theory.source]}</span>
+        <span className="ml-auto text-caption text-muted"><Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])}</Trans></span>
       </div>
     );
   }
@@ -42,7 +44,7 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
         <div className="flex items-center gap-2">
           {agentPill}
           <span className="ml-auto inline-flex items-center gap-1.5 text-caption text-teal">
-            <span className="size-1.5 rounded-full bg-teal pulse-dot" /> A/B in flight
+            <span className="size-1.5 rounded-full bg-teal pulse-dot" /> <Trans>A/B in flight</Trans>
           </span>
         </div>
         <div className="h-[3px] rounded-full overflow-hidden bg-card-2 indeterminate-bar" />
@@ -51,24 +53,24 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
   }
 
   // Validated / Rejected — both show the measured pass-rate transition.
-  const t = passRateTransition(theory);
+  const transition = passRateTransition(theory);
   const validated = theory.status === TheoryStatus.Validated;
 
   return (
     <div className="flex flex-col gap-2.5">
-      {t && (
+      {transition && (
         <div className="flex items-center gap-2 mono text-caption">
-          <span className={cn(validated ? 'text-secondary' : 'text-muted')}>{t.fromPct}%</span>
+          <span className={cn(validated ? 'text-secondary' : 'text-muted')}>{transition.fromPct}%</span>
           <span className="text-muted">→</span>
-          <span className={cn('font-semibold', validated ? 'text-success' : 'text-secondary')}>{t.toPct}%</span>
-          {t.deltaPt !== 0 && (
+          <span className={cn('font-semibold', validated ? 'text-success' : 'text-secondary')}>{transition.toPct}%</span>
+          {transition.deltaPt !== 0 && (
             <span
               className={cn(
                 'rounded-full px-1.5 py-[1px] font-semibold',
-                t.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
+                transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
               )}
             >
-              {t.deltaPt > 0 ? '+' : '−'}{Math.abs(t.deltaPt)}pt
+              {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}<Trans>pt</Trans>
             </span>
           )}
         </div>
@@ -85,12 +87,12 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
           onClick={(e) => { e.stopPropagation(); onPromote(); }}
           data-testid={`theory-promote-btn-${theory.id}`}
         >
-          {isPromoting ? 'Promoting…' : 'Promote'}
+          {isPromoting ? t`Promoting…` : t`Promote`}
         </Button>
       ) : (
         theory.pValue != null && (
           <span className="mono text-caption text-muted">
-            {formatPValue(theory.pValue)} · {isInsideNoise(theory.pValue) ? 'inside noise' : 'significant'}
+            {formatPValue(theory.pValue)} · {isInsideNoise(theory.pValue) ? t`inside noise` : t`significant`}
           </span>
         )
       )}

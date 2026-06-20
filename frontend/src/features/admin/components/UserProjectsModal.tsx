@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { Modal } from '../../../components/overlays/Modal';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -12,6 +13,7 @@ interface UserProjectsModalProps {
 
 /** Per-user editor to assign/unassign the user across every project. */
 export function UserProjectsModal({ user, onClose }: UserProjectsModalProps) {
+  const { t } = useLingui();
   const { data: projects, isLoading } = useAllProjects();
   const { data: memberships } = useUserProjects(user.id);
   const assign = useAssignUserProject(user.id);
@@ -24,12 +26,12 @@ export function UserProjectsModal({ user, onClose }: UserProjectsModalProps) {
     checked ? assign.mutate(projectId) : unassign.mutate(projectId);
 
   return (
-    <Modal title={`Projects — ${user.email}`} onClose={onClose}>
+    <Modal title={t`Projects — ${user.email}`} onClose={onClose}>
       <div className="max-h-[360px] overflow-y-auto" data-testid="user-projects-modal">
         {isLoading ? (
           <SkeletonList rows={5} height={36} gap={4} />
         ) : !projects || projects.length === 0 ? (
-          <EmptyState title="No projects" description="Create a project first to assign members." />
+          <EmptyState title={t`No projects`} description={t`Create a project first to assign members.`} />
         ) : (
           <div className="flex flex-col gap-1">
             {projects.map((p) => (

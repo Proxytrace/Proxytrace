@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import type { AgentCallDto } from '../../../api/models';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
 import { TracesStep } from '../CreateSuiteWizard';
@@ -15,6 +16,7 @@ interface Props {
  * Opens empty each time; confirming stages the selection on the suite (shown as pending-add rows
  * until Save). */
 export function AddTracesModal({ agentId, onClose, onAdd }: Props) {
+  const { t } = useLingui();
   const [selected, setSelected] = useState<Map<string, AgentCallDto>>(new Map());
 
   function toggle(trace: AgentCallDto) {
@@ -41,14 +43,14 @@ export function AddTracesModal({ agentId, onClose, onAdd }: Props) {
 
   return (
     <Modal
-      title="Add cases from traces"
+      title={t`Add cases from traces`}
       onClose={onClose}
       size="xl"
       footer={
         <ModalFooter
           onCancel={onClose}
           onSubmit={confirm}
-          submitLabel={selected.size > 0 ? `Add ${selected.size} to suite` : 'Add to suite'}
+          submitLabel={selected.size > 0 ? t`Add ${selected.size} to suite` : t`Add to suite`}
           disabled={selected.size === 0}
         />
       }

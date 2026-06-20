@@ -3,6 +3,8 @@
 // code. Promoting a proposal therefore hands the change to a developer; this module renders the
 // "apply this change" package they take away. No JSX, no I/O — unit-tested in handoffDoc.spec.ts.
 
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import type { OptimizationProposalDto } from '../../api/models';
 import { ProposalKind } from '../../api/models';
 import { formatDeltaPt } from './validatedView';
@@ -18,10 +20,10 @@ export function proposedClipboardPayload(proposal: OptimizationProposalDto): str
 }
 
 /** Label for the kind-specific copy button. */
-export const COPY_PAYLOAD_LABEL: Record<ProposalKind, string> = {
-  [ProposalKind.SystemPrompt]: 'Copy proposed prompt',
-  [ProposalKind.Tool]: 'Copy tools JSON',
-  [ProposalKind.ModelSwitch]: 'Copy model name',
+export const COPY_PAYLOAD_LABEL: Record<ProposalKind, MessageDescriptor> = {
+  [ProposalKind.SystemPrompt]: msg`Copy proposed prompt`,
+  [ProposalKind.Tool]: msg`Copy tools JSON`,
+  [ProposalKind.ModelSwitch]: msg`Copy model name`,
 };
 
 function pct(rate: number | null): string {

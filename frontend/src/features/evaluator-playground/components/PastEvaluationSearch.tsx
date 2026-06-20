@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { Input } from '../../../components/ui/Input';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -22,6 +23,7 @@ interface Props {
  * preview, bounded height with internal scroll so it never clips the viewport.
  */
 export function PastEvaluationSearch({ evaluatorId, evaluatorName, recent, onPick }: Props) {
+  const { t } = useLingui();
   const [raw, setRaw] = useState('');
   const debounced = useDebounce(raw, 200);
   const { results, isFetching, active } = useEvaluatorEvaluationSearch(evaluatorId, debounced);
@@ -53,7 +55,7 @@ export function PastEvaluationSearch({ evaluatorId, evaluatorName, recent, onPic
         onChange={e => setRaw(e.target.value)}
         onKeyDown={onKeyDown}
         leftAddon={<SearchIcon size={14} />}
-        placeholder="Search this evaluator's past evaluations…"
+        placeholder={t`Search this evaluator's past evaluations…`}
         data-testid="search-input"
         className="shrink-0"
       />
@@ -63,10 +65,10 @@ export function PastEvaluationSearch({ evaluatorId, evaluatorName, recent, onPic
           {list.length === 0 ? (
             <div className="px-2.5 py-6 text-center text-[11.5px] text-muted leading-relaxed">
               {tooShort
-                ? `Type at least ${MIN_QUERY} characters.`
+                ? <Trans>Type at least {MIN_QUERY} characters.</Trans>
                 : active
-                  ? isFetching ? 'Searching…' : 'No matching evaluations.'
-                  : 'No past evaluations yet.'}
+                  ? isFetching ? <Trans>Searching…</Trans> : <Trans>No matching evaluations.</Trans>
+                  : <Trans>No past evaluations yet.</Trans>}
             </div>
           ) : (
             list.map(it => {

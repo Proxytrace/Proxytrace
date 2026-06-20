@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import type { TestSuiteListItemDto } from '../../../api/models';
 import { ListRail } from '../../../components/ui/ListRail';
 import { FilterDropdown, type FilterDropdownOption } from '../../../components/ui/FilterDropdown';
@@ -19,20 +20,22 @@ interface Props {
 /** Left column of the Suites master–detail, built on the shared `ListRail`: New-suite action,
  * agent filter, name search, and the selectable suite cards. The page stays orchestration. */
 export function SuiteList({ suites, isLoading, selectedId, highlightId, onSelect, onDelete, onNew, agentFilter }: Props) {
+  const { t } = useLingui();
   const [search, setSearch] = useState('');
   const q = search.trim().toLowerCase();
   const filtered = q ? suites.filter(s => s.name.toLowerCase().includes(q)) : suites;
 
   return (
     <ListRail
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- data-testid value, not UI copy
       listTestId="suite-list"
-      title="Test suites"
+      title={t`Test suites`}
       count={suites.length}
-      create={{ onClick: onNew, label: 'New suite', testId: 'suite-create-btn' }}
-      search={{ value: search, onChange: setSearch, placeholder: 'Search suites…' }}
+      create={{ onClick: onNew, label: t`New suite`, testId: 'suite-create-btn' }}
+      search={{ value: search, onChange: setSearch, placeholder: t`Search suites…` }}
       filter={
         <FilterDropdown
-          label="Agent"
+          label={t`Agent`}
           value={agentFilter.value}
           options={agentFilter.options}
           onChange={agentFilter.onChange}
@@ -47,8 +50,8 @@ export function SuiteList({ suites, isLoading, selectedId, highlightId, onSelect
       empty={
         <div data-testid="suite-empty-state">
           <EmptyState
-            title={suites.length === 0 ? 'No test suites yet' : 'No matches'}
-            description={suites.length === 0 ? 'Create one to start evaluating.' : 'Clear the search to see all suites.'}
+            title={suites.length === 0 ? t`No test suites yet` : t`No matches`}
+            description={suites.length === 0 ? t`Create one to start evaluating.` : t`Clear the search to see all suites.`}
           />
         </div>
       }

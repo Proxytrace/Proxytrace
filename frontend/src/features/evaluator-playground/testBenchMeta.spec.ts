@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
+import { i18n } from '../../i18n';
 import { EvaluationScore } from '../../api/models';
 import {
   scoreColor, runLabel, tooltipPosition, scoreNumber, scoreAnchor, scoreDelta,
 } from './testBenchMeta';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 describe('scoreNumber', () => {
   it('ranks each score 1–5', () => {
@@ -50,13 +54,13 @@ describe('scoreColor', () => {
 
 describe('runLabel', () => {
   it('shows the in-flight label while pending', () => {
-    expect(runLabel(true, false)).toBe('Running…');
-    expect(runLabel(true, true)).toBe('Running…');
+    expect(i18n._(runLabel(true, false))).toBe('Running…');
+    expect(i18n._(runLabel(true, true))).toBe('Running…');
   });
 
   it('shows "Re-run" once a result exists and "Run evaluator" before the first run', () => {
-    expect(runLabel(false, true)).toBe('Re-run');
-    expect(runLabel(false, false)).toBe('Run evaluator');
+    expect(i18n._(runLabel(false, true))).toBe('Re-run');
+    expect(i18n._(runLabel(false, false))).toBe('Run evaluator');
   });
 });
 

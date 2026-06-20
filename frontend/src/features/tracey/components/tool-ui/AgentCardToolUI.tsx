@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Avatar } from '../../../../components/ui/Avatar';
 import { Pill } from '../../../../components/ui/Pill';
 import { Badge } from '../../../../components/ui/Badge';
@@ -28,6 +29,8 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 
 /** Inline renderer for the `get_agent` tool result. */
 export const AgentCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data: agent } = useArtifactResult('agent', result, status, isError);
   const promptPreview = agent?.systemMessage.trim() ?? '';
   return (
@@ -44,25 +47,25 @@ export const AgentCardToolUI: ToolCallMessagePartComponent = ({ result, status, 
       }
       color={agentColor(agent?.id ?? '')}
       testId="tracey-agent-card"
-      pendingLabel="Loading agent…"
+      pendingLabel={t`Loading agent…`}
     >
       {agent && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
             <Pill label={agent.endpointName} color={modelColor(agent.endpointName)} size="sm" />
-            {agent.isSystemAgent && <Badge label="System" variant="accent" size="sm" />}
+            {agent.isSystemAgent && <Badge label={t`System`} variant="accent" size="sm" />}
           </div>
           <div className="grid grid-cols-3 gap-x-4">
-            <MetaItem label="Tools" value={String(agent.tools.length)} />
+            <MetaItem label={t`Tools`} value={String(agent.tools.length)} />
             <MetaItem
-              label="Last used"
-              value={agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}
+              label={t`Last used`}
+              value={agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : t`never`}
             />
-            <MetaItem label="Created" value={fmtRelative(agent.createdAt)} />
+            <MetaItem label={t`Created`} value={fmtRelative(agent.createdAt)} />
           </div>
           {promptPreview && (
             <div className="border-l-2 border-border pl-2.5">
-              <div className="text-caption uppercase tracking-[0.06em] text-muted">System prompt</div>
+              <div className="text-caption uppercase tracking-[0.06em] text-muted"><Trans>System prompt</Trans></div>
               <p className="mt-0.5 line-clamp-2 text-body-sm leading-relaxed text-secondary">
                 {promptPreview}
               </p>

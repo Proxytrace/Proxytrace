@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
@@ -25,11 +26,14 @@ import { LatencySection } from './components/LatencySection';
 import { AgentsSection } from './components/AgentsSection';
 
 export default function Dashboard() {
+  const { t } = useLingui();
   const qc = useQueryClient();
   // Range selector persists across refresh / navigation. Defaults to the all-time bucket
   // until the user picks a window.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
   const [storedRange, setRange] = useLocalStorageState<RangeKey>('dashboard.range', 'all');
   // Guard against a stale/garbage stored value — only accept a known key.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
   const range = RANGE_KEYS.includes(storedRange) ? storedRange : 'all';
   // Memoize so `from` is stable across renders; recomputing `new Date()` each
   // render would churn every queryKey below and cause an infinite refetch loop.
@@ -78,14 +82,14 @@ export default function Dashboard() {
         <div className="flex items-center gap-3.5">
           <span className="text-[9.5px] text-accent-hover font-mono tracking-[0.18em] flex items-center gap-[7px] font-semibold">
             <span className="size-1.5 rounded-full bg-success pulse-dot shadow-[0_0_10px_var(--success)]" />
-            LIVE
+            <Trans>LIVE</Trans>
           </span>
-          <h1 className="text-[20px] font-extrabold tracking-[-0.025em] leading-none">Mission Control</h1>
-          <p className="text-body-sm text-muted">{currentProject?.name ?? 'All projects'}</p>
+          <h1 className="text-[20px] font-extrabold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
+          <p className="text-body-sm text-muted">{currentProject?.name ?? t`All projects`}</p>
         </div>
         <div className="flex items-center gap-2.5 font-mono text-[10.5px] text-muted">
           <span className="text-primary font-semibold tracking-[0.04em] tabular-nums">{clock}</span>
-          <span className="tracking-[0.14em] uppercase">UTC · proxy</span>
+          <span className="tracking-[0.14em] uppercase"><Trans>UTC · proxy</Trans></span>
         </div>
       </div>
 

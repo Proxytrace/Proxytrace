@@ -1,4 +1,5 @@
 import { useCallback, useState, type KeyboardEvent } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { setupApi } from '../../../api/setup';
 import { QUERY_KEYS } from '../../../api/query-keys';
@@ -16,6 +17,7 @@ export const SETUP_STEPS = {
 const LAST_STEP = SETUP_STEPS.getStarted;
 
 export function useSetupWizard() {
+  const { t } = useLingui();
   const qc = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState<number>(SETUP_STEPS.welcome);
@@ -98,10 +100,10 @@ export function useSetupWizard() {
       });
       setTestResult({
         ok: res.success,
-        message: res.success ? 'Connection successful.' : (res.error ?? 'Connection failed.'),
+        message: res.success ? t`Connection successful.` : (res.error ?? t`Connection failed.`),
       });
     } catch (e) {
-      setTestResult({ ok: false, message: e instanceof Error ? e.message : 'Connection failed.' });
+      setTestResult({ ok: false, message: e instanceof Error ? e.message : t`Connection failed.` });
     } finally {
       setTesting(false);
     }
@@ -123,7 +125,7 @@ export function useSetupWizard() {
       qc.setQueryData(QUERY_KEYS.setupStatus, { isConfigured: true });
       window.location.assign('/traces');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'An unexpected error occurred.');
+      setError(e instanceof Error ? e.message : t`An unexpected error occurred.`);
       setLoading(false);
     }
   }

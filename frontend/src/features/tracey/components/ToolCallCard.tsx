@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { CheckIcon, ChevronRightIcon, XIcon } from '../../../components/icons';
 import { CodeBlock } from '../../../components/ui/CodeBlock';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -14,7 +15,9 @@ function classify(statusType: string, isError: boolean | undefined): ToolStatus 
 }
 
 function formatDuration(ms: number): string {
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical duration readout
   if (ms < 1000) return `${Math.round(ms)} ms`;
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- compact technical duration readout
   return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`;
 }
 
@@ -23,7 +26,7 @@ function StatusBadge({ status }: { status: ToolStatus }) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] text-warn">
         <span className="size-1.5 animate-pulse rounded-full bg-warn" />
-        Running
+        <Trans>Running</Trans>
       </span>
     );
   }
@@ -31,14 +34,14 @@ function StatusBadge({ status }: { status: ToolStatus }) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] text-danger">
         <XIcon size={11} />
-        Failed
+        <Trans>Failed</Trans>
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-[10px] text-success">
       <CheckIcon size={11} />
-      Done
+      <Trans>Done</Trans>
     </span>
   );
 }
@@ -54,6 +57,7 @@ function Section({ title, content, json }: { title: string; content: string; jso
  * inline UI (e.g. `navigate`, `list_*`, `get_dashboard_stats`).
  */
 export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, argsText, result, isError, status }) => {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
 
   const isRunning = status.type === 'running' || status.type === 'requires-action';
@@ -103,11 +107,11 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
 
       {open && (
         <div className="space-y-2 border-t border-hairline px-2.5 py-2">
-          {argsJson && <Section title="Input" content={argsJson} json />}
+          {argsJson && <Section title={t`Input`} content={argsJson} json />}
           {hasResult && (
-            <Section title={isError ? 'Error' : 'Output'} content={resultText} json={!resultIsString} />
+            <Section title={isError ? t`Error` : t`Output`} content={resultText} json={!resultIsString} />
           )}
-          {!hasResult && !isRunning && <div className="text-[11px] text-muted">No output returned.</div>}
+          {!hasResult && !isRunning && <div className="text-[11px] text-muted"><Trans>No output returned.</Trans></div>}
         </div>
       )}
     </div>

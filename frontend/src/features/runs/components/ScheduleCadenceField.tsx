@@ -1,3 +1,6 @@
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import { type MessageDescriptor } from '@lingui/core';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -12,22 +15,23 @@ import {
   type Frequency,
 } from '../../../lib/scheduleCadence';
 
-const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
-  { value: 'hourly', label: 'Hourly' },
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'custom', label: 'Custom' },
+const FREQUENCY_OPTIONS: { value: Frequency; label: MessageDescriptor }[] = [
+  { value: 'hourly', label: msg`Hourly` },
+  { value: 'daily', label: msg`Daily` },
+  { value: 'weekly', label: msg`Weekly` },
+  { value: 'custom', label: msg`Custom` },
 ];
 
-const UNIT_OPTIONS: { value: IntervalUnit; label: string }[] = [
-  { value: 'minutes', label: 'minutes' },
-  { value: 'hours', label: 'hours' },
-  { value: 'days', label: 'days' },
+const UNIT_OPTIONS: { value: IntervalUnit; label: MessageDescriptor }[] = [
+  { value: 'minutes', label: msg`minutes` },
+  { value: 'hours', label: msg`hours` },
+  { value: 'days', label: msg`days` },
 ];
 
 /** Frequency picker (Hourly / Daily / Weekly / Custom) with a live UTC next-run preview. Maps to the
  * backend's `(intervalMinutes, anchorAt)` via {@link cadenceToSchedule}; all times are UTC. */
 export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceState; onChange: (c: CadenceState) => void }) {
+  const { t, i18n } = useLingui();
   const set = (patch: Partial<CadenceState>) => onChange({ ...cadence, ...patch });
 
   const now = new Date();
@@ -35,7 +39,7 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
   const next = computeNextRun(anchorAt, intervalMinutes, now);
 
   return (
-    <FormField label="Frequency">
+    <FormField label={t`Frequency`}>
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-2 flex-wrap" data-testid="schedule-cadence">
           <div className="w-32">
@@ -44,13 +48,13 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
               onValueChange={v => set({ frequency: v as Frequency })}
               data-testid="schedule-frequency"
             >
-              {FREQUENCY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {FREQUENCY_OPTIONS.map(o => <option key={o.value} value={o.value}>{i18n._(o.label)}</option>)}
             </Select>
           </div>
 
           {cadence.frequency === 'hourly' && (
             <>
-              <span className="text-body-sm text-muted">at minute</span>
+              <span className="text-body-sm text-muted"><Trans>at minute</Trans></span>
               <Input
                 type="number"
                 min={0}
@@ -66,14 +70,14 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
           {cadence.frequency === 'weekly' && (
             <div className="w-36">
               <Select value={String(cadence.weekday)} onValueChange={v => set({ weekday: Number(v) })} data-testid="schedule-weekday">
-                {WEEKDAY_LABELS.map((label, i) => <option key={i} value={String(i)}>{label}</option>)}
+                {WEEKDAY_LABELS.map((label, i) => <option key={i} value={String(i)}>{i18n._(label)}</option>)}
               </Select>
             </div>
           )}
 
           {(cadence.frequency === 'daily' || cadence.frequency === 'weekly') && (
             <>
-              <span className="text-body-sm text-muted">at</span>
+              <span className="text-body-sm text-muted"><Trans>at</Trans></span>
               <Input
                 type="time"
                 value={cadence.time}
@@ -81,13 +85,13 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
                 className="w-28"
                 data-testid="schedule-time"
               />
-              <span className="text-body-sm text-muted">UTC</span>
+              <span className="text-body-sm text-muted"><Trans>UTC</Trans></span>
             </>
           )}
 
           {cadence.frequency === 'custom' && (
             <>
-              <span className="text-body-sm text-muted">every</span>
+              <span className="text-body-sm text-muted"><Trans>every</Trans></span>
               <Input
                 type="number"
                 min={1}
@@ -98,7 +102,7 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
               />
               <div className="w-32">
                 <Select value={cadence.customUnit} onValueChange={v => set({ customUnit: v as IntervalUnit })} data-testid="schedule-interval-unit">
-                  {UNIT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  {UNIT_OPTIONS.map(o => <option key={o.value} value={o.value}>{i18n._(o.label)}</option>)}
                 </Select>
               </div>
             </>
@@ -109,11 +113,11 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
           <ClockIcon size={12} />
           {next ? (
             <span>
-              Next run · <span className="text-secondary font-medium">{fmtDateTimeShortUtc(next.toISOString())} UTC</span>{' '}
-              <span className="text-muted">({fmtUntil(next.toISOString())})</span>
+              <Trans>Next run · <span className="text-secondary font-medium">{fmtDateTimeShortUtc(next.toISOString())} UTC</span>{' '}
+              <span className="text-muted">({fmtUntil(next.toISOString())})</span></Trans>
             </span>
           ) : (
-            <span>Next run · —</span>
+            <span><Trans>Next run · —</Trans></span>
           )}
         </div>
       </div>
