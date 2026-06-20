@@ -331,12 +331,13 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 }
 
                 // Cached input is a subset of the input tokens, priced at the cheaper cached rate
-                // (falling back to the input rate when no cached price is configured).
+                // (falling back to the input rate when no cached price is configured). Per-token
+                // prices are EUR per 1M tokens, so divide by 1M to match ModelEndpoint.CalculateCost.
                 long cached = Math.Min(r.TotalCached, r.TotalInput);
                 decimal? input = endpoint.InputTokenCost is { } ic
-                    ? ic * (r.TotalInput - cached) + (endpoint.CachedInputTokenCost ?? ic) * cached
+                    ? (ic * (r.TotalInput - cached) + (endpoint.CachedInputTokenCost ?? ic) * cached) / 1_000_000m
                     : null;
-                decimal? output = endpoint.OutputTokenCost is { } oc ? oc * r.TotalOutput : null;
+                decimal? output = endpoint.OutputTokenCost is { } oc ? oc * r.TotalOutput / 1_000_000m : null;
                 decimal? total = (input ?? 0m) + (output ?? 0m);
                 return new CostEstimateStat(r.EndpointId, input, output, total);
             })
