@@ -2,13 +2,16 @@ import { i18n } from '@lingui/core'
 
 // The set of UI languages, kept in sync with the backend's
 // Proxytrace.Domain.User.SupportedLanguages and lingui.config.ts `locales`.
-export const SUPPORTED_LOCALES = ['en', 'de'] as const
+export const SUPPORTED_LOCALES = ['en', 'de', 'fr', 'es', 'it'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 /** Native display name per locale, shown in the language selector. */
 export const LOCALE_NAMES: Record<Locale, string> = {
   en: 'English',
   de: 'Deutsch',
+  fr: 'Français',
+  es: 'Español',
+  it: 'Italiano',
 }
 
 export const DEFAULT_LOCALE: Locale = 'en'

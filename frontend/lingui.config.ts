@@ -6,7 +6,7 @@ import { formatter } from '@lingui/format-po'
 // Keep `locales` in sync with the backend's Proxytrace.Domain.User.SupportedLanguages.
 export default defineConfig({
   sourceLocale: 'en',
-  locales: ['en', 'de'],
+  locales: ['en', 'de', 'fr', 'es', 'it'],
   catalogs: [
     {
       path: '<rootDir>/src/locales/{locale}/messages',

@@ -12,7 +12,7 @@ public static class SupportedLanguages
     public const string Default = "en";
 
     /// <summary>All selectable UI language codes, including <see cref="Default"/>.</summary>
-    public static IReadOnlyList<string> All { get; } = ["en", "de"];
+    public static IReadOnlyList<string> All { get; } = ["en", "de", "fr", "es", "it"];
 
     /// <summary>True when <paramref name="code"/> is a language the UI can be displayed in.</summary>
     public static bool IsSupported(string? code) => code is not null && All.Contains(code);

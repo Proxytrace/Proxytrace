@@ -75,6 +75,10 @@ msgstr "{0, plural, one {# Evaluator} other {# Evaluators}}"
 msgid "{0, plural, one {# failing run motivated this} other {# failing runs motivated this}}"
 msgstr "{0, plural, one {# fehlgeschlagener Run hat dies motiviert} other {# fehlgeschlagene Runs haben dies motiviert}}"
 
+#. placeholder {0}: theory.evidenceTestRunIds.length
+msgid "{0, plural, one {# failing run} other {# failing runs}}"
+msgstr "{0, plural, one {# fehlgeschlagener Run} other {# fehlgeschlagene Runs}}"
+
 #. placeholder {0}: p.memberCount
 msgid "{0, plural, one {# member} other {# members}}"
 msgstr "{0, plural, one {# Member} other {# Members}}"
@@ -116,6 +120,10 @@ msgstr "{0, plural, one {# Suite für diesen Agent} other {# Suites für diesen 
 msgid "{0, plural, one {# suite} other {# suites}}"
 msgstr "{0, plural, one {# Suite} other {# Suites}}"
 
+#. placeholder {0}: visibleTheories.length
+msgid "{0, plural, one {# theory} other {# theories}}"
+msgstr "{0, plural, one {# Theorie} other {# Theorien}}"
+
 #. placeholder {0}: a.toolCount
 #. placeholder {0}: agent.toolCount
 #. placeholder {0}: v.tools.length
@@ -142,7 +150,7 @@ msgstr "{0, plural, one {Zeige # weitere Zeile} other {Zeige # weitere Zeilen}}"
 msgid "{0, plural, one {Waiting for # action} other {Waiting for # actions}}"
 msgstr "{0, plural, one {Warte auf # Aktion} other {Warte auf # Aktionen}}"
 
-#. placeholder {0}: adoptionLabel(proposal)
+#. placeholder {0}: i18n._(adoptionLabel(proposal))
 msgid "{0} — the change is live in the agent."
 msgstr "{0} — die Änderung ist im Agent live."
 
@@ -291,13 +299,9 @@ msgstr "{0} Runs · {range}"
 msgid "{0} selected"
 msgstr "{0} ausgewählt"
 
-#. placeholder {0}: badge.label
-msgid "{0} tier"
-msgstr "{0} Stufe"
-
-#. placeholder {0}: badge.label
-msgid "{0} tier — upgrade"
-msgstr "{0} Stufe — Upgrade"
+#. placeholder {0}: Math.round(v)
+msgid "{0} t/s"
+msgstr "{0} t/s"
 
 #. placeholder {0}: fmtTokens(totalTok)
 msgid "{0} tok"
@@ -318,6 +322,15 @@ msgstr "{0} gesamt"
 #. placeholder {0}: Math.round(v)
 msgid "{0} traces"
 msgstr "{0} Traces"
+
+#. placeholder {0}: fmtTokens(limits.MaxTracesPerMonth ?? 10_000)
+#. placeholder {1}: limits.TraceRetentionDays ?? 14
+msgid "{0} traces per month, kept {1} days"
+msgstr "{0} Traces pro Monat, {1} Tage aufbewahrt"
+
+#. placeholder {0}: limits.TraceRetentionDays ?? 365
+msgid "{0}-day trace retention"
+msgstr "Trace-Aufbewahrung für {0} Tage"
 
 #. placeholder {0}: m.name
 #. placeholder {1}: fmtTokens(m.tokens)
@@ -382,6 +395,10 @@ msgstr "{0}% → {1}% Bestehensrate"
 msgid "{0}% pass"
 msgstr "{0}% bestanden"
 
+#. placeholder {0}: a.toolCount
+msgid "{0}t"
+msgstr "{0}t"
+
 #. placeholder {0}: suiteSchedules.length
 msgid "{activeCount} active · {0} total"
 msgstr "{activeCount} aktiv · {0} gesamt"
@@ -411,6 +428,12 @@ msgstr "{kindLabel} für {0}"
 msgid "{label} (Enterprise)"
 msgstr "{label} (Enterprise)"
 
+msgid "{label} tier"
+msgstr "{label}-Tarif"
+
+msgid "{label} tier — upgrade"
+msgstr "{label}-Tarif — Upgrade"
+
 msgid "{lineCount, plural, one {# line} other {# lines}}"
 msgstr "{lineCount, plural, one {# Zeile} other {# Zeilen}}"
 
@@ -419,6 +442,15 @@ msgstr "{memberCount, plural, one {# Member} other {# Member}}"
 
 msgid "{msgCount, plural, one {# msg} other {# msgs}}"
 msgstr "{msgCount, plural, one {# msg} other {# msgs}}"
+
+msgid "{n} agents"
+msgstr "{n} Agents"
+
+msgid "{n} projects"
+msgstr "{n} Projekte"
+
+msgid "{n} test suites"
+msgstr "{n} Test Suites"
 
 msgid "{passed}/{total} passed"
 msgstr "{passed}/{total} bestanden"
@@ -448,6 +480,9 @@ msgstr "{runCount, plural, one {Run} other {Runs}}"
 
 msgid "{runCount} models"
 msgstr "{runCount} Modelle"
+
+msgid "{sizeB} B"
+msgstr "{sizeB} B"
 
 msgid "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
 msgstr "{toolCallCount, plural, one {# Tool-Aufruf} other {# Tool-Aufrufe}}"
@@ -495,11 +530,18 @@ msgstr "+ Wird hinzugefügt"
 msgid "+{0} more"
 msgstr "+{0} mehr"
 
+#. placeholder {0}: stats.provenGainPt
+msgid "+{0}pt"
+msgstr "+{0}pt"
+
 msgid "+{added} added"
 msgstr "+{added} hinzugefügt"
 
 msgid "+{hidden} more"
 msgstr "+{hidden} weitere"
+
+msgid "+7pt"
+msgstr "+7pt"
 
 #. placeholder {0}: fmtLatency(stats.latencyStdDevMs)
 msgid "± {0}"
@@ -520,6 +562,9 @@ msgstr "<0>{0}</0> aus"
 #. placeholder {0}: (summary?.totalCalls ?? 0).toLocaleString()
 msgid "<0>{0}</0> traces"
 msgstr "<0>{0}</0> Traces"
+
+msgid "<your rubric goes here>"
+msgstr "<your rubric goes here>"
 
 msgid "= no change vs previous"
 msgstr "= keine Änderung gegenüber vorher"
@@ -549,6 +594,18 @@ msgstr "○ Nicht verbunden"
 msgid "● Attached"
 msgstr "● Verbunden"
 
+msgid "0pt"
+msgstr "0pt"
+
+msgid "1 agent"
+msgstr "1 Agent"
+
+msgid "1 project"
+msgstr "1 Projekt"
+
+msgid "1 test suite"
+msgstr "1 Test Suite"
+
 msgid "2 proposals"
 msgstr "2 Proposals"
 
@@ -567,6 +624,9 @@ msgstr "Ein Reviewer hat entschieden, diese Änderung nicht anzuwenden."
 
 msgid "a suite"
 msgstr "eine Suite"
+
+msgid "A/B"
+msgstr "A/B"
 
 msgid "A/B in flight"
 msgstr "A/B läuft"
@@ -654,6 +714,10 @@ msgstr "Admin ist bereits vorhanden."
 msgid "Adopted"
 msgstr "Übernommen"
 
+#. placeholder {0}: proposal.adoptedAgentVersionNumber
+msgid "Adopted in v{0}"
+msgstr "Eingeführt in v{0}"
+
 msgid "against <0>{selectedModelName}</0>"
 msgstr "gegen <0>{selectedModelName}</0>"
 
@@ -675,11 +739,17 @@ msgstr "Agent hat keine Tools."
 msgid "Agent observability platform"
 msgstr "Agent-Observability-Plattform"
 
+msgid "Agent Playground"
+msgstr "Agent Playground"
+
 msgid "Agent stats · 30d"
 msgstr "Agent-Statistiken · 30 Tage"
 
 msgid "Agent:"
 msgstr "Agent:"
+
+msgid "Agentic evaluators"
+msgstr "Agentic evaluators"
 
 msgid "Agentic evaluators require a paid plan"
 msgstr "Agentic Evaluators erfordern einen kostenpflichtigen Plan"
@@ -734,6 +804,15 @@ msgstr "Run wird analysiert…"
 msgid "Anomalies and alerts from your test runs will appear here."
 msgstr "Anomalien und Warnungen aus deinen Test-Runs erscheinen hier."
 
+msgid "Anthropic"
+msgstr "Anthropic"
+
+msgid "Anthropic’s OpenAI-compatible endpoint — use your regular Anthropic API key."
+msgstr "Anthropic’s OpenAI-compatible endpoint — use your regular Anthropic API key."
+
+msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
+msgstr "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
+
 msgid "API key copied"
 msgstr "API key kopiert"
 
@@ -764,6 +843,9 @@ msgstr "Bitte einen Admin um einen neuen Einladungslink."
 msgid "Ask Tracey…  (/ for tools)"
 msgstr "Frag Tracey…  (/ für Tools)"
 
+msgid "Assistant"
+msgstr "Assistant"
+
 msgid "ASSISTANT"
 msgstr "ASSISTANT"
 
@@ -786,6 +868,9 @@ msgstr "Evaluators anhängen (optional). Sie bewerten jeden Testlauf."
 msgid "Attached to"
 msgstr "Angehängt an"
 
+msgid "Audit log"
+msgstr "Audit-Log"
+
 #. placeholder {0}: auth.error.message
 msgid "Auth error: {0}"
 msgstr "Authentifizierungsfehler: {0}"
@@ -802,6 +887,9 @@ msgstr "Auto-Aktualisierung · {0} aktuellste"
 
 msgid "Auto-reindex on change"
 msgstr "Bei Änderung automatisch neu indizieren"
+
+msgid "Auto-rejected by A/B"
+msgstr "Von A/B automatisch abgelehnt"
 
 msgid "Avg"
 msgstr "Ø"
@@ -821,11 +909,20 @@ msgstr "Ø-Score"
 msgid "Awaited actions"
 msgstr "Ausstehende Aktionen"
 
+msgid "Awaiting adoption"
+msgstr "Wartet auf Einführung"
+
+msgid "Awaiting decision"
+msgstr "Wartet auf Entscheidung"
+
 msgid "awaiting telemetry"
 msgstr "wartet auf Telemetrie"
 
 msgid "Azure"
 msgstr "Azure"
+
+msgid "Azure AI Foundry"
+msgstr "Azure AI Foundry"
 
 msgid "Bad"
 msgstr "Schlecht"
@@ -1003,6 +1100,9 @@ msgstr "Bestätigen"
 
 msgid "Confirmed — ready to ship"
 msgstr "Bestätigt — bereit zum Ausrollen"
+
+msgid "Connect your model provider"
+msgstr "Verbinde deinen model provider"
 
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt…"
@@ -1182,6 +1282,9 @@ msgstr "Erstellen Sie Ihren ersten Evaluator, um mit dem Scoring von Agent-Antwo
 msgid "Create your first project to get started."
 msgstr "Erstellen Sie Ihr erstes Projekt, um loszulegen."
 
+msgid "Create your project"
+msgstr "Erstelle dein Projekt"
+
 msgid "Create, switch, and delete projects across the workspace."
 msgstr "Projekte im gesamten Workspace erstellen, wechseln und löschen."
 
@@ -1218,6 +1321,9 @@ msgstr "Benutzerdefiniert"
 msgid "Custom (write your own)"
 msgstr "Benutzerdefiniert (eigene Angabe)"
 
+msgid "Custom evaluators"
+msgstr "Custom evaluators"
+
 msgid "Custom range"
 msgstr "Benutzerdefinierter Bereich"
 
@@ -1232,6 +1338,9 @@ msgstr "Gefahrenbereich"
 
 msgid "Dashboard"
 msgstr "Dashboard"
+
+msgid "Dashboard, agents, test suites & evaluators"
+msgstr "Dashboard, agents, test suites & evaluators"
 
 msgid "days"
 msgstr "Tage"
@@ -1351,6 +1460,9 @@ msgstr "Fertig"
 msgid "Download .md"
 msgstr ".md herunterladen"
 
+msgid "Draft created"
+msgstr "Entwurf erstellt"
+
 msgid "Drag to reorder"
 msgstr "Zum Neuordnen ziehen"
 
@@ -1362,6 +1474,9 @@ msgstr "z. B. Customer Support Bot"
 
 msgid "e.g. gpt-4o"
 msgstr "z. B. gpt-4o"
+
+msgid "e.g. OpenAI"
+msgstr "z. B. OpenAI"
 
 msgid "e.g. OpenAI Production"
 msgstr "z. B. OpenAI Production"
@@ -1480,6 +1595,9 @@ msgstr "Evaluator-Name"
 
 msgid "Evaluator playground"
 msgstr "Evaluator-Playground"
+
+msgid "Evaluator Playground"
+msgstr "Evaluator Playground"
 
 msgid "Evaluators"
 msgstr "Evaluators"
@@ -1618,11 +1736,17 @@ msgstr "Frequenzstrafe"
 msgid "Frequency"
 msgstr "Frequenz"
 
+msgid "Friday"
+msgstr "Freitag"
+
 msgid "From"
 msgstr "Von"
 
 msgid "Full proxy setup guide →"
 msgstr "Vollständige Proxy-Einrichtungsanleitung →"
+
+msgid "Full trace capture through the OpenAI-compatible proxy"
+msgstr "Vollständige Trace-Erfassung über den OpenAI-kompatiblen Proxy"
 
 msgid "Fully correct"
 msgstr "Vollständig korrekt"
@@ -1669,6 +1793,9 @@ msgstr "Kulanzzeitraum"
 msgid "Grading rubric"
 msgstr "Bewertungsrubrik"
 
+msgid "Grok models via xAI’s OpenAI-compatible API."
+msgstr "Grok-Modelle über die OpenAI-kompatible API von xAI."
+
 msgid "Have a license key?"
 msgstr "Hast du einen Lizenzschlüssel?"
 
@@ -1705,11 +1832,17 @@ msgstr "Zum Vorschauen hovern oder eine frühere Bewertung auswählen."
 msgid "How can I help?"
 msgstr "Wie kann ich helfen?"
 
+msgid "https://api.openai.com/v1"
+msgstr "https://api.openai.com/v1"
+
 msgid "Hypotheses awaiting a test"
 msgstr "Hypothesen, die auf einen Test warten"
 
 msgid "Hypotheses spawned from failing test results, moving through validation — from untested to proven."
 msgstr "Hypothesen aus fehlgeschlagenen Testergebnissen, die durch die Validierung laufen — von ungetestet bis bewährt."
+
+msgid "Hypothesised"
+msgstr "Hypothetisch"
 
 msgid "id"
 msgstr "id"
@@ -1723,8 +1856,14 @@ msgstr "Verbessert"
 msgid "Improved the pass rate."
 msgstr "Die Bestehensquote verbessert."
 
+msgid "Improvement confirmed"
+msgstr "Verbesserung bestätigt"
+
 msgid "in {win}"
 msgstr "in {win}"
+
+msgid "In flight"
+msgstr "Läuft"
 
 msgid "Index status"
 msgstr "Indexstatus"
@@ -1734,6 +1873,9 @@ msgstr "Indizierte Entity-Typen"
 
 msgid "Indexing configuration for the active project."
 msgstr "Indexierungskonfiguration für das aktive Projekt."
+
+msgid "Info"
+msgstr "Info"
 
 msgid "Ingestion URL"
 msgstr "Ingestion-URL"
@@ -1790,6 +1932,9 @@ msgstr "Einladung abgelaufen oder bereits verwendet"
 
 msgid "Irreversible, workspace-wide maintenance actions."
 msgstr "Nicht umkehrbare, workspace-weite Wartungsaktionen."
+
+msgid "JSON"
+msgstr "JSON"
 
 msgid "JSON schema"
 msgstr "JSON-Schema"
@@ -1999,6 +2144,9 @@ msgstr "Trace wird geladen…"
 msgid "Loading…"
 msgstr "Wird geladen…"
 
+msgid "Local"
+msgstr "Lokal"
+
 msgid "Local authentication was enabled on this install. Confirm your email and choose a password to finish migrating your existing user."
 msgstr "Die lokale Authentifizierung wurde bei dieser Installation aktiviert. Bestätige deine E-Mail und wähle ein Passwort, um die Migration deines bestehenden Users abzuschließen."
 
@@ -2031,6 +2179,9 @@ msgstr "Als übernommen markieren"
 
 msgid "Mark as read"
 msgstr "Als gelesen markieren"
+
+msgid "Marked adopted"
+msgstr "Als übernommen markiert"
 
 msgid "Max"
 msgstr "Max"
@@ -2101,11 +2252,17 @@ msgstr "Modellwechsel"
 msgid "Models"
 msgstr "Modelle"
 
+msgid "Models are discovered from your provider automatically; prices load from the catalogue."
+msgstr "Modelle werden automatisch von Ihrem Provider erkannt; Preise werden aus dem Katalog geladen."
+
 msgid "modified"
 msgstr "geändert"
 
 msgid "Modified from agent default"
 msgstr "Von der Agent-Standardvorgabe geändert"
+
+msgid "Monday"
+msgstr "Montag"
 
 msgid "Monthly trace quota reached — new traces are being dropped until the quota resets next month."
 msgstr "Monatliches Trace-Kontingent erreicht — neue Traces werden verworfen, bis das Kontingent nächsten Monat zurückgesetzt wird."
@@ -2131,6 +2288,9 @@ msgstr "Verschieben…"
 
 msgid "Moving…"
 msgstr "Wird verschoben…"
+
+msgid "ms"
+msgstr "ms"
 
 msgid "My judge"
 msgstr "Mein Gutachter"
@@ -2282,6 +2442,9 @@ msgstr "Keine Evaluators"
 
 msgid "No evaluators yet"
 msgstr "Noch keine Evaluators"
+
+msgid "No improvement"
+msgstr "Keine Verbesserung"
 
 msgid "No improvement — theory rejected."
 msgstr "Keine Verbesserung — Theory abgelehnt."
@@ -2497,6 +2660,9 @@ msgstr "Nicht-Model-Daten gelöscht"
 msgid "None configured"
 msgstr "Keine konfiguriert"
 
+msgid "None generated"
+msgstr "Keine erzeugt"
+
 msgid "Not attached to any suite yet."
 msgstr "Noch keinem Suite zugeordnet."
 
@@ -2517,6 +2683,9 @@ msgstr "Noch von keinem Agenten verwendet."
 
 msgid "Not valid JSON — showing raw text"
 msgstr "Kein gültiges JSON — Rohtext wird angezeigt"
+
+msgid "Not yet tested"
+msgstr "Noch nicht getestet"
 
 msgid "Nothing here yet"
 msgstr "Noch nichts hier"
@@ -2602,6 +2771,12 @@ msgstr "Dieses Ergebnis in der Run-Matrix öffnen"
 msgid "Open trace"
 msgstr "Trace öffnen"
 
+msgid "OpenAI"
+msgstr "OpenAI"
+
+msgid "OpenAI-compatible"
+msgstr "OpenAI-kompatibel"
+
 msgid "Optimization cancelled."
 msgstr "Optimierung abgebrochen."
 
@@ -2626,6 +2801,9 @@ msgstr "Reihenfolge"
 msgid "Other"
 msgstr "Sonstiges"
 
+msgid "out"
+msgstr "aus"
+
 msgid "Output"
 msgstr "Ausgabe"
 
@@ -2643,6 +2821,15 @@ msgstr "Generierte Ausgabetokens"
 
 msgid "Overview"
 msgstr "Übersicht"
+
+#. placeholder {0}: fmtLatency(telemetry.p95Ms)
+msgid "p95 {0}"
+msgstr "p95 {0}"
+
+#. placeholder {0}: fmtLatency(latencyStats.p95)
+#. placeholder {1}: fmtLatency(latencyStats.p99)
+msgid "p95 {0} · p99 {1}"
+msgstr "p95 {0} · p99 {1}"
 
 msgid "p95 latency"
 msgstr "p95-Latenz"
@@ -2728,6 +2915,9 @@ msgstr "Ausstehende Entfernung"
 msgid "Pending review"
 msgstr "Ausstehende Prüfung"
 
+msgid "Pending validation"
+msgstr "Validierung ausstehend"
+
 msgid "per call"
 msgstr "pro Call"
 
@@ -2779,8 +2969,14 @@ msgstr "Wähle einen Eintrag aus der Liste, um seine Definition, zugehörige Sui
 msgid "Pick to start"
 msgstr "Zum Starten auswählen"
 
+msgid "Pick your default model"
+msgstr "Wähle dein Standardmodell"
+
 msgid "Point your agent at the proxy — one base-URL change — and every request, response, tool call, token and cost is recorded."
 msgstr "Richte deinen Agenten auf den Proxy aus — nur eine Base-URL-Änderung — und jede Anfrage, jede Antwort, jeder Tool-Aufruf, jedes Token und jeder Cost wird aufgezeichnet."
+
+msgid "Point your client at Proxytrace"
+msgstr "Richte deinen Client auf Proxytrace aus"
 
 msgid "Preparing questions…"
 msgstr "Fragen werden vorbereitet…"
@@ -2821,6 +3017,9 @@ msgstr "Projects"
 #. placeholder {0}: user.email
 msgid "Projects — {0}"
 msgstr "Projects — {0}"
+
+msgid "Projects group your agents, traces, and benchmarks."
+msgstr "Projekte gruppieren Ihre Agents, Traces und Benchmarks."
 
 msgid "Projects, Users & API keys"
 msgstr "Projects, Users & API keys"
@@ -2899,6 +3098,12 @@ msgstr "Proxytrace <0>{0}</0> ist verfügbar — du verwendest <1>{1}</1>."
 
 msgid "Proxytrace API keys"
 msgstr "Proxytrace API-Schlüssel"
+
+msgid "Proxytrace speaks the OpenAI protocol — point it at OpenAI or any OpenAI-compatible endpoint."
+msgstr "Proxytrace spricht das OpenAI-Protokoll — richte es auf OpenAI oder einen beliebigen OpenAI-kompatiblen Endpoint."
+
+msgid "pt"
+msgstr "pt"
 
 msgid "Pulled from the provider; prices load automatically."
 msgstr "Vom Provider übernommen; Preise werden automatisch geladen."
@@ -3180,6 +3385,9 @@ msgstr "Beispiel"
 msgid "Sampling and budget controls."
 msgstr "Sampling- und Budget-Steuerung."
 
+msgid "Saturday"
+msgstr "Samstag"
+
 msgid "Save"
 msgstr "Speichern"
 
@@ -3203,6 +3411,9 @@ msgstr "Geplant"
 
 msgid "Scheduled runs"
 msgstr "Geplante Runs"
+
+msgid "Scheduled test runs"
+msgstr "Geplante Test Runs"
 
 msgid "Scheduled test runs are part of the Enterprise tier."
 msgstr "Geplante Testläufe sind Teil des Enterprise-Tiers."
@@ -3454,6 +3665,9 @@ msgstr "Anmelden"
 msgid "significant"
 msgstr "erheblich"
 
+msgid "sk-…"
+msgstr "sk-…"
+
 msgid "Snippet length (characters)"
 msgstr "Snippet-Länge (Zeichen)"
 
@@ -3471,6 +3685,12 @@ msgstr "Quelle"
 
 msgid "Split by model"
 msgstr "Nach Modell aufteilen"
+
+msgid "SSO"
+msgstr "SSO"
+
+msgid "SSO / OIDC sign-in"
+msgstr "SSO / OIDC-Anmeldung"
 
 msgid "Stacktrace"
 msgstr "Stacktrace"
@@ -3533,6 +3753,9 @@ msgstr "Streaming…"
 msgid "Submit"
 msgstr "Absenden"
 
+msgid "Submitted directly"
+msgstr "Direkt eingereicht"
+
 msgid "Submitted via {sourceLabel} — no failing runs attached. Validated against {suite}."
 msgstr "Über {sourceLabel} gesendet — keine fehlgeschlagenen Runs angehängt. Gegen {suite} validiert."
 
@@ -3553,6 +3776,12 @@ msgstr "Suite-Passraten"
 
 msgid "Suites"
 msgstr "Suites"
+
+msgid "Sunday"
+msgstr "Sonntag"
+
+msgid "Swap the base URL for your project’s proxy endpoint — your existing provider API key keeps working."
+msgstr "Tausche die Basis-URL gegen den Proxy-Endpoint deines Projekts aus — dein vorhandener Provider API key funktioniert weiterhin."
 
 msgid "Switch endpoint"
 msgstr "Endpoint wechseln"
@@ -3595,6 +3824,9 @@ msgstr "System Prompt-Diff"
 
 msgid "System Traces"
 msgstr "System Traces"
+
+msgid "t/s"
+msgstr "t/s"
 
 msgid "Talk to {agentName}"
 msgstr "Mit {agentName} sprechen"
@@ -3648,6 +3880,9 @@ msgstr "Testlauf abgebrochen."
 msgid "Test runs"
 msgstr "Testläufe"
 
+msgid "Test Runs"
+msgstr "Test Runs"
+
 msgid "Test runs & test run groups"
 msgstr "Testläufe & Testlauf-Gruppen"
 
@@ -3655,6 +3890,9 @@ msgid "Test suite"
 msgstr "Test Suite"
 
 msgid "Test suites"
+msgstr "Test Suites"
+
+msgid "Test Suites"
 msgstr "Test Suites"
 
 msgid "Test suites & Test cases"
@@ -3691,6 +3929,12 @@ msgstr "Die konfigurierte Lizenz ist ungültig — es laufen Free-Tier-Limits."
 msgid "The installation falls back to the environment-supplied license, or the Free tier. Enterprise features stop working immediately if no other license is configured."
 msgstr "Die Installation fällt auf die vom System bereitgestellte Lizenz oder den Free-Tier zurück. Enterprise-Features funktionieren sofort nicht mehr, wenn keine andere Lizenz konfiguriert ist."
 
+msgid "The license is fixed by this deployment (demo mode) and cannot be changed here."
+msgstr "Die Lizenz ist durch diese Bereitstellung festgelegt (Demo-Modus) und kann hier nicht geändert werden."
+
+msgid "The native OpenAI API — works out of the box."
+msgstr "Die native OpenAI API — funktioniert sofort."
+
 msgid "The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
 msgstr "Die Runde erreichte ihr Tool-Schritt-Budget, bevor Tracey antworten konnte. Bitte sie, fortzufahren."
 
@@ -3715,6 +3959,9 @@ msgstr "Diese Aktion kann nicht rückgängig gemacht werden."
 msgid "This action cannot be undone. Type <0>{entityName}</0> to confirm."
 msgstr "Diese Aktion kann nicht rückgängig gemacht werden. Geben Sie zur Bestätigung <0>{entityName}</0> ein."
 
+msgid "This action exceeds a usage limit of your current license tier. Upgrade to Enterprise for unlimited projects, agents, users, and test suites."
+msgstr "Diese Aktion überschreitet das Nutzungslimit Ihrer aktuellen Lizenzstufe. Wechseln Sie zu Enterprise für unbegrenzte Projekte, Agents, Users und Test Suites."
+
 msgid "This becomes your project's default model. All discovered models are added with prices loaded automatically from the catalogue — nothing to type in."
 msgstr "Dadurch wird das Standardmodell Ihres Projekts festgelegt. Alle erkannten Modelle werden mit automatisch aus dem Katalog geladenen Preisen hinzugefügt — nichts muss eingegeben werden."
 
@@ -3730,15 +3977,27 @@ msgstr "Dieser Evaluator hat diesen Case noch nicht bewertet."
 msgid "This evaluator kind returns a score without written reasoning."
 msgstr "Dieser Evaluator-Typ gibt eine Bewertung ohne schriftliche Begründung zurück."
 
+msgid "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock it."
+msgstr "Diese Funktion ist Teil der Proxytrace Enterprise-Stufe. Aktualisieren Sie Ihre Lizenz, um sie freizuschalten."
+
 msgid "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more."
 msgstr "Diese Funktion ist Teil der Proxytrace Enterprise-Stufe. Aktualisieren Sie Ihre Lizenz, um Optimization Proposals, LLM-judge Evaluators und mehr freizuschalten."
 
-#. placeholder {0}: tier.tierLabel
+#. placeholder {0}: i18n._(tier.tierLabel)
 msgid "This installation: {0}"
 msgstr "Diese Installation: {0}"
 
+msgid "This is an Enterprise feature"
+msgstr "Dies ist eine Enterprise-Funktion"
+
 msgid "This license key is not valid."
 msgstr "Dieser Lizenzschlüssel ist ungültig."
+
+msgid "This license was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied license."
+msgstr "Diese Lizenz wurde über die UI aktiviert und in der Datenbank gespeichert. Sie bleibt nach Neustarts erhalten und hat Vorrang vor einer über die Umgebung bereitgestellten Lizenz."
+
+msgid "This license was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it."
+msgstr "Diese Lizenz wurde über die Umgebungsvariable PROXYTRACE_LICENSE bereitgestellt. Ein hier aktivierter Schlüssel wird in der Datenbank gespeichert und hat Vorrang davor."
 
 msgid "this page"
 msgstr "diese Seite"
@@ -3764,6 +4023,9 @@ msgstr "Dadurch werden <0>{0}</0> dauerhaft entfernt und von allen Test Suites g
 
 msgid "Throughput"
 msgstr "Durchsatz"
+
+msgid "Thursday"
+msgstr "Donnerstag"
 
 msgid "Tier"
 msgstr "Stufe"
@@ -3883,6 +4145,9 @@ msgstr "Traces zum Schutz vor vergangenen Bugs und zuvor behobenen Problemen."
 msgid "Tracey AI"
 msgstr "Tracey AI"
 
+msgid "Tracey AI assistant"
+msgstr "Tracey AI assistant"
+
 msgid "Tracey couldn’t load this."
 msgstr "Tracey konnte dies nicht laden."
 
@@ -3909,6 +4174,9 @@ msgstr "Versuche, den Zeitraum, Agent oder die Suche zu vergrößern."
 
 msgid "TTFT"
 msgstr "TTFT"
+
+msgid "Tuesday"
+msgstr "Dienstag"
 
 #. placeholder {0}: turns.length - i
 msgid "Turn {0}"
@@ -3944,6 +4212,21 @@ msgstr "Rückgängig"
 msgid "Undo remove"
 msgstr "Entfernen rückgängig machen"
 
+msgid "Unknown"
+msgstr "Unbekannt"
+
+msgid "Unlimited agents"
+msgstr "Unbegrenzte Agents"
+
+msgid "Unlimited projects"
+msgstr "Unbegrenzte Projekte"
+
+msgid "Unlimited projects, agents & test suites"
+msgstr "Unbegrenzte Projekte, Agents und Test Suites"
+
+msgid "Unlimited test suites"
+msgstr "Unbegrenzte Test Suites"
+
 msgid "Unlock everything with Enterprise — proxytrace.dev"
 msgstr "Alles freischalten mit Enterprise — proxytrace.dev"
 
@@ -3968,8 +4251,14 @@ msgstr "Upstream-API-Schlüssel"
 msgid "Upstream key copied"
 msgstr "Upstream-Schlüssel kopiert"
 
+msgid "Use your resource’s OpenAI-compatible v1 endpoint. Model discovery lists the models you have deployed."
+msgstr "Verwenden Sie den OpenAI-kompatiblen v1-Endpunkt Ihrer Ressource. Die Modellauswahl zeigt die Modelle an, die Sie bereitgestellt haben."
+
 msgid "Used tools"
 msgstr "Verwendete Tools"
+
+msgid "User"
+msgstr "User"
 
 msgid "USER"
 msgstr "BENUTZER"
@@ -4093,6 +4382,12 @@ msgstr "Warten auf … Aktionen"
 msgid "Waiting for the model to finish streaming…"
 msgstr "Warten, bis das Modell mit dem Streaming fertig ist…"
 
+msgid "Warning"
+msgstr "Warnung"
+
+msgid "Wednesday"
+msgstr "Mittwoch"
+
 msgid "Weekly"
 msgstr "Wöchentlich"
 
@@ -4141,6 +4436,9 @@ msgstr "Schlechtest"
 msgid "Writing…"
 msgstr "Wird geschrieben…"
 
+msgid "xAI"
+msgstr "xAI"
+
 msgid "You"
 msgstr "Du"
 
@@ -4158,6 +4456,9 @@ msgstr "Du kannst dein eigenes Konto nicht ändern."
 
 msgid "You stopped before these finished — they keep running in the background."
 msgstr "Du hast aufgehört, bevor diese fertig waren — sie laufen im Hintergrund weiter."
+
+msgid "You've reached a Free-tier limit"
+msgstr "Sie haben ein Limit des Free-Tiers erreicht"
 
 msgid "you@example.com"
 msgstr "you@example.com"
