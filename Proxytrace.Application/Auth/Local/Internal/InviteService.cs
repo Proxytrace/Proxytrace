@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Proxytrace.Application.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Invite;
 using Proxytrace.Domain.User;
@@ -18,6 +19,7 @@ internal sealed class InviteService : IInviteService
     private readonly IPasswordService passwords;
     private readonly ITransaction transaction;
     private readonly ILicenseService license;
+    private readonly ISecretHasher hasher;
 
     public InviteService(
         IInviteRepository invites,
@@ -26,7 +28,8 @@ internal sealed class InviteService : IInviteService
         IUser.CreateNew createUser,
         IPasswordService passwords,
         ITransaction transaction,
-        ILicenseService license)
+        ILicenseService license,
+        ISecretHasher hasher)
     {
         this.invites = invites;
         this.users = users;
@@ -35,19 +38,23 @@ internal sealed class InviteService : IInviteService
         this.passwords = passwords;
         this.transaction = transaction;
         this.license = license;
+        this.hasher = hasher;
     }
 
-    public async Task<IInvite> CreateAsync(
-        string email, 
+    public async Task<InviteCreated> CreateAsync(
+        string email,
         UserRole role,
-        IUser invitedBy, 
+        IUser invitedBy,
         CancellationToken cancellationToken = default)
     {
         license.Ensure(LicenseLimit.MaxUsers, await users.CountAsync(cancellationToken));
 
-        var token = GenerateToken();
-        var invite = createInvite(email, role, token, DateTimeOffset.UtcNow + Ttl, invitedBy);
-        return await invite.AddAsync(cancellationToken);
+        // Persist only the hash of the token; the raw value is returned once so the caller can build
+        // the invite link, and is unrecoverable afterwards.
+        var rawToken = GenerateToken();
+        var invite = createInvite(email, role, hasher.Hash(rawToken), DateTimeOffset.UtcNow + Ttl, invitedBy);
+        var saved = await invite.AddAsync(cancellationToken);
+        return new InviteCreated(saved, rawToken);
     }
 
     public async Task<IInvite?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)

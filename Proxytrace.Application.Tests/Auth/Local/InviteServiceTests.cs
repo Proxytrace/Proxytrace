@@ -21,12 +21,14 @@ public sealed class InviteServiceTests : BaseTest<Module>
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
 
-        var invite = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
+        var created = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
 
-        invite.Token.Should().NotBeNullOrEmpty();
-        invite.Email.Should().Be("a@b.com");
-        invite.ConsumedAt.Should().BeNull();
-        invite.ExpiresAt.Should().BeAfter(DateTimeOffset.UtcNow.AddDays(6));
+        created.RawToken.Should().NotBeNullOrEmpty();
+        // Only the hash is persisted — never the raw token.
+        created.Invite.TokenHash.Should().NotBe(created.RawToken);
+        created.Invite.Email.Should().Be("a@b.com");
+        created.Invite.ConsumedAt.Should().BeNull();
+        created.Invite.ExpiresAt.Should().BeAfter(DateTimeOffset.UtcNow.AddDays(6));
     }
 
     [TestMethod]
@@ -35,9 +37,9 @@ public sealed class InviteServiceTests : BaseTest<Module>
         var s = GetServices(PermissiveLicense);
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
-        var invite = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
+        var created = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
 
-        var fetched = await svc.GetByTokenAsync(invite.Token, CancellationToken);
+        var fetched = await svc.GetByTokenAsync(created.RawToken, CancellationToken);
         fetched.Should().NotBeNull();
         fetched.Email.Should().Be("a@b.com");
     }
@@ -48,16 +50,16 @@ public sealed class InviteServiceTests : BaseTest<Module>
         var s = GetServices(PermissiveLicense);
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
-        var invite = await svc.CreateAsync("new@b.com", UserRole.Admin, inviter, CancellationToken);
+        var created = await svc.CreateAsync("new@b.com", UserRole.Admin, inviter, CancellationToken);
 
-        var newUser = await svc.ConsumeAsync(invite.Token, "Abcdef1!", CancellationToken);
+        var newUser = await svc.ConsumeAsync(created.RawToken, "Abcdef1!", CancellationToken);
 
         newUser.Should().NotBeNull();
         newUser.Email.Should().Be("new@b.com");
         newUser.Role.Should().Be(UserRole.Admin);
         newUser.PasswordHash.Should().NotBeNullOrEmpty();
 
-        (await svc.GetByTokenAsync(invite.Token, CancellationToken)).Should().BeNull();
+        (await svc.GetByTokenAsync(created.RawToken, CancellationToken)).Should().BeNull();
     }
 
     [TestMethod]
@@ -87,9 +89,9 @@ public sealed class InviteServiceTests : BaseTest<Module>
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
 
-        var invite = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
+        var created = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
 
-        invite.Should().NotBeNull();
+        created.Invite.Should().NotBeNull();
     }
 
     // The default (Free) tier caps MaxUsers at 1, so tests that seed a user before inviting must

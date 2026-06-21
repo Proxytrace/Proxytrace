@@ -21,7 +21,8 @@ internal class InviteConfig : AbstractEntityConfiguration<InviteEntity>, IMapper
 
     public override void Configure(EntityTypeBuilder<InviteEntity> builder)
     {
-        builder.HasIndex(e => e.Token).IsUnique();
+        builder.HasIndex(e => e.TokenHash).IsUnique();
+        builder.Property(e => e.TokenHash).HasMaxLength(64);
         builder.HasIndex(e => e.Email);
         builder.HasOne<UserEntity>()
             .WithMany()
@@ -32,7 +33,7 @@ internal class InviteConfig : AbstractEntityConfiguration<InviteEntity>, IMapper
     public async Task<IInvite> Map(InviteEntity stored, CancellationToken cancellationToken = default)
     {
         var inviter = await users.GetAsync(stored.InvitedBy, cancellationToken);
-        return factory(stored.Email, stored.Role, stored.Token, stored.ExpiresAt, stored.ConsumedAt, inviter, stored);
+        return factory(stored.Email, stored.Role, stored.TokenHash, stored.ExpiresAt, stored.ConsumedAt, inviter, stored);
     }
 
     public Task<InviteEntity> Map(IInvite domain, CancellationToken cancellationToken = default)
@@ -41,7 +42,7 @@ internal class InviteConfig : AbstractEntityConfiguration<InviteEntity>, IMapper
             Id = domain.Id,
             Email = domain.Email,
             Role = domain.Role,
-            Token = domain.Token,
+            TokenHash = domain.TokenHash,
             ExpiresAt = domain.ExpiresAt,
             ConsumedAt = domain.ConsumedAt,
             InvitedBy = domain.InvitedBy.Id,

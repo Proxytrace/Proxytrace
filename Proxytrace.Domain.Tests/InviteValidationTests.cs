@@ -21,7 +21,7 @@ public sealed class InviteValidationTests : BaseTest<Module>
 
         invite.Email.Should().Be("invitee@example.com");
         invite.Role.Should().Be(UserRole.Member);
-        invite.Token.Should().Be("tok-abcdef");
+        invite.TokenHash.Should().Be("tok-abcdef");
         invite.ConsumedAt.Should().BeNull();
         invite.InvitedBy.Id.Should().Be(user.Id);
     }

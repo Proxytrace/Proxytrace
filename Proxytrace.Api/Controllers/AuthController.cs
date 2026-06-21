@@ -201,11 +201,12 @@ public class AuthController : ControllerBase
         var me = await currentUser.GetCurrentUserAsync(ct);
         if (me is null) return Unauthorized();
 
-        var invite = await invites.CreateAsync(req.Email, req.Role, me, ct);
+        var created = await invites.CreateAsync(req.Email, req.Role, me, ct);
         audit.LogAudit(
-            AuditAction.UserInvited, nameof(IInvite), invite.Id, req.Email,
+            AuditAction.UserInvited, nameof(IInvite), created.Invite.Id, req.Email,
             details: JsonSerializer.Serialize(new { role = req.Role.ToString() }));
-        return new CreateInviteResponse(invite.Token, BuildInviteUrl(invite.Token), invite.ExpiresAt);
+        // The raw token is available only here; the list endpoint can no longer rebuild the link.
+        return new CreateInviteResponse(created.RawToken, BuildInviteUrl(created.RawToken), created.Invite.ExpiresAt);
     }
 
     private string BuildInviteUrl(string token)
@@ -220,7 +221,9 @@ public class AuthController : ControllerBase
     public async Task<IReadOnlyList<InviteDto>> List(CancellationToken ct)
     {
         var all = await inviteRepo.GetAllAsync(ct);
-        return all.Select(i => new InviteDto(i.Id, i.Email, i.Role, i.ExpiresAt, i.ConsumedAt, BuildInviteUrl(i.Token))).ToArray();
+        // The token is hashed at rest, so the invite link cannot be reconstructed — the list shows
+        // status only; the link is shown once when the invite is created.
+        return all.Select(i => new InviteDto(i.Id, i.Email, i.Role, i.ExpiresAt, i.ConsumedAt)).ToArray();
     }
 
     [Authorize(Roles = nameof(UserRole.Admin))]

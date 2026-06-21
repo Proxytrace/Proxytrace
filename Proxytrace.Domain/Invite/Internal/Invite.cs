@@ -9,7 +9,7 @@ internal record Invite : DomainEntity<IInvite>, IInvite
 {
     public string Email { get; }
     public UserRole Role { get; }
-    public string Token { get; }
+    public string TokenHash { get; }
     public DateTimeOffset ExpiresAt { get; }
     public DateTimeOffset? ConsumedAt { get; private init; }
     public IUser InvitedBy { get; }
@@ -17,14 +17,14 @@ internal record Invite : DomainEntity<IInvite>, IInvite
     public Invite(
         string email,
         UserRole role,
-        string token,
+        string tokenHash,
         DateTimeOffset expiresAt,
         IUser invitedBy,
         IRepository<IInvite> repository) : base(repository)
     {
         Email = email;
         Role = role;
-        Token = token;
+        TokenHash = tokenHash;
         ExpiresAt = expiresAt;
         InvitedBy = invitedBy;
     }
@@ -32,7 +32,7 @@ internal record Invite : DomainEntity<IInvite>, IInvite
     public Invite(
         string email,
         UserRole role,
-        string token,
+        string tokenHash,
         DateTimeOffset expiresAt,
         DateTimeOffset? consumedAt,
         IUser invitedBy,
@@ -41,7 +41,7 @@ internal record Invite : DomainEntity<IInvite>, IInvite
     {
         Email = email;
         Role = role;
-        Token = token;
+        TokenHash = tokenHash;
         ExpiresAt = expiresAt;
         ConsumedAt = consumedAt;
         InvitedBy = invitedBy;
@@ -58,7 +58,7 @@ internal record Invite : DomainEntity<IInvite>, IInvite
         }
 
         yield return Validation.NotNullOrWhiteSpace(Email);
-        yield return Validation.NotNullOrWhiteSpace(Token);
+        yield return Validation.NotNullOrWhiteSpace(TokenHash);
         yield return Validation.Defined(Role);
         yield return Validation.NotBefore(ExpiresAt, CreatedAt);
 

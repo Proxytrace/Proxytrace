@@ -1,4 +1,5 @@
 using Proxytrace.Common.Random;
+using Proxytrace.Common.Security;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.User;
 
@@ -25,7 +26,7 @@ internal class InviteGenerator : DomainEntityGenerator<IInvite>
         return factory(
             email: random.Email(),
             role: random.Enum<UserRole>(),
-            token: random.UniqueString(),
+            tokenHash: Sha256.HexHash(random.UniqueString()),
             expiresAt: DateTimeOffset.UtcNow.AddDays(7),
             invitedBy: user);
     }
