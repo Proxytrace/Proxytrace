@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { LanguageMenuItems } from './LanguageMenuItems';
+import { EmailNotificationMenuItems } from './EmailNotificationMenuItems';
 import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
 import { isNavEntryLocked } from './navGating';
@@ -244,6 +245,7 @@ export function Shell() {
               </IconButton>
             }
           >
+            <EmailNotificationMenuItems />
             <LanguageMenuItems />
             <Menu.Item
               data-testid="logout-btn"
