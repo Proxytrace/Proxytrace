@@ -101,3 +101,26 @@ internal sealed class SingleHandlerClientFactory : IHttpClientFactory
     public SingleHandlerClientFactory(HttpMessageHandler handler) => this.handler = handler;
     public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
 }
+
+/// <summary>A response stream that fails every write — simulates a client that disconnected.</summary>
+internal sealed class ThrowOnWriteStream : Stream
+{
+    public override bool CanRead => false;
+    public override bool CanSeek => false;
+    public override bool CanWrite => true;
+    public override long Length => 0;
+    public override long Position { get => 0; set { } }
+
+    public override void Flush() { }
+    public override Task FlushAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        => throw new IOException("client disconnected");
+
+    public override void Write(byte[] buffer, int offset, int count)
+        => throw new IOException("client disconnected");
+
+    public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+}

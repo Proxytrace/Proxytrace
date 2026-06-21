@@ -197,6 +197,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Proxied calls are no longer dropped when the client disconnects after the upstream responds.**
+  The proxy threaded the client request-aborted token all the way into the ingestion publish, so a
+  client cancel/timeout/navigation *after* the upstream LLM call had already completed (a common
+  pattern) cancelled the publish and silently lost the captured call. Capture is now decoupled from
+  the client request lifetime — the publish runs with an independent token, and the streaming path
+  publishes the accumulated transcript even on a mid-stream disconnect.
+
 - **A malformed `Content-Type` header no longer crashes a proxied request.** The OpenAI-compatible
   ingestion proxy parsed the client-supplied `Content-Type` strictly, so a single bad value (e.g.
   `garbage;;`) threw and surfaced as an opaque `500`. The header is now parsed leniently and, when it

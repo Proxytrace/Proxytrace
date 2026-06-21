@@ -315,9 +315,17 @@ public class OpenAiProxyController : ControllerBase
         var responseBody = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
         sw.Stop();
 
-        await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
-
-        await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, cancellationToken);
+        try
+        {
+            await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
+        }
+        finally
+        {
+            // Capture is decoupled from the client request lifetime: the upstream call has already
+            // completed, so a client disconnect/timeout here must not drop the captured call.
+            // Publish with CancellationToken.None rather than the request-aborted token.
+            await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, CancellationToken.None);
+        }
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
@@ -337,27 +345,35 @@ public class OpenAiProxyController : ControllerBase
         await using var upstreamStream = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(upstreamStream, Encoding.UTF8, leaveOpen: true);
 
-        while (true)
+        try
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null)
+            while (true)
             {
-                break;
-            }
+                var line = await reader.ReadLineAsync(cancellationToken);
+                if (line is null)
+                {
+                    break;
+                }
 
-            // Bound the captured copy (the forwarded stream below is never truncated). Use '\n'
-            // explicitly so the capture matches what is forwarded rather than Environment.NewLine.
-            if (accumulated.Length < MaxCapturedResponseChars)
-            {
-                accumulated.Append(line).Append('\n');
-            }
+                // Bound the captured copy (the forwarded stream below is never truncated). Use '\n'
+                // explicitly so the capture matches what is forwarded rather than Environment.NewLine.
+                if (accumulated.Length < MaxCapturedResponseChars)
+                {
+                    accumulated.Append(line).Append('\n');
+                }
 
-            await WriteSseLineAsync(line, cancellationToken);
+                await WriteSseLineAsync(line, cancellationToken);
+            }
         }
-
-        sw.Stop();
-
-        await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, cancellationToken);
+        finally
+        {
+            // Always publish what we accumulated, even when the client disconnects mid-stream: the
+            // forward loop above throws out on disconnect, but the partial transcript is exactly the
+            // data the proxy exists to capture. Decouple from the request-aborted token with
+            // CancellationToken.None so the publish itself isn't cancelled by the same disconnect.
+            sw.Stop();
+            await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, CancellationToken.None);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
