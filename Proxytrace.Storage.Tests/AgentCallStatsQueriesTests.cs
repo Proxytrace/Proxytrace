@@ -2,7 +2,12 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.Message;
+using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Usage;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Storage.Tests;
@@ -108,6 +113,53 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
         var rows = await reader.GetCostEstimateAsync(new StatisticsFilter(), CancellationToken);
 
         rows.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetCostEstimate_SeededCalls_AgreesWithCalculateCost()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+
+        // An endpoint with known per-1M-token prices (input <= output, cached <= input).
+        var endpointSeedGen = services.GetRequiredService<IDomainObjectGenerator<IModelEndpoint>>();
+        var seed = await endpointSeedGen.CreateAsync(CancellationToken);
+        var createEndpoint = services.GetRequiredService<IModelEndpoint.CreateNew>();
+        var endpointRepo = services.GetRequiredService<IRepository<IModelEndpoint>>();
+        IModelEndpoint endpoint = await endpointRepo.AddAsync(
+            createEndpoint(seed.Model, seed.Provider, inputTokenCost: 2.5m, outputTokenCost: 10m, cachedInputTokenCost: 1m),
+            CancellationToken);
+
+        // Two calls on that endpoint with known token counts.
+        var agentGen = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
+        var agent = await agentGen.CreateAsync(CancellationToken);
+        var conversationGen = services.GetRequiredService<IDomainObjectGenerator<Conversation>>();
+        var completionGen = services.GetRequiredService<IDomainObjectGenerator<ICompletion>>();
+        var sampleResponse = (await completionGen.CreateAsync(CancellationToken)).Response;
+        var createCompletion = services.GetRequiredService<ICompletion.Create>();
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var callRepo = services.GetRequiredService<IRepository<IAgentCall>>();
+
+        var usages = new[] { new TokenUsage(1000, 500, 200), new TokenUsage(3000, 1500, 0) };
+        foreach (var usage in usages)
+        {
+            var response = createCompletion(sampleResponse, usage, TimeSpan.FromMilliseconds(10));
+            var request = await conversationGen.CreateAsync(CancellationToken);
+            var call = createCall(agent, agent.CurrentVersion, endpoint, request, response);
+            await callRepo.AddAsync(call, CancellationToken);
+        }
+
+        var rows = await reader.GetCostEstimateAsync(new StatisticsFilter(), CancellationToken);
+
+        var stat = rows.Single(r => r.EndpointId == endpoint.Id);
+        var summed = new TokenUsage(
+            usages.Aggregate(0UL, (acc, u) => acc + u.InputTokenCount),
+            usages.Aggregate(0UL, (acc, u) => acc + u.OutputTokenCount),
+            usages.Aggregate(0UL, (acc, u) => acc + u.CachedInputTokenCount));
+
+        // Single source of truth: the estimate must match ModelEndpoint.CalculateCost (which divides
+        // by 1M). Concretely TotalCostEur is ~0.0297 EUR here, not the ~29,700 EUR the pre-fix bug gave.
+        stat.TotalCostEur.Should().Be(endpoint.CalculateCost(summed));
     }
 
     [TestMethod]

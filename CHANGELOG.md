@@ -191,6 +191,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Concurrent edits to the same record no longer silently overwrite each other.** Optimistic
+  concurrency was only checked in application code before a save, so two edits that started from the
+  same version of a record could both pass the check and both write — the second silently discarding
+  the first. The version stamp (`UpdatedAt`) is now enforced as a database concurrency token, so a
+  genuine race is caught at write time and the losing edit fails cleanly instead of clobbering data.
+
 - **The Playground agent picker only lists real agents.** The agent select-box no longer offers
   internal system agents (such as the built-in Tracey agent) — it shows only the user-facing agents
   you can actually run in the Playground.

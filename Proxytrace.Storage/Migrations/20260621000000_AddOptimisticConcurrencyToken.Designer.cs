@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Proxytrace.Storage;
@@ -11,9 +12,11 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260621000000_AddOptimisticConcurrencyToken")]
+    partial class AddOptimisticConcurrencyToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -353,56 +356,6 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("AuditLogEntryEntity");
-                });
-
-            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.EmailSettings.EmailSettingsEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AppBaseUrl")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("Enabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("FromAddress")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FromName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("MinSeverity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Security")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SmtpHost")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("SmtpPort")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Username")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EmailSettingsEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Evaluator.EvaluatorEntity", b =>
