@@ -395,14 +395,26 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         // Update the tracked entity using EF Core's proper update mechanism
         EntityEntry<TStoredEntity> entry = context.Entry(existing);
         entry.CurrentValues.SetValues(updated);
+        RealignConcurrencyToken(entry);
 
         // Handle owned entities manually
         UpdateOwnedEntities(entry, updated);
 
         await UpdateRelationsAsync(context, updated, cancellationToken);
 
-        // Save changes
-        await context.SaveChangesAsync(cancellationToken);
+        // UpdatedAt is configured as an EF concurrency token (see StorageDbContext.OnModelCreating),
+        // so SaveChanges emits `UPDATE ... WHERE UpdatedAt = @original` and a zero-rowcount result —
+        // a concurrent writer won the race — surfaces as DbUpdateConcurrencyException. The database
+        // WHERE-clause check catches a genuine race that the in-app pre-check above cannot: both
+        // writers read the same token, but another committed first.
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new OptimisticConcurrencyException(entity.Id, typeof(TDomainEntity), ex);
+        }
         cache?.Invalidate(entity.Id);
 
         return await this.GetAsync(entity.Id, cancellationToken);
@@ -429,7 +441,17 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             }
 
             context.Set<TStoredEntity>().Remove(existing);
-            await context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // UpdatedAt is a concurrency token, so the DELETE carries `WHERE UpdatedAt = @original`.
+                // A concurrent writer modified or removed the row after our read, so it no longer
+                // matches the version we loaded — treat it as "not removed by us" rather than throwing.
+                return false;
+            }
             cache?.Invalidate(id);
             return true;
         });
@@ -458,6 +480,20 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         {
             Notify(id, EntityChangeType.Removed);
         }
+    }
+
+    /// <summary>
+    /// Realigns the <c>UpdatedAt</c> concurrency-token original value to the precision PostgreSQL
+    /// persists (microseconds) before a tracked update/archive is saved. A row inserted or updated
+    /// earlier in this same context is still tracked at .NET's 100-nanosecond precision, which would
+    /// otherwise spuriously fail the DB-level <c>WHERE UpdatedAt = @original</c> check against the
+    /// microsecond value the database actually stored. Call after <c>SetValues</c> (which mutates the
+    /// current value but leaves the original intact). See <see cref="ConcurrencyTokenExtensions"/>.
+    /// </summary>
+    protected static void RealignConcurrencyToken(EntityEntry<TStoredEntity> entry)
+    {
+        PropertyEntry<TStoredEntity, DateTimeOffset> updatedAt = entry.Property(e => e.UpdatedAt);
+        updatedAt.OriginalValue = updatedAt.OriginalValue.TruncateToMicroseconds();
     }
 
     /// <summary>

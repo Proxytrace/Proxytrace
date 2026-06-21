@@ -47,7 +47,17 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
 
             var entry = context.Entry(existing);
             entry.CurrentValues.SetValues(existing with { IsArchived = true, UpdatedAt = DateTimeOffset.UtcNow });
-            await context.SaveChangesAsync(cancellationToken);
+            RealignConcurrencyToken(entry);
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // UpdatedAt is a concurrency token: a concurrent writer moved the row on after our
+                // read, so report no state transition rather than clobbering their change.
+                return false;
+            }
             InvalidateCacheEntry(id);
             return true;
         });
@@ -73,7 +83,16 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
 
             var entry = context.Entry(existing);
             entry.CurrentValues.SetValues(existing with { IsArchived = false, UpdatedAt = DateTimeOffset.UtcNow });
-            await context.SaveChangesAsync(cancellationToken);
+            RealignConcurrencyToken(entry);
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // A concurrent writer moved the row on after our read; skip the unarchive.
+                return false;
+            }
             InvalidateCacheEntry(id);
             return true;
         }, cancellationToken);

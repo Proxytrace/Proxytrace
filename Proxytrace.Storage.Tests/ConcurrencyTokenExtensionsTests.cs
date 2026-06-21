@@ -48,4 +48,45 @@ public sealed class ConcurrencyTokenExtensionsTests
 
         utc.MatchesConcurrencyToken(sameInstantOtherOffset).Should().BeTrue();
     }
+
+    [TestMethod]
+    public void TruncateToMicroseconds_DropsSubMicrosecondTicks()
+    {
+        var microsecondAligned = new DateTimeOffset(
+            DateTimeOffset.UtcNow.UtcTicks / TimeSpan.TicksPerMicrosecond * TimeSpan.TicksPerMicrosecond,
+            TimeSpan.Zero);
+        var withSubMicrosecond = microsecondAligned.AddTicks(7); // +700ns, below microsecond precision
+
+        withSubMicrosecond.TruncateToMicroseconds().Should().Be(microsecondAligned);
+    }
+
+    [TestMethod]
+    public void TruncateToMicroseconds_AlreadyAligned_IsUnchanged()
+    {
+        var microsecondAligned = new DateTimeOffset(
+            DateTimeOffset.UtcNow.UtcTicks / TimeSpan.TicksPerMicrosecond * TimeSpan.TicksPerMicrosecond,
+            TimeSpan.Zero);
+
+        microsecondAligned.TruncateToMicroseconds().Should().Be(microsecondAligned);
+    }
+
+    [TestMethod]
+    public void TruncateToMicroseconds_NormalisesToUtc()
+    {
+        // The truncated token is always expressed at +00:00 — it is compared by instant, and the
+        // database persists UTC.
+        var withOffset = new DateTimeOffset(2026, 6, 6, 14, 0, 0, TimeSpan.FromHours(2));
+
+        withOffset.TruncateToMicroseconds().Offset.Should().Be(TimeSpan.Zero);
+        withOffset.TruncateToMicroseconds().Should().Be(withOffset.ToUniversalTime());
+    }
+
+    [TestMethod]
+    public void TruncateToMicroseconds_ResultMatchesOriginalToken()
+    {
+        // Truncating must never make a token look like a different version of itself.
+        var value = DateTimeOffset.UtcNow;
+
+        value.MatchesConcurrencyToken(value.TruncateToMicroseconds()).Should().BeTrue();
+    }
 }
