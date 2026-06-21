@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Internal;
+using Proxytrace.Domain.Notification;
 
 namespace Proxytrace.Domain.User.Internal;
 
@@ -11,6 +12,8 @@ internal record User : DomainEntity<IUser>, IUser
     public string? PasswordHash { get; private init; }
     public UserRole Role { get; private init; }
     public string Language { get; private init; }
+    public bool EmailNotificationsEnabled { get; private init; }
+    public NotificationSeverity EmailNotificationMinSeverity { get; private init; }
 
     public User(
         string email,
@@ -18,6 +21,8 @@ internal record User : DomainEntity<IUser>, IUser
         string? passwordHash,
         UserRole role,
         string language,
+        bool emailNotificationsEnabled,
+        NotificationSeverity emailNotificationMinSeverity,
         IRepository<IUser> repository) : base(repository)
     {
         Email = email;
@@ -25,6 +30,8 @@ internal record User : DomainEntity<IUser>, IUser
         PasswordHash = passwordHash;
         Role = role;
         Language = language;
+        EmailNotificationsEnabled = emailNotificationsEnabled;
+        EmailNotificationMinSeverity = emailNotificationMinSeverity;
     }
 
     public User(
@@ -33,6 +40,8 @@ internal record User : DomainEntity<IUser>, IUser
         string? passwordHash,
         UserRole role,
         string language,
+        bool emailNotificationsEnabled,
+        NotificationSeverity emailNotificationMinSeverity,
         IDomainEntityData existing,
         IRepository<IUser> repository) : base(existing, repository)
     {
@@ -41,6 +50,8 @@ internal record User : DomainEntity<IUser>, IUser
         PasswordHash = passwordHash;
         Role = role;
         Language = language;
+        EmailNotificationsEnabled = emailNotificationsEnabled;
+        EmailNotificationMinSeverity = emailNotificationMinSeverity;
     }
 
     public Task<IUser> ChangeRole(UserRole role, CancellationToken cancellationToken = default)
@@ -56,6 +67,11 @@ internal record User : DomainEntity<IUser>, IUser
             ? Task.FromResult<IUser>(this)
             : ApplyAsync(this with { Language = language }, cancellationToken);
 
+    public Task<IUser> ChangeEmailNotificationPreferences(bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, CancellationToken cancellationToken = default)
+        => EmailNotificationsEnabled == emailNotificationsEnabled && EmailNotificationMinSeverity == emailNotificationMinSeverity
+            ? Task.FromResult<IUser>(this)
+            : ApplyAsync(this with { EmailNotificationsEnabled = emailNotificationsEnabled, EmailNotificationMinSeverity = emailNotificationMinSeverity }, cancellationToken);
+
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
@@ -65,6 +81,7 @@ internal record User : DomainEntity<IUser>, IUser
 
         yield return Validation.NotNullOrWhiteSpace(Email);
         yield return Validation.Defined(Role);
+        yield return Validation.Defined(EmailNotificationMinSeverity);
 
         yield return Validation.NotNullOrWhiteSpace(Language);
         if (!SupportedLanguages.IsSupported(Language))

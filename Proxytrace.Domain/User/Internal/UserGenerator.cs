@@ -1,6 +1,7 @@
 using Proxytrace.Common.Async;
 using Proxytrace.Common.Random;
 using Proxytrace.Domain.Internal;
+using Proxytrace.Domain.Notification;
 
 namespace Proxytrace.Domain.User.Internal;
 
@@ -22,6 +23,8 @@ internal class UserGenerator : DomainEntityGenerator<IUser>
                 externalSubject: $"test|{random.UniqueString()}",
                 passwordHash: null,
                 role: random.Enum<UserRole>(),
-                language: random.Any(SupportedLanguages.All))
+                language: random.Any(SupportedLanguages.All),
+                emailNotificationsEnabled: random.Bool(),
+                emailNotificationMinSeverity: random.Enum<NotificationSeverity>())
             .ToTaskResult();
 }
