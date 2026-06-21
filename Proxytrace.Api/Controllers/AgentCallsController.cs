@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Json;
 using Proxytrace.Api.Dto.Agents;
@@ -29,6 +30,7 @@ public class AgentCallsController : ControllerBase
     private readonly AgentDtoMapper agentDtoMapper;
     private readonly IAgentCall.CreateNew createCall;
     private readonly ICompletion.Create createCompletion;
+    private readonly IProjectAccessGuard accessGuard;
 
     public AgentCallsController(
         IAgentCallRepository repository,
@@ -38,7 +40,8 @@ public class AgentCallsController : ControllerBase
         AgentCallDtoMapper agentCallDtoMapper,
         AgentDtoMapper agentDtoMapper,
         IAgentCall.CreateNew createCall,
-        ICompletion.Create createCompletion)
+        ICompletion.Create createCompletion,
+        IProjectAccessGuard accessGuard)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
@@ -48,6 +51,26 @@ public class AgentCallsController : ControllerBase
         this.agentDtoMapper = agentDtoMapper;
         this.createCall = createCall;
         this.createCompletion = createCompletion;
+        this.accessGuard = accessGuard;
+    }
+
+    // Resolve the effective owning project of a list query and verify access. Admins
+    // (accessible == null) may run any query. Non-admins must scope to a project they belong to —
+    // directly via projectId or via the agent's project — otherwise the list returns nothing rather
+    // than leaking other tenants' rows (#193).
+    private async Task<bool> CanListAsync(Guid? projectId, Guid? agentId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        if (accessible is null)
+            return true;
+        if (projectId is { } pid)
+            return accessible.Contains(pid);
+        if (agentId is { } aid)
+        {
+            var agent = await agentRepository.FindAsync(aid, cancellationToken);
+            return agent is not null && accessible.Contains(agent.Project.Id);
+        }
+        return false;
     }
 
     [HttpGet]
@@ -67,6 +90,8 @@ public class AgentCallsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
+        if (!await CanListAsync(projectId, agentId, cancellationToken))
+            return new PagedResult<AgentCallListItemDto>([], 0, page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
         var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallListItem>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
@@ -95,6 +120,8 @@ public class AgentCallsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
+        if (!await CanListAsync(projectId, agentId, cancellationToken))
+            return new PagedResult<AgentCallDto>([], 0, page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<IAgentCall>(items, total, page, pageSize).Map(agentCallDtoMapper.ToDto);
@@ -107,6 +134,9 @@ public class AgentCallsController : ControllerBase
         [FromQuery] DateTimeOffset? from = null,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(projectId, agentId, cancellationToken))
+            return new TracesOverviewDto([], [], []);
+
         var latencyFilter = new StatisticsFilter(from, null, projectId, agentId);
         var breakdownFilter = new StatisticsFilter(from, null, projectId);
 
@@ -150,6 +180,8 @@ public class AgentCallsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         buckets = Math.Clamp(buckets, 1, 240);
+        if (!await CanListAsync(projectId, agentId, cancellationToken))
+            return [];
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
         var result = await repository.GetHistogramAsync(filter, buckets, cancellationToken);
         return result.Select(b => new TraceHistogramBucketDto(b.Start, b.Total, b.Errors)).ToList();
@@ -160,6 +192,9 @@ public class AgentCallsController : ControllerBase
     {
         var call = await repository.FindAsync(id, cancellationToken);
         if (call is null)
+            return NotFound();
+        // Hide other tenants' traces behind a 404 rather than disclosing the request/response.
+        if (!await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
             return NotFound();
         return agentCallDtoMapper.ToDto(call);
     }
@@ -220,10 +255,17 @@ public class AgentCallsController : ControllerBase
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("X-Accel-Buffering", "no");
 
+        // Snapshot the caller's project scope once; non-admins only receive traces for projects they
+        // belong to (admins: accessible == null → all). Without this the stream broadcast every
+        // tenant's traces to any authenticated user.
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+
         var reader = traceBroadcaster.Subscribe(cancellationToken);
 
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
+            if (accessible is not null && !accessible.Contains(evt.ProjectId))
+                continue;
             var data = SseEventSerializer.Serialize(evt);
             await Response.WriteAsync($"event: trace-created\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
@@ -233,6 +275,11 @@ public class AgentCallsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
+        var call = await repository.FindAsync(id, cancellationToken);
+        if (call is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
+            return NotFound();
         var removed = await repository.RemoveAsync(id, cancellationToken);
         return removed ? NoContent() : NotFound();
     }

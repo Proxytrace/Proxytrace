@@ -6,6 +6,7 @@ namespace Proxytrace.Application.Streaming;
 public record TraceCreatedEvent(
     Guid Id,
     Guid AgentId,
+    Guid ProjectId,
     string AgentName,
     string Model,
     string Provider,
@@ -16,6 +17,7 @@ public record TraceCreatedEvent(
         => new(
             call.Id,
             call.Agent.Id,
+            call.Agent.Project.Id,
             call.Agent.Name,
             call.Endpoint.Model.Name,
             call.Endpoint.Provider.Name,

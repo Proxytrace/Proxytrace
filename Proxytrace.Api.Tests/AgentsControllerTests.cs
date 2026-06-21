@@ -174,5 +174,6 @@ public sealed class AgentsControllerTests : BaseTest<Module>
         services.GetRequiredService<Proxytrace.Domain.Agent.IAgent.CreateNew>(),
         services.GetRequiredService<Proxytrace.Domain.Prompt.IPromptTemplate.Create>(),
         services.GetRequiredService<Proxytrace.Domain.Inference.IModelParameters.Create>(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance,
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
 }

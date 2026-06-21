@@ -34,6 +34,18 @@ public sealed class Module : Autofac.Module
             => Task.FromResult<IUser?>(null);
     }
 
+    // Permissive by default (admin-equivalent: access everything), so existing controller tests that
+    // don't care about tenant scoping keep passing. Tests that exercise cross-tenant authorization
+    // register their own IProjectAccessGuard substitute via GetServices(builder => ...).
+    private sealed class StubProjectAccessGuard : Api.Auth.IProjectAccessGuard
+    {
+        public Task<bool> CanAccessProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+            => Task.FromResult(true);
+
+        public Task<IReadOnlyCollection<Guid>?> GetAccessibleProjectIdsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyCollection<Guid>?>(null);
+    }
+
     // The real HttpContextAuditActorAccessor needs IHttpContextAccessor (registered by the API host,
     // not the test container). Stub it to the System actor, mirroring StubCurrentUserAccessor.
     private sealed class StubAuditActorAccessor : IAuditActorAccessor
@@ -54,6 +66,9 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterInstance<ICurrentUserAccessor>(new StubCurrentUserAccessor())
+            .SingleInstance();
+
+        builder.RegisterInstance<Api.Auth.IProjectAccessGuard>(new StubProjectAccessGuard())
             .SingleInstance();
 
         builder.RegisterInstance<IAuditActorAccessor>(new StubAuditActorAccessor())

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Json;
 using Proxytrace.Application.AuditLog;
@@ -36,6 +37,7 @@ public class AgentsController : ControllerBase
     private readonly IPromptTemplate.Create createPromptTemplate;
     private readonly IModelParameters.Create createModelParameters;
     private readonly ILogger<Audit> audit;
+    private readonly IProjectAccessGuard accessGuard;
 
     public AgentsController(
         IAgentRepository repository,
@@ -49,7 +51,8 @@ public class AgentsController : ControllerBase
         IAgent.CreateNew createAgent,
         IPromptTemplate.Create createPromptTemplate,
         IModelParameters.Create createModelParameters,
-        ILogger<Audit> audit)
+        ILogger<Audit> audit,
+        IProjectAccessGuard accessGuard)
     {
         this.repository = repository;
         this.endpoints = endpoints;
@@ -63,6 +66,13 @@ public class AgentsController : ControllerBase
         this.createPromptTemplate = createPromptTemplate;
         this.createModelParameters = createModelParameters;
         this.audit = audit;
+        this.accessGuard = accessGuard;
+    }
+
+    private async Task<bool> CanListAsync(Guid? projectId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        return accessible is null || (projectId.HasValue && accessible.Contains(projectId.Value));
     }
 
     [HttpGet]
@@ -72,6 +82,9 @@ public class AgentsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(projectId, cancellationToken))
+            return new PagedResult<AgentListItemDto>([], 0, page, pageSize);
+
         // Archived (soft-deleted) agents are hidden from the listing — they keep resolving by id for
         // history, but must not appear here (mirrors EvaluatorsController, which lists via the
         // archive-filtered GetAllAsync/GetByProjectAsync). EnumerateAsync streams the full set.
@@ -102,6 +115,8 @@ public class AgentsController : ControllerBase
     {
         var agent = await repository.FindAsync(id, cancellationToken);
         if (agent is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
             return NotFound();
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
         return agentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
@@ -146,9 +161,10 @@ public class AgentsController : ControllerBase
     [HttpGet("{id:guid}/proposals/stream")]
     public async Task StreamProposals(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var agent = await repository.FindAsync(id, cancellationToken);
+        if (agent is null || !await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
         {
-            Response.StatusCode = 404;
+            Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
 
@@ -174,9 +190,10 @@ public class AgentsController : ControllerBase
     [HttpGet("{id:guid}/theories/stream")]
     public async Task StreamTheories(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var agent = await repository.FindAsync(id, cancellationToken);
+        if (agent is null || !await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
         {
-            Response.StatusCode = 404;
+            Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
 
@@ -198,6 +215,8 @@ public class AgentsController : ControllerBase
     {
         var agent = await repository.FindAsync(id, cancellationToken);
         if (agent is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
             return NotFound();
 
         // System agents (Tracey, optimizers, agentic-evaluator judges) are internal plumbing, not
@@ -222,6 +241,8 @@ public class AgentsController : ControllerBase
         CancellationToken cancellationToken)
     {
         IAgent agent = await repository.GetAsync(id, cancellationToken);
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
+            return NotFound();
         IModelEndpoint endpoint = await endpoints.GetAsync(request.EndpointId, cancellationToken);
         // ChangeEndpoint is a no-op (no persist) when the endpoint is unchanged — mirror that here so a
         // same-endpoint PATCH records no phantom "endpoint changed" audit event.
@@ -241,6 +262,10 @@ public class AgentsController : ControllerBase
     {
         IAgent? agent = await repository.FindAsync(id, cancellationToken);
         if (agent is null)
+        {
+            return NotFound();
+        }
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
         {
             return NotFound();
         }

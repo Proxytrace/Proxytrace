@@ -177,6 +177,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Security
 
+- **Systemic cross-tenant access (IDOR) across the CRUD and SSE APIs is now closed.** The app is
+  multi-tenant (resources belong to a project; users belong to projects; admins bypass), but the bulk
+  controllers never checked membership: any authenticated user could read, modify, delete, or trigger
+  billable runs on **another tenant's** traces, agents, agent versions, proposals, theories, test
+  suites/cases/runs/run-groups/schedules, evaluators, notifications, and search — and the real-time
+  streams broadcast every tenant's events to everyone. A central `IProjectAccessGuard` (admin bypass)
+  now backs every one of these endpoints: a single resource you can't access returns `404` (so its
+  existence doesn't leak); list endpoints are scoped to your member projects instead of returning all
+  tenants' rows; per-resource streams are membership-checked before subscribing; and the global trace
+  and notification streams filter each event to your projects.
+
 - **Projects and their members are no longer enumerable across tenants.** `GET /api/projects`,
   `GET /api/projects/{id}`, and `GET /api/projects/{id}/members` had no membership filter, so any
   authenticated user could list every project, read any project's details, and harvest any project's

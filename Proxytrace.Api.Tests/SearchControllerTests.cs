@@ -153,5 +153,6 @@ public sealed class SearchControllerTests : BaseTest<Module>
         services.GetRequiredService<ISearchIndexStatistics>(),
         services.GetRequiredService<IReindexStateTracker>(),
         services.GetRequiredService<IProjectSearchSettings.CreateNew>(),
-        services.GetRequiredService<SearchRequestOptions>());
+        services.GetRequiredService<SearchRequestOptions>(),
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
 }

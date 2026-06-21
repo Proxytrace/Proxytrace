@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.TestCase;
+using Proxytrace.Domain.TestSuite;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -13,17 +15,40 @@ namespace Proxytrace.Api.Controllers;
 public class TestCasesController : ControllerBase
 {
     private readonly IRepository<ITestCase> repository;
+    private readonly ITestSuiteRepository suiteRepository;
     private readonly ITestCase.CreateExisting createExisting;
     private readonly TestSuiteDtoMapper mapper;
+    private readonly IProjectAccessGuard accessGuard;
 
     public TestCasesController(
         IRepository<ITestCase> repository,
+        ITestSuiteRepository suiteRepository,
         ITestCase.CreateExisting createExisting,
-        TestSuiteDtoMapper mapper)
+        TestSuiteDtoMapper mapper,
+        IProjectAccessGuard accessGuard)
     {
         this.repository = repository;
+        this.suiteRepository = suiteRepository;
         this.createExisting = createExisting;
         this.mapper = mapper;
+        this.accessGuard = accessGuard;
+    }
+
+    // A test case has no direct project navigation — it is referenced by a suite (suite.TestCases),
+    // and a suite belongs to a project via suite.Agent.Project. Resolve access by checking whether
+    // any suite in a project the caller can access contains this test case. Admins bypass.
+    private async Task<bool> CanAccessTestCaseAsync(Guid testCaseId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        if (accessible is null)
+            return true;
+        foreach (var projectId in accessible)
+        {
+            var suites = await suiteRepository.GetByProjectAsync(projectId, cancellationToken);
+            if (suites.Any(s => s.TestCases.Any(tc => tc.Id == testCaseId)))
+                return true;
+        }
+        return false;
     }
 
     [HttpGet("{id:guid}")]
@@ -31,6 +56,7 @@ public class TestCasesController : ControllerBase
     {
         var tc = await repository.FindAsync(id, cancellationToken);
         if (tc is null) return NotFound();
+        if (!await CanAccessTestCaseAsync(id, cancellationToken)) return NotFound();
         return ToDto(tc);
     }
 
@@ -42,6 +68,7 @@ public class TestCasesController : ControllerBase
     {
         var existing = await repository.FindAsync(id, cancellationToken);
         if (existing is null) return NotFound();
+        if (!await CanAccessTestCaseAsync(id, cancellationToken)) return NotFound();
 
         var expected = mapper.BuildAssistantMessage(request.ExpectedOutput);
         var updated = createExisting(existing.Input, expected, existing);

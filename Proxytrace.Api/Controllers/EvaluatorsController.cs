@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Api.Evaluators;
@@ -33,6 +34,7 @@ public class EvaluatorsController : ControllerBase
     private readonly EvaluatorBuilder evaluatorBuilder;
     private readonly EvaluatorDtoMapper evaluatorMapper;
     private readonly ITransaction transaction;
+    private readonly IProjectAccessGuard accessGuard;
     private readonly ILogger<Audit> audit;
 
     public EvaluatorsController(
@@ -46,9 +48,11 @@ public class EvaluatorsController : ControllerBase
         EvaluatorBuilder evaluatorBuilder,
         EvaluatorDtoMapper evaluatorMapper,
         ITransaction transaction,
+        IProjectAccessGuard accessGuard,
         ILogger<Audit> audit)
     {
         this.audit = audit;
+        this.accessGuard = accessGuard;
         this.evaluatorRepository = evaluatorRepository;
         this.projectRepository = projectRepository;
         this.agenticPresets = agenticPresets;
@@ -59,6 +63,12 @@ public class EvaluatorsController : ControllerBase
         this.evaluatorBuilder = evaluatorBuilder;
         this.evaluatorMapper = evaluatorMapper;
         this.transaction = transaction;
+    }
+
+    private async Task<bool> CanListAsync(Guid? projectId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        return accessible is null || (projectId.HasValue && accessible.Contains(projectId.Value));
     }
 
     [HttpGet("agentic-presets")]
@@ -72,6 +82,8 @@ public class EvaluatorsController : ControllerBase
         [FromQuery] Guid? projectId = null,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(projectId, cancellationToken))
+            return [];
         var all = projectId.HasValue
             ? await evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
             : await evaluatorRepository.GetAllAsync(cancellationToken);
@@ -83,6 +95,8 @@ public class EvaluatorsController : ControllerBase
         [FromQuery] Guid? projectId = null,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(projectId, cancellationToken))
+            return [];
         var all = projectId.HasValue
             ? await evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
             : await evaluatorRepository.GetAllAsync(cancellationToken);
@@ -95,6 +109,8 @@ public class EvaluatorsController : ControllerBase
         var evaluator = await evaluatorRepository.FindAsync(id, cancellationToken);
         if (evaluator is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(evaluator.Project.Id, cancellationToken))
+            return NotFound();
         return evaluatorMapper.ToDto(evaluator);
     }
 
@@ -106,6 +122,8 @@ public class EvaluatorsController : ControllerBase
         [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(projectId, cancellationToken))
+            return new EvaluatorsOverviewDto([], [], []);
         Task<IReadOnlyList<IEvaluator>> evaluatorsTask = projectId.HasValue
             ? evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
             : evaluatorRepository.GetAllAsync(cancellationToken);
@@ -140,7 +158,10 @@ public class EvaluatorsController : ControllerBase
     {
         if (from is null || to is null)
             return BadRequest("Query parameters 'from' and 'to' are required.");
-        if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
+        var evaluator = await evaluatorRepository.FindAsync(id, cancellationToken);
+        if (evaluator is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(evaluator.Project.Id, cancellationToken))
             return NotFound();
 
         var capped = Math.Clamp(recentCount, 1, 50);
@@ -173,6 +194,8 @@ public class EvaluatorsController : ControllerBase
             var project = await projectRepository.FindAsync(request.ProjectId, cancellationToken);
             if (project is null)
                 return BadRequest($"Project {request.ProjectId} not found.");
+            if (!await accessGuard.CanAccessProjectAsync(project.Id, cancellationToken))
+                return NotFound();
 
             var evaluator = await evaluatorBuilder.BuildAsync(request, project, cancellationToken);
             var saved = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
@@ -197,6 +220,8 @@ public class EvaluatorsController : ControllerBase
             var existing = await evaluatorRepository.FindAsync(id, cancellationToken);
             if (existing is null)
                 return NotFound();
+            if (!await accessGuard.CanAccessProjectAsync(existing.Project.Id, cancellationToken))
+                return NotFound();
 
             var evaluator = await evaluatorBuilder.BuildAsync(request, existing, cancellationToken);
             var saved = await evaluatorRepository.UpdateAsync(evaluator, cancellationToken);
@@ -214,6 +239,8 @@ public class EvaluatorsController : ControllerBase
     {
         var evaluator = await evaluatorRepository.FindAsync(id, cancellationToken);
         if (evaluator is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(evaluator.Project.Id, cancellationToken))
             return NotFound();
 
         // Soft-delete: archiving hides the evaluator and detaches it from suites, but keeps the row
@@ -234,7 +261,10 @@ public class EvaluatorsController : ControllerBase
         [FromQuery] EvaluationScore? score = null,
         CancellationToken cancellationToken = default)
     {
-        if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
+        var evaluator = await evaluatorRepository.FindAsync(id, cancellationToken);
+        if (evaluator is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(evaluator.Project.Id, cancellationToken))
             return NotFound();
 
         var capped = Math.Clamp(count, 1, 50);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Statistics;
@@ -35,6 +36,7 @@ public class TestSuitesController : ControllerBase
     private readonly TestSuiteDtoMapper mapper;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly ILicenseService license;
+    private readonly IProjectAccessGuard accessGuard;
     private readonly ILogger<Audit> audit;
 
     public TestSuitesController(
@@ -51,9 +53,11 @@ public class TestSuitesController : ControllerBase
         TestSuiteDtoMapper mapper,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         ILicenseService license,
+        IProjectAccessGuard accessGuard,
         ILogger<Audit> audit)
     {
         this.audit = audit;
+        this.accessGuard = accessGuard;
         this.suiteRepository = suiteRepository;
         this.agentRepository = agentRepository;
         this.agentCallRepository = agentCallRepository;
@@ -77,6 +81,18 @@ public class TestSuitesController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        var scopeProjectId = projectId;
+        if (agentId.HasValue)
+        {
+            var scopeAgent = await agentRepository.FindAsync(agentId.Value, cancellationToken);
+            if (scopeAgent is null)
+                return new PagedResult<TestSuiteListItemDto>([], 0, page, pageSize);
+            scopeProjectId = scopeAgent.Project.Id;
+        }
+
+        if (!await CanListAsync(scopeProjectId, cancellationToken))
+            return new PagedResult<TestSuiteListItemDto>([], 0, page, pageSize);
+
         PagedResult<ITestSuite> paged;
         if (agentId.HasValue)
             paged = await suiteRepository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken);
@@ -112,11 +128,19 @@ public class TestSuitesController : ControllerBase
             .ToDictionary(g => g.Key, g => (IReadOnlyList<TestRunStats>)g.ToArray());
     }
 
+    private async Task<bool> CanListAsync(Guid? projectId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        return accessible is null || (projectId.HasValue && accessible.Contains(projectId.Value));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TestSuiteDto>> Get(Guid id, CancellationToken cancellationToken)
     {
         var suite = await suiteRepository.FindAsync(id, cancellationToken);
         if (suite is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(suite.Agent.Project.Id, cancellationToken))
             return NotFound();
         var statsBySuite = await GetRunStatsBySuiteAsync([id], cancellationToken);
         return mapper.ToDto(
@@ -136,7 +160,10 @@ public class TestSuitesController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var suite = await suiteRepository.FindAsync(id, cancellationToken);
+        if (suite is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(suite.Agent.Project.Id, cancellationToken))
             return NotFound();
 
         var rows = await runStats.QueryAsync(
@@ -155,6 +182,8 @@ public class TestSuitesController : ControllerBase
         var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
+            return NotFound();
 
         license.Ensure(LicenseLimit.MaxTestSuites, await suiteRepository.CountAsync(cancellationToken));
 
@@ -197,6 +226,8 @@ public class TestSuitesController : ControllerBase
         var existing = await suiteRepository.FindAsync(id, cancellationToken);
         if (existing is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(existing.Agent.Project.Id, cancellationToken))
+            return NotFound();
 
         var agent = request.AgentId.HasValue && request.AgentId.Value != existing.Agent.Id
             ? await agentRepository.GetAsync(request.AgentId.Value, cancellationToken)
@@ -226,6 +257,8 @@ public class TestSuitesController : ControllerBase
         var suite = await suiteRepository.FindAsync(id, cancellationToken);
         if (suite is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
 
         if (!await suiteRepository.RemoveAsync(id, cancellationToken))
             return NotFound();
@@ -253,6 +286,8 @@ public class TestSuitesController : ControllerBase
         var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
+            return NotFound();
 
         license.Ensure(LicenseLimit.MaxTestSuites, await suiteRepository.CountAsync(cancellationToken));
 
@@ -300,6 +335,8 @@ public class TestSuitesController : ControllerBase
         var existing = await suiteRepository.FindAsync(id, cancellationToken);
         if (existing is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(existing.Agent.Project.Id, cancellationToken))
+            return NotFound();
 
         var testCase = await BuildTestCase(request.FromAgentCallId, request.Input, request.ExpectedOutput, cancellationToken);
         if (testCase is null)
@@ -322,6 +359,8 @@ public class TestSuitesController : ControllerBase
     {
         var existing = await suiteRepository.FindAsync(id, cancellationToken);
         if (existing is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(existing.Agent.Project.Id, cancellationToken))
             return NotFound();
         if (existing.TestCases.All(tc => tc.Id != caseId))
             return mapper.ToDto(existing); // nothing to remove

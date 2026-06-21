@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -16,17 +17,20 @@ public class AgentVersionsController : ControllerBase
     private readonly IAgentRepository agents;
     private readonly ITransaction transaction;
     private readonly AgentDtoMapper mapper;
+    private readonly IProjectAccessGuard accessGuard;
 
     public AgentVersionsController(
         IAgentVersionRepository versions,
         IAgentRepository agents,
         ITransaction transaction,
-        AgentDtoMapper mapper)
+        AgentDtoMapper mapper,
+        IProjectAccessGuard accessGuard)
     {
         this.versions = versions;
         this.agents = agents;
         this.transaction = transaction;
         this.mapper = mapper;
+        this.accessGuard = accessGuard;
     }
 
     [HttpGet("{id:guid}")]
@@ -34,6 +38,10 @@ public class AgentVersionsController : ControllerBase
     {
         var version = await versions.FindAsync(id, cancellationToken);
         if (version is null)
+        {
+            return NotFound();
+        }
+        if (!await accessGuard.CanAccessProjectAsync(version.ProjectId, cancellationToken))
         {
             return NotFound();
         }
@@ -64,6 +72,14 @@ public class AgentVersionsController : ControllerBase
         var source = await version.GetAgentAsync(cancellationToken);
         var target = await agents.FindAsync(request.TargetAgentId, cancellationToken);
         if (target is null)
+        {
+            return NotFound("Target agent not found.");
+        }
+        if (!await accessGuard.CanAccessProjectAsync(source.Project.Id, cancellationToken))
+        {
+            return NotFound("Version not found.");
+        }
+        if (!await accessGuard.CanAccessProjectAsync(target.Project.Id, cancellationToken))
         {
             return NotFound("Target agent not found.");
         }

@@ -290,8 +290,10 @@ public sealed class TestRunSchedulesControllerTests : BaseTest<Module>
         services.GetRequiredService<ITestRunGroupRepository>(),
         services.GetRequiredService<ITestRunRepository>(),
         services.GetRequiredService<ITestSuiteRepository>(),
+        services.GetRequiredService<Proxytrace.Domain.Agent.IAgentRepository>(),
         services.GetRequiredService<IRepository<IModelEndpoint>>(),
         services.GetRequiredService<ITestRunSchedule.CreateNew>(),
         services.GetRequiredService<ITestRunnerService>(),
-        services.GetRequiredService<TestRunDtoMapper>());
+        services.GetRequiredService<TestRunDtoMapper>(),
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
 }

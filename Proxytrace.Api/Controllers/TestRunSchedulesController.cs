@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -22,29 +24,54 @@ public class TestRunSchedulesController : ControllerBase
     private readonly ITestRunGroupRepository groupRepository;
     private readonly ITestRunRepository runRepository;
     private readonly ITestSuiteRepository suiteRepository;
+    private readonly IAgentRepository agentRepository;
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly ITestRunSchedule.CreateNew createSchedule;
     private readonly ITestRunnerService runner;
     private readonly TestRunDtoMapper runMapper;
+    private readonly IProjectAccessGuard accessGuard;
 
     public TestRunSchedulesController(
         ITestRunScheduleRepository scheduleRepository,
         ITestRunGroupRepository groupRepository,
         ITestRunRepository runRepository,
         ITestSuiteRepository suiteRepository,
+        IAgentRepository agentRepository,
         IRepository<IModelEndpoint> endpoints,
         ITestRunSchedule.CreateNew createSchedule,
         ITestRunnerService runner,
-        TestRunDtoMapper runMapper)
+        TestRunDtoMapper runMapper,
+        IProjectAccessGuard accessGuard)
     {
         this.scheduleRepository = scheduleRepository;
         this.groupRepository = groupRepository;
         this.runRepository = runRepository;
         this.suiteRepository = suiteRepository;
+        this.agentRepository = agentRepository;
         this.endpoints = endpoints;
         this.createSchedule = createSchedule;
         this.runner = runner;
         this.runMapper = runMapper;
+        this.accessGuard = accessGuard;
+    }
+
+    // Resolve the effective owning project of a list query and verify access. Admins
+    // (accessible == null) pass for any scope. Non-admins must scope to a project they belong to —
+    // directly via projectId or via the agent's project — otherwise the query returns nothing rather
+    // than leaking other tenants' rows.
+    private async Task<bool> CanListAsync(Guid? agentId, Guid? projectId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        if (accessible is null)
+            return true;
+        if (projectId is { } pid)
+            return accessible.Contains(pid);
+        if (agentId is { } aid)
+        {
+            var agent = await agentRepository.FindAsync(aid, cancellationToken);
+            return agent is not null && accessible.Contains(agent.Project.Id);
+        }
+        return false;
     }
 
     /// <summary>
@@ -57,6 +84,9 @@ public class TestRunSchedulesController : ControllerBase
         [FromQuery] Guid? projectId = null,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(agentId, projectId, cancellationToken))
+            return [];
+
         IReadOnlyList<ITestRunSchedule> schedules;
         if (agentId.HasValue)
             schedules = await scheduleRepository.GetByAgentAsync(agentId.Value, cancellationToken);
@@ -74,6 +104,8 @@ public class TestRunSchedulesController : ControllerBase
         var schedule = await scheduleRepository.FindAsync(id, cancellationToken);
         if (schedule is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(schedule.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
         return await ToDtoAsync(schedule, cancellationToken);
     }
 
@@ -86,6 +118,9 @@ public class TestRunSchedulesController : ControllerBase
         var suite = await suiteRepository.FindAsync(request.TestSuiteId, cancellationToken);
         if (suite is null)
             return BadRequest($"Test suite {request.TestSuiteId} not found.");
+
+        if (!await accessGuard.CanAccessProjectAsync(suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
 
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
@@ -118,6 +153,9 @@ public class TestRunSchedulesController : ControllerBase
         if (schedule is null)
             return NotFound();
 
+        if (!await accessGuard.CanAccessProjectAsync(schedule.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
+
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
 
@@ -145,6 +183,9 @@ public class TestRunSchedulesController : ControllerBase
         if (schedule is null)
             return NotFound();
 
+        if (!await accessGuard.CanAccessProjectAsync(schedule.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
+
         await scheduleRepository.RemoveAsync(id, cancellationToken);
         return NoContent();
     }
@@ -155,6 +196,9 @@ public class TestRunSchedulesController : ControllerBase
     {
         var schedule = await scheduleRepository.FindAsync(id, cancellationToken);
         if (schedule is null)
+            return NotFound();
+
+        if (!await accessGuard.CanAccessProjectAsync(schedule.Suite.Agent.Project.Id, cancellationToken))
             return NotFound();
 
         await runner.RunInBackgroundAsync(

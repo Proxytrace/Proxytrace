@@ -203,6 +203,10 @@ internal sealed class Module : Autofac.Module
             .As<ICurrentUserAccessor>()
             .InstancePerLifetimeScope();
 
+        builder.RegisterType<ProjectAccessGuard>()
+            .As<IProjectAccessGuard>()
+            .InstancePerLifetimeScope();
+
         // Synchronous, DB-free actor snapshot for audit capture (the singleton audit logger can't take
         // a scoped ICurrentUserAccessor). Reads the request context via IHttpContextAccessor.
         builder.RegisterType<HttpContextAuditActorAccessor>()

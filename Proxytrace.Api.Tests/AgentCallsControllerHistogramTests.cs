@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.AgentCalls;
@@ -50,7 +51,7 @@ public sealed class AgentCallsControllerHistogramTests : BaseTest<Module>
             Arg.Any<CancellationToken>());
     }
 
-    private static AgentCallsController ResolveController(IAgentCallRepository repo)
+    private AgentCallsController ResolveController(IAgentCallRepository repo)
     {
         var toolDtoMapper = new ToolDtoMapper();
         return new AgentCallsController(
@@ -61,6 +62,7 @@ public sealed class AgentCallsControllerHistogramTests : BaseTest<Module>
             new AgentCallDtoMapper(toolDtoMapper),
             new AgentDtoMapper(toolDtoMapper),
             Substitute.For<IAgentCall.CreateNew>(),
-            Substitute.For<ICompletion.Create>());
+            Substitute.For<ICompletion.Create>(),
+            GetServices().GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
     }
 }
