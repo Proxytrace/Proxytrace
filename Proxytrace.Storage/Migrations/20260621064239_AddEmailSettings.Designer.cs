@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Proxytrace.Storage;
@@ -11,9 +12,11 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260621064239_AddEmailSettings")]
+    partial class AddEmailSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,7 +59,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -132,7 +134,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -182,7 +183,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("VersionNumber")
@@ -237,7 +237,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasDefaultValue(1);
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -284,7 +283,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -341,7 +339,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("character varying(128)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -428,7 +425,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -470,7 +466,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -499,7 +494,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -522,7 +516,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -564,7 +557,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -608,7 +600,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -659,7 +650,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -737,7 +727,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -817,7 +806,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -856,7 +844,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -911,7 +898,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -971,7 +957,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1010,7 +995,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1051,7 +1035,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1089,7 +1072,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1126,7 +1108,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1185,7 +1166,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1218,7 +1198,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -1272,7 +1251,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");

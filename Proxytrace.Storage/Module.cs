@@ -111,6 +111,10 @@ public sealed class Module : Autofac.Module
             .AsImplementedInterfaces()
             .InstancePerDependency();
 
+        builder.RegisterType<Internal.Entities.EmailSettings.EmailSettingsStore>()
+            .AsImplementedInterfaces()
+            .InstancePerDependency();
+
         builder.RegisterType<AgentCallStatsQueries>()
             .As<IAgentCallStatsReader>()
             .InstancePerDependency();

@@ -164,6 +164,16 @@ Two precision details (see `ConcurrencyTokenExtensions`):
 > **Gotcha — not enforced in-memory.** The EF in-memory provider ignores concurrency tokens (it does
 > no rowcount check), so this guarantee only holds on PostgreSQL. Like the `Restrict`/`Cascade` FK
 > semantics above, lost-update races cannot be reproduced by unit tests on the in-memory provider.
+The `AddEmailSettings` migration adds the `EmailSettingsEntity` table: the single-row operator
+SMTP/email configuration (mirrors the `StoredLicenseEntity` single-row pattern). Columns: `Id` uuid
+PK, `Enabled` boolean, `SmtpHost` / `FromAddress` / `FromName` non-nullable text, `SmtpPort`
+integer, `Security` integer (the `SmtpSecurity` enum — `None=0`, `StartTls=1`, `Auto=2`,
+`SslOnConnect=3`), `Username` / `Password` / `AppBaseUrl` nullable text, `MinSeverity` integer (the
+`NotificationSeverity` enum), plus the standard `CreatedAt` / `UpdatedAt` `timestamp with time zone`
+columns. The `Password` column holds ciphertext only; `EmailSettingsStore` encrypts via
+`ISecretProtector.Protect` on save and decrypts via `Unprotect` on read. No FK constraints; no
+`[StoredDomainEntity]` attribute (registered manually in `Storage.Module`, like
+`StoredLicenseStore`).
 
 ## Quick start
 
