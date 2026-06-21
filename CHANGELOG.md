@@ -177,6 +177,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Security
 
+- **Projects and their members are no longer enumerable across tenants.** `GET /api/projects`,
+  `GET /api/projects/{id}`, and `GET /api/projects/{id}/members` had no membership filter, so any
+  authenticated user could list every project, read any project's details, and harvest any project's
+  members' emails. Non-admins are now scoped to the projects they belong to (admins still see all),
+  and out-of-scope projects return `404` so their existence does not leak. Membership can also no
+  longer be mass-assigned through the generic project update: `memberIds` was dropped from the update
+  request, so the member set changes only via the dedicated add/remove-member endpoints.
+
 - **The user roster is no longer exposed to non-admins.** `GET /api/users` (every user's email,
   role and timestamps), `GET /api/users/{id}`, and `GET /api/users/{id}/projects` were callable by
   any authenticated user, leaking the full user base and their PII. They now require the Admin role,

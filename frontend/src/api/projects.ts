@@ -10,7 +10,6 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest {
   name: string;
   systemEndpointId: string;
-  memberIds?: string[];
 }
 
 export const projectsApi = {
