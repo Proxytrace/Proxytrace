@@ -72,6 +72,7 @@ internal sealed class CapturingHttpMessageHandler : HttpMessageHandler
     public HttpMethod? LastMethod { get; private set; }
     public bool LastHadContent { get; private set; }
     public byte[] LastBody { get; private set; } = [];
+    public string? LastContentType { get; private set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -82,6 +83,9 @@ internal sealed class CapturingHttpMessageHandler : HttpMessageHandler
         if (request.Content is not null)
         {
             LastBody = await request.Content.ReadAsByteArrayAsync(cancellationToken);
+            LastContentType = request.Content.Headers.TryGetValues("Content-Type", out var values)
+                ? string.Join(",", values)
+                : null;
         }
 
         return new HttpResponseMessage(HttpStatusCode.OK)
