@@ -300,6 +300,6 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         }
 
         var hash = SHA1.HashData(Encoding.UTF8.GetBytes(sessionId));
-        return new Guid(hash);
+        return new Guid(hash.AsSpan(0, 16));
     }
 }

@@ -193,6 +193,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Captured calls with a non-UUID session id are no longer silently dropped.** When a client sent a
+  session identifier that was not a GUID, Proxytrace hashed it to derive a stable conversation id but
+  built the id from all 20 SHA-1 bytes, which threw and caused every such call to be discarded during
+  ingestion. The hash is now truncated to 16 bytes, so calls carrying arbitrary session ids are
+  captured and grouped into the same conversation as expected.
+
 - **Saving a record no longer spuriously fails on the in-memory database.** After `UpdatedAt` became
   a database concurrency token, ordinary single-actor updates (for example a user changing their
   email-notification preference) could fail with a false "modified by another process" error on the
