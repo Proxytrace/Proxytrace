@@ -1,9 +1,11 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Api.Json;
 using Proxytrace.Application.Streaming;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestRun;
 
@@ -15,17 +17,23 @@ namespace Proxytrace.Api.Controllers;
 public class TestRunsController : ControllerBase
 {
     private readonly ITestRunRepository repository;
+    private readonly IAgentRepository agentRepository;
     private readonly ITestResultBroadcaster broadcaster;
     private readonly TestRunDtoMapper mapper;
+    private readonly IProjectAccessGuard accessGuard;
 
     public TestRunsController(
         ITestRunRepository repository,
+        IAgentRepository agentRepository,
         ITestResultBroadcaster broadcaster,
-        TestRunDtoMapper mapper)
+        TestRunDtoMapper mapper,
+        IProjectAccessGuard accessGuard)
     {
         this.repository = repository;
+        this.agentRepository = agentRepository;
         this.broadcaster = broadcaster;
         this.mapper = mapper;
+        this.accessGuard = accessGuard;
     }
 
     [HttpGet]
@@ -35,9 +43,20 @@ public class TestRunsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var paged = agentId.HasValue
-            ? await repository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken)
-            : await repository.GetPagedAsync(page, pageSize, cancellationToken);
+        if (agentId.HasValue)
+        {
+            var agent = await agentRepository.FindAsync(agentId.Value, cancellationToken);
+            if (agent is null || !await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
+                return new PagedResult<TestRunDto>([], 0, page, pageSize);
+            var pagedByAgent = await repository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken);
+            return pagedByAgent.Map(mapper.ToDto);
+        }
+
+        // No agent filter enumerates across all tenants — admins only; non-admins get nothing.
+        if (await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken) is not null)
+            return new PagedResult<TestRunDto>([], 0, page, pageSize);
+
+        var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
         return paged.Map(mapper.ToDto);
     }
 
@@ -46,6 +65,8 @@ public class TestRunsController : ControllerBase
     {
         var run = await repository.FindAsync(id, cancellationToken);
         if (run is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(run.Group.Suite.Agent.Project.Id, cancellationToken))
             return NotFound();
         return mapper.ToDto(run);
     }
@@ -56,6 +77,8 @@ public class TestRunsController : ControllerBase
     {
         var run = await repository.FindAsync(id, cancellationToken);
         if (run is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(run.Group.Suite.Agent.Project.Id, cancellationToken))
             return NotFound();
         var result = run.TestResults.FirstOrDefault(r => r.TestCase.Id == caseId);
         if (result is null)
@@ -70,6 +93,8 @@ public class TestRunsController : ControllerBase
         var run = await repository.FindAsync(id, cancellationToken);
         if (run is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(run.Group.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
         var testCase = run.Group.Suite.TestCases.FirstOrDefault(tc => tc.Id == caseId);
         if (testCase is null)
             return NotFound();
@@ -83,9 +108,9 @@ public class TestRunsController : ControllerBase
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {
         var run = await repository.FindAsync(id, cancellationToken);
-        if (run is null)
+        if (run is null || !await accessGuard.CanAccessProjectAsync(run.Group.Suite.Agent.Project.Id, cancellationToken))
         {
-            Response.StatusCode = 404;
+            Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
 
@@ -129,10 +154,17 @@ public class TestRunsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        => this.DeleteOrConflictAsync(
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var run = await repository.FindAsync(id, cancellationToken);
+        if (run is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(run.Group.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
+        return await this.DeleteOrConflictAsync(
             () => repository.RemoveAsync(id, cancellationToken),
             "This test run is still referenced by an optimization proposal. Remove the proposal before deleting the run.");
+    }
 
     private async Task WriteEventAsync(TestRunEvent evt, CancellationToken cancellationToken)
     {

@@ -6,6 +6,7 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Testing;
 
@@ -159,6 +160,8 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
 
     private static TestRunsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<ITestRunRepository>(),
+        services.GetRequiredService<IAgentRepository>(),
         services.GetRequiredService<ITestResultBroadcaster>(),
-        services.GetRequiredService<TestRunDtoMapper>());
+        services.GetRequiredService<TestRunDtoMapper>(),
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
 }

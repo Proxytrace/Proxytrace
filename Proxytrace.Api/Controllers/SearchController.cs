@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Dto.Search;
 using Proxytrace.Domain.ProjectSearchSettings;
@@ -20,6 +21,7 @@ public class SearchController : ControllerBase
     private readonly IReindexStateTracker reindexTracker;
     private readonly IProjectSearchSettings.CreateNew settingsFactory;
     private readonly SearchRequestOptions options;
+    private readonly IProjectAccessGuard accessGuard;
 
     public SearchController(
         ISearchService searchService,
@@ -28,7 +30,8 @@ public class SearchController : ControllerBase
         ISearchIndexStatistics indexStatistics,
         IReindexStateTracker reindexTracker,
         IProjectSearchSettings.CreateNew settingsFactory,
-        SearchRequestOptions options)
+        SearchRequestOptions options,
+        IProjectAccessGuard accessGuard)
     {
         this.searchService = searchService;
         this.indexer = indexer;
@@ -37,6 +40,7 @@ public class SearchController : ControllerBase
         this.reindexTracker = reindexTracker;
         this.settingsFactory = settingsFactory;
         this.options = options;
+        this.accessGuard = accessGuard;
     }
 
     [HttpGet]
@@ -52,6 +56,10 @@ public class SearchController : ControllerBase
         if (q.Length > options.MaxQueryLength)
         {
             return BadRequest(new { error = $"q must be at most {options.MaxQueryLength} chars" });
+        }
+        if (!await accessGuard.CanAccessProjectAsync(projectId, cancellationToken))
+        {
+            return NotFound();
         }
 
         var results = await searchService.SearchAsync(projectId, q.Trim(), cancellationToken);
@@ -76,6 +84,10 @@ public class SearchController : ControllerBase
         if (limit <= 0 || limit > 50)
         {
             return BadRequest(new { error = "limit must be between 1 and 50" });
+        }
+        if (!await accessGuard.CanAccessProjectAsync(projectId, cancellationToken))
+        {
+            return NotFound();
         }
 
         var parsedKinds = new HashSet<SearchKind>();

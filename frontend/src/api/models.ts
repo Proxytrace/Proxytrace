@@ -957,6 +957,7 @@ export interface TheoryStatusChangedEvent {
 export interface TraceCreatedEvent {
   id: string;
   agentId: string;
+  projectId: string;
   agentName: string;
   model: string;
   provider: string;

@@ -5,6 +5,7 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestCase;
+using Proxytrace.Domain.TestSuite;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -99,6 +100,8 @@ public sealed class TestCasesControllerTests : BaseTest<Module>
 
     private static TestCasesController Resolve(IServiceProvider services) => new(
         services.GetRequiredService<IRepository<ITestCase>>(),
+        services.GetRequiredService<ITestSuiteRepository>(),
         services.GetRequiredService<ITestCase.CreateExisting>(),
-        services.GetRequiredService<TestSuiteDtoMapper>());
+        services.GetRequiredService<TestSuiteDtoMapper>(),
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
 }

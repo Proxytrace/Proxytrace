@@ -239,5 +239,6 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<EvaluatorBuilder>(),
         services.GetRequiredService<EvaluatorDtoMapper>(),
         services.GetRequiredService<ITransaction>(),
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
         Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

@@ -78,5 +78,5 @@ public sealed class TraceBroadcasterTests
     }
 
     private static TraceCreatedEvent NewEvent()
-        => new(Guid.NewGuid(), Guid.NewGuid(), "agent", "model", "provider", DateTimeOffset.UtcNow, null);
+        => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "agent", "model", "provider", DateTimeOffset.UtcNow, null);
 }

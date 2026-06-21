@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
 using Proxytrace.Api.Dto.Theories;
@@ -31,6 +32,7 @@ public class TheoriesController : ControllerBase
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly TheoryDtoMapper mapper;
+    private readonly IProjectAccessGuard accessGuard;
 
     public TheoriesController(
         IOptimizationTheoryRepository repository,
@@ -42,7 +44,8 @@ public class TheoriesController : ControllerBase
         IRepository<ITestSuite> suites,
         IRepository<IModelEndpoint> endpoints,
         ITestSuite.CreateNew createSuite,
-        TheoryDtoMapper mapper)
+        TheoryDtoMapper mapper,
+        IProjectAccessGuard accessGuard)
     {
         this.repository = repository;
         this.validationService = validationService;
@@ -54,6 +57,26 @@ public class TheoriesController : ControllerBase
         this.endpoints = endpoints;
         this.createSuite = createSuite;
         this.mapper = mapper;
+        this.accessGuard = accessGuard;
+    }
+
+    // Resolve the effective owning project of a list query and verify access. Admins
+    // (accessible == null) pass for any scope. Non-admins must scope to a project they belong to —
+    // directly via projectId or via the agent's project — otherwise the query returns nothing rather
+    // than leaking other tenants' rows.
+    private async Task<bool> CanListAsync(Guid? agentId, Guid? projectId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        if (accessible is null)
+            return true;
+        if (projectId is { } pid)
+            return accessible.Contains(pid);
+        if (agentId is { } aid)
+        {
+            var agent = await agents.FindAsync(aid, cancellationToken);
+            return agent is not null && accessible.Contains(agent.Project.Id);
+        }
+        return false;
     }
 
     [HttpGet]
@@ -63,6 +86,9 @@ public class TheoriesController : ControllerBase
         [FromQuery] TheoryStatus? status = null,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(agentId, projectId, cancellationToken))
+            return [];
+
         IReadOnlyList<IOptimizationTheory> theories;
         if (agentId.HasValue)
             theories = await repository.GetByAgentAsync(agentId.Value, cancellationToken);
@@ -81,7 +107,13 @@ public class TheoriesController : ControllerBase
     public async Task<ActionResult<TheoryDto>> Get(Guid id, CancellationToken cancellationToken)
     {
         var theory = await repository.FindAsync(id, cancellationToken);
-        return theory is null ? NotFound() : Ok(mapper.ToDto(theory));
+        if (theory is null)
+            return NotFound();
+
+        if (!await accessGuard.CanAccessProjectAsync(theory.Agent.Project.Id, cancellationToken))
+            return NotFound();
+
+        return Ok(mapper.ToDto(theory));
     }
 
     /// <summary>
@@ -95,6 +127,9 @@ public class TheoriesController : ControllerBase
     {
         var agent = await agents.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
+            return NotFound($"Agent {request.AgentId} does not exist.");
+
+        if (!await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
             return NotFound($"Agent {request.AgentId} does not exist.");
 
         var suite = await suites.FindAsync(request.SuiteId, cancellationToken);
@@ -162,6 +197,13 @@ public class TheoriesController : ControllerBase
     [HttpPost("{id:guid}/reset")]
     public async Task<ActionResult<TheoryDto>> Reset(Guid id, CancellationToken cancellationToken)
     {
+        var existing = await repository.FindAsync(id, cancellationToken);
+        if (existing is null)
+            return NotFound($"Theory {id} does not exist.");
+
+        if (!await accessGuard.CanAccessProjectAsync(existing.Agent.Project.Id, cancellationToken))
+            return NotFound($"Theory {id} does not exist.");
+
         var result = await validationService.ResetToProposedAsync(id, cancellationToken);
         return (result.Outcome, result.Theory) switch
         {

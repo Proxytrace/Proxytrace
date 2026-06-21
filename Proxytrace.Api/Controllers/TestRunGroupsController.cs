@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Api.Json;
 using Proxytrace.Application.AuditLog;
@@ -33,6 +34,7 @@ public class TestRunGroupsController : ControllerBase
     private readonly IOptimizerService optimizerService;
     private readonly TestRunDtoMapper runMapper;
     private readonly IAgentRepository agentRepository;
+    private readonly IProjectAccessGuard accessGuard;
     private readonly ILogger<Audit> audit;
 
     public TestRunGroupsController(
@@ -45,6 +47,7 @@ public class TestRunGroupsController : ControllerBase
         IOptimizerService optimizerService,
         TestRunDtoMapper runMapper,
         IAgentRepository agentRepository,
+        IProjectAccessGuard accessGuard,
         ILogger<Audit> audit)
     {
         this.groupRepository = groupRepository;
@@ -56,7 +59,32 @@ public class TestRunGroupsController : ControllerBase
         this.optimizerService = optimizerService;
         this.runMapper = runMapper;
         this.agentRepository = agentRepository;
+        this.accessGuard = accessGuard;
         this.audit = audit;
+    }
+
+    // Resolve the effective owning project of a list query and verify access. Admins
+    // (accessible == null) pass for any scope. Non-admins must scope to a project they belong to —
+    // via projectId, the suite's project, or the agent's project — otherwise the query returns
+    // nothing rather than leaking other tenants' rows.
+    private async Task<bool> CanListAsync(Guid? suiteId, Guid? agentId, Guid? projectId, CancellationToken cancellationToken)
+    {
+        var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
+        if (accessible is null)
+            return true;
+        if (projectId is { } pid)
+            return accessible.Contains(pid);
+        if (suiteId is { } sid)
+        {
+            var suite = await suiteRepository.FindAsync(sid, cancellationToken);
+            return suite is not null && accessible.Contains(suite.Agent.Project.Id);
+        }
+        if (agentId is { } aid)
+        {
+            var agent = await agentRepository.FindAsync(aid, cancellationToken);
+            return agent is not null && accessible.Contains(agent.Project.Id);
+        }
+        return false;
     }
 
     [HttpGet]
@@ -69,6 +97,9 @@ public class TestRunGroupsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanListAsync(suiteId, agentId, projectId, cancellationToken))
+            return new PagedResult<TestRunGroupListItemDto>([], 0, page, pageSize);
+
         PagedResult<ITestRunGroup> paged;
         if (suiteId.HasValue)
             paged = await groupRepository.GetBySuitePagedAsync(suiteId.Value, page, pageSize, includeSystem, cancellationToken);
@@ -90,6 +121,8 @@ public class TestRunGroupsController : ControllerBase
         var group = await groupRepository.FindAsync(id, cancellationToken);
         if (group is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
         return await ToDtoAsync(group, cancellationToken);
     }
 
@@ -101,6 +134,9 @@ public class TestRunGroupsController : ControllerBase
         var suite = await suiteRepository.FindAsync(request.TestSuiteId, cancellationToken);
         if (suite is null)
             return BadRequest($"Test suite {request.TestSuiteId} not found.");
+
+        if (!await accessGuard.CanAccessProjectAsync(suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
 
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
@@ -124,9 +160,9 @@ public class TestRunGroupsController : ControllerBase
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {
         var group = await groupRepository.FindAsync(id, cancellationToken);
-        if (group is null)
+        if (group is null || !await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
         {
-            Response.StatusCode = 404;
+            Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
 
@@ -173,6 +209,8 @@ public class TestRunGroupsController : ControllerBase
         var group = await groupRepository.FindAsync(id, cancellationToken);
         if (group is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
         if (group.Status is not TestRunStatus.Completed)
             return BadRequest("Only completed test run groups can be optimized.");
         await optimizerService.EnqueueAsync(group, cancellationToken);
@@ -185,15 +223,24 @@ public class TestRunGroupsController : ControllerBase
         var group = await groupRepository.FindAsync(id, cancellationToken);
         if (group is null)
             return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
         group = await runner.CancelAsync(group, cancellationToken);
         return AcceptedAtAction(nameof(Get), new { id = group.Id }, await ToDtoAsync(group, cancellationToken));
     }
 
     [HttpDelete("{id:guid}")]
-    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        => this.DeleteOrConflictAsync(
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var group = await groupRepository.FindAsync(id, cancellationToken);
+        if (group is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
+            return NotFound();
+        return await this.DeleteOrConflictAsync(
             () => groupRepository.RemoveAsync(id, cancellationToken),
             "This run group still has runs referenced by an optimization proposal. Remove the proposal first.");
+    }
 
     private async Task<TestRunGroupDto> ToDtoAsync(ITestRunGroup group, CancellationToken cancellationToken)
     {

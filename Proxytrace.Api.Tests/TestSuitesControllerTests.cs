@@ -560,6 +560,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<TestSuiteDtoMapper>(),
             services.GetRequiredService<IStatsReader<TestRunStats, TestRunStats.Filter>>(),
             license ?? UnlimitedLicense(),
+            services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 
     private static ILicenseService UnlimitedLicense()
