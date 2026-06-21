@@ -87,6 +87,30 @@ public sealed class SettingsAuthorizationTests
             nameof(ModelProvidersController.Get));
     }
 
+    [TestMethod]
+    public void UsersController_RosterEndpoints_RequireAdmin()
+    {
+        // The full roster, any user's record, and any user's project memberships expose other
+        // users' emails (PII) and role assignments — admin-only, like the mutating endpoints.
+        AssertRequiresAdmin<UsersController>(
+            nameof(UsersController.GetAll),
+            nameof(UsersController.Get),
+            nameof(UsersController.GetProjects),
+            nameof(UsersController.UpdateRole),
+            nameof(UsersController.Delete));
+    }
+
+    [TestMethod]
+    public void UsersController_SelfServiceEndpoints_StayOpenToMembers()
+    {
+        // The account menu (own profile, own language, own email-notification prefs) is used by
+        // every authenticated user and must not require Admin.
+        AssertDoesNotRequireAdmin<UsersController>(
+            nameof(UsersController.Me),
+            nameof(UsersController.UpdateMyLanguage),
+            nameof(UsersController.UpdateMyEmailNotifications));
+    }
+
     private static void AssertRequiresAdmin<TController>(params string[] methodNames)
     {
         foreach (var name in methodNames)
