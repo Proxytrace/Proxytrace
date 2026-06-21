@@ -834,6 +834,9 @@ msgstr "All agents"
 msgid "All agents ({0})"
 msgstr "All agents ({0})"
 
+msgid "All alerts by email"
+msgstr "All alerts by email"
+
 msgid "All cases passed."
 msgstr "All cases passed."
 
@@ -887,6 +890,9 @@ msgstr "API Key Created"
 
 msgid "API Key Deleted"
 msgstr "API Key Deleted"
+
+msgid "App URL (for links in emails)"
+msgstr "App URL (for links in emails)"
 
 msgid "Application errors and critical failures will appear here as they occur."
 msgstr "Application errors and critical failures will appear here as they occur."
@@ -949,6 +955,9 @@ msgstr "Audit Log"
 #. placeholder {0}: auth.error.message
 msgid "Auth error: {0}"
 msgstr "Auth error: {0}"
+
+msgid "Auto"
+msgstr "Auto"
 
 msgid "Auto-approve actions"
 msgstr "Auto-approve actions"
@@ -1393,6 +1402,9 @@ msgstr "Creating…"
 msgid "Critical"
 msgstr "Critical"
 
+msgid "Critical alerts by email"
+msgstr "Critical alerts by email"
+
 msgid "Curate real traces into test suites and score them with evaluators on every agent version."
 msgstr "Curate real traces into test suites and score them with evaluators on every agent version."
 
@@ -1610,6 +1622,21 @@ msgstr "Effective gain"
 
 msgid "Email"
 msgstr "Email"
+
+msgid "Email all alerts"
+msgstr "Email all alerts"
+
+msgid "Email critical alerts only"
+msgstr "Email critical alerts only"
+
+msgid "Email notifications"
+msgstr "Email notifications"
+
+msgid "Email settings saved"
+msgstr "Email settings saved"
+
+msgid "Enable email notifications"
+msgstr "Enable email notifications"
 
 msgid "Enable schedule"
 msgstr "Enable schedule"
@@ -1852,6 +1879,12 @@ msgstr "Friday"
 
 msgid "From"
 msgstr "From"
+
+msgid "From address"
+msgstr "From address"
+
+msgid "From name"
+msgstr "From name"
 
 msgid "Full proxy setup guide →"
 msgstr "Full proxy setup guide →"
@@ -2155,6 +2188,9 @@ msgstr "latest suite run"
 msgid "latest suite run · project-wide"
 msgstr "latest suite run · project-wide"
 
+msgid "Leave blank to keep current password"
+msgstr "Leave blank to keep current password"
+
 msgid "Level"
 msgstr "Level"
 
@@ -2359,6 +2395,9 @@ msgstr "Metadata"
 
 msgid "Min"
 msgstr "Min"
+
+msgid "Minimum severity"
+msgstr "Minimum severity"
 
 msgid "minutes"
 msgstr "minutes"
@@ -2571,6 +2610,9 @@ msgstr "No decision yet — validation must finish first."
 
 msgid "no delta predicted"
 msgstr "no delta predicted"
+
+msgid "No email alerts"
+msgstr "No email alerts"
 
 msgid "No endpoints available"
 msgstr "No endpoints available"
@@ -2809,6 +2851,9 @@ msgstr "No written reasoning."
 
 msgid "Non-model data deleted"
 msgstr "Non-model data deleted"
+
+msgid "None"
+msgstr "None"
 
 msgid "None configured"
 msgstr "None configured"
@@ -3707,6 +3752,9 @@ msgstr "Searching traces…"
 msgid "Searching…"
 msgstr "Searching…"
 
+msgid "Security"
+msgstr "Security"
+
 msgid "Security and lifecycle events for this project."
 msgstr "Security and lifecycle events for this project."
 
@@ -3795,8 +3843,14 @@ msgstr "Send error"
 msgid "Send message"
 msgstr "Send message"
 
+msgid "Send notification alerts to your users by email."
+msgstr "Send notification alerts to your users by email."
+
 msgid "Send result"
 msgstr "Send result"
+
+msgid "Send test email"
+msgstr "Send test email"
 
 msgid "Set a password for your account"
 msgstr "Set a password for your account"
@@ -3868,6 +3922,12 @@ msgstr "significant"
 
 msgid "sk-…"
 msgstr "sk-…"
+
+msgid "SMTP host"
+msgstr "SMTP host"
+
+msgid "SMTP port"
+msgstr "SMTP port"
 
 msgid "Snippet length (characters)"
 msgstr "Snippet length (characters)"
@@ -4082,6 +4142,9 @@ msgstr "Test Cases"
 
 msgid "Test connection"
 msgstr "Test connection"
+
+msgid "Test email sent"
+msgstr "Test email sent"
 
 msgid "Test results"
 msgstr "Test results"
@@ -4509,6 +4572,9 @@ msgstr "User Role Changed"
 msgid "User Signed Up"
 msgstr "User Signed Up"
 
+msgid "Username"
+msgstr "Username"
+
 msgid "Users"
 msgstr "Users"
 
@@ -4648,6 +4714,9 @@ msgstr "When"
 
 msgid "When disabled, search returns no results and indexing pauses."
 msgstr "When disabled, search returns no results and indexing pauses."
+
+msgid "When on, notifications are emailed to users who opt in."
+msgstr "When on, notifications are emailed to users who opt in."
 
 msgid "Which agent should this suite test?"
 msgstr "Which agent should this suite test?"

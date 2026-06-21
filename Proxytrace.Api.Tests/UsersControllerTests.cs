@@ -8,6 +8,7 @@ using Proxytrace.Api.Dto.Users;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
 using Proxytrace.Testing;
@@ -70,6 +71,39 @@ public sealed class UsersControllerTests : BaseTest<Module>
         result.Should().BeOfType<NoContentResult>();
         var reloaded = await services.GetRequiredService<IRepository<IUser>>().GetAsync(user.Id, CancellationToken);
         reloaded.Language.Should().Be("de");
+    }
+
+    [TestMethod]
+    public async Task UpdateMyEmailNotifications_Valid_PersistsAndReturnsNoContent()
+    {
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance(accessor).As<ICurrentUserAccessor>());
+        var user = await CreateUserAsync(services, UserRole.Member);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(user);
+        var controller = ResolveController(services);
+
+        var result = await controller.UpdateMyEmailNotifications(
+            new UpdateMyEmailNotificationsRequest(false, NotificationSeverity.Critical),
+            CancellationToken);
+
+        result.Should().BeOfType<NoContentResult>();
+        var reloaded = await services.GetRequiredService<IRepository<IUser>>().GetAsync(user.Id, CancellationToken);
+        reloaded.EmailNotificationsEnabled.Should().BeFalse();
+        reloaded.EmailNotificationMinSeverity.Should().Be(NotificationSeverity.Critical);
+    }
+
+    [TestMethod]
+    public async Task UpdateMyEmailNotifications_NoCurrentUser_ReturnsUnauthorized()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.UpdateMyEmailNotifications(
+            new UpdateMyEmailNotificationsRequest(true, NotificationSeverity.Warning),
+            CancellationToken);
+
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     [TestMethod]

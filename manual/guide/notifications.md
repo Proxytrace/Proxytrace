@@ -45,8 +45,29 @@ Notifications are scoped to the currently selected **project** (plus any system-
 notifications). Switch projects from the sidebar selector to see another project's
 notifications.
 
-::: tip Coming soon
-The notification system is built to be extendable. Future releases will surface additional
-notification kinds in this same inbox, and add delivery channels beyond the in-app inbox —
-for example email.
+## Email notifications
+
+When an operator has configured email, you can opt in to receive notification alerts by email
+as well as seeing them in the in-app inbox. New accounts are set to *All* by default, so you may
+start receiving emails as soon as an operator enables email — change the level or turn email off
+from the account menu below. The in-app inbox always shows every notification regardless of this
+setting.
+
+Open the account menu (your avatar or initials in the top-right corner) and choose
+**Notifications**. Pick one of three levels — a short hint below the selector spells out what
+each delivers:
+
+- **All** (default) — every notification, including informational ones, is emailed.
+- **Critical** — only the most urgent alerts are emailed.
+- **None** — no email alerts; you'll still see everything in the in-app inbox.
+
+The **Notifications** entry in the account menu only appears once the operator has enabled and
+configured email for the installation. If you do not see it, email delivery has not been set up
+yet — contact your administrator.
+
+::: tip Delivery scope
+Email recipients for a notification are the project's members (for project-scoped
+notifications) or all users (for global notifications), filtered to those who have opted in
+and whose chosen severity threshold the notification meets. The operator can also set an
+installation-wide minimum severity floor that applies before any per-user setting.
 :::

@@ -9,6 +9,8 @@ export interface Segment<T extends string> {
   icon?: ReactNode;
   count?: number;
   ariaLabel?: string;
+  /** Stable hook for e2e selection of this specific segment. */
+  testId?: string;
 }
 
 interface Props<T extends string> {
@@ -38,6 +40,7 @@ export function SegmentedControl<T extends string>({ value, onChange, segments, 
             onClick={() => onChange(seg.value)}
             aria-pressed={active}
             aria-label={seg.ariaLabel}
+            data-testid={seg.testId}
             className={`rounded-md cursor-pointer font-medium whitespace-nowrap transition-colors duration-[var(--motion-fast)] ${FOCUS_RING} ${stateCls} ${
               iconOnly ? 'w-[26px] h-[26px] flex items-center justify-center' : 'px-2.5 py-1 text-body-sm'
             }`}

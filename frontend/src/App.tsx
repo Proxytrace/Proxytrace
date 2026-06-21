@@ -34,6 +34,7 @@ import { SearchIndexingSection } from './features/settings/sections/SearchIndexi
 import { ProjectsSection } from './features/settings/sections/ProjectsSection';
 import { DangerZoneSection } from './features/settings/sections/DangerZoneSection';
 import { LicenseSection } from './features/settings/sections/LicenseSection';
+import { EmailNotificationsSection } from './features/settings/sections/EmailNotificationsSection';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -246,6 +247,7 @@ function AppRoutes() {
             <Route path="users" element={wrap(<Users />)} />
             <Route path="license" element={<LicenseSection />} />
             <Route path="error-log" element={wrap(<ErrorLog />)} />
+            <Route path="email-notifications" element={<EmailNotificationsSection />} />
             <Route path="audit-log" element={wrap(<AuditLog />)} />
             <Route path="danger" element={<DangerZoneSection />} />
           </Route>

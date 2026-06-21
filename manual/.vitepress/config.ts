@@ -55,6 +55,7 @@ export default defineConfig({
             { text: 'User Management', link: '/admin/user-management' },
             { text: 'Error Log', link: '/admin/error-log' },
             { text: 'Audit Log', link: '/admin/audit-log' },
+            { text: 'Email Notifications', link: '/admin/email' },
             { text: 'Deployment', link: '/admin/deployment' },
             { text: 'Upgrading', link: '/admin/upgrading' },
             { text: 'E2E Tests', link: '/admin/e2e-tests' },

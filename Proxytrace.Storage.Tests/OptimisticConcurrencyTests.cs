@@ -3,6 +3,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Exceptions;
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.User;
 using Proxytrace.Testing;
 
@@ -25,7 +26,7 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
 
         var modifier = new ConcurrentModifier(user);
         var factory = services.GetRequiredService<IUser.CreateExisting>();
-        var modified = factory(modifier.Email, modifier.ExternalSubject, modifier.PasswordHash, modifier.Role, modifier.Language, modifier);
+        var modified = factory(modifier.Email, modifier.ExternalSubject, modifier.PasswordHash, modifier.Role, modifier.Language, modifier.EmailNotificationsEnabled, modifier.EmailNotificationMinSeverity, modifier);
 
         await FluentActions.Invoking(() => repo.UpdateAsync(modified, CancellationToken))
             .Should()
@@ -92,10 +93,13 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
         public string? PasswordHash => user.PasswordHash;
         public UserRole Role => user.Role;
         public string Language => user.Language;
+        public bool EmailNotificationsEnabled => user.EmailNotificationsEnabled;
+        public NotificationSeverity EmailNotificationMinSeverity => user.EmailNotificationMinSeverity;
 
         public Task<IUser> ChangeRole(UserRole role, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> ChangePasswordHash(string passwordHash, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> ChangeLanguage(string language, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
+        public Task<IUser> ChangeEmailNotificationPreferences(bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> ReloadAsync(CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> AddAsync(CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
         public Task<IUser> UpdateAsync(CancellationToken cancellationToken = default) => Task.FromResult<IUser>(this);
@@ -116,6 +120,8 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
         public string? PasswordHash => user.PasswordHash;
         public UserRole Role => user.Role;
         public string Language => user.Language;
+        public bool EmailNotificationsEnabled => user.EmailNotificationsEnabled;
+        public NotificationSeverity EmailNotificationMinSeverity => user.EmailNotificationMinSeverity;
 
         public ConcurrentModifier(IUser user)
         {
@@ -129,6 +135,9 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
             => Task.FromResult<IUser>(this);
 
         public Task<IUser> ChangeLanguage(string language, CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task<IUser> ChangeEmailNotificationPreferences(bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, CancellationToken cancellationToken = default)
             => Task.FromResult<IUser>(this);
 
         public Task<IUser> ReloadAsync(CancellationToken cancellationToken = default)

@@ -9,9 +9,11 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Auth;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
+using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Invite;
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.User;
 using Proxytrace.Testing;
 
@@ -204,7 +206,31 @@ public sealed class AuthControllerTests : BaseTest<Module>
         result.Value.Language.Should().Be("de");
     }
 
-    private static AuthController ResolveController(IServiceProvider services) => new(
+    [TestMethod]
+    public async Task Me_IncludesEmailPreferences_AndOperatorEnabledFlag()
+    {
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(accessor).As<ICurrentUserAccessor>());
+        var create = services.GetRequiredService<IUser.CreateNew>();
+        var user = create($"{Guid.NewGuid():N}@example.test", externalSubject: null, passwordHash: "hash",
+            UserRole.Member, "en", emailNotificationsEnabled: false, emailNotificationMinSeverity: NotificationSeverity.Critical);
+        await services.GetRequiredService<IRepository<IUser>>().AddAsync(user, CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(user);
+
+        var store = Substitute.For<IEmailSettingsStore>();
+        store.GetAsync(Arg.Any<CancellationToken>()).Returns(EnabledSettings());
+
+        var result = await ResolveController(services, store).Me(CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        result.Value.EmailNotificationsEnabled.Should().BeFalse();
+        result.Value.EmailNotificationMinSeverity.Should().Be(NotificationSeverity.Critical);
+        result.Value.EmailEnabled.Should().BeTrue();
+    }
+
+    private static AuthController ResolveController(
+        IServiceProvider services,
+        IEmailSettingsStore? emailSettings = null) => new(
         new AuthOptions(),
         services.GetRequiredService<ISetupService>(),
         services.GetRequiredService<ILoginService>(),
@@ -215,8 +241,14 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),
         new ConfigurationBuilder().Build(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance)
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance,
+        emailSettings ?? Substitute.For<IEmailSettingsStore>())
     {
         ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
     };
+
+    private static EmailSettings EnabledSettings() => new(
+        Enabled: true, SmtpHost: "smtp", SmtpPort: 25, Security: SmtpSecurity.None,
+        Username: null, Password: null, FromAddress: "a@b.c", FromName: "PT",
+        AppBaseUrl: null, MinSeverity: NotificationSeverity.Warning);
 }

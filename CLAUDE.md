@@ -22,6 +22,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/i18n.md`](docs/i18n.md) | Adding any user-facing UI string, or touching the translation system / per-user language |
 | [`docs/commands.md`](docs/commands.md) | Building, running, or testing the stack |
 | [`docs/domain-concepts.md`](docs/domain-concepts.md) | Needing the domain glossary (entities + domain objects) |
+| [`docs/notifications.md`](docs/notifications.md) | Touching notifications, channels, or email delivery |
 
 ## Hard Rules (apply everywhere)
 

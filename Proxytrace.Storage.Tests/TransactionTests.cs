@@ -287,7 +287,7 @@ public sealed class TransactionTests : BaseTest<Module>
         // Act
         await transaction.InvokeAsync(async () =>
         {
-            var updatedUser = createExisting("updated@example.com", initialUser.ExternalSubject, initialUser.PasswordHash, initialUser.Role, initialUser.Language, initialUser);
+            var updatedUser = createExisting("updated@example.com", initialUser.ExternalSubject, initialUser.PasswordHash, initialUser.Role, initialUser.Language, initialUser.EmailNotificationsEnabled, initialUser.EmailNotificationMinSeverity, initialUser);
             await repository.UpdateAsync(updatedUser, CancellationToken);
         });
 

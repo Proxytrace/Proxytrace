@@ -49,4 +49,7 @@ public enum AuditAction
 
     // Optimization proposal state transitions (e.g. via the MCP server).
     ProposalStatusChanged = 36,
+
+    // Operator email/SMTP configuration.
+    EmailSettingsUpdated = 37,
 }

@@ -834,6 +834,9 @@ msgstr "Alle Agents"
 msgid "All agents ({0})"
 msgstr "Alle Agents ({0})"
 
+msgid "All alerts by email"
+msgstr "Alle Alerts per E-Mail"
+
 msgid "All cases passed."
 msgstr "Alle Cases bestanden."
 
@@ -887,6 +890,9 @@ msgstr "API Key erstellt"
 
 msgid "API Key Deleted"
 msgstr "API Key gelöscht"
+
+msgid "App URL (for links in emails)"
+msgstr "App-URL (für Links in E-Mails)"
 
 msgid "Application errors and critical failures will appear here as they occur."
 msgstr "Anwendungsfehler und kritische Ausfälle erscheinen hier, sobald sie auftreten."
@@ -949,6 +955,9 @@ msgstr "Audit-Log"
 #. placeholder {0}: auth.error.message
 msgid "Auth error: {0}"
 msgstr "Authentifizierungsfehler: {0}"
+
+msgid "Auto"
+msgstr "Auto"
 
 msgid "Auto-approve actions"
 msgstr "Aktionen automatisch freigeben"
@@ -1393,6 +1402,9 @@ msgstr "Wird erstellt…"
 msgid "Critical"
 msgstr "Kritisch"
 
+msgid "Critical alerts by email"
+msgstr "Kritische Alerts per E-Mail"
+
 msgid "Curate real traces into test suites and score them with evaluators on every agent version."
 msgstr "Kuratieren Sie echte Traces in Test Suites und bewerten Sie sie mit Evaluators bei jeder neuen Agent-Version."
 
@@ -1610,6 +1622,21 @@ msgstr "Effektiver Gewinn"
 
 msgid "Email"
 msgstr "E-Mail"
+
+msgid "Email all alerts"
+msgstr "Alle Alerts per E-Mail"
+
+msgid "Email critical alerts only"
+msgstr "Nur kritische Alerts per E-Mail"
+
+msgid "Email notifications"
+msgstr "E-Mail-Benachrichtigungen"
+
+msgid "Email settings saved"
+msgstr "E-Mail-Einstellungen gespeichert"
+
+msgid "Enable email notifications"
+msgstr "E-Mail-Benachrichtigungen aktivieren"
 
 msgid "Enable schedule"
 msgstr "Zeitplan aktivieren"
@@ -1852,6 +1879,12 @@ msgstr "Freitag"
 
 msgid "From"
 msgstr "Von"
+
+msgid "From address"
+msgstr "Absenderadresse"
+
+msgid "From name"
+msgstr "Absendername"
 
 msgid "Full proxy setup guide →"
 msgstr "Vollständige Proxy-Einrichtungsanleitung →"
@@ -2155,6 +2188,9 @@ msgstr "neuester Suite-Run"
 msgid "latest suite run · project-wide"
 msgstr "neuester Suite-Run · projektweit"
 
+msgid "Leave blank to keep current password"
+msgstr "Leer lassen, um das aktuelle Passwort beizubehalten"
+
 msgid "Level"
 msgstr "Level"
 
@@ -2359,6 +2395,9 @@ msgstr "Metadaten"
 
 msgid "Min"
 msgstr "Min"
+
+msgid "Minimum severity"
+msgstr "Minimale Schweregradstufe"
 
 msgid "minutes"
 msgstr "Minuten"
@@ -2571,6 +2610,9 @@ msgstr "Noch keine Entscheidung — die Validierung muss zuerst abgeschlossen we
 
 msgid "no delta predicted"
 msgstr "kein Delta vorhergesagt"
+
+msgid "No email alerts"
+msgstr "Keine E-Mail-Alerts"
 
 msgid "No endpoints available"
 msgstr "Keine Endpoints verfügbar"
@@ -2809,6 +2851,9 @@ msgstr "Keine schriftliche Begründung."
 
 msgid "Non-model data deleted"
 msgstr "Nicht-Model-Daten gelöscht"
+
+msgid "None"
+msgstr "Keine"
 
 msgid "None configured"
 msgstr "Keine konfiguriert"
@@ -3707,6 +3752,9 @@ msgstr "Traces werden gesucht…"
 msgid "Searching…"
 msgstr "Suchen…"
 
+msgid "Security"
+msgstr "Sicherheit"
+
 msgid "Security and lifecycle events for this project."
 msgstr "Sicherheits- und Lebenszyklusereignisse für dieses Projekt."
 
@@ -3795,8 +3843,14 @@ msgstr "Sendefehler"
 msgid "Send message"
 msgstr "Nachricht senden"
 
+msgid "Send notification alerts to your users by email."
+msgstr "Sende Benachrichtigungen per E-Mail an deine User."
+
 msgid "Send result"
 msgstr "Ergebnis senden"
+
+msgid "Send test email"
+msgstr "Test-E-Mail senden"
 
 msgid "Set a password for your account"
 msgstr "Legen Sie ein Passwort für Ihr Konto fest"
@@ -3868,6 +3922,12 @@ msgstr "erheblich"
 
 msgid "sk-…"
 msgstr "sk-…"
+
+msgid "SMTP host"
+msgstr "SMTP-Host"
+
+msgid "SMTP port"
+msgstr "SMTP-Port"
 
 msgid "Snippet length (characters)"
 msgstr "Snippet-Länge (Zeichen)"
@@ -4082,6 +4142,9 @@ msgstr "Test Cases"
 
 msgid "Test connection"
 msgstr "Verbindung testen"
+
+msgid "Test email sent"
+msgstr "Test-E-Mail gesendet"
 
 msgid "Test results"
 msgstr "Testergebnisse"
@@ -4509,6 +4572,9 @@ msgstr "User-Rolle geändert"
 msgid "User Signed Up"
 msgstr "User registriert"
 
+msgid "Username"
+msgstr "Benutzername"
+
 msgid "Users"
 msgstr "Benutzer"
 
@@ -4648,6 +4714,9 @@ msgstr "Wann"
 
 msgid "When disabled, search returns no results and indexing pauses."
 msgstr "Wenn deaktiviert, liefert die Suche keine Ergebnisse und die Indizierung pausiert."
+
+msgid "When on, notifications are emailed to users who opt in."
+msgstr "Wenn aktiviert, werden Benachrichtigungen per E-Mail an User gesendet, die sich dafür angemeldet haben."
 
 msgid "Which agent should this suite test?"
 msgstr "Welcher Agent soll diese Suite testen?"

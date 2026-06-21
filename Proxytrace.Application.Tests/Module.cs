@@ -2,6 +2,7 @@ using Autofac;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Application.Ingestion.Internal;
+using Proxytrace.Application.Notifications;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Application.TestRun.Internal;
 using Proxytrace.Domain.Agent;
@@ -26,6 +27,11 @@ public class Module : Autofac.Module
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
         builder.RegisterStub<Proxytrace.Application.Auth.ICurrentUserAccessor>();
+        // EmailNotificationChannel needs IEmailSettingsStore and IEmailSender; stub both so that
+        // tests resolving INotificationService (which fans out to all INotificationChannel instances
+        // including EmailNotificationChannel) don't fail on missing IDataProtectionProvider.
+        builder.RegisterStub<IEmailSettingsStore>();
+        builder.RegisterStub<IEmailSender>();
         // TestRunnerService enqueues completed groups for anomaly detection; the real pipeline isn't
         // part of this test module, so stub it (tests asserting detection register their own).
         builder.RegisterStub<Proxytrace.Application.Anomaly.IAnomalyDetectionService>();

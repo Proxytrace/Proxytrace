@@ -71,13 +71,13 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
         }
 
         TestRunStatsEntity updated = ToEntity(stats, id: existing.Id, createdAt: existing.CreatedAt, updatedAt: now);
-        var entry = context.Entry(existing);
-        entry.CurrentValues.SetValues(updated);
+        var existingEntry = context.Entry(existing);
+        existingEntry.CurrentValues.SetValues(updated);
         // UpdatedAt is a concurrency token. The stats projector shares the ambient context across the
         // insert-race retry, so a row inserted earlier in this context is still tracked at .NET's
         // 100ns precision; realign the token's original to the microseconds PostgreSQL persists so the
         // `WHERE UpdatedAt = @original` check does not spuriously fail. See ConcurrencyTokenExtensions.
-        var updatedAtProperty = entry.Property(e => e.UpdatedAt);
+        var updatedAtProperty = existingEntry.Property(e => e.UpdatedAt);
         updatedAtProperty.OriginalValue = updatedAtProperty.OriginalValue.TruncateToMicroseconds();
         await context.SaveChangesAsync(cancellationToken);
     }

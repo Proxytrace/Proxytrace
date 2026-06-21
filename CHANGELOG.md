@@ -11,6 +11,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Email notifications.** Operators can configure outgoing SMTP under **Settings → Email notifications** and users can opt in to receive notification alerts by email, choosing **All**, **Critical**, or **None** from the account menu (defaulting to All). The SMTP password is encrypted at rest using ASP.NET Data Protection.
+
 - **Audit log of system actions.** Proxytrace now keeps a durable, user-attributed record of
   significant actions — authentication events (sign-in, failed sign-in, sign-out, first-admin setup,
   legacy-account claim), user invites/sign-ups/role changes/deletions, project create/rename/delete

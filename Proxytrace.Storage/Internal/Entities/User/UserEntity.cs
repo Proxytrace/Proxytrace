@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Storage.Internal.Entities.User;
@@ -18,4 +19,10 @@ internal record UserEntity : Entity
 
     /// <summary><see cref="Proxytrace.Domain.User.IUser.Language"/>. BCP-47 culture code; defaults to English.</summary>
     public string Language { get; init; } = "en";
+
+    /// <summary><see cref="Proxytrace.Domain.User.IUser.EmailNotificationsEnabled"/>. Defaults to true.</summary>
+    public bool EmailNotificationsEnabled { get; init; } = true;
+
+    /// <summary><see cref="Proxytrace.Domain.User.IUser.EmailNotificationMinSeverity"/>. Defaults to Info.</summary>
+    public NotificationSeverity EmailNotificationMinSeverity { get; init; } = NotificationSeverity.Info;
 }

@@ -6,6 +6,7 @@ using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
@@ -71,6 +72,23 @@ public class UsersController : ControllerBase
             return Unauthorized();
 
         await user.ChangeLanguage(request.Language, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Self-service: the current user changes their own email notification preferences. Any
+    /// authenticated user may call this (unlike the admin-only settings endpoint).
+    /// </summary>
+    [HttpPatch("me/email-notifications")]
+    public async Task<IActionResult> UpdateMyEmailNotifications(
+        [FromBody] UpdateMyEmailNotificationsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (user is null)
+            return Unauthorized();
+
+        await user.ChangeEmailNotificationPreferences(request.Enabled, request.MinSeverity, cancellationToken);
         return NoContent();
     }
 

@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Notification;
+
 namespace Proxytrace.Domain.User;
 
 /// <summary>
@@ -29,6 +31,12 @@ public interface IUser : IDomainEntity<IUser>
     /// </summary>
     string Language { get; }
 
+    /// <summary>Whether the user receives email notifications. Defaults to <see langword="true"/>.</summary>
+    bool EmailNotificationsEnabled { get; }
+
+    /// <summary>Minimum <see cref="NotificationSeverity"/> that triggers an email. Defaults to <see cref="NotificationSeverity.Info"/> (the "All" option in the account menu).</summary>
+    NotificationSeverity EmailNotificationMinSeverity { get; }
+
     /// <summary>Updates the user's <see cref="Role"/> and persists.</summary>
     Task<IUser> ChangeRole(UserRole role, CancellationToken cancellationToken = default);
 
@@ -38,6 +46,9 @@ public interface IUser : IDomainEntity<IUser>
     /// <summary>Updates the user's UI <see cref="Language"/> and persists.</summary>
     Task<IUser> ChangeLanguage(string language, CancellationToken cancellationToken = default);
 
-    public delegate IUser CreateNew(string email, string? externalSubject, string? passwordHash, UserRole role, string language = SupportedLanguages.Default);
-    public delegate IUser CreateExisting(string email, string? externalSubject, string? passwordHash, UserRole role, string language, IDomainEntityData existing);
+    /// <summary>Updates the user's email notification preferences and persists.</summary>
+    Task<IUser> ChangeEmailNotificationPreferences(bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, CancellationToken cancellationToken = default);
+
+    public delegate IUser CreateNew(string email, string? externalSubject, string? passwordHash, UserRole role, string language = SupportedLanguages.Default, bool emailNotificationsEnabled = true, NotificationSeverity emailNotificationMinSeverity = NotificationSeverity.Info);
+    public delegate IUser CreateExisting(string email, string? externalSubject, string? passwordHash, UserRole role, string language, bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, IDomainEntityData existing);
 }
