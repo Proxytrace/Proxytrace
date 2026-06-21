@@ -1,5 +1,7 @@
+using System.Security.Cryptography;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Security;
 using Proxytrace.Common.Time;
 using AppEmailSettings = Proxytrace.Application.Notifications.EmailSettings;
@@ -13,15 +15,18 @@ internal sealed class EmailSettingsStore : IEmailSettingsStore
     private readonly Func<StorageDbContext> contextFactory;
     private readonly ISecretProtector secretProtector;
     private readonly IClock clock;
+    private readonly ILogger<EmailSettingsStore> logger;
 
     public EmailSettingsStore(
         Func<StorageDbContext> contextFactory,
         ISecretProtector secretProtector,
-        IClock clock)
+        IClock clock,
+        ILogger<EmailSettingsStore> logger)
     {
         this.contextFactory = contextFactory;
         this.secretProtector = secretProtector;
         this.clock = clock;
+        this.logger = logger;
     }
 
     public async Task<AppEmailSettings?> GetAsync(CancellationToken cancellationToken = default)
@@ -33,21 +38,39 @@ internal sealed class EmailSettingsStore : IEmailSettingsStore
         if (entity is null)
             return null;
 
-        var password = string.IsNullOrEmpty(entity.Password)
-            ? null
-            : secretProtector.Unprotect(entity.Password);
-
         return new AppEmailSettings(
             entity.Enabled,
             entity.SmtpHost,
             entity.SmtpPort,
             entity.Security,
             entity.Username,
-            password,
+            DecryptPassword(entity.Password),
             entity.FromAddress,
             entity.FromName,
             entity.AppBaseUrl,
             entity.MinSeverity);
+    }
+
+    /// <summary>
+    /// Decrypts the stored password, degrading to <see langword="null"/> (rather than throwing) when the
+    /// ciphertext can't be decrypted — e.g. an ephemeral Data Protection key ring after a restart without
+    /// <c>PROXYTRACE_DATA_DIR</c>. <see cref="GetAsync"/> is on the hot auth path (<c>/api/auth/me</c>), so a
+    /// crash here would lock every user out; instead email delivery degrades and the operator re-enters the password.
+    /// </summary>
+    private string? DecryptPassword(string? cipher)
+    {
+        if (string.IsNullOrEmpty(cipher))
+            return null;
+
+        try
+        {
+            return secretProtector.Unprotect(cipher);
+        }
+        catch (CryptographicException ex)
+        {
+            logger.LogWarning(ex, "Could not decrypt the stored SMTP password; treating it as unset.");
+            return null;
+        }
     }
 
     public async Task SaveAsync(AppEmailSettings settings, CancellationToken cancellationToken = default)

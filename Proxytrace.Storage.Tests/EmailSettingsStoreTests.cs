@@ -1,9 +1,12 @@
+using System.Security.Cryptography;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Application.Notifications;
+using Proxytrace.Application.Security;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Testing;
@@ -56,6 +59,27 @@ public sealed class EmailSettingsStoreTests : BaseTest<Module>
             .Set<EmailSettingsEntity>()
             .CountAsync(CancellationToken);
         rowCount.Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task GetAsync_WhenPasswordCannotBeDecrypted_DegradesToNullPassword()
+    {
+        // Simulate an undecryptable key ring (e.g. ephemeral keys after a restart without
+        // PROXYTRACE_DATA_DIR): Protect stores the value, Unprotect throws. GetAsync must not
+        // throw — /api/auth/me sits on the hot auth path and would otherwise lock everyone out.
+        var protector = Substitute.For<ISecretProtector>();
+        protector.Protect(Arg.Any<string>()).Returns(call => call.Arg<string>());
+        protector.Unprotect(Arg.Any<string>()).Returns<string>(_ => throw new CryptographicException("bad key ring"));
+
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance(protector).As<ISecretProtector>());
+        var store = services.GetRequiredService<IEmailSettingsStore>();
+
+        await store.SaveAsync(Sample() with { Password = "smtp-secret" }, CancellationToken);
+        var loaded = await store.GetAsync(CancellationToken);
+
+        loaded.Should().NotBeNull();
+        loaded.Should().Match<EmailSettings>(s => s.Password == null && s.SmtpHost == "smtp.example" && s.Enabled);
     }
 
     private (IEmailSettingsStore Store, IServiceProvider Services) Resolve()
