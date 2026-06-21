@@ -1252,6 +1252,9 @@ msgstr "Copiar resultado"
 msgid "Copy system prompt"
 msgstr "Copiar system prompt"
 
+msgid "Copy this link now — it won't be shown again:"
+msgstr "Copia este enlace ahora — no se volverá a mostrar:"
+
 msgid "Copy tool call"
 msgstr "Copiar llamada a Tool"
 
@@ -3863,9 +3866,6 @@ msgstr "La configuración coincide con los valores predeterminados del Agent"
 
 msgid "Share by segment"
 msgstr "Compartir por segmento"
-
-msgid "Share this link:"
-msgstr "Comparte este enlace:"
 
 msgid "Show"
 msgstr "Mostrar"

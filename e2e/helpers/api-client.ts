@@ -133,7 +133,9 @@ export class ProxytraceApiClient {
       data: { name: keyName, projectId },
     });
     if (!res.ok()) throw new Error(`create api key failed: ${res.status()} ${await res.text()}`);
-    return res.json();
+    // The key is hashed at rest; the full value (`plaintextKey`) is returned only here, at creation.
+    const dto = (await res.json()) as { plaintextKey?: string };
+    return { keyValue: dto.plaintextKey ?? '' };
   }
 
   async getAgentCalls(params?: { page?: number; pageSize?: number }): Promise<{ total: number; items: Record<string, unknown>[] }> {
@@ -428,7 +430,7 @@ export class ProxytraceApiClient {
     providers: Array<{
       provider: { id: string; name: string };
       models: Array<{ id: string; modelName: string }>;
-      keys: Array<{ id: string; name: string; keyValue: string }>;
+      keys: Array<{ id: string; name: string; keyPrefix: string }>;
     }>;
     projects: Array<{ id: string; name: string; systemEndpointId: string }>;
   }> {

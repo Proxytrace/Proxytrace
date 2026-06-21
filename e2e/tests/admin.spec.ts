@@ -33,7 +33,9 @@ test.describe('Admin / Users', () => {
     await page.getByTestId('invite-role-select-option-Member').click();
     await page.getByTestId('invite-create-btn').click();
 
-    // The created invite surfaces a share link and a new pending row.
+    // The share link is revealed once, right after creation (the token is hashed at rest, so it
+    // cannot be re-shown).
+    await expect(page.getByTestId('invite-link-reveal')).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
 
     const invites = await api.listInvites();
@@ -41,10 +43,10 @@ test.describe('Admin / Users', () => {
     expect(created, 'invite should be persisted').toBeTruthy();
     if (!created) return;
 
+    // The pending row shows status only — no re-copy control, since the link can't be reconstructed.
     await expect(page.getByTestId(`invite-row-${created.id}`)).toBeVisible();
     await expect(page.getByTestId(`invite-status-${created.id}`)).toHaveText('Pending');
-    // A pending invite exposes a copy-link control so the admin can re-share it later.
-    await expect(page.getByTestId(`invite-copy-btn-${created.id}`)).toBeVisible();
+    await expect(page.getByTestId(`invite-copy-btn-${created.id}`)).toHaveCount(0);
   });
 
   test('admin revokes an invite and the row is removed', async ({ page }) => {
