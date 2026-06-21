@@ -134,6 +134,8 @@ test.describe('Providers page', () => {
     // And the key is listed in the table. Read the id back to target its row deterministically.
     const keyId = await findKeyId(api, id, keyName);
     await expect(page.getByTestId(`key-row-${keyId}`)).toBeVisible();
+    // The list shows only the non-secret prefix — the full value is never re-displayed.
+    await expect(page.getByTestId(`key-prefix-${keyId}`)).toContainText('proxytrace-');
   });
 
   test('revokes an API key and removes it from the Keys section', async ({ page }) => {

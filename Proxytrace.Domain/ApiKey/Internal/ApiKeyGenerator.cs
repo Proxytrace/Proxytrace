@@ -1,4 +1,5 @@
 using Proxytrace.Common.Random;
+using Proxytrace.Common.Security;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
@@ -32,9 +33,12 @@ internal class ApiKeyGenerator : DomainEntityGenerator<IApiKey>
         var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
         var provider = await providerGenerator.GetOrCreateAsync(cancellationToken);
         var owner = await userGenerator.GetOrCreateAsync(cancellationToken);
+        // Generated keys carry their stored shape: the hash of a fresh raw key plus a display prefix.
+        var raw = $"proxytrace-{random.UniqueString()}";
         return factory(
             name: random.String(),
-            apiKey: $"proxytrace-{random.UniqueString()}",
+            keyHash: Sha256.HexHash(raw),
+            keyPrefix: raw.Length <= 16 ? raw : raw[..16],
             project: project,
             provider: provider,
             scopes: ApiKeyScopes.Ingestion | ApiKeyScopes.McpRead | ApiKeyScopes.McpWrite,

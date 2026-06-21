@@ -15,7 +15,6 @@ import { KeyCapabilities } from './KeyCapabilities';
 import { ingestionUrl } from '../../../lib/ingestion';
 import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import useToast from '../../../hooks/useToast';
-import { maskKey } from '../providerMeta';
 import { hasIngestion, hasMcp, mcpEndpointUrl } from '../keyScopes';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
 import { useUsersList } from '../hooks/useProviderQueries';
@@ -69,10 +68,13 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
     {
       key: 'key', label: t`Key`, width: '1.3fr',
       render: k => (
-        <div className="flex items-center gap-1.5 min-w-0">
-          <code className="font-mono text-body text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
-          <CopyButton text={k.keyValue} label={t`Copy key`} data-testid={`key-copy-btn-${k.id}`} />
-        </div>
+        <code
+          data-testid={`key-prefix-${k.id}`}
+          title={t`Shown in full only once, when created`}
+          className="font-mono text-body text-muted overflow-hidden text-ellipsis whitespace-nowrap block"
+        >
+          {k.keyPrefix}…
+        </code>
       ),
     },
     {
@@ -118,11 +120,11 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
         </div>
       )}
 
-      {created && (
+      {created?.plaintextKey && (
         <div className="px-4 py-3 rounded-lg flex items-center gap-3 bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)]">
           <div className="flex-1 min-w-0">
-            <div className="text-body font-semibold mb-1 text-success"><Trans>Key "{created.name}" created — copy it now</Trans></div>
-            <code data-testid="key-value-reveal" className="font-mono text-body text-primary break-all">{created.keyValue}</code>
+            <div className="text-body font-semibold mb-1 text-success"><Trans>Key "{created.name}" created — copy it now, it won't be shown again</Trans></div>
+            <code data-testid="key-value-reveal" className="font-mono text-body text-primary break-all">{created.plaintextKey}</code>
             {hasIngestion(created.scopes) && (
               <div className="flex items-baseline gap-1.5 mt-2 min-w-0">
                 <span className="text-body-sm text-muted whitespace-nowrap"><Trans>Ingestion URL</Trans></span>
@@ -137,7 +139,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
             )}
           </div>
           {/* eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy */}
-          <Button variant="success" size="sm" leftIcon={<CopyIcon size={12} />} onClick={() => { navigator.clipboard.writeText(created.keyValue); toast(t`API key copied`, 'success'); }}><Trans>Copy</Trans></Button>
+          <Button variant="success" size="sm" leftIcon={<CopyIcon size={12} />} onClick={() => { navigator.clipboard.writeText(created.plaintextKey ?? ''); toast(t`API key copied`, 'success'); }}><Trans>Copy</Trans></Button>
           <IconButton aria-label={t`Dismiss`} onClick={() => setCreated(null)}><XIcon size={14} /></IconButton>
         </div>
       )}

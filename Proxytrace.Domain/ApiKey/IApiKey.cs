@@ -13,20 +13,28 @@ public interface IApiKey : IDomainEntity
     /// The name (purpose) of the api key
     /// </summary>
     string Name { get; }
-    
+
     /// <summary>
-    /// The api key
+    /// One-way SHA-256 hash of the inbound API key. The key is a verify-only credential — it is never
+    /// replayed, only compared — so only its hash is stored. The plaintext is shown once at creation
+    /// and is unrecoverable thereafter; use <see cref="KeyPrefix"/> to identify a key in listings.
     /// </summary>
-    string ApiKey { get; }
-    
+    string KeyHash { get; }
+
+    /// <summary>
+    /// A short, non-secret leading slice of the inbound key (e.g. <c>proxytrace-AbCd…</c>), kept so a
+    /// key can be recognised in lists without exposing the secret.
+    /// </summary>
+    string KeyPrefix { get; }
+
     /// <summary>
     /// The associated project
     /// </summary>
     IProject Project { get; }
-    
+
     /// <summary>
     /// The model provider this api key associates with.
-    /// Note: The <see cref="ApiKey"/> property is for authenticating at this app.
+    /// Note: <see cref="KeyHash"/> authenticates the caller at this app.
     /// The model provider requires a separate (different) ApiKey <see cref="IModelProvider.ApiKey"/>
     /// </summary>
     IModelProvider Provider { get; }
@@ -45,8 +53,8 @@ public interface IApiKey : IDomainEntity
     IUser Owner { get; }
 
     /// <summary>Factory delegate for creating a new API key.</summary>
-    public delegate IApiKey CreateNew(string name, string apiKey, IProject project, IModelProvider provider, ApiKeyScopes scopes, IUser owner);
+    public delegate IApiKey CreateNew(string name, string keyHash, string keyPrefix, IProject project, IModelProvider provider, ApiKeyScopes scopes, IUser owner);
 
     /// <summary>Factory delegate for reconstituting an existing API key from persistence.</summary>
-    public delegate IApiKey CreateExisting(string name, string apiKey, IProject project, IModelProvider provider, ApiKeyScopes scopes, IUser owner, IDomainEntityData existing);
+    public delegate IApiKey CreateExisting(string name, string keyHash, string keyPrefix, IProject project, IModelProvider provider, ApiKeyScopes scopes, IUser owner, IDomainEntityData existing);
 }

@@ -1225,14 +1225,8 @@ msgstr "Copy handoff doc"
 msgid "Copy ingestion URL"
 msgstr "Copy ingestion URL"
 
-msgid "Copy invite link"
-msgstr "Copy invite link"
-
 msgid "Copy JSON"
 msgstr "Copy JSON"
-
-msgid "Copy key"
-msgstr "Copy key"
 
 msgid "Copy MCP endpoint"
 msgstr "Copy MCP endpoint"
@@ -1257,6 +1251,9 @@ msgstr "Copy result"
 
 msgid "Copy system prompt"
 msgstr "Copy system prompt"
+
+msgid "Copy this link now — it won't be shown again:"
+msgstr "Copy this link now — it won't be shown again:"
 
 msgid "Copy tool call"
 msgstr "Copy tool call"
@@ -2108,8 +2105,8 @@ msgid "Key"
 msgstr "Key"
 
 #. placeholder {0}: created.name
-msgid "Key \"{0}\" created — copy it now"
-msgstr "Key \"{0}\" created — copy it now"
+msgid "Key \"{0}\" created — copy it now, it won't be shown again"
+msgstr "Key \"{0}\" created — copy it now, it won't be shown again"
 
 msgid "Key name"
 msgstr "Key name"
@@ -3870,9 +3867,6 @@ msgstr "Settings match agent defaults"
 msgid "Share by segment"
 msgstr "Share by segment"
 
-msgid "Share this link:"
-msgstr "Share this link:"
-
 msgid "Show"
 msgstr "Show"
 
@@ -3901,6 +3895,9 @@ msgstr "Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to 
 #. placeholder {1}: total.toLocaleString()
 msgid "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
 msgstr "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
+
+msgid "Shown in full only once, when created"
+msgstr "Shown in full only once, when created"
 
 msgid "Sign in"
 msgstr "Sign in"

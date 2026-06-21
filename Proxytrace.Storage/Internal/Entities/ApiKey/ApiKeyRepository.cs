@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Proxytrace.Application.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Events;
@@ -9,21 +10,27 @@ namespace Proxytrace.Storage.Internal.Entities.ApiKey;
 [UsedImplicitly]
 internal class ApiKeyRepository : AbstractRepository<IApiKey, ApiKeyEntity>, IApiKeyRepository
 {
+    private readonly ISecretHasher hasher;
+
     public ApiKeyRepository(
         IMapper<IApiKey, ApiKeyEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
-        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
+        AmbientDbContext ambient,
+        ISecretHasher hasher) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
+        this.hasher = hasher;
     }
 
     public async Task<IApiKey?> FindByKeyAsync(string key, CancellationToken cancellationToken = default)
     {
+        // The key is stored as a hash; match on the hash of the presented raw key.
+        var keyHash = hasher.Hash(key);
         var entity = await contextFactory()
             .Set<ApiKeyEntity>()
             .AsNoTracking()
-            .Where(e => e.ApiKey == key)
+            .Where(e => e.KeyHash == keyHash)
             .FirstOrDefaultAsync(cancellationToken);
 
         return await Map(entity, cancellationToken);

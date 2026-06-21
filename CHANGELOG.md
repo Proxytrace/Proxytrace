@@ -11,6 +11,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Secrets are now protected at rest.** Upstream provider API keys are encrypted in the database
+  (recovered only to call the provider), while inbound Proxytrace API keys and invite tokens are
+  stored as one-way hashes. As a result, a newly generated API key and a new invite link are now
+  shown **once, at creation** — copy them then; afterwards the key list shows only a short,
+  non-secret prefix to identify each key. Existing keys, provider credentials, and pending invites
+  are protected automatically on upgrade, with no action required and no disruption to live
+  integrations.
+
 - **Email notifications.** Operators can configure outgoing SMTP under **Settings → Email notifications** and users can opt in to receive notification alerts by email, choosing **All**, **Critical**, or **None** from the account menu (defaulting to All). The SMTP password is encrypted at rest using ASP.NET Data Protection.
 
 - **Audit log of system actions.** Proxytrace now keeps a durable, user-attributed record of

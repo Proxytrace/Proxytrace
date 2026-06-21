@@ -1,13 +1,11 @@
-import { Trans, useLingui } from '@lingui/react/macro';
+import { Trans } from '@lingui/react/macro';
 import { Button } from '../../../components/ui/Button';
-import { CopyButton } from '../../../components/ui/CopyButton';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import { useInvites, useRevokeInvite } from '../hooks/useInvites';
 import { inviteStatus } from '../invitesMeta';
 
-/** Lists invites that are still pending (not yet redeemed or expired) with a copy/revoke action. */
+/** Lists invites that are still pending (not yet redeemed or expired) with a revoke action. */
 export function PendingInvitesTable() {
-  const { t } = useLingui();
   const { data, isLoading } = useInvites();
   const revoke = useRevokeInvite();
 
@@ -38,11 +36,6 @@ export function PendingInvitesTable() {
             <td className="py-2">{new Date(i.expiresAt).toLocaleString()}</td>
             <td className="py-2">
               <div className="flex items-center justify-end gap-2">
-                <CopyButton
-                  text={i.url}
-                  label={t`Copy invite link`}
-                  data-testid={`invite-copy-btn-${i.id}`}
-                />
                 <Button
                   variant="link"
                   data-write

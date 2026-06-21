@@ -65,10 +65,10 @@ export function InviteUserForm() {
       </form>
 
       {createdUrl && (
-        <div className="flex items-center gap-2 rounded border border-border bg-surface p-3 text-sm">
-          <span className="text-muted"><Trans>Share this link:</Trans></span>
+        <div data-testid="invite-link-reveal" className="flex items-center gap-2 rounded border border-border bg-surface p-3 text-sm">
+          <span className="text-muted"><Trans>Copy this link now — it won't be shown again:</Trans></span>
           <code className="flex-1 truncate">{createdUrl}</code>
-          <Button variant="secondary" size="sm" onClick={copy}>
+          <Button variant="secondary" size="sm" data-testid="invite-link-copy-btn" onClick={copy}>
             {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </Button>
         </div>

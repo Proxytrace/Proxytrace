@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
+using Proxytrace.Common.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.ApiKeys;
@@ -327,12 +328,17 @@ public class ModelProvidersController : ControllerBase
         RandomNumberGenerator.Fill(keyBytes);
         var keyValue = $"proxytrace-{Convert.ToBase64String(keyBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')}";
 
+        // The key is verify-only, so only its hash is persisted; a short prefix is kept so it can be
+        // recognised in lists. The plaintext is returned once below and is unrecoverable afterwards.
+        var keyHash = Sha256.HexHash(keyValue);
+        var keyPrefix = keyValue.Length <= 16 ? keyValue : keyValue[..16];
+
         // Least privilege: a key grants only the scopes explicitly requested; an unspecified set falls
         // back to Ingestion-only so a key is never silently MCP-capable.
         var scopes = request.Scopes is { Count: > 0 }
             ? request.Scopes.Aggregate(ApiKeyScopes.None, (acc, s) => acc | s)
             : ApiKeyScopes.Ingestion;
-        var key = createApiKey(request.Name, keyValue, project, provider, scopes, owner);
+        var key = createApiKey(request.Name, keyHash, keyPrefix, project, provider, scopes, owner);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
         audit.LogAudit(
             AuditAction.ApiKeyMinted,
@@ -341,7 +347,7 @@ public class ModelProvidersController : ControllerBase
             saved.Name,
             projectId: project.Id,
             details: JsonSerializer.Serialize(new { scopes = scopes.ToString(), ownerEmail = owner.Email }));
-        return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));
+        return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToCreatedKeyDto(saved, keyValue));
     }
 
     [HttpDelete("{providerId:guid}/keys/{keyId:guid}")]

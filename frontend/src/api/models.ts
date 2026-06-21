@@ -626,7 +626,10 @@ export type ApiKeyScope = 'Ingestion' | 'McpRead' | 'McpWrite';
 export interface ApiKeyDto {
   id: string;
   name: string;
-  keyValue: string;
+  /** Non-secret leading slice of the key, for identifying it in lists. */
+  keyPrefix: string;
+  /** The full key, returned only in the response to creating it (hashed at rest; never shown again). */
+  plaintextKey?: string | null;
   projectId: string;
   projectName: string;
   providerId: string;

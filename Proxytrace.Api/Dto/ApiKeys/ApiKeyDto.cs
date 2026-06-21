@@ -5,7 +5,7 @@ namespace Proxytrace.Api.Dto.ApiKeys;
 public record ApiKeyDto(
     Guid Id,
     string Name,
-    string KeyValue,
+    string KeyPrefix,
     Guid ProjectId,
     string ProjectName,
     Guid ProviderId,
@@ -13,7 +13,10 @@ public record ApiKeyDto(
     IReadOnlyList<ApiKeyScopes> Scopes,
     Guid OwnerId,
     string OwnerEmail,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    // Populated only in the response to key creation — the plaintext is hashed at rest and cannot be
+    // shown again. Null in every list/overview response.
+    string? PlaintextKey = null);
 
 public record CreateApiKeyRequest(
     string Name,

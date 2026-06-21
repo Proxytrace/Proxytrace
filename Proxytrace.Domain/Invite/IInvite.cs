@@ -13,8 +13,12 @@ public interface IInvite : IDomainEntity<IInvite>
     /// <summary>Role to grant the user when they redeem the invite.</summary>
     UserRole Role { get; }
 
-    /// <summary>Opaque single-use redemption token.</summary>
-    string Token { get; }
+    /// <summary>
+    /// SHA-256 hash of the single-use redemption token. The token is verify-only — the redeemer
+    /// presents the raw token, which is hashed and compared — so only the hash is stored. The raw
+    /// token (and its invite link) is surfaced once at creation and is unrecoverable afterwards.
+    /// </summary>
+    string TokenHash { get; }
 
     /// <summary>Moment after which the invite can no longer be redeemed.</summary>
     DateTimeOffset ExpiresAt { get; }
@@ -31,6 +35,6 @@ public interface IInvite : IDomainEntity<IInvite>
     /// <summary>Marks the invite as redeemed and persists.</summary>
     Task<IInvite> MarkConsumedAsync(CancellationToken cancellationToken = default);
 
-    public delegate IInvite CreateNew(string email, UserRole role, string token, DateTimeOffset expiresAt, IUser invitedBy);
-    public delegate IInvite CreateExisting(string email, UserRole role, string token, DateTimeOffset expiresAt, DateTimeOffset? consumedAt, IUser invitedBy, IDomainEntityData existing);
+    public delegate IInvite CreateNew(string email, UserRole role, string tokenHash, DateTimeOffset expiresAt, IUser invitedBy);
+    public delegate IInvite CreateExisting(string email, UserRole role, string tokenHash, DateTimeOffset expiresAt, DateTimeOffset? consumedAt, IUser invitedBy, IDomainEntityData existing);
 }

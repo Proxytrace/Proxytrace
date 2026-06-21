@@ -9,10 +9,9 @@ namespace Proxytrace.Domain.ApiKey.Internal;
 
 internal record ApiKey : DomainEntity<IApiKey>, IApiKey
 {
-    private readonly string apiKey;
-
     public string Name { get; }
-    string IApiKey.ApiKey => apiKey;
+    public string KeyHash { get; }
+    public string KeyPrefix { get; }
     public IProject Project { get; }
     public IModelProvider Provider { get; }
     public ApiKeyScopes Scopes { get; }
@@ -20,7 +19,8 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
 
     public ApiKey(
         string name,
-        string apiKey,
+        string keyHash,
+        string keyPrefix,
         IProject project,
         IModelProvider provider,
         ApiKeyScopes scopes,
@@ -28,7 +28,8 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         IRepository<IApiKey> repository) : base(repository)
     {
         Name = name;
-        this.apiKey = apiKey;
+        KeyHash = keyHash;
+        KeyPrefix = keyPrefix;
         Project = project;
         Provider = provider;
         Scopes = scopes;
@@ -37,7 +38,8 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
 
     public ApiKey(
         string name,
-        string apiKey,
+        string keyHash,
+        string keyPrefix,
         IProject project,
         IModelProvider provider,
         ApiKeyScopes scopes,
@@ -46,7 +48,8 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         IRepository<IApiKey> repository) : base(existing, repository)
     {
         Name = name;
-        this.apiKey = apiKey;
+        KeyHash = keyHash;
+        KeyPrefix = keyPrefix;
         Project = project;
         Provider = provider;
         Scopes = scopes;
@@ -61,7 +64,7 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         }
 
         yield return Validation.NotNullOrWhiteSpace(Name);
-        yield return Validation.NotNullOrWhiteSpace(apiKey);
+        yield return Validation.NotNullOrWhiteSpace(KeyHash);
         yield return Validation.NotNull(Owner);
 
         if (Scopes == ApiKeyScopes.None)

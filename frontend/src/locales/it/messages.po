@@ -1225,14 +1225,8 @@ msgstr "Copia documento di handoff"
 msgid "Copy ingestion URL"
 msgstr "Copia URL di acquisizione"
 
-msgid "Copy invite link"
-msgstr "Copia link di invito"
-
 msgid "Copy JSON"
 msgstr "Copia JSON"
-
-msgid "Copy key"
-msgstr "Copia chiave"
 
 msgid "Copy MCP endpoint"
 msgstr "Copia endpoint MCP"
@@ -1257,6 +1251,9 @@ msgstr "Copia risultato"
 
 msgid "Copy system prompt"
 msgstr "Copia prompt di sistema"
+
+msgid "Copy this link now — it won't be shown again:"
+msgstr "Copia questo link ora — non verrà più mostrato:"
 
 msgid "Copy tool call"
 msgstr "Copia chiamata Tool"
@@ -2108,8 +2105,8 @@ msgid "Key"
 msgstr "Chiave"
 
 #. placeholder {0}: created.name
-msgid "Key \"{0}\" created — copy it now"
-msgstr "Chiave \"{0}\" creata — copiala subito"
+msgid "Key \"{0}\" created — copy it now, it won't be shown again"
+msgstr "Chiave \"{0}\" creata — copiala subito, non verrà più mostrata"
 
 msgid "Key name"
 msgstr "Nome della chiave"
@@ -3870,9 +3867,6 @@ msgstr "Le impostazioni corrispondono ai valori predefiniti dell'Agent"
 msgid "Share by segment"
 msgstr "Condividi per segmento"
 
-msgid "Share this link:"
-msgstr "Condividi questo link:"
-
 msgid "Show"
 msgstr "Mostra"
 
@@ -3901,6 +3895,9 @@ msgstr "Mostrando i primi {WIZARD_TRACE_PAGE_SIZE} Trace — restringi il filtro
 #. placeholder {1}: total.toLocaleString()
 msgid "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
 msgstr "Mostrando i {0} Run più recenti di {1} — apri la pagina Run per l'elenco completo."
+
+msgid "Shown in full only once, when created"
+msgstr "Mostrata per intero solo una volta, al momento della creazione"
 
 msgid "Sign in"
 msgstr "Accedi"

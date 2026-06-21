@@ -3,9 +3,15 @@ using Proxytrace.Domain.User;
 
 namespace Proxytrace.Application.Auth.Local;
 
+/// <summary>
+/// A freshly created invite together with its raw redemption token. Only the token's hash is
+/// persisted, so the raw value is available exactly once — here — to build the invite link.
+/// </summary>
+public sealed record InviteCreated(IInvite Invite, string RawToken);
+
 public interface IInviteService
 {
-    Task<IInvite> CreateAsync(
+    Task<InviteCreated> CreateAsync(
         string email,
         UserRole role,
         IUser invitedBy,
