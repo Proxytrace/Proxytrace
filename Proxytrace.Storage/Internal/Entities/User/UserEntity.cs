@@ -23,6 +23,6 @@ internal record UserEntity : Entity
     /// <summary><see cref="Proxytrace.Domain.User.IUser.EmailNotificationsEnabled"/>. Defaults to true.</summary>
     public bool EmailNotificationsEnabled { get; init; } = true;
 
-    /// <summary><see cref="Proxytrace.Domain.User.IUser.EmailNotificationMinSeverity"/>. Defaults to Warning.</summary>
-    public NotificationSeverity EmailNotificationMinSeverity { get; init; } = NotificationSeverity.Warning;
+    /// <summary><see cref="Proxytrace.Domain.User.IUser.EmailNotificationMinSeverity"/>. Defaults to Info.</summary>
+    public NotificationSeverity EmailNotificationMinSeverity { get; init; } = NotificationSeverity.Info;
 }

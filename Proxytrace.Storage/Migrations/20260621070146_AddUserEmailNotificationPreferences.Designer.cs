@@ -1238,7 +1238,7 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<int>("EmailNotificationMinSeverity")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasDefaultValue(0);
 
                     b.Property<bool>("EmailNotificationsEnabled")
                         .ValueGeneratedOnAdd()

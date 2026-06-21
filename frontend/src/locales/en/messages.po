@@ -834,6 +834,9 @@ msgstr "All agents"
 msgid "All agents ({0})"
 msgstr "All agents ({0})"
 
+msgid "All alerts by email"
+msgstr "All alerts by email"
+
 msgid "All cases passed."
 msgstr "All cases passed."
 
@@ -1399,8 +1402,8 @@ msgstr "Creating…"
 msgid "Critical"
 msgstr "Critical"
 
-msgid "Critical only"
-msgstr "Critical only"
+msgid "Critical alerts by email"
+msgstr "Critical alerts by email"
 
 msgid "Curate real traces into test suites and score them with evaluators on every agent version."
 msgstr "Curate real traces into test suites and score them with evaluators on every agent version."
@@ -1619,6 +1622,12 @@ msgstr "Effective gain"
 
 msgid "Email"
 msgstr "Email"
+
+msgid "Email all alerts"
+msgstr "Email all alerts"
+
+msgid "Email critical alerts only"
+msgstr "Email critical alerts only"
 
 msgid "Email notifications"
 msgstr "Email notifications"
@@ -2011,9 +2020,6 @@ msgstr "Indexing configuration for the active project."
 
 msgid "Info"
 msgstr "Info"
-
-msgid "Info and above"
-msgstr "Info and above"
 
 msgid "Ingestion proxy"
 msgstr "Ingestion proxy"
@@ -2604,6 +2610,9 @@ msgstr "No decision yet — validation must finish first."
 
 msgid "no delta predicted"
 msgstr "no delta predicted"
+
+msgid "No email alerts"
+msgstr "No email alerts"
 
 msgid "No endpoints available"
 msgstr "No endpoints available"
@@ -3372,9 +3381,6 @@ msgstr "Reasoning — optional short explanation the judge attaches to the score
 
 msgid "Reasoning effort"
 msgstr "Reasoning effort"
-
-msgid "Receive email alerts"
-msgstr "Receive email alerts"
 
 msgid "Receiving tokens"
 msgstr "Receiving tokens"
@@ -4687,9 +4693,6 @@ msgstr "Waiting for the model to finish streaming…"
 
 msgid "Warning"
 msgstr "Warning"
-
-msgid "Warning and above"
-msgstr "Warning and above"
 
 msgid "Wednesday"
 msgstr "Wednesday"

@@ -27,7 +27,7 @@ internal class UserConfig : AbstractEntityConfiguration<UserEntity>, IMapper<IUs
         builder.Property(e => e.Language).HasDefaultValue("en");
 
         builder.Property(e => e.EmailNotificationsEnabled).HasDefaultValue(true);
-        builder.Property(e => e.EmailNotificationMinSeverity).HasDefaultValue(NotificationSeverity.Warning);
+        builder.Property(e => e.EmailNotificationMinSeverity).HasDefaultValue(NotificationSeverity.Info);
     }
 
     public Task<IUser> Map(UserEntity stored, CancellationToken cancellationToken = default)

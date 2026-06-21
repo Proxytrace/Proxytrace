@@ -834,6 +834,9 @@ msgstr "Tutti gli agent"
 msgid "All agents ({0})"
 msgstr "Tutti gli agent ({0})"
 
+msgid "All alerts by email"
+msgstr "Tutti gli alert via email"
+
 msgid "All cases passed."
 msgstr "Tutti i casi sono passati."
 
@@ -1399,8 +1402,8 @@ msgstr "Creazione…"
 msgid "Critical"
 msgstr "Critico"
 
-msgid "Critical only"
-msgstr "Solo critiche"
+msgid "Critical alerts by email"
+msgstr "Alert critici via email"
 
 msgid "Curate real traces into test suites and score them with evaluators on every agent version."
 msgstr "Seleziona Traces reali in Test Suite e valuta ogni versione dell'agent con gli evaluator."
@@ -1619,6 +1622,12 @@ msgstr "Guadagno effettivo"
 
 msgid "Email"
 msgstr "Email"
+
+msgid "Email all alerts"
+msgstr "Invia tutte le notifiche via email"
+
+msgid "Email critical alerts only"
+msgstr "Invia via email solo le notifiche critiche"
 
 msgid "Email notifications"
 msgstr "Notifiche email"
@@ -2011,9 +2020,6 @@ msgstr "Configurazione di indexing per il progetto attivo."
 
 msgid "Info"
 msgstr "Info"
-
-msgid "Info and above"
-msgstr "Info e superiori"
 
 msgid "Ingestion proxy"
 msgstr "Proxy di ingestione"
@@ -2604,6 +2610,9 @@ msgstr "Nessuna decisione ancora — la validazione deve prima completarsi."
 
 msgid "no delta predicted"
 msgstr "nessun delta previsto"
+
+msgid "No email alerts"
+msgstr "Nessun alert via email"
 
 msgid "No endpoints available"
 msgstr "Nessun Endpoint disponibile"
@@ -3372,9 +3381,6 @@ msgstr "Reasoning — breve spiegazione opzionale che il giudice associa al punt
 
 msgid "Reasoning effort"
 msgstr "Effort del Reasoning"
-
-msgid "Receive email alerts"
-msgstr "Ricevi avvisi via email"
 
 msgid "Receiving tokens"
 msgstr "Token in arrivo"
@@ -4687,9 +4693,6 @@ msgstr "In attesa che il modello finisca lo streaming…"
 
 msgid "Warning"
 msgstr "Avviso"
-
-msgid "Warning and above"
-msgstr "Avvisi e superiori"
 
 msgid "Wednesday"
 msgstr "Mercoledì"

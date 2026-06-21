@@ -11,7 +11,7 @@ namespace Proxytrace.Domain.Tests;
 public sealed class UserTests : DomainTest<Module>
 {
     [TestMethod]
-    public void CreateNew_DefaultsEmailPreferences_OnAndWarning()
+    public void CreateNew_DefaultsEmailPreferences_OnAndInfo()
     {
         IServiceProvider services = GetServices();
         var create = services.GetRequiredService<IUser.CreateNew>();
@@ -19,7 +19,7 @@ public sealed class UserTests : DomainTest<Module>
         var user = create("u@example.test", externalSubject: null, passwordHash: "hash", UserRole.Member);
 
         user.EmailNotificationsEnabled.Should().BeTrue();
-        user.EmailNotificationMinSeverity.Should().Be(NotificationSeverity.Warning);
+        user.EmailNotificationMinSeverity.Should().Be(NotificationSeverity.Info);
     }
 
     [TestMethod]
@@ -46,7 +46,7 @@ public sealed class UserTests : DomainTest<Module>
         var user = await create("u@example.test", externalSubject: null, passwordHash: "hash", UserRole.Member)
             .AddAsync(CancellationToken);
 
-        var same = await user.ChangeEmailNotificationPreferences(true, NotificationSeverity.Warning, CancellationToken);
+        var same = await user.ChangeEmailNotificationPreferences(true, NotificationSeverity.Info, CancellationToken);
 
         same.Should().BeSameAs(user);
     }

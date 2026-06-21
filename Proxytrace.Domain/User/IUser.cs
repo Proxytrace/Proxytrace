@@ -34,7 +34,7 @@ public interface IUser : IDomainEntity<IUser>
     /// <summary>Whether the user receives email notifications. Defaults to <see langword="true"/>.</summary>
     bool EmailNotificationsEnabled { get; }
 
-    /// <summary>Minimum <see cref="NotificationSeverity"/> that triggers an email. Defaults to <see cref="NotificationSeverity.Warning"/>.</summary>
+    /// <summary>Minimum <see cref="NotificationSeverity"/> that triggers an email. Defaults to <see cref="NotificationSeverity.Info"/> (the "All" option in the account menu).</summary>
     NotificationSeverity EmailNotificationMinSeverity { get; }
 
     /// <summary>Updates the user's <see cref="Role"/> and persists.</summary>
@@ -49,6 +49,6 @@ public interface IUser : IDomainEntity<IUser>
     /// <summary>Updates the user's email notification preferences and persists.</summary>
     Task<IUser> ChangeEmailNotificationPreferences(bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, CancellationToken cancellationToken = default);
 
-    public delegate IUser CreateNew(string email, string? externalSubject, string? passwordHash, UserRole role, string language = SupportedLanguages.Default, bool emailNotificationsEnabled = true, NotificationSeverity emailNotificationMinSeverity = NotificationSeverity.Warning);
+    public delegate IUser CreateNew(string email, string? externalSubject, string? passwordHash, UserRole role, string language = SupportedLanguages.Default, bool emailNotificationsEnabled = true, NotificationSeverity emailNotificationMinSeverity = NotificationSeverity.Info);
     public delegate IUser CreateExisting(string email, string? externalSubject, string? passwordHash, UserRole role, string language, bool emailNotificationsEnabled, NotificationSeverity emailNotificationMinSeverity, IDomainEntityData existing);
 }

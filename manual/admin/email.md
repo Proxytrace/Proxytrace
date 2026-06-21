@@ -80,8 +80,9 @@ regardless of individual user settings:
 | **Warning** | Only Warning and Critical notifications are emailed. |
 | **Critical** | Only Critical notifications are emailed. |
 
-Individual users can raise this threshold further from their own account preferences, but they
-cannot lower it below the operator floor.
+Individual users choose **All**, **Critical**, or **None** for their own email from the account
+menu. The operator floor still applies on top, so a user who picks **All** never receives emails
+for notifications below this severity.
 
 ## Send test email
 

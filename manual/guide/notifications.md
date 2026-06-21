@@ -48,22 +48,22 @@ notifications.
 ## Email notifications
 
 When an operator has configured email, you can opt in to receive notification alerts by email
-as well as seeing them in the in-app inbox. New accounts are opted in at *Warning and above* by
-default, so you may start receiving emails as soon as an operator enables email — adjust or turn
-them off from the account menu below.
+as well as seeing them in the in-app inbox. New accounts are set to *All* by default, so you may
+start receiving emails as soon as an operator enables email — change the level or turn email off
+from the account menu below. The in-app inbox always shows every notification regardless of this
+setting.
 
 Open the account menu (your avatar or initials in the top-right corner) and choose
-**Email notifications**. Two controls appear:
+**Notifications**. Pick one of three levels — a short hint below the selector spells out what
+each delivers:
 
-- **Receive email alerts** — toggle this on to start receiving emails, or off to stop.
-- **Minimum severity** — choose the lowest severity level that triggers an email:
-  - *Info and above* — every notification, including informational ones.
-  - *Warning and above* (default) — warnings and critical alerts only.
-  - *Critical only* — the most urgent alerts only.
+- **All** (default) — every notification, including informational ones, is emailed.
+- **Critical** — only the most urgent alerts are emailed.
+- **None** — no email alerts; you'll still see everything in the in-app inbox.
 
-The **Email notifications** entry in the account menu only appears once the operator has
-enabled and configured email for the installation. If you do not see it, email delivery has
-not been set up yet — contact your administrator.
+The **Notifications** entry in the account menu only appears once the operator has enabled and
+configured email for the installation. If you do not see it, email delivery has not been set up
+yet — contact your administrator.
 
 ::: tip Delivery scope
 Email recipients for a notification are the project's members (for project-scoped

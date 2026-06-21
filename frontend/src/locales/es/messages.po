@@ -834,6 +834,9 @@ msgstr "Todos los agents"
 msgid "All agents ({0})"
 msgstr "Todos los agents ({0})"
 
+msgid "All alerts by email"
+msgstr "Todas las alertas por correo electrónico"
+
 msgid "All cases passed."
 msgstr "Todos los casos pasaron."
 
@@ -1399,8 +1402,8 @@ msgstr "Creando…"
 msgid "Critical"
 msgstr "Crítico"
 
-msgid "Critical only"
-msgstr "Solo críticas"
+msgid "Critical alerts by email"
+msgstr "Alertas críticas por correo electrónico"
 
 msgid "Curate real traces into test suites and score them with evaluators on every agent version."
 msgstr "Convierte traces reales en test suites y puntúalos con evaluators en cada versión de Agent."
@@ -1619,6 +1622,12 @@ msgstr "Ganancia efectiva"
 
 msgid "Email"
 msgstr "Correo electrónico"
+
+msgid "Email all alerts"
+msgstr "Enviar por correo electrónico todas las alertas"
+
+msgid "Email critical alerts only"
+msgstr "Enviar por correo electrónico solo las alertas críticas"
 
 msgid "Email notifications"
 msgstr "Notificaciones por email"
@@ -2011,9 +2020,6 @@ msgstr "Configuración de indexado para el proyecto activo."
 
 msgid "Info"
 msgstr "Información"
-
-msgid "Info and above"
-msgstr "Información y superiores"
 
 msgid "Ingestion proxy"
 msgstr "Proxy de ingestión"
@@ -2604,6 +2610,9 @@ msgstr "Aún no hay una decisión — la validación debe terminar primero."
 
 msgid "no delta predicted"
 msgstr "no se predice delta"
+
+msgid "No email alerts"
+msgstr "Sin alertas por correo electrónico"
 
 msgid "No endpoints available"
 msgstr "No hay endpoints disponibles"
@@ -3372,9 +3381,6 @@ msgstr "Razonamiento — breve explicación opcional que el juez adjunta a la pu
 
 msgid "Reasoning effort"
 msgstr "Esfuerzo de razonamiento"
-
-msgid "Receive email alerts"
-msgstr "Recibir alertas por email"
 
 msgid "Receiving tokens"
 msgstr "Tokens de entrada"
@@ -4687,9 +4693,6 @@ msgstr "Esperando a que el modelo termine de transmitir…"
 
 msgid "Warning"
 msgstr "Advertencia"
-
-msgid "Warning and above"
-msgstr "Advertencia y superiores"
 
 msgid "Wednesday"
 msgstr "Miércoles"

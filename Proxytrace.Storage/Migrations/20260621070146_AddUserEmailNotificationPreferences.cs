@@ -15,7 +15,7 @@ namespace Proxytrace.Storage.Migrations
                 table: "UserEntity",
                 type: "integer",
                 nullable: false,
-                defaultValue: 1);
+                defaultValue: 0);
 
             migrationBuilder.AddColumn<bool>(
                 name: "EmailNotificationsEnabled",
