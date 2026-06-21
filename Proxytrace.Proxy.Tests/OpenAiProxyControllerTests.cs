@@ -139,6 +139,44 @@ public sealed class OpenAiProxyControllerTests
         capture.LastContentType.Should().Be("garbage;;", "an unparseable Content-Type is forwarded raw, not dropped or fatal");
     }
 
+    [TestMethod]
+    public async Task Proxy_BufferedCapture_PublishesWithIndependentToken_NotRequestToken()
+    {
+        // The upstream call has completed by the time we publish; a client cancel/disconnect must
+        // not drop the captured call, so the publish runs with CancellationToken.None.
+        var stream = Substitute.For<IIngestionStream>();
+        using var cts = new CancellationTokenSource();
+        var controller = BuildController(
+            stream,
+            ResolverFor(ApiKey()),
+            new FakeHttpClientFactory(FakeHttpMessageHandler.BuildOpenAiResponse("hello")));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+
+        await controller.Proxy("chat/completions", project: null, cts.Token);
+
+        await stream.Received(1).PublishAsync(Arg.Any<IngestMessage>(), CancellationToken.None);
+    }
+
+    [TestMethod]
+    public async Task Proxy_StreamingClientDisconnect_StillPublishesAccumulatedTranscript()
+    {
+        var stream = Substitute.For<IIngestionStream>();
+        var controller = BuildController(
+            stream,
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(new CapturingHttpMessageHandler("data: {\"choices\":[]}\n\ndata: [DONE]\n")));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","stream":true,"messages":[]}""");
+        // Simulate the client going away mid-stream: writing the forwarded line fails.
+        controller.ControllerContext.HttpContext.Response.Body = new ThrowOnWriteStream();
+
+        await FluentActions
+            .Awaiting(() => controller.Proxy("chat/completions", project: null, CancellationToken.None))
+            .Should().ThrowAsync<IOException>();
+
+        // The accumulated transcript is published despite the client disconnect.
+        await stream.Received(1).PublishAsync(Arg.Any<IngestMessage>(), CancellationToken.None);
+    }
+
     private static OpenAiProxyController BuildController(
         IIngestionStream stream,
         IApiKeyResolver resolver,
