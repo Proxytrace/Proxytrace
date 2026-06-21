@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Dto.Users;
@@ -17,3 +18,6 @@ public record UpdateMyLanguageRequest(string Language);
 
 /// <summary>Lightweight project reference for the user-centric project assignment editor.</summary>
 public record UserProjectDto(Guid Id, string Name);
+
+/// <summary>Self-service email-notification preferences for the current user.</summary>
+public record UpdateMyEmailNotificationsRequest(bool Enabled, NotificationSeverity MinSeverity);

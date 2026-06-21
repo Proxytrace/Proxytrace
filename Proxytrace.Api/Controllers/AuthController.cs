@@ -7,6 +7,7 @@ using Proxytrace.Api.Dto.Auth;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
+using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Invite;
@@ -29,6 +30,7 @@ public class AuthController : ControllerBase
     private readonly IStreamTicketService streamTickets;
     private readonly IConfiguration config;
     private readonly ILogger<Audit> audit;
+    private readonly IEmailSettingsStore emailSettings;
 
     public AuthController(
         AuthOptions options,
@@ -41,7 +43,8 @@ public class AuthController : ControllerBase
         ICurrentUserAccessor currentUser,
         IStreamTicketService streamTickets,
         IConfiguration config,
-        ILogger<Audit> audit)
+        ILogger<Audit> audit,
+        IEmailSettingsStore emailSettings)
     {
         this.options = options;
         this.setup = setup;
@@ -54,6 +57,7 @@ public class AuthController : ControllerBase
         this.streamTickets = streamTickets;
         this.config = config;
         this.audit = audit;
+        this.emailSettings = emailSettings;
     }
 
     [HttpGet("mode")]
@@ -154,7 +158,11 @@ public class AuthController : ControllerBase
     {
         var me = await currentUser.GetCurrentUserAsync(ct);
         if (me is null) return Unauthorized();
-        return new MeDto(me.Id, me.Email, me.Role, me.Language);
+        var settings = await emailSettings.GetAsync(ct);
+        return new MeDto(
+            me.Id, me.Email, me.Role, me.Language,
+            me.EmailNotificationsEnabled, me.EmailNotificationMinSeverity,
+            EmailEnabled: settings?.Enabled ?? false);
     }
 
     [HttpPost("signup")]
