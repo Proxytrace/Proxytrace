@@ -12,9 +12,17 @@ internal record ApiKeyEntity : Entity
     public required string Name { get; init; }
 
     /// <summary>
-    /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.ApiKey"/>
+    /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.KeyHash"/> — SHA-256 of the inbound key (the key is
+    /// verify-only, so only its hash is stored).
     /// </summary>
-    public required string ApiKey { get; init; }
+    public required string KeyHash { get; init; }
+
+    /// <summary>
+    /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.KeyPrefix"/> — a non-secret display slice. Null on a
+    /// pre-retrofit row until the startup backfill sets it (the null marks an un-migrated row whose
+    /// <see cref="KeyHash"/> still holds the plaintext key).
+    /// </summary>
+    public string? KeyPrefix { get; init; }
 
     /// <summary>
     /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.Project"/>

@@ -33,9 +33,10 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
 
     public override void Configure(EntityTypeBuilder<ApiKeyEntity> builder)
     {
-        builder.HasIndex(e => e.ApiKey).IsUnique();
+        builder.HasIndex(e => e.KeyHash).IsUnique();
         builder.Property(e => e.Name).HasMaxLength(256).IsRequired();
-        builder.Property(e => e.ApiKey).HasMaxLength(512).IsRequired();
+        builder.Property(e => e.KeyHash).HasMaxLength(64).IsRequired();
+        builder.Property(e => e.KeyPrefix).HasMaxLength(32);
 
         // SQL default backfills pre-scopes keys to Ingestion-only, so existing ingestion keys do not
         // silently gain MCP capabilities (least privilege). New keys always set Scopes explicitly.
@@ -66,7 +67,7 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
         var project = await projects.GetAsync(stored.Project, cancellationToken);
         var provider = await providers.GetAsync(stored.Provider, cancellationToken);
         var owner = await users.GetAsync(stored.Owner, cancellationToken);
-        return factory(stored.Name, stored.ApiKey, project, provider, stored.Scopes, owner, stored);
+        return factory(stored.Name, stored.KeyHash, stored.KeyPrefix ?? string.Empty, project, provider, stored.Scopes, owner, stored);
     }
 
     public Task<ApiKeyEntity> Map(IApiKey domain, CancellationToken cancellationToken = default)
@@ -74,7 +75,8 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
         {
             Id = domain.Id,
             Name = domain.Name,
-            ApiKey = domain.ApiKey,
+            KeyHash = domain.KeyHash,
+            KeyPrefix = domain.KeyPrefix,
             Project = domain.Project.Id,
             Provider = domain.Provider.Id,
             Scopes = domain.Scopes,

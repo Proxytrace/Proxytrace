@@ -14,6 +14,7 @@ using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Common.Security;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests.Mcp;
@@ -25,9 +26,17 @@ public sealed class McpApiKeyAuthenticationHandlerTests : BaseTest<Module>
     public async Task Authenticate_WithValidKey_SucceedsAndStashesProjectId()
     {
         IServiceProvider services = GetServices();
-        var apiKey = await services.GetRequiredService<IDomainEntityGenerator<IApiKey>>().CreateAsync(CancellationToken);
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var owner = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var createApiKey = services.GetRequiredService<IApiKey.CreateNew>();
+        var apiKeys = services.GetRequiredService<IApiKeyRepository>();
+        const string raw = "proxytrace-valid-key";
+        var apiKey = await apiKeys.AddAsync(
+            createApiKey("mcp", Sha256.HexHash(raw), raw[..16], project, provider, ApiKeyScopes.McpRead, owner),
+            CancellationToken);
 
-        var (handler, context) = await BuildHandlerAsync(services, $"Bearer {apiKey.ApiKey}");
+        var (handler, context) = await BuildHandlerAsync(services, $"Bearer {raw}");
         var result = await handler.AuthenticateAsync();
 
         result.Succeeded.Should().BeTrue();
@@ -47,11 +56,13 @@ public sealed class McpApiKeyAuthenticationHandlerTests : BaseTest<Module>
         var owner = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var projectA = await projectGen.CreateAsync(CancellationToken);
         var projectB = await projectGen.CreateAsync(CancellationToken);
-        var keyA = await apiKeys.AddAsync(createApiKey("mcp-a", "proxytrace-secret-a", projectA, provider, ApiKeyScopes.McpRead, owner), CancellationToken);
-        var keyB = await apiKeys.AddAsync(createApiKey("mcp-b", "proxytrace-secret-b", projectB, provider, ApiKeyScopes.McpRead, owner), CancellationToken);
+        const string rawA = "proxytrace-secret-a";
+        const string rawB = "proxytrace-secret-b";
+        await apiKeys.AddAsync(createApiKey("mcp-a", Sha256.HexHash(rawA), rawA[..16], projectA, provider, ApiKeyScopes.McpRead, owner), CancellationToken);
+        await apiKeys.AddAsync(createApiKey("mcp-b", Sha256.HexHash(rawB), rawB[..16], projectB, provider, ApiKeyScopes.McpRead, owner), CancellationToken);
 
-        var (_, contextA) = await BuildHandlerAuthenticatedAsync(services, $"Bearer {keyA.ApiKey}");
-        var (_, contextB) = await BuildHandlerAuthenticatedAsync(services, $"Bearer {keyB.ApiKey}");
+        var (_, contextA) = await BuildHandlerAuthenticatedAsync(services, $"Bearer {rawA}");
+        var (_, contextB) = await BuildHandlerAuthenticatedAsync(services, $"Bearer {rawB}");
 
         projectA.Id.Should().NotBe(projectB.Id);
         contextA.Items[McpProjectAccessor.ProjectIdItemKey].Should().Be(projectA.Id);
@@ -80,11 +91,12 @@ public sealed class McpApiKeyAuthenticationHandlerTests : BaseTest<Module>
         var createApiKey = services.GetRequiredService<IApiKey.CreateNew>();
         var apiKeys = services.GetRequiredService<IApiKeyRepository>();
         var owner = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
-        var key = await apiKeys.AddAsync(
-            createApiKey("ingest-only", "proxytrace-ingest-only", project, provider, ApiKeyScopes.Ingestion, owner),
+        const string raw = "proxytrace-ingest-only";
+        await apiKeys.AddAsync(
+            createApiKey("ingest-only", Sha256.HexHash(raw), raw[..16], project, provider, ApiKeyScopes.Ingestion, owner),
             CancellationToken);
 
-        var (handler, context) = await BuildHandlerAsync(services, $"Bearer {key.ApiKey}");
+        var (handler, context) = await BuildHandlerAsync(services, $"Bearer {raw}");
         var result = await handler.AuthenticateAsync();
 
         result.Succeeded.Should().BeFalse();

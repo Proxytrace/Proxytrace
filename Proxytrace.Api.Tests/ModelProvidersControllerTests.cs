@@ -189,6 +189,35 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task CreateKey_ReturnsPlaintextOnce_ThenListShowsPrefixOnly()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var owner = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+
+        var result = await controller.CreateKey(
+            provider.Id,
+            new CreateApiKeyRequest("dev-key", project.Id, UserId: owner.Id),
+            CancellationToken);
+
+        // The create response carries the plaintext exactly once...
+        var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
+        var dto = (ApiKeyDto?)created.Value;
+        dto.Should().NotBeNull();
+        dto.PlaintextKey.Should().NotBeNullOrEmpty();
+        dto.PlaintextKey.Should().StartWith("proxytrace-");
+        dto.KeyPrefix.Should().NotBeNullOrEmpty();
+
+        // ...and the list never exposes it again, only the masked prefix.
+        var listed = await controller.GetKeys(provider.Id, CancellationToken);
+        listed.Should().ContainSingle();
+        listed[0].PlaintextKey.Should().BeNull();
+        listed[0].KeyPrefix.Should().StartWith("proxytrace-");
+    }
+
+    [TestMethod]
     public async Task DeleteKey_Unknown_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

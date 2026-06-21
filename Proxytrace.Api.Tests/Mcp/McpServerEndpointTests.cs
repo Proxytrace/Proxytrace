@@ -15,6 +15,7 @@ using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Common.Security;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests.Mcp;
@@ -115,11 +116,12 @@ public sealed class McpServerEndpointTests : BaseTest<Module>
         var owner = await sp.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var createApiKey = sp.GetRequiredService<IApiKey.CreateNew>();
         var apiKeys = sp.GetRequiredService<IApiKeyRepository>();
-        var key = await apiKeys.AddAsync(
-            createApiKey("mcp-integration", "proxytrace-integration-key", agentInProject.Project, provider, ApiKeyScopes.McpRead, owner),
+        const string rawKey = "proxytrace-integration-key";
+        await apiKeys.AddAsync(
+            createApiKey("mcp-integration", Sha256.HexHash(rawKey), rawKey[..16], agentInProject.Project, provider, ApiKeyScopes.McpRead, owner),
             CancellationToken);
 
-        return new Seed(agentInProject.Id, agentInOther.Id, key.ApiKey);
+        return new Seed(agentInProject.Id, agentInOther.Id, rawKey);
     }
 
     private async Task<McpClient> ConnectAsync(WebApplication app, string apiKey)
