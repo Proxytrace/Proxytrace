@@ -260,6 +260,49 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         calls[1].ConversationId.Should().Be(sharedConversationId);
     }
 
+    [TestMethod]
+    public async Task IngestAsync_WhenSessionIdIsNotAGuid_PersistsAndGroupsCallsUnderSameConversationId()
+    {
+        // A non-GUID session id is hashed with SHA1 (20 bytes); the Guid must be built from the
+        // first 16 bytes — otherwise new Guid(byte[]) throws and every such call is silently dropped.
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+        var sessionId = "my-app-session-xyz";
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: ChatTurn1RequestBody,
+                ResponseBody: ChatTurn1ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: sessionId),
+            cancellationToken: CancellationToken);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: ChatTurn2RequestBodyNoTools,
+                ResponseBody: ChatTurn2ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: sessionId),
+            cancellationToken: CancellationToken);
+
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(2);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+
+        var sharedConversationId = calls[0].ConversationId;
+        sharedConversationId.Should().NotBeNull();
+        calls[1].ConversationId.Should().Be(sharedConversationId);
+    }
+
     // Reasoning models receive the system prompt under the "developer" role (emitted by the AI SDK
     // for Tracey's own calls); the parser must treat it like "system" or the whole call is dropped.
     private const string DeveloperRoleRequestBody = $$"""
