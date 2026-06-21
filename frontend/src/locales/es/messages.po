@@ -1225,14 +1225,8 @@ msgstr "Copiar documento de handoff"
 msgid "Copy ingestion URL"
 msgstr "Copiar URL de ingesta"
 
-msgid "Copy invite link"
-msgstr "Copiar enlace de invitación"
-
 msgid "Copy JSON"
 msgstr "Copiar JSON"
-
-msgid "Copy key"
-msgstr "Copiar key"
 
 msgid "Copy MCP endpoint"
 msgstr "Copiar endpoint MCP"
@@ -2108,8 +2102,8 @@ msgid "Key"
 msgstr "Clave"
 
 #. placeholder {0}: created.name
-msgid "Key \"{0}\" created — copy it now"
-msgstr "Key \"{0}\" creada — cópiala ahora"
+msgid "Key \"{0}\" created — copy it now, it won't be shown again"
+msgstr "Clave \"{0}\" creada — cópiala ahora; no se volverá a mostrar"
 
 msgid "Key name"
 msgstr "Nombre de la clave"
@@ -3901,6 +3895,9 @@ msgstr "Mostrando los primeros {WIZARD_TRACE_PAGE_SIZE} traces — acota el filt
 #. placeholder {1}: total.toLocaleString()
 msgid "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
 msgstr "Mostrando las {0} ejecuciones más recientes de {1} — abre la página Runs para ver la lista completa."
+
+msgid "Shown in full only once, when created"
+msgstr "Se muestra completa solo una vez, al crearse"
 
 msgid "Sign in"
 msgstr "Iniciar sesión"
