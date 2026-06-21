@@ -35,7 +35,13 @@ export function EmailNotificationsSection() {
   const [draft, setDraft] = useState<UpdateEmailSettings>(EMPTY);
   if (data !== loaded) {
     setLoaded(data);
-    setDraft(data ? { ...data, password: null } : EMPTY);
+    // Prefill App URL from the address the admin reached the app on — best guess for the
+    // public-facing URL the server can't infer itself. Editable; only used when none is stored.
+    setDraft(
+      data
+        ? { ...data, password: null, appBaseUrl: data.appBaseUrl ?? window.location.origin }
+        : EMPTY,
+    );
   }
 
   return (
@@ -115,6 +121,7 @@ export function EmailNotificationsSection() {
             <Input
               value={draft.appBaseUrl ?? ''}
               onChange={(e) => setDraft({ ...draft, appBaseUrl: e.target.value || null })}
+              placeholder={window.location.origin}
               data-testid="email-app-base-url"
             />
           </FormField>

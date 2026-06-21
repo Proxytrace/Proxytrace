@@ -7,7 +7,9 @@ import useToast from '../../../hooks/useToast';
 export function useEmailSettings() {
   return useQuery({
     queryKey: QUERY_KEYS.emailSettings,
-    queryFn: () => emailSettingsApi.get(),
+    // GET returns 204 (undefined) when never configured; React Query forbids an
+    // undefined queryFn result, so normalise the "not configured" case to null.
+    queryFn: async () => (await emailSettingsApi.get()) ?? null,
     retry: false,
   });
 }
