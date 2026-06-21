@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Projects;
 using Proxytrace.Application.AuditLog;
+using Proxytrace.Application.Auth;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
@@ -30,6 +31,7 @@ public class ProjectsController : ControllerBase
     private readonly IProject.CreateExisting createExisting;
     private readonly ITraceyAgentProvisioner traceyProvisioner;
     private readonly IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner;
+    private readonly ICurrentUserAccessor currentUser;
     private readonly ILogger<Audit> audit;
 
     public ProjectsController(
@@ -41,6 +43,7 @@ public class ProjectsController : ControllerBase
         IProject.CreateExisting createExisting,
         ITraceyAgentProvisioner traceyProvisioner,
         IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner,
+        ICurrentUserAccessor currentUser,
         ILogger<Audit> audit)
     {
         this.repository = repository;
@@ -51,6 +54,7 @@ public class ProjectsController : ControllerBase
         this.createExisting = createExisting;
         this.traceyProvisioner = traceyProvisioner;
         this.defaultEvaluatorProvisioner = defaultEvaluatorProvisioner;
+        this.currentUser = currentUser;
         this.audit = audit;
     }
 
@@ -60,8 +64,25 @@ public class ProjectsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
-        return paged.Map(ProjectDtoMapper.ToListItemDto);
+        // Admins see every project; non-admins (e.g. the sidebar project switcher) see only the
+        // projects they belong to — never the full cross-tenant list.
+        if (User.IsInRole(nameof(UserRole.Admin)))
+        {
+            var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
+            return paged.Map(ProjectDtoMapper.ToListItemDto);
+        }
+
+        var user = await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (user is null)
+            return new PagedResult<ProjectListItemDto>([], 0, page, pageSize);
+
+        var memberProjects = await repository.GetByMemberAsync(user.Id, cancellationToken);
+        var items = memberProjects
+            .Skip(Math.Max(page - 1, 0) * pageSize)
+            .Take(pageSize)
+            .Select(ProjectDtoMapper.ToListItemDto)
+            .ToArray();
+        return new PagedResult<ProjectListItemDto>(items, memberProjects.Count, page, pageSize);
     }
 
     [HttpGet("{id:guid}")]
@@ -69,6 +90,9 @@ public class ProjectsController : ControllerBase
     {
         var project = await repository.FindAsync(id, cancellationToken);
         if (project is null)
+            return NotFound();
+        // Hide projects the caller cannot access behind a 404 so existence does not leak.
+        if (!await CanAccessAsync(project, cancellationToken))
             return NotFound();
         return ToDto(project);
     }
@@ -109,15 +133,10 @@ public class ProjectsController : ControllerBase
             ? existing.SystemEndpoint
             : await endpointRepository.GetAsync(request.SystemEndpointId, cancellationToken);
 
-        var members = request.MemberIds is null
-            ? existing.Members
-            : await ResolveMembersAsync(request.MemberIds, cancellationToken);
-        if (members is null)
-            return BadRequest("One or more memberIds reference unknown users.");
-
-        // Snapshot the prior member set BEFORE createExisting (which may mutate existing.Members in
-        // place) so we can audit any membership delta this PUT applies.
-        var priorMembers = existing.Members.ToDictionary(m => m.Id, m => m.Email);
+        // Membership is NOT mass-assignable here — it changes only via the dedicated add/remove
+        // endpoints. Carry the existing member set through unchanged (snapshot first, since
+        // createExisting may mutate existing.Members in place).
+        var members = existing.Members.ToArray();
         var priorName = existing.Name;
 
         var updated = createExisting(request.Name, endpoint, members, existing);
@@ -129,13 +148,6 @@ public class ProjectsController : ControllerBase
                 AuditAction.ProjectRenamed, nameof(IProject), id, saved.Name, projectId: id,
                 details: JsonSerializer.Serialize(new { from = priorName, to = saved.Name }));
 
-        // Membership can also change through this PUT body (not only the dedicated add/remove
-        // endpoints), so audit the delta here too, matching those endpoints' events.
-        var savedMemberIds = saved.Members.Select(m => m.Id).ToHashSet();
-        foreach (var added in saved.Members.Where(m => !priorMembers.ContainsKey(m.Id)))
-            audit.LogAudit(AuditAction.ProjectMemberAdded, nameof(IUser), added.Id, added.Email, projectId: id);
-        foreach (var (removedId, removedEmail) in priorMembers.Where(p => !savedMemberIds.Contains(p.Key)))
-            audit.LogAudit(AuditAction.ProjectMemberRemoved, nameof(IUser), removedId, removedEmail, projectId: id);
         return ToDto(saved);
     }
 
@@ -182,6 +194,9 @@ public class ProjectsController : ControllerBase
     {
         var project = await repository.FindAsync(id, cancellationToken);
         if (project is null)
+            return NotFound();
+        // Members' emails are PII — only an admin or a member of the project may list them.
+        if (!await CanAccessAsync(project, cancellationToken))
             return NotFound();
         return project.Members.Select(ProjectDtoMapper.ToMemberDto).ToArray();
     }
@@ -230,6 +245,16 @@ public class ProjectsController : ControllerBase
         var saved = await repository.UpdateAsync(updated, cancellationToken);
         audit.LogAudit(AuditAction.ProjectMemberRemoved, nameof(IUser), userId, member.Email, projectId: id);
         return ToDto(saved);
+    }
+
+    // Admins can access any project; everyone else only the projects they belong to. The project is
+    // already loaded with its Members, so membership is checked in memory without an extra query.
+    private async Task<bool> CanAccessAsync(IProject project, CancellationToken cancellationToken)
+    {
+        if (User.IsInRole(nameof(UserRole.Admin)))
+            return true;
+        var user = await currentUser.GetCurrentUserAsync(cancellationToken);
+        return user is not null && project.Members.Any(m => m.Id == user.Id);
     }
 
     private async Task<IReadOnlyCollection<IUser>?> ResolveMembersAsync(

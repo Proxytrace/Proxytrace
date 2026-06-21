@@ -1,8 +1,13 @@
+using System.Security.Claims;
+using Autofac;
 using AwesomeAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Projects;
+using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
@@ -98,19 +103,104 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task Update_ReplacingMembers_PersistsNewSet()
+    public async Task Update_RenamesProject_ButLeavesMembershipUnchanged()
     {
+        // Membership is not mass-assignable through the generic update — it only changes via the
+        // dedicated add/remove-member endpoints.
         IServiceProvider services = GetServices();
         var controller = ResolveController(services);
         var (project, userA) = await SeedProjectAndUserAsync(services);
-        var userB = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
-
         await controller.AddMember(project.Id, userA.Id, CancellationToken);
 
-        var update = new UpdateProjectRequest(project.Name, project.SystemEndpoint.Id, [userB.Id]);
+        var update = new UpdateProjectRequest("Renamed", project.SystemEndpoint.Id);
         var result = await controller.Update(project.Id, update, CancellationToken);
 
-        (result.Value ?? throw new InvalidOperationException("Expected non-null Value.")).Members.Should().ContainSingle(m => m.Id == userB.Id);
+        var dto = result.Value ?? throw new InvalidOperationException("Expected non-null Value.");
+        dto.Name.Should().Be("Renamed");
+        dto.Members.Should().ContainSingle(m => m.Id == userA.Id);
+    }
+
+    [TestMethod]
+    public async Task GetAll_AsNonAdmin_ReturnsOnlyMemberProjects()
+    {
+        ICurrentUserAccessor accessor = null!;
+        IServiceProvider services = GetServices(builder => accessor = RegisterAccessor(builder));
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var user = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var createNew = services.GetRequiredService<IProject.CreateNew>();
+        var repo = services.GetRequiredService<IProjectRepository>();
+        var mine = await repo.AddAsync(createNew("Mine", endpoint, [user]), CancellationToken);
+        await repo.AddAsync(createNew("Theirs", endpoint, []), CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(user);
+
+        var controller = ResolveController(services, ContextWithRoles());
+        var result = await controller.GetAll(cancellationToken: CancellationToken);
+
+        result.Items.Should().ContainSingle().Which.Id.Should().Be(mine.Id);
+    }
+
+    [TestMethod]
+    public async Task GetAll_AsAdmin_ReturnsAllProjects()
+    {
+        IServiceProvider services = GetServices();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var createNew = services.GetRequiredService<IProject.CreateNew>();
+        var repo = services.GetRequiredService<IProjectRepository>();
+        await repo.AddAsync(createNew("A", endpoint, []), CancellationToken);
+        await repo.AddAsync(createNew("B", endpoint, []), CancellationToken);
+
+        var controller = ResolveController(services, ContextWithRoles(nameof(UserRole.Admin)));
+        var result = await controller.GetAll(cancellationToken: CancellationToken);
+
+        result.Items.Should().HaveCount(2);
+    }
+
+    [TestMethod]
+    public async Task Get_AsNonMember_ReturnsNotFound()
+    {
+        ICurrentUserAccessor accessor = null!;
+        IServiceProvider services = GetServices(builder => accessor = RegisterAccessor(builder));
+        var outsider = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(outsider);
+
+        var controller = ResolveController(services, ContextWithRoles());
+        var result = await controller.Get(project.Id, CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetMembers_AsNonMember_ReturnsNotFound()
+    {
+        ICurrentUserAccessor accessor = null!;
+        IServiceProvider services = GetServices(builder => accessor = RegisterAccessor(builder));
+        var outsider = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(outsider);
+
+        var controller = ResolveController(services, ContextWithRoles());
+        var result = await controller.GetMembers(project.Id, CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetMembers_AsMember_ReturnsMembers()
+    {
+        ICurrentUserAccessor accessor = null!;
+        IServiceProvider services = GetServices(builder => accessor = RegisterAccessor(builder));
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var user = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var createNew = services.GetRequiredService<IProject.CreateNew>();
+        var repo = services.GetRequiredService<IProjectRepository>();
+        var project = await repo.AddAsync(createNew("Mine", endpoint, [user]), CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(user);
+
+        var controller = ResolveController(services, ContextWithRoles());
+        var result = await controller.GetMembers(project.Id, CancellationToken);
+
+        result.Value.Should().ContainSingle(m => m.Id == user.Id);
     }
 
     [TestMethod]
@@ -157,8 +247,9 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
         result.Should().BeOfType<NotFoundResult>();
     }
 
-    private static ProjectsController ResolveController(IServiceProvider services) =>
-        new(
+    private static ProjectsController ResolveController(IServiceProvider services, ControllerContext? context = null)
+    {
+        var controller = new ProjectsController(
             services.GetRequiredService<IProjectRepository>(),
             services.GetRequiredService<IRepository<IModelEndpoint>>(),
             services.GetRequiredService<IRepository<IUser>>(),
@@ -167,7 +258,26 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
             services.GetRequiredService<IProject.CreateExisting>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             services.GetRequiredService<Proxytrace.Application.Evaluator.IDefaultEvaluatorProvisioner>(),
+            services.GetRequiredService<ICurrentUserAccessor>(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+        if (context is not null)
+            controller.ControllerContext = context;
+        return controller;
+    }
+
+    private static ICurrentUserAccessor RegisterAccessor(ContainerBuilder builder)
+    {
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        builder.RegisterInstance(accessor).As<ICurrentUserAccessor>();
+        return accessor;
+    }
+
+    private static ControllerContext ContextWithRoles(params string[] roles)
+    {
+        var identity = new ClaimsIdentity(roles.Select(r => new Claim(ClaimTypes.Role, r)), "test");
+        var http = new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
+        return new ControllerContext { HttpContext = http };
+    }
 
     private async Task<(IProject project, IUser user)> SeedProjectAndUserAsync(IServiceProvider services)
     {

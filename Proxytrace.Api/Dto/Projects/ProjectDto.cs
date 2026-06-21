@@ -30,7 +30,8 @@ public record CreateProjectRequest(
     [Required] Guid SystemEndpointId,
     IReadOnlyList<Guid>? MemberIds = null);
 
+// Membership is an access-control primitive and must NOT be mass-assignable through this generic
+// "update name/endpoint" call — it changes only via the dedicated add/remove-member endpoints.
 public record UpdateProjectRequest(
     [Required, StringLength(200, MinimumLength = 1)] string Name,
-    [Required] Guid SystemEndpointId,
-    IReadOnlyList<Guid>? MemberIds = null);
+    [Required] Guid SystemEndpointId);
