@@ -197,6 +197,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **A hung model provider no longer stalls test and optimization runs indefinitely.** Internal model
+  calls (optimizers, evaluators, the playground) were made with no request timeout and no retry
+  policy, so a wedged or very slow upstream had no upper time bound and could pin a worker forever,
+  stalling the serial A/B-validation / optimization queue. Each call now has a hard network-timeout
+  ceiling independent of the caller, plus a bounded retry policy for transient failures.
+
 - **Proxied calls are no longer dropped when the client disconnects after the upstream responds.**
   The proxy threaded the client request-aborted token all the way into the ingestion publish, so a
   client cancel/timeout/navigation *after* the upstream LLM call had already completed (a common

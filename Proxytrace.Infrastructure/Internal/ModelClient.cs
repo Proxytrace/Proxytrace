@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.ClientModel.Primitives;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -289,9 +290,24 @@ internal class ModelClient : IModelClient
         }
 
         var credential = new ApiKeyCredential(endpoint.Provider.ApiKey);
-        var options = new OpenAIClientOptions { Endpoint = endpoint.Provider.Endpoint };
-        return new OpenAIClient(credential, options)
+        return new OpenAIClient(credential, BuildClientOptions(endpoint))
             .GetChatClient(endpoint.Model.Name)
             .AsIChatClient();
     }
+
+    // A wedged/slow provider must not be able to pin a worker indefinitely: without these every
+    // model call relied entirely on the caller's CancellationToken for an upper time bound, so a
+    // hung endpoint could stall the (serial) A/B-validation / optimization queue. NetworkTimeout
+    // gives each call a hard ceiling independent of the caller token, and the bounded retry policy
+    // recovers from transient upstream failures without retrying forever.
+    internal static readonly TimeSpan NetworkTimeout = TimeSpan.FromMinutes(5);
+    internal const int MaxRetries = 2;
+
+    internal static OpenAIClientOptions BuildClientOptions(IModelEndpoint endpoint) =>
+        new()
+        {
+            Endpoint = endpoint.Provider.Endpoint,
+            NetworkTimeout = NetworkTimeout,
+            RetryPolicy = new ClientRetryPolicy(maxRetries: MaxRetries),
+        };
 }

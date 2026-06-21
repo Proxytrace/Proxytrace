@@ -1,5 +1,7 @@
+using System.ClientModel.Primitives;
 using System.Reflection;
 using System.Text.Json;
+using OpenAI;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.AI;
@@ -132,6 +134,32 @@ public sealed class ModelClientTests : BaseTest<Module>
         var conv = Conversation.Create();
         conv.Add(Message.CreateUserMessage(userText));
         return conv;
+    }
+
+    // ── client options (timeout / retry) ──────────────────────────────────────
+
+    [TestMethod]
+    public void BuildClientOptions_AppliesNetworkTimeout_SoAHungEndpointCannotPinAWorker()
+    {
+        var options = ModelClient.BuildClientOptions(MakeEndpoint());
+
+        options.NetworkTimeout.Should().Be(ModelClient.NetworkTimeout);
+    }
+
+    [TestMethod]
+    public void BuildClientOptions_AppliesABoundedRetryPolicy()
+    {
+        var options = ModelClient.BuildClientOptions(MakeEndpoint());
+
+        options.RetryPolicy.Should().BeOfType<ClientRetryPolicy>();
+    }
+
+    [TestMethod]
+    public void BuildClientOptions_PointsAtTheProviderEndpoint()
+    {
+        var options = ModelClient.BuildClientOptions(MakeEndpoint(endpointUrl: "https://api.example.test/v1"));
+
+        options.Endpoint.Should().Be(new Uri("https://api.example.test/v1"));
     }
 
     // ── CompleteAsync (non-generic) ───────────────────────────────────────────
