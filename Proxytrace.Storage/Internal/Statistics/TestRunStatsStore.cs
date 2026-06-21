@@ -77,8 +77,14 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
         // insert-race retry, so a row inserted earlier in this context is still tracked at .NET's
         // 100ns precision; realign the token's original to the microseconds PostgreSQL persists so the
         // `WHERE UpdatedAt = @original` check does not spuriously fail. See ConcurrencyTokenExtensions.
-        var updatedAtProperty = existingEntry.Property(e => e.UpdatedAt);
-        updatedAtProperty.OriginalValue = updatedAtProperty.OriginalValue.TruncateToMicroseconds();
+        // Only the relational provider truncates UpdatedAt on persist; the in-memory provider stores the
+        // full 100ns value verbatim, so truncating the original there would make EF's own concurrency
+        // check throw on every ordinary update — skip the realignment on non-relational providers.
+        if (context.Database.IsRelational())
+        {
+            var updatedAtProperty = existingEntry.Property(e => e.UpdatedAt);
+            updatedAtProperty.OriginalValue = updatedAtProperty.OriginalValue.TruncateToMicroseconds();
+        }
         await context.SaveChangesAsync(cancellationToken);
     }
 

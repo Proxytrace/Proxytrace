@@ -193,6 +193,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Saving a record no longer spuriously fails on the in-memory database.** After `UpdatedAt` became
+  a database concurrency token, ordinary single-actor updates (for example a user changing their
+  email-notification preference) could fail with a false "modified by another process" error on the
+  in-memory storage backend used by the all-in-one/kiosk runtime, because the version stamp was being
+  truncated to the precision PostgreSQL stores even when running in memory. The truncation now only
+  applies on PostgreSQL, so updates succeed normally on both backends.
+
 - **Concurrent edits to the same record no longer silently overwrite each other.** Optimistic
   concurrency was only checked in application code before a save, so two edits that started from the
   same version of a record could both pass the check and both write — the second silently discarding

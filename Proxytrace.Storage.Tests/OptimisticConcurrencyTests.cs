@@ -34,6 +34,29 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Update_SingleActorWithStoredToken_DoesNotConflict()
+    {
+        // Regression for #202: once UpdatedAt was marked an EF concurrency token, the in-memory
+        // provider threw DbUpdateConcurrencyException on ordinary single-actor updates, because the
+        // tracked original token was truncated to microseconds (correct only for the relational
+        // provider, which persists at that precision) while the in-memory store keeps the full
+        // .NET 100ns value. A plain update carrying the entity's own persisted token must succeed.
+        IServiceProvider services = GetServices();
+        IUser user = await services.GetRequiredService<IDomainEntityGenerator<IUser>>()
+            .GetOrCreateAsync(CancellationToken);
+        var repo = services.GetRequiredService<IRepository<IUser>>();
+
+        // Reload to carry the exact persisted token, then perform two sequential plain updates.
+        IUser reloaded = await repo.GetAsync(user.Id, CancellationToken);
+
+        await FluentActions.Invoking(async () =>
+        {
+            IUser once = await repo.UpdateAsync(reloaded, CancellationToken);
+            await repo.UpdateAsync(once, CancellationToken);
+        }).Should().NotThrowAsync();
+    }
+
+    [TestMethod]
     public async Task Update_TokenDiffersOnlyBelowMicrosecond_DoesNotConflict()
     {
         // Reproduces the Postgres precision bug: the in-memory token keeps .NET's 100ns precision
