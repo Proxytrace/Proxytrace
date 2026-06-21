@@ -5,9 +5,14 @@
 # The repo targets net10.0 (see Directory.Build.props / *.csproj). Remote web
 # containers ship without the .NET SDK. The official dotnet-install.sh and the
 # Microsoft binary CDNs (builds.dotnet.microsoft.com / aka.ms) are blocked by the
-# environment's network policy, but the Microsoft apt repo (packages.microsoft.com)
-# is reachable, so we install the SDK from there. Container state is cached after
-# the hook completes, so subsequent sessions reuse the install.
+# environment's network policy. Ubuntu 24.04 (noble) ships the .NET 10 SDK in its
+# own main/universe repos (package `dotnet-sdk-10.0`), and archive.ubuntu.com /
+# security.ubuntu.com are reachable, so we install from there. Container state is
+# cached after the hook completes, so subsequent sessions reuse the install.
+#
+# NOTE: we must run a FULL `apt-get update` first. A partial refresh of only one
+# repo leaves the Ubuntu indexes stale, so apt's candidate version points at a
+# point release that has already been purged from the pool -> every .deb 404s.
 set -euo pipefail
 
 # Only run in the remote (web) environment; local machines already have the SDK.
@@ -28,22 +33,12 @@ fi
 
 # Install the .NET 10 SDK if it isn't already present (idempotent).
 if ! command -v dotnet >/dev/null 2>&1 || ! dotnet --list-sdks 2>/dev/null | grep -q '^10\.'; then
-  echo "Installing .NET 10 SDK via the Microsoft apt repository ..."
+  echo "Installing .NET 10 SDK from the Ubuntu apt repositories ..."
 
-  # Register the Microsoft package repo (no-op if already registered).
-  if [ ! -f /etc/apt/sources.list.d/microsoft-prod.list ] && \
-     ! ls /etc/apt/sources.list.d/ 2>/dev/null | grep -qi microsoft; then
-    curl -fsSL -o /tmp/packages-microsoft-prod.deb \
-      https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
-    dpkg -i /tmp/packages-microsoft-prod.deb
-  fi
-
-  # Refresh only the Microsoft repo. The base image carries some unrelated PPAs
-  # (deadsnakes, ondrej/php) that fail to refresh; don't let those abort the hook.
-  apt-get update \
-    -o Dir::Etc::sourcelist="sources.list.d/microsoft-prod.list" \
-    -o Dir::Etc::sourceparts="-" \
-    -o APT::Get::List-Cleanup="0" || apt-get update || true
+  # Full refresh so apt's candidate version matches a .deb still in the pool.
+  # The base image carries some unrelated PPAs (deadsnakes, ondrej/php) that fail
+  # to refresh; don't let those abort the hook.
+  apt-get update || true
 
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends dotnet-sdk-10.0
 else
