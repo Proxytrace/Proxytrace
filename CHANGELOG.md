@@ -177,6 +177,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Security
 
+- **The user roster is no longer exposed to non-admins.** `GET /api/users` (every user's email,
+  role and timestamps), `GET /api/users/{id}`, and `GET /api/users/{id}/projects` were callable by
+  any authenticated user, leaking the full user base and their PII. They now require the Admin role,
+  matching the existing role-change and delete endpoints; the self-service `me` endpoints stay open.
 - **Test-support and `/seed` endpoints are no longer reachable on real deployments.** The e2e helper
   endpoints (including a destructive `POST /api/test/reset` that wiped all run data, and the
   per-controller `/seed` injectors) were exposed to any authenticated user in production. They are

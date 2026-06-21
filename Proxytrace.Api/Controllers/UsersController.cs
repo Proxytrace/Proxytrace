@@ -39,6 +39,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<PagedResult<UserDto>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -93,6 +94,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<UserDto>> Get(Guid id, CancellationToken cancellationToken)
     {
         var user = await repository.FindAsync(id, cancellationToken);
@@ -102,6 +104,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:guid}/projects")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<IReadOnlyList<UserProjectDto>>> GetProjects(
         Guid id,
         CancellationToken cancellationToken)
