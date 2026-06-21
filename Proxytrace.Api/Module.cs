@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Security.Claims;
 using Autofac;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -77,7 +78,18 @@ internal sealed class Module : Autofac.Module
             .RegisterType<SigningKeyProvider>()
             .As<ISigningKeyProvider>()
             .SingleInstance();
-        
+
+        var dataProtectionDir = Environment.GetEnvironmentVariable("PROXYTRACE_DATA_DIR");
+        builder.RegisterServiceCollection(services =>
+        {
+            var dp = services.AddDataProtection().SetApplicationName("Proxytrace");
+            if (!string.IsNullOrWhiteSpace(dataProtectionDir))
+            {
+                dp.PersistKeysToFileSystem(
+                    new DirectoryInfo(Path.Combine(dataProtectionDir, "dataprotection-keys")));
+            }
+        });
+
         var kiosk = configuration.GetSection("Kiosk").Get<KioskOptions>() ?? new KioskOptions();
         builder
             .RegisterInstance(kiosk)
