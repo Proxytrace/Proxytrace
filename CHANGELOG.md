@@ -193,6 +193,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **A malformed `Content-Type` header no longer crashes a proxied request.** The OpenAI-compatible
+  ingestion proxy parsed the client-supplied `Content-Type` strictly, so a single bad value (e.g.
+  `garbage;;`) threw and surfaced as an opaque `500`. The header is now parsed leniently and, when it
+  cannot be parsed, forwarded upstream unchanged — the request proceeds normally instead of failing.
+
 - **Captured calls with a non-UUID session id are no longer silently dropped.** When a client sent a
   session identifier that was not a GUID, Proxytrace hashed it to derive a stable conversation id but
   built the id from all 20 SHA-1 bytes, which threw and caused every such call to be discarded during

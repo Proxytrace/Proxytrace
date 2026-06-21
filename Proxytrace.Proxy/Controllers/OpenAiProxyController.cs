@@ -435,8 +435,18 @@ public class OpenAiProxyController : ControllerBase
             {
                 if (upstreamRequest.Content is not null)
                 {
-                    upstreamRequest.Content.Headers.ContentType =
-                        MediaTypeHeaderValue.Parse(header.Value.ToString());
+                    // The Content-Type is client-supplied and may be malformed; never let a bad
+                    // header crash the proxy with an unhandled FormatException → opaque 500. Parse
+                    // leniently and fall back to forwarding the raw value without validation.
+                    var rawContentType = header.Value.ToString();
+                    if (MediaTypeHeaderValue.TryParse(rawContentType, out var contentType))
+                    {
+                        upstreamRequest.Content.Headers.ContentType = contentType;
+                    }
+                    else
+                    {
+                        upstreamRequest.Content.Headers.TryAddWithoutValidation("Content-Type", rawContentType);
+                    }
                 }
             }
             else if (header.Key.Equals("authorization", StringComparison.OrdinalIgnoreCase))

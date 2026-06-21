@@ -120,6 +120,25 @@ public sealed class OpenAiProxyControllerTests
         Encoding.UTF8.GetString(capture.LastBody).Should().Be("""{"model":"gpt-4o","messages":[]}""");
     }
 
+    [TestMethod]
+    public async Task Proxy_MalformedContentType_DoesNotCrash_AndForwardsHeader()
+    {
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext(
+            "Bearer valid",
+            body: """{"model":"gpt-4o","messages":[]}""",
+            contentType: "garbage;;");
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        controller.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        capture.LastContentType.Should().Be("garbage;;", "an unparseable Content-Type is forwarded raw, not dropped or fatal");
+    }
+
     private static OpenAiProxyController BuildController(
         IIngestionStream stream,
         IApiKeyResolver resolver,
@@ -159,7 +178,8 @@ public sealed class OpenAiProxyControllerTests
         return new ResolvedApiKey(project, provider);
     }
 
-    private static ControllerContext BuildContext(string authHeader, string body = "{}", string method = "POST")
+    private static ControllerContext BuildContext(
+        string authHeader, string body = "{}", string method = "POST", string contentType = "application/json")
     {
         var httpContext = new DefaultHttpContext();
         if (!string.IsNullOrEmpty(authHeader))
@@ -169,7 +189,7 @@ public sealed class OpenAiProxyControllerTests
 
         if (!string.IsNullOrEmpty(body))
         {
-            httpContext.Request.ContentType = "application/json";
+            httpContext.Request.ContentType = contentType;
         }
 
         httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
