@@ -50,7 +50,7 @@ in `frontend/src/api/models.ts`.
   - `ProposalStatusChangedEvent` — `+ Kind, Status, AdoptedAt?, AdoptedAgentVersionId?, AdoptedAgentVersionNumber?, AdoptedManually?, UpdatedAt` (published by `ProposalsController.UpdateStatus` and `ProposalAdoptionService`)
 - **`TheoryStatusChangedEvent`** — `Id, AgentId, Kind, Status, Source, Priority, Rationale, ResultingProposalId?, UpdatedAt`
 - **Notification events** (`NotificationEvent` carries `Id`, `ProjectId?`):
-  - `NotificationCreatedEvent` — `+ Kind, Severity, Title, Message, Status, TargetKind?, TargetId?, CreatedAt` (published by `DashboardNotificationChannel`)
+  - `NotificationCreatedEvent` — `+ Kind, Severity, Title, Message, Status, TargetKind?, TargetId?, CreatedAt` (published by `DashboardNotificationChannel`; de-duplication handled upstream by `NotificationService`)
   - `NotificationStatusChangedEvent` — `+ Status, UpdatedAt` (published by `NotificationsController` on mark-read / dismiss)
 - **Run events** (`TestRunEvent` carries `RunId`, `GroupId`):
   - `TestCaseStartedEvent` — `+ TestCaseId`
