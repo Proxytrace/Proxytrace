@@ -1,5 +1,6 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
@@ -26,5 +27,11 @@ internal class Module : Autofac.Module
         }).SingleInstance();
 
         builder.RegisterServiceCollection(sc => sc.AddLogging());
+
+        // Entity mappers and stores that protect secrets at rest (ModelProviderConfig,
+        // EmailSettingsStore) depend on ISecretProtector -> IDataProtectionProvider, which the
+        // mapper resolves eagerly whenever a StorageDbContext model is built. Register an ephemeral
+        // (non-persisted) Data Protection key ring so every test container can construct it.
+        builder.RegisterServiceCollection(sc => sc.AddDataProtection());
     }
 }

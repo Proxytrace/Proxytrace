@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Proxytrace.Application.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.ModelProvider;
@@ -10,24 +11,30 @@ namespace Proxytrace.Storage.Internal.Entities.ModelProvider;
 [UsedImplicitly]
 internal class ModelProviderRepository : ArchivableRepository<IModelProvider, ModelProviderEntity>, IModelProviderRepository
 {
+    private readonly ISecretHasher hasher;
+
     public ModelProviderRepository(
         IMapper<IModelProvider, ModelProviderEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
         IEntityCache<IModelProvider> cache,
-        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
+        AmbientDbContext ambient,
+        ISecretHasher hasher) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
     {
+        this.hasher = hasher;
     }
 
     public async Task<IModelProvider?> FindByApiKeyAsync(string apiKey, CancellationToken cancellationToken = default)
     {
-        // By-key lookup (proxy upstream-key auth): intentionally unfiltered so an archived provider
-        // that still receives matching traffic keeps resolving, mirroring agent/endpoint attribution.
+        // The plaintext key is encrypted (non-deterministic) at rest, so match on its deterministic
+        // blind-index hash instead. Intentionally unfiltered so an archived provider that still
+        // receives matching traffic keeps resolving, mirroring agent/endpoint attribution.
+        var lookupHash = hasher.Hash(apiKey);
         var entity = await contextFactory()
             .Set<ModelProviderEntity>()
             .AsNoTracking()
-            .Where(e => e.ApiKey == apiKey)
+            .Where(e => e.ApiKeyLookupHash == lookupHash)
             .FirstOrDefaultAsync(cancellationToken);
 
         return await Map(entity, cancellationToken);
