@@ -1,0 +1,87 @@
+using AwesomeAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Proxytrace.Domain;
+using Proxytrace.Domain.ApiKey;
+using Proxytrace.Domain.ModelProvider;
+using Proxytrace.Domain.Project;
+using Proxytrace.Domain.User;
+using Proxytrace.Storage.Internal;
+using Proxytrace.Testing;
+using ApiKeyEntity = Proxytrace.Storage.Internal.Entities.ApiKey.ApiKeyEntity;
+using InviteEntity = Proxytrace.Storage.Internal.Entities.Invite.InviteEntity;
+using ModelProviderEntity = Proxytrace.Storage.Internal.Entities.ModelProvider.ModelProviderEntity;
+
+namespace Proxytrace.Storage.Tests;
+
+[TestClass]
+public sealed class SecretsBackfillServiceTests : BaseTest<Module>
+{
+    [TestMethod]
+    public async Task Backfill_ProtectsPlaintextRowsInPlace_AndIsIdempotent()
+    {
+        IServiceProvider services = GetServices();
+        var contextFactory = services.GetRequiredService<Func<StorageDbContext>>();
+        var now = DateTimeOffset.UtcNow;
+
+        // Valid FK targets for the legacy ApiKey / Invite rows.
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var fkProvider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var owner = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+
+        // Seed pre-retrofit plaintext rows directly (bypassing the protect/hash-aware mappers).
+        var providerId = Guid.NewGuid();
+        var keyId = Guid.NewGuid();
+        var inviteId = Guid.NewGuid();
+        const string providerPlaintext = "sk-provider-plain";
+        const string keyPlaintext = "proxytrace-inbound-plain";
+        var tokenPlaintext = new string('a', 43); // base64url(32 bytes) length
+
+        var seed = contextFactory();
+        seed.Set<ModelProviderEntity>().Add(new ModelProviderEntity
+        {
+            Id = providerId, Name = "legacy-provider", Endpoint = "https://api.example.com/v1",
+            ApiKey = providerPlaintext, ApiKeyLookupHash = null, Kind = ModelProviderKind.OpenAiCompatible,
+            CreatedAt = now, UpdatedAt = now,
+        });
+        seed.Set<ApiKeyEntity>().Add(new ApiKeyEntity
+        {
+            Id = keyId, Name = "legacy-key", KeyHash = keyPlaintext, KeyPrefix = null,
+            Project = project.Id, Provider = fkProvider.Id, Scopes = ApiKeyScopes.Ingestion, Owner = owner.Id,
+            CreatedAt = now, UpdatedAt = now,
+        });
+        seed.Set<InviteEntity>().Add(new InviteEntity
+        {
+            Id = inviteId, Email = "legacy@example.com", Role = UserRole.Member, TokenHash = tokenPlaintext,
+            ExpiresAt = now.AddDays(7), InvitedBy = owner.Id, CreatedAt = now, UpdatedAt = now,
+        });
+        await seed.SaveChangesAsync(CancellationToken);
+
+        var backfill = services.GetRequiredService<SecretsBackfillService>();
+        await backfill.StartAsync(CancellationToken);
+
+        // Provider: encrypted in place, resolvable by its plaintext key via the blind index.
+        var providers = services.GetRequiredService<IModelProviderRepository>();
+        (await providers.FindByApiKeyAsync(providerPlaintext, CancellationToken))!.Id.Should().Be(providerId);
+        var rawProvider = await contextFactory().Set<ModelProviderEntity>().AsNoTracking().FirstAsync(e => e.Id == providerId, CancellationToken);
+        rawProvider.ApiKey.Should().NotBe(providerPlaintext);
+        rawProvider.ApiKeyLookupHash.Should().NotBeNullOrEmpty();
+
+        // Inbound key: hashed in place, resolvable by its raw value, prefix populated.
+        var keys = services.GetRequiredService<IApiKeyRepository>();
+        (await keys.FindByKeyAsync(keyPlaintext, CancellationToken))!.Id.Should().Be(keyId);
+        var rawKey = await contextFactory().Set<ApiKeyEntity>().AsNoTracking().FirstAsync(e => e.Id == keyId, CancellationToken);
+        rawKey.KeyHash.Should().NotBe(keyPlaintext);
+        rawKey.KeyPrefix.Should().Be(keyPlaintext[..16]);
+
+        // Invite: token hashed in place (now a 64-char hash).
+        var rawInvite = await contextFactory().Set<InviteEntity>().AsNoTracking().FirstAsync(e => e.Id == inviteId, CancellationToken);
+        rawInvite.TokenHash.Should().HaveLength(64).And.NotBe(tokenPlaintext);
+
+        // Re-run is a no-op: already-protected rows are left untouched.
+        var providerCipher = rawProvider.ApiKey;
+        await backfill.StartAsync(CancellationToken);
+        var rawProviderAgain = await contextFactory().Set<ModelProviderEntity>().AsNoTracking().FirstAsync(e => e.Id == providerId, CancellationToken);
+        rawProviderAgain.ApiKey.Should().Be(providerCipher);
+    }
+}
