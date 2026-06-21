@@ -11,6 +11,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/domain-entities.md`](docs/domain-entities.md) | Adding/changing a domain entity (the five-file pattern, FK conventions, factory delegates) |
 | [`docs/validation.md`](docs/validation.md) | Adding domain validation rules |
 | [`docs/database.md`](docs/database.md) | Anything storage-, provider-, or EF-migration-related |
+| [`docs/security.md`](docs/security.md) | Touching at-rest secret protection — encryption/hashing seams, blind-index lookups, the Data Protection key ring, or the secrets backfill |
 | [`docs/licensing.md`](docs/licensing.md) | Gating a feature/limit behind a license tier (`ILicenseService`) |
 | [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
 | [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |

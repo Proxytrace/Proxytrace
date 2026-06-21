@@ -31,13 +31,16 @@ there is no self-service sign-up:
 
 1. Under **Invite a user**, enter the person's **email**, pick their initial **role**, and click
    **Create invite**.
-2. Proxytrace generates a single-use invite link (valid for 7 days). **Copy the link and share it
-   yourself** — Proxytrace does not send email.
+2. Proxytrace generates a single-use invite link (valid for 7 days), **shown once right after you
+   create the invite**. **Copy the link then and share it yourself** — Proxytrace does not send
+   email.
 3. The recipient opens the link, sets a password, and is signed in. They now appear in the
    **All users** list.
 
 Outstanding invitations are listed under **Pending invites** with their status (Pending, Used, or
-Expired). Use **Revoke** to cancel one that hasn't been used yet.
+Expired). Use **Revoke** to cancel one that hasn't been used yet. The link is **not** shown again
+after creation — invite tokens are stored hashed, so if you lose a link, revoke the invite and create
+a new one.
 
 ::: warning Free tier is single-user
 The **Free** tier is limited to a **single user**. Once that seat is taken, creating an invite is

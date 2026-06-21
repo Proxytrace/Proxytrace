@@ -92,10 +92,19 @@ MCP-only key cannot proxy LLM traffic. Keys issued before this feature are **ing
    an external agent use the [MCP server](/guide/mcp-server)).
 4. Choose the **owner** — the user every MCP call made with the key is attributed to. Leave it as
    *Yourself (creator)* or assign the key to a specific teammate.
-5. Generate the key and distribute it to the client team. Treat it as a secret.
+5. Generate the key. The **full key is shown once, right after creation** — copy it then and
+   distribute it to the client team. Treat it as a secret.
 
 Clients then set this key plus the proxy base URL in their OpenAI-compatible client — see
 [Proxy Setup](/guide/proxy-setup).
+
+::: tip Secrets are protected at rest
+Inbound API keys are stored as one-way hashes, so Proxytrace cannot show a key again after it is
+created — the key list shows only a short, non-secret prefix to help you identify each key. If a key
+is lost, revoke it and issue a new one. Upstream provider credentials are stored **encrypted** (they
+must be replayed to the provider). Existing keys and credentials are protected automatically when you
+upgrade; nothing changes for clients already using a key.
+:::
 
 ## Project system endpoint
 
