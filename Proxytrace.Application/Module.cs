@@ -422,6 +422,10 @@ public sealed class Module : Autofac.Module
             .As<Security.ISecretProtector>()
             .SingleInstance();
 
+        builder.RegisterType<Security.Internal.Sha256SecretHasher>()
+            .As<Security.ISecretHasher>()
+            .SingleInstance();
+
         builder.RegisterType<Notifications.Internal.SmtpEmailSender>()
             .As<Notifications.IEmailSender>()
             .SingleInstance();
