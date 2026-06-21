@@ -42,22 +42,50 @@ internal sealed class SecretsBackfillService : IHostedService
         this.logger = logger;
     }
 
+    private const int MaxAttempts = 3;
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(2);
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await RunSafely(BackfillProvidersAsync, "provider API key", cancellationToken);
-        await RunSafely(BackfillApiKeysAsync, "inbound API key", cancellationToken);
-        await RunSafely(BackfillInvitesAsync, "invite token", cancellationToken);
+        // Until a row is backfilled its lookup column still holds the pre-retrofit plaintext, so the
+        // hashed/encrypted lookup cannot match it — the impact text below spells out what stops
+        // working if a pass keeps failing.
+        await RunSafely(BackfillProvidersAsync, "provider API key",
+            "existing providers cannot authenticate upstream until this completes", cancellationToken);
+        await RunSafely(BackfillApiKeysAsync, "inbound API key",
+            "existing API keys cannot authenticate at the proxy or MCP server until this completes", cancellationToken);
+        await RunSafely(BackfillInvitesAsync, "invite token",
+            "pending invites cannot be redeemed until this completes", cancellationToken);
     }
 
-    private async Task RunSafely(Func<CancellationToken, Task> pass, string what, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs a single table's backfill with a few retries for transient faults. On persistent failure
+    /// it logs at Critical (surfaced in the operator Error Log) with the operational impact, rather
+    /// than failing host boot — but the impact is real, so the message is loud and actionable: a
+    /// restart re-runs the backfill, and the affected credentials stay broken until it succeeds.
+    /// </summary>
+    private async Task RunSafely(Func<CancellationToken, Task> pass, string what, string impact, CancellationToken cancellationToken)
     {
-        try
+        for (var attempt = 1; attempt <= MaxAttempts; attempt++)
         {
-            await pass(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Secrets backfill for {What} failed; skipping (will retry next start).", what);
+            try
+            {
+                await pass(cancellationToken);
+                return;
+            }
+            catch (Exception ex) when (attempt < MaxAttempts && !cancellationToken.IsCancellationRequested)
+            {
+                logger.LogWarning(ex, "Secrets backfill for {What} failed (attempt {Attempt}/{Max}); retrying.",
+                    what, attempt, MaxAttempts);
+                await Task.Delay(RetryDelay, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex,
+                    "Secrets backfill for {What} failed after {Max} attempts — {Impact}. Restart to retry.",
+                    what, MaxAttempts, impact);
+                return;
+            }
         }
     }
 

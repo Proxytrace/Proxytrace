@@ -1,6 +1,9 @@
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using Proxytrace.Application.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
@@ -83,5 +86,38 @@ public sealed class SecretsBackfillServiceTests : BaseTest<Module>
         await backfill.StartAsync(CancellationToken);
         var rawProviderAgain = await contextFactory().Set<ModelProviderEntity>().AsNoTracking().FirstAsync(e => e.Id == providerId, CancellationToken);
         rawProviderAgain.ApiKey.Should().Be(providerCipher);
+    }
+
+    [TestMethod]
+    public async Task Backfill_WhenEncryptionFails_DoesNotCrash_AndLeavesProviderUnbackfilled()
+    {
+        // A protector that always throws stands in for a broken key ring. The provider pass must
+        // degrade (the row stays plaintext/unmarked for a future retry) without crashing boot.
+        var throwingProtector = Substitute.For<ISecretProtector>();
+        throwingProtector.Protect(Arg.Any<string>()).Returns(_ => throw new InvalidOperationException("no key ring"));
+
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance(throwingProtector).As<ISecretProtector>());
+        var contextFactory = services.GetRequiredService<Func<StorageDbContext>>();
+        var now = DateTimeOffset.UtcNow;
+
+        var providerId = Guid.NewGuid();
+        var seed = contextFactory();
+        seed.Set<ModelProviderEntity>().Add(new ModelProviderEntity
+        {
+            Id = providerId, Name = "legacy", Endpoint = "https://api.example.com/v1",
+            ApiKey = "sk-plain", ApiKeyLookupHash = null, Kind = ModelProviderKind.OpenAiCompatible,
+            CreatedAt = now, UpdatedAt = now,
+        });
+        await seed.SaveChangesAsync(CancellationToken);
+
+        var backfill = services.GetRequiredService<SecretsBackfillService>();
+        // Must not throw, even though every encryption attempt fails.
+        await backfill.StartAsync(CancellationToken);
+
+        // The row is left untouched (marker still null) so a later boot can retry it.
+        var raw = await contextFactory().Set<ModelProviderEntity>().AsNoTracking().FirstAsync(e => e.Id == providerId, CancellationToken);
+        raw.ApiKey.Should().Be("sk-plain");
+        raw.ApiKeyLookupHash.Should().BeNull();
     }
 }

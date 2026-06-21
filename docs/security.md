@@ -76,6 +76,13 @@ plaintext survives into the new column for the backfill to read. A drop+add woul
 and pending invites. When changing these columns, hand-check the generated migration emits
 `RenameColumn`, not drop+add.
 
+**Failure handling.** Each table's pass is retried a few times for transient faults; a persistent
+failure is logged at **Critical** (surfaced in the operator Error Log) instead of crashing boot. The
+impact is real: until a row is backfilled its lookup column still holds the pre-retrofit plaintext,
+so the hashed/encrypted lookup cannot match it — the affected existing API keys, provider auth, and
+pending invites **do not authenticate until a restart re-runs the backfill to completion**.
+Credentials created after the upgrade are unaffected.
+
 ## Threat model
 
 Protects **database dumps and backups**: the encryption key ring lives outside the database (in
