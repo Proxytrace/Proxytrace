@@ -155,15 +155,22 @@ race on its own.
 Two precision details (see `ConcurrencyTokenExtensions`):
 
 - PostgreSQL `timestamptz` stores **microsecond** precision, but a token carried in memory keeps
-  .NET's 100-nanosecond precision. Before saving, `UpdateCoreAsync` realigns the token's EF *original
-  value* to microseconds (`TruncateToMicroseconds`) so a row inserted earlier in the **same** context
-  — still tracked at 100ns — does not spuriously mismatch the value the database actually persisted.
+  .NET's 100-nanosecond precision. Before saving, `RealignConcurrencyToken` realigns the token's EF
+  *original value* to microseconds (`TruncateToMicroseconds`) so a row inserted earlier in the
+  **same** context — still tracked at 100ns — does not spuriously mismatch the value the database
+  actually persisted. **This truncation is gated on `Database.IsRelational()`**: the EF in-memory
+  provider stores the full 100ns value verbatim, so truncating the original there would make EF's own
+  in-memory token check compare a truncated original against the full-precision stored value and throw
+  `DbUpdateConcurrencyException` on every ordinary single-actor update (regression #202).
 - The in-app pre-check compares at microsecond granularity (`MatchesConcurrencyToken`) for the same
   reason — the entity returned by `AddAsync` before any DB round-trip carries the un-truncated token.
 
-> **Gotcha — not enforced in-memory.** The EF in-memory provider ignores concurrency tokens (it does
-> no rowcount check), so this guarantee only holds on PostgreSQL. Like the `Restrict`/`Cascade` FK
-> semantics above, lost-update races cannot be reproduced by unit tests on the in-memory provider.
+> **Gotcha — partial enforcement in-memory.** The EF in-memory provider does **not** emit the
+> `WHERE … AND UpdatedAt = @original` rowcount check, so a genuine lost-update race cannot be
+> reproduced by unit tests — that guarantee only holds on PostgreSQL. It *does*, however, perform its
+> own value-equality concurrency-token check on save, which is why the microsecond realignment above
+> must be skipped on the in-memory provider. Like the `Restrict`/`Cascade` FK semantics above, treat
+> lost-update enforcement as Postgres-only.
 The `AddEmailSettings` migration adds the `EmailSettingsEntity` table: the single-row operator
 SMTP/email configuration (mirrors the `StoredLicenseEntity` single-row pattern). Columns: `Id` uuid
 PK, `Enabled` boolean, `SmtpHost` / `FromAddress` / `FromName` non-nullable text, `SmtpPort`

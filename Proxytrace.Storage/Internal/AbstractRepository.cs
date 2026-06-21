@@ -489,9 +489,21 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// otherwise spuriously fail the DB-level <c>WHERE UpdatedAt = @original</c> check against the
     /// microsecond value the database actually stored. Call after <c>SetValues</c> (which mutates the
     /// current value but leaves the original intact). See <see cref="ConcurrencyTokenExtensions"/>.
+    /// <para>
+    /// Only the relational provider truncates <c>UpdatedAt</c> to microseconds on persist; the EF Core
+    /// in-memory provider stores the full .NET 100-nanosecond value verbatim. Truncating the tracked
+    /// original value there would make EF's own concurrency check compare a truncated original against
+    /// the full-precision stored value and throw <c>DbUpdateConcurrencyException</c> on every ordinary
+    /// single-actor update — so the realignment is skipped on non-relational providers.
+    /// </para>
     /// </summary>
     protected static void RealignConcurrencyToken(EntityEntry<TStoredEntity> entry)
     {
+        if (!entry.Context.Database.IsRelational())
+        {
+            return;
+        }
+
         PropertyEntry<TStoredEntity, DateTimeOffset> updatedAt = entry.Property(e => e.UpdatedAt);
         updatedAt.OriginalValue = updatedAt.OriginalValue.TruncateToMicroseconds();
     }
