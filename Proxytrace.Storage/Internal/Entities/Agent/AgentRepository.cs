@@ -178,8 +178,12 @@ internal class AgentRepository : ArchivableRepository<IAgent, AgentEntity>, IAge
         {
             var ctx = ambient.RequireContext();
             var stored = await ctx.Set<AgentEntity>().FirstAsync(a => a.Id == agentId, cancellationToken);
-            ctx.Entry(stored).Property(e => e.CurrentVersionId).CurrentValue = versionId;
-            ctx.Entry(stored).Property(e => e.UpdatedAt).CurrentValue = DateTimeOffset.UtcNow;
+            var entry = ctx.Entry(stored);
+            entry.Property(e => e.CurrentVersionId).CurrentValue = versionId;
+            entry.Property(e => e.UpdatedAt).CurrentValue = DateTimeOffset.UtcNow;
+            // UpdatedAt is a concurrency token; align its original to the precision PostgreSQL persists
+            // so this tracked update is not tripped by a sub-microsecond mismatch. See AbstractRepository.
+            RealignConcurrencyToken(entry);
             await ctx.SaveChangesAsync(cancellationToken);
             InvalidateCacheEntry(agentId);
         });

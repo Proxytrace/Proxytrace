@@ -131,6 +131,40 @@ effect: deleting an individual test run now also deletes any proposal that used 
 The `Restrict` semantics were not enforced by the in-memory provider, so this class of bug only
 surfaces on PostgreSQL — unit tests cannot reproduce it.
 
+The `AddOptimisticConcurrencyToken` migration marks every entity's `UpdatedAt` column as an EF
+concurrency token (see [Optimistic concurrency](#optimistic-concurrency)). It changes only the SQL
+EF generates — no PostgreSQL schema change — so its `Up`/`Down` are empty; it exists to keep the
+model snapshot in sync for future migration diffs.
+
+## Optimistic concurrency
+
+Every entity derives from `Entity` and carries an `UpdatedAt` timestamp that `AbstractRepository`
+stamps on each write and uses as an optimistic-concurrency version stamp.
+
+`UpdatedAt` is configured as an **EF concurrency token** centrally in
+`StorageDbContext.OnModelCreating` (which loops the model and marks the `UpdatedAt` property of every
+entity type). EF therefore emits `UPDATE/DELETE … WHERE Id = @id AND UpdatedAt = @original` and
+checks the affected row count: if a concurrent writer already moved the row on, zero rows match and
+EF raises `DbUpdateConcurrencyException`. `UpdateCoreAsync` translates that into the domain
+`OptimisticConcurrencyException`; `RemoveAsync` treats it as "not removed by us" and returns `false`.
+This enforces the guarantee **atomically at the database** — the in-app pre-check in
+`UpdateCoreAsync` (comparing the caller's token via `MatchesConcurrencyToken`) is only a fast-fail
+that avoids a round-trip for an obviously stale token; it cannot catch a genuine read-read-write-write
+race on its own.
+
+Two precision details (see `ConcurrencyTokenExtensions`):
+
+- PostgreSQL `timestamptz` stores **microsecond** precision, but a token carried in memory keeps
+  .NET's 100-nanosecond precision. Before saving, `UpdateCoreAsync` realigns the token's EF *original
+  value* to microseconds (`TruncateToMicroseconds`) so a row inserted earlier in the **same** context
+  — still tracked at 100ns — does not spuriously mismatch the value the database actually persisted.
+- The in-app pre-check compares at microsecond granularity (`MatchesConcurrencyToken`) for the same
+  reason — the entity returned by `AddAsync` before any DB round-trip carries the un-truncated token.
+
+> **Gotcha — not enforced in-memory.** The EF in-memory provider ignores concurrency tokens (it does
+> no rowcount check), so this guarantee only holds on PostgreSQL. Like the `Restrict`/`Cascade` FK
+> semantics above, lost-update races cannot be reproduced by unit tests on the in-memory provider.
+
 ## Quick start
 
 Bring up a PostgreSQL instance (the repo's `docker-compose.yml` ships one) and run the API:
