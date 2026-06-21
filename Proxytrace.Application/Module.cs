@@ -422,6 +422,10 @@ public sealed class Module : Autofac.Module
             .As<Security.ISecretProtector>()
             .SingleInstance();
 
+        builder.RegisterType<Notifications.Internal.SmtpEmailSender>()
+            .As<Notifications.IEmailSender>()
+            .SingleInstance();
+
         builder.Register(_ => new LocalAuthOptions
             {
                 SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
