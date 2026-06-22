@@ -34,4 +34,17 @@ public sealed class RedisIngestionStreamTests
         depth.Should().Be(0L);
         connection.DidNotReceiveWithAnyArgs().GetDatabase();
     }
+
+    [TestMethod]
+    public void RedeliversUnacknowledged_IsTrue()
+    {
+        // Pending entries are reclaimed via XAUTOCLAIM and redelivered, so the consumer may leave a
+        // retryable failure unacked rather than retrying it inline.
+        var stream = new RedisIngestionStream(
+            Substitute.For<IConnectionMultiplexer>(),
+            new MessagingConfiguration(),
+            NullLogger<RedisIngestionStream>.Instance);
+
+        stream.RedeliversUnacknowledged.Should().BeTrue();
+    }
 }

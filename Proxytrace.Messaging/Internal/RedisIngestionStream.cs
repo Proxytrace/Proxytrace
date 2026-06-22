@@ -93,6 +93,9 @@ internal sealed class RedisIngestionStream : IIngestionStream
     public async Task AckAsync(string messageId, CancellationToken cancellationToken = default)
         => await Database.StreamAcknowledgeAsync(configuration.Stream, configuration.ConsumerGroup, messageId);
 
+    // Pending entries are reclaimed via XAUTOCLAIM and redelivered, so an unacked envelope reappears.
+    public bool RedeliversUnacknowledged => true;
+
     public async Task<long> GetQueueDepthAsync(CancellationToken cancellationToken = default)
     {
         // Depth is observability-only and runs on the hot dashboard path. The multiplexer is

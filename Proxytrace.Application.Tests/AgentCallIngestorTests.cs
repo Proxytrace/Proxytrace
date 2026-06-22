@@ -772,4 +772,116 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         var count = await repository.CountAsync(CancellationToken);
         count.Should().Be(2);
     }
+
+    [TestMethod]
+    public async Task Worker_OnInProcessTransport_RetriesRetryableFailureInline_AndDoesNotLeak()
+    {
+        // The in-process channel never redelivers an unacked envelope. A retryable failure must be
+        // retried inline or the captured call is lost — and the retry must keep no per-message state.
+        var attempts = 0;
+        var processor = Substitute.For<IAgentCallProcessor>();
+        processor.IngestAsync(Arg.Any<IngestJob>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                // Fail the first two attempts with a retryable error, then succeed.
+                if (Interlocked.Increment(ref attempts) < 3)
+                {
+                    throw new InvalidOperationException("transient storage failure");
+                }
+
+                return Task.CompletedTask;
+            });
+
+        var services = GetServices(builder =>
+            builder.RegisterInstance(processor).As<IAgentCallProcessor>());
+        var stream = services.GetRequiredService<IIngestionStream>();
+        var worker = services.GetRequiredService<AgentCallIngestionWorker>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await worker.StartAsync(CancellationToken);
+        try
+        {
+            await stream.PublishAsync(
+                new IngestMessage(
+                    ProviderId: provider.Id,
+                    ProjectId: project.Id,
+                    RequestBody: ChatTurn1RequestBody,
+                    ResponseBody: ChatTurn1ResponseBody,
+                    DurationMs: 100,
+                    HttpStatus: (int)HttpStatusCode.OK,
+                    SessionId: null),
+                CancellationToken);
+
+            await WaitUntilAsync(() => Task.FromResult(Volatile.Read(ref attempts) >= 3));
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken);
+        }
+
+        // Retried inline until it succeeded — the message survived despite two retryable failures.
+        Volatile.Read(ref attempts).Should().Be(3);
+        // No redelivery tracking on this transport, so the failedAttempts dictionary cannot grow.
+        worker.TrackedRetryCount.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task Worker_OnInProcessTransport_DropsMessageAfterMaxInlineAttempts_AndKeepsConsuming()
+    {
+        // A deterministically-failing message must not loop forever or kill the consumer: it is
+        // dropped after a bounded number of inline attempts, and later messages still process.
+        var poisonAttempts = 0;
+        var goodCalls = 0;
+        var processor = Substitute.For<IAgentCallProcessor>();
+        processor.IngestAsync(Arg.Any<IngestJob>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                if (callInfo.Arg<IngestJob>().RequestBody == UnrelatedRequestBody)
+                {
+                    Interlocked.Increment(ref goodCalls);
+                    return Task.CompletedTask;
+                }
+
+                Interlocked.Increment(ref poisonAttempts);
+                throw new InvalidOperationException("always fails");
+            });
+
+        var services = GetServices(builder =>
+            builder.RegisterInstance(processor).As<IAgentCallProcessor>());
+        var stream = services.GetRequiredService<IIngestionStream>();
+        var worker = services.GetRequiredService<AgentCallIngestionWorker>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await worker.StartAsync(CancellationToken);
+        try
+        {
+            await stream.PublishAsync(
+                new IngestMessage(
+                    provider.Id, project.Id, ChatTurn1RequestBody, ChatTurn1ResponseBody,
+                    DurationMs: 100, HttpStatus: (int)HttpStatusCode.OK, SessionId: null),
+                CancellationToken);
+            await WaitUntilAsync(() => Task.FromResult(Volatile.Read(ref poisonAttempts) >= MaxInlineAttempts));
+
+            // A subsequent good message proves the consumer survived dropping the poison one.
+            await stream.PublishAsync(
+                new IngestMessage(
+                    provider.Id, project.Id, UnrelatedRequestBody, UnrelatedResponseBody,
+                    DurationMs: 100, HttpStatus: (int)HttpStatusCode.OK, SessionId: null),
+                CancellationToken);
+            await WaitUntilAsync(() => Task.FromResult(Volatile.Read(ref goodCalls) >= 1));
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken);
+        }
+
+        // Dropped after exactly the cap — never redelivered, so the count cannot climb past it.
+        Volatile.Read(ref poisonAttempts).Should().Be(MaxInlineAttempts);
+        Volatile.Read(ref goodCalls).Should().Be(1);
+        worker.TrackedRetryCount.Should().Be(0);
+    }
+
+    // Mirrors AgentCallIngestionWorker.MaxRetryableAttempts — the inline-retry cap on a
+    // non-redelivering transport.
+    private const int MaxInlineAttempts = 5;
 }

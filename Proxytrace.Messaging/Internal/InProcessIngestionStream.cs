@@ -42,6 +42,9 @@ internal sealed class InProcessIngestionStream : IIngestionStream
     public Task AckAsync(string messageId, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 
+    // The channel drops anything that is not pulled; an unacked envelope is never redelivered.
+    public bool RedeliversUnacknowledged => false;
+
     public Task<long> GetQueueDepthAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(Math.Max(0L, Interlocked.Read(ref depth)));
 }

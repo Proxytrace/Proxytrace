@@ -224,6 +224,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Retryable ingestion failures no longer leak memory or silently drop traces in single-process
+  deployments.** The ingestion worker tracked retryable failures in a dictionary and left the
+  message unacknowledged for the transport to redeliver. That is correct for Redis Streams, but the
+  in-process channel used by single-process/kiosk runs never redelivers — so each retryable failure
+  left an orphaned entry that grew unbounded under sustained failures, and the "retryable" message
+  was lost rather than reprocessed. The worker now detects whether the transport actually redelivers:
+  on the in-process channel it retries inline (a bounded number of times, then drops) and keeps no
+  per-message state, while the Redis path is unchanged.
+
 - **A large upstream response can no longer exhaust proxy memory on non-streaming calls.** The
   proxy's buffered (non-streaming) path read the entire upstream body into a string and then
   re-encoded it to bytes, leaving several full-size copies resident per in-flight request with no
