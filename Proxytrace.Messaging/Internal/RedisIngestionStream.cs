@@ -64,7 +64,7 @@ internal sealed class RedisIngestionStream : IIngestionStream
             reclaimCursor = claimed.NextStartId;
 
             var produced = false;
-            foreach (IngestEnvelope envelope in ToEnvelopes(claimed.ClaimedEntries))
+            await foreach (IngestEnvelope envelope in ToEnvelopesAsync(claimed.ClaimedEntries))
             {
                 produced = true;
                 yield return envelope;
@@ -77,7 +77,7 @@ internal sealed class RedisIngestionStream : IIngestionStream
                 StreamPosition.NewMessages,
                 count: configuration.BatchSize);
 
-            foreach (IngestEnvelope envelope in ToEnvelopes(entries))
+            await foreach (IngestEnvelope envelope in ToEnvelopesAsync(entries))
             {
                 produced = true;
                 yield return envelope;
@@ -131,19 +131,47 @@ internal sealed class RedisIngestionStream : IIngestionStream
         return 0L;
     }
 
-    private IEnumerable<IngestEnvelope> ToEnvelopes(StreamEntry[] entries)
+    private async IAsyncEnumerable<IngestEnvelope> ToEnvelopesAsync(StreamEntry[] entries)
     {
+        List<RedisValue>? poisonIds = null;
         foreach (StreamEntry entry in entries)
         {
             IngestMessage? message = Deserialize(entry);
             if (message is null)
             {
-                // Poison entry — acknowledge so it stops being redelivered.
-                Database.StreamAcknowledge(configuration.Stream, configuration.ConsumerGroup, entry.Id);
+                // Poison entry — collect its id and ack the whole batch once below, off the hot
+                // yield path. Acking each entry inline with the blocking sync XACK let a burst of
+                // poison entries during a Redis blip stall this single producer one ~ConnectTimeout
+                // wait at a time, and a throw tore down the whole Parallel.ForEachAsync round.
+                (poisonIds ??= new List<RedisValue>()).Add(entry.Id);
                 continue;
             }
 
             yield return new IngestEnvelope(entry.Id.ToString(), message);
+        }
+
+        if (poisonIds is not null)
+        {
+            await AcknowledgePoisonAsync(poisonIds);
+        }
+    }
+
+    private async Task AcknowledgePoisonAsync(List<RedisValue> poisonIds)
+    {
+        try
+        {
+            // One batched async XACK rather than a blocking call per entry: it never ties up a
+            // thread and a single round-trip cannot serialise multiple ConnectTimeout waits.
+            await Database.StreamAcknowledgeAsync(
+                configuration.Stream,
+                configuration.ConsumerGroup,
+                poisonIds.ToArray());
+        }
+        catch (RedisException ex)
+        {
+            // Best-effort cleanup: an unacked poison entry stays pending and is reclaimed via
+            // XAUTOCLAIM, so we just retry the ack next round. Never let it wedge the consumer.
+            logger.LogDebug(ex, "Unable to acknowledge {Count} poison ingestion entries", poisonIds.Count);
         }
     }
 
