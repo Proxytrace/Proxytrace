@@ -102,6 +102,83 @@ internal sealed class SingleHandlerClientFactory : IHttpClientFactory
     public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
 }
 
+/// <summary>
+/// Serves a fixed byte body whose stream hands out at most <c>maxBytesPerRead</c> bytes per read, so
+/// tests can force the buffered proxy path across many chunk boundaries (and split a multi-byte UTF-8
+/// character across two reads) deterministically.
+/// </summary>
+internal sealed class ChunkedRawHttpClientFactory : IHttpClientFactory
+{
+    private readonly byte[] body;
+    private readonly int maxBytesPerRead;
+
+    public ChunkedRawHttpClientFactory(byte[] body, int maxBytesPerRead)
+    {
+        this.body = body;
+        this.maxBytesPerRead = maxBytesPerRead;
+    }
+
+    public HttpClient CreateClient(string name)
+        => new(new Handler(body, maxBytesPerRead)) { BaseAddress = new Uri("http://fake-upstream/") };
+
+    private sealed class Handler : HttpMessageHandler
+    {
+        private readonly byte[] body;
+        private readonly int maxBytesPerRead;
+
+        public Handler(byte[] body, int maxBytesPerRead)
+        {
+            this.body = body;
+            this.maxBytesPerRead = maxBytesPerRead;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(new ChunkLimitedStream(body, maxBytesPerRead)),
+            });
+    }
+}
+
+/// <summary>A read-only stream over a byte[] that never returns more than <c>maxChunk</c> bytes per read.</summary>
+internal sealed class ChunkLimitedStream : Stream
+{
+    private readonly byte[] data;
+    private readonly int maxChunk;
+    private int position;
+
+    public ChunkLimitedStream(byte[] data, int maxChunk)
+    {
+        this.data = data;
+        this.maxChunk = maxChunk;
+    }
+
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => data.Length;
+    public override long Position { get => position; set => throw new NotSupportedException(); }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        var remaining = data.Length - position;
+        if (remaining <= 0)
+        {
+            return 0;
+        }
+
+        var n = Math.Min(Math.Min(count, maxChunk), remaining);
+        Array.Copy(data, position, buffer, offset, n);
+        position += n;
+        return n;
+    }
+
+    public override void Flush() { }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+}
+
 /// <summary>A response stream that fails every write — simulates a client that disconnected.</summary>
 internal sealed class ThrowOnWriteStream : Stream
 {

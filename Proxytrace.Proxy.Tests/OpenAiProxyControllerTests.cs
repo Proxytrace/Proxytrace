@@ -158,6 +158,97 @@ public sealed class OpenAiProxyControllerTests
     }
 
     [TestMethod]
+    public async Task Proxy_BufferedResponseStreamedInChunks_ForwardsFullBody_AndCapturesIt()
+    {
+        // The buffered path now streams the upstream body through in chunks instead of reading it
+        // whole. Forwarding and capture must survive crossing many read boundaries with nothing lost
+        // or duplicated. Serve a body well over a single read, dripped in small chunks.
+        var body = "{\"data\":\"" + new string('a', 200 * 1024) + "\"}";
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+
+        IngestMessage? captured = null;
+        var stream = Substitute.For<IIngestionStream>();
+        stream.PublishAsync(Arg.Do<IngestMessage>(m => captured = m), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        var responseBody = new MemoryStream();
+        var controller = BuildController(
+            stream,
+            ResolverFor(ApiKey()),
+            new ChunkedRawHttpClientFactory(bodyBytes, maxBytesPerRead: 4096));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Response.Body = responseBody;
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        controller.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        responseBody.ToArray().Should().Equal(bodyBytes, "the forwarded body must be byte-for-byte identical across all chunks");
+        captured.Should().NotBeNull();
+        captured?.ResponseBody.Should().Be(body, "an under-cap response is captured in full");
+    }
+
+    [TestMethod]
+    public async Task Proxy_BufferedOversizedResponse_ForwardsFullBody_ButBoundsCapturedCopy()
+    {
+        // Regression for #185: the non-streaming path used to ReadAsStringAsync the entire upstream
+        // body unbounded (plus a second copy when re-encoding) and capture it verbatim — an OOM
+        // vector on a large/hostile reply. The forwarded bytes must still go through untruncated, but
+        // the captured copy must now be bounded the same way the streaming path bounds it. This
+        // mirrors the private MaxCapturedResponseChars constant (16 MiB).
+        const int capChars = 16 * 1024 * 1024;
+        var oversized = new string('x', capChars + 4096);
+
+        IngestMessage? captured = null;
+        var stream = Substitute.For<IIngestionStream>();
+        stream.PublishAsync(Arg.Do<IngestMessage>(m => captured = m), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        var responseBody = new MemoryStream();
+        var controller = BuildController(
+            stream,
+            ResolverFor(ApiKey()),
+            new FakeHttpClientFactory(oversized));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Response.Body = responseBody;
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        controller.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        responseBody.Length.Should().Be(oversized.Length, "the forwarded response body must never be truncated");
+        captured.Should().NotBeNull();
+        captured?.ResponseBody.Should().HaveLength(capChars, "the captured copy must be bounded at MaxCapturedResponseChars");
+    }
+
+    [TestMethod]
+    public async Task Proxy_BufferedResponseMultiByteCharSplitAcrossChunks_CapturedWithoutCorruption()
+    {
+        // Drip the body one byte per read so every multi-byte UTF-8 character (€ = 3 bytes, é = 2) is
+        // split across reads. A naive per-chunk decode would emit replacement chars at the seams; the
+        // Decoder must reassemble them. Forwarded bytes stay exact and the captured text round-trips.
+        var body = "{\"text\":\"café costs 5€ — déjà vu\"}";
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+
+        IngestMessage? captured = null;
+        var stream = Substitute.For<IIngestionStream>();
+        stream.PublishAsync(Arg.Do<IngestMessage>(m => captured = m), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        var responseBody = new MemoryStream();
+        var controller = BuildController(
+            stream,
+            ResolverFor(ApiKey()),
+            new ChunkedRawHttpClientFactory(bodyBytes, maxBytesPerRead: 1));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Response.Body = responseBody;
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        responseBody.ToArray().Should().Equal(bodyBytes, "the forwarded bytes must be untouched regardless of chunking");
+        captured.Should().NotBeNull();
+        captured?.ResponseBody.Should().Be(body, "multi-byte characters split across chunk reads must be captured intact");
+    }
+
+    [TestMethod]
     public async Task Proxy_StreamingClientDisconnect_StillPublishesAccumulatedTranscript()
     {
         var stream = Substitute.For<IIngestionStream>();
