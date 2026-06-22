@@ -33,6 +33,10 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     private const int MaxRetryableAttempts = 5;
     private readonly ConcurrentDictionary<string, int> failedAttempts = new();
 
+    // Backoff between inline retries on a non-redelivering transport. Bounded and short — the
+    // single in-process consumer is blocked on the one envelope while it retries.
+    private static readonly TimeSpan InlineRetryBackoff = TimeSpan.FromMilliseconds(200);
+
     public AgentCallIngestionWorker(
         IIngestionStream stream,
         IAgentCallProcessor processor,
@@ -95,7 +99,16 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         }
     }
 
-    private async Task HandleAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
+    // A retryable failure is recovered differently per transport: one that redelivers unacked
+    // entries (Redis) leaves the entry pending and tracks attempts across redeliveries; one that
+    // does not (the in-process channel) must retry here and now, because an unacked envelope is
+    // simply dropped — so deferring the retry would lose the captured call.
+    private Task HandleAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
+        => stream.RedeliversUnacknowledged
+            ? HandleWithRedeliveryAsync(envelope, cancellationToken)
+            : HandleWithInlineRetryAsync(envelope, cancellationToken);
+
+    private async Task HandleWithRedeliveryAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
     {
         try
         {
@@ -136,6 +149,48 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         // Success — acknowledge and forget any prior attempt count.
         await AckAndForgetAsync(envelope.MessageId, cancellationToken);
     }
+
+    // Non-redelivering transport (the in-process channel): an unacknowledged envelope is never
+    // redelivered, so a retryable failure is retried inline — bounded attempts with a short backoff,
+    // then dropped. No per-message state is kept, so this path cannot leak the failedAttempts
+    // dictionary the way leaving it unacked-and-tracked would.
+    private async Task HandleWithInlineRetryAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; attempt <= MaxRetryableAttempts; attempt++)
+        {
+            try
+            {
+                await ProcessAsync(envelope.Message, cancellationToken);
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw; // shutting down — abandon without dropping
+            }
+            catch (EntityNotFoundException ex)
+            {
+                // Poison: the referenced provider/project no longer exists. Not retryable — drop.
+                logger.LogWarning(ex, "Dropping ingestion envelope {MessageId}: referenced entity missing", envelope.MessageId);
+                return;
+            }
+            catch (Exception ex) when (attempt < MaxRetryableAttempts)
+            {
+                logger.LogWarning(ex, "Retryable failure on ingestion envelope {MessageId} (attempt {Attempt}/{Max}); retrying inline", envelope.MessageId, attempt, MaxRetryableAttempts);
+                await Task.Delay(InlineRetryBackoff, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Exhausted: this transport cannot redeliver, so drop rather than let the exception
+                // tear down the consumer loop.
+                logger.LogError(ex, "Dropping ingestion envelope {MessageId} after {Attempts} inline attempts", envelope.MessageId, attempt);
+                return;
+            }
+        }
+    }
+
+    // Test seam: ids currently tracked for cross-redelivery retry. Stays 0 on a non-redelivering
+    // transport, which retries inline and keeps no per-message state — guards the leak fix.
+    internal int TrackedRetryCount => failedAttempts.Count;
 
     private async Task AckAndForgetAsync(string messageId, CancellationToken cancellationToken)
     {

@@ -41,6 +41,14 @@ public sealed class InProcessIngestionStreamTests
     }
 
     [TestMethod]
+    public void RedeliversUnacknowledged_IsFalse()
+    {
+        // The channel drops whatever is not pulled — the consumer relies on this to retry inline
+        // instead of leaving a failed envelope unacked (which would lose it).
+        new InProcessIngestionStream().RedeliversUnacknowledged.Should().BeFalse();
+    }
+
+    [TestMethod]
     public async Task GetQueueDepth_ReflectsUnconsumedMessages()
     {
         var stream = new InProcessIngestionStream();

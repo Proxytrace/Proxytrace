@@ -26,6 +26,15 @@ public interface IIngestionStream
     Task AckAsync(string messageId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Whether an envelope left unacknowledged (see <see cref="AckAsync"/>) is eventually
+    /// redelivered by the transport. Redis Streams reclaim and redeliver pending entries
+    /// (<c>true</c>); the in-process channel drops them (<c>false</c>). The consumer reads this to
+    /// decide whether a retryable failure can be left pending for redelivery, or must be retried
+    /// inline before the captured call is lost.
+    /// </summary>
+    bool RedeliversUnacknowledged { get; }
+
+    /// <summary>
     /// Best-effort backlog depth: how many published entries are waiting to be processed (Redis
     /// consumer-group lag, or the in-process channel's queued count). Surfaced as dashboard live
     /// telemetry so a lagging consumer is visible before the stream's trim cap silently drops
