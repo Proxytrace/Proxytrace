@@ -224,6 +224,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **A large upstream response can no longer exhaust proxy memory on non-streaming calls.** The
+  proxy's buffered (non-streaming) path read the entire upstream body into a string and then
+  re-encoded it to bytes, leaving several full-size copies resident per in-flight request with no
+  size cap on the response side — a very large or hostile upstream reply could push the ingestion
+  proxy to OOM. The buffered path now streams the body straight through to the client in chunks
+  (forwarded byte-for-byte, never truncated) and bounds only the copy it captures for ingestion to
+  the same 16 MiB ceiling the streaming path already applied.
+
 - **A hung model provider no longer stalls test and optimization runs indefinitely.** Internal model
   calls (optimizers, evaluators, the playground) were made with no request timeout and no retry
   policy, so a wedged or very slow upstream had no upper time bound and could pin a worker forever,

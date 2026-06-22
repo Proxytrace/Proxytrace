@@ -312,19 +312,47 @@ public class OpenAiProxyController : ControllerBase
         string? agentName,
         CancellationToken cancellationToken)
     {
-        var responseBody = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
-        sw.Stop();
+        // Stream the upstream body straight through to the client instead of materializing it as a
+        // string and re-encoding it. The old ReadAsStringAsync + Encoding.UTF8.GetBytes held two
+        // full-size copies resident per in-flight request with no bound at all on the response side
+        // (the request side already caps at MaxRequestBodyBytes) — a large or hostile upstream reply
+        // could push the proxy to OOM. The forwarded bytes are copied through verbatim and never
+        // truncated; only the transcript we capture for ingestion is bounded at
+        // MaxCapturedResponseChars, exactly as the streaming path does.
+        var captured = new StringBuilder();
+        var decoder = Encoding.UTF8.GetDecoder();
+        var buffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
+        var chars = ArrayPool<char>.Shared.Rent(Encoding.UTF8.GetMaxCharCount(buffer.Length));
 
         try
         {
-            await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
+            await using var upstreamStream = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
+
+            int read;
+            while ((read = await upstreamStream.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
+            {
+                await Response.Body.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+
+                // Bound the captured copy: decode this chunk and append only while under the cap. The
+                // Decoder carries a multi-byte UTF-8 sequence split across a chunk boundary between
+                // calls, so the captured text never gets a corrupted character at a seam.
+                if (captured.Length < MaxCapturedResponseChars)
+                {
+                    var decoded = decoder.GetChars(buffer, 0, read, chars, 0);
+                    captured.Append(chars, 0, Math.Min(decoded, MaxCapturedResponseChars - captured.Length));
+                }
+            }
         }
         finally
         {
+            ArrayPool<char>.Shared.Return(chars);
+            ArrayPool<byte>.Shared.Return(buffer);
+            sw.Stop();
+
             // Capture is decoupled from the client request lifetime: the upstream call has already
             // completed, so a client disconnect/timeout here must not drop the captured call.
             // Publish with CancellationToken.None rather than the request-aborted token.
-            await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, CancellationToken.None);
+            await EnqueueSafeAsync(provider, project, requestBody, captured.ToString(), sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, CancellationToken.None);
         }
     }
 
