@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AwesomeAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -47,4 +48,73 @@ public sealed class RedisIngestionStreamTests
 
         stream.RedeliversUnacknowledged.Should().BeTrue();
     }
+
+    // Regression: poison entries (those that fail to deserialize) used to be acked with the blocking
+    // synchronous StreamAcknowledge from inside the consume iterator. With AbortOnConnectFail=false a
+    // Redis blip makes that sync call block until ConnectTimeout, stalling the single producer one
+    // entry at a time (and a throw tore down the whole Parallel.ForEachAsync round). The consumer must
+    // now ack poison entries with the async StreamAcknowledgeAsync — never the sync overload — while
+    // still yielding the valid entries in the same batch.
+    [TestMethod]
+    public async Task ConsumeAsync_WithPoisonEntry_AcksAsynchronouslyAndStillYieldsValidEntries()
+    {
+        var config = new MessagingConfiguration();
+        var database = Substitute.For<IDatabase>();
+
+        // No reclaimed entries — XAUTOCLAIM yields an empty result.
+        database.StreamAutoClaimAsync(
+                Arg.Any<RedisKey>(), Arg.Any<RedisValue>(), Arg.Any<RedisValue>(),
+                Arg.Any<long>(), Arg.Any<RedisValue>(), Arg.Any<int?>(), Arg.Any<CommandFlags>())
+            .Returns(StreamAutoClaimResult.Null);
+
+        // A poison entry (empty payload → deserializes to null) ahead of a valid one in the batch.
+        StreamEntry poison = MakeEntry("1-0", string.Empty);
+        StreamEntry valid = MakeEntry("2-0", JsonSerializer.Serialize(SampleMessage()));
+        var batches = new Queue<StreamEntry[]>();
+        batches.Enqueue(new[] { poison, valid });
+        database.StreamReadGroupAsync(
+                Arg.Any<RedisKey>(), Arg.Any<RedisValue>(), Arg.Any<RedisValue>(),
+                Arg.Any<RedisValue?>(), Arg.Any<int?>(), Arg.Any<bool>(), Arg.Any<CommandFlags>())
+            .Returns(_ => batches.Count > 0 ? batches.Dequeue() : Array.Empty<StreamEntry>());
+
+        var connection = Substitute.For<IConnectionMultiplexer>();
+        connection.GetDatabase(Arg.Any<int>(), Arg.Any<object>()).Returns(database);
+
+        var stream = new RedisIngestionStream(
+            connection, config, NullLogger<RedisIngestionStream>.Instance);
+
+        using var cts = new CancellationTokenSource();
+        var received = new List<IngestEnvelope>();
+        await foreach (IngestEnvelope envelope in stream.ConsumeAsync(cts.Token))
+        {
+            received.Add(envelope);
+            cts.Cancel(); // one valid entry is enough; stop the otherwise-infinite consume loop
+        }
+
+        received.Should().ContainSingle();
+        received[0].MessageId.Should().Be("2-0");
+
+        // The poison id is acked via the async batched overload...
+        await database.Received(1).StreamAcknowledgeAsync(
+            config.Stream,
+            config.ConsumerGroup,
+            Arg.Is<RedisValue[]>(ids => ids.Length == 1 && ids[0] == "1-0"),
+            Arg.Any<CommandFlags>());
+        // ...and never via the blocking synchronous overload.
+        database.DidNotReceiveWithAnyArgs().StreamAcknowledge(
+            Arg.Any<RedisKey>(), Arg.Any<RedisValue>(), Arg.Any<RedisValue>(), Arg.Any<CommandFlags>());
+    }
+
+    private static StreamEntry MakeEntry(string id, string payload)
+        => new(id, new[] { new NameValueEntry("payload", payload) });
+
+    private static IngestMessage SampleMessage()
+        => new(
+            ProviderId: Guid.NewGuid(),
+            ProjectId: Guid.NewGuid(),
+            RequestBody: "{}",
+            ResponseBody: "{}",
+            DurationMs: 1,
+            HttpStatus: 200,
+            SessionId: null);
 }

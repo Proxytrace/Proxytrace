@@ -224,6 +224,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **A burst of unparseable ingestion entries during a Redis outage no longer stalls the consumer.**
+  The Redis ingestion consumer acknowledged "poison" entries (captured calls that fail to
+  deserialize) with a blocking, synchronous `XACK` from inside its read loop. Because the Redis
+  client is configured to fail slowly rather than on connect, each such ack could block for the full
+  connect timeout (~5s) while Redis was unreachable — so a burst of poison entries during a Redis
+  blip serialized those waits and wedged ingestion, and a thrown ack tore down the whole parallel
+  processing round. Poison entries are now acknowledged with a single batched **asynchronous** ack
+  per read, off the hot yield path and guarded so a transient Redis error just leaves them to be
+  reclaimed and retried.
+
 - **Retryable ingestion failures no longer leak memory or silently drop traces in single-process
   deployments.** The ingestion worker tracked retryable failures in a dictionary and left the
   message unacknowledged for the transport to redeliver. That is correct for Redis Streams, but the
