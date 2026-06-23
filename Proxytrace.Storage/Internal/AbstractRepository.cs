@@ -429,7 +429,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public async Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
         bool removed = await transaction.InvokeAsync(async () =>
         {

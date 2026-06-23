@@ -60,4 +60,20 @@ public sealed class ModelEndpointArchiveTests : BaseTest<Module>
 
         archived.Should().BeFalse();
     }
+
+    [TestMethod]
+    public async Task RemoveAsync_IsRefused_SoTracesAreNeverCascadeDeleted()
+    {
+        // Endpoints are archive-only: a hard delete would cascade-remove every AgentCall recorded
+        // against them. RemoveAsync must refuse and the endpoint must remain.
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IModelEndpointRepository>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().CreateAsync(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => repository.RemoveAsync(endpoint.Id, CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        (await repository.ContainsAsync(endpoint.Id, CancellationToken)).Should().BeTrue();
+    }
 }

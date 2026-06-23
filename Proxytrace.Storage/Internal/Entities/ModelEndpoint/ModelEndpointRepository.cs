@@ -33,6 +33,11 @@ internal class ModelEndpointRepository : ArchivableRepository<IModelEndpoint, Mo
         this.createNewEndpoint = createNewEndpoint;
     }
 
+    // Archive-only: a hard delete would cascade-remove every AgentCall (trace) recorded against this
+    // endpoint. Removal goes through ArchiveAsync; RemoveAsync is refused. The FK Restrict in
+    // AgentCallConfig is the DB-level backstop.
+    protected override bool SupportsHardDelete => false;
+
     public async Task<IModelEndpoint> GetOrCreateAsync(
         string modelName,
         IModelProvider provider,

@@ -234,7 +234,18 @@ internal class EntityTestCases<TStoredEntity, TDomainEntity> : IEntityTestCases
         TDomainEntity entity = await generator.CreateAsync();
 
         // Act
-        await repository.RemoveAsync(entity.Id);
+        try
+        {
+            await repository.RemoveAsync(entity.Id);
+        }
+        catch (InvalidOperationException)
+        {
+            // Archive-only repositories (model-style entities whose history would be cascade-wiped)
+            // refuse a hard delete by design; the entity must remain. Their dedicated archive tests
+            // cover the ArchiveAsync path. See ArchivableRepository.SupportsHardDelete.
+            (await repository.ContainsAsync(entity.Id)).Should().BeTrue();
+            return;
+        }
 
         // Assert
         bool contains = await repository.ContainsAsync(entity.Id);
