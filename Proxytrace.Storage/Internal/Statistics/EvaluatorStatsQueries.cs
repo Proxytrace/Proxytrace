@@ -26,20 +26,38 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
     {
         StorageDbContext context = contextFactory();
 
-        // Evaluations are stored as a JSON-converted collection on TestResultEntity, so we cannot
-        // filter inside SQL. Load (CreatedAt, Evaluations) for the window, then expand in memory.
-        var rows = await context.Set<TestResultEntity>()
+        // Filter to this evaluator's evaluations in SQL via the EvaluationStat projection, so only
+        // the in-scope rows cross the wire — never the whole window's worth of test results, and no
+        // JSON deserialization. See EvaluationStatEntity.
+        var raw = await context.Set<EvaluationStatEntity>()
             .AsNoTracking()
-            .Where(t => t.CreatedAt >= from && t.CreatedAt <= to)
-            .Select(t => new { t.CreatedAt, t.Evaluations })
+            .Where(e => e.EvaluatorId == evaluatorId && e.CreatedAt >= from && e.CreatedAt <= to)
+            .Select(e => new
+            {
+                e.CreatedAt,
+                e.Score,
+                e.HasError,
+                e.InputTokens,
+                e.OutputTokens,
+                e.CachedInputTokens,
+                e.LatencyMicroseconds,
+                e.Cost,
+            })
             .ToListAsync(cancellationToken);
 
-        var matching = rows
-            .SelectMany(r => r.Evaluations.Select(e => (Timestamp: r.CreatedAt, Eval: e)))
-            .Where(x => x.Eval.EvaluatorId == evaluatorId)
+        EvaluationRow[] rows = raw
+            .Select(e => new EvaluationRow(
+                e.CreatedAt,
+                e.Score,
+                e.HasError,
+                e.InputTokens,
+                e.OutputTokens,
+                e.CachedInputTokens,
+                e.LatencyMicroseconds,
+                e.Cost))
             .ToArray();
 
-        return BuildOverview(matching, bucket);
+        return BuildOverview(rows, bucket);
     }
 
     public async Task<IReadOnlyList<EvaluatorSparklineStat>> GetSparklinesAsync(
@@ -62,35 +80,34 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             return [];
         }
 
-        var rows = await context.Set<TestResultEntity>()
+        // Scope to this project's evaluators in SQL; only their evaluations are materialized.
+        var rows = await context.Set<EvaluationStatEntity>()
             .AsNoTracking()
-            .Where(t => t.CreatedAt >= from && t.CreatedAt <= to)
-            .Select(t => new { t.CreatedAt, t.Evaluations })
+            .Where(e => evaluatorIds.Contains(e.EvaluatorId) && e.CreatedAt >= from && e.CreatedAt <= to)
+            .Select(e => new
+            {
+                e.EvaluatorId,
+                e.CreatedAt,
+                e.Score,
+                e.HasError,
+            })
             .ToListAsync(cancellationToken);
 
-        var evaluatorIdSet = evaluatorIds.ToHashSet();
-
-        var byEvaluator = rows
-            .SelectMany(r => r.Evaluations.Select(e => (Timestamp: r.CreatedAt, Eval: e)))
-            .Where(x => evaluatorIdSet.Contains(x.Eval.EvaluatorId))
-            .GroupBy(x => x.Eval.EvaluatorId)
-            .ToDictionary(g => g.Key, g => g.ToArray());
+        ILookup<Guid, (DateTimeOffset Timestamp, EvaluationScore? Score, bool HasError)> byEvaluator =
+            rows.ToLookup(
+                r => r.EvaluatorId,
+                r => (r.CreatedAt, r.Score, r.HasError));
 
         return evaluatorIds
             .Select(id =>
             {
-                if (!byEvaluator.TryGetValue(id, out var entries))
-                {
-                    return new EvaluatorSparklineStat(id, []);
-                }
-
-                EvaluatorPassRatePoint[] points = entries
-                    .Where(x => x.Eval is { ErrorMessage: null, Score: not null })
+                EvaluatorPassRatePoint[] points = byEvaluator[id]
+                    .Where(x => x is { HasError: false, Score: not null })
                     .GroupBy(x => bucket.BucketStart(x.Timestamp))
                     .OrderBy(g => g.Key)
                     .Select(g => new EvaluatorPassRatePoint(
                         BucketStart: g.Key,
-                        Passed: g.Count(x => IsPassed(x.Eval.Score ?? 0)),
+                        Passed: g.Count(x => IsPassed(x.Score ?? 0)),
                         Total: g.Count()))
                     .ToArray();
 
@@ -99,28 +116,26 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             .ToArray();
     }
 
-    private static EvaluatorOverviewStat BuildOverview(
-        (DateTimeOffset Timestamp, StoredEvaluation Eval)[] matching,
-        StatisticsBucket bucket)
+    private static EvaluatorOverviewStat BuildOverview(EvaluationRow[] matching, StatisticsBucket bucket)
     {
         var succeeded = matching
-            .Where(x => x.Eval.Score.HasValue)
+            .Where(x => x.Score.HasValue)
             .ToArray();
         int total = succeeded.Length;
-        double? avgScore = total > 0 ? succeeded.Average(x => (double)(byte)(x.Eval.Score ?? 0)) : null;
-        int passedCount = succeeded.Count(x => IsPassed(x.Eval.Score ?? 0));
+        double? avgScore = total > 0 ? succeeded.Average(x => (double)(byte)(x.Score ?? 0)) : null;
+        int passedCount = succeeded.Count(x => IsPassed(x.Score ?? 0));
         double? passRate = total > 0 ? passedCount / (double)total : null;
 
-        var withTokens = matching.Where(x => x.Eval is { InputTokens: not null, OutputTokens: not null }).ToArray();
-        long? inputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.InputTokens ?? 0) : null;
-        long? outputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.OutputTokens ?? 0) : null;
-        long? cachedInputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.CachedInputTokens ?? 0) : null;
+        var withTokens = matching.Where(x => x is { InputTokens: not null, OutputTokens: not null }).ToArray();
+        long? inputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.InputTokens ?? 0) : null;
+        long? outputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.OutputTokens ?? 0) : null;
+        long? cachedInputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.CachedInputTokens ?? 0) : null;
 
-        var withCost = matching.Where(x => x.Eval.Cost.HasValue).ToArray();
-        decimal? totalCost = withCost.Length > 0 ? withCost.Sum(x => x.Eval.Cost ?? 0) : null;
+        var withCost = matching.Where(x => x.Cost.HasValue).ToArray();
+        decimal? totalCost = withCost.Length > 0 ? withCost.Sum(x => x.Cost ?? 0) : null;
 
         double? avgLatencyMs = matching.Length > 0
-            ? matching.Average(x => x.Eval.LatencyMicroseconds / 1_000.0)
+            ? matching.Average(x => x.LatencyMicroseconds / 1_000.0)
             : null;
 
         var summary = new EvaluatorSummary(
@@ -138,13 +153,13 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             .OrderBy(g => g.Key)
             .Select(g => new EvaluatorPassRatePoint(
                 BucketStart: g.Key,
-                Passed: g.Count(x => IsPassed(x.Eval.Score ?? 0)),
+                Passed: g.Count(x => IsPassed(x.Score ?? 0)),
                 Total: g.Count()))
             .ToArray();
 
         EvaluatorScoreBucket[] distribution = succeeded
-            .Where(x => x.Eval.Score.HasValue)
-            .GroupBy(x => x.Eval.Score ?? 0)
+            .Where(x => x.Score.HasValue)
+            .GroupBy(x => x.Score ?? 0)
             .OrderBy(g => (byte)g.Key)
             .Select(g => new EvaluatorScoreBucket(g.Key.ToString(), g.Count()))
             .ToArray();
@@ -154,15 +169,27 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             .OrderBy(g => g.Key)
             .Select(g => new EvaluatorCostPoint(
                 BucketStart: g.Key,
-                InputTokens: g.Sum(x => x.Eval.InputTokens ?? 0),
-                OutputTokens: g.Sum(x => x.Eval.OutputTokens ?? 0),
-                CachedInputTokens: g.Sum(x => x.Eval.CachedInputTokens ?? 0),
-                Cost: g.Sum(x => x.Eval.Cost ?? 0m),
-                AvgLatencyMs: g.Average(x => x.Eval.LatencyMicroseconds / 1_000.0)))
+                InputTokens: g.Sum(x => x.InputTokens ?? 0),
+                OutputTokens: g.Sum(x => x.OutputTokens ?? 0),
+                CachedInputTokens: g.Sum(x => x.CachedInputTokens ?? 0),
+                Cost: g.Sum(x => x.Cost ?? 0m),
+                AvgLatencyMs: g.Average(x => x.LatencyMicroseconds / 1_000.0)))
             .ToArray();
 
         return new EvaluatorOverviewStat(summary, trend, distribution, costTrend);
     }
 
     private static bool IsPassed(EvaluationScore score) => (byte)score >= (byte)EvaluationScore.Acceptable;
+
+    // Scalar projection of an evaluation for in-memory aggregation, after the SQL filter has already
+    // scoped the rows to the queried evaluator(s) and time window.
+    private sealed record EvaluationRow(
+        DateTimeOffset Timestamp,
+        EvaluationScore? Score,
+        bool HasError,
+        long? InputTokens,
+        long? OutputTokens,
+        long? CachedInputTokens,
+        long LatencyMicroseconds,
+        decimal? Cost);
 }

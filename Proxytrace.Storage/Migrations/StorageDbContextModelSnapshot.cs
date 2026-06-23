@@ -1027,6 +1027,51 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("TestCaseEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestResult.EvaluationStatEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("CachedInputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EvaluatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("HasError")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("InputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LatencyMicroseconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("OutputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte?>("Score")
+                        .HasColumnType("smallint");
+
+                    b.Property<Guid>("TestResultId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TestResultId");
+
+                    b.HasIndex("EvaluatorId", "CreatedAt");
+
+                    b.ToTable("EvaluationStatEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestResult.TestResultEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1491,6 +1536,15 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestResult.EvaluationStatEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.TestResult.TestResultEntity", null)
+                        .WithMany("EvaluationStats")
+                        .HasForeignKey("TestResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestResult.TestResultEntity", b =>
                 {
                     b.HasOne("Proxytrace.Storage.Internal.Entities.TestCase.TestCaseEntity", null)
@@ -1580,6 +1634,11 @@ namespace Proxytrace.Storage.Migrations
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", b =>
                 {
                     b.Navigation("ProjectUsers");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestResult.TestResultEntity", b =>
+                {
+                    b.Navigation("EvaluationStats");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEntity", b =>
