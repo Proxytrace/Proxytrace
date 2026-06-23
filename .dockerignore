@@ -21,6 +21,9 @@
 **/node_modules
 **/npm-debug.log
 **/obj
+# Developer-local config (gitignored) must never bake into an image — e.g. a personal
+# appsettings.local.json carrying a license key or secret would leak into the build.
+**/*.local.json
 **/secrets.dev.yaml
 **/values.dev.yaml
 LICENSE

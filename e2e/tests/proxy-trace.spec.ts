@@ -21,18 +21,22 @@ test.describe('@llm chat completion trace lands on Traces page', () => {
     api.setToken(token);
 
     // auth.setup.spec.ts already created a default project. Stand up a dedicated real
-    // LLM provider and mint a Proxytrace proxy key scoped to that project.
-    const projects = await api.getProjects();
-    const projectId = projects.items[0].id;
+    // LLM provider and mint a Proxytrace proxy key scoped to that project. Use firstProjectId()
+    // (oldest = the project the UI defaults to): the projects list is newest-first, so items[0]
+    // can be a leftover project from an earlier spec, ingesting the call where the UI can't see it.
+    const projectId = await api.firstProjectId();
 
+    // Providers are archive-only and survive the per-test DB reset, so on a retry this beforeAll
+    // would collide with the previous attempt's provider on the unique name. Stamp it unique.
+    const stamp = Date.now();
     const provider = await api.createProvider({
-      name: 'E2E Proxy-Trace Provider',
+      name: `E2E Proxy-Trace Provider ${stamp}`,
       endpoint: UPSTREAM_ENDPOINT,
       upstreamApiKey: process.env.OPENAI_API_KEY!,
       kind: PROVIDER_KIND,
     });
 
-    const key = await api.createProviderApiKey(provider.id, 'e2e-proxy-trace-key', projectId);
+    const key = await api.createProviderApiKey(provider.id, `e2e-proxy-trace-key-${stamp}`, projectId);
     proxyApiKey = key.keyValue;
   });
 

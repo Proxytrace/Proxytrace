@@ -418,13 +418,9 @@ public sealed class Module : Autofac.Module
             .As<IPasswordService>()
             .SingleInstance();
 
-        builder.RegisterType<Security.Internal.DataProtectionSecretProtector>()
-            .As<Security.ISecretProtector>()
-            .SingleInstance();
-
-        builder.RegisterType<Security.Internal.Sha256SecretHasher>()
-            .As<Security.ISecretHasher>()
-            .SingleInstance();
+        // Secret seams (ISecretProtector / ISecretHasher) + the Data Protection key ring. Shared with
+        // the lean proxy host via this module so both resolve an identical key ring. See docs/security.md.
+        builder.RegisterModule<Security.SecretProtectionModule>();
 
         builder.RegisterType<Notifications.Internal.SmtpEmailSender>()
             .As<Notifications.IEmailSender>()

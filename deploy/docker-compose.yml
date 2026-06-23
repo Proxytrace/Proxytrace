@@ -103,6 +103,11 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD:-proxytrace}
       - Redis__ConnectionString=redis:6379
+      # Shares the api's Data Protection key ring (same appdata volume) so the proxy can decrypt the
+      # upstream provider key before replaying it. Must match the api's PROXYTRACE_DATA_DIR.
+      - PROXYTRACE_DATA_DIR=/app/data
+    volumes:
+      - appdata:/app/data
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q 200 <&3'"]
       interval: 5s

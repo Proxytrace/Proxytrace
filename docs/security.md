@@ -20,11 +20,16 @@ credential (a database dump would then yield usable credentials).
 ## The two seams (`Proxytrace.Application/Security/`)
 
 - **`ISecretProtector`** — `Protect`/`Unprotect`, backed by ASP.NET Core Data Protection
-  (`DataProtectionSecretProtector`, purpose `"Proxytrace.Secrets.v1"`). The key ring persists to
-  `PROXYTRACE_DATA_DIR` (wired in `Proxytrace.Api/Module.cs`); without it the ring is ephemeral and
-  ciphertext does not survive a restart. Reads degrade gracefully on a `CryptographicException`
-  (treat the secret as unset + log) rather than crashing a hot path — see
-  `ModelProviderConfig.Decrypt` and `EmailSettingsStore.DecryptPassword`.
+  (`DataProtectionSecretProtector`, purpose `"Proxytrace.Secrets.v1"`). The seam and its key ring are
+  registered together in `Proxytrace.Application/Security/SecretProtectionModule.cs` (application name
+  `"Proxytrace"`, persisted to `PROXYTRACE_DATA_DIR/dataprotection-keys`); without it the ring is
+  ephemeral and ciphertext does not survive a restart. **Both hosts that touch encrypted secrets — the
+  API (writer) and the lean ingestion proxy (reader, which decrypts the upstream provider key before
+  replaying it) — load this module and must mount the *same* `PROXYTRACE_DATA_DIR` volume**, or the
+  proxy cannot decrypt what the API wrote (the deploy/e2e compose files wire the shared `appdata`
+  volume into both). Reads degrade gracefully on a `CryptographicException` (treat the secret as unset
+  + log) rather than crashing a hot path — see `ModelProviderConfig.Decrypt` and
+  `EmailSettingsStore.DecryptPassword`.
 - **`ISecretHasher`** — `Hash(value)` → hex SHA-256 (`Sha256SecretHasher`, delegating to the shared
   `Proxytrace.Common.Security.Sha256.HexHash`). Deterministic and **key-ring-independent**, so the
   verify paths keep working even if `PROXYTRACE_DATA_DIR` is lost. Unkeyed SHA-256 is safe here

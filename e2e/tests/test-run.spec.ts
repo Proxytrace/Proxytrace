@@ -166,10 +166,15 @@ test.describe('@llm test run', () => {
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);
 
-    const { items: agents } = await api.listAgents();
-    expect(agents.length).toBeGreaterThan(0);
-    const agent = agents[0];
     const projectId = await api.firstProjectId();
+    // Seed a dedicated agent in the default project so the suite, its run group, and the
+    // project-scoped /runs list the UI shows all agree on the project. An unfiltered listAgents()[0]
+    // can name an agent in another project, whose run group then never appears under /runs.
+    const agent = await api.createAgent({
+      name: `E2E Run-From-Suites Agent ${Date.now()}`,
+      endpointId: await api.firstEndpointId(),
+      projectId,
+    });
 
     const { id: evaluatorId } = await api.createEvaluator(projectId);
     const suiteName = 'E2E Run-From-Suites';
@@ -191,7 +196,11 @@ test.describe('@llm test run', () => {
       .flatMap(p => p.endpoints)
       .find(e => e.id === agent.endpointId);
     expect(endpoint).toBeTruthy();
-    await page.getByRole('button', { name: new RegExp(endpoint!.modelName) }).first().click();
+    // Endpoints render as a searchable multi-select popover — open it, toggle the agent's endpoint
+    // (option lives in a portal outside the modal, so locate via `page`), then close it.
+    await page.getByTestId('run-endpoints').click();
+    await page.getByTestId(`run-endpoints-option-${endpoint!.id}`).click();
+    await page.getByTestId('run-endpoints').click();
     await page.getByRole('button', { name: /Start run|Run on \d+ endpoints/ }).click();
 
     // The modal confirms the run started.

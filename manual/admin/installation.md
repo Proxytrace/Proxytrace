@@ -32,9 +32,12 @@ Open `http://localhost:5101` and follow the first-run setup to create the admin 
 This manual is served by your installation at `http://localhost:5101/docs`.
 
 Every setting has a working default: the bundled Postgres is internal-only with a default
-password, the session signing key is generated on first start and persisted in the
-`appdata` volume, and without a license Proxytrace runs the Free tier. To override
-anything (ports, public URL, your own database password — recommended for production):
+password, the session signing key and the at-rest secret-encryption key ring are generated on
+first start and persisted in the `appdata` volume — which the shipped compose mounts into **both**
+the `api` and `proxy` services so the proxy can decrypt your upstream provider keys before
+forwarding (if you run the proxy from a custom Compose, give it the same `appdata` /
+`PROXYTRACE_DATA_DIR` volume as the `api`). Without a license Proxytrace runs the Free tier. To
+override anything (ports, public URL, your own database password — recommended for production):
 
 ```bash
 cp .env.example .env   # the template documents every value

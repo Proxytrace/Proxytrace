@@ -43,6 +43,11 @@ services:
       - Proxy__PublicBaseUrl=http://localhost:5102
       - Redis__ConnectionString=redis:6379
       - Messaging__Provider=Redis
+      # Persists the Data Protection key ring so the proxy (which mounts the same appdata volume)
+      # can decrypt upstream provider keys this api encrypted. See docs/security.md.
+      - PROXYTRACE_DATA_DIR=/app/data
+    volumes:
+      - appdata:/app/data
 
   # Standalone ingestion proxy: authenticates, forwards agent traffic upstream, and publishes
   # captured calls to Redis. Stays up independently of the app; scale this horizontally.
@@ -59,6 +64,11 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace
       - Redis__ConnectionString=redis:6379
+      # Shares the api's Data Protection key ring (same appdata volume) to decrypt upstream provider
+      # keys before replaying them. Without this the proxy cannot read encrypted keys. See docs/security.md.
+      - PROXYTRACE_DATA_DIR=/app/data
+    volumes:
+      - appdata:/app/data
 
   frontend:
     build:
@@ -73,3 +83,6 @@ services:
 
 volumes:
   pgdata:
+  # Data Protection key ring shared between api (writer) and proxy (reader) so the proxy can
+  # decrypt upstream provider keys the api encrypted.
+  appdata:

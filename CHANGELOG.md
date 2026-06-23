@@ -185,6 +185,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Security
 
+- **Developer-local config is no longer baked into container images.** `*.local.json` files — which
+  may carry a developer's license key or other secrets — were not excluded from the Docker build
+  context and could be copied into a locally built image. They are now ignored, so a personal
+  `appsettings.local.json` can no longer leak into an image (the official release images, built from a
+  clean checkout, were never affected).
+
 - **Systemic cross-tenant access (IDOR) across the CRUD and SSE APIs is now closed.** The app is
   multi-tenant (resources belong to a project; users belong to projects; admins bypass), but the bulk
   controllers never checked membership: any authenticated user could read, modify, delete, or trigger
@@ -221,8 +227,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   whose compiler-generated `ToString()` printed every property, so a configured upstream credential
   could surface in a log line, exception message, or debugger string. The key is now redacted from the
   record's string representation.
+- Updated `dompurify` (the HTML sanitizer behind the message HTML view and the search-snippet
+  preview) to 3.4.10, picking up upstream sanitization-bypass fixes, and refreshed the frontend
+  dev toolchain so `npm audit` reports no known vulnerabilities.
 
 ### Fixed
+
+- **The ingestion proxy can decrypt upstream provider keys again.** Now that provider API keys are
+  encrypted at rest, the standalone proxy needs the same ASP.NET Data Protection key ring as the app
+  to recover a key before forwarding a call — without it every proxied request failed. The proxy now
+  loads that key ring, and the shipped `docker-compose.yml` mounts the shared key-ring volume into
+  both services. Operators running the proxy from a **custom** Compose must give it the same
+  `PROXYTRACE_DATA_DIR` volume as the `api` service, or proxied calls cannot authenticate upstream.
 
 - **Model-call clients no longer leak their HTTP transport, and the tool-schema parser no longer
   leaks pooled buffers.** Every LLM call (test runs, the Playground, agentic evaluators, and the
@@ -430,12 +446,6 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - The project segment in the proxy URL (`/{project}/openai/v1/…`) is now matched
   case-insensitively, so a base URL like `…/Development/openai/v1` resolves the **Development**
   project instead of returning **401 Unauthorized**.
-
-### Security
-
-- Updated `dompurify` (the HTML sanitizer behind the message HTML view and the search-snippet
-  preview) to 3.4.10, picking up upstream sanitization-bypass fixes, and refreshed the frontend
-  dev toolchain so `npm audit` reports no known vulnerabilities.
 
 ## [1.0.3] - 2026-06-12
 

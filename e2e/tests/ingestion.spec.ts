@@ -19,19 +19,23 @@ test.describe('@llm ingestion via proxy', () => {
     authToken = token;
     api.setToken(token);
 
-    // Setup already created a default project in auth.setup.spec.ts.
-    // Create a dedicated real LLM provider and issue a proxy API key for it.
-    const projects = await api.getProjects();
-    const projectId = projects.items[0].id;
+    // Setup already created a default project in auth.setup.spec.ts. Create a dedicated real LLM
+    // provider and issue a proxy API key for it. Use firstProjectId() (oldest = the project the UI
+    // defaults to): the projects list is newest-first, so items[0] can be a leftover project from
+    // an earlier spec — ingesting the call (and its agent) where the UI and other specs can't see it.
+    const projectId = await api.firstProjectId();
 
+    // Providers are archive-only and survive the per-test DB reset, so on a retry this beforeAll
+    // would collide with the previous attempt's provider on the unique name. Stamp it unique.
+    const stamp = Date.now();
     const provider = await api.createProvider({
-      name: 'E2E LLM Provider',
+      name: `E2E LLM Provider ${stamp}`,
       endpoint: UPSTREAM_ENDPOINT,
       upstreamApiKey: process.env.OPENAI_API_KEY!,
       kind: PROVIDER_KIND,
     });
 
-    const key = await api.createProviderApiKey(provider.id, 'e2e-llm-key', projectId);
+    const key = await api.createProviderApiKey(provider.id, `e2e-llm-key-${stamp}`, projectId);
     proxyApiKey = key.keyValue;
   });
 

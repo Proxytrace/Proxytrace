@@ -4,31 +4,36 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 test.describe('@llm playground', () => {
   test.skip(!process.env.OPENAI_API_KEY, 'requires OPENAI_API_KEY env var');
 
-  // The Playground needs an agent in the current project. Agents only exist once a call has
-  // been ingested, so this project depends on llm-ingestion (wired in playwright.config.ts).
+  let agentId: string;
+
+  // The Playground keeps a per-agent conversation server-side and @llm specs get no reset between
+  // tests, so reusing one agent would carry a prior test's turns into this one (extra bubbles, a
+  // stale first message). Seed a FRESH agent in the default project per test — a brand-new agent has
+  // an empty conversation — and drive the picker to it by id.
   test.beforeEach(async ({ request }) => {
     const api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);
-    const { items: agents } = await api.listAgents();
-    expect(agents.length, 'need at least one agent — run ingestion spec first').toBeGreaterThan(0);
+    const projectId = await api.firstProjectId();
+    const endpointId = await api.firstEndpointId();
+    const agent = await api.createAgent({
+      name: `E2E Playground Agent ${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+      endpointId,
+      projectId,
+    });
+    agentId = agent.id;
   });
 
-  test('pick agent + endpoint, send a prompt → assistant reply renders with stats', async ({ page, request }) => {
+  test('pick agent + endpoint, send a prompt → assistant reply renders with stats', async ({ page }) => {
     test.setTimeout(120_000);
-
-    const api = new ProxytraceApiClient(request);
-    const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
-    api.setToken(token);
-    const { items: agents } = await api.listAgents();
-    const agent = agents[0];
 
     await page.goto('/playground', { waitUntil: 'load' });
     await expect(page.getByTestId('playground')).toBeVisible({ timeout: 10_000 });
 
-    // AgentPicker → choose the ingested agent.
+    // AgentPicker → choose this test's freshly-seeded agent (guaranteed in the picker: default
+    // project, non-system) so the conversation starts empty.
     await page.getByTestId('agent-picker').click();
-    await page.getByTestId(`agent-picker-option-${agent.id}`).click();
+    await page.getByTestId(`agent-picker-option-${agentId}`).click();
 
     // ComposeBox is enabled once an agent is selected; EndpointPicker shows the endpoint.
     const compose = page.getByTestId('compose-box');
@@ -53,18 +58,12 @@ test.describe('@llm playground', () => {
     await expect(stats).toContainText('Latency', { timeout: 90_000 });
   });
 
-  test('AddMessageBar adds a follow-up turn → multi-turn conversation', async ({ page, request }) => {
+  test('AddMessageBar adds a follow-up turn → multi-turn conversation', async ({ page }) => {
     test.setTimeout(120_000);
-
-    const api = new ProxytraceApiClient(request);
-    const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
-    api.setToken(token);
-    const { items: agents } = await api.listAgents();
-    const agent = agents[0];
 
     await page.goto('/playground', { waitUntil: 'load' });
     await page.getByTestId('agent-picker').click();
-    await page.getByTestId(`agent-picker-option-${agent.id}`).click();
+    await page.getByTestId(`agent-picker-option-${agentId}`).click();
 
     const compose = page.getByTestId('compose-box');
     await expect(compose).toBeEnabled({ timeout: 10_000 });
@@ -89,18 +88,12 @@ test.describe('@llm playground', () => {
     ).toHaveCount(bubblesBefore + 1);
   });
 
-  test('temperature ParameterSlider change is reflected in the override state', async ({ page, request }) => {
+  test('temperature ParameterSlider change is reflected in the override state', async ({ page }) => {
     test.setTimeout(60_000);
-
-    const api = new ProxytraceApiClient(request);
-    const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
-    api.setToken(token);
-    const { items: agents } = await api.listAgents();
-    const agent = agents[0];
 
     await page.goto('/playground', { waitUntil: 'load' });
     await page.getByTestId('agent-picker').click();
-    await page.getByTestId(`agent-picker-option-${agent.id}`).click();
+    await page.getByTestId(`agent-picker-option-${agentId}`).click();
     await expect(page.getByTestId('compose-box')).toBeEnabled({ timeout: 10_000 });
 
     // Open the parameters drawer on the RightRail and change the temperature.
@@ -113,18 +106,12 @@ test.describe('@llm playground', () => {
     await expect(slider).toHaveValue('1.5');
   });
 
-  test('EditableMessageBubble edits a prior user message before re-sending', async ({ page, request }) => {
+  test('EditableMessageBubble edits a prior user message before re-sending', async ({ page }) => {
     test.setTimeout(120_000);
-
-    const api = new ProxytraceApiClient(request);
-    const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
-    api.setToken(token);
-    const { items: agents } = await api.listAgents();
-    const agent = agents[0];
 
     await page.goto('/playground', { waitUntil: 'load' });
     await page.getByTestId('agent-picker').click();
-    await page.getByTestId(`agent-picker-option-${agent.id}`).click();
+    await page.getByTestId(`agent-picker-option-${agentId}`).click();
 
     const compose = page.getByTestId('compose-box');
     await expect(compose).toBeEnabled({ timeout: 10_000 });

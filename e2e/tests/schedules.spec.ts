@@ -14,7 +14,8 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 //
 // Stable data-testids: `schedules-tab` (the tab trigger), `schedules-section`,
 // `schedule-create-btn`, the dialog (`schedule-form`, `schedule-name-input`,
-// `schedule-suite-select` + `schedule-suite-select-option-<suiteId>`, `schedule-endpoint-<id>`,
+// `schedule-suite-select` + `schedule-suite-select-option-<suiteId>`, the `schedule-endpoints`
+// multi-select (+ `schedule-endpoints-option-<id>` for each endpoint option),
 // the cadence picker `schedule-frequency` (+ `schedule-frequency-option-<freq>`), with per-frequency
 // controls `schedule-time` (daily/weekly), `schedule-minute` (hourly), `schedule-weekday` (weekly),
 // `schedule-interval-value`/`schedule-interval-unit` (custom), the `schedule-next-run-preview`, and
@@ -78,8 +79,11 @@ test.describe('Scheduled test runs', () => {
     await dialog.getByTestId('schedule-suite-select').click();
     await page.getByTestId(`schedule-suite-select-option-${suiteId}`).click();
 
-    // Endpoint (multi-select row toggle) — pick the setup endpoint.
-    await dialog.getByTestId(`schedule-endpoint-${endpointId}`).click();
+    // Endpoint (searchable multi-select popover) — open it, toggle the setup endpoint, close it.
+    // Options render in a portal outside the modal panel, so locate them via `page`.
+    await dialog.getByTestId('schedule-endpoints').click();
+    await page.getByTestId(`schedule-endpoints-option-${endpointId}`).click();
+    await dialog.getByTestId('schedule-endpoints').click();
 
     // Cadence: switch to Custom to expose the every-N-unit interval fields, then 6 hours → 360
     // minutes → "Every 6h" cadence label.
@@ -131,7 +135,9 @@ test.describe('Scheduled test runs', () => {
     await dialog.getByTestId('schedule-name-input').fill(scheduleName);
     await dialog.getByTestId('schedule-suite-select').click();
     await page.getByTestId(`schedule-suite-select-option-${suiteId}`).click();
-    await dialog.getByTestId(`schedule-endpoint-${endpointId}`).click();
+    await dialog.getByTestId('schedule-endpoints').click();
+    await page.getByTestId(`schedule-endpoints-option-${endpointId}`).click();
+    await dialog.getByTestId('schedule-endpoints').click();
 
     // Daily is the default frequency; set the run time to 02:00 UTC. The live preview reflects it.
     await dialog.getByTestId('schedule-time').fill('02:00');
