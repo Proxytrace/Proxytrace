@@ -69,8 +69,8 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
 
         OptimizerEvidence evidence = evidenceBuilder.Build(currentRun);
 
-        SystemPromptOptimizerOutput? output = await systemAgent
-            .CreateClient()
+        using var systemClient = systemAgent.CreateClient();
+        SystemPromptOptimizerOutput? output = await systemClient
             .CompleteAsync<SystemPromptOptimizerOutput>(
                 Message.CreateUserMessage(evidence.ToJson()),
                 cancellationToken: cancellationToken);

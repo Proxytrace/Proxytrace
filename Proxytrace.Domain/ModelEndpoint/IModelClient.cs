@@ -45,7 +45,12 @@ public record RequestToolCallPreview(string Id, string Name, string Arguments);
 
 public record RequestToolPreview(string Name, string Description, string JsonSchema);
 
-public interface IModelClient
+/// <summary>
+/// A model client bound to a single agent + endpoint. Implementations own a disposable provider
+/// transport, so callers MUST dispose the client (a <c>using</c>) once done — it is created per
+/// call via <see cref="Factory"/> and its underlying chat-client transport is not freed for them.
+/// </summary>
+public interface IModelClient : IDisposable
 {
     public delegate IModelClient Factory(
         IAgent agent,

@@ -110,6 +110,10 @@ internal sealed class CannedJsonAgent : IAgent
             await Task.CompletedTask;
             yield break;
         }
+
+        public void Dispose()
+        {
+        }
     }
 
     public Task<IAgent> ReloadAsync(CancellationToken cancellationToken = default)

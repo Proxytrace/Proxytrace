@@ -29,6 +29,7 @@ internal class ModelClient : IModelClient
     private readonly IModelEndpoint endpoint;
     private readonly IOutputFormat.Create outputFormatFactory;
     private readonly IChatClient chatClient;
+    private bool disposed;
 
     public ModelClient(
         IAgent agent,
@@ -69,6 +70,21 @@ internal class ModelClient : IModelClient
         this.agentCallFactory = agentCallFactory;
         this.outputFormatFactory = outputFormatFactory;
         this.chatClient = chatClient;
+    }
+
+    // A ModelClient is created per call (one per case × evaluator × baseline/candidate A/B run) and
+    // owns the IChatClient it was built with — the OpenAI-backed transport behind it is disposable.
+    // Disposing here releases that transport instead of abandoning it. Idempotent so the deterministic
+    // using-disposal at the call site and any Autofac scope-end disposal can't double-free.
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        chatClient.Dispose();
     }
 
     public Task<ICompletion> CompleteAsync(

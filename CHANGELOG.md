@@ -224,6 +224,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Model-call clients no longer leak their HTTP transport, and the tool-schema parser no longer
+  leaks pooled buffers.** Every LLM call (test runs, the Playground, agentic evaluators, and the
+  prompt/tool optimizers) built a fresh client wrapping a disposable provider transport that was
+  never disposed — so across a run's cases × evaluators × baseline/candidate A/B calls each one
+  abandoned its transport state. The per-request tool-definition builder also parsed each tool's
+  JSON schema with a `JsonDocument` that was never disposed, defeating its pooled-buffer reuse on
+  every tool of every request. The model client is now disposable and every caller releases it
+  immediately after use, and the schema parse is scoped so its buffer is returned right away.
+
 - **Test run groups no longer leak `CancellationTokenSource` instances.** Every foreground,
   background, and A/B validation run group created an owned `CancellationTokenSource` plus a linked
   source (to combine the caller's token with run cancellation), but the `finally` only removed the

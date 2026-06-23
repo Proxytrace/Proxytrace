@@ -35,8 +35,8 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
         try
         {
             var agent = await GetGeneratorAgent(project, cancellationToken);
-            var result = await agent
-                .CreateClient()
+            using var client = agent.CreateClient();
+            var result = await client
                 .CompleteAsync(
                     Message.CreateUserMessage(promptTemplate.Template),
                     cancellationToken: cancellationToken);

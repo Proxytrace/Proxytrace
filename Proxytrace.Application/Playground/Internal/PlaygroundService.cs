@@ -51,7 +51,7 @@ internal sealed class PlaygroundService : IPlaygroundService
         ModelOptions options = new(endpoint.Model.Name, tools);
         Conversation conversation = BuildConversation(request.Messages);
 
-        IModelClient client = agent.CreateClient(endpoint, skipIngestion: true);
+        using IModelClient client = agent.CreateClient(endpoint, skipIngestion: true);
 
         ulong inputTokens = 0;
         ulong outputTokens = 0;

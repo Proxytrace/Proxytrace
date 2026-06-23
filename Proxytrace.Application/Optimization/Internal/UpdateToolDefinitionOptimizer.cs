@@ -74,8 +74,8 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             cancellationToken: cancellationToken);
 
         OptimizerEvidence evidence = evidenceBuilder.Build(currentRun);
-        ToolOptimizerOutput? completion = await optimizer
-            .CreateClient()
+        using var optimizerClient = optimizer.CreateClient();
+        ToolOptimizerOutput? completion = await optimizerClient
             .CompleteAsync<ToolOptimizerOutput>(
                 Message.CreateUserMessage(evidence.ToJson()),
                 cancellationToken: cancellationToken);
