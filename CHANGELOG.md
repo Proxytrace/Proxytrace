@@ -250,6 +250,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   their history), but a stray hard delete or manual database statement can no longer cascade through
   to the traces table.
 
+- **Deleting a model endpoint can no longer wipe its test-run history.** The `TestRun → ModelEndpoint`
+  foreign key was still configured to *cascade* on delete (the sibling of the provider/endpoint fix
+  above), so a stray hard delete of an endpoint could have removed every test run recorded against it.
+  It is now `Restrict`: endpoints are still removed the safe way (they are archived), but a hard delete
+  or manual database statement can no longer cascade through to the test-run history.
+
 - **A burst of unparseable ingestion entries during a Redis outage no longer stalls the consumer.**
   The Redis ingestion consumer acknowledged "poison" entries (captured calls that fail to
   deserialize) with a blocking, synchronous `XACK` from inside its read loop. Because the Redis

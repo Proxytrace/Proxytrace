@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Storage.Internal.Entities.AgentCall;
 using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 using Proxytrace.Storage.Internal.Entities.ModelProvider;
+using Proxytrace.Storage.Internal.Entities.TestRun;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Storage.Tests;
@@ -37,6 +38,14 @@ public sealed class CascadeDeleteBehaviorModelTests : BaseTest<Module>
         DeleteBehaviorFor<ModelEndpointEntity>(nameof(ModelEndpointEntity.Provider))
             .Should().Be(DeleteBehavior.Restrict,
                 "a hard delete of a ModelProvider must never cascade through its endpoints to the traces table");
+    }
+
+    [TestMethod]
+    public void TestRunToModelEndpoint_IsRestrict_SoDeletingAnEndpointCannotWipeTestRuns()
+    {
+        DeleteBehaviorFor<TestRunEntity>(nameof(TestRunEntity.Endpoint))
+            .Should().Be(DeleteBehavior.Restrict,
+                "a hard delete of a ModelEndpoint must never cascade-delete its TestRun history");
     }
 
     private DeleteBehavior DeleteBehaviorFor<TEntity>(string foreignKeyPropertyName)

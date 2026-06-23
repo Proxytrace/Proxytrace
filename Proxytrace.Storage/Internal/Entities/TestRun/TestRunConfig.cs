@@ -40,7 +40,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             .HasOne<ModelEndpointEntity>()
             .WithMany()
             .HasForeignKey(e => e.Endpoint)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder
             .HasOne<TestRunGroupEntity>()
