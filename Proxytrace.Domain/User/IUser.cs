@@ -34,7 +34,7 @@ public interface IUser : IDomainEntity<IUser>
     /// <summary>Whether the user receives email notifications. Defaults to <see langword="true"/>.</summary>
     bool EmailNotificationsEnabled { get; }
 
-    /// <summary>Minimum <see cref="NotificationSeverity"/> that triggers an email. Defaults to <see cref="NotificationSeverity.Info"/> (the "All" option in the account menu).</summary>
+    /// <summary>Minimum <see cref="NotificationSeverity"/> that triggers an email. Defaults to <see cref="NotificationSeverity.Info"/> (the "All" option in the account menu); net email volume is bounded by the operator-level <c>EmailSettings.MinSeverity</c> floor (admin-form default <see cref="NotificationSeverity.Warning"/>), which gates before this per-user threshold.</summary>
     NotificationSeverity EmailNotificationMinSeverity { get; }
 
     /// <summary>Updates the user's <see cref="Role"/> and persists.</summary>
