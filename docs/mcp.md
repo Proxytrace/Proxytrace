@@ -32,7 +32,7 @@ This page covers the backend design; the user/integrator guide is `manual/guide/
 `Proxytrace.Api/Module.cs` and mapped in `Program.cs`:
 
 ```csharp
-// Module.cs (non-kiosk only)
+// Module.cs (registered unconditionally — inert until the endpoint is mapped)
 services.AddMcpServer().WithHttpTransport(o => o.Stateless = true).WithToolsFromAssembly(typeof(Module).Assembly);
 
 // Program.cs (non-kiosk only)
@@ -40,9 +40,13 @@ app.MapMcp("/mcp").RequireAuthorization("Mcp");
 ```
 
 Stateless transport means every JSON-RPC POST is its own request: it re-runs the auth handler, so the
-project context is re-established per call and tools execute within that request's `HttpContext`. The
-endpoint and scheme are **omitted in kiosk mode** (kiosk has no API keys, and `KioskReadOnlyMiddleware`
-403s the POST anyway).
+project context is re-established per call and tools execute within that request's `HttpContext`. **What
+disables MCP in kiosk is the endpoint, not the DI registration:** the MCP server services, the tool
+types and the `McpApiKey` scheme are registered unconditionally (they are inert until used), but
+`Program.cs` only maps `/mcp` when `!Kiosk.Enabled`, and `KioskReadOnlyMiddleware` 403s the POST
+anyway. Decoupling registration from the kiosk flag keeps it deterministic regardless of the ambient
+config the `Module` reads (it pulls `appsettings.local.json`, which the host's `IConfiguration` does
+not), so `McpServerEndpointTests` exercises the same stack production maps.
 
 **Reverse proxy.** `/mcp` is served by the API but reached at the app's public origin, so it must be
 proxied through alongside `/api`. The bundled `frontend/nginx.conf` forwards `/mcp` → `api:8080` with

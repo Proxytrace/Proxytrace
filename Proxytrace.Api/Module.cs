@@ -236,23 +236,24 @@ internal sealed class Module : Autofac.Module
             .InstancePerLifetimeScope();
 
         // MCP server: external agents call Proxytrace functionality over /mcp, authenticated by a
-        // Proxytrace API key whose project scopes the call. Disabled in kiosk (no accounts/keys, and
-        // KioskReadOnlyMiddleware 403s the POST anyway). The SDK instantiates the tool classes per
-        // invocation from this container, so register them AsSelf.
-        if (!kiosk.Enabled)
-        {
-            builder.RegisterAssemblyTypes(typeof(Module).Assembly)
-                .Where(t => t.GetCustomAttribute<ModelContextProtocol.Server.McpServerToolTypeAttribute>() is not null)
-                .AsSelf()
-                .InstancePerLifetimeScope();
+        // Proxytrace API key whose project scopes the call. The SDK instantiates the tool classes per
+        // invocation from this container, so register them AsSelf. These DI registrations are made
+        // unconditionally (they are inert until used) — the /mcp endpoint is what is actually disabled
+        // in kiosk: Program.cs only maps it when !Kiosk.Enabled, and KioskReadOnlyMiddleware 403s the
+        // POST anyway. Keeping registration decoupled from the kiosk flag makes it deterministic
+        // regardless of ambient config (which the Module reads from appsettings.local.json), so the
+        // MCP endpoint tests wire the same stack production does.
+        builder.RegisterAssemblyTypes(typeof(Module).Assembly)
+            .Where(t => t.GetCustomAttribute<ModelContextProtocol.Server.McpServerToolTypeAttribute>() is not null)
+            .AsSelf()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterServiceCollection(services =>
-                services
-                    .AddMcpServer()
-                    .WithHttpTransport(options => options.Stateless = true)
-                    .WithToolsFromAssembly(typeof(Module).Assembly)
-                    .WithPromptsFromAssembly(typeof(Module).Assembly));
-        }
+        builder.RegisterServiceCollection(services =>
+            services
+                .AddMcpServer()
+                .WithHttpTransport(options => options.Stateless = true)
+                .WithToolsFromAssembly(typeof(Module).Assembly)
+                .WithPromptsFromAssembly(typeof(Module).Assembly));
 
         ConfigureAuth(builder, configuration, kiosk);
 
@@ -292,7 +293,13 @@ internal sealed class Module : Autofac.Module
                 services
                     .AddAuthentication(KioskAuthenticationHandler.SchemeName)
                     .AddScheme<AuthenticationSchemeOptions, KioskAuthenticationHandler>(
-                        KioskAuthenticationHandler.SchemeName, _ => { });
+                        KioskAuthenticationHandler.SchemeName, _ => { })
+                    // The MCP scheme is registered in kiosk too so the auth wiring is deterministic
+                    // regardless of mode (the MCP endpoint tests pin the "Mcp" policy to it). The
+                    // default scheme stays Kiosk and the /mcp endpoint is not mapped under kiosk
+                    // (Program.cs), so this scheme is inert here.
+                    .AddScheme<AuthenticationSchemeOptions, McpApiKeyAuthenticationHandler>(
+                        McpApiKeyAuthenticationHandler.SchemeName, _ => { });
             }
             else
             {
