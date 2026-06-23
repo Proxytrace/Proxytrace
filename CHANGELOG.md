@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-23
+
 ### Added
 
 - **Secrets are now protected at rest.** Upstream provider API keys are encrypted in the database
