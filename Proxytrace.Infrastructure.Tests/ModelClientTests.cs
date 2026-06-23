@@ -769,4 +769,46 @@ public sealed class ModelClientTests : BaseTest<Module>
             .Invoking(() => factory(MakeAgent(endpoint)))
             .Should().NotThrow();
     }
+
+    // ── disposal ──────────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void Dispose_DisposesUnderlyingChatClient()
+    {
+        // The per-call client owns its IChatClient (an OpenAI-backed, disposable transport).
+        // Disposing the ModelClient must release that transport rather than abandon it — the
+        // abandoned transport accumulating across cases × evaluators × A/B runs was the leak.
+        IChatClient chatClient = Substitute.For<IChatClient>();
+
+        var services = GetServices(config =>
+        {
+            RegisterEndpoint(config);
+            config.RegisterInstance(chatClient).As<IChatClient>();
+        });
+
+        var client = services.GetRequiredService<IModelClient>();
+        client.Dispose();
+
+        chatClient.Received(1).Dispose();
+    }
+
+    [TestMethod]
+    public void Dispose_CalledTwice_DisposesUnderlyingChatClientOnce()
+    {
+        // Dispose is idempotent: the deterministic using at the call site and Autofac's scope-end
+        // disposal can both run, so a second Dispose must not double-free the transport.
+        IChatClient chatClient = Substitute.For<IChatClient>();
+
+        var services = GetServices(config =>
+        {
+            RegisterEndpoint(config);
+            config.RegisterInstance(chatClient).As<IChatClient>();
+        });
+
+        var client = services.GetRequiredService<IModelClient>();
+        client.Dispose();
+        client.Dispose();
+
+        chatClient.Received(1).Dispose();
+    }
 }

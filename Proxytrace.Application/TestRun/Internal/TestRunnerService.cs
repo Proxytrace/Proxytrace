@@ -264,7 +264,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         try
         {
             IAgent agent = customAgent ?? testRun.Group.Suite.Agent;
-            IModelClient client = agent.CreateClient(
+            using IModelClient client = agent.CreateClient(
                 customEndpoint: testRun.Endpoint,
                 skipIngestion: true);
             ICompletion completion = await client.CompleteAsync(

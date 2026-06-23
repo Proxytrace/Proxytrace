@@ -59,8 +59,8 @@ internal sealed record AgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEval
             Conversation conversation = Conversation.Create();
             conversation.Add(BuildEvaluationMessage(testResult));
 
-            var completion = await Agent
-                .CreateClient()
+            using var client = Agent.CreateClient();
+            var completion = await client
                 .CompleteAsync<AgenticEvaluatorResult>(
                     conversation,
                     cancellationToken: cancellationToken);

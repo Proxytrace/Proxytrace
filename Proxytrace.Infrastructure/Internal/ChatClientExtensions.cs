@@ -65,10 +65,17 @@ internal static class ChatClientExtensions
         if (options.Tools.Any())
         {
             chatOptions.Tools = options.Tools
-                .Select(t => (AITool)AIFunctionFactory.CreateDeclaration(
-                    t.Name,
-                    t.Description,
-                    JsonDocument.Parse(t.Arguments.JsonSchema).RootElement.Clone()))
+                .Select(t =>
+                {
+                    // JsonDocument rents from a pooled buffer; Clone() detaches a standalone copy so
+                    // the document can be disposed immediately, returning the buffer rather than
+                    // leaking it on every tool of every model request.
+                    using var doc = JsonDocument.Parse(t.Arguments.JsonSchema);
+                    return (AITool)AIFunctionFactory.CreateDeclaration(
+                        t.Name,
+                        t.Description,
+                        doc.RootElement.Clone());
+                })
                 .ToList();
         }
 
