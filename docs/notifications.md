@@ -87,6 +87,13 @@ Resolves recipients and sends one email per recipient with failure isolation:
 Target deep links route to `/runs?id=`, `/agents?id=`, or `/proposals?id=` depending on
 `NotificationTargetKind`.
 
+> **Default thresholds.** A new user's `EmailNotificationMinSeverity` defaults to `Info` (surfaced as
+> the **All** option in the account-menu control). Net email volume is bounded by the operator-level
+> `EmailSettings.MinSeverity` floor (step 2), which the admin form defaults to `Warning` — so a
+> default install emails only `Warning` + `Critical`. The per-user control exposes **All** /
+> **Critical** / **None** only (there is no per-user `Warning`); see
+> `frontend/src/components/layout/EmailNotificationMenuItems.tsx`.
+
 ## Email settings store
 
 ### `EmailSettings` record
