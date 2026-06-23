@@ -141,8 +141,19 @@ Endpoints/providers are removed via the archive flow (`ArchivableRepository`), n
 untouched; it also matches the existing `AgentVersion → AgentCall` restriction. Like the
 `CascadeSuiteDelete` FK change above, `Restrict`/`Cascade` is not enforced by the in-memory provider,
 so the regression test (`CascadeDeleteBehaviorModelTests`) asserts on the EF model metadata that
-drives the PostgreSQL DDL rather than on a delete round-trip. (The `TestRun → ModelEndpoint` FK is
-still `Cascade` — a separate, lower-severity vector tracked in its own issue.)
+drives the PostgreSQL DDL rather than on a delete round-trip. (The sibling `TestRun → ModelEndpoint`
+FK was flipped to `Restrict` in the `RestrictTestRunEndpointCascadeDelete` migration — see below.)
+
+The `RestrictTestRunEndpointCascadeDelete` migration flips one foreign key from `Cascade` to
+`Restrict`: `TestRunEntity.Endpoint → ModelEndpointEntity`. Previously a hard delete of a
+`ModelEndpoint` cascaded through to **every** `TestRun` recorded against it — wiping its test-run
+history (issue #221). As with the traces vector above, endpoints are removed via the archive flow,
+never hard-deleted, so `Restrict` blocks only the accidental hard delete (or manual SQL) while
+leaving the supported path untouched. The sibling `TestRun → TestRunGroup` FK intentionally stays
+`Cascade` — `CascadeSuiteDelete` relies on the suite → run group → run cascade to delete a used
+suite. The regression lives in `CascadeDeleteBehaviorModelTests` and, like the other cascade tests,
+asserts on the EF model metadata rather than a delete round-trip, because `Restrict`/`Cascade` is not
+enforced by the in-memory provider.
 
 The `AddOptimisticConcurrencyToken` migration marks every entity's `UpdatedAt` column as an EF
 concurrency token (see [Optimistic concurrency](#optimistic-concurrency)). It changes only the SQL
