@@ -100,6 +100,7 @@ public sealed class Module : Autofac.Module
         ConfigureEntity(typeof(TestSuiteEvaluatorEntity), builder);
         ConfigureEntity(typeof(TestRunScheduleEndpointEntity), builder);
         ConfigureEntity(typeof(ProjectUserEntity), builder);
+        ConfigureEntity(typeof(Internal.Entities.TestResult.EvaluationStatEntity), builder);
 
         builder.RegisterType<AmbientDbContext>()
             .AsSelf()

@@ -14,6 +14,14 @@ internal record TestResultEntity : Entity
     public required long? InputTokens { get; init; }
     public required long? OutputTokens { get; init; }
     public required long? CachedInputTokens { get; init; }
+
+    /// <summary>
+    /// Queryable projection of <see cref="Evaluations"/>, one row per evaluation, populated at write
+    /// time. Lets the evaluator-stats queries filter by evaluator and time in SQL instead of loading
+    /// and deserializing every result in the window. Not loaded on the read path (the JSON
+    /// <see cref="Evaluations"/> column remains the source of truth). See <see cref="EvaluationStatEntity"/>.
+    /// </summary>
+    public ICollection<EvaluationStatEntity> EvaluationStats { get; init; } = [];
 }
 
 /// <summary>

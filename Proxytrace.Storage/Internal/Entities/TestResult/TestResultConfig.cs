@@ -126,5 +126,24 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             CachedInputTokens = (long?)domain.Usage?.CachedInputTokenCount,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
+            // Queryable projection of the evaluations above; CreatedAt copied from the parent so the
+            // evaluator-stats queries range/bucket on the child row without joining back. See
+            // EvaluationStatEntity. Written on insert; test results are append-only.
+            EvaluationStats = domain.Evaluations
+                .Select(e => new EvaluationStatEntity
+                {
+                    Id = Guid.NewGuid(),
+                    TestResultId = domain.Id,
+                    EvaluatorId = e.Evaluator.Id,
+                    CreatedAt = domain.CreatedAt,
+                    Score = e.Score,
+                    HasError = e.ErrorMessage is not null,
+                    InputTokens = (long?)e.TokenUsage?.InputTokenCount,
+                    OutputTokens = (long?)e.TokenUsage?.OutputTokenCount,
+                    CachedInputTokens = (long?)e.TokenUsage?.CachedInputTokenCount,
+                    LatencyMicroseconds = (long)e.Latency.TotalMicroseconds,
+                    Cost = e.Cost,
+                })
+                .ToList(),
         }.ToTaskResult();
 }
