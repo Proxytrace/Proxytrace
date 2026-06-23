@@ -48,3 +48,15 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
   [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the
   GitHub release notes verbatim — see [`docs/releasing.md`](docs/releasing.md)).
+
+## Team Composition
+
+Implement each task using a team of experts, including (but not limited to) the following roles:
+- **Architect**: has great system knowledge and overview of the domain and components. creates high-level plans.
+- **Engineer**: implementation expert with focus on clean code and maintainability. create and executes implementation plans.
+- **Tester**: test implementations (depending on scope) and gives concise feedback.
+- **Documenter**: updates docs and makes sure that user facing changes are covered by the manual.
+- **Reviewer**: Reviews the implementation. Depending on scope and area, different aspects are especially relevant (security, user experience, efficiency, performance, etc.)
+
+Depending on the task, decide which team members are required and spawn them only when necessary.
+
