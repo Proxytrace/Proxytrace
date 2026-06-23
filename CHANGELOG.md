@@ -224,6 +224,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Deleting a model provider or endpoint can no longer wipe your traces.** The trace history
+  (`AgentCall`) and the endpoint→provider link were configured to *cascade* on delete, so a single
+  hard delete of a provider could have removed every endpoint under it and, with them, every trace
+  recorded against those endpoints — irreversible telemetry loss. Both foreign keys are now
+  `Restrict`: providers and endpoints are still removed the safe way (they are archived, which keeps
+  their history), but a stray hard delete or manual database statement can no longer cascade through
+  to the traces table.
+
 - **A burst of unparseable ingestion entries during a Redis outage no longer stalls the consumer.**
   The Redis ingestion consumer acknowledged "poison" entries (captured calls that fail to
   deserialize) with a blocking, synchronous `XACK` from inside its read loop. Because the Redis

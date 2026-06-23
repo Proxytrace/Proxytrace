@@ -131,6 +131,19 @@ effect: deleting an individual test run now also deletes any proposal that used 
 The `Restrict` semantics were not enforced by the in-memory provider, so this class of bug only
 surfaces on PostgreSQL — unit tests cannot reproduce it.
 
+The `RestrictEndpointProviderCascadeDelete` migration flips two foreign keys from `Cascade` to
+`Restrict` so a config row can no longer cascade-wipe the high-volume traces table:
+`AgentCallEntity.EndpointId → ModelEndpointEntity` and `ModelEndpointEntity.Provider →
+ModelProviderEntity`. Previously a single hard delete of a `ModelProvider` cascaded through its
+endpoints to **every** `AgentCall` (trace) recorded against them — irreversible telemetry loss.
+Endpoints/providers are removed via the archive flow (`ArchivableRepository`), never hard-deleted, so
+`Restrict` blocks only the accidental hard delete (or manual SQL) while leaving the supported path
+untouched; it also matches the existing `AgentVersion → AgentCall` restriction. Like the
+`CascadeSuiteDelete` FK change above, `Restrict`/`Cascade` is not enforced by the in-memory provider,
+so the regression test (`CascadeDeleteBehaviorModelTests`) asserts on the EF model metadata that
+drives the PostgreSQL DDL rather than on a delete round-trip. (The `TestRun → ModelEndpoint` FK is
+still `Cascade` — a separate, lower-severity vector tracked in its own issue.)
+
 The `AddOptimisticConcurrencyToken` migration marks every entity's `UpdatedAt` column as an EF
 concurrency token (see [Optimistic concurrency](#optimistic-concurrency)). It changes only the SQL
 EF generates — no PostgreSQL schema change — so its `Up`/`Down` are empty; it exists to keep the

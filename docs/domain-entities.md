@@ -94,14 +94,18 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
   409. Ingestion attribution (`GetOrCreateAsync`/`FindByNameAsync`) is a by-key lookup, so an
   archived agent that receives matching traffic again still resolves.
 - **`ModelEndpoint`** — the per-endpoint delete archives, preserving the `AgentCall`/`TestRun` rows a
-  hard delete would have `Cascade`-removed. Reuse via `GetOrCreateAsync` (a by-key lookup)
+  hard delete would otherwise remove. The `AgentCall → ModelEndpoint` FK is also `Restrict` (not
+  `Cascade`), so even a stray hard delete can never cascade-wipe the high-volume traces table — the
+  archive flow stays the only supported delete path. Reuse via `GetOrCreateAsync` (a by-key lookup)
   **un-archives** a matched archived endpoint (`ArchivableRepository.UnarchiveAsync`) so it never
   lingers as a live-but-hidden zombie.
-- **`ModelProvider`** — the per-provider delete archives instead of hard-deleting, closing the former
-  cascade-data-loss gap (a hard delete cascaded through the provider's endpoints to every
-  `AgentCall`/`TestRun`). `ArchiveRelationsAsync` also archives the provider's endpoints so the whole
-  provider leaves pickers together, while the history those endpoints back is preserved.
-  `FindByApiKeyAsync` (the proxy's upstream-key auth) is a by-key lookup and stays unfiltered.
+- **`ModelProvider`** — the per-provider delete archives instead of hard-deleting. The
+  `ModelEndpoint → ModelProvider` FK is `Restrict` (not `Cascade`), so the former cascade-data-loss
+  gap — a hard delete cascading through the provider's endpoints to every `AgentCall` trace — is now
+  closed at the database too, not just by convention. `ArchiveRelationsAsync` also archives the
+  provider's endpoints so the whole provider leaves pickers together, while the history those
+  endpoints back is preserved. `FindByApiKeyAsync` (the proxy's upstream-key auth) is a by-key lookup
+  and stays unfiltered.
 
 ## Reference Implementations
 

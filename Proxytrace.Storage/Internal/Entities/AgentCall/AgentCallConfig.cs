@@ -89,11 +89,17 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
                 v => serializer.Deserialize<ModelParametersData>(v) ?? ModelParametersData.Empty
             );
 
+        // Restrict, not Cascade: AgentCall is the product's highest-volume table (irreplaceable
+        // telemetry). A Cascade here let a single hard delete of a ModelEndpoint — or, transitively,
+        // a ModelProvider — wipe every trace recorded against it. Endpoints/providers are removed via
+        // the archive flow (ArchivableRepository), never hard-deleted, so Restrict blocks only the
+        // accidental hard delete while leaving the supported path untouched. Mirrors the
+        // AgentVersion -> AgentCall restriction above.
         builder
             .HasOne<ModelEndpointEntity>()
             .WithMany()
             .HasForeignKey(e => e.EndpointId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public async Task<IAgentCall> Map(AgentCallEntity stored, CancellationToken cancellationToken = default)

@@ -38,11 +38,16 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
             .HasForeignKey(e => e.Model)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Restrict, not Cascade: a Cascade let a hard delete of a ModelProvider remove its endpoints
+        // and — through AgentCall's FK — cascade on to wipe every trace recorded against them.
+        // Providers are removed via the archive flow (ModelProviderRepository.ArchiveRelationsAsync
+        // archives the endpoints), never hard-deleted, so Restrict blocks only the accidental hard
+        // delete. See AgentCallConfig for the trace-table side of the same guard.
         builder
             .HasOne<ModelProviderEntity>()
             .WithMany()
             .HasForeignKey(e => e.Provider)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => new { e.Model, e.Provider }).IsUnique();
         // Supports the provider-scoped list query, which excludes archived rows.
