@@ -1,3 +1,4 @@
+using System.Reflection;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -385,5 +386,74 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         testRun.TestResults[0].Evaluations.Should().HaveCount(2);
         testRun.TestResults[0].Evaluations.Select(e => e.Evaluator.Kind)
             .Should().Contain(EvaluatorKind.Agentic);
+    }
+
+    [TestMethod]
+    public async Task RunInForeground_DisposesCancellationTokenSourcesAfterRun()
+    {
+        // Regression for #197: ExecuteGroupAsync created a CancellationTokenSource and a
+        // linked source whose reference was discarded, then never disposed either — the
+        // finally only TryRemove'd the CTS from the registry. The linked source and the
+        // owned CTS (and the callback the linked source registers on the caller's token)
+        // leaked per run group. The fix disposes both in the finally; we verify the owned
+        // CTS is disposed once the run returns (Cancel on a disposed source throws), and
+        // that the runner no longer holds a registration for the group.
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+
+        CancellationTokenSource? capturedOwnedCts = null;
+        Guid? groupId = null;
+        ITestRunnerService? runner = null;
+
+        var services = GetServices(config =>
+        {
+            config.Register(ct =>
+            {
+                IModelClient handler = Substitute.For<IModelClient>();
+                var completionFactory = ct.Resolve<ICompletion.Create>();
+                handler.CompleteAsync(
+                        Arg.Any<Conversation>(),
+                        Arg.Any<ModelOptions>(),
+                        Arg.Any<IReadOnlyDictionary<string, string>?>(),
+                        Arg.Any<CancellationToken>())
+                    .Returns(ci =>
+                    {
+                        // The CTS is registered before the parallel loop starts, so it is
+                        // available here while the group is still executing.
+                        if (runner is not null && groupId is not null)
+                        {
+                            var field = runner.GetType().GetField(
+                                "cancellationTokens",
+                                BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (field?.GetValue(runner)
+                                is System.Collections.Concurrent.ConcurrentDictionary<Guid, CancellationTokenSource> dict
+                                && dict.TryGetValue(groupId.Value, out var owned))
+                            {
+                                capturedOwnedCts = owned;
+                            }
+                        }
+                        return Task.FromResult(completionFactory(
+                            expectedOutput, null, TimeSpan.FromMilliseconds(1000)));
+                    });
+                return handler;
+            });
+        });
+
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
+
+        await runner.RunInForegroundAsync(
+            suite,
+            [endpoint],
+            onGroupCreated: (g, ct) => { groupId = g.Id; return Task.CompletedTask; },
+            cancellationToken: CancellationToken);
+
+        // The owned CTS must be disposed once the run returns.
+        capturedOwnedCts.Should().NotBeNull();
+        if (capturedOwnedCts is { } ownedCts)
+        {
+            Action cancelOwned = () => ownedCts.Cancel();
+            cancelOwned.Should().Throw<ObjectDisposedException>();
+        }
     }
 }

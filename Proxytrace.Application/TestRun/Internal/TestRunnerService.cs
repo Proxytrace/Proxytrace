@@ -167,7 +167,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
 
         CancellationTokenSource cts = new CancellationTokenSource();
         cancellationTokens.TryAdd(group.Id, cts);
-        cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token;
+        CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
+        cancellationToken = linkedCts.Token;
 
         try
         {
@@ -227,6 +228,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         finally
         {
             cancellationTokens.TryRemove(group.Id, out _);
+            linkedCts.Dispose();
+            cts.Dispose();
         }
     }
 

@@ -224,6 +224,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Test run groups no longer leak `CancellationTokenSource` instances.** Every foreground,
+  background, and A/B validation run group created an owned `CancellationTokenSource` plus a linked
+  source (to combine the caller's token with run cancellation), but the `finally` only removed the
+  owned source from the runner's registry — neither was disposed, and the linked source's reference
+  was discarded entirely so it could never be disposed. The optimization loop fires baseline + candidate
+  runs per theory, so both sources (and the callback the linked source registers on the caller's token)
+  accumulated steadily in a long-running process. Both are now disposed in the `finally` (the linked
+  source before the owned one).
+
 - **Deleting a model provider or endpoint can no longer wipe your traces.** The trace history
   (`AgentCall`) and the endpoint→provider link were configured to *cascade* on delete, so a single
   hard delete of a provider could have removed every endpoint under it and, with them, every trace
