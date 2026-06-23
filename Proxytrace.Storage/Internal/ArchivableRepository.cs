@@ -28,6 +28,28 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
     {
     }
 
+    /// <summary>
+    /// Whether this archivable entity may still be hard-deleted. Defaults to <c>true</c> — archiving
+    /// is the *normal* path but a hard delete remains available (e.g. <c>Agent</c>/<c>Evaluator</c>
+    /// cleanup). Model-style config entities whose history would be cascade-destroyed by a hard delete
+    /// (<c>ModelProvider</c>, <c>ModelEndpoint</c>) override this to <c>false</c> so <see cref="ArchiveAsync"/>
+    /// is the *only* delete path — see the soft-delete section of <c>docs/domain-entities.md</c>.
+    /// </summary>
+    protected virtual bool SupportsHardDelete => true;
+
+    /// <summary>
+    /// Refuses a hard delete on an archive-only entity (<see cref="SupportsHardDelete"/> is
+    /// <c>false</c>), redirecting the caller to <see cref="ArchiveAsync"/>. This enforces the
+    /// soft-delete contract in application code, complementing the database-level <c>Restrict</c> FK
+    /// (which also catches raw SQL / bulk deletes). Otherwise hard-deletes as normal.
+    /// </summary>
+    public override Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
+        => SupportsHardDelete
+            ? base.RemoveAsync(id, cancellationToken)
+            : throw new InvalidOperationException(
+                $"{typeof(TDomainEntity).Name} is archive-only and cannot be hard-deleted; call " +
+                "ArchiveAsync instead. A hard delete would cascade-remove the history that references it.");
+
     /// <inheritdoc />
     public async Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
     {

@@ -84,6 +84,17 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
   — so history and traffic attribution keep resolving archived rows.
 - **Controller** — the `Delete` endpoint calls `ArchiveAsync` and keeps the `204/404` contract, so
   the frontend (optimistic list-cache removal + archived-filtered refetch) needs no change.
+- **Enforcing archive-only (preferred for model-style entities)** — archiving is the *normal* delete
+  path, but `RemoveAsync` (a hard delete) is still inherited and would bypass it. For a **model/config
+  entity whose history would be cascade-destroyed by a hard delete** (`ModelProvider`,
+  `ModelEndpoint`), make `ArchiveAsync` the *only* delete path: override
+  `ArchivableRepository.SupportsHardDelete` to `false`, and `RemoveAsync` then throws
+  `InvalidOperationException` directing the caller to `ArchiveAsync`. This enforces the contract in
+  application code; it **complements** (does not replace) a database-level FK `Restrict`, which is the
+  backstop for raw SQL / EF bulk deletes the repository never sees. `SupportsHardDelete` defaults to
+  `true`, so `Agent`/`Evaluator` — which are archivable but still legitimately hard-deleted (system-agent
+  cleanup, agent-version merge) — are unaffected; only opt a repository in when its rows back
+  irreplaceable history.
 
 **Adopters:**
 - **`Evaluator`** — archiving deletes its `TestSuiteEvaluatorEntity` rows via `ArchiveRelationsAsync`
@@ -94,15 +105,17 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
   409. Ingestion attribution (`GetOrCreateAsync`/`FindByNameAsync`) is a by-key lookup, so an
   archived agent that receives matching traffic again still resolves.
 - **`ModelEndpoint`** — the per-endpoint delete archives, preserving the `AgentCall`/`TestRun` rows a
-  hard delete would otherwise remove. The `AgentCall → ModelEndpoint` FK is also `Restrict` (not
-  `Cascade`), so even a stray hard delete can never cascade-wipe the high-volume traces table — the
-  archive flow stays the only supported delete path. Reuse via `GetOrCreateAsync` (a by-key lookup)
-  **un-archives** a matched archived endpoint (`ArchivableRepository.UnarchiveAsync`) so it never
-  lingers as a live-but-hidden zombie.
-- **`ModelProvider`** — the per-provider delete archives instead of hard-deleting. The
-  `ModelEndpoint → ModelProvider` FK is `Restrict` (not `Cascade`), so the former cascade-data-loss
-  gap — a hard delete cascading through the provider's endpoints to every `AgentCall` trace — is now
-  closed at the database too, not just by convention. `ArchiveRelationsAsync` also archives the
+  hard delete would otherwise remove. It is **archive-only** (`SupportsHardDelete => false`, so
+  `RemoveAsync` is refused), and the `AgentCall → ModelEndpoint` FK is also `Restrict` (not `Cascade`)
+  as the database backstop, so neither an app-level hard delete nor raw SQL can cascade-wipe the
+  high-volume traces table — the archive flow stays the only supported delete path. Reuse via
+  `GetOrCreateAsync` (a by-key lookup) **un-archives** a matched archived endpoint
+  (`ArchivableRepository.UnarchiveAsync`) so it never lingers as a live-but-hidden zombie.
+- **`ModelProvider`** — the per-provider delete archives instead of hard-deleting. It is
+  **archive-only** (`SupportsHardDelete => false`), and the `ModelEndpoint → ModelProvider` FK is
+  `Restrict` (not `Cascade`) as the database backstop, so the former cascade-data-loss gap — a hard
+  delete cascading through the provider's endpoints to every `AgentCall` trace — is closed in both
+  application code and the database, not just by convention. `ArchiveRelationsAsync` also archives the
   provider's endpoints so the whole provider leaves pickers together, while the history those
   endpoints back is preserved. `FindByApiKeyAsync` (the proxy's upstream-key auth) is a by-key lookup
   and stays unfiltered.

@@ -25,6 +25,11 @@ internal class ModelProviderRepository : ArchivableRepository<IModelProvider, Mo
         this.hasher = hasher;
     }
 
+    // Archive-only: a hard delete would cascade through this provider's endpoints to every AgentCall
+    // (trace) recorded against them. Removal goes through ArchiveAsync (which archives the endpoints
+    // too); RemoveAsync is refused. The FK Restrict in ModelEndpointConfig is the DB-level backstop.
+    protected override bool SupportsHardDelete => false;
+
     public async Task<IModelProvider?> FindByApiKeyAsync(string apiKey, CancellationToken cancellationToken = default)
     {
         // The plaintext key is encrypted (non-deterministic) at rest, so match on its deterministic

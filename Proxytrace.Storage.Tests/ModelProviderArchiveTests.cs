@@ -85,4 +85,20 @@ public sealed class ModelProviderArchiveTests : BaseTest<Module>
         first.Should().BeTrue();
         second.Should().BeFalse();
     }
+
+    [TestMethod]
+    public async Task RemoveAsync_IsRefused_SoTracesAreNeverCascadeDeleted()
+    {
+        // Providers are archive-only: a hard delete would cascade through their endpoints to every
+        // AgentCall (trace). RemoveAsync must refuse and the provider must remain.
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IModelProviderRepository>();
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => repository.RemoveAsync(provider.Id, CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        (await repository.ContainsAsync(provider.Id, CancellationToken)).Should().BeTrue();
+    }
 }
