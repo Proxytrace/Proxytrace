@@ -10,6 +10,12 @@ namespace Proxytrace.Licensing.Internal;
 /// startup gate (in <see cref="LicenseService"/>), this periodically contacts the license server
 /// and degrades the tier when the server reports revocation or remains unreachable past the
 /// offline grace window.
+/// <para>
+/// An <b>offline-only</b> license (the JWT carries <c>offline: true</c>, see
+/// <see cref="LicenseSnapshot.Offline"/>) is exempt from the server check entirely — air-gapped
+/// installs cannot reach the server, which is the whole point. Such a key cannot be revoked; its
+/// <c>exp</c> is the only thing that ends it, and that is enforced locally here.
+/// </para>
 /// </summary>
 internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTrigger
 {
@@ -71,13 +77,28 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (licenseService.Current.Jti is not null)
-                    await SafeRunCheckAsync(cancellationToken);
+                var delay = period;
+                var snapshot = licenseService.Current;
+                if (snapshot.Jti is not null)
+                {
+                    if (snapshot.Offline)
+                    {
+                        // Offline-only key: never contact the server (it cannot be revoked).
+                        // Enforce exp locally and wake exactly when it lands so the license ends
+                        // on time without any network call.
+                        EnforceOfflineExpiry(snapshot);
+                        delay = OfflineWakeDelay(licenseService.Current, period);
+                    }
+                    else
+                    {
+                        await SafeRunCheckAsync(cancellationToken);
+                    }
+                }
 
                 var changed = licenseChanged;
                 try
                 {
-                    await Task.WhenAny(Task.Delay(period, cancellationToken), changed.Task);
+                    await Task.WhenAny(Task.Delay(delay, cancellationToken), changed.Task);
                 }
                 catch (OperationCanceledException)
                 {
@@ -116,6 +137,14 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         var snapshot = licenseService.Current;
         if (snapshot.Jti is null)
             return;
+
+        // Offline-only keys are exempt from the server check: a forced refresh (admin "Re-check
+        // now") just re-evaluates expiry locally — there is nothing to ask the server.
+        if (snapshot.Offline)
+        {
+            EnforceOfflineExpiry(snapshot);
+            return;
+        }
 
         await checkLock.WaitAsync(cancellationToken);
         try
@@ -229,6 +258,38 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
             Status = LicenseStatus.Active,
             GracePeriodEndsAt = null,
         };
+    }
+
+    /// <summary>
+    /// Degrades an offline-only license to <see cref="LicenseStatus.Expired"/> (Free entitlements)
+    /// once it passes its <c>exp</c>. With no server check, expiry is the only thing that ends an
+    /// offline key, so it is enforced locally on every loop tick and forced refresh.
+    /// </summary>
+    private void EnforceOfflineExpiry(LicenseSnapshot snapshot)
+    {
+        if (snapshot.ExpiresAt is { } expiresAt && clock.UtcNow >= expiresAt)
+        {
+            logger.LogWarning(
+                "Offline license {Jti} expired at {Expiry:o}; downgrading to Free",
+                snapshot.Jti,
+                expiresAt);
+            licenseService.ApplySnapshot(Expired(snapshot.Source));
+        }
+    }
+
+    /// <summary>
+    /// The next wake for an offline-only license: the sooner of the regular poll interval and the
+    /// moment its <c>exp</c> lands, so the license ends on time rather than up to one interval
+    /// late. Never longer than <paramref name="period"/> (the normal poll interval), so the offline
+    /// path adds no delay the online path didn't already use.
+    /// </summary>
+    private TimeSpan OfflineWakeDelay(LicenseSnapshot snapshot, TimeSpan period)
+    {
+        if (snapshot.ExpiresAt is not { } expiresAt)
+            return period;
+
+        var until = expiresAt - clock.UtcNow;
+        return until > TimeSpan.Zero && until < period ? until : period;
     }
 
     private static LicenseSnapshot Free(LicenseSource source)

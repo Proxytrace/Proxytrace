@@ -100,6 +100,64 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public void Get_OfflineLicense_ProjectsOfflineFlag()
+    {
+        var definition = LicensePolicy.For(LicenseTier.Enterprise);
+        var snapshot = new LicenseSnapshot(
+            LicenseTier.Enterprise,
+            LicenseStatus.Active,
+            DateTimeOffset.UtcNow.AddDays(30),
+            null,
+            "airgap@example.com",
+            "jti-offline",
+            definition.Features,
+            definition.Limits,
+            LicenseSource.Stored,
+            InvalidReason: null,
+            Offline: true);
+
+        var services = GetServices();
+        var dto = ResolveController(services, StubLicense(snapshot)).Get();
+
+        dto.Offline.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void Get_OnlineLicense_OfflineFlagIsFalse()
+    {
+        var services = GetServices();
+        var dto = ResolveController(services, StubLicense(LicenseSnapshot.Free())).Get();
+
+        dto.Offline.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void Validate_OfflineKey_PreviewReportsOffline()
+    {
+        var services = GetServices();
+        var keyManager = Substitute.For<ILicenseKeyManager>();
+        var definition = LicensePolicy.For(LicenseTier.Enterprise);
+        keyManager.Validate("jwt").Returns(new LicenseSnapshot(
+            LicenseTier.Enterprise,
+            LicenseStatus.Active,
+            DateTimeOffset.UtcNow.AddDays(30),
+            null,
+            "airgap@example.com",
+            "jti-offline",
+            definition.Features,
+            definition.Limits,
+            LicenseSource.None,
+            InvalidReason: null,
+            Offline: true));
+        var controller = ResolveController(services, StubLicense(LicenseSnapshot.Free()), keyManager);
+
+        var result = controller.Validate(new SetLicenseRequest("jwt"));
+
+        result.Valid.Should().BeTrue();
+        result.Offline.Should().BeTrue();
+    }
+
+    [TestMethod]
     public void Get_InvalidStatus_ReturnsInvalidDtoWithReason()
     {
         var snapshot = LicenseSnapshot.Invalid(LicenseSource.Environment, "The configured license is invalid: Expired.");

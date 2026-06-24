@@ -64,6 +64,8 @@ internal sealed class TestLicenseFactory : IDisposable
         string? jti = null,
         IEnumerable<string>? features = null,
         IEnumerable<string>? limits = null,
+        bool? offline = null,
+        (string Value, string ValueType)? offlineRaw = null,
         bool sign = true)
     {
         var claims = new List<Claim>
@@ -78,6 +80,16 @@ internal sealed class TestLicenseFactory : IDisposable
 
         foreach (var limit in limits ?? [])
             claims.Add(new Claim("lim", limit));
+
+        // Emitted as a real JSON boolean (ClaimValueTypes.Boolean) to mirror the license server's
+        // wire format — `offline: true` for an offline-only key, `offline: false` defensively.
+        // Pass null to omit the claim entirely (a normal online license). `offlineRaw` injects an
+        // off-contract claim of a chosen JSON type (e.g. a string or number) to exercise the
+        // validator's strict type-matching.
+        if (offline is { } offlineValue)
+            claims.Add(new Claim("offline", offlineValue ? "true" : "false", ClaimValueTypes.Boolean));
+        else if (offlineRaw is { } raw)
+            claims.Add(new Claim("offline", raw.Value, raw.ValueType));
 
         var signingKey = sign ? SigningSecurityKey : UntrustedKey;
         var credentials = new SigningCredentials(signingKey, Algorithm);

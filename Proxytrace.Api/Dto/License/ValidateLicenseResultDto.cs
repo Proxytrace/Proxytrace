@@ -9,4 +9,5 @@ public sealed record ValidateLicenseResultDto(
     string? Reason,
     string? Tier,
     DateTimeOffset? ExpiresAt,
-    string? CustomerEmail);
+    string? CustomerEmail,
+    bool Offline);

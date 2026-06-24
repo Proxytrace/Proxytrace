@@ -83,7 +83,8 @@ internal sealed class LicenseService : ILicenseService
             || a.CustomerEmail != b.CustomerEmail
             || a.Jti != b.Jti
             || a.Source != b.Source
-            || a.InvalidReason != b.InvalidReason)
+            || a.InvalidReason != b.InvalidReason
+            || a.Offline != b.Offline)
         {
             return false;
         }
