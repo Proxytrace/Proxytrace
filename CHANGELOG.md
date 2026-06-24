@@ -9,7 +9,7 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
-## [1.1.1] - 2026-06-24
+## [1.2.0] - 2026-06-24
 
 ### Added
 
