@@ -44,6 +44,12 @@ export interface LicenseDto {
   limits: Partial<Record<LicenseLimit, number>>;
   /** True when the current month's trace ingestion quota has been exceeded. */
   quotaExceeded?: boolean;
+  /**
+   * True for an offline-only license (the JWT carries `offline: true`): an air-gapped key
+   * that is never re-validated against the license server, so it cannot be revoked — only
+   * `expiresAt` ends it.
+   */
+  offline: boolean;
 }
 
 /** Outcome of a dry-run key validation (`POST /api/license/validate`). */
@@ -53,6 +59,8 @@ export interface ValidateLicenseResultDto {
   tier: LicenseTier | null;
   expiresAt: string | null;
   customerEmail: string | null;
+  /** True when the validated key is an offline-only license (`offline: true`). */
+  offline: boolean;
 }
 
 export const licenseApi = {

@@ -4,6 +4,12 @@ namespace Proxytrace.Licensing;
 /// An immutable point-in-time view of the resolved license: tier, status, validity window,
 /// the effective features and limits in force, and where the license came from.
 /// </summary>
+/// <param name="Offline">
+/// True when the license JWT carries the <c>offline: true</c> claim — an air-gapped,
+/// server-check-exempt key. For these the background service never contacts the license
+/// server (so they cannot be revoked); <see cref="ExpiresAt"/> is the only thing that ends
+/// them. Absent / non-<c>true</c> claim ⇒ false (a normal online license).
+/// </param>
 public sealed record LicenseSnapshot(
     LicenseTier Tier,
     LicenseStatus Status,
@@ -14,7 +20,8 @@ public sealed record LicenseSnapshot(
     IReadOnlySet<LicenseFeature> Features,
     IReadOnlyDictionary<LicenseLimit, long> Limits,
     LicenseSource Source = LicenseSource.None,
-    string? InvalidReason = null)
+    string? InvalidReason = null,
+    bool Offline = false)
 {
     /// <summary>
     /// Builds the default Free-tier snapshot used when no license JWT is configured.

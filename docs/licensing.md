@@ -60,6 +60,34 @@ everything and is not user-manageable.
 - The license offline-grace cache and the auto-generated signing key live in
   `PROXYTRACE_DATA_DIR` when set (the Docker deployment mounts the `appdata` volume there).
 
+## Offline-only licenses
+
+An **offline-only** license is for air-gapped installs that cannot reach the license server. The
+JWT carries one extra claim, `offline` (a JSON boolean), and the server emits it **present and
+`true`** only on these keys — a normal online license omits the claim entirely.
+
+- `JwtLicenseValidator` parses `offline` by JSON type onto `LicenseSnapshot.Offline` (true only when
+  present and exactly `true`; absent / `false` / any other value ⇒ online). Everything else about the
+  token — ES256 signature, `iss`/`aud`/`exp` validation against the bundled public keys — is
+  unchanged, so an offline token still verifies fully offline.
+- `LicenseCheckService` **skips the periodic `/licenses/check` call entirely** for an offline
+  snapshot (both the background loop and the admin "Re-check now" / `ForceRefreshAsync` path). The
+  offline-grace state machine (the `OfflineGracePeriodDays` window that degrades a *normal* license
+  when the server is unreachable) therefore never runs for these keys — they do not degrade just
+  because there is no network.
+- With no server check, **`exp` is the only thing that ends an offline license**, and it is enforced
+  locally: an already-expired token is rejected at validation (`ValidateLifetime`), and a token that
+  expires *while running* is downgraded to `Expired`/Free by `EnforceOfflineExpiry`. The loop wakes
+  at the sooner of the check interval and the moment `exp` lands so the license ends on time.
+- **Security:** an offline key cannot be revoked (the client never contacts the server, so
+  `revoke`/`reissue` and key rotation have no effect on it) and is a bearer credential that works on
+  unlimited installs until `exp`. The server caps offline `exp` at ≤365 days; that time bound is the
+  only containment lever. Prefer the shortest viable lifetime.
+- `Offline` flows through to the API (`GET /api/license` → `LicenseDto.offline`,
+  `POST /api/license/validate` → `ValidateLicenseResultDto.offline`); the settings License page
+  surfaces it (an "offline license" note and no "Re-check now" button, since there is nothing to
+  ask the server).
+
 ## Notes on specific gates
 
 - **`AgenticEvaluators`** is enforced at *use* time, not creation time. Default agentic evaluators

@@ -13,4 +13,5 @@ public sealed record LicenseDto(
     string? CustomerEmail,
     IReadOnlyList<string> Features,
     IReadOnlyDictionary<string, long> Limits,
-    bool QuotaExceeded);
+    bool QuotaExceeded,
+    bool Offline);

@@ -58,7 +58,8 @@ public class LicenseController : ControllerBase
                 Reason: null,
                 Tier: snapshot.Tier.ToString().ToLowerInvariant(),
                 ExpiresAt: snapshot.ExpiresAt,
-                CustomerEmail: snapshot.CustomerEmail);
+                CustomerEmail: snapshot.CustomerEmail,
+                Offline: snapshot.Offline);
         }
         catch (InvalidLicenseException ex)
         {
@@ -67,7 +68,8 @@ public class LicenseController : ControllerBase
                 Reason: ex.Message,
                 Tier: null,
                 ExpiresAt: null,
-                CustomerEmail: null);
+                CustomerEmail: null,
+                Offline: false);
         }
     }
 
@@ -138,5 +140,6 @@ public class LicenseController : ControllerBase
         CustomerEmail: snapshot.CustomerEmail,
         Features: snapshot.Features.Select(f => f.ToString()).ToArray(),
         Limits: snapshot.Limits.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
-        QuotaExceeded: quotaGuard.IsCurrentMonthOverQuota);
+        QuotaExceeded: quotaGuard.IsCurrentMonthOverQuota,
+        Offline: snapshot.Offline);
 }

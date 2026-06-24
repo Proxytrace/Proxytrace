@@ -141,6 +141,7 @@ describe('buildTierSummary', () => {
     customerEmail: null,
     features: [],
     limits: { MaxProjects: 1, MaxAgents: 1, MaxTestSuites: 1, MaxTracesPerMonth: 10000, TraceRetentionDays: 14 },
+    offline: false,
   };
 
   const enterpriseLicense: LicenseDto = {

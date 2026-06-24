@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Proxytrace.Licensing.Exceptions;
@@ -132,7 +133,29 @@ internal sealed class JwtLicenseValidator : IJwtLicenseValidator
             CustomerEmail: string.IsNullOrWhiteSpace(email) ? null : email,
             Jti: token.Id,
             features,
-            limits);
+            limits,
+            Offline: ReadOfflineClaim(token));
+    }
+
+    /// <summary>
+    /// Reads the optional <c>offline</c> claim, matched strictly by <b>JSON type</b> per the wire
+    /// contract: offline-only is signalled only by a JSON boolean <c>true</c>. A missing claim,
+    /// <c>false</c>, a quoted string (even <c>"true"</c>), or a number all read as a normal online
+    /// license. Never string-matched — the value must be a real boolean <c>true</c> to flip the
+    /// install offline. (Depending on the JWT library's deserialization the boolean surfaces as a
+    /// CLR <see cref="bool"/> or a <see cref="JsonElement"/>, so both are accepted.)
+    /// </summary>
+    private static bool ReadOfflineClaim(JwtSecurityToken token)
+    {
+        if (!token.Payload.TryGetValue("offline", out var raw) || raw is null)
+            return false;
+
+        return raw switch
+        {
+            bool flag => flag,
+            JsonElement { ValueKind: JsonValueKind.True } => true,
+            _ => false,
+        };
     }
 
     private LicenseTier ParseTier(JwtSecurityToken token)

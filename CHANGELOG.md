@@ -9,6 +9,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Offline-only licenses for air-gapped installs.** Proxytrace now recognises license keys issued
+  as *offline-only*: they are verified entirely on the box (signature + expiry) and are **never**
+  checked against the license server, so an install with no outbound internet keeps running without
+  hitting the offline grace window. Such a key cannot be revoked and works until its built-in expiry
+  (capped at 365 days), at which point the installation downgrades to Free. **Settings → License**
+  shows an "offline license" note and hides **Re-check now** for these keys. Normal (online) keys are
+  unchanged — still re-checked every 24 hours and revocable.
+
 ## [1.1.0] - 2026-06-23
 
 ### Added

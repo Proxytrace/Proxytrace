@@ -56,6 +56,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
           <CheckIcon size={12} strokeWidth={2.5} />
           <span>
             {t`Valid ${preview.tier === 'enterprise' ? 'Enterprise' : 'Free'} license`}
+            {preview.offline ? t` (offline)` : ''}
             {preview.customerEmail ? t` for ${preview.customerEmail}` : ''}
             {preview.expiresAt ? t`, valid until ${fmtDate(preview.expiresAt)}` : ''}
           </span>

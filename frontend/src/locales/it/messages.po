@@ -13,6 +13,9 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+msgid " (offline)"
+msgstr " (offline)"
+
 #. placeholder {0}: preview.customerEmail
 msgid " for {0}"
 msgstr " per {0}"
@@ -4280,6 +4283,9 @@ msgstr "Questa installation: {0}"
 
 msgid "This is an Enterprise feature"
 msgstr "Questa è una feature Enterprise"
+
+msgid "This is an offline license. It is never re-validated against the license server, so it keeps working with no outbound connection — only its expiry ends it."
+msgstr "Questa è una licenza offline. Non viene mai nuovamente convalidata con il server di licenza, quindi continua a funzionare senza alcuna connessione in uscita — solo la sua scadenza la interrompe."
 
 msgid "This license key is not valid."
 msgstr "Questa license key non è valida."

@@ -6,7 +6,7 @@ import { LicenseKeyForm } from '../../../components/license/LicenseKeyForm';
 import { Button } from '../../../components/ui/Button';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
-import { AlertTriangleIcon, CrownIcon, ResetIcon, SparklesIcon, TrashIcon } from '../../../components/icons';
+import { AlertTriangleIcon, CrownIcon, ResetIcon, ServerIcon, SparklesIcon, TrashIcon } from '../../../components/icons';
 import { fmtDate } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import { SectionHeader } from '../components/SectionHeader';
@@ -53,7 +53,7 @@ export function LicenseSection() {
               {isPaid ? <CrownIcon size={14} className="text-accent" /> : <SparklesIcon size={14} className="text-accent" />}
               <Trans>Current license</Trans>
             </h3>
-            {isPaid && !isOverride && (
+            {isPaid && !isOverride && !license.offline && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -100,6 +100,18 @@ export function LicenseSection() {
                   The configured license could not be validated
                   {license.invalidReason ? ` — ${license.invalidReason}` : ''}. The installation runs
                   with Free-tier limits until a valid key is activated.
+                </Trans>
+              </span>
+            </div>
+          )}
+
+          {license.offline && (
+            <div className="flex items-start gap-1.5 text-body-sm text-secondary" data-testid="license-offline-note">
+              <ServerIcon size={12} className="mt-0.5 shrink-0 text-teal" />
+              <span>
+                <Trans>
+                  This is an offline license. It is never re-validated against the license server, so
+                  it keeps working with no outbound connection — only its expiry ends it.
                 </Trans>
               </span>
             </div>

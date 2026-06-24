@@ -183,9 +183,35 @@ immediately rather than waiting out the grace period.
 
 The last-known-good status is persisted to the cache file
 (`PROXYTRACE_LICENSE_CACHE_PATH`) so that a restart during an outage does not reset the grace
-window. For genuinely air-gapped deployments, expect to operate within the grace period and
-plan periodic, controlled connectivity to refresh the license, or contact sales about
-offline licensing arrangements.
+window. The grace window above applies to a **normal** license that simply cannot reach the
+server. For a permanently disconnected install, ask sales for an **offline-only license**
+(below) instead of operating within the grace period.
+
+### Offline-only licenses
+
+For genuinely air-gapped installs, Proxytrace supports an **offline-only license**: a key that
+is **never** checked against the license server, so it needs no outbound connectivity at all.
+Ask sales for one (see [Where to buy](#where-to-buy)) — it activates exactly like a normal key
+(setup wizard, **Settings → License**, or `PROXYTRACE_LICENSE`).
+
+How it differs from a normal key:
+
+- **No server contact, ever.** The periodic 24-hour check and the offline grace window do not
+  apply — an offline key does not degrade just because there is no network. The **Settings →
+  License** page shows an "offline license" note and hides **Re-check now** (there is nothing to
+  ask the server).
+- **Expiry is the only thing that ends it.** With no server check, the key works until its
+  built-in expiry date, then downgrades to Free. Offline keys are capped at **365 days** and are
+  typically issued for shorter — plan to obtain a fresh key before the current one expires.
+- **It cannot be revoked.** Because the install never calls home, a leaked offline key keeps
+  working until it expires, and key rotation does not retire it early. Treat it as a sensitive
+  bearer credential, and prefer the shortest lifetime that fits your renewal cadence.
+
+::: tip Online vs offline
+A normal (online) key is the default and is preferable when the install has even occasional
+connectivity — it can be revoked and re-issued, and it picks up entitlement changes. Choose an
+offline-only key only for installs that will never reach `https://license.proxytrace.dev`.
+:::
 
 ## Where to buy
 

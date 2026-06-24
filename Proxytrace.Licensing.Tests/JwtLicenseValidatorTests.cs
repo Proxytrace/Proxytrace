@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AwesomeAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Licensing.Exceptions;
@@ -125,5 +126,62 @@ public sealed class JwtLicenseValidatorTests
         var snapshot = CreateValidator().Validate(jwt);
 
         snapshot.Limits[LicenseLimit.MaxUsers].Should().Be(50);
+    }
+
+    [TestMethod]
+    public void Validate_OfflineClaimTrue_SnapshotIsOffline()
+    {
+        var jwt = factory.CreateJwt(tier: "Enterprise", offline: true);
+
+        var snapshot = CreateValidator().Validate(jwt);
+
+        snapshot.Offline.Should().BeTrue();
+        snapshot.Tier.Should().Be(LicenseTier.Enterprise);
+        snapshot.Status.Should().Be(LicenseStatus.Active);
+    }
+
+    [TestMethod]
+    public void Validate_NoOfflineClaim_SnapshotIsOnline()
+    {
+        // A normal mint omits the claim entirely; that must read as online (not offline).
+        var jwt = factory.CreateJwt(tier: "Enterprise");
+
+        var snapshot = CreateValidator().Validate(jwt);
+
+        snapshot.Offline.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void Validate_OfflineClaimFalse_SnapshotIsOnline()
+    {
+        // Defensive: the server never emits offline:false, but the client must not break on it.
+        var jwt = factory.CreateJwt(tier: "Enterprise", offline: false);
+
+        var snapshot = CreateValidator().Validate(jwt);
+
+        snapshot.Offline.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void Validate_OfflineClaimJsonString_TreatedAsOnline()
+    {
+        // The contract is "JSON boolean true" matched by type — a quoted string "true" is NOT a
+        // boolean, so it must read as online. This pins the "do not string-match" requirement.
+        var jwt = factory.CreateJwt(tier: "Enterprise", offlineRaw: ("true", ClaimValueTypes.String));
+
+        var snapshot = CreateValidator().Validate(jwt);
+
+        snapshot.Offline.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void Validate_OfflineClaimNumber_TreatedAsOnline()
+    {
+        // A numeric (or any non-boolean) offline claim must not flip the install offline.
+        var jwt = factory.CreateJwt(tier: "Enterprise", offlineRaw: ("1", ClaimValueTypes.Integer));
+
+        var snapshot = CreateValidator().Validate(jwt);
+
+        snapshot.Offline.Should().BeFalse();
     }
 }
