@@ -60,8 +60,8 @@ public class EvaluatorTestBenchController : ControllerBase
             Conversation: testCase.Input.Messages
                 .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), m.GetText()))
                 .ToArray(),
-            ExpectedResponse: testCase.ExpectedOutput.GetText(),
-            ActualResponse: latest.ActualResponse.GetText(),
+            ExpectedResponse: testCase.ExpectedOutput.GetDisplayText(),
+            ActualResponse: latest.ActualResponse.GetDisplayText(),
             LoggedEvaluation: logged is null
                 ? null
                 : new EvaluationResultDto(

@@ -1059,6 +1059,9 @@ msgstr "Cancel"
 msgid "Cancel turn"
 msgstr "Cancel turn"
 
+msgid "Cancel validation"
+msgstr "Cancel validation"
+
 msgid "Cancelled"
 msgstr "Cancelled"
 
@@ -3409,8 +3412,14 @@ msgstr "Reindex started"
 msgid "Reindexing"
 msgstr "Reindexing"
 
+msgid "Reject"
+msgstr "Reject"
+
 msgid "Reject (error)"
 msgstr "Reject (error)"
+
+msgid "Reject theory"
+msgstr "Reject theory"
 
 msgid "Rejected"
 msgstr "Rejected"
@@ -3923,6 +3932,9 @@ msgstr "significant"
 msgid "sk-…"
 msgstr "sk-…"
 
+msgid "Skipped"
+msgstr "Skipped"
+
 msgid "SMTP host"
 msgstr "SMTP host"
 
@@ -4307,6 +4319,9 @@ msgstr "This stops future runs. Existing runs it produced are kept."
 
 msgid "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
 msgstr "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
+
+msgid "This theory was dismissed without running an A/B validation."
+msgstr "This theory was dismissed without running an A/B validation."
 
 msgid "This trace has no response and cannot be promoted."
 msgstr "This trace has no response and cannot be promoted."

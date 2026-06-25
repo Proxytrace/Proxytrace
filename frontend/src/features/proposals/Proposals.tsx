@@ -15,6 +15,7 @@ import { useTheories } from './hooks/useTheories';
 import { useSuiteNames } from './hooks/useSuiteNames';
 import { useSetProposalStatus } from './hooks/useSetProposalStatus';
 import { useResetTheory } from './hooks/useResetTheory';
+import { useRejectTheory } from './hooks/useRejectTheory';
 import { ProposalStatus, TheoryStatus } from '../../api/models';
 import { BOARD_COLUMNS, boardStats, groupByColumn } from './theoryBoard';
 
@@ -29,6 +30,7 @@ export default function Proposals() {
   const suiteName = useSuiteNames();
   const setStatus = useSetProposalStatus();
   const resetTheory = useResetTheory();
+  const rejectTheory = useRejectTheory();
 
   // The open theory drawer is encoded in ?id= so it survives refresh and links.
   const [selectedId, setSelectedId] = useSelectedId();
@@ -123,6 +125,8 @@ export default function Proposals() {
                           onOpen={() => setSelectedId(theory.id)}
                           onPromote={() => { if (theory.resultingProposalId) setStatus.mutate({ id: theory.resultingProposalId, status: ProposalStatus.Accepted }); }}
                           isPromoting={setStatus.isPending && setStatus.variables?.id === theory.resultingProposalId && setStatus.variables?.status === ProposalStatus.Accepted}
+                          onReject={() => rejectTheory.mutate(theory.id)}
+                          isRejecting={rejectTheory.isPending && rejectTheory.variables === theory.id}
                         />
                       ))}
               </TheoryColumn>
@@ -138,8 +142,10 @@ export default function Proposals() {
           suiteName={suiteName(selectedTheory.suiteId)}
           onSetStatus={(status) => { if (selectedProposal) setStatus.mutate({ id: selectedProposal.id, status }); }}
           onReset={() => resetTheory.mutate(selectedTheory.id)}
+          onReject={() => rejectTheory.mutate(selectedTheory.id)}
           actionPending={setStatus.isPending}
           resetPending={resetTheory.isPending}
+          rejectPending={rejectTheory.isPending}
           onClose={() => setSelectedId(null)}
         />
       )}

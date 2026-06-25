@@ -7,4 +7,5 @@ export const theoriesApi = {
   get: (id: string, opts?: RequestOptions) => api.get<TheoryDto>(`/api/theories/${id}`, opts),
   submit: (request: SubmitTheoryRequest) => api.post<TheoryDto>('/api/theories', request),
   reset: (id: string) => api.post<TheoryDto>(`/api/theories/${id}/reset`, {}),
+  reject: (id: string) => api.post<TheoryDto>(`/api/theories/${id}/reject`, {}),
 };

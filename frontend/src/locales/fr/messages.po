@@ -1059,6 +1059,9 @@ msgstr "Annuler"
 msgid "Cancel turn"
 msgstr "Annuler le tour"
 
+msgid "Cancel validation"
+msgstr "Annuler la validation"
+
 msgid "Cancelled"
 msgstr "Annulé"
 
@@ -3409,8 +3412,14 @@ msgstr "Réindexation commencée"
 msgid "Reindexing"
 msgstr "Réindexation"
 
+msgid "Reject"
+msgstr "Rejeter"
+
 msgid "Reject (error)"
 msgstr "Rejeter (erreur)"
+
+msgid "Reject theory"
+msgstr "Rejeter la Theory"
 
 msgid "Rejected"
 msgstr "Rejeté"
@@ -3923,6 +3932,9 @@ msgstr "significatif"
 msgid "sk-…"
 msgstr "sk-…"
 
+msgid "Skipped"
+msgstr "Ignoré"
+
 msgid "SMTP host"
 msgstr "Hôte SMTP"
 
@@ -4307,6 +4319,9 @@ msgstr "Cela arrête les futurs Runs. Les Runs existants qu’il a produits sont
 
 msgid "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
 msgstr "Cela arrête les futurs Runs. Les Runs existants qu’il a produits sont conservés. Cette action est irréversible."
+
+msgid "This theory was dismissed without running an A/B validation."
+msgstr "Cette Theory a été rejetée sans exécuter de validation A/B."
 
 msgid "This trace has no response and cannot be promoted."
 msgstr "Ce Trace n’a pas de réponse et ne peut pas être promu."

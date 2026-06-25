@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { I18n } from '@lingui/core';
-import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon } from '../../../components/icons';
+import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon, StopIcon, XIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { OptimizationProposalDto, TheoryDto } from '../../../api/models';
 import { ProposalStatus, TheoryStatus } from '../../../api/models';
@@ -23,12 +23,14 @@ interface Props {
   suiteName: string | undefined;
   onSetStatus: (status: ProposalStatus) => void;
   onReset: () => void;
+  onReject: () => void;
   actionPending: boolean;
   resetPending: boolean;
+  rejectPending: boolean;
 }
 
 /** The detail drawer body: the theory's lifecycle as a top-to-bottom decision flow. */
-export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending }: Props) {
+export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset, onReject, actionPending, resetPending, rejectPending }: Props) {
   const stages = buildDecisionFlow(theory, proposal);
 
   return (
@@ -48,8 +50,10 @@ export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset
             suiteName={suiteName}
             onSetStatus={onSetStatus}
             onReset={onReset}
+            onReject={onReject}
             actionPending={actionPending}
             resetPending={resetPending}
+            rejectPending={rejectPending}
           />
         </FlowStep>
       ))}
@@ -58,7 +62,7 @@ export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset
 }
 
 function StageBody({
-  stageKey, theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending,
+  stageKey, theory, proposal, suiteName, onSetStatus, onReset, onReject, actionPending, resetPending, rejectPending,
 }: { stageKey: FlowStageKey } & Props) {
   const { t, i18n } = useLingui();
   const sourceLabel = i18n._(THEORY_SOURCE_LABEL[theory.source]);
@@ -101,8 +105,10 @@ function StageBody({
           proposal={proposal}
           onSetStatus={onSetStatus}
           onReset={onReset}
+          onReject={onReject}
           actionPending={actionPending}
           resetPending={resetPending}
+          rejectPending={rejectPending}
         />
       );
   }
@@ -186,14 +192,16 @@ function ProposalBody({ theory, proposal }: { theory: TheoryDto; proposal: Optim
 }
 
 function OutcomeBody({
-  theory, proposal, onSetStatus, onReset, actionPending, resetPending,
+  theory, proposal, onSetStatus, onReset, onReject, actionPending, resetPending, rejectPending,
 }: {
   theory: TheoryDto;
   proposal: OptimizationProposalDto | null;
   onSetStatus: (s: ProposalStatus) => void;
   onReset: () => void;
+  onReject: () => void;
   actionPending: boolean;
   resetPending: boolean;
+  rejectPending: boolean;
 }) {
   const { i18n } = useLingui();
   const context = outcomeContext(theory, proposal, i18n);
@@ -204,11 +212,27 @@ function OutcomeBody({
   const canReset = terminal
     && proposal?.status !== ProposalStatus.Accepted
     && proposal?.status !== ProposalStatus.Adopted;
+  // A Proposed theory can be rejected without ever running A/B; a Validating one can be cancelled
+  // mid-flight. Both land in Invalidated.
+  const isValidating = theory.status === TheoryStatus.Validating;
+  const canDismiss = theory.status === TheoryStatus.Proposed || isValidating;
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-body-sm text-secondary m-0">{context}</p>
       {proposal && <HandoffPanel proposal={proposal} />}
+      {canDismiss && (
+        <div className="flex">
+          <Button
+            variant="ghost" size="sm" loading={rejectPending}
+            leftIcon={isValidating ? <StopIcon size={12} /> : <XIcon size={12} />}
+            onClick={onReject}
+            data-testid="flow-reject-btn"
+          >
+            {isValidating ? <Trans>Cancel validation</Trans> : <Trans>Reject theory</Trans>}
+          </Button>
+        </div>
+      )}
       {reviewable && (
         <div className="flex gap-2">
           <Button
@@ -246,7 +270,12 @@ function OutcomeBody({
 
 function outcomeContext(theory: TheoryDto, proposal: OptimizationProposalDto | null, i18n: I18n): React.ReactNode {
   if (theory.status === TheoryStatus.Invalidated) {
-    return <Trans>The A/B test found no improvement, so the theory was rejected automatically — no review needed.</Trans>;
+    // A manual dismissal carries no A/B metrics; an A/B-disproven theory does. Don't claim the A/B
+    // test ran when a user dismissed the theory before (or instead of) validation.
+    const hadAbTest = theory.pValue != null || theory.baselinePassRate != null;
+    return hadAbTest
+      ? <Trans>The A/B test found no improvement, so the theory was rejected automatically — no review needed.</Trans>
+      : <Trans>This theory was dismissed without running an A/B validation.</Trans>;
   }
   if (theory.status === TheoryStatus.Validated) {
     if (proposal?.status === ProposalStatus.Accepted) return <Trans>Promoted — awaiting adoption in your agent.</Trans>;

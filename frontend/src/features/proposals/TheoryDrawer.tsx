@@ -13,8 +13,10 @@ interface Props {
   suiteName: string | undefined;
   onSetStatus: (status: ProposalStatus) => void;
   onReset: () => void;
+  onReject: () => void;
   actionPending: boolean;
   resetPending: boolean;
+  rejectPending: boolean;
   onClose: () => void;
 }
 
@@ -23,9 +25,9 @@ interface Props {
  * as a decision flow (evidence → theory → A/B validation → proposal → outcome); once the A/B
  * test validates it, the body leads with the concrete change and its effective gain instead.
  */
-export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending, onClose }: Props) {
+export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, onReset, onReject, actionPending, resetPending, rejectPending, onClose }: Props) {
   const { i18n } = useLingui();
-  const body = { theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending };
+  const body = { theory, proposal, suiteName, onSetStatus, onReset, onReject, actionPending, resetPending, rejectPending };
   return (
     <Drawer
       title={`${theoryShortId(theory.id)} · ${i18n._(KIND_META[theory.kind].label)}`}

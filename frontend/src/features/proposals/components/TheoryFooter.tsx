@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { ArrowUpRightIcon } from '../../../components/icons';
+import { ArrowUpRightIcon, StopIcon, XIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { TheoryDto } from '../../../api/models';
 import { TheoryStatus } from '../../../api/models';
@@ -12,10 +12,12 @@ interface Props {
   theory: TheoryDto;
   onPromote: () => void;
   isPromoting: boolean;
+  onReject: () => void;
+  isRejecting: boolean;
 }
 
 /** Status-specific bottom row of a {@link TheoryCard}: agent, A/B progress, transition, or promote. */
-export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
+export function TheoryFooter({ theory, onPromote, isPromoting, onReject, isRejecting }: Props) {
   const { t, i18n } = useLingui();
   // agentColor is a runtime, hash-derived color → inline style is the sanctioned use (DESIGN §6).
   const aColor = agentColor(theory.agentId);
@@ -33,7 +35,18 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
     return (
       <div className="flex items-center gap-2">
         {agentPill}
-        <span className="ml-auto text-caption text-muted"><Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])}</Trans></span>
+        <span className="min-w-0 truncate text-caption text-muted"><Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])}</Trans></span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto shrink-0"
+          loading={isRejecting}
+          leftIcon={<XIcon size={12} />}
+          onClick={(e) => { e.stopPropagation(); onReject(); }}
+          data-testid={`theory-reject-btn-${theory.id}`}
+        >
+          <Trans>Reject</Trans>
+        </Button>
       </div>
     );
   }
@@ -48,6 +61,17 @@ export function TheoryFooter({ theory, onPromote, isPromoting }: Props) {
           </span>
         </div>
         <div className="h-[3px] rounded-full overflow-hidden bg-card-2 indeterminate-bar" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-end"
+          loading={isRejecting}
+          leftIcon={<StopIcon size={12} />}
+          onClick={(e) => { e.stopPropagation(); onReject(); }}
+          data-testid={`theory-cancel-btn-${theory.id}`}
+        >
+          <Trans>Cancel validation</Trans>
+        </Button>
       </div>
     );
   }

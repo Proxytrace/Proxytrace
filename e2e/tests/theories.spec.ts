@@ -75,6 +75,46 @@ test.describe('Optimization Theories', () => {
     expect(res.status()).toBe(404);
   });
 
+  test('a Proposed theory can be rejected (skipping A/B) via the API', async () => {
+    // Seeded theories bypass the validation queue, so the theory stays Proposed deterministically.
+    const theory = await api.seedTheory({ agentId, status: 'Proposed', rationale: 'to reject' });
+    expect(theory.status).toBe('Proposed');
+
+    const rejected = await api.rejectTheory(theory.id);
+    expect(rejected.status).toBe('Invalidated');
+
+    // Already terminal → rejecting again is a 409.
+    const again = await api.theoryRejectResponse(theory.id);
+    expect(again.status()).toBe(409);
+  });
+
+  test('rejecting a Validating theory cancels it to Invalidated', async () => {
+    const theory = await api.seedTheory({ agentId, status: 'Validating', rationale: 'cancel me' });
+    expect(theory.status).toBe('Validating');
+
+    const rejected = await api.rejectTheory(theory.id);
+    expect(rejected.status).toBe('Invalidated');
+  });
+
+  test('rejecting a Proposed theory from the board removes its reject action', async ({ page }) => {
+    const theory = await api.seedTheory({
+      agentId,
+      status: 'Proposed',
+      rationale: `dismiss from board ${Date.now()}`,
+    });
+
+    await page.goto('/proposals', { waitUntil: 'load' });
+    await expect(page.getByTestId(`theory-card-${theory.id}`)).toBeVisible({ timeout: 10_000 });
+
+    await page.getByTestId(`theory-reject-btn-${theory.id}`).click();
+
+    // Once rejected the theory is Invalidated, so its Proposed-only reject action disappears while
+    // the card itself stays on the board (now in the Rejected column).
+    await expect(page.getByTestId(`theory-reject-btn-${theory.id}`)).toBeHidden({ timeout: 10_000 });
+    await expect(page.getByTestId(`theory-card-${theory.id}`)).toBeVisible();
+    expect((await api.getTheory(theory.id)).status).toBe('Invalidated');
+  });
+
   test('submitted theory appears as a card on the theories board', async ({ page }) => {
     const theory = await api.submitTheory({
       agentId,

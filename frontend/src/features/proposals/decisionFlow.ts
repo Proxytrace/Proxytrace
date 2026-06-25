@@ -33,6 +33,9 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
   const invalidated = status === TheoryStatus.Invalidated;
   const validating = status === TheoryStatus.Validating;
   const hasEvidence = theory.evidenceTestRunIds.length > 0;
+  // A manually-dismissed theory lands in Invalidated without ever running an A/B test, so it carries
+  // no metrics — distinguish it from a theory the A/B test actually disproved.
+  const hadAbTest = theory.pValue != null || theory.baselinePassRate != null;
 
   const abTest: FlowStage = {
     key: 'abTest',
@@ -40,7 +43,9 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
     ...(validated
       ? { state: 'complete' as const, statusLabel: msg`Improvement confirmed` }
       : invalidated
-        ? { state: 'rejected' as const, statusLabel: msg`No improvement` }
+        ? (hadAbTest
+            ? { state: 'rejected' as const, statusLabel: msg`No improvement` }
+            : { state: 'pending' as const, statusLabel: msg`Skipped` })
         : validating
           ? { state: 'current' as const, statusLabel: msg`In flight` }
           : { state: 'pending' as const, statusLabel: msg`Not yet tested` }),
@@ -56,7 +61,7 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
         : { state: 'pending' as const, statusLabel: msg`Pending validation` }),
   };
 
-  const outcome: FlowStage = { key: 'outcome', title: 'Outcome', ...outcomeState(status, proposal) };
+  const outcome: FlowStage = { key: 'outcome', title: 'Outcome', ...outcomeState(theory, proposal) };
 
   return [
     {
@@ -74,9 +79,14 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
   ];
 }
 
-function outcomeState(status: TheoryStatus, proposal: OptimizationProposalDto | null): { state: FlowState; statusLabel: MessageDescriptor } {
+function outcomeState(theory: TheoryDto, proposal: OptimizationProposalDto | null): { state: FlowState; statusLabel: MessageDescriptor } {
+  const { status } = theory;
   if (status === TheoryStatus.Invalidated) {
-    return { state: 'rejected', statusLabel: msg`Auto-rejected by A/B` };
+    // A theory dismissed by the user (no A/B metrics) wasn't auto-rejected by the test — say so.
+    const hadAbTest = theory.pValue != null || theory.baselinePassRate != null;
+    return hadAbTest
+      ? { state: 'rejected', statusLabel: msg`Auto-rejected by A/B` }
+      : { state: 'rejected', statusLabel: msg`Dismissed` };
   }
   if (status === TheoryStatus.Validated) {
     switch (proposal?.status) {

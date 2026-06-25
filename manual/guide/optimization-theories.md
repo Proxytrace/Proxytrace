@@ -89,6 +89,24 @@ theory is still *Validating*, and it stays on **rejected** theories too, so you 
 worse run that caused the rejection. Following it opens the [runs](/guide/running-tests) view with
 that A/B run revealed and selected.
 
+## Dismissing a theory
+
+You don't have to wait for the A/B test on every theory. Two actions let you take a theory out of
+the pipeline yourself — both on the card and in its decision flow:
+
+- **Reject** (on a *Proposed* theory) — dismisses it **without running A/B validation**. Use it for
+  hypotheses you've already judged not worth a validation run.
+- **Cancel validation** (on a *Validating* theory) — **aborts the in-flight A/B run** and dismisses
+  the theory. Use it to stop a run you no longer need.
+
+Either action moves the theory to **Rejected**. Because it was never measured, the card shows that
+it was "dismissed without running an A/B validation" rather than a pass-rate verdict — and you can
+still **Reset to Proposed** later to validate it after all.
+
+Theories validate **one at a time**: only a single A/B run is ever in flight, and the rest wait in
+the queue. Rejecting queued theories or cancelling the running one is how you keep that backlog under
+control.
+
 ## Re-validating a theory
 
 A **Validated** or **Rejected** theory's drawer carries a **Reset to Proposed** button. It

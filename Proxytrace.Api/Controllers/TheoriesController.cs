@@ -217,6 +217,31 @@ public class TheoriesController : ControllerBase
     }
 
     /// <summary>
+    /// Dismisses an active theory at the user's request. A Proposed theory is rejected without running
+    /// A/B validation; a Validating theory has its in-flight A/B run cancelled. Either way it lands in
+    /// Invalidated. Returns 409 when the theory is already terminal.
+    /// </summary>
+    [HttpPost("{id:guid}/reject")]
+    public async Task<ActionResult<TheoryDto>> Reject(Guid id, CancellationToken cancellationToken)
+    {
+        var existing = await repository.FindAsync(id, cancellationToken);
+        if (existing is null)
+            return NotFound($"Theory {id} does not exist.");
+
+        if (!await accessGuard.CanAccessProjectAsync(existing.Agent.Project.Id, cancellationToken))
+            return NotFound($"Theory {id} does not exist.");
+
+        var result = await validationService.RejectAsync(id, cancellationToken);
+        return (result.Outcome, result.Theory) switch
+        {
+            (TheoryRejectOutcome.Rejected, { } rejected) => Ok(mapper.ToDto(rejected)),
+            (TheoryRejectOutcome.NotFound, _) => NotFound($"Theory {id} does not exist."),
+            (TheoryRejectOutcome.NotActive, _) => Conflict("Only a Proposed or Validating theory can be rejected."),
+            _ => StatusCode(StatusCodes.Status500InternalServerError),
+        };
+    }
+
+    /// <summary>
     /// Test-only: seeds a theory directly in a chosen lifecycle state, bypassing the asynchronous
     /// validation pipeline so board states are deterministic in tests.
     /// </summary>

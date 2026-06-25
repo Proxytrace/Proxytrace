@@ -9,6 +9,24 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Cancel or reject an optimization theory.** On the **Optimization Theories** board you can now
+  dismiss a theory you don't want to pursue: **Reject** a *Proposed* theory to skip A/B validation
+  entirely, or **Cancel validation** on a *Validating* theory to abort its in-flight A/B run. Either
+  way the theory moves to *Rejected* and can still be reset later. Validation already runs **one
+  theory at a time**, so these controls let you clear the queue and stop runs you no longer need.
+
+### Fixed
+
+- **Global search again shows recent agents, suites, and evaluators.** The title-bar search's default
+  (empty-query) list was being crowded out by traces on busy projects, leaving only recent traces.
+  Each entity type is now surfaced independently, so recent agents, test suites, evaluators, and
+  traces all appear again.
+- **Evaluator playground shows tool-call responses.** When a selected past evaluation's response was a
+  tool call with no text, the **reference** showed "—" and the **candidate** was blank (the scoring
+  itself was unaffected). Both now render the tool call (e.g. `[tool call] get_weather({…})`).
+
 ## [1.2.0] - 2026-06-24
 
 ### Added

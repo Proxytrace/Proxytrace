@@ -412,6 +412,18 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
+  // POST /api/theories/{id}/reject — dismisses a Proposed theory (skipping A/B) or cancels a
+  // Validating one; both land in Invalidated. Raw-response variant so specs can assert status codes.
+  theoryRejectResponse(id: string) {
+    return this.request.post(`/api/theories/${id}/reject`, { headers: this.headers() });
+  }
+
+  async rejectTheory(id: string): Promise<TheoryDto> {
+    const res = await this.theoryRejectResponse(id);
+    if (!res.ok()) throw new Error(`reject theory failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
   // ── Providers ──────────────────────────────────────────────────────────────
   // /api/providers/overview returns each provider with embedded model endpoints + keys. We
   // flatten it to the {id,name,endpoints[]} shape the specs consume.
