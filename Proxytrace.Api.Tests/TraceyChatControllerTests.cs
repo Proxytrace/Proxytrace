@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Application.Auth;
+using Proxytrace.Application.Ingestion;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
@@ -20,16 +21,16 @@ namespace Proxytrace.Api.Tests;
 public sealed class TraceyChatControllerTests : BaseTest<Module>
 {
     [TestMethod]
-    public async Task Forward_WritesUpstreamResponse_AndPublishesIngestion()
+    public async Task Forward_WritesUpstreamResponse_AndIngestsInProcess()
     {
         var upstreamBody = FakeHttpMessageHandler.BuildOpenAiResponse("Hello from Tracey");
-        var ingestion = Substitute.For<IIngestionStream>();
+        var ingestion = Substitute.For<IIngestionExecutor>();
 
         IServiceProvider services = GetServices(builder =>
         {
             builder.Register(_ => new FakeHttpClientFactory(upstreamBody))
                 .As<IHttpClientFactory>().SingleInstance();
-            builder.RegisterInstance(ingestion).As<IIngestionStream>();
+            builder.RegisterInstance(ingestion).As<IIngestionExecutor>();
         });
 
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>()
@@ -40,7 +41,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
             """{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}]}""");
 
         responseBody.Should().Be(upstreamBody);
-        await ingestion.Received(1).PublishAsync(
+        await ingestion.Received(1).IngestAsync(
             Arg.Is<IngestMessage>(m =>
                 m.ProjectId == project.Id
                 && m.ProviderId == project.SystemEndpoint.Provider.Id
@@ -53,11 +54,11 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
     public async Task Forward_UnknownProject_Returns404()
     {
         IServiceProvider services = GetServices(builder =>
-            builder.RegisterInstance(Substitute.For<IIngestionStream>()).As<IIngestionStream>());
+            builder.RegisterInstance(Substitute.For<IIngestionExecutor>()).As<IIngestionExecutor>());
 
         var controller = new TraceyChatController(
             services.GetRequiredService<IHttpClientFactory>(),
-            services.GetRequiredService<IIngestionStream>(),
+            services.GetRequiredService<IIngestionExecutor>(),
             services.GetRequiredService<IRepository<IProject>>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             AdminUserAccessor(services),
@@ -76,12 +77,12 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task Forward_NonMember_Returns403()
     {
-        var ingestion = Substitute.For<IIngestionStream>();
+        var ingestion = Substitute.For<IIngestionExecutor>();
         IServiceProvider services = GetServices(builder =>
         {
             builder.Register(_ => new FakeHttpClientFactory(FakeHttpMessageHandler.BuildOpenAiResponse("x")))
                 .As<IHttpClientFactory>().SingleInstance();
-            builder.RegisterInstance(ingestion).As<IIngestionStream>();
+            builder.RegisterInstance(ingestion).As<IIngestionExecutor>();
         });
 
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>()
@@ -95,7 +96,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
 
         var controller = new TraceyChatController(
             services.GetRequiredService<IHttpClientFactory>(),
-            services.GetRequiredService<IIngestionStream>(),
+            services.GetRequiredService<IIngestionExecutor>(),
             services.GetRequiredService<IRepository<IProject>>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             accessor,
@@ -109,7 +110,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
         await controller.Forward(project.Id, "chat/completions", CancellationToken);
 
         http.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
-        await ingestion.DidNotReceive().PublishAsync(Arg.Any<IngestMessage>(), Arg.Any<CancellationToken>());
+        await ingestion.DidNotReceive().IngestAsync(Arg.Any<IngestMessage>(), Arg.Any<CancellationToken>());
     }
 
     private static ICurrentUserAccessor AdminUserAccessor(IServiceProvider services)
@@ -126,7 +127,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
     {
         var controller = new TraceyChatController(
             services.GetRequiredService<IHttpClientFactory>(),
-            services.GetRequiredService<IIngestionStream>(),
+            services.GetRequiredService<IIngestionExecutor>(),
             services.GetRequiredService<IRepository<IProject>>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             currentUser,

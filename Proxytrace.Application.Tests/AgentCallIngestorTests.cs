@@ -3,6 +3,7 @@ using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Ingestion.Internal;
 using Proxytrace.Messaging;
 using Proxytrace.Domain;
@@ -196,6 +197,34 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         {
             await worker.StopAsync(CancellationToken);
         }
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+        calls.Should().HaveCount(1);
+        calls[0].Endpoint.Provider.Id.Should().Be(provider.Id);
+    }
+
+    [TestMethod]
+    public async Task InProcessExecutor_PersistsCallDirectly_WithoutTheStream()
+    {
+        // The in-process path the Tracey chat passthrough uses: persist a captured call directly,
+        // without publishing to the message transport — so it works even when Redis/the stream is
+        // unavailable (the regression that silently dropped every in-process Tracey trace).
+        var services = GetServices();
+        var executor = services.GetRequiredService<IIngestionExecutor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await executor.IngestAsync(
+            new IngestMessage(
+                ProviderId: provider.Id,
+                ProjectId: project.Id,
+                RequestBody: ChatTurn1RequestBody,
+                ResponseBody: ChatTurn1ResponseBody,
+                DurationMs: 100,
+                HttpStatus: (int)HttpStatusCode.OK,
+                SessionId: null),
+            CancellationToken);
 
         var calls = (await callRepo.GetFilteredAsync(
             new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;

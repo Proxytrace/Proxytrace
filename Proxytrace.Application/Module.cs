@@ -286,6 +286,13 @@ public sealed class Module : Autofac.Module
             .SingleInstance()
             .IfNotRegistered(typeof(AgentCallProcessor));
 
+        // Shared in-process ingestion core. Used by the stream consumer per envelope AND directly by
+        // same-process producers (Tracey) so they don't round-trip through the Redis transport.
+        builder.RegisterType<IngestionExecutor>()
+            .As<IIngestionExecutor>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(IngestionExecutor));
+
         builder.RegisterType<AgentCallIngestionWorker>()
             .AsSelf()
             .SingleInstance()

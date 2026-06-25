@@ -12,6 +12,7 @@ import { DistributionBar } from './DistributionBar';
 export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live?: LiveProgress }) {
   const rows = buildEvaluatorHeatmap(group, live);
   const runs = group.runs;
+  const multi = runs.length > 1;
   const hasJudgements = rows.some(r => r.cells.some(c => c.total > 0));
   if (rows.length === 0 || !hasJudgements) return null;
 
@@ -38,23 +39,28 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
           ))}
 
           {/* Rows */}
-          {rows.map((row, i) => (
-            <Row key={row.evaluator.id} divider={i > 0}>
-              <div className="px-3 py-2 min-w-0 flex items-center gap-2 text-body-sm font-semibold">
-                <span className="w-[7px] h-[7px] rounded-sm shrink-0" style={{ background: EVALUATOR_KIND_COLOR[row.evaluator.kind] }} />
-                <span className="truncate">{row.evaluator.name}</span>
-              </div>
-              {row.cells.map(cell => (
-                <div
-                  key={cell.run.id}
-                  data-testid={`evaluator-heatmap-cell-${row.evaluator.id}-${cell.run.id}`}
-                  className="px-3 py-2 flex flex-col justify-center"
-                >
-                  <DistributionBar cell={cell} />
+          {rows.map((row, i) => {
+            // Highlight the row's top scorer, but only when models actually diverge on this evaluator.
+            const rates = row.cells.map(c => c.passRate).filter((r): r is number => r !== null);
+            const lead = multi && new Set(rates).size > 1 ? Math.max(...rates) : null;
+            return (
+              <Row key={row.evaluator.id} divider={i > 0}>
+                <div className="px-3 py-2 min-w-0 flex items-center gap-2 text-body-sm font-semibold">
+                  <span className="w-[7px] h-[7px] rounded-sm shrink-0" style={{ background: EVALUATOR_KIND_COLOR[row.evaluator.kind] }} />
+                  <span className="truncate">{row.evaluator.name}</span>
                 </div>
-              ))}
-            </Row>
-          ))}
+                {row.cells.map(cell => (
+                  <div
+                    key={cell.run.id}
+                    data-testid={`evaluator-heatmap-cell-${row.evaluator.id}-${cell.run.id}`}
+                    className="px-3 py-2 flex flex-col justify-center"
+                  >
+                    <DistributionBar cell={cell} leading={lead !== null && cell.passRate === lead} />
+                  </div>
+                ))}
+              </Row>
+            );
+          })}
         </div>
       </div>
     </Card>

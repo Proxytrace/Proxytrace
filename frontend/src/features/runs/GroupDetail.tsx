@@ -44,7 +44,7 @@ export function GroupDetail({ groupId, onDelete }: { groupId: string; onDelete: 
         cancelPending={cancelGroup.isPending}
       />
 
-      <PerformanceSummary runs={group.runs} />
+      <PerformanceSummary group={group} />
 
       <EvaluatorHeatmap group={group} live={live} />
 

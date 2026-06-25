@@ -19,6 +19,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Test-run model comparison, rebuilt around your production model.** A run's results now open with
+  the model you have **in production** (the agent's deployed endpoint) as the **baseline** — a
+  highlighted champion card carrying the headline pass rate plus duration, cost, and token totals.
+  Every other model is a **candidate**, read as deltas measured *against production*: pass-rate
+  points, faster/slower, and cheaper/pricier, coloured green when the candidate wins that metric and
+  red when it loses — so it's obvious at a glance whether a candidate is worth switching to. Three
+  **award medals** call out the highest pass rate, the fastest, and the cheapest model, and the
+  evaluator breakdown now highlights the leading model per evaluator. When a run doesn't include your
+  deployed model, the best performer stands in as the baseline. Deltas and medals still appear only
+  once the whole run group has finished.
 - **Tracey no longer cuts a reply short at a turn limit.** The assistant's per-turn tool-step cap and
   its "Step limit reached" notice have been removed, so a complex request that needs many tool steps
   now runs to completion instead of stopping early and asking you to continue. (A high internal
@@ -30,6 +40,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Tracey's own traces are captured reliably again.** Tracey runs inside the app, but her captured
+  calls were being routed through the same Redis message stream used to bridge the standalone
+  ingestion proxy — so whenever that stream was unavailable, every Tracey trace was silently dropped
+  (her replies still worked, but the trace link reported "still being captured" forever and nothing
+  showed in Traces). In-app captures now persist directly, with no dependency on the proxy's
+  transport.
 - **Test-run results stay readable with many evaluators.** The test-case matrix used to scroll inside
   its own card, shrinking to an unusable height when a run had lots of evaluators. The whole results
   column now scrolls as one unit, so the matrix keeps its full height.

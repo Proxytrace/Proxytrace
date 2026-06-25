@@ -102,17 +102,26 @@ offering the tools a case expects; if a tool is missing here, the model can't ca
 request is rebuilt on demand from the agent's current configuration, so it reflects what a
 re-run would send.
 
-### Per-model performance summary
+### Model comparison
 
-![The per-model performance summary comparing two models — pass rate, duration, cost, and tokens — with Fast / Cheap / Best winner badges.](/screenshots/runs/per-model.png)
+![The model comparison: an in-production champion card with its headline pass rate, a candidate card reading as green/red deltas against production, and award medals for the highest pass rate, fastest, and cheapest model.](/screenshots/runs/per-model.png)
 
-Every run — single-model and multi-model alike — includes a **per-model performance summary**
-below the matrix. It shows pass rate, average latency, and cost for each model in the run.
-The numbers update live while the run is in progress.
+Every run — single-model and multi-model alike — opens with a **model comparison** at the top
+of the results. The model you currently have **in production** (the agent's deployed endpoint)
+is the **baseline**: a highlighted champion card showing its headline pass rate plus duration,
+cost, and token totals.
 
-**Best / Fast / Cheap** winner badges and comparative coloring (highlighting which model won
-each metric) appear only once the entire run group has finished. During an active run the
-summary is visible but stays neutral — no model is crowned a winner until all results are in.
+Every other model in the run is a **candidate**, shown as a set of deltas measured *against
+production* — pass-rate points, faster or slower, and cheaper or pricier — coloured green when
+the candidate wins that metric and red when it loses. That makes it obvious at a glance whether a
+candidate is worth switching to. Beneath the cards, three **award medals** call out the **highest
+pass rate**, the **fastest**, and the **cheapest** model.
+
+The pass rates update live while a run is in progress, but the deltas and medals are conclusions,
+so they appear only once the entire run group has finished — during an active run the cards stay
+neutral and no model is crowned. When a run doesn't include your deployed model (a
+candidates-only comparison), the best performer stands in as the baseline, labelled **Baseline**
+rather than *In production*.
 
 ## What runs feed into
 

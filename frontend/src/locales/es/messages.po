@@ -227,6 +227,10 @@ msgstr "{0} evaluadores"
 msgid "{0} failed"
 msgstr "{0} fallidos"
 
+#. placeholder {0}: fmtDuration(ms)
+msgid "{0} faster"
+msgstr "{0} más rápido"
+
 #. placeholder {0}: proposal.kind
 #. placeholder {1}: proposal.agentName
 msgid "{0} for {1}"
@@ -305,6 +309,10 @@ msgstr "{0} aprobados"
 msgid "{0} pending"
 msgstr "{0} pendientes"
 
+#. placeholder {0}: points(delta.passPoints)
+msgid "{0} pt"
+msgstr "{0} pt"
+
 #. placeholder {0}: hits.length
 msgid "{0} recent"
 msgstr "{0} recientes"
@@ -316,6 +324,10 @@ msgstr "{0} ejecuciones · {range}"
 #. placeholder {0}: selected.size
 msgid "{0} selected"
 msgstr "{0} seleccionados"
+
+#. placeholder {0}: fmtDuration(-ms)
+msgid "{0} slower"
+msgstr "{0} más lento"
 
 #. placeholder {0}: Math.round(v)
 msgid "{0} t/s"
@@ -479,8 +491,17 @@ msgstr "{passed}/{total} aprobados · {failed} fallidos"
 msgid "{passPercent}% pass"
 msgstr "{passPercent}% aprobados"
 
+msgid "{passRate}% · {passed}/{total} pass"
+msgstr "{passRate}% · {passed}/{total} pasan"
+
 msgid "{pct}% cached"
 msgstr "{pct}% en caché"
+
+msgid "{pct}% cheaper"
+msgstr "{pct}% más barato"
+
+msgid "{pct}% pricier"
+msgstr "{pct}% más caro"
 
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# Proposal lista} other {# Proposals listas}}"
@@ -1020,6 +1041,9 @@ msgstr "Base"
 msgid "baseline"
 msgstr "baseline"
 
+msgid "Baseline"
+msgstr "Base"
+
 msgid "Benchmark what matters"
 msgstr "Evalúa lo que importa"
 
@@ -1031,9 +1055,6 @@ msgstr "Benchmarks"
 
 msgid "best"
 msgstr "mejor"
-
-msgid "Best"
-msgstr "Mejor"
 
 msgid "Boundary inputs, unusual conversations, rare tool combinations."
 msgstr "Entradas límite, conversaciones inusuales, combinaciones raras de Tools."
@@ -1065,6 +1086,9 @@ msgstr "Cancelar validación"
 msgid "Cancelled"
 msgstr "Cancelado"
 
+msgid "Candidate"
+msgstr "Candidato"
+
 msgid "Candidate edited — "
 msgstr "Candidato editado — "
 
@@ -1092,8 +1116,8 @@ msgstr "Casos"
 msgid "Change provider kind"
 msgstr "Cambiar tipo de Provider"
 
-msgid "Cheap"
-msgstr "Barato"
+msgid "Cheapest"
+msgstr "Más barato"
 
 msgid "Choose a tool or type a name…"
 msgstr "Elige una Tool o escribe un nombre…"
@@ -1847,8 +1871,8 @@ msgstr "Casos de fallo"
 msgid "Falls back to the environment-supplied license, or the Free tier."
 msgstr "Vuelve a la licencia proporcionada por el entorno, o al nivel Free."
 
-msgid "Fast"
-msgstr "Rápido"
+msgid "Fastest"
+msgstr "Más rápido"
 
 msgid "Filter agents by name…"
 msgstr "Filtrar Agents por nombre…"
@@ -1961,6 +1985,9 @@ msgstr "Ocultar traces de agentes de sistema"
 msgid "High"
 msgstr "Alto"
 
+msgid "Highest pass rate"
+msgstr "Mayor tasa de aprobación"
+
 msgid "History"
 msgstr "Historial"
 
@@ -2014,6 +2041,9 @@ msgstr "en {win}"
 
 msgid "In flight"
 msgstr "En curso"
+
+msgid "In production"
+msgstr "En producción"
 
 msgid "Index status"
 msgstr "Estado del índice"
@@ -3065,6 +3095,9 @@ msgstr "Aprobar"
 msgid "PASS"
 msgstr "APROBAR"
 
+msgid "pass rate"
+msgstr "tasa de aprobación"
+
 msgid "Pass rate"
 msgstr "Tasa de aprobación"
 
@@ -3601,6 +3634,9 @@ msgstr "Ejecutando <0>{0, plural, one {# caso de prueba} other {# casos de prueb
 msgid "Running A/B test…"
 msgstr "Ejecutando A/B test…"
 
+msgid "running…"
+msgstr "ejecutando…"
+
 msgid "Running…"
 msgstr "Ejecutando…"
 
@@ -3612,6 +3648,9 @@ msgstr "Ejecuciones"
 
 msgid "Runtime"
 msgstr "Tiempo de ejecución"
+
+msgid "same"
+msgstr "igual"
 
 msgid "Same version on both sides — nothing to compare."
 msgstr "La misma versión en ambos lados — no hay nada que comparar."
@@ -3958,6 +3997,9 @@ msgstr "Algo salió mal"
 
 msgid "Source"
 msgstr "Origen"
+
+msgid "Speed"
+msgstr "Velocidad"
 
 msgid "Split by model"
 msgstr "Dividir por modelo"
@@ -4686,11 +4728,14 @@ msgstr "viendo"
 msgid "Volume appears once traces are captured."
 msgstr "El volumen aparecerá una vez que se capturen Traces."
 
-msgid "vs best"
-msgstr "vs el mejor"
+msgid "vs baseline"
+msgstr "frente a la base"
 
 msgid "vs prev period"
 msgstr "vs periodo anterior"
+
+msgid "vs production"
+msgstr "frente a producción"
 
 msgid "Wait stopped"
 msgstr "Espera detenida"

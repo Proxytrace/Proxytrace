@@ -2,9 +2,14 @@ import { Trans } from '@lingui/react/macro';
 import type { HeatmapCell } from '../comparison';
 import { SCORE_BUCKETS, scoreBucketColor } from '../comparison';
 import { passRateColor } from '../results';
+import { cn } from '../../../lib/cn';
 
-/** Stacked score-distribution bar for one evaluator × one model, with judged count + pass rate. */
-export function DistributionBar({ cell }: { cell: HeatmapCell }) {
+/**
+ * Stacked score-distribution bar for one evaluator × one model, with judged count + pass rate.
+ * `leading` marks this model as the row's top scorer (in a multi-model comparison) — its pass rate
+ * is shown in success green so the strongest model per evaluator reads at a glance.
+ */
+export function DistributionBar({ cell, leading = false }: { cell: HeatmapCell; leading?: boolean }) {
   if (cell.total === 0) return <span className="text-body-sm text-muted italic"><Trans>pending</Trans></span>;
 
   return (
@@ -27,7 +32,10 @@ export function DistributionBar({ cell }: { cell: HeatmapCell }) {
       </div>
       <div className="flex justify-between text-caption text-muted">
         <span><Trans>{cell.total} judged</Trans></span>
-        <span className="mono font-bold" style={{ color: passRateColor(cell.passRate) }}>
+        <span
+          className={cn('mono font-bold', leading && 'text-success')}
+          style={leading ? undefined : { color: passRateColor(cell.passRate) }}
+        >
           {cell.passRate === null ? '—' : `${cell.passRate}%`}
         </span>
       </div>

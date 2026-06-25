@@ -227,6 +227,10 @@ msgstr "{0} evaluators"
 msgid "{0} failed"
 msgstr "{0} failed"
 
+#. placeholder {0}: fmtDuration(ms)
+msgid "{0} faster"
+msgstr "{0} faster"
+
 #. placeholder {0}: proposal.kind
 #. placeholder {1}: proposal.agentName
 msgid "{0} for {1}"
@@ -305,6 +309,10 @@ msgstr "{0} passed"
 msgid "{0} pending"
 msgstr "{0} pending"
 
+#. placeholder {0}: points(delta.passPoints)
+msgid "{0} pt"
+msgstr "{0} pt"
+
 #. placeholder {0}: hits.length
 msgid "{0} recent"
 msgstr "{0} recent"
@@ -316,6 +324,10 @@ msgstr "{0} runs · {range}"
 #. placeholder {0}: selected.size
 msgid "{0} selected"
 msgstr "{0} selected"
+
+#. placeholder {0}: fmtDuration(-ms)
+msgid "{0} slower"
+msgstr "{0} slower"
 
 #. placeholder {0}: Math.round(v)
 msgid "{0} t/s"
@@ -479,8 +491,17 @@ msgstr "{passed}/{total} passed · {failed} failed"
 msgid "{passPercent}% pass"
 msgstr "{passPercent}% pass"
 
+msgid "{passRate}% · {passed}/{total} pass"
+msgstr "{passRate}% · {passed}/{total} pass"
+
 msgid "{pct}% cached"
 msgstr "{pct}% cached"
+
+msgid "{pct}% cheaper"
+msgstr "{pct}% cheaper"
+
+msgid "{pct}% pricier"
+msgstr "{pct}% pricier"
 
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
@@ -1020,6 +1041,9 @@ msgstr "Base"
 msgid "baseline"
 msgstr "baseline"
 
+msgid "Baseline"
+msgstr "Baseline"
+
 msgid "Benchmark what matters"
 msgstr "Benchmark what matters"
 
@@ -1031,9 +1055,6 @@ msgstr "Benchmarks"
 
 msgid "best"
 msgstr "best"
-
-msgid "Best"
-msgstr "Best"
 
 msgid "Boundary inputs, unusual conversations, rare tool combinations."
 msgstr "Boundary inputs, unusual conversations, rare tool combinations."
@@ -1065,6 +1086,9 @@ msgstr "Cancel validation"
 msgid "Cancelled"
 msgstr "Cancelled"
 
+msgid "Candidate"
+msgstr "Candidate"
+
 msgid "Candidate edited — "
 msgstr "Candidate edited — "
 
@@ -1092,8 +1116,8 @@ msgstr "Cases"
 msgid "Change provider kind"
 msgstr "Change provider kind"
 
-msgid "Cheap"
-msgstr "Cheap"
+msgid "Cheapest"
+msgstr "Cheapest"
 
 msgid "Choose a tool or type a name…"
 msgstr "Choose a tool or type a name…"
@@ -1847,8 +1871,8 @@ msgstr "Failure Cases"
 msgid "Falls back to the environment-supplied license, or the Free tier."
 msgstr "Falls back to the environment-supplied license, or the Free tier."
 
-msgid "Fast"
-msgstr "Fast"
+msgid "Fastest"
+msgstr "Fastest"
 
 msgid "Filter agents by name…"
 msgstr "Filter agents by name…"
@@ -1961,6 +1985,9 @@ msgstr "Hide traces from system agents"
 msgid "High"
 msgstr "High"
 
+msgid "Highest pass rate"
+msgstr "Highest pass rate"
+
 msgid "History"
 msgstr "History"
 
@@ -2014,6 +2041,9 @@ msgstr "in {win}"
 
 msgid "In flight"
 msgstr "In flight"
+
+msgid "In production"
+msgstr "In production"
 
 msgid "Index status"
 msgstr "Index status"
@@ -3065,6 +3095,9 @@ msgstr "Pass"
 msgid "PASS"
 msgstr "PASS"
 
+msgid "pass rate"
+msgstr "pass rate"
+
 msgid "Pass rate"
 msgstr "Pass rate"
 
@@ -3601,6 +3634,9 @@ msgstr "Running <0>{0, plural, one {# test case} other {# test cases}}</0>"
 msgid "Running A/B test…"
 msgstr "Running A/B test…"
 
+msgid "running…"
+msgstr "running…"
+
 msgid "Running…"
 msgstr "Running…"
 
@@ -3612,6 +3648,9 @@ msgstr "Runs"
 
 msgid "Runtime"
 msgstr "Runtime"
+
+msgid "same"
+msgstr "same"
 
 msgid "Same version on both sides — nothing to compare."
 msgstr "Same version on both sides — nothing to compare."
@@ -3958,6 +3997,9 @@ msgstr "Something went wrong"
 
 msgid "Source"
 msgstr "Source"
+
+msgid "Speed"
+msgstr "Speed"
 
 msgid "Split by model"
 msgstr "Split by model"
@@ -4686,11 +4728,14 @@ msgstr "viewing"
 msgid "Volume appears once traces are captured."
 msgstr "Volume appears once traces are captured."
 
-msgid "vs best"
-msgstr "vs best"
+msgid "vs baseline"
+msgstr "vs baseline"
 
 msgid "vs prev period"
 msgstr "vs prev period"
+
+msgid "vs production"
+msgstr "vs production"
 
 msgid "Wait stopped"
 msgstr "Wait stopped"

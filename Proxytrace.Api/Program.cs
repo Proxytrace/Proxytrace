@@ -66,6 +66,13 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
+#if DEBUG
+// DEBUG-ONLY developer back-door: seed a fixed admin (debug@proxytrace.dev) so a local debug build
+// can always sign in through the normal login form. Compiled out of Release entirely — both this
+// registration and the seeder type are under #if DEBUG. See Proxytrace.Api/Debug + docs/debug_api.md.
+builder.Services.AddHostedService<Proxytrace.Api.Debug.DebugLoginSeederHostedService>();
+#endif
+
 var app = builder.Build();
 
 // Resolve the kiosk decision from the container (the Module is the single source of truth — it reads
