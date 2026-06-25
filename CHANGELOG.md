@@ -17,8 +17,26 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   way the theory moves to *Rejected* and can still be reset later. Validation already runs **one
   theory at a time**, so these controls let you clear the queue and stop runs you no longer need.
 
+### Changed
+
+- **Tracey no longer cuts a reply short at a turn limit.** The assistant's per-turn tool-step cap and
+  its "Step limit reached" notice have been removed, so a complex request that needs many tool steps
+  now runs to completion instead of stopping early and asking you to continue. (A high internal
+  safety backstop still prevents a runaway loop.)
+- **Tracey's per-response stats now break down token usage.** The quiet status row beneath each reply
+  shows **input tokens**, the **share of input served from cache**, and **output tokens** instead of
+  a single total — making it clear how much of a turn's cost was cached prompt vs. fresh input vs.
+  generated output.
+
 ### Fixed
 
+- **Test-run results stay readable with many evaluators.** The test-case matrix used to scroll inside
+  its own card, shrinking to an unusable height when a run had lots of evaluators. The whole results
+  column now scrolls as one unit, so the matrix keeps its full height.
+- **Global search hides built-in system agents and their traces.** The title-bar search and recent
+  feed no longer surface internal system agents (Tracey, the optimization/A-B optimizer agents,
+  agentic-evaluator agents) or the traces they generate — only your own agents, suites, traces,
+  evaluators, and test cases. Any previously indexed system entities are purged on the next reindex.
 - **Global search again shows recent agents, suites, and evaluators.** The title-bar search's default
   (empty-query) list was being crowded out by traces on busy projects, leaving only recent traces.
   Each entity type is now surfaced independently, so recent agents, test suites, evaluators, and

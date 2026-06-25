@@ -2006,6 +2006,9 @@ msgstr "Improved the pass rate."
 msgid "Improvement confirmed"
 msgstr "Improvement confirmed"
 
+msgid "in"
+msgstr "in"
+
 msgid "in {win}"
 msgstr "in {win}"
 
@@ -4002,9 +4005,6 @@ msgstr "Step {0} of {total}"
 msgid "Step 0"
 msgstr "Step 0"
 
-msgid "Step limit reached"
-msgstr "Step limit reached"
-
 msgid "Still failing"
 msgstr "Still failing"
 
@@ -4241,9 +4241,6 @@ msgstr "The license is fixed by this deployment (demo mode) and cannot be change
 msgid "The native OpenAI API — works out of the box."
 msgstr "The native OpenAI API — works out of the box."
 
-msgid "The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
-msgstr "The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
-
 msgid "Theories"
 msgstr "Theories"
 
@@ -4432,11 +4429,6 @@ msgstr "Total cost"
 
 msgid "Total runs"
 msgstr "Total runs"
-
-#. placeholder {0}: stats.inputTokens.toLocaleString()
-#. placeholder {1}: stats.outputTokens.toLocaleString()
-msgid "Total tokens (input {0} · output {1})"
-msgstr "Total tokens (input {0} · output {1})"
 
 #. placeholder {0}: trace.model
 msgid "Trace preview · {0}"

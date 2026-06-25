@@ -18,8 +18,17 @@ internal sealed class AgentCallDocumentMapper : AbstractDocumentMapper<IAgentCal
     {
     }
 
-    protected override Document GetDocument(IAgentCall call)
+    protected override Document? GetDocument(IAgentCall call)
     {
+        // Skip traces made by system agents (Tracey, the prompt/A-B optimizers, agentic-evaluator
+        // agents) — these are internal LLM calls, not the user's own traffic, so they must never
+        // surface in title-bar search or the recent feed. Returning null also evicts any such trace
+        // that was indexed before this guard existed (FlushBatchAsync deletes on a null build).
+        if (call.Agent.IsSystemAgent)
+        {
+            return null;
+        }
+
         var body = new StringBuilder();
 
         foreach (var msg in call.Request.Messages)

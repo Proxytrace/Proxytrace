@@ -31,10 +31,12 @@ export function GroupDetail({ groupId, onDelete }: { groupId: string; onDelete: 
   }
 
   // Single- and multi-endpoint groups render identically: the matrix is the canonical results
-  // view (one column per endpoint) and the only scroller, so this column fills the viewport and
-  // never spills a page scrollbar.
+  // view (one column per endpoint). This column renders at its natural height — the run header,
+  // performance summary, evaluator heatmap, and the full matrix scroll together as a single unit
+  // inside the right detail panel's scroller (Runs.tsx), so the matrix keeps its full height and is
+  // never squeezed when a run has many evaluators.
   return (
-    <div className="flex flex-col gap-3 h-full min-h-0">
+    <div className="flex flex-col gap-3">
       <RunGroupHeader
         group={group}
         onDelete={onDelete}

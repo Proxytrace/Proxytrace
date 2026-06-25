@@ -17,8 +17,17 @@ internal sealed class AgentDocumentMapper : AbstractDocumentMapper<IAgent>
     {
     }
     
-    protected override Document GetDocument(IAgent agent)
+    protected override Document? GetDocument(IAgent agent)
     {
+        // System agents are internal plumbing (Tracey, the prompt/A-B optimizers, agentic-evaluator
+        // agents) — never something a user searches for. Returning null keeps them out of the index
+        // and, because FlushBatchAsync deletes the entry when BuildAsync returns null, purges any
+        // already-indexed system agent on the next update/reindex.
+        if (agent.IsSystemAgent)
+        {
+            return null;
+        }
+
         var body = new StringBuilder()
             .Append(agent.SystemPrompt.Name).Append('\n')
             .Append(agent.SystemPrompt.Template).Append('\n');

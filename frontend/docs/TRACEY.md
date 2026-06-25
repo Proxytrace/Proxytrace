@@ -64,7 +64,7 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `TraceyHost.tsx` | The single mount point for the chat: calls `useTraceyChat()` and wraps the routed page content in `TraceyChatProvider` + `TraceyActionsProvider` + `AssistantRuntimeProvider`. Rendered **once** by `Shell` around the router `Outlet`, and **lazy-loaded** so the whole Tracey stack (assistant-ui, ai SDK, tools, docs index) stays out of the main chunk. |
 | `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, thread persistence, artifact lifecycle, the lazy session query, and builds the runtime. Called **once** from `TraceyHost` (above the router `Outlet`), not from the page — see "Conversation persistence". |
 | `tracey-chat-context.ts` | Shares the single `TraceyChat` (runtime + state) app-wide. `TraceyChatProvider` mounts in `TraceyHost` around the `Outlet`; `useTraceyChatContext()` reads it from the page. |
-| `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT + turn-correlation header per request, windows the history sent to the model (`windowMessages`, UI thread untouched), runs `streamText` with `prepareStep` (progressive tool disclosure) + `stopWhen: stepCountIs(MAX_TURN_STEPS)` (12), adapts our tools into the SDK `ToolSet` (threading the abort signal), and writes per-turn metadata on finish. |
+| `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT + turn-correlation header per request, windows the history sent to the model (`windowMessages`, UI thread untouched), runs `streamText` with `prepareStep` (progressive tool disclosure) + `stopWhen: stepCountIs(MAX_TURN_STEPS)` (64 — a high infinite-loop **safety backstop**, not a user-facing turn limit), adapts our tools into the SDK `ToolSet` (threading the abort signal), and writes per-turn metadata on finish. |
 | `tracey-tools.ts` | **Composition root** for tools: `createTraceyTools(ctx)` wires every `tools/*` domain factory against a shared artifact store. `TRACEY_TOOLS_META` is the static name+description list for the slash menu (must list every tool). |
 | `tools/` | Per-domain tool factories: `navigation.ts` (navigate, search_docs, load_skill), `agents.ts`, `suites.ts`, `runs.ts`, `proposals.ts`, `stats.ts`, `providers.ts`, `traces.ts`, `display.ts` (show_*, ask_questions), `await.ts` (await_actions). `shared.ts` holds `TraceyToolContext`, the `tool()`/`empty`/`CANCELLED` helpers, and `makeStore`. `poll-until-terminal.ts` backs `await`; `run-analysis.ts` holds the pure failure/comparison derivations behind `get_run_failures`/`compare_runs` (verdicts reuse `features/runs/results.ts`). |
 | `tool-access.ts` | **Progressive tool disclosure.** `CORE_TOOL_NAMES` (always active) + `activeToolNamesFor(loadedSkillIds)` (core ∪ the tool bundles of skills loaded this conversation). |
@@ -77,7 +77,7 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `tracey-storage.ts` | `localStorage` thread persistence keyed by `user + project`. |
 | `tracey-actions.tsx` | React context (`navigate`) for assistant-ui message-part components that can't take props. |
 | `tracey-quick-actions.ts` | Curated prompt presets shown as composer chips + top of the slash menu. |
-| `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens/duration/`stoppedEarly` (step budget hit) + the trace id (unit-tested). |
+| `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens (input / cached-input / output / total) + duration + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu; its **send button toggles to a Stop button** via `ThreadPrimitive.If running` + `ComposerPrimitive.Cancel` while a turn runs — see "Stopping a turn"), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
@@ -94,11 +94,11 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
    and the full tool set — but `prepareStep` restricts the **active** tools per step (see
    "Progressive tool disclosure").
 4. If the model emits a tool call, the SDK runs that tool's `execute` **in the browser**;
-   `stopWhen: stepCountIs(MAX_TURN_STEPS)` (12) keeps the loop going (tool → result → model)
-   until Tracey answers or the step budget is spent. **Without `stopWhen` the run ends after the
-   first step and a tool-first turn produces no text** — don't remove it. A budget-truncated turn
-   finishes with `finishReason: 'tool-calls'`, which `MessageStatusBar` surfaces as a "Step limit
-   reached" notice.
+   `stopWhen: stepCountIs(MAX_TURN_STEPS)` keeps the loop going (tool → result → model) until
+   Tracey answers. **Without `stopWhen` the run ends after the first step and a tool-first turn
+   produces no text** — don't remove it. `MAX_TURN_STEPS` (64) is only a high infinite-loop
+   **safety backstop**, not a user-facing turn limit — a normal turn finishes well below it, and
+   there is no "step limit reached" notice.
 5. Results stream back; `TraceyConversation` renders assistant Markdown, per-tool inline UIs
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
 6. On the stream's **finish** part, `toUIMessageStream({ messageMetadata })` writes
@@ -317,8 +317,8 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
   `toolChoice: { type: 'tool', toolName: 'await_actions' }`. The model can't end the turn with
   "the run has started" and leave the user to re-prompt for the outcome; it still authors the
   args, so it batches every pending handle into the one call. Cancelled / not-found writes return
-  no handle and never force a wait; a wrong or missed id just re-forces on the next step, capped
-  by the step budget.
+  no handle and never force a wait; a wrong or missed id just re-forces on the next step, bounded
+  by the `MAX_TURN_STEPS` safety backstop.
 - Because the wait is forced right after any producing step, the prompts tell the model to start
   ALL the actions it intends to run in the **same step** (parallel tool calls), then call
   `await_actions` **once** with every handle (never per-action, never poll itself).
@@ -349,23 +349,26 @@ patching the relevant query cache (never refetching — see DESIGN.md §8 / BEST
 
 ## Per-response status row
 
-Each finished assistant turn shows `MessageStatusBar` — a quiet row with the turn's **total tokens
-+ duration**, a `CopyMessageButton`, and an `OpenTraceButton`.
+Each finished assistant turn shows `MessageStatusBar` — a quiet row with the turn's **token usage
+broken down into input / share-of-input-cached / output, plus duration**, a `CopyMessageButton`,
+and an `OpenTraceButton`.
 
 A Tracey turn is a multi-step tool loop, so it makes several upstream calls — each ingested as its
 own trace, all sharing the turn's ConversationId. The SDK's `part.totalUsage` is the usage
 aggregated **across all steps** (the whole turn), so it matches the sum of the turn's ingested
 traces. We read tokens straight from the SDK at the client: instant, no polling.
 
-- `TraceyTransport` writes `metadata.custom = { traceConversationId, usage, durationMs,
-  finishReason }` on the **finish** part only (so the row stays hidden while streaming). A
-  `finishReason` of `'tool-calls'` means the step budget truncated the turn; the row then shows a
-  warn-colored "Step limit reached" notice. The same turn id rides every
-  upstream request as `x-proxytrace-session-id`, so the turn's calls share it.
+- `TraceyTransport` writes `metadata.custom = { traceConversationId, usage, durationMs }` on the
+  **finish** part only (so the row stays hidden while streaming); `usage` carries
+  `inputTokens` / `cachedInputTokens` / `outputTokens` / `totalTokens` from `part.totalUsage`. The
+  same turn id rides every upstream request as `x-proxytrace-session-id`, so the turn's calls
+  share it.
 - The backend (`TraceyChatController`) reads that header into `IngestMessage.SessionId`, stored as
   each call's **`ConversationId`** (a GUID is stored verbatim; a non-GUID would be SHA-1 hashed).
 - `MessageStatusBar` reads `metadata.custom` once; `message-stats.ts` narrows it to
-  `{ inputTokens, outputTokens, totalTokens, durationMs }` + the id; values render via `lib/format`.
+  `{ inputTokens, cachedInputTokens, outputTokens, totalTokens, durationMs }` + the id; the row
+  renders input / output via `fmtTokens` and the cached share via the shared `CachedTokensHint`
+  primitive (`lib/format`'s `cachedPct`).
 - `OpenTraceButton` → `useOpenResponseTrace` resolves the ConversationId to the latest call **on
   click** (one `GET /api/agent-calls`, not a poll) and routes to `/traces?focus=<id>` (expanding the
   turn's conversation group in Traces), or toasts if nothing is ingested yet. `CopyMessageButton`

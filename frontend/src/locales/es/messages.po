@@ -2006,6 +2006,9 @@ msgstr "Mejoró la tasa de aprobación."
 msgid "Improvement confirmed"
 msgstr "Mejora confirmada"
 
+msgid "in"
+msgstr "en"
+
 msgid "in {win}"
 msgstr "en {win}"
 
@@ -4002,9 +4005,6 @@ msgstr "Paso {0} de {total}"
 msgid "Step 0"
 msgstr "Paso 0"
 
-msgid "Step limit reached"
-msgstr "Límite de pasos alcanzado"
-
 msgid "Still failing"
 msgstr "Sigue fallando"
 
@@ -4241,9 +4241,6 @@ msgstr "La licencia está fijada por este despliegue (modo demo) y no se puede c
 msgid "The native OpenAI API — works out of the box."
 msgstr "La API nativa de OpenAI — funciona de inmediato."
 
-msgid "The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
-msgstr "El turno agotó su presupuesto de tool-step antes de que Tracey pudiera responder. Pídele que continúe."
-
 msgid "Theories"
 msgstr "Theories"
 
@@ -4432,11 +4429,6 @@ msgstr "Costo total"
 
 msgid "Total runs"
 msgstr "Total de runs"
-
-#. placeholder {0}: stats.inputTokens.toLocaleString()
-#. placeholder {1}: stats.outputTokens.toLocaleString()
-msgid "Total tokens (input {0} · output {1})"
-msgstr "Total de tokens (entrada {0} · salida {1})"
 
 #. placeholder {0}: trace.model
 msgid "Trace preview · {0}"
