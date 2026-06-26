@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { statisticsApi } from '../../../api/statistics';
-import { type ToolFactory, tool, ignore404, presentArg } from './shared';
+import { type ToolFactory, tool, ignore404, presentArg, includeSystemArg } from './shared';
 
 export const createStatsTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -10,11 +10,14 @@ export const createStatsTools: ToolFactory = (ctx, store) => {
         'Get aggregate dashboard statistics for the current project. The digest includes the ' +
         'headline summary plus per-agent and per-model usage breakdowns (calls, tokens) — use it ' +
         'to chart or compare usage across agents instead of fetching each agent individually. ' +
-        'The full dashboard is rendered to the user as a card.',
-      parameters: z.object({ present: presentArg }),
+        'The full dashboard is rendered to the user as a card. All figures (totals, per-model, and ' +
+        'per-agent) exclude internal system agents (Tracey, evaluators) unless includeSystem is true.',
+      parameters: z.object({ present: presentArg, includeSystem: includeSystemArg }),
       confirm: false,
-      execute: async () => {
-        const view = await statisticsApi.dashboard({ projectId });
+      execute: async ({ includeSystem }) => {
+        // System agents (Tracey, evaluators) make their own calls; exclude them server-side by
+        // default so the summary, per-model, and per-agent figures are all about the user's agents.
+        const view = await statisticsApi.dashboard({ projectId, excludeSystemAgents: !includeSystem });
         // Per-agent tokens come from the bucketed series; fold it down to one row per agent so the
         // digest stays compact while still letting the model chart usage without N follow-up reads.
         const tokensByAgent = new Map<string, { inputTokens: number; outputTokens: number }>();

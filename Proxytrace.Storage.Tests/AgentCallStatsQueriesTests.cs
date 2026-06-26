@@ -188,6 +188,53 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetSummary_WithExcludeSystemAgents_DropsSystemAgentCalls()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+
+        await gen.CreateAsync(CancellationToken);          // an ordinary user-agent call
+        await SeedSystemAgentCall(services);               // a system-agent (Tracey/evaluator) call
+
+        var all = await reader.GetSummaryAsync(new StatisticsFilter(), CancellationToken);
+        var nonSystem = await reader.GetSummaryAsync(new StatisticsFilter(ExcludeSystemAgents: true), CancellationToken);
+
+        all.TotalCalls.Should().Be(2);
+        nonSystem.TotalCalls.Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task GetAgentBreakdown_WithExcludeSystemAgents_OmitsSystemAgent()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+
+        var userCall = await gen.CreateAsync(CancellationToken);
+        var systemAgentId = await SeedSystemAgentCall(services);
+
+        var rows = await reader.GetAgentBreakdownAsync(new StatisticsFilter(ExcludeSystemAgents: true), CancellationToken);
+
+        rows.Select(r => r.AgentId).Should().Contain(userCall.Agent.Id).And.NotContain(systemAgentId);
+    }
+
+    private async Task<Guid> SeedSystemAgentCall(IServiceProvider services)
+    {
+        var systemAgent = await services.GetRequiredService<IAgentGenerator>()
+            .CreateAsync("Tracey", systemPrompt: "internal", isSystemAgent: true, cancellationToken: CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var request = await services.GetRequiredService<IDomainObjectGenerator<Conversation>>().CreateAsync(CancellationToken);
+        var response = await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken);
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var callRepo = services.GetRequiredService<IRepository<IAgentCall>>();
+
+        var call = createCall(systemAgent, systemAgent.CurrentVersion, endpoint, request, response);
+        await callRepo.AddAsync(call, CancellationToken);
+        return systemAgent.Id;
+    }
+
+    [TestMethod]
     public async Task GetSummary_FilteredByUnknownAgent_ReturnsZeros()
     {
         IServiceProvider services = GetServices();

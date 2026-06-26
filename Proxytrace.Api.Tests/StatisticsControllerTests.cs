@@ -70,7 +70,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var projectId = Guid.NewGuid();
         var from = DateTimeOffset.UtcNow.AddDays(-1);
 
-        await controller.GetDashboardView(from, null, projectId, recentTraceCount: 3, agentLimit: 4, CancellationToken);
+        await controller.GetDashboardView(from, null, projectId, recentTraceCount: 3, agentLimit: 4, cancellationToken: CancellationToken);
 
         await dashboard.Received(1).GetDashboardViewAsync(
             Arg.Is<StatisticsFilter>(f => f.From == from && f.ProjectId == projectId),

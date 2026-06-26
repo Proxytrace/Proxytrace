@@ -61,6 +61,22 @@ export const presentArg = z.boolean().optional().describe(
   'when this card is the answer the user asked to see — never for intermediate reads.',
 );
 
+/**
+ * Optional flag a read/search tool exposes so the model can opt into Proxytrace's internal
+ * **system agents** (the Tracey assistant herself, evaluators like a helpfulness judge) and their
+ * activity. Default (omitted/false): system agents and the runs/traces/usage they generate are
+ * hidden, so a plain "list my agents" / "token usage" / "recent runs" stays about the user's own
+ * agents. The model sets it `true` ONLY when the user explicitly asks about a system agent — names
+ * the Tracey agent or a specific evaluator, or says "system/internal" agents. The wire description
+ * stays terse; the prompt carries the full when-to-include nuance. Spread into a tool's schema:
+ * `z.object({ includeSystem: includeSystemArg, … })`.
+ */
+export const includeSystemArg = z.boolean().optional().describe(
+  "Include Proxytrace's internal system agents (the Tracey assistant, evaluators) and their " +
+  'runs/traces/usage. Default false: system agents are hidden. Set true only when the user ' +
+  'explicitly asks about a system agent (e.g. "the Tracey agent", a helpfulness evaluator).',
+);
+
 /** Result a write tool returns when the user declines the confirmation. */
 export const CANCELLED = { cancelled: true } as const;
 

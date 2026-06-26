@@ -53,7 +53,7 @@ internal class DashboardStatistics : IDashboardStatistics
         Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = Task.Run(async () => await GetTokenUsageAsync(filter, await tokenBucketTask, cancellationToken), cancellationToken);
         Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = Task.Run(async () => await GetTokenUsageByAgentAsync(filter, await tokenBucketTask, cancellationToken), cancellationToken);
         Task<(IReadOnlyList<IAgentCall> Items, int Total)> recentTask = Task.Run(() => agentCalls.GetFilteredAsync(
-            new AgentCallFilter(ProjectId: filter.ProjectId, From: filter.From),
+            new AgentCallFilter(ProjectId: filter.ProjectId, From: filter.From, IncludeSystemAgents: !filter.ExcludeSystemAgents),
             page: 1,
             pageSize: recentTraceCount,
             cancellationToken), cancellationToken);
@@ -72,6 +72,9 @@ internal class DashboardStatistics : IDashboardStatistics
 
         IReadOnlyDictionary<Guid, DateTimeOffset> lastCallTimes = lastCallTimesTask.Result;
         IReadOnlyList<IAgent> topAgents = agentsTask.Result
+            // The agent load isn't routed through the call-stats query, so drop system agents here too
+            // when excluded, keeping the returned Agents list consistent with the filtered aggregates.
+            .Where(a => !filter.ExcludeSystemAgents || !a.IsSystemAgent)
             .OrderByDescending(a => lastCallTimes.TryGetValue(a.Id, out DateTimeOffset t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
             .Take(agentLimit)

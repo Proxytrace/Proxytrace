@@ -34,6 +34,13 @@ Tracey fetches live data before answering. If a request is ambiguous (for exampl
 agents match a name) or she needs a few decisions from you before acting, she asks with an
 inline **questions widget** rather than guessing — see *Inline components* below.
 
+By default Tracey answers about **your own agents**. Proxytrace runs a few internal *system*
+agents — Tracey herself and the evaluators that score your test runs — which make their own model
+calls. She leaves these out of "list my agents", token-usage charts, recent test runs, and trace
+searches so the numbers are about your work, not the platform's. Just ask if you want them
+included — for example "show token usage including the Tracey agent" or "list system agents" — and
+she'll add them back in.
+
 ## Answers from the manual
 
 Tracey also uses **this manual** as a knowledge base. For how-to, what-is, and setup

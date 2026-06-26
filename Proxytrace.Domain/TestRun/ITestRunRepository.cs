@@ -31,5 +31,17 @@ public interface ITestRunRepository : IRepository<ITestRun>
         Guid agentId,
         int page,
         int pageSize,
+        bool includeSystem = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pages all runs across tenants, newest first. <paramref name="includeSystem"/> false (the
+    /// default) drops runs of ephemeral system run groups (A/B validation), mirroring
+    /// <see cref="ITestRunGroupRepository"/>.
+    /// </summary>
+    Task<PagedResult<ITestRun>> GetAllPagedAsync(
+        int page,
+        int pageSize,
+        bool includeSystem = false,
         CancellationToken cancellationToken = default);
 }

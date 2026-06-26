@@ -61,6 +61,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   shows **input tokens**, the **share of input served from cache**, and **output tokens** instead of
   a single total — making it clear how much of a turn's cost was cached prompt vs. fresh input vs.
   generated output.
+- **Tracey now focuses on your own agents.** Her data tools hide Proxytrace's internal *system*
+  agents — Tracey herself and the evaluators that score your test runs — by default, so "list my
+  agents", token-usage charts, recent test runs (the internal A/B validation runs are hidden too),
+  and trace searches stay about your work rather than the platform's own activity. Ask explicitly
+  (e.g. "include the Tracey agent" or "list system agents") and she'll add them back in.
 
 ### Fixed
 
