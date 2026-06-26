@@ -1032,6 +1032,9 @@ msgstr "Azure"
 msgid "Azure AI Foundry"
 msgstr "Azure AI Foundry"
 
+msgid "Back to sign in"
+msgstr "Retour à la connexion"
+
 msgid "Bad"
 msgstr "Mauvais"
 
@@ -1118,6 +1121,12 @@ msgstr "Changer le type de Provider"
 
 msgid "Cheapest"
 msgstr "Le moins cher"
+
+msgid "Check your inbox"
+msgstr "Vérifiez votre boîte de réception"
+
+msgid "Choose a new password"
+msgstr "Choisissez un nouveau mot de passe"
 
 msgid "Choose a tool or type a name…"
 msgstr "Choisir un Tool ou saisir un nom…"
@@ -1323,6 +1332,9 @@ msgstr "Impossible de lister les models du Provider : {modelsError}. Saisissez l
 
 msgid "Could not load the request for this case."
 msgstr "Impossible de charger la requête pour ce cas."
+
+msgid "Could not reset your password. Please try again."
+msgstr "Impossible de réinitialiser votre mot de passe. Veuillez réessayer."
 
 msgid "Couldn’t load this evaluation."
 msgstr "Impossible de charger cette évaluation."
@@ -1692,6 +1704,9 @@ msgstr "Endpoint mis à jour"
 msgid "Endpoint URL"
 msgstr "URL de l'Endpoint"
 
+msgid "Enter your email and we'll send a link to reset your password."
+msgstr "Saisissez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe."
+
 msgid "Enterprise"
 msgstr "Entreprise"
 
@@ -1806,8 +1821,15 @@ msgstr "Expiré / révoqué"
 msgid "Expires"
 msgstr "Expire"
 
+#. placeholder {0}: new Date(expiresAt).toLocaleString()
+msgid "Expires {0}"
+msgstr "Expire le {0}"
+
 msgid "External"
 msgstr "Externe"
+
+msgid "External users sign in through your identity provider."
+msgstr "Les utilisateurs externes se connectent via votre fournisseur d'identité."
 
 msgid "Extract a number from the response and check it within a tolerance."
 msgstr "Extraire un nombre de la réponse et le vérifier dans une tolérance."
@@ -1888,6 +1910,9 @@ msgstr "Corriger la licence"
 
 msgid "Fixed"
 msgstr "Corrigé"
+
+msgid "Forgot password?"
+msgstr "Mot de passe oublié ?"
 
 msgid "Free"
 msgstr "Free"
@@ -2024,6 +2049,9 @@ msgstr "id"
 msgid "Idle"
 msgstr "Inactif"
 
+msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+msgstr "Si un compte existe pour cette adresse email, les instructions de réinitialisation du mot de passe sont en cours d'envoi. Si l'envoi d'email n'est pas configuré sur ce serveur, contactez votre administrateur pour obtenir un lien de réinitialisation."
+
 msgid "Improved"
 msgstr "Amélioré"
 
@@ -2106,6 +2134,9 @@ msgstr "Email ou mot de passe invalide."
 #. placeholder {0}: (e as Error).message
 msgid "Invalid JSON: {0}"
 msgstr "JSON invalide : {0}"
+
+msgid "Invalid reset link"
+msgstr "Lien de réinitialisation invalide"
 
 msgid "Invalidated"
 msgstr "Invalide"
@@ -3125,6 +3156,18 @@ msgstr "Réussite"
 msgid "Password"
 msgstr "Mot de passe"
 
+msgid "Password Reset Completed"
+msgstr "Réinitialisation du mot de passe effectuée"
+
+msgid "Password reset link — {email}"
+msgstr "Lien de réinitialisation du mot de passe — {email}"
+
+msgid "Password Reset Link Issued"
+msgstr "Lien de réinitialisation du mot de passe envoyé"
+
+msgid "Password Reset Requested"
+msgstr "Réinitialisation du mot de passe demandée"
+
 msgid "past {range}"
 msgstr "depuis {range}"
 
@@ -3518,6 +3561,9 @@ msgstr "Requête"
 msgid "Request · {model}"
 msgstr "Requête · {model}"
 
+msgid "Request a new link"
+msgstr "Demander un nouveau lien"
+
 msgid "required"
 msgstr "obligatoire"
 
@@ -3539,8 +3585,14 @@ msgstr "Réinitialiser tous les paramètres aux valeurs par défaut de l’Agent
 msgid "Reset all to agent defaults"
 msgstr "Tout réinitialiser aux valeurs par défaut de l’Agent"
 
+msgid "Reset password"
+msgstr "Réinitialiser le mot de passe"
+
 msgid "Reset to Proposed"
 msgstr "Réinitialiser sur Proposed"
+
+msgid "Reset your password"
+msgstr "Réinitialisez votre mot de passe"
 
 msgid "Response time"
 msgstr "Temps de réponse"
@@ -3897,6 +3949,9 @@ msgstr "Envoyer un message"
 msgid "Send notification alerts to your users by email."
 msgstr "Envoyez des alertes de notification à vos utilisateurs par email."
 
+msgid "Send reset link"
+msgstr "Envoyer le lien de réinitialisation"
+
 msgid "Send result"
 msgstr "Envoyer le résultat"
 
@@ -3905,6 +3960,9 @@ msgstr "Envoyer un email de test"
 
 msgid "Set a password for your account"
 msgstr "Définir un mot de passe pour votre compte"
+
+msgid "Set new password"
+msgstr "Définir un nouveau mot de passe"
 
 msgid "Set password & sign in"
 msgstr "Définir le mot de passe et se connecter"
@@ -3920,6 +3978,9 @@ msgstr "Les paramètres correspondent aux valeurs par défaut de l'Agent"
 
 msgid "Share by segment"
 msgstr "Partager par segment"
+
+msgid "Share this one-time link with the user. It won't be shown again."
+msgstr "Partagez ce lien à usage unique avec l'utilisateur. Il ne sera plus affiché."
 
 msgid "Show"
 msgstr "Afficher"
@@ -3994,6 +4055,9 @@ msgstr "Autre chose…"
 
 msgid "Something went wrong"
 msgstr "Une erreur s’est produite"
+
+msgid "Something went wrong. Please try again."
+msgstr "Une erreur s'est produite. Veuillez réessayer."
 
 msgid "Source"
 msgstr "Source"
@@ -4350,8 +4414,14 @@ msgstr "Cette licence a été fournie via la variable d’environnement PROXYTRA
 msgid "this page"
 msgstr "cette page"
 
+msgid "This password reset link is missing or malformed. Request a new one."
+msgstr "Ce lien de réinitialisation du mot de passe est manquant ou mal formé. Demandez-en un nouveau."
+
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Cela supprime définitivement le Run et ses résultats. Cette action est irréversible."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau."
 
 msgid "This stops future runs. Existing runs it produced are kept."
 msgstr "Cela arrête les futurs Runs. Les Runs existants qu’il a produits sont conservés."
@@ -4417,6 +4487,9 @@ msgstr "tolérance"
 
 msgid "Tolerance"
 msgstr "Tolérance"
+
+msgid "Too many attempts. Please wait a few minutes and try again."
+msgstr "Trop de tentatives. Veuillez patienter quelques minutes puis réessayer."
 
 msgid "TOOL"
 msgstr "OUTIL"

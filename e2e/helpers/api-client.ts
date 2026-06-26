@@ -837,6 +837,32 @@ export class ProxytraceApiClient {
     if (!res.ok()) throw new Error(`revoke invite failed: ${res.status()} ${await res.text()}`);
   }
 
+  /** Looks up a user id by email via the admin list. Throws if no such user exists. */
+  async userIdByEmail(email: string): Promise<string> {
+    const { items } = await this.listUsers();
+    const user = items.find((u) => u.email === email);
+    if (!user) throw new Error(`user not found: ${email}`);
+    return user.id;
+  }
+
+  // ── Password reset ─────────────────────────────────────────────────────────
+  /** Admin: mint a one-time password-reset link for a user (POST /api/users/{id}/reset-link). */
+  async createResetLink(userId: string): Promise<{ link: string; expiresAt: string }> {
+    const res = await this.request.post(`/api/users/${userId}/reset-link`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`create reset link failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  /** Raw POST /api/auth/forgot-password (anonymous) so callers can assert the status (202). */
+  forgotPasswordResponse(email: string): Promise<APIResponse> {
+    return this.request.post('/api/auth/forgot-password', { data: { email } });
+  }
+
+  /** Raw POST /api/auth/reset-password (anonymous) so callers can assert the status (200 / 410 / 400). */
+  resetPasswordResponse(token: string, password: string): Promise<APIResponse> {
+    return this.request.post('/api/auth/reset-password', { data: { token, password } });
+  }
+
   // ── Config ─────────────────────────────────────────────────────────────────
   async getConfig(): Promise<{ kiosk: boolean }> {
     const res = await this.request.get('/api/config', { headers: this.headers() });

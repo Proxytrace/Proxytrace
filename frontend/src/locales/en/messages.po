@@ -1032,6 +1032,9 @@ msgstr "Azure"
 msgid "Azure AI Foundry"
 msgstr "Azure AI Foundry"
 
+msgid "Back to sign in"
+msgstr "Back to sign in"
+
 msgid "Bad"
 msgstr "Bad"
 
@@ -1118,6 +1121,12 @@ msgstr "Change provider kind"
 
 msgid "Cheapest"
 msgstr "Cheapest"
+
+msgid "Check your inbox"
+msgstr "Check your inbox"
+
+msgid "Choose a new password"
+msgstr "Choose a new password"
 
 msgid "Choose a tool or type a name…"
 msgstr "Choose a tool or type a name…"
@@ -1323,6 +1332,9 @@ msgstr "Could not list models from the provider: {modelsError}. Enter the model 
 
 msgid "Could not load the request for this case."
 msgstr "Could not load the request for this case."
+
+msgid "Could not reset your password. Please try again."
+msgstr "Could not reset your password. Please try again."
 
 msgid "Couldn’t load this evaluation."
 msgstr "Couldn’t load this evaluation."
@@ -1692,6 +1704,9 @@ msgstr "Endpoint updated"
 msgid "Endpoint URL"
 msgstr "Endpoint URL"
 
+msgid "Enter your email and we'll send a link to reset your password."
+msgstr "Enter your email and we'll send a link to reset your password."
+
 msgid "Enterprise"
 msgstr "Enterprise"
 
@@ -1806,8 +1821,15 @@ msgstr "Expired / revoked"
 msgid "Expires"
 msgstr "Expires"
 
+#. placeholder {0}: new Date(expiresAt).toLocaleString()
+msgid "Expires {0}"
+msgstr "Expires {0}"
+
 msgid "External"
 msgstr "External"
+
+msgid "External users sign in through your identity provider."
+msgstr "External users sign in through your identity provider."
 
 msgid "Extract a number from the response and check it within a tolerance."
 msgstr "Extract a number from the response and check it within a tolerance."
@@ -1888,6 +1910,9 @@ msgstr "Fix license"
 
 msgid "Fixed"
 msgstr "Fixed"
+
+msgid "Forgot password?"
+msgstr "Forgot password?"
 
 msgid "Free"
 msgstr "Free"
@@ -2024,6 +2049,9 @@ msgstr "id"
 msgid "Idle"
 msgstr "Idle"
 
+msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+msgstr "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+
 msgid "Improved"
 msgstr "Improved"
 
@@ -2106,6 +2134,9 @@ msgstr "Invalid email or password."
 #. placeholder {0}: (e as Error).message
 msgid "Invalid JSON: {0}"
 msgstr "Invalid JSON: {0}"
+
+msgid "Invalid reset link"
+msgstr "Invalid reset link"
 
 msgid "Invalidated"
 msgstr "Invalidated"
@@ -3125,6 +3156,18 @@ msgstr "Passing"
 msgid "Password"
 msgstr "Password"
 
+msgid "Password Reset Completed"
+msgstr "Password Reset Completed"
+
+msgid "Password reset link — {email}"
+msgstr "Password reset link — {email}"
+
+msgid "Password Reset Link Issued"
+msgstr "Password Reset Link Issued"
+
+msgid "Password Reset Requested"
+msgstr "Password Reset Requested"
+
 msgid "past {range}"
 msgstr "past {range}"
 
@@ -3518,6 +3561,9 @@ msgstr "Request"
 msgid "Request · {model}"
 msgstr "Request · {model}"
 
+msgid "Request a new link"
+msgstr "Request a new link"
+
 msgid "required"
 msgstr "required"
 
@@ -3539,8 +3585,14 @@ msgstr "Reset all settings to agent defaults"
 msgid "Reset all to agent defaults"
 msgstr "Reset all to agent defaults"
 
+msgid "Reset password"
+msgstr "Reset password"
+
 msgid "Reset to Proposed"
 msgstr "Reset to Proposed"
+
+msgid "Reset your password"
+msgstr "Reset your password"
 
 msgid "Response time"
 msgstr "Response time"
@@ -3897,6 +3949,9 @@ msgstr "Send message"
 msgid "Send notification alerts to your users by email."
 msgstr "Send notification alerts to your users by email."
 
+msgid "Send reset link"
+msgstr "Send reset link"
+
 msgid "Send result"
 msgstr "Send result"
 
@@ -3905,6 +3960,9 @@ msgstr "Send test email"
 
 msgid "Set a password for your account"
 msgstr "Set a password for your account"
+
+msgid "Set new password"
+msgstr "Set new password"
 
 msgid "Set password & sign in"
 msgstr "Set password & sign in"
@@ -3920,6 +3978,9 @@ msgstr "Settings match agent defaults"
 
 msgid "Share by segment"
 msgstr "Share by segment"
+
+msgid "Share this one-time link with the user. It won't be shown again."
+msgstr "Share this one-time link with the user. It won't be shown again."
 
 msgid "Show"
 msgstr "Show"
@@ -3994,6 +4055,9 @@ msgstr "Something else…"
 
 msgid "Something went wrong"
 msgstr "Something went wrong"
+
+msgid "Something went wrong. Please try again."
+msgstr "Something went wrong. Please try again."
 
 msgid "Source"
 msgstr "Source"
@@ -4350,8 +4414,14 @@ msgstr "This license was supplied via the PROXYTRACE_LICENSE environment variabl
 msgid "this page"
 msgstr "this page"
 
+msgid "This password reset link is missing or malformed. Request a new one."
+msgstr "This password reset link is missing or malformed. Request a new one."
+
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "This permanently deletes the run and its results. This action cannot be undone."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "This reset link is invalid or has expired. Request a new one."
 
 msgid "This stops future runs. Existing runs it produced are kept."
 msgstr "This stops future runs. Existing runs it produced are kept."
@@ -4417,6 +4487,9 @@ msgstr "tolerance"
 
 msgid "Tolerance"
 msgstr "Tolerance"
+
+msgid "Too many attempts. Please wait a few minutes and try again."
+msgstr "Too many attempts. Please wait a few minutes and try again."
 
 msgid "TOOL"
 msgstr "TOOL"

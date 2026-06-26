@@ -35,6 +35,13 @@ The one deliberate exception to "audit only successes" is **failed sign-in** (`A
 emitted with `outcome: AuditOutcome.Failure` so brute-force / credential-stuffing attempts are visible.
 That is the sole producer of `AuditOutcome.Failure` today; every other action records `Success`.
 
+The **password-reset** actions follow the same shape: `PasswordResetRequested` is emitted for every
+forgot-password attempt (the submitted email is the target, even when no account matches — like
+`LoginFailed`, it records the attempt without revealing whether the address exists), `PasswordResetCompleted`
+when a reset token is redeemed, and `PasswordResetLinkIssued` when an admin mints a reset link from the
+Users page. The first two come from `AuthController` (`[RequireLocalMode]`); the third from `UsersController`
+(admin-only).
+
 **Authentication events are local-mode only.** The auth-lifecycle actions (`UserLoggedIn`,
 `LoginFailed`, `UserLoggedOut`, `UserSignedUp`, `AdminBootstrapped`, `LegacyAccountClaimed`,
 `UserInvited`, `InviteRevoked`) are emitted from `AuthController`, whose endpoints are

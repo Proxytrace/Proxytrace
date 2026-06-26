@@ -52,4 +52,9 @@ public enum AuditAction
 
     // Operator email/SMTP configuration.
     EmailSettingsUpdated = 37,
+
+    // Password reset (forgot-password flow + admin-issued reset link).
+    PasswordResetRequested = 38,
+    PasswordResetCompleted = 39,
+    PasswordResetLinkIssued = 40,
 }

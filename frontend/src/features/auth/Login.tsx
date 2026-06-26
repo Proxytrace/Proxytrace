@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useAuthMode } from '../../auth/authMode';
 import { localAuthApi } from '../../auth/local/localAuthApi';
@@ -96,6 +96,13 @@ function LocalLogin() {
         <Button data-testid="login-submit" type="submit" fullWidth loading={submitting}>
           <Trans>Sign in</Trans>
         </Button>
+        <Link
+          to="/forgot-password"
+          data-testid="login-forgot-password"
+          className="block text-center text-body-sm text-accent hover:underline"
+        >
+          <Trans>Forgot password?</Trans>
+        </Link>
       </form>
     </div>
   );

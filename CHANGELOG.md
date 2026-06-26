@@ -11,6 +11,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Forgot your password? Self-service reset.** The sign-in screen now has a **Forgot password?**
+  link. Enter your email and Proxytrace sends a one-time reset link — valid for 1 hour — that lets you
+  choose a new password and signs you straight in. **No SMTP? You're still covered:** if outgoing
+  email isn't configured, the reset link is written to the server log for the operator to relay, and
+  an admin can mint a one-time reset link for any user from **Settings → Users** (the **Reset
+  password** button). Reset requests and completions are recorded in the audit log, and the public
+  reset endpoints are rate-limited.
 - **Cancel or reject an optimization theory.** On the **Optimization Theories** board you can now
   dismiss a theory you don't want to pursue: **Reject** a *Proposed* theory to skip A/B validation
   entirely, or **Cancel validation** on a *Validating* theory to abort its in-flight A/B run. Either

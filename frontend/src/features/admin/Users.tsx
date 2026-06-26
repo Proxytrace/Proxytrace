@@ -6,11 +6,12 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import type { UserDto, UserRole } from '../../api/models';
-import { useDeleteUser, useUpdateUserRole, useUsers } from './hooks/useUsers';
+import { useCreateUserResetLink, useDeleteUser, useUpdateUserRole, useUsers } from './hooks/useUsers';
 import { InviteUserForm } from './components/InviteUserForm';
 import { PendingInvitesTable } from './components/PendingInvitesTable';
 import { UsersTable } from './components/UsersTable';
 import { UserProjectsModal } from './components/UserProjectsModal';
+import { ResetLinkModal } from './components/ResetLinkModal';
 
 export default function Users() {
   const { t } = useLingui();
@@ -19,8 +20,10 @@ export default function Users() {
   const { data: users, isLoading } = useUsers();
   const updateRole = useUpdateUserRole();
   const deleteUser = useDeleteUser();
+  const resetLink = useCreateUserResetLink();
   const [confirmDelete, setConfirmDelete] = useState<UserDto | null>(null);
   const [manageProjects, setManageProjects] = useState<UserDto | null>(null);
+  const [resetLinkFor, setResetLinkFor] = useState<{ email: string; link: string; expiresAt: string } | null>(null);
 
   const isLocal = authMode?.mode === 'local';
 
@@ -29,6 +32,10 @@ export default function Users() {
     if (!confirmDelete) return;
     deleteUser.mutate(confirmDelete.id, { onSuccess: () => setConfirmDelete(null) });
   };
+  const onResetPassword = (user: UserDto) =>
+    resetLink.mutate(user.id, {
+      onSuccess: (r) => setResetLinkFor({ email: user.email, link: r.link, expiresAt: r.expiresAt }),
+    });
 
   return (
     <div className="space-y-8 p-6 max-w-6xl">
@@ -61,6 +68,7 @@ export default function Users() {
             onChangeRole={onChangeRole}
             onDelete={setConfirmDelete}
             onManageProjects={setManageProjects}
+            onResetPassword={onResetPassword}
           />
         )}
       </section>
@@ -78,6 +86,15 @@ export default function Users() {
 
       {manageProjects && (
         <UserProjectsModal user={manageProjects} onClose={() => setManageProjects(null)} />
+      )}
+
+      {resetLinkFor && (
+        <ResetLinkModal
+          email={resetLinkFor.email}
+          link={resetLinkFor.link}
+          expiresAt={resetLinkFor.expiresAt}
+          onClose={() => setResetLinkFor(null)}
+        />
       )}
     </div>
   );

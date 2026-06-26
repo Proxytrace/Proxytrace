@@ -457,6 +457,10 @@ public sealed class Module : Autofac.Module
             .As<ILegacyClaimService>()
             .SingleInstance();
 
+        builder.RegisterType<PasswordResetService>()
+            .As<IPasswordResetService>()
+            .SingleInstance();
+
         builder.RegisterInstance(Prompts.ResourceManager);
 
         builder.RegisterType<AgenticEvaluatorPresets>()

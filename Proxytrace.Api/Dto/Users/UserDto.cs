@@ -21,3 +21,9 @@ public record UserProjectDto(Guid Id, string Name);
 
 /// <summary>Self-service email-notification preferences for the current user.</summary>
 public record UpdateMyEmailNotificationsRequest(bool Enabled, NotificationSeverity MinSeverity);
+
+/// <summary>
+/// An admin-minted, one-time password-reset link for a user, plus when it expires. The link is shown
+/// once and cannot be reconstructed afterwards (the token is stored only as a hash).
+/// </summary>
+public record ResetLinkResponse(string Link, DateTimeOffset ExpiresAt);

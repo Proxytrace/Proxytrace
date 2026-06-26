@@ -51,6 +51,8 @@ const Playground = lazy(() => import('./features/playground/Playground'));
 const EvaluatorPlayground = lazy(() => import('./features/evaluator-playground/EvaluatorPlayground'));
 const Login = lazy(() => import('./features/auth/Login'));
 const Signup = lazy(() => import('./features/auth/Signup'));
+const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./features/auth/ResetPassword'));
 const Users = lazy(() => import('./features/admin/Users'));
 const ErrorLog = lazy(() => import('./features/error-log/ErrorLog'));
 const AuditLog = lazy(() => import('./features/audit-log/AuditLog'));
@@ -145,7 +147,12 @@ function LocalAuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (pathname === '/signup' || pathname === '/setup') {
+  if (
+    pathname === '/signup' ||
+    pathname === '/setup' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password'
+  ) {
     return <CurrentUserContext.Provider value={currentUser}>{children}</CurrentUserContext.Provider>;
   }
   if (!local.isAuthenticated) {
@@ -208,6 +215,8 @@ function AppRoutes() {
     <LocaleSync />
     <Routes>
       {authMode.mode === 'local' && <Route path="/signup" element={wrap(<Signup />)} />}
+      {authMode.mode === 'local' && <Route path="/forgot-password" element={wrap(<ForgotPassword />)} />}
+      {authMode.mode === 'local' && <Route path="/reset-password" element={wrap(<ResetPassword />)} />}
       <Route
         path="/setup"
         element={setupNeeded ? wrap(<Setup />) : <Navigate to="/dashboard" replace />}

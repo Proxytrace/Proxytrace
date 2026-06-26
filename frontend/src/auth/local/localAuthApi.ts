@@ -25,6 +25,26 @@ export const localAuthApi = {
     post<TokenResponse>('/api/auth/setup', { email, password }),
   signup: (token: string, password: string) =>
     post<TokenResponse>('/api/auth/signup', { token, password }),
+  /**
+   * Requests a password reset. Resolves on success and is deliberately opaque about whether the
+   * email maps to an account (anti-enumeration); only a 429 (rate limited) is surfaced.
+   */
+  forgotPassword: async (email: string): Promise<void> => {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (res.status === 429) {
+      const error: Error & { status?: number } = new Error('forgot-password rate-limited');
+      error.status = 429;
+      throw error;
+    }
+    // Any other status is treated as success — never reveal whether the address is registered.
+  },
+  /** Consumes a reset token and sets a new password; logs the user in (httpOnly cookie + token). */
+  resetPassword: (token: string, password: string) =>
+    post<TokenResponse>('/api/auth/reset-password', { token, password }),
   /** Who the httpOnly session cookie says we are; rejects (status 401) when signed out. */
   me: async (): Promise<MeResponse> => {
     const res = await fetch('/api/auth/me');

@@ -12,7 +12,10 @@ A secret's treatment is decided by **how it is used**, not by what it is:
   provider credential, replayed on every proxied/outbound call), the SMTP password.
 - **Verify-only credential** — only ever compared against a presented value, never replayed. These
   are one-way **hashed** (`ISecretHasher`); the plaintext is shown once at creation and is
-  unrecoverable afterwards. Example: `ApiKey.KeyHash` (inbound Proxytrace keys), `Invite.TokenHash`.
+  unrecoverable afterwards. Example: `ApiKey.KeyHash` (inbound Proxytrace keys), `Invite.TokenHash`,
+  `PasswordResetToken.TokenHash` (the forgot-password / admin reset link — 32-byte CSPRNG, 1-hour TTL,
+  single-use; the raw token is emailed, logged for the operator, or returned as an admin link exactly
+  once).
 
 Never hash a replayable secret (you could not replay it) and never reversibly encrypt a verify-only
 credential (a database dump would then yield usable credentials).

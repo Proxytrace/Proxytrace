@@ -1,0 +1,37 @@
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
+using Proxytrace.Application.Security;
+using Proxytrace.Domain;
+using Proxytrace.Domain.Events;
+using Proxytrace.Domain.PasswordResetToken;
+
+namespace Proxytrace.Storage.Internal.Entities.PasswordResetToken;
+
+[UsedImplicitly]
+internal class PasswordResetTokenRepository
+    : AbstractRepository<IPasswordResetToken, PasswordResetTokenEntity>,
+      IPasswordResetTokenRepository
+{
+    private readonly ISecretHasher hasher;
+
+    public PasswordResetTokenRepository(
+        IMapper<IPasswordResetToken, PasswordResetTokenEntity> mapper,
+        Func<StorageDbContext> context,
+        ITransaction transaction,
+        IEntityEventService entityEvents,
+        AmbientDbContext ambient,
+        ISecretHasher hasher) : base(mapper, context, transaction, entityEvents, ambient)
+    {
+        this.hasher = hasher;
+    }
+
+    public async Task<IPasswordResetToken?> FindByTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        // The token is stored as a hash; match on the hash of the presented raw token.
+        var tokenHash = hasher.Hash(token);
+        var entity = await contextFactory().Set<PasswordResetTokenEntity>().AsNoTracking()
+            .Where(x => x.TokenHash == tokenHash)
+            .FirstOrDefaultAsync(cancellationToken);
+        return await Map(entity, cancellationToken);
+    }
+}

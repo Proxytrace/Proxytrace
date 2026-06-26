@@ -1032,6 +1032,9 @@ msgstr "Azure"
 msgid "Azure AI Foundry"
 msgstr "Azure AI Foundry"
 
+msgid "Back to sign in"
+msgstr "Volver a iniciar sesión"
+
 msgid "Bad"
 msgstr "Malo"
 
@@ -1118,6 +1121,12 @@ msgstr "Cambiar tipo de Provider"
 
 msgid "Cheapest"
 msgstr "Más barato"
+
+msgid "Check your inbox"
+msgstr "Revisa tu bandeja de entrada"
+
+msgid "Choose a new password"
+msgstr "Elige una nueva contraseña"
 
 msgid "Choose a tool or type a name…"
 msgstr "Elige una Tool o escribe un nombre…"
@@ -1323,6 +1332,9 @@ msgstr "No se pudieron listar los models del Provider: {modelsError}. Introduce 
 
 msgid "Could not load the request for this case."
 msgstr "No se pudo cargar la solicitud de este caso."
+
+msgid "Could not reset your password. Please try again."
+msgstr "No se pudo restablecer tu contraseña. Por favor, inténtalo de nuevo."
 
 msgid "Couldn’t load this evaluation."
 msgstr "No se pudo cargar esta evaluación."
@@ -1692,6 +1704,9 @@ msgstr "Endpoint actualizado"
 msgid "Endpoint URL"
 msgstr "URL del Endpoint"
 
+msgid "Enter your email and we'll send a link to reset your password."
+msgstr "Introduce tu correo y te enviaremos un enlace para restablecer tu contraseña."
+
 msgid "Enterprise"
 msgstr "Enterprise"
 
@@ -1806,8 +1821,15 @@ msgstr "Expirado / revocado"
 msgid "Expires"
 msgstr "Expira"
 
+#. placeholder {0}: new Date(expiresAt).toLocaleString()
+msgid "Expires {0}"
+msgstr "Vence {0}"
+
 msgid "External"
 msgstr "Externo"
+
+msgid "External users sign in through your identity provider."
+msgstr "Los usuarios externos inician sesión a través de tu proveedor de identidad."
 
 msgid "Extract a number from the response and check it within a tolerance."
 msgstr "Extrae un número de la respuesta y compruébalo con una tolerancia."
@@ -1888,6 +1910,9 @@ msgstr "Corregir licencia"
 
 msgid "Fixed"
 msgstr "Corregido"
+
+msgid "Forgot password?"
+msgstr "¿Olvidaste tu contraseña?"
 
 msgid "Free"
 msgstr "Gratis"
@@ -2024,6 +2049,9 @@ msgstr "id"
 msgid "Idle"
 msgstr "Inactivo"
 
+msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+msgstr "Si existe una cuenta para ese correo, las instrucciones para restablecer la contraseña ya están en camino. Si el envío de correo no está configurado en este servidor, contacta a tu administrador para obtener un enlace de restablecimiento."
+
 msgid "Improved"
 msgstr "Mejorado"
 
@@ -2106,6 +2134,9 @@ msgstr "Correo electrónico o contraseña inválidos."
 #. placeholder {0}: (e as Error).message
 msgid "Invalid JSON: {0}"
 msgstr "JSON inválido: {0}"
+
+msgid "Invalid reset link"
+msgstr "Enlace de restablecimiento no válido"
 
 msgid "Invalidated"
 msgstr "Invalidado"
@@ -3125,6 +3156,18 @@ msgstr "Aprobando"
 msgid "Password"
 msgstr "Contraseña"
 
+msgid "Password Reset Completed"
+msgstr "Restablecimiento de contraseña completado"
+
+msgid "Password reset link — {email}"
+msgstr "Enlace para restablecer la contraseña — {email}"
+
+msgid "Password Reset Link Issued"
+msgstr "Enlace de restablecimiento de contraseña emitido"
+
+msgid "Password Reset Requested"
+msgstr "Restablecimiento de contraseña solicitado"
+
 msgid "past {range}"
 msgstr "últimos {range}"
 
@@ -3518,6 +3561,9 @@ msgstr "Solicitud"
 msgid "Request · {model}"
 msgstr "Solicitud · {model}"
 
+msgid "Request a new link"
+msgstr "Solicitar un nuevo enlace"
+
 msgid "required"
 msgstr "obligatorio"
 
@@ -3539,8 +3585,14 @@ msgstr "Restablecer todos los ajustes a los valores predeterminados del agent"
 msgid "Reset all to agent defaults"
 msgstr "Restablecer todo a los valores predeterminados del agent"
 
+msgid "Reset password"
+msgstr "Restablecer contraseña"
+
 msgid "Reset to Proposed"
 msgstr "Restablecer a Propuesta"
+
+msgid "Reset your password"
+msgstr "Restablece tu contraseña"
 
 msgid "Response time"
 msgstr "Tiempo de respuesta"
@@ -3897,6 +3949,9 @@ msgstr "Enviar mensaje"
 msgid "Send notification alerts to your users by email."
 msgstr "Enviar alertas de notificación a tus usuarios por email."
 
+msgid "Send reset link"
+msgstr "Enviar enlace de restablecimiento"
+
 msgid "Send result"
 msgstr "Enviar resultado"
 
@@ -3905,6 +3960,9 @@ msgstr "Enviar email de prueba"
 
 msgid "Set a password for your account"
 msgstr "Establece una contraseña para tu cuenta"
+
+msgid "Set new password"
+msgstr "Establecer nueva contraseña"
 
 msgid "Set password & sign in"
 msgstr "Establecer contraseña e iniciar sesión"
@@ -3920,6 +3978,9 @@ msgstr "La configuración coincide con los valores predeterminados del Agent"
 
 msgid "Share by segment"
 msgstr "Compartir por segmento"
+
+msgid "Share this one-time link with the user. It won't be shown again."
+msgstr "Comparte este enlace de un solo uso con el usuario. No se volverá a mostrar."
 
 msgid "Show"
 msgstr "Mostrar"
@@ -3994,6 +4055,9 @@ msgstr "Algo más…"
 
 msgid "Something went wrong"
 msgstr "Algo salió mal"
+
+msgid "Something went wrong. Please try again."
+msgstr "Algo salió mal. Por favor, inténtalo de nuevo."
 
 msgid "Source"
 msgstr "Origen"
@@ -4350,8 +4414,14 @@ msgstr "Esta licencia se proporcionó mediante la variable de entorno PROXYTRACE
 msgid "this page"
 msgstr "esta página"
 
+msgid "This password reset link is missing or malformed. Request a new one."
+msgstr "Este enlace de restablecimiento de contraseña falta o está mal formado. Solicita uno nuevo."
+
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Esto elimina permanentemente el Run y sus resultados. Esta acción no se puede deshacer."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "Este enlace de restablecimiento no es válido o ha caducado. Solicita uno nuevo."
 
 msgid "This stops future runs. Existing runs it produced are kept."
 msgstr "Esto detiene los Runs futuros. Los Runs existentes que generó se conservan."
@@ -4417,6 +4487,9 @@ msgstr "tolerancia"
 
 msgid "Tolerance"
 msgstr "Tolerancia"
+
+msgid "Too many attempts. Please wait a few minutes and try again."
+msgstr "Demasiados intentos. Espera unos minutos e inténtalo de nuevo."
 
 msgid "TOOL"
 msgstr "HERRAMIENTA"

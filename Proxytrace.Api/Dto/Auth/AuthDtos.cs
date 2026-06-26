@@ -18,6 +18,8 @@ public record MeDto(
     NotificationSeverity EmailNotificationMinSeverity,
     bool EmailEnabled);
 public record StreamTicketResponse(string Token, DateTimeOffset ExpiresAt);
+public record ForgotPasswordRequest(string Email);
+public record ResetPasswordRequest(string Token, string Password);
 public record CreateInviteRequest(string Email, UserRole Role);
 public record InviteDto(Guid Id, string Email, UserRole Role, DateTimeOffset ExpiresAt, DateTimeOffset? ConsumedAt);
 public record CreateInviteResponse(string Token, string Url, DateTimeOffset ExpiresAt);

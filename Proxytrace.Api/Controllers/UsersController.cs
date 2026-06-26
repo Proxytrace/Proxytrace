@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Users;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
+using Proxytrace.Application.Auth.Local;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Notification;
@@ -22,6 +23,8 @@ public class UsersController : ControllerBase
     private readonly IProjectRepository projects;
     private readonly IUserAdministrationService administration;
     private readonly ICurrentUserAccessor currentUser;
+    private readonly IPasswordResetService passwordReset;
+    private readonly IConfiguration config;
     private readonly ILogger<Audit> audit;
 
     public UsersController(
@@ -29,12 +32,16 @@ public class UsersController : ControllerBase
         IProjectRepository projects,
         IUserAdministrationService administration,
         ICurrentUserAccessor currentUser,
+        IPasswordResetService passwordReset,
+        IConfiguration config,
         ILogger<Audit> audit)
     {
         this.repository = repository;
         this.projects = projects;
         this.administration = administration;
         this.currentUser = currentUser;
+        this.passwordReset = passwordReset;
+        this.config = config;
         this.audit = audit;
     }
 
@@ -147,6 +154,33 @@ public class UsersController : ControllerBase
             return NotFound();
         audit.LogAudit(AuditAction.UserDeleted, nameof(IUser), id, target.Email);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Admin-initiated password reset: mints a one-time reset link for the user and returns it once.
+    /// Lets an admin recover a locked-out user out-of-band when self-service email is unavailable. The
+    /// link is never emailed from here — the admin relays it however they choose.
+    /// </summary>
+    [HttpPost("{id:guid}/reset-link")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    public async Task<ActionResult<ResetLinkResponse>> CreateResetLink(Guid id, CancellationToken cancellationToken)
+    {
+        var target = await repository.FindAsync(id, cancellationToken);
+        if (target is null)
+            return NotFound();
+
+        var link = await passwordReset.IssueResetLinkAsync(id, BuildResetUrl, cancellationToken);
+        if (link is null)
+            return NotFound();
+
+        audit.LogAudit(AuditAction.PasswordResetLinkIssued, nameof(IUser), id, target.Email);
+        return new ResetLinkResponse(link.Link, link.ExpiresAt);
+    }
+
+    private string BuildResetUrl(string token)
+    {
+        var baseUrl = config["Frontend:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        return $"{baseUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(token)}";
     }
 
     private static UserDto ToDto(IUser u) =>

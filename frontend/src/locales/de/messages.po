@@ -1032,6 +1032,9 @@ msgstr "Azure"
 msgid "Azure AI Foundry"
 msgstr "Azure AI Foundry"
 
+msgid "Back to sign in"
+msgstr "Zurück zur Anmeldung"
+
 msgid "Bad"
 msgstr "Schlecht"
 
@@ -1118,6 +1121,12 @@ msgstr "Provider-Typ ändern"
 
 msgid "Cheapest"
 msgstr "Am günstigsten"
+
+msgid "Check your inbox"
+msgstr "Prüfen Sie Ihren Posteingang"
+
+msgid "Choose a new password"
+msgstr "Wählen Sie ein neues Passwort"
 
 msgid "Choose a tool or type a name…"
 msgstr "Wähle ein Tool oder gib einen Namen ein…"
@@ -1323,6 +1332,9 @@ msgstr "Modelle des Providers konnten nicht aufgelistet werden: {modelsError}. G
 
 msgid "Could not load the request for this case."
 msgstr "Die Anfrage für diesen Fall konnte nicht geladen werden."
+
+msgid "Could not reset your password. Please try again."
+msgstr "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es erneut."
 
 msgid "Couldn’t load this evaluation."
 msgstr "Diese Evaluation konnte nicht geladen werden."
@@ -1692,6 +1704,9 @@ msgstr "Endpoint aktualisiert"
 msgid "Endpoint URL"
 msgstr "Endpoint-URL"
 
+msgid "Enter your email and we'll send a link to reset your password."
+msgstr "Geben Sie Ihre E-Mail-Adresse ein, und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts."
+
 msgid "Enterprise"
 msgstr "Enterprise"
 
@@ -1806,8 +1821,15 @@ msgstr "Abgelaufen / widerrufen"
 msgid "Expires"
 msgstr "Läuft ab"
 
+#. placeholder {0}: new Date(expiresAt).toLocaleString()
+msgid "Expires {0}"
+msgstr "Läuft ab {0}"
+
 msgid "External"
 msgstr "Extern"
+
+msgid "External users sign in through your identity provider."
+msgstr "Externe User melden sich über Ihren Identity Provider an."
 
 msgid "Extract a number from the response and check it within a tolerance."
 msgstr "Extrahieren Sie eine Zahl aus der Antwort und prüfen Sie sie innerhalb einer Toleranz."
@@ -1888,6 +1910,9 @@ msgstr "Lizenz korrigieren"
 
 msgid "Fixed"
 msgstr "Behoben"
+
+msgid "Forgot password?"
+msgstr "Passwort vergessen?"
 
 msgid "Free"
 msgstr "Free"
@@ -2024,6 +2049,9 @@ msgstr "id"
 msgid "Idle"
 msgstr "Inaktiv"
 
+msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+msgstr "Falls für diese E-Mail ein Konto existiert, sind die Anweisungen zum Zurücksetzen des Passworts unterwegs. Wenn der E-Mail-Versand auf diesem Server nicht konfiguriert ist, wenden Sie sich an Ihren Administrator, um einen Reset-Link zu erhalten."
+
 msgid "Improved"
 msgstr "Verbessert"
 
@@ -2106,6 +2134,9 @@ msgstr "Ungültige E-Mail oder ungültiges Passwort."
 #. placeholder {0}: (e as Error).message
 msgid "Invalid JSON: {0}"
 msgstr "Ungültiges JSON: {0}"
+
+msgid "Invalid reset link"
+msgstr "Ungültiger Reset-Link"
 
 msgid "Invalidated"
 msgstr "Ungültig gemacht"
@@ -3125,6 +3156,18 @@ msgstr "Bestehend"
 msgid "Password"
 msgstr "Passwort"
 
+msgid "Password Reset Completed"
+msgstr "Passwort zurückgesetzt"
+
+msgid "Password reset link — {email}"
+msgstr "Passwort-Reset-Link — {email}"
+
+msgid "Password Reset Link Issued"
+msgstr "Passwort-Reset-Link erstellt"
+
+msgid "Password Reset Requested"
+msgstr "Passwort-Reset angefordert"
+
 msgid "past {range}"
 msgstr "letzte {range}"
 
@@ -3518,6 +3561,9 @@ msgstr "Anfrage"
 msgid "Request · {model}"
 msgstr "Anfrage · {model}"
 
+msgid "Request a new link"
+msgstr "Neuen Link anfordern"
+
 msgid "required"
 msgstr "erforderlich"
 
@@ -3539,8 +3585,14 @@ msgstr "Alle Einstellungen auf die Agent-Standardeinstellungen zurücksetzen"
 msgid "Reset all to agent defaults"
 msgstr "Alles auf Agent-Standardeinstellungen zurücksetzen"
 
+msgid "Reset password"
+msgstr "Passwort zurücksetzen"
+
 msgid "Reset to Proposed"
 msgstr "Auf Vorgeschlagen zurücksetzen"
+
+msgid "Reset your password"
+msgstr "Setzen Sie Ihr Passwort zurück"
 
 msgid "Response time"
 msgstr "Antwortzeit"
@@ -3897,6 +3949,9 @@ msgstr "Nachricht senden"
 msgid "Send notification alerts to your users by email."
 msgstr "Sende Benachrichtigungen per E-Mail an deine User."
 
+msgid "Send reset link"
+msgstr "Reset-Link senden"
+
 msgid "Send result"
 msgstr "Ergebnis senden"
 
@@ -3905,6 +3960,9 @@ msgstr "Test-E-Mail senden"
 
 msgid "Set a password for your account"
 msgstr "Legen Sie ein Passwort für Ihr Konto fest"
+
+msgid "Set new password"
+msgstr "Neues Passwort festlegen"
 
 msgid "Set password & sign in"
 msgstr "Passwort festlegen & anmelden"
@@ -3920,6 +3978,9 @@ msgstr "Einstellungen entsprechen den Standardwerten des Agent"
 
 msgid "Share by segment"
 msgstr "Nach Segment teilen"
+
+msgid "Share this one-time link with the user. It won't be shown again."
+msgstr "Teilen Sie diesen einmaligen Link mit dem User. Er wird nicht erneut angezeigt."
 
 msgid "Show"
 msgstr "Anzeigen"
@@ -3994,6 +4055,9 @@ msgstr "Etwas anderes…"
 
 msgid "Something went wrong"
 msgstr "Etwas ist schiefgelaufen"
+
+msgid "Something went wrong. Please try again."
+msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
 
 msgid "Source"
 msgstr "Quelle"
@@ -4350,8 +4414,14 @@ msgstr "Diese Lizenz wurde über die Umgebungsvariable PROXYTRACE_LICENSE bereit
 msgid "this page"
 msgstr "diese Seite"
 
+msgid "This password reset link is missing or malformed. Request a new one."
+msgstr "Dieser Passwort-Reset-Link fehlt oder ist fehlerhaft. Fordern Sie einen neuen an."
+
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Dadurch werden der Run und seine Ergebnisse dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "Dieser Reset-Link ist ungültig oder abgelaufen. Fordern Sie einen neuen an."
 
 msgid "This stops future runs. Existing runs it produced are kept."
 msgstr "Dadurch werden zukünftige Runs gestoppt. Bereits erzeugte Runs bleiben erhalten."
@@ -4417,6 +4487,9 @@ msgstr "Toleranz"
 
 msgid "Tolerance"
 msgstr "Toleranz"
+
+msgid "Too many attempts. Please wait a few minutes and try again."
+msgstr "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut."
 
 msgid "TOOL"
 msgstr "TOOL"

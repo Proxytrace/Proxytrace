@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Auth;
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
     private readonly ILegacyClaimService legacyClaim;
     private readonly IInviteService invites;
     private readonly IInviteRepository inviteRepo;
+    private readonly IPasswordResetService passwordReset;
     private readonly IPasswordPolicy policy;
     private readonly ICurrentUserAccessor currentUser;
     private readonly IStreamTicketService streamTickets;
@@ -39,6 +41,7 @@ public class AuthController : ControllerBase
         ILegacyClaimService legacyClaim,
         IInviteService invites,
         IInviteRepository inviteRepo,
+        IPasswordResetService passwordReset,
         IPasswordPolicy policy,
         ICurrentUserAccessor currentUser,
         IStreamTicketService streamTickets,
@@ -52,6 +55,7 @@ public class AuthController : ControllerBase
         this.legacyClaim = legacyClaim;
         this.invites = invites;
         this.inviteRepo = inviteRepo;
+        this.passwordReset = passwordReset;
         this.policy = policy;
         this.currentUser = currentUser;
         this.streamTickets = streamTickets;
@@ -181,6 +185,45 @@ public class AuthController : ControllerBase
         if (session is null) return NotFound();
         SessionCookie.Append(Response, session.Token, session.ExpiresAt);
         return new TokenResponse(session.Token, session.ExpiresAt);
+    }
+
+    // Self-service password reset. Always responds the same way whether or not the email maps to an
+    // account, so the response never reveals which addresses are registered. When SMTP is configured
+    // the reset link is emailed; otherwise it is written to the server log for the operator to relay
+    // (the only escape from a sole-admin lockout). Rate-limited to blunt enumeration/abuse.
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [RequireLocalMode]
+    [EnableRateLimiting("auth-reset")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, CancellationToken ct)
+    {
+        await passwordReset.RequestResetAsync(req.Email, BuildResetUrl, ct);
+        audit.LogAudit(AuditAction.PasswordResetRequested, nameof(IUser), targetLabel: req.Email);
+        return Accepted();
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [RequireLocalMode]
+    [EnableRateLimiting("auth-reset")]
+    public async Task<ActionResult<TokenResponse>> ResetPassword([FromBody] ResetPasswordRequest req, CancellationToken ct)
+    {
+        var v = policy.Validate(req.Password);
+        if (!v.IsValid) return BadRequest(v.Errors);
+
+        var result = await passwordReset.CompleteResetAsync(req.Token, req.Password, ct);
+        if (result is null) return StatusCode(410, "Reset link invalid, expired, or already used.");
+
+        // Log the user straight in, mirroring signup — they have just proven control of the account.
+        SessionCookie.Append(Response, result.Token, result.ExpiresAt);
+        audit.LogAudit(AuditAction.PasswordResetCompleted, nameof(IUser), result.User.Id, result.User.Email);
+        return new TokenResponse(result.Token, result.ExpiresAt);
+    }
+
+    private string BuildResetUrl(string token)
+    {
+        var baseUrl = config["Frontend:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        return $"{baseUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(token)}";
     }
 
     [HttpGet("invites/by-token/{token}")]

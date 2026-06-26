@@ -11,9 +11,10 @@ interface UsersTableProps {
   onChangeRole: (user: UserDto, role: UserRole) => void;
   onDelete: (user: UserDto) => void;
   onManageProjects: (user: UserDto) => void;
+  onResetPassword: (user: UserDto) => void;
 }
 
-export function UsersTable({ users, currentUserEmail, onChangeRole, onDelete, onManageProjects }: UsersTableProps) {
+export function UsersTable({ users, currentUserEmail, onChangeRole, onDelete, onManageProjects, onResetPassword }: UsersTableProps) {
   return (
     <table className="w-full text-sm" data-testid="user-list">
       <thead className="text-muted">
@@ -35,6 +36,7 @@ export function UsersTable({ users, currentUserEmail, onChangeRole, onDelete, on
             onChangeRole={onChangeRole}
             onDelete={onDelete}
             onManageProjects={onManageProjects}
+            onResetPassword={onResetPassword}
           />
         ))}
       </tbody>
@@ -49,9 +51,10 @@ interface UserRowProps {
   onChangeRole: (user: UserDto, role: UserRole) => void;
   onDelete: (user: UserDto) => void;
   onManageProjects: (user: UserDto) => void;
+  onResetPassword: (user: UserDto) => void;
 }
 
-function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProjects }: UserRowProps) {
+function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProjects, onResetPassword }: UserRowProps) {
   const { t, i18n } = useLingui();
   const guarded = isSelf || locked;
   const guardReason = isSelf
@@ -90,6 +93,17 @@ function UserRow({ user, isSelf, locked, onChangeRole, onDelete, onManageProject
             onClick={() => onManageProjects(user)}
           >
             <Trans>Projects</Trans>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            data-write
+            disabled={user.isExternal}
+            title={user.isExternal ? t`External users sign in through your identity provider.` : undefined}
+            data-testid={`user-reset-password-btn-${user.id}`}
+            onClick={() => onResetPassword(user)}
+          >
+            <Trans>Reset password</Trans>
           </Button>
           <Button
             variant="dangerOutline"

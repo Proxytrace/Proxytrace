@@ -1032,6 +1032,9 @@ msgstr "Azure"
 msgid "Azure AI Foundry"
 msgstr "Azure AI Foundry"
 
+msgid "Back to sign in"
+msgstr "Torna all'accesso"
+
 msgid "Bad"
 msgstr "Scarso"
 
@@ -1118,6 +1121,12 @@ msgstr "Cambia tipo di Provider"
 
 msgid "Cheapest"
 msgstr "Più economico"
+
+msgid "Check your inbox"
+msgstr "Controlla la tua inbox"
+
+msgid "Choose a new password"
+msgstr "Scegli una nuova password"
 
 msgid "Choose a tool or type a name…"
 msgstr "Scegli un Tool o digita un nome…"
@@ -1323,6 +1332,9 @@ msgstr "Impossibile elencare i modelli dal provider: {modelsError}. Inserisci ma
 
 msgid "Could not load the request for this case."
 msgstr "Impossibile caricare la richiesta per questo caso."
+
+msgid "Could not reset your password. Please try again."
+msgstr "Impossibile reimpostare la password. Riprova."
 
 msgid "Couldn’t load this evaluation."
 msgstr "Impossibile caricare questa evaluation."
@@ -1692,6 +1704,9 @@ msgstr "Endpoint aggiornato"
 msgid "Endpoint URL"
 msgstr "URL dell'Endpoint"
 
+msgid "Enter your email and we'll send a link to reset your password."
+msgstr "Inserisci la tua email e ti invieremo un link per reimpostare la password."
+
 msgid "Enterprise"
 msgstr "Enterprise"
 
@@ -1806,8 +1821,15 @@ msgstr "Scaduto / revocato"
 msgid "Expires"
 msgstr "Scade"
 
+#. placeholder {0}: new Date(expiresAt).toLocaleString()
+msgid "Expires {0}"
+msgstr "Scade {0}"
+
 msgid "External"
 msgstr "Esterno"
+
+msgid "External users sign in through your identity provider."
+msgstr "Gli utenti esterni accedono tramite il tuo identity provider."
 
 msgid "Extract a number from the response and check it within a tolerance."
 msgstr "Estrai un numero dalla risposta e verificane il valore entro una tolleranza."
@@ -1888,6 +1910,9 @@ msgstr "Correggi license"
 
 msgid "Fixed"
 msgstr "Corretto"
+
+msgid "Forgot password?"
+msgstr "Hai dimenticato la password?"
 
 msgid "Free"
 msgstr "Free"
@@ -2024,6 +2049,9 @@ msgstr "id"
 msgid "Idle"
 msgstr "Inattivo"
 
+msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+msgstr "Se esiste un account per quell'email, le istruzioni per reimpostare la password sono in arrivo. Se l'invio delle email non è configurato su questo server, contatta il tuo amministratore per ottenere un link di reset."
+
 msgid "Improved"
 msgstr "Migliorato"
 
@@ -2106,6 +2134,9 @@ msgstr "Email o password non valide."
 #. placeholder {0}: (e as Error).message
 msgid "Invalid JSON: {0}"
 msgstr "JSON non valido: {0}"
+
+msgid "Invalid reset link"
+msgstr "Link di reset non valido"
 
 msgid "Invalidated"
 msgstr "Invalidato"
@@ -3125,6 +3156,18 @@ msgstr "Superando"
 msgid "Password"
 msgstr "Password"
 
+msgid "Password Reset Completed"
+msgstr "Reimpostazione password completata"
+
+msgid "Password reset link — {email}"
+msgstr "Link di reset password — {email}"
+
+msgid "Password Reset Link Issued"
+msgstr "Link per reimpostazione password inviato"
+
+msgid "Password Reset Requested"
+msgstr "Richiesta di reimpostazione password inviata"
+
 msgid "past {range}"
 msgstr "ultimi {range}"
 
@@ -3518,6 +3561,9 @@ msgstr "Richiesta"
 msgid "Request · {model}"
 msgstr "Richiesta · {model}"
 
+msgid "Request a new link"
+msgstr "Richiedi un nuovo link"
+
 msgid "required"
 msgstr "obbligatorio"
 
@@ -3539,8 +3585,14 @@ msgstr "Ripristina tutte le impostazioni ai valori predefiniti dell'Agent"
 msgid "Reset all to agent defaults"
 msgstr "Ripristina tutto ai valori predefiniti dell'Agent"
 
+msgid "Reset password"
+msgstr "Reimposta password"
+
 msgid "Reset to Proposed"
 msgstr "Ripristina a Proposto"
+
+msgid "Reset your password"
+msgstr "Reimposta la tua password"
 
 msgid "Response time"
 msgstr "Tempo di risposta"
@@ -3897,6 +3949,9 @@ msgstr "Invia messaggio"
 msgid "Send notification alerts to your users by email."
 msgstr "Invia avvisi di notifica ai tuoi utenti via email."
 
+msgid "Send reset link"
+msgstr "Invia link di reset"
+
 msgid "Send result"
 msgstr "Invia risultato"
 
@@ -3905,6 +3960,9 @@ msgstr "Invia email di test"
 
 msgid "Set a password for your account"
 msgstr "Imposta una password per il tuo account"
+
+msgid "Set new password"
+msgstr "Imposta una nuova password"
 
 msgid "Set password & sign in"
 msgstr "Imposta la password e accedi"
@@ -3920,6 +3978,9 @@ msgstr "Le impostazioni corrispondono ai valori predefiniti dell'Agent"
 
 msgid "Share by segment"
 msgstr "Condividi per segmento"
+
+msgid "Share this one-time link with the user. It won't be shown again."
+msgstr "Condividi questo link monouso con l'utente. Non sarà mostrato di nuovo."
 
 msgid "Show"
 msgstr "Mostra"
@@ -3994,6 +4055,9 @@ msgstr "Qualcos'altro…"
 
 msgid "Something went wrong"
 msgstr "Qualcosa è andato storto"
+
+msgid "Something went wrong. Please try again."
+msgstr "Qualcosa è andato storto. Riprova."
 
 msgid "Source"
 msgstr "Origine"
@@ -4350,8 +4414,14 @@ msgstr "Questa license è stata fornita tramite la variabile di ambiente PROXYTR
 msgid "this page"
 msgstr "questa pagina"
 
+msgid "This password reset link is missing or malformed. Request a new one."
+msgstr "Questo link di reset della password manca o non è valido. Richiedine uno nuovo."
+
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Questo elimina definitivamente il run e i suoi risultati. Questa azione non può essere annullata."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "Questo link di reset non è valido o è scaduto. Richiedine uno nuovo."
 
 msgid "This stops future runs. Existing runs it produced are kept."
 msgstr "Questo interrompe i run futuri. I run esistenti che ha prodotto vengono mantenuti."
@@ -4417,6 +4487,9 @@ msgstr "tolleranza"
 
 msgid "Tolerance"
 msgstr "Tolleranza"
+
+msgid "Too many attempts. Please wait a few minutes and try again."
+msgstr "Troppe richieste. Attendi qualche minuto e riprova."
 
 msgid "TOOL"
 msgstr "TOOL"

@@ -237,6 +237,7 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<ILegacyClaimService>(),
         services.GetRequiredService<IInviteService>(),
         services.GetRequiredService<IInviteRepository>(),
+        services.GetRequiredService<IPasswordResetService>(),
         services.GetRequiredService<IPasswordPolicy>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),

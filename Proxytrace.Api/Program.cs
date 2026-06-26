@@ -1,6 +1,8 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 using Proxytrace.Api.Auth.Mcp;
@@ -25,6 +27,23 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+// Throttle the anonymous password-reset endpoints (forgot/reset) per client IP to blunt account
+// enumeration and brute-forcing of reset tokens. In-memory is fine — each deployment runs a single
+// API instance. Applied via [EnableRateLimiting("auth-reset")] on the endpoints.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth-reset", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0,
+            }));
+});
 
 builder.Services.AddAuthorization(options =>
 {
@@ -91,6 +110,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<KioskReadOnlyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();
