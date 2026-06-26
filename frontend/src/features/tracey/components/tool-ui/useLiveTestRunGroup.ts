@@ -3,7 +3,7 @@ import { testRunGroupsApi } from '../../../../api/test-run-groups';
 import { QUERY_KEYS } from '../../../../api/query-keys';
 import { useTestRunGroupStream } from '../../../../api/event-stream';
 import type { TestRunGroupDto } from '../../../../api/models';
-import { isActive } from '../../../runs/results';
+import { isActive } from '../../../../lib/runResults';
 import { applyGroupComplete, applyRunComplete, patchGroupWithResult } from './live-run-progress';
 
 /**

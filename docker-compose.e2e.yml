@@ -104,7 +104,14 @@ services:
       - Authentication__Mode=Local
       - Authentication__Local__SigningKey=e2e-test-signing-key-32-chars-min!
       - TestSupport__Enabled=true
+      # Share the SAME Data Protection key ring as `api` (mounts the same appdata volume below).
+      # api-free reads the shared Postgres DB, so it must decrypt secrets (provider keys, protected
+      # columns) the primary `api` encrypted — its own ephemeral key ring would throw
+      # "key not found in the key ring" and 500 the request. See SecretProtectionModule.
+      - PROXYTRACE_DATA_DIR=/app/data
       # Deliberately NO PROXYTRACE_LICENSE / PROXYTRACE_LICENSE_PUBLIC_KEY → Free tier.
+    volumes:
+      - appdata:/app/data
 
   # Free-tier SPA: same built frontend image, but its nginx proxies /api to api-free.
   # Exposed on :5103 so the `licensing` project's baseURL points at a Free-tier stack.

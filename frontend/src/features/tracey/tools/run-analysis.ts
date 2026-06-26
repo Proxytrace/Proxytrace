@@ -1,10 +1,10 @@
 // Pure derive helpers for Tracey's tuning tools (`get_run_failures`, `compare_runs`).
 // No JSX, no I/O — unit-tested in run-analysis.spec.ts. Pass/fail semantics are NOT
-// re-derived here: they come from features/runs/results.ts so a case's verdict is
+// re-derived here: they come from lib/runResults.ts so a case's verdict is
 // computed identically to the Runs UI.
 
 import type { TestResultDto, TestRunDto } from '../../../api/models';
-import { resultPass } from '../../runs/results';
+import { resultPass } from '../../../lib/runResults';
 
 /** Truncates a string for a model-facing digest, marking the cut. */
 export function clip(value: string, max: number): string {

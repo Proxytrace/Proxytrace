@@ -25,9 +25,19 @@ public class TestSupportController : ControllerBase
 
     /// <summary>
     /// Clears all per-run domain content (agents, traces, evaluators, suites, runs, proposals,
-    /// invites) while preserving the setup baseline, so a spec can start from a known state.
+    /// invites, MFA enrollments) while preserving the setup baseline, so a spec can start from a
+    /// known state.
     /// </summary>
+    /// <remarks>
+    /// Anonymous on purpose: the reset must be reachable to restore a clean baseline even when the
+    /// shared admin is in a state that blocks login (e.g. an MFA spec enabled a second factor — a
+    /// password login then returns an MFA challenge with no session token). Requiring auth created a
+    /// chicken-and-egg where the reset that clears the MFA enrollment could not authenticate to run.
+    /// Safe because <see cref="TestOnlyEndpointAttribute"/> already 404s this endpoint on any real
+    /// deployment (only Development or <c>TestSupport:Enabled</c> reaches it).
+    /// </remarks>
     [HttpPost("reset")]
+    [AllowAnonymous]
     public async Task<IActionResult> Reset(CancellationToken cancellationToken)
     {
         await reset.ResetAsync(cancellationToken);

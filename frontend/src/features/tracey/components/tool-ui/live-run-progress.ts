@@ -11,7 +11,7 @@ import type {
   TestResultDto,
   TestRunGroupDto,
 } from '../../../../api/models';
-import { compositePercent, resultPass } from '../../../runs/results';
+import { compositePercent, resultPass } from '../../../../lib/runResults';
 
 export interface RunProgress {
   /** Total cases across every run in the group (cases × endpoints). */

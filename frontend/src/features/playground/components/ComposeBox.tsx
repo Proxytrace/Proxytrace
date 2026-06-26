@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { CheckIcon, ZapIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
+import { Popover } from '../../../components/ui/Popover';
 import useModelEndpoints from '../../../hooks/useModelEndpoints';
+import { useAutosizeTextarea } from '../../../hooks/useAutosizeTextarea';
 import { cn } from '../../../lib/cn';
 
 interface Props {
@@ -32,33 +34,11 @@ export function ComposeBox({
   const [text, setText] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const pickerRef = useRef<HTMLDivElement>(null);
 
   const { data: endpoints = [] } = useModelEndpoints(!!onEndpointChange);
 
-  useEffect(() => {
-    const ta = taRef.current;
-    if (!ta) return;
-    // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS style value, not UI copy
-    ta.style.height = 'auto';
-    const next = Math.min(220, Math.max(60, ta.scrollHeight));
-    // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS style value, not UI copy
-    ta.style.height = `${next}px`;
-  }, [text]);
-
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (!pickerRef.current?.contains(e.target as Node)) setPickerOpen(false);
-    };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setPickerOpen(false); };
-    document.addEventListener('mousedown', handler);
-    document.addEventListener('keydown', esc);
-    return () => {
-      document.removeEventListener('mousedown', handler);
-      document.removeEventListener('keydown', esc);
-    };
-  }, [pickerOpen]);
+  // Auto-grow the composer to fit its content (external DOM measurement → custom hook, §4.1).
+  useAutosizeTextarea(taRef, text);
 
   const send = () => {
     const trimmed = text.trim();
@@ -102,78 +82,78 @@ export function ComposeBox({
         />
         <div className="flex items-center gap-[8px] px-[10px] pb-[8px] pt-[2px]">
           {onEndpointChange && (
-            <div ref={pickerRef} className="relative">
-              {/* eslint-disable-next-line no-restricted-syntax -- bespoke endpoint pill trigger (ZapIcon + modified dot) */}
-              <button
-                type="button"
-                onClick={() => setPickerOpen(o => !o)}
-                data-testid="endpoint-picker"
-                className={cn(
-                  'inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary border',
-                  pickerOpen
-                    ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
-                    : 'bg-[rgba(255,255,255,0.04)] border-border text-secondary',
-                )}
-                title={t`Switch endpoint`}
-                aria-haspopup="listbox"
-                aria-expanded={pickerOpen}
-              >
-                <ZapIcon size={11} strokeWidth={2.2} />
-                {badgeLabel}
-                {isModified && (
-                  <span
-                    aria-label={t`modified`}
-                    title={t`Modified from agent default`}
-                    className="ml-[2px] size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-card)]"
-                  />
-                )}
-              </button>
-              {pickerOpen && (
-                <div
-                  role="listbox"
-                  className="absolute left-0 bottom-full mb-[6px] z-30 w-[280px] rounded-[12px] py-[6px] max-h-[320px] overflow-y-auto fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
+            <Popover
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              side="top"
+              align="start"
+              className="w-[280px] py-[6px] max-h-[320px] overflow-y-auto"
+              trigger={
+                // eslint-disable-next-line no-restricted-syntax -- bespoke endpoint pill trigger (ZapIcon + modified dot); Popover asChild target
+                <button
+                  type="button"
+                  data-testid="endpoint-picker"
+                  className={cn(
+                    'inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary border',
+                    pickerOpen
+                      ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
+                      : 'bg-[rgba(255,255,255,0.04)] border-border text-secondary',
+                  )}
+                  title={t`Switch endpoint`}
                 >
-                  <div className="px-[10px] pt-[2px] pb-[6px] flex items-center justify-between">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
-                    {defaultEndpointId && endpointId !== defaultEndpointId && (
-                      <Button
-                        variant="link"
-                        className="text-[10px] uppercase tracking-[0.08em]"
-                        onClick={() => { onEndpointChange(defaultEndpointId); setPickerOpen(false); }}
-                      >
-                        <Trans>Reset</Trans>
-                      </Button>
-                    )}
-                  </div>
-                  {endpoints.length === 0 ? (
-                    <div className="px-[10px] py-[8px] text-[11.5px] text-muted"><Trans>No endpoints configured.</Trans></div>
-                  ) : endpoints.map(ep => {
-                    const active = ep.id === endpointId;
-                    return (
-                      <RowButton
-                        key={ep.id}
-                        role="option"
-                        aria-selected={active}
-                        onClick={() => { onEndpointChange(ep.id); setPickerOpen(false); }}
-                        data-testid={`endpoint-picker-option-${ep.id}`}
-                        className={cn(
-                          'flex items-center gap-[8px] px-[10px] py-[6px] hover:bg-card transition-colors',
-                          active && 'bg-accent-subtle',
-                        )}
-                      >
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <span className={`text-[12px] truncate ${active ? 'text-primary font-semibold' : 'text-secondary'}`}>
-                            {ep.modelName}
-                          </span>
-                          <span className="text-[10.5px] text-muted truncate mono">{ep.providerName}</span>
-                        </div>
-                        {active && <CheckIcon size={12} strokeWidth={2.5} />}
-                      </RowButton>
-                    );
-                  })}
+                  <ZapIcon size={11} strokeWidth={2.2} />
+                  {badgeLabel}
+                  {isModified && (
+                    <span
+                      aria-label={t`modified`}
+                      title={t`Modified from agent default`}
+                      className="ml-[2px] size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-card)]"
+                    />
+                  )}
+                </button>
+              }
+            >
+              <div role="listbox">
+                <div className="px-[10px] pt-[2px] pb-[6px] flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
+                  {defaultEndpointId && endpointId !== defaultEndpointId && (
+                    <Button
+                      variant="link"
+                      className="text-[10px] uppercase tracking-[0.08em]"
+                      onClick={() => { onEndpointChange(defaultEndpointId); setPickerOpen(false); }}
+                    >
+                      <Trans>Reset</Trans>
+                    </Button>
+                  )}
                 </div>
-              )}
-            </div>
+                {endpoints.length === 0 ? (
+                  <div className="px-[10px] py-[8px] text-[11.5px] text-muted"><Trans>No endpoints configured.</Trans></div>
+                ) : endpoints.map(ep => {
+                  const active = ep.id === endpointId;
+                  return (
+                    <RowButton
+                      key={ep.id}
+                      role="option"
+                      aria-selected={active}
+                      onClick={() => { onEndpointChange(ep.id); setPickerOpen(false); }}
+                      data-testid={`endpoint-picker-option-${ep.id}`}
+                      className={cn(
+                        'flex items-center gap-[8px] px-[10px] py-[6px] hover:bg-card transition-colors',
+                        active && 'bg-accent-subtle',
+                      )}
+                    >
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className={`text-[12px] truncate ${active ? 'text-primary font-semibold' : 'text-secondary'}`}>
+                          {ep.modelName}
+                        </span>
+                        <span className="text-[10.5px] text-muted truncate mono">{ep.providerName}</span>
+                      </div>
+                      {active && <CheckIcon size={12} strokeWidth={2.5} />}
+                    </RowButton>
+                  );
+                })}
+              </div>
+            </Popover>
           )}
           <div className="ml-auto flex items-center gap-[10px] text-[10.5px] mono text-muted tabular-nums">
             <span title={t`Approximate tokens (chars / 4)`}><Trans>~{tokens} tok</Trans></span>
