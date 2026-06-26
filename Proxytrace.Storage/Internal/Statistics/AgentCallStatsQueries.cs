@@ -139,14 +139,14 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context, StatisticsFilter filter, CancellationToken cancellationToken)
     {
         var (where, parameters) = BuildLatencyWhere(context, filter);
+        // One ordered-set aggregate over an ARRAY of probabilities: PostgreSQL computes p50/p95/p99
+        // from a single ordered pass and returns a double[] (vs. three separate percentile_cont calls).
         string sql = $"""
             SELECT "EndpointId",
                    count(*) AS cnt,
                    min("LatencyMs") AS mn,
                    max("LatencyMs") AS mx,
-                   percentile_cont(0.5)  WITHIN GROUP (ORDER BY "LatencyMs") AS p50,
-                   percentile_cont(0.95) WITHIN GROUP (ORDER BY "LatencyMs") AS p95,
-                   percentile_cont(0.99) WITHIN GROUP (ORDER BY "LatencyMs") AS p99
+                   percentile_cont(ARRAY[0.5, 0.95, 0.99]) WITHIN GROUP (ORDER BY "LatencyMs") AS ps
             FROM "AgentCallEntity"
             WHERE "LatencyMs" IS NOT NULL{where}
             GROUP BY "EndpointId"
@@ -170,11 +170,12 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
+                double[] percentiles = reader.GetFieldValue<double[]>(4);
                 result.Add(new LatencyStat(
                     EndpointId: reader.GetGuid(0),
-                    P50Ms: reader.GetDouble(4),
-                    P95Ms: reader.GetDouble(5),
-                    P99Ms: reader.GetDouble(6),
+                    P50Ms: percentiles[0],
+                    P95Ms: percentiles[1],
+                    P99Ms: percentiles[2],
                     MinMs: reader.GetDouble(2),
                     MaxMs: reader.GetDouble(3),
                     SampleCount: (int)reader.GetInt64(1)));

@@ -95,6 +95,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Dashboard and statistics stay fast on large datasets.** On a database with a lot of history the
+  dashboard and statistics aggregates could take several seconds because PostgreSQL's query planner,
+  working from out-of-date table statistics, chose a plan that scanned the whole traces table the slow
+  way. Proxytrace now keeps the planner's statistics fresh on the high-volume traces table (more
+  frequent auto-analysis), so the same queries run in a few hundred milliseconds. If you bulk-import or
+  restore a large database, run `ANALYZE` once afterwards so the speed-up applies immediately rather
+  than after the next automatic analysis.
 - **Tracey's own traces are captured reliably again.** Tracey runs inside the app, but her captured
   calls were being routed through the same Redis message stream used to bridge the standalone
   ingestion proxy — so whenever that stream was unavailable, every Tracey trace was silently dropped

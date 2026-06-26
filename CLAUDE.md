@@ -52,8 +52,9 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
   entity (above all `AgentCallEntity`/traces, but any table that grows unboundedly), you MUST add or
   extend a perf test in [`perf/`](perf/) that measures the changed path against a budget in
   `perf/perf-budgets.json` — a correctness test on a few in-memory rows does **not** catch
-  client-side evaluation or O(rows) blow-ups that only bite at scale. Verify the aggregate is
-  server-side (`ToQueryString()` shows a `GROUP BY`, not a full-row scan) and run
+  client-side evaluation, bad query plans (e.g. a nested loop from stale planner statistics), or
+  O(rows) blow-ups that only bite at scale. Sanity-check with `ToQueryString()` (server-side
+  `GROUP BY`, not a full-row scan) and `EXPLAIN (ANALYZE)` (estimated vs actual rows) and run
   `perf/run.sh --size 1000000`. See [`docs/performance-testing.md`](docs/performance-testing.md) and
   the `run-perf-tests` skill.
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of

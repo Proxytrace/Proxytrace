@@ -46,14 +46,14 @@ internal static class PerfCli
             switch (command)
             {
                 case "seed":
-                    await SeedAsync(container, size, cts.Token);
+                    await SeedAsync(container, connection, size, cts.Token);
                     return 0;
 
                 case "db-layer":
                     return await DbLayerAsync(container, budgetsPath, outPath, warmup, iterations, ingestCount, ingestConcurrency, cts.Token);
 
                 case "all":
-                    await SeedAsync(container, size, cts.Token);
+                    await SeedAsync(container, connection, size, cts.Token);
                     return await DbLayerAsync(container, budgetsPath, outPath, warmup, iterations, ingestCount, ingestConcurrency, cts.Token);
 
                 default:
@@ -68,11 +68,31 @@ internal static class PerfCli
         }
     }
 
-    private static async Task SeedAsync(PerfContainer container, long size, CancellationToken cancellationToken)
+    private static async Task SeedAsync(PerfContainer container, string connection, long size, CancellationToken cancellationToken)
     {
         await container.ApplyMigrationsAsync(cancellationToken);
         var seeder = new PerfDataSeeder(container);
         await seeder.SeedAsync(SeedOptions.ForSize(size), cancellationToken);
+        await AnalyzeAsync(connection, cancellationToken);
+    }
+
+    /// <summary>
+    /// Refreshes planner statistics after the bulk load. PostgreSQL leaves a freshly bulk-inserted
+    /// table with no stats until autovacuum catches up, and the planner then defaults to wildly low
+    /// row estimates — turning the statistics aggregates into a nested-loop plan that random-reads the
+    /// whole table (seconds at 1M rows) instead of a parallel seq-scan aggregate (sub-second). A
+    /// production database accrues rows incrementally and autovacuum keeps its stats current; the
+    /// harness bulk-loads in one shot, so it must ANALYZE explicitly to measure the steady-state plan
+    /// the product actually runs rather than a cold-load artifact (issue #246).
+    /// </summary>
+    private static async Task AnalyzeAsync(string connection, CancellationToken cancellationToken)
+    {
+        Console.WriteLine("[seed] ANALYZE (refresh planner statistics after bulk load)…");
+        await using var conn = new Npgsql.NpgsqlConnection(connection);
+        await conn.OpenAsync(cancellationToken);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "ANALYZE";
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<int> DbLayerAsync(

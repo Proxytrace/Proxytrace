@@ -74,18 +74,21 @@ Set the connection string in:
   "outliers only" trace filter cheaply — outliers are a small fraction of this high-volume table. The
   filter is relational metadata; the in-memory provider ignores it. See [`domain-concepts.md`](domain-concepts.md).
 
-> **Gotcha — `ulong?` columns silently kill aggregate translation.** The token columns
-> (`InputTokens` / `OutputTokens` / `CachedInputTokens`) are `ulong?`, mapped to `numeric(20,0)`
-> (Postgres has no unsigned types). `Queryable.Sum` has **no `ulong` overload**, so it is tempting to
-> cast per-row: `g.Sum(c => (long?)c.InputTokens ?? 0L)`. That per-row `Convert` + in-aggregate
-> coalesce does **not** translate on Npgsql, and EF does **not throw** — it falls back to **client
-> evaluation**, materialising every matching `AgentCallEntity` (including the value-converted
-> `Request`/`Response` JSON payloads) and summing in C#. At 1M rows this is ~4s + heavy allocation vs
-> <1ms for the raw `GROUP BY` (issue #246). The fast `COUNT`-only aggregates prove the scan is fine —
-> only the Sum breaks. **Rule:** sum over the column's natural store type and move the coalesce/cast
-> onto the tiny materialised result — `g.Sum(c => (decimal?)c.InputTokens)` then `(long)(x ?? 0m)`
-> client-side. Because client-eval here is silent, **verify the generated SQL is a single server-side
-> `GROUP BY` with `sum(...)` via `ToQueryString()`** — never assume an aggregate translated.
+> **Gotcha — keep planner statistics fresh on AgentCallEntity (issue #246).** The dashboard/statistics
+> aggregates (`AgentCallStatsQueries`) translate to server-side `GROUP BY` / `sum` / `percentile_cont` —
+> they do **not** client-evaluate. (The token columns are `ulong?` → `numeric(20,0)`; `Queryable.Sum`
+> has no `ulong` overload, so they cast inside the aggregate, e.g.
+> `g.Sum(c => (long?)c.InputTokens ?? 0L)` → `sum(coalesce("InputTokens"::bigint,0))`. That casts to
+> bigint server-side and is fine — `(decimal?)` translates too but sums as the slower `numeric`.) The
+> real cliff is **stale planner statistics**: right after a bulk load/restore the table has no stats, so
+> Postgres defaults to a wildly low row estimate and flips the windowed aggregate from a parallel
+> seq-scan aggregate to a **nested loop that random-reads the whole table** — ~3.5s at 1M vs
+> ~270-480ms once analyzed (*same SQL*, confirmed by `EXPLAIN ANALYZE`). A production database accrues
+> rows incrementally and autovacuum keeps stats current; a one-shot bulk import does not. **Rules:** run
+> `ANALYZE` after any bulk import/restore (the perf seeder does); `autovacuum_analyze_scale_factor` is
+> lowered on this table (migration `TuneAgentCallAutovacuum`) so growth keeps stats fresh; and when a
+> server-side aggregate is unexpectedly slow, `EXPLAIN (ANALYZE)` it and compare the planner's **estimated
+> vs actual** row counts before assuming the query itself is wrong.
 
 ## Migrations
 
@@ -233,6 +236,14 @@ columns. The `Password` column holds ciphertext only; `EmailSettingsStore` encry
 `ISecretProtector.Protect` on save and decrypts via `Unprotect` on read. No FK constraints; no
 `[StoredDomainEntity]` attribute (registered manually in `Storage.Module`, like
 `StoredLicenseStore`).
+
+The `TuneAgentCallAutovacuum` migration lowers `autovacuum_analyze_scale_factor` (to `0.02`, plus an
+`autovacuum_analyze_threshold` of `5000`) on the high-volume `AgentCallEntity` table via raw
+`ALTER TABLE … SET (…)`. The default scale factor (`0.10`) only re-analyzes after ~10% of rows change,
+which lets planner statistics lag during rapid ingestion and can flip the statistics aggregates onto a
+nested-loop plan (issue #246 — see the gotcha under [High-volume tables](#high-volume-tables-agentcall)).
+It is PostgreSQL-only relational metadata, so its `Up`/`Down` are raw SQL and the in-memory provider
+ignores it.
 
 ## Quick start
 

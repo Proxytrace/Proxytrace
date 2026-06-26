@@ -61,15 +61,25 @@ boundaries, so the k6-bootstrapped admin sees all seeded data. CI: the manual **
 
 See [`perf/README.md`](../perf/README.md) for the operator-facing quick reference.
 
-## First finding (issue #246)
+## First finding (issue #246) — stale planner statistics
 
-On its first 1M-row run the suite caught a real bug: the project-wide statistics aggregations
+On its first 1M-row run the suite measured the project-wide statistics aggregations
 (`GetSummaryAsync`, `GetTokenUsageAsync`, `GetModelBreakdownAsync`, `GetCostEstimateAsync`,
-`GetCallTrendsAsync`, `GetLatencyAsync`) take **3.7–4.4 s** at 1M rows, while the equivalent raw SQL
-aggregate runs in **<1 ms** — they fall back to **client-side evaluation** (materialising every row,
-including the JSON payload columns) because the `ulong?→numeric` token `Sum()`s don't translate.
-`COUNT`-only and index-backed queries stay fast. The `stats*` (and `httpP95Ms.statisticsDashboard`)
-budgets are set to **target** values — a few hundred ms, which the <1ms raw SQL aggregate shows is
-achievable — so the suite is **intentionally RED on those metrics until #246 lands** and stays an active
-reminder. Everything else is green. When #246 is fixed, those metrics should pass at the target without
-loosening.
+`GetCallTrendsAsync`, `GetLatencyAsync`) at **3.7–4.4 s**. The first diagnosis (client-side evaluation
+of `ulong?→numeric` token `Sum()`s) was **wrong**: `ToQueryString` and `EXPLAIN ANALYZE` show every one
+of these translates to a single server-side `GROUP BY` / `sum` / `percentile_cont` and never reads the
+JSON payload columns. The real cause was **stale planner statistics**: the seeder bulk-loads 1M rows in
+one shot and (before the fix) never ran `ANALYZE`, so Postgres had no stats, defaulted to a wildly low
+row estimate, and chose a **nested-loop plan that random-read the whole table** (≈3.5 s) instead of the
+parallel seq-scan aggregate the same SQL runs once analyzed (≈270–480 ms). The author's `<1 ms` raw-SQL
+baseline was on a settled, analyzed table — hence the apparent 1000× gap.
+
+**Fixes (all landed):** the seeder now runs `ANALYZE` after the bulk load so the suite measures the
+steady-state plan; migration `TuneAgentCallAutovacuum` lowers `autovacuum_analyze_scale_factor` on
+`AgentCallEntity` so production stats stay fresh as the table grows; `GetLatencyAsync` uses a single
+`percentile_cont(ARRAY[…])`. The `stats*` budgets are now **real measured p95 + headroom**, not targets.
+After the fix everything is green except where noted: the three heaviest aggregates
+(`statsLatencyPercentiles` ~880 ms full sort, `statsTokenUsage` / `statsCallTrends` ~780–880 ms bucketed
+full scans) are **scan-bound** — no index helps a full-window aggregate, so sub-second at 10M+ would
+require pre-aggregated rollups. A return to the nested-loop plan (e.g. a fresh restore without `ANALYZE`)
+would blow past these budgets and the suite would catch it.

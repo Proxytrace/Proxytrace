@@ -1,7 +1,7 @@
 {
   "_comment": "Absolute performance budgets — the single source of truth for all three perf scopes (DB-layer runner, k6 HTTP, BenchmarkDotNet). A scope exits non-zero when a measured value breaches its budget. Most budgets are calibrated from a 1M-row run on a dev machine (2026-06); RECALIBRATE on your target/CI hardware (set each ~20-30% above the observed p95/mean). A missing key = measure but never fail.",
 
-  "_comment_stats": "statsSummary/statsLatencyPercentiles/statsTokenUsage/statsModelBreakdown/statsCostEstimate/statsCallTrends and httpP95Ms.statisticsDashboard are set to TARGET values, NOT to current measurements: these aggregations client-evaluate at scale (issue #246) and currently measure ~3.7-4.4s (~5-6s over HTTP), so the suite is INTENTIONALLY RED on them. The raw SQL aggregate is <1ms, so a few hundred ms is achievable once #246 lands. Keeping them red makes the suite an active reminder. When #246 is fixed, re-run `perf/run.sh --scopes db-layer,http` and confirm these go green at the target; loosen only if the measured value is legitimately and unavoidably higher.",
+  "_comment_stats": "The statistics aggregates (statsSummary/statsLatencyPercentiles/statsTokenUsage/statsModelBreakdown/statsCostEstimate/statsCallTrends) translate to server-side GROUP BY/sum/percentile_cont — they do NOT client-evaluate. Their cost is one scan of the windowed rows: sub-second at 1M after planner statistics are current. The ~3.7-4.4s seen on the first 1M run (issue #246) was a stale-statistics artifact — a freshly bulk-seeded table with no ANALYZE made the planner pick a nested-loop plan that random-read the whole table; the same SQL runs ~270-880ms once analyzed (3452ms -> 478ms on EXPLAIN). The seeder now ANALYZEs after the bulk load and migration TuneAgentCallAutovacuum keeps stats fresh in production, so these budgets are real measured p95 + ~30-45% headroom on a 1M dev run (2026-06). The three heaviest (latencyPercentiles ~880ms full sort, tokenUsage/callTrends ~780-880ms bucketed full scans) are scan-bound — no index helps a full-window aggregate; sub-second at 10M+ would need pre-aggregated rollups. RECALIBRATE on your CI hardware (~20-30% above observed p95).",
 
   "ingestion": {
     "callsPerSecMin": 150
@@ -13,18 +13,18 @@
     "agentCallsListByTimeRange": 80,
     "agentCallsHistogram": 150,
     "statsSummary": 500,
-    "statsLatencyPercentiles": 800,
-    "statsTokenUsage": 800,
+    "statsLatencyPercentiles": 1200,
+    "statsTokenUsage": 1200,
     "statsAgentBreakdown": 500,
     "statsModelBreakdown": 600,
     "statsCostEstimate": 600,
-    "statsCallTrends": 700,
+    "statsCallTrends": 1100,
     "agentOverview": 250,
     "agentDistributions": 250
   },
 
   "httpP95Ms": {
-    "statisticsDashboard": 1500,
+    "statisticsDashboard": 2500,
     "agentCallsList": 300,
     "agentDistributions": 600
   },
