@@ -116,7 +116,8 @@ public class StatisticsController : ControllerBase
     }
 
     private static MetricDistributionDto ToDto(MetricDistribution d) =>
-        new(d.Mean, d.StdDev, d.SampleCount);
+        new(d.Mean, d.StdDev, d.SampleCount, d.Min, d.Max,
+            d.Histogram.Select(b => new HistogramBinDto(b.Start, b.End, b.Count)).ToArray());
 
     private static AgentTimeSummaryDto ToDto(AgentTimeSummary s) =>
         new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCachedInputTokens, s.TotalCostEur, s.AvgLatencyMs);

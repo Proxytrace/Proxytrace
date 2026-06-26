@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import type { MetricDistributionDto } from '../../../api/models';
 import { fmtCostEur, fmtLatency, fmtPct, fmtTokens } from '../../../lib/format';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { MiniHistogram } from '../../../components/charts';
 import type { RangeKey } from '../../../lib/time-range';
 import { useAgentDistributions } from '../hooks/useAgentDistributions';
 import { Widget } from './Widget';
@@ -22,6 +23,7 @@ interface Row {
   unit: Unit;
   dist: MetricDistributionDto;
   fmt: (v: number) => string;
+  color: string;
 }
 
 function fmtCount(v: number): string {
@@ -40,18 +42,18 @@ export function DistributionWidget({ agentId, range, className }: Props) {
   if (isLoading || !distributions) {
     return (
       <Widget title={t`Distribution`} className={className}>
-        <Skeleton height={150} className="rounded-md" />
+        <Skeleton height={210} className="rounded-md" />
       </Widget>
     );
   }
 
   const rows: Row[] = [
-    { key: 'input', label: <Trans>Input tokens</Trans>, unit: 'call', dist: distributions.inputTokensPerCall, fmt: fmtTokenStat },
-    { key: 'output', label: <Trans>Output tokens</Trans>, unit: 'call', dist: distributions.outputTokensPerCall, fmt: fmtTokenStat },
-    { key: 'latency', label: <Trans>Latency</Trans>, unit: 'call', dist: distributions.latencyMsPerCall, fmt: fmtLatency },
-    { key: 'cost', label: <Trans>Cost</Trans>, unit: 'conv', dist: distributions.costPerConversationEur, fmt: fmtCostEur },
-    { key: 'cache', label: <Trans>Cache hit (t≥2)</Trans>, unit: 'conv', dist: distributions.cacheHitRatePerConversation, fmt: fmtPct },
-    { key: 'tools', label: <Trans>Tool calls</Trans>, unit: 'conv', dist: distributions.toolCallsPerConversation, fmt: fmtCount },
+    { key: 'input', label: <Trans>Input tokens</Trans>, unit: 'call', dist: distributions.inputTokensPerCall, fmt: fmtTokenStat, color: 'var(--teal)' },
+    { key: 'output', label: <Trans>Output tokens</Trans>, unit: 'call', dist: distributions.outputTokensPerCall, fmt: fmtTokenStat, color: 'var(--teal)' },
+    { key: 'latency', label: <Trans>Latency</Trans>, unit: 'call', dist: distributions.latencyMsPerCall, fmt: fmtLatency, color: 'var(--success)' },
+    { key: 'cost', label: <Trans>Cost</Trans>, unit: 'conv', dist: distributions.costPerConversationEur, fmt: fmtCostEur, color: 'var(--warn)' },
+    { key: 'cache', label: <Trans>Cache hit (t≥2)</Trans>, unit: 'conv', dist: distributions.cacheHitRatePerConversation, fmt: fmtPct, color: 'var(--accent-primary)' },
+    { key: 'tools', label: <Trans>Tool calls</Trans>, unit: 'conv', dist: distributions.toolCallsPerConversation, fmt: fmtCount, color: 'var(--accent-primary)' },
   ];
 
   // Per-call token sampling covers every successful call, so an empty token sample means no calls.
@@ -65,28 +67,34 @@ export function DistributionWidget({ agentId, range, className }: Props) {
 
   return (
     <Widget title={t`Distribution`} className={className}>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {rows.map(r => (
           <div
             key={r.key}
             data-testid={`distribution-${r.key}`}
-            className="flex items-baseline justify-between gap-2 text-body-sm"
             title={r.dist.sampleCount === 1 ? t`1 sample` : t`${r.dist.sampleCount} samples`}
           >
-            <span className="text-secondary truncate">
-              {r.label}
-              <span className="text-muted"> {r.unit === 'call' ? <Trans>/ call</Trans> : <Trans>/ conv</Trans>}</span>
-            </span>
-            <span className="shrink-0 font-mono">
-              {r.dist.sampleCount === 0 ? (
-                <span className="text-muted">—</span>
-              ) : (
-                <>
-                  <span className="font-semibold text-primary">{r.fmt(r.dist.mean)}</span>
-                  <span className="text-muted"> ± {r.fmt(r.dist.stdDev)}</span>
-                </>
-              )}
-            </span>
+            <div className="flex items-baseline justify-between gap-2 text-body-sm">
+              <span className="text-secondary truncate">
+                {r.label}
+                <span className="text-muted"> {r.unit === 'call' ? <Trans>/ call</Trans> : <Trans>/ conv</Trans>}</span>
+              </span>
+              <span className="shrink-0 font-mono">
+                {r.dist.sampleCount === 0 ? (
+                  <span className="text-muted">—</span>
+                ) : (
+                  <>
+                    <span className="font-semibold text-primary">{r.fmt(r.dist.mean)}</span>
+                    <span className="text-muted"> ± {r.fmt(r.dist.stdDev)}</span>
+                  </>
+                )}
+              </span>
+            </div>
+            {r.dist.sampleCount > 0 && r.dist.histogram.length > 0 && (
+              <div className="mt-1.5">
+                <MiniHistogram bins={r.dist.histogram} color={r.color} formatValue={r.fmt} />
+              </div>
+            )}
           </div>
         ))}
       </div>

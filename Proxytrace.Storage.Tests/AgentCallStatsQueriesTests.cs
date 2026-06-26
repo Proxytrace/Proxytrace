@@ -367,6 +367,48 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetAgentDistributions_Histogram_BinsCoverAllSamplesWithMinMax()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        foreach (ulong input in new ulong[] { 100, 200, 300 })
+        {
+            await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+                new TokenUsage(input, 10, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        }
+
+        var h = (await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken)).InputTokensPerCall;
+
+        h.Min.Should().Be(100d);
+        h.Max.Should().Be(300d);
+        h.Histogram.Should().HaveCount(3);                       // distinct values → one bar each
+        h.Histogram.Sum(b => b.Count).Should().Be(3);            // every sample lands in exactly one bin
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_Histogram_IdenticalSamples_CollapseToSingleBin()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(500, 10, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(500, 10, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+
+        var h = (await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken)).InputTokensPerCall;
+
+        h.Histogram.Should().ContainSingle().Which.Count.Should().Be(2);
+    }
+
+    [TestMethod]
     public async Task GetAgentDistributions_SingleCall_StdDevIsZero()
     {
         IServiceProvider services = GetServices();

@@ -310,11 +310,20 @@ export interface AgentOverviewDto {
   suitePassRates: AgentSuitePassRateDto[];
   counts: AgentEntityCountsDto;
 }
-/** Mean ± sample std-dev of a single metric over its sample set (std is 0 when fewer than two samples). */
+/** One equal-width histogram bin: the value range and how many samples fell in it. */
+export interface HistogramBinDto {
+  start: number;
+  end: number;
+  count: number;
+}
+/** Mean ± sample std-dev of a single metric, its min/max, and a histogram of the samples. */
 export interface MetricDistributionDto {
   mean: number;
   stdDev: number;
   sampleCount: number;
+  min: number;
+  max: number;
+  histogram: HistogramBinDto[];
 }
 /** Distribution of an agent's successful calls: tokens/latency per call, cost/cache/tools per conversation. */
 export interface AgentDistributionsDto {

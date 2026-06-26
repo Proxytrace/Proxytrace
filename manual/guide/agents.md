@@ -98,8 +98,11 @@ Where the **Performance** card shows totals and averages, the **Distribution** w
 how *consistent* the agent's calls are: the **mean ± standard deviation** of each metric over
 the same time window, computed from the agent's **successful** calls only. A large spread
 (big ± value) means the metric swings widely from call to call; a small one means it is steady.
+Each metric also draws a small **histogram** of the actual samples — hover a bar to read its value
+range and the number of calls (or conversations) in it. When every sample shares one value, the
+histogram collapses to a single centred bar.
 
-![The Distribution widget on the agent detail page, showing input and output tokens and latency per call, and cost, cache hit rate, and tool calls per conversation — each as a mean ± standard deviation.](/screenshots/agents/distribution.png)
+![The Distribution widget on the agent detail page: input and output tokens and latency per call, and cost, cache hit rate, and tool calls per conversation — each shown as a mean ± standard deviation with a small histogram of the samples.](/screenshots/agents/distribution.png)
 
 | Metric | Measured per | Notes |
 | --- | --- | --- |

@@ -782,8 +782,9 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     }
 
     /// <summary>
-    /// Mean and sample (n−1) standard deviation of <paramref name="samples"/>. Std-dev is 0 when
-    /// fewer than two samples exist; an empty set yields <see cref="MetricDistribution.Empty"/>.
+    /// Mean, sample (n−1) standard deviation, min/max and an equal-width histogram of
+    /// <paramref name="samples"/>. Std-dev is 0 when fewer than two samples exist; an empty set yields
+    /// <see cref="MetricDistribution.Empty"/>.
     /// </summary>
     private static MetricDistribution Distribution(IReadOnlyList<double> samples)
     {
@@ -794,18 +795,51 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         }
 
         double mean = samples.Sum() / n;
-        if (n < 2)
+        double std = 0d;
+        if (n >= 2)
         {
-            return new MetricDistribution(mean, 0d, n);
+            double sumSq = 0d;
+            foreach (double v in samples)
+            {
+                double d = v - mean;
+                sumSq += d * d;
+            }
+            std = Math.Sqrt(sumSq / (n - 1));
         }
 
-        double sumSq = 0d;
+        double min = samples.Min();
+        double max = samples.Max();
+        return new MetricDistribution(mean, std, n, min, max, BuildHistogram(samples, min, max));
+    }
+
+    /// <summary>
+    /// Bins <paramref name="samples"/> into up to 24 equal-width buckets over [min, max]. The bin count
+    /// is capped at the number of distinct values, so small discrete metrics (e.g. tool counts) get one
+    /// bar per value rather than fractional empties. When every sample is identical, a single bin holds
+    /// them all. The max value lands in the last bin (the top edge is treated as inclusive).
+    /// </summary>
+    private static IReadOnlyList<HistogramBin> BuildHistogram(IReadOnlyList<double> samples, double min, double max)
+    {
+        if (max <= min)
+        {
+            return [new HistogramBin(min, max, samples.Count)];
+        }
+
+        int bins = Math.Clamp(samples.Distinct().Count(), 1, 24);
+        double width = (max - min) / bins;
+        var counts = new int[bins];
         foreach (double v in samples)
         {
-            double d = v - mean;
-            sumSq += d * d;
+            int idx = (int)((v - min) / width);
+            counts[Math.Clamp(idx, 0, bins - 1)]++;
         }
-        return new MetricDistribution(mean, Math.Sqrt(sumSq / (n - 1)), n);
+
+        var result = new HistogramBin[bins];
+        for (int i = 0; i < bins; i++)
+        {
+            result[i] = new HistogramBin(min + (i * width), min + ((i + 1) * width), counts[i]);
+        }
+        return result;
     }
 
     private static double Percentile(double[] sorted, double p)

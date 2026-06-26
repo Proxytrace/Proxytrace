@@ -168,13 +168,23 @@ public record AgentOverviewStat(
     IReadOnlyList<AgentSuitePassRate> SuitePassRates,
     AgentEntityCounts Counts);
 
+/// <summary>One equal-width histogram bin: the half-open value range and how many samples fell in it.</summary>
+public record HistogramBin(double Start, double End, int Count);
+
 /// <summary>
-/// Mean and (sample) standard deviation of one metric over its sample set, plus the sample count.
-/// <see cref="StdDev"/> is 0 when fewer than two samples exist.
+/// Mean and (sample) standard deviation of one metric over its sample set, the min/max, the sample
+/// count, and an equal-width <see cref="Histogram"/> of the samples (so the UI can plot the real
+/// shape, not a synthesized curve). <see cref="StdDev"/> is 0 when fewer than two samples exist.
 /// </summary>
-public record MetricDistribution(double Mean, double StdDev, int SampleCount)
+public record MetricDistribution(
+    double Mean,
+    double StdDev,
+    int SampleCount,
+    double Min,
+    double Max,
+    IReadOnlyList<HistogramBin> Histogram)
 {
-    public static MetricDistribution Empty => new(0d, 0d, 0);
+    public static MetricDistribution Empty => new(0d, 0d, 0, 0d, 0d, []);
 }
 
 /// <summary>
