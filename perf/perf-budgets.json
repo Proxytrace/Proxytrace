@@ -1,0 +1,38 @@
+{
+  "_comment": "Absolute performance budgets — the single source of truth for all three perf scopes (DB-layer runner, k6 HTTP, BenchmarkDotNet). A scope exits non-zero when a measured value breaches its budget. Most budgets are calibrated from a 1M-row run on a dev machine (2026-06); RECALIBRATE on your target/CI hardware (set each ~20-30% above the observed p95/mean). A missing key = measure but never fail.",
+
+  "_comment_stats": "statsSummary/statsLatencyPercentiles/statsTokenUsage/statsModelBreakdown/statsCostEstimate/statsCallTrends and httpP95Ms.statisticsDashboard are set to TARGET values, NOT to current measurements: these aggregations client-evaluate at scale (issue #246) and currently measure ~3.7-4.4s (~5-6s over HTTP), so the suite is INTENTIONALLY RED on them. The raw SQL aggregate is <1ms, so a few hundred ms is achievable once #246 lands. Keeping them red makes the suite an active reminder. When #246 is fixed, re-run `perf/run.sh --scopes db-layer,http` and confirm these go green at the target; loosen only if the measured value is legitimately and unavoidably higher.",
+
+  "ingestion": {
+    "callsPerSecMin": 150
+  },
+
+  "dbQueryP95Ms": {
+    "agentCallsList": 90,
+    "agentCallsListByAgent": 40,
+    "agentCallsListByTimeRange": 80,
+    "agentCallsHistogram": 150,
+    "statsSummary": 500,
+    "statsLatencyPercentiles": 800,
+    "statsTokenUsage": 800,
+    "statsAgentBreakdown": 500,
+    "statsModelBreakdown": 600,
+    "statsCostEstimate": 600,
+    "statsCallTrends": 700,
+    "agentOverview": 250,
+    "agentDistributions": 250
+  },
+
+  "httpP95Ms": {
+    "statisticsDashboard": 1500,
+    "agentCallsList": 300,
+    "agentDistributions": 600
+  },
+
+  "benchmarkMeanUs": {
+    "conversationSerialize": 50,
+    "conversationDeserialize": 80,
+    "responseSerialize": 40,
+    "responseDeserialize": 60
+  }
+}

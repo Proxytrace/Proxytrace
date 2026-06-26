@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <!-- BenchmarkDotNet requires an optimized build to produce meaningful numbers. -->
+        <Optimize>true</Optimize>
+        <RootNamespace>Proxytrace.Benchmarks</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+        <PackageReference Include="NSubstitute" Version="5.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Proxytrace.Application\Proxytrace.Application.csproj" />
+        <ProjectReference Include="..\..\Proxytrace.Storage\Proxytrace.Storage.csproj" />
+        <ProjectReference Include="..\..\Proxytrace.Serialization\Proxytrace.Serialization.csproj" />
+        <ProjectReference Include="..\..\Proxytrace.Domain\Proxytrace.Domain.csproj" />
+        <ProjectReference Include="..\..\Proxytrace.Common\Proxytrace.Common.csproj" />
+        <ProjectReference Include="..\..\Proxytrace.Testing\Proxytrace.Testing.csproj" />
+    </ItemGroup>
+
+</Project>

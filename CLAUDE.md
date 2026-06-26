@@ -16,6 +16,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/licensing.md`](docs/licensing.md) | Gating a feature/limit behind a license tier (`ILicenseService`) |
 | [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
 | [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |
+| [`docs/performance-testing.md`](docs/performance-testing.md) | Touching the perf suite (`perf/`) — seeding at scale, the DB-layer/HTTP/benchmark scopes, or the budgets |
 | [`docs/sse-events.md`](docs/sse-events.md) | Adding/changing a real-time stream (SSE broadcasters, event payloads, client hooks) |
 | [`docs/mcp.md`](docs/mcp.md) | Touching the MCP server (the `/mcp` endpoint, `McpApiKey` auth scheme, MCP tools) |
 | [`docs/audit-log.md`](docs/audit-log.md) | Emitting an audit event, or touching the audit capture pipeline / read API / retention |
