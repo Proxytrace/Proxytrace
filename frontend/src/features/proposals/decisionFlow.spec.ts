@@ -52,12 +52,21 @@ describe('buildDecisionFlow', () => {
     expect(i18n._(f.find(s => s.key === 'abTest')!.statusLabel)).toBe('In flight');
   });
 
-  it('Invalidated: A/B + proposal + outcome all rejected (auto)', () => {
-    const f = buildDecisionFlow(theory({ status: TheoryStatus.Invalidated }), null);
+  it('Invalidated by A/B (has metrics): A/B + proposal + outcome rejected (auto)', () => {
+    const f = buildDecisionFlow(theory({ status: TheoryStatus.Invalidated, pValue: 0.4, baselinePassRate: 0.6 }), null);
     expect(state(f, 'abTest')).toBe('rejected');
     expect(state(f, 'proposal')).toBe('rejected');
     expect(state(f, 'outcome')).toBe('rejected');
+    expect(i18n._(f.find(s => s.key === 'abTest')!.statusLabel)).toBe('No improvement');
     expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Auto-rejected by A/B');
+  });
+
+  it('Invalidated by user (no metrics): A/B skipped, outcome dismissed', () => {
+    const f = buildDecisionFlow(theory({ status: TheoryStatus.Invalidated }), null);
+    expect(state(f, 'abTest')).toBe('pending');
+    expect(state(f, 'outcome')).toBe('rejected');
+    expect(i18n._(f.find(s => s.key === 'abTest')!.statusLabel)).toBe('Skipped');
+    expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Dismissed');
   });
 
   it('Validated + Draft proposal: outcome awaits user review', () => {

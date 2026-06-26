@@ -62,6 +62,7 @@ export default defineConfig({
         '**/pagination.spec.ts',
         '**/negative.spec.ts',
         '**/sse.spec.ts',
+        '**/mfa.spec.ts',
       ],
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],

@@ -1,6 +1,12 @@
 import { api, qs } from './client';
 import type { NotificationSeverity, PagedResult, UserDto, UserProjectDto, UserRole } from './models';
 
+/** An admin-minted, one-time password-reset link plus its expiry. Shown once. */
+export interface ResetLinkResponse {
+  link: string;
+  expiresAt: string;
+}
+
 export const usersApi = {
   list: (params?: { page?: number; pageSize?: number }) =>
     api.get<PagedResult<UserDto>>(`/api/users${qs(params ?? {})}`),
@@ -13,4 +19,8 @@ export const usersApi = {
     api.patch<void>(`/api/users/me/email-notifications`, { enabled, minSeverity }),
   delete: (id: string) => api.del(`/api/users/${id}`),
   listProjects: (id: string) => api.get<UserProjectDto[]>(`/api/users/${id}/projects`),
+  /** Admin: mint a one-time password-reset link for a user (returned once, never emailed from here). */
+  createResetLink: (id: string) => api.post<ResetLinkResponse>(`/api/users/${id}/reset-link`),
+  /** Admin: turn off a user's two-factor authentication (lockout recovery). Idempotent. */
+  disableMfa: (id: string) => api.post<void>(`/api/users/${id}/mfa/disable`),
 };

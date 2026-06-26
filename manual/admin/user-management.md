@@ -54,6 +54,42 @@ Click **Projects** on a user's row to open the project assignment editor. Tick a
 the user as a member; untick to remove them. The same membership can also be managed from the
 project side under **Settings → Projects**.
 
+## Resetting a password
+
+Users who forget their password use **Forgot password?** on the sign-in screen to request a reset
+link themselves. How that link reaches them depends on whether outgoing email is configured:
+
+- **Email configured** ([SMTP set up](/admin/email)) — Proxytrace emails the one-time reset link
+  directly to the user. The link is valid for **1 hour** and can be used once.
+- **No email configured** — the link can't be emailed. Proxytrace instead writes it to the **server
+  log** (at warning level — e.g. `Password reset requested for … reset link: …`) so you, the
+  operator, can retrieve it and hand it to the user. This is the only way to recover a **sole Admin**
+  who is locked out of an instance with no SMTP configured.
+
+You can also reset on a user's behalf without involving email at all: on the user's row click **Reset
+password**. Proxytrace mints a one-time link and shows it once in a dialog — copy it and share it with
+the user over a trusted channel. As with invites, the link is stored hashed and **never shown again**.
+
+::: tip Resets don't sign existing sessions out
+A new password takes effect immediately for new sign-ins, but any session the user already has open
+stays valid until it expires. To revoke access right away, delete the user.
+:::
+
+External (SSO) users have no Proxytrace password, so **Reset password** is disabled for them — manage
+their credentials at your identity provider.
+
+## Resetting two-factor authentication
+
+Users turn [two-factor authentication](/guide/two-factor-authentication) on and off themselves under
+**Account security**, and they get one-time backup codes for when they lose their device. If a user
+loses **both** their authenticator app and their backup codes, they're locked out — and only an admin
+can recover them.
+
+On the user's row, click **Reset MFA** (shown only for users who currently have it enabled) and
+confirm. This turns off two-factor authentication for that user and discards their backup codes; they
+can then sign in with just their password and set it up again. The reset is recorded in the
+[audit log](/admin/audit-log).
+
 ## How this works with OIDC (SSO)
 
 When Proxytrace is configured against an external **OIDC** identity provider, account creation is

@@ -198,6 +198,27 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            // The run was cancelled (process shutdown, or a user cancelling theory validation through
+            // the linked token). Mark the group and any non-terminal runs Cancelled with a fresh token
+            // so the in-flight A/B run isn't stranded in Running forever, then rethrow. Best-effort.
+            try
+            {
+                var runs = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken.None);
+                foreach (var run in runs.Where(r => !IsTerminal(r.Status)))
+                    await run.SetCancelled(CancellationToken.None);
+
+                group = await group.ReloadAsync(CancellationToken.None);
+                if (!IsTerminal(group.Status))
+                {
+                    group = await group.SetCancelled(CancellationToken.None);
+                    broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to mark cancelled test run group {GroupId} terminal", group.Id);
+            }
+
             throw;
         }
         catch (Exception ex)

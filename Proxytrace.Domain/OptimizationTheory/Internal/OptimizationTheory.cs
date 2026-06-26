@@ -144,6 +144,16 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
             cancellationToken);
     }
 
+    public Task<IOptimizationTheory> Reject(CancellationToken cancellationToken = default)
+    {
+        if (Status is not (TheoryStatus.Proposed or TheoryStatus.Validating))
+            throw new InvalidOperationException($"Cannot reject theory {Id} from status {Status}.");
+
+        // Keep any A/B run already linked while validating for provenance; record no metrics so a
+        // manual dismissal stays distinguishable from an A/B-disproven invalidation.
+        return ApplyAsync(this with { Status = TheoryStatus.Invalidated }, cancellationToken);
+    }
+
     public Task<IOptimizationTheory> ResetToProposed(CancellationToken cancellationToken = default)
     {
         if (Status is not (TheoryStatus.Validated or TheoryStatus.Invalidated))

@@ -47,6 +47,17 @@ menu (the icon top-left), trace lists show the essential columns, and lists open
 detail as a separate screen with a back button. Authoring flows (suite creation wizards,
 the playgrounds, evaluator editing) are best used on a desktop browser.
 
+## Resetting your password
+
+Forgot your password? Click **Forgot password?** on the sign-in screen and enter your email.
+Proxytrace sends a one-time reset link (valid for one hour) that lets you choose a new password and
+signs you straight in. If outgoing email isn't configured on your instance, the link can't be
+emailed — ask an administrator to generate a reset link for you instead (see
+[User Management](/admin/user-management)).
+
+This applies to local password accounts only. If your organization signs in through single sign-on
+(SSO), password resets are handled by your identity provider, not Proxytrace.
+
 ## Next step
 
 Start by [setting up the proxy](/guide/proxy-setup) so your agent traffic begins flowing

@@ -6,6 +6,7 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
+using Proxytrace.Domain.Message;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Testing;
@@ -45,6 +46,29 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
 
         result.Value.Should().NotBeNull();
         result.Value.LoggedEvaluation.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Load_WhenActualResponseIsToolCallOnly_RendersToolCallInsteadOfEmpty()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        var testCase = await services.GetRequiredService<IDomainEntityGenerator<ITestCase>>().CreateAsync(CancellationToken);
+        var toolResponse = new AssistantMessage(
+            [],
+            [new ToolRequest("call-1", "get_weather", """{"city":"NYC"}""")]);
+        var completion = services.GetRequiredService<ICompletion.Create>()(toolResponse, null, TimeSpan.FromMilliseconds(10));
+        var evaluation = services.GetRequiredService<IEvaluation.Create>()(evaluator, EvaluationScore.Good, TimeSpan.FromMilliseconds(10), null, null, null);
+        var result = services.GetRequiredService<ITestResult.CreateNew>()(testCase, completion, [evaluation]);
+        await services.GetRequiredService<ITestResultRepository>().AddAsync(result, CancellationToken);
+        var controller = ResolveController(services);
+
+        var payload = (await controller.Load(evaluator.Id, testCase.Id, CancellationToken)).Value;
+
+        payload.Should().NotBeNull();
+        payload.ActualResponse.Should().NotBeNullOrWhiteSpace();
+        payload.ActualResponse.Should().Contain("[tool call]");
+        payload.ActualResponse.Should().Contain("get_weather");
     }
 
     [TestMethod]

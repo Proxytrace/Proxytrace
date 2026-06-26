@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useAuthMode } from '../../auth/authMode';
 import { localAuthApi } from '../../auth/local/localAuthApi';
@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import useLocalAuth from '../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../auth/password';
 import { BrandMark } from '../../components/ui/BrandMark';
+import { MfaChallengeForm } from './components/MfaChallengeForm';
 
 export default function Login() {
   const { data } = useAuthMode();
@@ -52,51 +53,74 @@ function LocalLogin() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Set when the password step passes but the account requires a TOTP second factor.
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+
+  const completeLogin = (token: string) => {
+    setToken(token);
+    navigate('/');
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface text-primary">
-      <form
-        data-testid="login-form"
-        className="w-80 space-y-3 rounded-xl border border-border bg-surface-2 p-6 shadow-[var(--shadow-card)]"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setErr(null);
-          setSubmitting(true);
-          try {
-            const r = await localAuthApi.login(email, password);
-            setToken(r.token);
-            navigate('/');
-          } catch {
-            setErr(t`Invalid email or password.`);
-          } finally {
-            setSubmitting(false);
-          }
-        }}
-      >
-        <h1 className="text-lg font-semibold"><Trans>Sign in</Trans></h1>
-        <Input
-          data-testid="login-email"
-          placeholder={t`Email`}
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          data-testid="login-password"
-          placeholder={t`Password`}
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {err && <p data-testid="login-error" className="text-sm text-danger">{err}</p>}
-        <Button data-testid="login-submit" type="submit" fullWidth loading={submitting}>
-          <Trans>Sign in</Trans>
-        </Button>
-      </form>
+      <div className="w-80 rounded-xl border border-border bg-surface-2 p-6 shadow-[var(--shadow-card)]">
+        {challengeToken ? (
+          <MfaChallengeForm challengeToken={challengeToken} onVerified={completeLogin} />
+        ) : (
+          <form
+            data-testid="login-form"
+            className="space-y-3"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setErr(null);
+              setSubmitting(true);
+              try {
+                const outcome = await localAuthApi.login(email, password);
+                if (outcome.mfaRequired) {
+                  setChallengeToken(outcome.challengeToken);
+                } else {
+                  completeLogin(outcome.token);
+                }
+              } catch {
+                setErr(t`Invalid email or password.`);
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+          >
+            <h1 className="text-lg font-semibold"><Trans>Sign in</Trans></h1>
+            <Input
+              data-testid="login-email"
+              placeholder={t`Email`}
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              data-testid="login-password"
+              placeholder={t`Password`}
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {err && <p data-testid="login-error" className="text-sm text-danger">{err}</p>}
+            <Button data-testid="login-submit" type="submit" fullWidth loading={submitting}>
+              <Trans>Sign in</Trans>
+            </Button>
+            <Link
+              to="/forgot-password"
+              data-testid="login-forgot-password"
+              className="block text-center text-body-sm text-accent hover:underline"
+            >
+              <Trans>Forgot password?</Trans>
+            </Link>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

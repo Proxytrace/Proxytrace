@@ -40,6 +40,9 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, MessageDescriptor> = {
   [AuditAction.AdminBootstrapped]: msg`Admin Created`,
   [AuditAction.LegacyAccountClaimed]: msg`Account Claimed`,
   [AuditAction.ProposalStatusChanged]: msg`Proposal Status Changed`,
+  [AuditAction.PasswordResetRequested]: msg`Password Reset Requested`,
+  [AuditAction.PasswordResetCompleted]: msg`Password Reset Completed`,
+  [AuditAction.PasswordResetLinkIssued]: msg`Password Reset Link Issued`,
 };
 
 export const AUDIT_ACTOR_TYPE_LABEL: Record<AuditActorType, MessageDescriptor> = {
@@ -91,4 +94,7 @@ export const ACTION_COLOR: Record<AuditAction, string> = {
   [AuditAction.AdminBootstrapped]: 'var(--accent-primary)',
   [AuditAction.LegacyAccountClaimed]: 'var(--accent-primary)',
   [AuditAction.ProposalStatusChanged]: 'var(--teal)',
+  [AuditAction.PasswordResetRequested]: 'var(--warn)',
+  [AuditAction.PasswordResetCompleted]: 'var(--success)',
+  [AuditAction.PasswordResetLinkIssued]: 'var(--accent-primary)',
 };

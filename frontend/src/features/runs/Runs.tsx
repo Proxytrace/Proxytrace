@@ -123,7 +123,7 @@ export default function Runs() {
 
         {/* Right: detail — on mobile a full-screen view with a back affordance */}
         {(!isMobile || selectedGroup) && (
-        <div className={cn('min-w-0 min-h-0', isMobile && 'flex-1 overflow-y-auto flex flex-col gap-2')}>
+        <div className={cn('min-w-0 min-h-0 overflow-y-auto flex flex-col gap-2', isMobile && 'flex-1')}>
           {isMobile && (
             <Button
               variant="ghost"

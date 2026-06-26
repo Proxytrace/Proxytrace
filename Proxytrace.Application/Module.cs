@@ -286,6 +286,13 @@ public sealed class Module : Autofac.Module
             .SingleInstance()
             .IfNotRegistered(typeof(AgentCallProcessor));
 
+        // Shared in-process ingestion core. Used by the stream consumer per envelope AND directly by
+        // same-process producers (Tracey) so they don't round-trip through the Redis transport.
+        builder.RegisterType<IngestionExecutor>()
+            .As<IIngestionExecutor>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(IngestionExecutor));
+
         builder.RegisterType<AgentCallIngestionWorker>()
             .AsSelf()
             .SingleInstance()
@@ -414,6 +421,11 @@ public sealed class Module : Autofac.Module
             .As<IStreamTicketService>()
             .SingleInstance();
 
+        // In-memory, single-use MFA challenge tickets — SingleInstance so the dictionary is shared.
+        builder.RegisterType<MfaChallengeService>()
+            .As<IMfaChallengeService>()
+            .SingleInstance();
+
         builder.RegisterType<PasswordService>()
             .As<IPasswordService>()
             .SingleInstance();
@@ -448,6 +460,18 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<LegacyClaimService>()
             .As<ILegacyClaimService>()
+            .SingleInstance();
+
+        builder.RegisterType<PasswordResetService>()
+            .As<IPasswordResetService>()
+            .SingleInstance();
+
+        builder.RegisterType<TotpService>()
+            .As<ITotpService>()
+            .SingleInstance();
+
+        builder.RegisterType<MfaService>()
+            .As<IMfaService>()
             .SingleInstance();
 
         builder.RegisterInstance(Prompts.ResourceManager);

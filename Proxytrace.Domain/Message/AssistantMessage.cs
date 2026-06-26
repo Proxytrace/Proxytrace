@@ -39,6 +39,31 @@ public sealed record AssistantMessage : Message
         }
     }
 
+    /// <summary>
+    /// Returns the message text with any tool requests rendered as
+    /// <c>[tool call] Name(Arguments)</c> lines appended. Unlike <see cref="Message.GetText"/>
+    /// — which only concatenates <see cref="Message.Contents"/> and therefore returns an empty
+    /// string for a turn whose sole content is a tool call — this always yields a non-empty,
+    /// human-readable representation of a tool-call-only assistant turn. Intended for display
+    /// (e.g. the evaluator playground reference / candidate panes), not for evaluation.
+    /// </summary>
+    public string GetDisplayText()
+    {
+        var text = GetText();
+        if (ToolRequests.Count == 0)
+        {
+            return text;
+        }
+
+        var toolCalls = string.Join(
+            Environment.NewLine,
+            ToolRequests.Select(tr => $"[tool call] {tr.Name}({tr.Arguments})"));
+
+        return string.IsNullOrWhiteSpace(text)
+            ? toolCalls
+            : $"{text}{Environment.NewLine}{toolCalls}";
+    }
+
     public string GetTextResponse()
     {
         if (ToolRequests.Any())

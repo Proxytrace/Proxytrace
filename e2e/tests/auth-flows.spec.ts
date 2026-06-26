@@ -160,3 +160,82 @@ test.describe('Auth & access control', () => {
   // NOTE: the Free-tier 402 gate on the optimization-proposals route is covered in
   // licensing.spec.ts ('the optimization-proposals API is gated with HTTP 402'); not duplicated here.
 });
+
+// Forgot/reset-password flow. The reset link is exercised through the deterministic admin-issued
+// path (no SMTP needed): an admin mints a one-time link, the user opens it and chooses a new
+// password. See features/auth/{ForgotPassword,ResetPassword}.tsx + AuthController/UsersController.
+test.describe('Password reset', () => {
+  // Drive from a clean, signed-out browser session (the reset page is unauthenticated).
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  // Create a fresh local user with a known password via the invite flow; return its email + id.
+  async function seedLocalUser(api: ProxytraceApiClient): Promise<{ email: string; id: string }> {
+    const email = `reset+${Date.now()}-${Math.random().toString(36).slice(2)}@e2e.test`;
+    const invite = await api.inviteUser(email, 'Member');
+    await api.signup(invite.token, ADMIN_PASSWORD);
+    return { email, id: await api.userIdByEmail(email) };
+  }
+
+  function tokenFromLink(link: string): string {
+    const token = new URL(link).searchParams.get('token');
+    if (!token) throw new Error(`reset link had no token: ${link}`);
+    return token;
+  }
+
+  test('an admin-issued reset link lets a user set a new password and signs them in', async ({ page, request }) => {
+    const api = new ProxytraceApiClient(request);
+    const { token: adminToken } = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+    api.setToken(adminToken);
+
+    const user = await seedLocalUser(api);
+    const { link } = await api.createResetLink(user.id);
+
+    await page.goto(`/reset-password?token=${encodeURIComponent(tokenFromLink(link))}`, { waitUntil: 'load' });
+
+    const newPassword = 'E2eNewPass2@';
+    await page.getByTestId('reset-password-input').fill(newPassword);
+    await page.getByTestId('reset-password-submit').click();
+
+    // A successful reset logs the user straight in → '/', which lands on /dashboard.
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole('navigation')).toBeVisible();
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === SESSION_COOKIE)?.value).toBeTruthy();
+
+    // Backend-verified: the new password authenticates and the old one no longer does.
+    const relog = await api.login(user.email, newPassword);
+    expect(relog.token).toBeTruthy();
+    const oldPwd = await request.post('/api/auth/login', { data: { email: user.email, password: ADMIN_PASSWORD } });
+    expect(oldPwd.status()).toBe(401);
+  });
+
+  test('an invalid reset token shows the invalid-link state, not the form', async ({ page }) => {
+    await page.goto('/reset-password?token=not-a-real-token', { waitUntil: 'load' });
+    await page.getByTestId('reset-password-input').fill('E2eNewPass2@');
+    await page.getByTestId('reset-password-submit').click();
+    await expect(page.getByTestId('reset-password-error')).toBeVisible();
+    await expect(page).toHaveURL(/\/reset-password/);
+  });
+
+  test('forgot-password returns 202 for any email and never reveals which accounts exist', async ({ request }) => {
+    const api = new ProxytraceApiClient(request);
+    const known = await api.forgotPasswordResponse(ADMIN_EMAIL);
+    const unknown = await api.forgotPasswordResponse(`ghost+${Date.now()}@e2e.test`);
+    expect(known.status()).toBe(202);
+    expect(unknown.status()).toBe(202);
+  });
+
+  test('a reset link is single-use', async ({ request }) => {
+    const api = new ProxytraceApiClient(request);
+    const { token: adminToken } = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+    api.setToken(adminToken);
+
+    const user = await seedLocalUser(api);
+    const token = tokenFromLink((await api.createResetLink(user.id)).link);
+
+    const first = await api.resetPasswordResponse(token, 'E2eNewPass2@');
+    expect(first.status()).toBe(200);
+    const second = await api.resetPasswordResponse(token, 'E2eOther3#');
+    expect(second.status()).toBe(410);
+  });
+});

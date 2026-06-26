@@ -51,6 +51,24 @@ export function scoreBucketColor(bucket: ScoreBucket): string {
 
 // ── Model leaderboard (per-run comparison cards) ──────────────────────────────
 
+/**
+ * Signed comparison of one candidate model against the baseline (the in-production model,
+ * or — when the group doesn't include it — the best performer). Each `*Better` flag is `true`
+ * when the candidate wins that axis, `false` when it loses, and `null` when tied or not
+ * comparable. Magnitudes are kept raw so the view formats + translates them at the leaf.
+ */
+export interface MetricDeltas {
+  /** candidate − baseline, in pass-rate percentage points. */
+  passPoints: number | null;
+  passBetter: boolean | null;
+  /** baseline − candidate, in ms (positive ⇒ candidate is faster). */
+  durationMs: number | null;
+  durationBetter: boolean | null;
+  /** 1 − candidate/baseline cost (positive ⇒ candidate is cheaper). */
+  costFraction: number | null;
+  costBetter: boolean | null;
+}
+
 export interface LeaderboardEntry {
   run: TestRunDto;
   passed: number;
@@ -66,17 +84,46 @@ export interface LeaderboardEntry {
   isBest: boolean;
   isFastest: boolean;
   isCheapest: boolean;
-  /** Points below the best pass rate (≥ 0); `null` for the winner or when not comparable. */
-  deltaVsBest: number | null;
+  /** This run is the comparison baseline (the champion panel) — the model others read against. */
+  isBaseline: boolean;
+  /** The baseline is the agent's currently-deployed endpoint ("in production"), not a fallback. */
+  isProduction: boolean;
+  /** Candidate's deltas vs the baseline; `null` for the baseline itself or before the group settles. */
+  delta: MetricDeltas | null;
+}
+
+type LbBase = Omit<LeaderboardEntry, 'isBest' | 'isFastest' | 'isCheapest' | 'isBaseline' | 'isProduction' | 'delta'>;
+
+const dir = (n: number | null): boolean | null => (n === null ? null : n > 0 ? true : n < 0 ? false : null);
+
+/** Raw per-axis deltas of a candidate against the baseline (see {@link MetricDeltas}). */
+function deltaVsBaseline(e: LbBase, base: LbBase): MetricDeltas {
+  const passPoints = e.passRate !== null && base.passRate !== null ? e.passRate - base.passRate : null;
+  const durationMs = e.durationMs !== null && base.durationMs !== null ? base.durationMs - e.durationMs : null;
+  const costFraction = e.costUsd !== null && base.costUsd !== null && base.costUsd > 0 ? 1 - e.costUsd / base.costUsd : null;
+  return {
+    passPoints, passBetter: dir(passPoints),
+    durationMs, durationBetter: dir(durationMs),
+    costFraction, costBetter: dir(costFraction),
+  };
 }
 
 /**
- * Derives the per-run comparison row shown in the leaderboard: pass/fail/pending
- * counts, pass rate, and run-level cost/token totals, plus best/fastest/cheapest
- * flags computed across the group's completed runs.
+ * Derives the per-run comparison rows shown above the matrix: pass/fail/pending counts, pass rate,
+ * and run-level cost/token totals, plus best/fastest/cheapest flags and the baseline framing.
+ *
+ * The **baseline** (the champion panel) is the run on the agent's currently-deployed endpoint —
+ * `currentEndpointId`, the model in production — so candidates read as deltas *vs what we ship*.
+ * When the group doesn't include that model (a candidates-only comparison) the baseline falls back
+ * to the best pass rate. Winners and deltas are conclusions, so they only resolve once the whole
+ * group has settled (`complete`); the in-production baseline is known immediately, the fallback is not.
  */
-export function buildLeaderboard(runs: TestRunDto[], complete: boolean): LeaderboardEntry[] {
-  const base = runs.map(run => ({
+export function buildLeaderboard(
+  runs: TestRunDto[],
+  complete: boolean,
+  currentEndpointId: string | null = null,
+): LeaderboardEntry[] {
+  const base: LbBase[] = runs.map(run => ({
     run,
     passed: run.passedCases,
     failed: run.failedCases,
@@ -92,22 +139,47 @@ export function buildLeaderboard(runs: TestRunDto[], complete: boolean): Leaderb
   // Winners are computed only once the whole group has settled — otherwise badges flip
   // between models on partial data every SSE frame.
   const pool = complete ? base.filter(e => e.run.status === TestRunStatus.Completed && e.passRate !== null) : [];
-  const pick = <T>(items: T[], better: (a: T, b: T) => boolean): T | null =>
-    items.reduce<T | null>((best, x) => (best === null || better(x, best) ? x : best), null);
+  const pick = (items: LbBase[], better: (a: LbBase, b: LbBase) => boolean): LbBase | null =>
+    items.reduce<LbBase | null>((best, x) => (best === null || better(x, best) ? x : best), null);
 
   const best = pick(pool, (a, b) => (a.passRate as number) > (b.passRate as number));
   const fastest = pick(pool.filter(e => e.durationMs !== null), (a, b) => (a.durationMs as number) < (b.durationMs as number));
   const cheapest = pick(pool.filter(e => e.costUsd !== null), (a, b) => (a.costUsd as number) < (b.costUsd as number));
+
+  // Baseline = the in-production model if it's in the group; otherwise the best performer (known
+  // only once complete). Production is identified by endpoint id and so is known even mid-run.
+  const production = currentEndpointId ? base.find(e => e.run.endpointId === currentEndpointId) ?? null : null;
+  const baseline = production ?? best;
+  const baselineId = baseline?.run.id ?? null;
 
   return base.map(e => ({
     ...e,
     isBest: best?.run.id === e.run.id,
     isFastest: fastest?.run.id === e.run.id,
     isCheapest: cheapest?.run.id === e.run.id,
-    deltaVsBest: best && best.run.id !== e.run.id && e.passRate !== null
-      ? (best.passRate as number) - e.passRate
-      : null,
+    isBaseline: baselineId !== null && e.run.id === baselineId,
+    isProduction: production !== null && e.run.id === baselineId,
+    delta: complete && baseline && e.run.id !== baselineId ? deltaVsBaseline(e, baseline) : null,
   }));
+}
+
+/**
+ * Grid track template + the container-query breakpoint class for the comparison cards. The baseline
+ * leads in a wider first column; without one (a candidates-only group mid-run), columns are even.
+ * Below the breakpoint the cards stack. Returned as plain strings so the view stays declarative.
+ */
+export function comparisonGrid(count: number, hasBaseline: boolean): { cols: string; breakpoint: string } {
+  const cols = !hasBaseline
+    ? `repeat(${count}, minmax(0, 1fr))`
+    : count <= 1
+      ? 'minmax(0, 1fr)'
+      : count === 2
+        ? '1.2fr 1fr'
+        : `1.3fr repeat(${count - 1}, minmax(0, 1fr))`;
+  const breakpoint = count >= 3
+    ? '@3xl:[grid-template-columns:var(--cmp-cols)]'
+    : '@xl:[grid-template-columns:var(--cmp-cols)]';
+  return { cols, breakpoint };
 }
 
 // ── Evaluator heatmap (score distribution per evaluator × model) ──────────────

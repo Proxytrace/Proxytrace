@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Application.Auth;
+using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
@@ -21,9 +22,11 @@ namespace Proxytrace.Api.Controllers;
 /// <summary>
 /// Same-origin OpenAI-compatible passthrough for the Tracey assistant. The browser AI runtime calls
 /// this (via the app's own origin + JWT, so no CORS and no short-lived key); it forwards each call to
-/// the project's provider with the real upstream key, streams the response back, and publishes the
-/// captured exchange to the ingestion stream so Tracey's calls are persisted as AgentCalls — exactly
-/// like <c>Proxytrace.Proxy</c>, but in-process and authenticated by the user's session.
+/// the project's provider with the real upstream key, streams the response back, and ingests the
+/// captured exchange so Tracey's calls are persisted as AgentCalls — exactly like
+/// <c>Proxytrace.Proxy</c>, but authenticated by the user's session. Because this runs <b>in the
+/// app process</b>, it ingests directly via <see cref="IIngestionExecutor"/> rather than round-trip
+/// through the Redis message transport that only exists to bridge the out-of-process proxy.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -45,7 +48,7 @@ public class TraceyChatController : ControllerBase
     ]);
 
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IIngestionStream stream;
+    private readonly IIngestionExecutor ingestion;
     private readonly IRepository<IProject> projects;
     private readonly ITraceyAgentProvisioner traceyProvisioner;
     private readonly ICurrentUserAccessor currentUser;
@@ -53,14 +56,14 @@ public class TraceyChatController : ControllerBase
 
     public TraceyChatController(
         IHttpClientFactory httpClientFactory,
-        IIngestionStream stream,
+        IIngestionExecutor ingestion,
         IRepository<IProject> projects,
         ITraceyAgentProvisioner traceyProvisioner,
         ICurrentUserAccessor currentUser,
         ILogger<TraceyChatController> logger)
     {
         this.httpClientFactory = httpClientFactory;
-        this.stream = stream;
+        this.ingestion = ingestion;
         this.projects = projects;
         this.traceyProvisioner = traceyProvisioner;
         this.currentUser = currentUser;
@@ -162,7 +165,7 @@ public class TraceyChatController : ControllerBase
         var responseBody = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
         sw.Stop();
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
-        await EnqueueSafeAsync(providerId, projectId, agentName, sessionId, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+        await IngestSafeAsync(providerId, projectId, agentName, sessionId, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
     }
 
     private async Task StreamResponseAsync(
@@ -196,7 +199,7 @@ public class TraceyChatController : ControllerBase
         }
 
         sw.Stop();
-        await EnqueueSafeAsync(providerId, projectId, agentName, sessionId, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+        await IngestSafeAsync(providerId, projectId, agentName, sessionId, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
     }
 
     // Forwards one streamed line plus its '\n' terminator and flushes so the token reaches the
@@ -218,7 +221,7 @@ public class TraceyChatController : ControllerBase
         }
     }
 
-    private async Task EnqueueSafeAsync(
+    private async Task IngestSafeAsync(
         Guid providerId,
         Guid projectId,
         string agentName,
@@ -231,7 +234,10 @@ public class TraceyChatController : ControllerBase
     {
         try
         {
-            await stream.PublishAsync(
+            // Ingest in-process (no message transport): this controller runs inside the app, so it
+            // persists the captured call directly. Done after the response has been sent, so the DB
+            // write never delays Tracey's reply.
+            await ingestion.IngestAsync(
                 new IngestMessage(
                     ProviderId: providerId,
                     ProjectId: projectId,
@@ -245,7 +251,7 @@ public class TraceyChatController : ControllerBase
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to publish Tracey ingestion message");
+            logger.LogWarning(ex, "Failed to ingest Tracey call");
         }
     }
 

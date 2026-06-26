@@ -28,6 +28,7 @@ import {
 import {
   buildLeaderboard,
   buildEvaluatorHeatmap,
+  comparisonGrid,
   matrixCounts,
   filterSortMatrixRows,
 } from './comparison';
@@ -272,22 +273,56 @@ describe('buildMatrixRows', () => {
 describe('buildLeaderboard', () => {
   function lbRun(over: Partial<TestRunDto>): TestRunDto {
     return {
-      id: 'r', endpointName: 'm', status: TestRunStatus.Completed,
+      id: 'r', endpointId: 'ep', endpointName: 'm', status: TestRunStatus.Completed,
       totalCases: 10, passedCases: 8, failedCases: 2, results: new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}` })),
       durationMs: 1000, costUsd: 0.5, tokensIn: 100, tokensOut: 50, ...over,
     } as TestRunDto;
   }
 
   it('flags best pass rate, fastest and cheapest among completed runs', () => {
-    const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
-    const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
     const [ea, eb] = buildLeaderboard([a, b], true);
     expect(ea.passRate).toBe(90);
     expect(ea.isBest).toBe(true);
     expect(eb.isFastest).toBe(true);
     expect(eb.isCheapest).toBe(true);
-    expect(eb.deltaVsBest).toBe(30);
-    expect(ea.deltaVsBest).toBeNull();
+  });
+
+  it('without a deployed endpoint, the best performer is the baseline and others read against it', () => {
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
+    const [ea, eb] = buildLeaderboard([a, b], true);
+    expect(ea.isBaseline).toBe(true);
+    expect(ea.isProduction).toBe(false); // fallback baseline, not a deployed model
+    expect(ea.delta).toBeNull();
+    expect(eb.delta?.passPoints).toBe(-30); // 60 − 90
+    expect(eb.delta?.passBetter).toBe(false);
+    expect(eb.delta?.durationBetter).toBe(true); // 1000ms vs baseline 3000ms ⇒ faster
+    expect(eb.delta?.costBetter).toBe(true);
+  });
+
+  it('makes the in-production endpoint the baseline even when it is not the best', () => {
+    const prod = lbRun({ id: 'p', endpointId: 'prod', endpointName: 'prod', passedCases: 8, failedCases: 2, durationMs: 2000, costUsd: 0.4 });
+    const cand = lbRun({ id: 'c', endpointId: 'cand', endpointName: 'cand', passedCases: 10, failedCases: 0, durationMs: 1000, costUsd: 0.2 });
+    const entries = buildLeaderboard([prod, cand], true, 'prod');
+    const ep = entries.find(e => e.run.id === 'p');
+    const ec = entries.find(e => e.run.id === 'c');
+    expect(ep?.isBaseline).toBe(true);
+    expect(ep?.isProduction).toBe(true);
+    expect(ec?.isBest).toBe(true); // candidate beats production on pass rate…
+    expect(ec?.delta?.passPoints).toBe(20); // 100 − 80
+    expect(ec?.delta?.passBetter).toBe(true); // …shown as a green +20pt vs production
+  });
+
+  it('identifies the production baseline before the group settles, but withholds deltas', () => {
+    const prod = lbRun({ id: 'p', endpointId: 'prod', endpointName: 'prod', status: TestRunStatus.Running });
+    const cand = lbRun({ id: 'c', endpointId: 'cand', endpointName: 'cand', status: TestRunStatus.Running });
+    const entries = buildLeaderboard([prod, cand], false, 'prod');
+    expect(entries.find(e => e.run.id === 'p')?.isBaseline).toBe(true);
+    expect(entries.find(e => e.run.id === 'p')?.isProduction).toBe(true);
+    expect(entries.every(e => e.delta === null)).toBe(true);
+    expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest)).toBe(true);
   });
 
   it('derives pending from totalCases minus delivered results', () => {
@@ -298,20 +333,34 @@ describe('buildLeaderboard', () => {
   });
 
   it('excludes non-completed runs from winner selection', () => {
-    const done = lbRun({ id: 'd', endpointName: 'd', passedCases: 5, failedCases: 5 });
-    const running = lbRun({ id: 'x', endpointName: 'x', status: TestRunStatus.Running, passedCases: 10, failedCases: 0 });
+    const done = lbRun({ id: 'd', endpointId: 'd', endpointName: 'd', passedCases: 5, failedCases: 5 });
+    const running = lbRun({ id: 'x', endpointId: 'x', endpointName: 'x', status: TestRunStatus.Running, passedCases: 10, failedCases: 0 });
     const entries = buildLeaderboard([done, running], true);
     expect(entries.find(e => e.run.id === 'd')?.isBest).toBe(true);
     expect(entries.find(e => e.run.id === 'x')?.isBest).toBe(false);
   });
 
-  it('reports no winners and null deltas while the group is not yet complete', () => {
-    const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 1000, costUsd: 0.1 });
-    const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 3000, costUsd: 0.9 });
+  it('reports no winners, no baseline and null deltas while a candidates-only group is not yet complete', () => {
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', status: TestRunStatus.Running, passedCases: 9, failedCases: 1, durationMs: 1000, costUsd: 0.1 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', status: TestRunStatus.Running, passedCases: 6, failedCases: 4, durationMs: 3000, costUsd: 0.9 });
     const entries = buildLeaderboard([a, b], false);
-    expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest)).toBe(true);
-    expect(entries.every(e => e.deltaVsBest === null)).toBe(true);
+    expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest && !e.isBaseline)).toBe(true);
+    expect(entries.every(e => e.delta === null)).toBe(true);
     expect(entries.find(e => e.run.id === 'a')?.passRate).toBe(90);
+  });
+});
+
+describe('comparisonGrid', () => {
+  it('widens the baseline column and picks a breakpoint by card count', () => {
+    expect(comparisonGrid(1, true).cols).toBe('minmax(0, 1fr)');
+    expect(comparisonGrid(2, true).cols).toBe('1.2fr 1fr');
+    expect(comparisonGrid(3, true).cols).toBe('1.3fr repeat(2, minmax(0, 1fr))');
+    expect(comparisonGrid(2, true).breakpoint).toContain('@xl');
+    expect(comparisonGrid(3, true).breakpoint).toContain('@3xl');
+  });
+
+  it('uses even columns when there is no baseline', () => {
+    expect(comparisonGrid(3, false).cols).toBe('repeat(3, minmax(0, 1fr))');
   });
 });
 

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -47,6 +48,14 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             SingleReader = true,
             SingleWriter = false,
         });
+
+    /// <summary>
+    /// The cancellation source for each theory currently being validated, keyed by theory id. A user
+    /// "Cancel validation" request cancels the matching source, which aborts the in-flight A/B run via
+    /// the test runner's linked-token path. Validation is serial, so this holds at most one entry, but
+    /// a dictionary keeps the lookup/lifetime explicit and race-free against <see cref="RejectAsync"/>.
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> inFlightValidations = new();
 
     public TheoryValidationService(
         IOptimizationTheoryRepository theories,
@@ -129,6 +138,37 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         await channel.Writer.WriteAsync(reset.Id, cancellationToken);
 
         return new TheoryResetResult(TheoryResetOutcome.Reset, reset);
+    }
+
+    public async Task<TheoryRejectResult> RejectAsync(Guid theoryId, CancellationToken cancellationToken = default)
+    {
+        var theory = await theories.FindAsync(theoryId, cancellationToken);
+        if (theory is null)
+            return new TheoryRejectResult(TheoryRejectOutcome.NotFound, null);
+
+        if (theory.Status is not (TheoryStatus.Proposed or TheoryStatus.Validating))
+            return new TheoryRejectResult(TheoryRejectOutcome.NotActive, null);
+
+        // If this theory is the one currently validating, abort its in-flight A/B run. A Proposed
+        // theory still waiting in the queue has no in-flight source; the worker simply skips it
+        // (the already-settled guard in ValidateAsync) when it later dequeues the now-Invalidated id.
+        if (inFlightValidations.TryGetValue(theoryId, out var cts))
+        {
+            try
+            {
+                await cts.CancelAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Validation finished and disposed the source between the lookup and the cancel —
+                // the theory is settling on its own; the transition below is harmless either way.
+            }
+        }
+
+        var rejected = await theory.Reject(cancellationToken);
+        theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(rejected));
+
+        return new TheoryRejectResult(TheoryRejectOutcome.Rejected, rejected);
     }
 
     private async Task<bool> ShouldSuppressAsync(IOptimizationTheory theory, CancellationToken cancellationToken)
@@ -224,12 +264,16 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             return;
         }
 
+        // Register a per-theory cancellation source so a user "Cancel validation" request (RejectAsync)
+        // can abort this in-flight A/B run. Linked to the service stopping token so shutdown still cancels.
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        inFlightValidations[theoryId] = cts;
         try
         {
             // A recovered theory may already be Validating from before the restart.
             if (theory.Status == TheoryStatus.Proposed)
             {
-                theory = await theory.SetValidating(cancellationToken);
+                theory = await theory.SetValidating(cts.Token);
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
             }
 
@@ -246,7 +290,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             var validator = validators.FirstOrDefault(v => v.CanValidate(theory));
             TheoryValidationOutcome outcome = validator is null
                 ? TheoryValidationOutcome.Inconclusive
-                : await validator.ValidateAsync(theory, cancellationToken, OnCandidateRun);
+                : await validator.ValidateAsync(theory, cts.Token, OnCandidateRun);
 
             if (outcome.Proposal is { } proposal)
             {
@@ -279,12 +323,21 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            // individual job cancelled — continue processing
+            // A user cancelled this theory's validation: the in-flight run was aborted. RejectAsync
+            // normally transitions the theory to Invalidated first, but if that write lost an optimistic
+            // concurrency race (or the cancellation came from elsewhere) the theory could still be
+            // Validating — settle it. TryInvalidateAsync is a no-op when it is already terminal, so this
+            // does not double-broadcast in the normal path.
+            await TryInvalidateAsync(theoryId, cancellationToken);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Validation failed for theory {TheoryId}", theoryId);
             await TryInvalidateAsync(theoryId, cancellationToken);
+        }
+        finally
+        {
+            inFlightValidations.TryRemove(theoryId, out _);
         }
     }
 

@@ -14,6 +14,8 @@ interface Props {
   onOpen: () => void;
   onPromote: () => void;
   isPromoting: boolean;
+  onReject: () => void;
+  isRejecting: boolean;
 }
 
 const KIND_ICON: Record<ProposalKind, React.ReactNode> = {
@@ -39,7 +41,7 @@ const KIND_PILL: Record<ProposalKind, string> = {
     cn('bg-[color-mix(in_srgb,var(--teal)_9%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_20%,transparent)]'),
 };
 
-export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting }: Props) {
+export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting, onReject, isRejecting }: Props) {
   const { i18n } = useLingui();
   const kind = KIND_META[theory.kind];
   const evidenceCount = theory.evidenceTestRunIds.length;
@@ -83,7 +85,13 @@ export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting }
           )}
         </div>
 
-        <TheoryFooter theory={theory} onPromote={onPromote} isPromoting={isPromoting} />
+        <TheoryFooter
+          theory={theory}
+          onPromote={onPromote}
+          isPromoting={isPromoting}
+          onReject={onReject}
+          isRejecting={isRejecting}
+        />
       </div>
     </Card>
   );

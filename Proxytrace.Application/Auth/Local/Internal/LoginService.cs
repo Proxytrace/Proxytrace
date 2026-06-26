@@ -1,4 +1,5 @@
 using Proxytrace.Domain.User;
+using Proxytrace.Domain.UserTotpEnrollment;
 
 namespace Proxytrace.Application.Auth.Local.Internal;
 
@@ -7,15 +8,24 @@ internal sealed class LoginService : ILoginService
     private readonly IUserRepository users;
     private readonly IPasswordService passwords;
     private readonly ILocalTokenIssuer tokens;
+    private readonly IUserTotpEnrollmentRepository enrollments;
+    private readonly IMfaChallengeService challenges;
 
-    public LoginService(IUserRepository users, IPasswordService passwords, ILocalTokenIssuer tokens)
+    public LoginService(
+        IUserRepository users,
+        IPasswordService passwords,
+        ILocalTokenIssuer tokens,
+        IUserTotpEnrollmentRepository enrollments,
+        IMfaChallengeService challenges)
     {
         this.users = users;
         this.passwords = passwords;
         this.tokens = tokens;
+        this.enrollments = enrollments;
+        this.challenges = challenges;
     }
 
-    public async Task<LoginResult?> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<LoginOutcome?> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var user = await users.FindByEmailAsync(email, cancellationToken);
         if (user is null || string.IsNullOrEmpty(user.PasswordHash))
@@ -27,8 +37,15 @@ internal sealed class LoginService : ILoginService
         {
             return null;
         }
-        
+
+        // Password OK. If the account has confirmed TOTP MFA, defer the session to the second step.
+        if (await enrollments.FindByUserAsync(user.Id, cancellationToken) is { IsConfirmed: true })
+        {
+            var challenge = challenges.Issue(user);
+            return new MfaRequired(user, challenge.Token, challenge.ExpiresAt);
+        }
+
         var issued = tokens.Issue(user);
-        return new LoginResult(user, issued.Token, issued.ExpiresAt);
+        return new LoginSucceeded(user, issued.Token, issued.ExpiresAt);
     }
 }

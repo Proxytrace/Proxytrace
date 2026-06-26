@@ -91,6 +91,34 @@ export class ProxytraceApiClient {
     this.token = token;
   }
 
+  async mfaSetup(): Promise<{ secret: string; otpAuthUri: string }> {
+    const res = await this.request.post('/api/auth/mfa/setup', { headers: this.headers() });
+    if (!res.ok()) throw new Error(`mfa setup failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async mfaActivate(code: string): Promise<{ backupCodes: string[] }> {
+    const res = await this.request.post('/api/auth/mfa/activate', {
+      headers: this.headers(),
+      data: { code },
+    });
+    if (!res.ok()) throw new Error(`mfa activate failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async mfaDisable(password: string): Promise<void> {
+    const res = await this.request.post('/api/auth/mfa/disable', {
+      headers: this.headers(),
+      data: { password },
+    });
+    if (!res.ok()) throw new Error(`mfa disable failed: ${res.status()} ${await res.text()}`);
+  }
+
+  async adminDisableMfa(userId: string): Promise<void> {
+    const res = await this.request.post(`/api/users/${userId}/mfa/disable`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`admin disable mfa failed: ${res.status()} ${await res.text()}`);
+  }
+
   async completeSetup(opts: {
     providerName: string;
     providerEndpoint: string;
@@ -409,6 +437,18 @@ export class ProxytraceApiClient {
   async getTheory(id: string): Promise<TheoryDto> {
     const res = await this.request.get(`/api/theories/${id}`, { headers: this.headers() });
     if (!res.ok()) throw new Error(`get theory failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // POST /api/theories/{id}/reject — dismisses a Proposed theory (skipping A/B) or cancels a
+  // Validating one; both land in Invalidated. Raw-response variant so specs can assert status codes.
+  theoryRejectResponse(id: string) {
+    return this.request.post(`/api/theories/${id}/reject`, { headers: this.headers() });
+  }
+
+  async rejectTheory(id: string): Promise<TheoryDto> {
+    const res = await this.theoryRejectResponse(id);
+    if (!res.ok()) throw new Error(`reject theory failed: ${res.status()} ${await res.text()}`);
     return res.json();
   }
 
@@ -823,6 +863,32 @@ export class ProxytraceApiClient {
   async revokeInvite(id: string): Promise<void> {
     const res = await this.request.delete(`/api/auth/invites/${id}`, { headers: this.headers() });
     if (!res.ok()) throw new Error(`revoke invite failed: ${res.status()} ${await res.text()}`);
+  }
+
+  /** Looks up a user id by email via the admin list. Throws if no such user exists. */
+  async userIdByEmail(email: string): Promise<string> {
+    const { items } = await this.listUsers();
+    const user = items.find((u) => u.email === email);
+    if (!user) throw new Error(`user not found: ${email}`);
+    return user.id;
+  }
+
+  // ── Password reset ─────────────────────────────────────────────────────────
+  /** Admin: mint a one-time password-reset link for a user (POST /api/users/{id}/reset-link). */
+  async createResetLink(userId: string): Promise<{ link: string; expiresAt: string }> {
+    const res = await this.request.post(`/api/users/${userId}/reset-link`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`create reset link failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  /** Raw POST /api/auth/forgot-password (anonymous) so callers can assert the status (202). */
+  forgotPasswordResponse(email: string): Promise<APIResponse> {
+    return this.request.post('/api/auth/forgot-password', { data: { email } });
+  }
+
+  /** Raw POST /api/auth/reset-password (anonymous) so callers can assert the status (200 / 410 / 400). */
+  resetPasswordResponse(token: string, password: string): Promise<APIResponse> {
+    return this.request.post('/api/auth/reset-password', { data: { token, password } });
   }
 
   // ── Config ─────────────────────────────────────────────────────────────────

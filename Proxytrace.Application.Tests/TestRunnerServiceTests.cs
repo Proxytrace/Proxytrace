@@ -15,6 +15,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
+using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Licensing;
 using Proxytrace.Testing;
@@ -114,6 +115,65 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
                 .Returns(Task.FromResult(completionFactory(response, null, TimeSpan.FromMilliseconds(1000))));
             return handler;
         });
+    }
+
+    // A model client whose completion blocks until its cancellation token trips — lets a test cancel a
+    // run while it is genuinely in flight.
+    private static void RegisterBlockingModelClient(ContainerBuilder builder)
+    {
+        builder.Register(_ =>
+        {
+            IModelClient handler = Substitute.For<IModelClient>();
+            handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<IReadOnlyDictionary<string, string>?>(), Arg.Any<CancellationToken>())
+                .Returns(async call =>
+                {
+                    await Task.Delay(-1, call.Arg<CancellationToken>());
+                    throw new InvalidOperationException("unreachable — the delay always throws on cancellation");
+                });
+            return handler;
+        });
+    }
+
+    [TestMethod]
+    public async Task RunInForeground_WhenCancelledMidRun_MarksGroupCancelled()
+    {
+        var services = GetServices(RegisterBlockingModelClient);
+        var suite = await BuildSuiteAsync(services, new AssistantMessage([Content.FromText(MatchingText)], []), CancellationToken);
+        var endpoint = (await CreateEndpoints(services, 1))[0];
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var groups = services.GetRequiredService<ITestRunGroupRepository>();
+
+        using var cts = new CancellationTokenSource();
+        ITestRunGroup? created = null;
+        var runTask = runner.RunInForegroundAsync(
+            suite,
+            [endpoint],
+            isSystemTestRun: true,
+            onGroupCreated: (g, _) => { created = g; return Task.CompletedTask; },
+            cancellationToken: cts.Token);
+
+        // Wait until the group is actually Running (the model call is now blocked on the token).
+        ITestRunGroup? running = null;
+        for (var i = 0; i < 200 && running is null; i++)
+        {
+            var snapshot = created;
+            if (snapshot is not null)
+            {
+                var g = await groups.GetAsync(snapshot.Id, CancellationToken);
+                if (g.Status == TestRunStatus.Running)
+                    running = g;
+            }
+            await Task.Delay(20, CancellationToken);
+        }
+        if (running is null)
+            throw new InvalidOperationException("the run should reach Running before cancellation");
+
+        await cts.CancelAsync();
+        await FluentActions.Invoking(() => runTask).Should().ThrowAsync<OperationCanceledException>();
+
+        // The cancelled group must not be stranded in Running — it is reconciled to a terminal state.
+        var final = await groups.GetAsync(running.Id, CancellationToken);
+        final.Status.Should().Be(TestRunStatus.Cancelled);
     }
 
     [TestMethod]

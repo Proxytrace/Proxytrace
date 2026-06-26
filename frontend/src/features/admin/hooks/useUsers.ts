@@ -32,6 +32,22 @@ export function useDeleteUser() {
   });
 }
 
+/** Mints a one-time password-reset link for a user. Caller reads the link via `mutate`'s onSuccess. */
+export function useCreateUserResetLink() {
+  return useMutation({
+    mutationFn: (id: string) => usersApi.createResetLink(id),
+  });
+}
+
+/** Admin: turns off a user's two-factor authentication (lockout recovery); invalidates the list. */
+export function useDisableUserMfa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => usersApi.disableMfa(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.users }),
+  });
+}
+
 /** Projects a single user belongs to (for the assignment editor). */
 export function useUserProjects(userId: string | null) {
   return useQuery({

@@ -23,11 +23,14 @@ import { activeToolNamesFor } from './tool-access';
  * {@link createTraceyTools}.
  */
 /**
- * Per-turn tool-loop step budget. Must comfortably cover the longest scripted flow (the
- * optimize-agent playbook runs ~8 steps) — when it is hit anyway, the turn ends with
- * `finishReason: 'tool-calls'` and the UI shows a step-limit notice.
+ * Infinite-loop safety backstop for the per-turn tool loop — **not** a user-facing turn limit.
+ * `stopWhen` is structurally mandatory (without a stop condition the SDK ends the run after step 1,
+ * so a tool-first turn produces no assistant text — see TRACEY.md), so this caps the loop at a
+ * deliberately high value no legitimate flow approaches (the longest scripted flow, optimize-agent,
+ * runs ~8 steps). It exists only to stop a pathological model from looping forever, never to
+ * truncate a normal turn.
  */
-export const MAX_TURN_STEPS = 12;
+export const MAX_TURN_STEPS = 64;
 
 export class TraceyTransport implements ChatTransport<UIMessage> {
   private readonly tools: ToolSet;
@@ -117,11 +120,10 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
         }
         return { activeTools };
       },
-      // Without a stop condition the AI SDK ends the run after the first step, so a turn that
-      // starts with a tool call produces no assistant text. Keep looping (tool → result → model)
-      // until the model answers or the budget is spent. 12 covers the longest scripted flow
-      // (optimize-agent: load_skill → reads → submit → await = 8 steps) with slack for a
-      // disambiguation or an extra read; exhaustion is surfaced via `finishReason` below.
+      // `stopWhen` is structurally mandatory: without a stop condition the AI SDK ends the run
+      // after the first step, so a turn that starts with a tool call produces no assistant text.
+      // Keep looping (tool → result → model) until the model answers. MAX_TURN_STEPS is only a
+      // high infinite-loop backstop (see its doc) — a normal turn finishes well below it.
       stopWhen: stepCountIs(MAX_TURN_STEPS),
       abortSignal: options.abortSignal,
     });
@@ -129,8 +131,8 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
     // assistant message. assistant-ui surfaces these under `metadata.custom`; `MessageStatusBar`
     // shows them and uses the id to deep-link to the captured trace(s). `part.totalUsage` is the
     // SDK's usage aggregated across all tool-loop steps — i.e. the whole turn — which matches the
-    // sum of the turn's ingested traces. Emitted only on finish, so the row stays hidden while the
-    // turn is still streaming.
+    // sum of the turn's ingested traces (including the cached-input portion). Emitted only on
+    // finish, so the row stays hidden while the turn is still streaming.
     return result.toUIMessageStream({
       messageMetadata: ({ part }) =>
         part.type === 'finish'
@@ -139,13 +141,11 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
                 traceConversationId: turnId,
                 usage: {
                   inputTokens: part.totalUsage.inputTokens ?? 0,
+                  cachedInputTokens: part.totalUsage.cachedInputTokens ?? 0,
                   outputTokens: part.totalUsage.outputTokens ?? 0,
                   totalTokens: part.totalUsage.totalTokens ?? 0,
                 },
                 durationMs: Math.round(performance.now() - startedAt),
-                // 'tool-calls' here means the step budget cut the loop mid-tool-use — the model
-                // never got to answer. MessageStatusBar surfaces it as a step-limit notice.
-                finishReason: part.finishReason,
               },
             }
           : undefined,

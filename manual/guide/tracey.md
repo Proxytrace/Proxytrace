@@ -240,21 +240,19 @@ agent, attributed to the built-in **Tracey** system agent for your project. You 
 traces to system agents to review exactly what she did and how many tokens it cost.
 
 Each finished Tracey response carries a subtle **status row** beneath it. Because a single
-answer can involve several model calls (Tracey calling tools, then answering), the row shows
-the **total tokens** and **response time** for the whole turn — the token total matches the
-figure the Traces page shows for that turn's conversation group — plus two actions:
+answer can involve several model calls (Tracey calling tools, then answering), the row breaks
+down usage for the whole turn — the **input tokens**, the **share of those input tokens served
+from cache** (shown when any were), the **output tokens**, and the **response time** — where the
+token figures match what the Traces page shows for that turn's conversation group, plus two
+actions:
 
 - a **copy** button that puts the response text on your clipboard, and
 - a **trace icon** that jumps straight to that turn's captured traces in the **Traces** view,
   without hunting for them in the list.
 
-The row appears once the reply has finished streaming, with the totals shown immediately. If
+The row appears once the reply has finished streaming, with the figures shown immediately. If
 you click the trace icon before the capture has finished saving (ingestion is asynchronous),
 you'll see a brief "still being captured" note — try again in a second.
-
-If a turn needed more tool steps than Tracey's per-turn budget allows, the row shows a
-**"Step limit reached"** notice — she ran out of steps before she could answer. Just ask her
-to continue.
 
 Very long conversations stay fully visible in the chat, but Tracey only *considers* the most
 recent stretch of the thread when answering (this keeps long sessions fast and affordable). If

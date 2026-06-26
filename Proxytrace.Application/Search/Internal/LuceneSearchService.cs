@@ -258,67 +258,52 @@ internal sealed class LuceneSearchService : ISearchService
             return Task.FromResult(new SearchResults([]));
         }
 
-        var combined = new BooleanQuery
-        {
-            { new TermQuery(new Term(SearchConstants.FieldProjectId, projectId.ToString())), Occur.MUST },
-        };
-
-        var kindFilter = new BooleanQuery();
-        foreach (var kind in kinds)
-        {
-            kindFilter.Add(new TermQuery(new Term(SearchConstants.FieldKind, kind.ToString())), Occur.SHOULD);
-        }
-        combined.Add(kindFilter, Occur.MUST);
-
         using var reader = writer.AcquireReader();
         var searcher = reader.Searcher;
-
         var sort = new Sort(new SortField(SearchConstants.FieldCreatedAt, SortFieldType.INT64, reverse: true));
-        var perKind = new Dictionary<SearchKind, List<SearchHit>>();
-        var fetched = 0;
-        var pageSize = Math.Max(limit * kinds.Count * 2, 32);
-        var topDocs = searcher.Search(combined, null, pageSize, sort);
 
+        // Query each kind independently and cap it at `limit`. The previous approach ran one shared
+        // top-N window across all kinds sorted by createdAt, so a high-volume kind — traces are
+        // written continuously by the ingestion proxy and retained for weeks — filled the whole
+        // window and starved the low-volume kinds (agents, suites, evaluators), degrading the
+        // recent feed to traces-only on any busy project (issue #232). Per-kind queries guarantee
+        // each kind contributes up to `limit` of its own most-recent items regardless of trace volume.
+        var ordered = kinds
+            .SelectMany(kind => GetRecentForKind(searcher, projectId, kind, limit, sort))
+            .ToList();
+
+        return Task.FromResult(new SearchResults(ordered));
+    }
+
+    private static IEnumerable<SearchHit> GetRecentForKind(
+        IndexSearcher searcher,
+        Guid projectId,
+        SearchKind kind,
+        int limit,
+        Sort sort)
+    {
+        var query = new BooleanQuery
+        {
+            { new TermQuery(new Term(SearchConstants.FieldProjectId, projectId.ToString())), Occur.MUST },
+            { new TermQuery(new Term(SearchConstants.FieldKind, kind.ToString())), Occur.MUST },
+        };
+
+        var topDocs = searcher.Search(query, null, limit, sort);
         foreach (var scoreDoc in topDocs.ScoreDocs)
         {
             var doc = searcher.Doc(scoreDoc.Doc);
-            if (!Enum.TryParse<SearchKind>(doc.Get(SearchConstants.FieldKind), out var kind))
-            {
-                continue;
-            }
-            if (!perKind.TryGetValue(kind, out var bucket))
-            {
-                bucket = [];
-                perKind[kind] = bucket;
-            }
-            if (bucket.Count >= limit)
+            if (!Guid.TryParse(doc.Get(SearchConstants.FieldEntityId), out var entityId))
             {
                 continue;
             }
 
-            var entityIdStr = doc.Get(SearchConstants.FieldEntityId);
-            if (!Guid.TryParse(entityIdStr, out var entityId))
-            {
-                continue;
-            }
-
-            bucket.Add(new SearchHit(
+            yield return new SearchHit(
                 Kind: kind,
                 EntityId: entityId,
                 Title: doc.Get(SearchConstants.FieldTitle) ?? string.Empty,
                 Snippet: string.Empty,
                 Score: 0f,
-                Metadata: ParseMetadata(doc.Get(SearchConstants.FieldMetadata))));
-            fetched++;
-            if (fetched >= limit * kinds.Count)
-            {
-                break;
-            }
+                Metadata: ParseMetadata(doc.Get(SearchConstants.FieldMetadata)));
         }
-
-        var ordered = kinds
-            .SelectMany(k => perKind.TryGetValue(k, out var bucket) ? bucket : Enumerable.Empty<SearchHit>())
-            .ToList();
-        return Task.FromResult(new SearchResults(ordered));
     }
 }

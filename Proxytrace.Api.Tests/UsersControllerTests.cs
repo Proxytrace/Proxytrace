@@ -266,5 +266,9 @@ public sealed class UsersControllerTests : BaseTest<Module>
         services.GetRequiredService<IProjectRepository>(),
         services.GetRequiredService<IUserAdministrationService>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
+        services.GetRequiredService<Proxytrace.Application.Auth.Local.IPasswordResetService>(),
+        services.GetRequiredService<Proxytrace.Application.Auth.Local.IMfaService>(),
+        services.GetRequiredService<Proxytrace.Domain.UserTotpEnrollment.IUserTotpEnrollmentRepository>(),
+        new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
         Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

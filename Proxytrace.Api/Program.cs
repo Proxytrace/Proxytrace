@@ -1,6 +1,8 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 using Proxytrace.Api.Auth.Mcp;
@@ -25,6 +27,35 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+// Throttle the anonymous password-reset endpoints (forgot/reset) per client IP to blunt account
+// enumeration and brute-forcing of reset tokens. In-memory is fine — each deployment runs a single
+// API instance. Applied via [EnableRateLimiting("auth-reset")] on the endpoints.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth-reset", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0,
+            }));
+
+    // The MFA verify endpoint validates a 6-digit code — a small space — so it is rate-limited per
+    // client IP (in addition to the per-challenge attempt cap) to blunt brute force.
+    options.AddPolicy("auth-mfa", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0,
+            }));
+});
 
 builder.Services.AddAuthorization(options =>
 {
@@ -66,6 +97,13 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
+#if DEBUG
+// DEBUG-ONLY developer back-door: seed a fixed admin (debug@proxytrace.dev) so a local debug build
+// can always sign in through the normal login form. Compiled out of Release entirely — both this
+// registration and the seeder type are under #if DEBUG. See Proxytrace.Api/Debug + docs/debug_api.md.
+builder.Services.AddHostedService<Proxytrace.Api.Debug.DebugLoginSeederHostedService>();
+#endif
+
 var app = builder.Build();
 
 // Resolve the kiosk decision from the container (the Module is the single source of truth — it reads
@@ -84,6 +122,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<KioskReadOnlyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();

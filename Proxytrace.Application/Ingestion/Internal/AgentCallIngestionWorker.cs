@@ -1,29 +1,23 @@
 using System.Collections.Concurrent;
-using System.Net;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Domain;
 using Proxytrace.Domain.Exceptions;
-using Proxytrace.Domain.ModelProvider;
-using Proxytrace.Domain.Project;
 using Proxytrace.Messaging;
 
 namespace Proxytrace.Application.Ingestion.Internal;
 
 /// <summary>
 /// Consumer side of ingestion. Reads captured calls off the <see cref="IIngestionStream"/>
-/// (Redis Streams in the split deployment, in-memory otherwise), re-hydrates the
-/// <c>IModelProvider</c>/<c>IProject</c> referenced by id, and hands the work to
-/// <see cref="IAgentCallProcessor"/>. Replaces the producer half of the old in-process ingestor,
-/// which now lives in the proxy service.
+/// (Redis Streams in the split deployment, in-memory otherwise) and hands each one to the shared
+/// <see cref="IIngestionExecutor"/>, which enforces the quota, re-hydrates the referenced
+/// provider/project, and persists the call. Replaces the producer half of the old in-process
+/// ingestor, which now lives in the proxy service. In-process producers (e.g. Tracey) call the
+/// executor directly instead of round-tripping through the transport.
 /// </summary>
 internal sealed class AgentCallIngestionWorker : BackgroundService
 {
     private readonly IIngestionStream stream;
-    private readonly IAgentCallProcessor processor;
-    private readonly IRepository<IModelProvider> providerRepository;
-    private readonly IRepository<IProject> projectRepository;
-    private readonly ITraceQuotaGuard quotaGuard;
+    private readonly IIngestionExecutor executor;
     private readonly MessagingConfiguration messaging;
     private readonly ILogger<AgentCallIngestionWorker> logger;
 
@@ -39,18 +33,12 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
 
     public AgentCallIngestionWorker(
         IIngestionStream stream,
-        IAgentCallProcessor processor,
-        IRepository<IModelProvider> providerRepository,
-        IRepository<IProject> projectRepository,
-        ITraceQuotaGuard quotaGuard,
+        IIngestionExecutor executor,
         MessagingConfiguration messaging,
         ILogger<AgentCallIngestionWorker> logger)
     {
         this.stream = stream;
-        this.processor = processor;
-        this.providerRepository = providerRepository;
-        this.projectRepository = projectRepository;
-        this.quotaGuard = quotaGuard;
+        this.executor = executor;
         this.messaging = messaging;
         this.logger = logger;
     }
@@ -112,7 +100,7 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     {
         try
         {
-            await ProcessAsync(envelope.Message, cancellationToken);
+            await executor.IngestAsync(envelope.Message, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -160,7 +148,7 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         {
             try
             {
-                await ProcessAsync(envelope.Message, cancellationToken);
+                await executor.IngestAsync(envelope.Message, cancellationToken);
                 return;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -196,31 +184,5 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     {
         failedAttempts.TryRemove(messageId, out _);
         await stream.AckAsync(messageId, cancellationToken);
-    }
-
-    private async Task ProcessAsync(IngestMessage message, CancellationToken cancellationToken)
-    {
-        // Once the licensed monthly trace quota is reached, drop further captures rather than
-        // persisting them. The message is still acked by the caller to avoid redelivery loops.
-        if (quotaGuard.IsCurrentMonthOverQuota)
-        {
-            logger.LogWarning("Monthly trace quota exceeded; dropping captured call for project {ProjectId}", message.ProjectId);
-            return;
-        }
-
-        IModelProvider provider = await providerRepository.GetAsync(message.ProviderId, cancellationToken);
-        IProject project = await projectRepository.GetAsync(message.ProjectId, cancellationToken);
-
-        var job = new IngestJob(
-            provider,
-            project,
-            message.RequestBody,
-            message.ResponseBody,
-            TimeSpan.FromMilliseconds(message.DurationMs),
-            (HttpStatusCode)message.HttpStatus,
-            message.SessionId,
-            message.AgentName);
-
-        await processor.IngestAsync(job, cancellationToken);
     }
 }

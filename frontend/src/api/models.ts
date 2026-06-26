@@ -672,6 +672,8 @@ export interface UserDto {
   isExternal: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Whether the user has confirmed TOTP two-factor authentication. */
+  mfaEnabled: boolean;
 }
 
 /** Lightweight project reference for the user-centric project assignment editor. */
@@ -1094,6 +1096,9 @@ export enum AuditAction {
   AdminBootstrapped = 'AdminBootstrapped',
   LegacyAccountClaimed = 'LegacyAccountClaimed',
   ProposalStatusChanged = 'ProposalStatusChanged',
+  PasswordResetRequested = 'PasswordResetRequested',
+  PasswordResetCompleted = 'PasswordResetCompleted',
+  PasswordResetLinkIssued = 'PasswordResetLinkIssued',
 }
 
 export enum AuditActorType {

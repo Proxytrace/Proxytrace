@@ -117,6 +117,17 @@ public interface IOptimizationTheory : IDomainEntity
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Dismisses an active theory (<see cref="TheoryStatus.Proposed"/> or
+    /// <see cref="TheoryStatus.Validating"/>) to <see cref="TheoryStatus.Invalidated"/> on a user's
+    /// explicit request — skipping A/B validation for a Proposed theory, or cancelling it for a
+    /// Validating one. Unlike <see cref="SetInvalidated"/> (which the pipeline calls with the A/B
+    /// metrics that disproved the theory) this records no metrics; any A/B run already linked while
+    /// validating is preserved for provenance. The absence of metrics is what distinguishes a manual
+    /// dismissal from an A/B-disproven invalidation.
+    /// </summary>
+    Task<IOptimizationTheory> Reject(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns a terminal theory (<see cref="TheoryStatus.Validated"/> or
     /// <see cref="TheoryStatus.Invalidated"/>) to <see cref="TheoryStatus.Proposed"/>, clearing the
     /// recorded proposal reference, A/B metrics, and run link so it can be validated afresh. Callers

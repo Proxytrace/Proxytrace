@@ -48,6 +48,27 @@ public enum TheoryResetOutcome
 public record TheoryResetResult(TheoryResetOutcome Outcome, IOptimizationTheory? Theory);
 
 /// <summary>
+/// Outcome of rejecting (dismissing/cancelling) an active theory.
+/// </summary>
+public enum TheoryRejectOutcome
+{
+    /// <summary>The theory was dismissed to Invalidated; any in-flight A/B run was cancelled.</summary>
+    Rejected,
+
+    /// <summary>No theory exists with the given id.</summary>
+    NotFound,
+
+    /// <summary>The theory is already terminal (Validated/Invalidated); there is nothing to reject.</summary>
+    NotActive,
+}
+
+/// <summary>
+/// Result of a theory rejection. <see cref="Theory"/> is populated only when
+/// <see cref="Outcome"/> is <see cref="TheoryRejectOutcome.Rejected"/>.
+/// </summary>
+public record TheoryRejectResult(TheoryRejectOutcome Outcome, IOptimizationTheory? Theory);
+
+/// <summary>
 /// Accepts optimization theories from any producer (built-in optimizers, users, Tracey AI,
 /// external callers), deduplicates and rate-limits them, and validates each via an A/B run.
 /// </summary>
@@ -64,4 +85,12 @@ public interface ITheoryValidationService
     /// re-validation runs in the background.
     /// </summary>
     Task<TheoryResetResult> ResetToProposedAsync(Guid theoryId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Dismisses an active theory at the user's request: a Proposed theory is rejected without ever
+    /// running A/B validation; a Validating theory has its in-flight A/B run cancelled. Either way the
+    /// theory transitions to Invalidated. Returns <see cref="TheoryRejectOutcome.NotActive"/> for an
+    /// already-terminal theory.
+    /// </summary>
+    Task<TheoryRejectResult> RejectAsync(Guid theoryId, CancellationToken cancellationToken = default);
 }

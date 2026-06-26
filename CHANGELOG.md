@@ -9,6 +9,73 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Two-factor authentication (TOTP).** Protect your account with a second factor from an
+  authenticator app (Google Authenticator, Authy, 1Password). Turn it on under **Account security**
+  (in the account menu): scan the QR code, confirm a code, and save the **10 one-time backup codes**
+  you're shown. After that, signing in asks for a 6-digit code — or a backup code if you've lost your
+  device. Disabling it requires your password. Admins can clear a locked-out user's MFA from
+  **Settings → Users** (**Reset MFA**). MFA is opt-in per user, free on every tier, and applies to
+  password (local) sign-in; SSO/OIDC handles MFA at your identity provider. Enabling, disabling, and
+  failed code attempts are recorded in the audit log, and the verification endpoint is rate-limited.
+- **Forgot your password? Self-service reset.** The sign-in screen now has a **Forgot password?**
+  link. Enter your email and Proxytrace sends a one-time reset link — valid for 1 hour — that lets you
+  choose a new password and signs you straight in. **No SMTP? You're still covered:** if outgoing
+  email isn't configured, the reset link is written to the server log for the operator to relay, and
+  an admin can mint a one-time reset link for any user from **Settings → Users** (the **Reset
+  password** button). Reset requests and completions are recorded in the audit log, and the public
+  reset endpoints are rate-limited.
+- **Cancel or reject an optimization theory.** On the **Optimization Theories** board you can now
+  dismiss a theory you don't want to pursue: **Reject** a *Proposed* theory to skip A/B validation
+  entirely, or **Cancel validation** on a *Validating* theory to abort its in-flight A/B run. Either
+  way the theory moves to *Rejected* and can still be reset later. Validation already runs **one
+  theory at a time**, so these controls let you clear the queue and stop runs you no longer need.
+
+### Changed
+
+- **Test-run model comparison, rebuilt around your production model.** A run's results now open with
+  the model you have **in production** (the agent's deployed endpoint) as the **baseline** — a
+  highlighted champion card carrying the headline pass rate plus duration, cost, and token totals.
+  Every other model is a **candidate**, read as deltas measured *against production*: pass-rate
+  points, faster/slower, and cheaper/pricier, coloured green when the candidate wins that metric and
+  red when it loses — so it's obvious at a glance whether a candidate is worth switching to. Three
+  **award medals** call out the highest pass rate, the fastest, and the cheapest model, and the
+  evaluator breakdown now highlights the leading model per evaluator. When a run doesn't include your
+  deployed model, the best performer stands in as the baseline. Deltas and medals still appear only
+  once the whole run group has finished.
+- **Tracey no longer cuts a reply short at a turn limit.** The assistant's per-turn tool-step cap and
+  its "Step limit reached" notice have been removed, so a complex request that needs many tool steps
+  now runs to completion instead of stopping early and asking you to continue. (A high internal
+  safety backstop still prevents a runaway loop.)
+- **Tracey's per-response stats now break down token usage.** The quiet status row beneath each reply
+  shows **input tokens**, the **share of input served from cache**, and **output tokens** instead of
+  a single total — making it clear how much of a turn's cost was cached prompt vs. fresh input vs.
+  generated output.
+
+### Fixed
+
+- **Tracey's own traces are captured reliably again.** Tracey runs inside the app, but her captured
+  calls were being routed through the same Redis message stream used to bridge the standalone
+  ingestion proxy — so whenever that stream was unavailable, every Tracey trace was silently dropped
+  (her replies still worked, but the trace link reported "still being captured" forever and nothing
+  showed in Traces). In-app captures now persist directly, with no dependency on the proxy's
+  transport.
+- **Test-run results stay readable with many evaluators.** The test-case matrix used to scroll inside
+  its own card, shrinking to an unusable height when a run had lots of evaluators. The whole results
+  column now scrolls as one unit, so the matrix keeps its full height.
+- **Global search hides built-in system agents and their traces.** The title-bar search and recent
+  feed no longer surface internal system agents (Tracey, the optimization/A-B optimizer agents,
+  agentic-evaluator agents) or the traces they generate — only your own agents, suites, traces,
+  evaluators, and test cases. Any previously indexed system entities are purged on the next reindex.
+- **Global search again shows recent agents, suites, and evaluators.** The title-bar search's default
+  (empty-query) list was being crowded out by traces on busy projects, leaving only recent traces.
+  Each entity type is now surfaced independently, so recent agents, test suites, evaluators, and
+  traces all appear again.
+- **Evaluator playground shows tool-call responses.** When a selected past evaluation's response was a
+  tool call with no text, the **reference** showed "—" and the **candidate** was blank (the scoring
+  itself was unaffected). Both now render the tool call (e.g. `[tool call] get_weather({…})`).
+
 ## [1.2.0] - 2026-06-24
 
 ### Added

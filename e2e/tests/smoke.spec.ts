@@ -14,6 +14,7 @@ const ROUTES = [
   { path: '/playground', label: 'playground' },
   { path: '/evaluator-playground', label: 'evaluator-playground' },
   { path: '/proposals', label: 'proposals' },
+  { path: '/account', label: 'account security' },
   // Settings is an admin-only hub; smoke runs as admin (storageState). Providers, Users, and the
   // Error Log now live as sections under /settings. `/settings` itself redirects to general.
   { path: '/settings', label: 'settings (→ general)' },
@@ -49,4 +50,28 @@ test('unknown path redirects to the dashboard', async ({ page }) => {
   await page.goto('/does-not-exist', { waitUntil: 'load' });
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('navigation')).toBeVisible();
+});
+
+// The password-reset pages render outside the authenticated app shell (no nav chrome), so they
+// can't ride the ROUTES loop above. Smoke them directly: each must mount its form/state cleanly with
+// zero console errors. The smoke session is authenticated, but LocalAuthGate lets these paths through.
+test('forgot-password page renders without JS console errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
+  page.on('pageerror', (err) => errors.push(err.message));
+
+  await page.goto('/forgot-password', { waitUntil: 'load' });
+  await expect(page.getByTestId('forgot-password-form')).toBeVisible();
+  expect(errors, `console errors on /forgot-password: ${errors.join('; ')}`).toHaveLength(0);
+});
+
+test('reset-password page renders its invalid-link state without JS console errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
+  page.on('pageerror', (err) => errors.push(err.message));
+
+  // No token in the URL → the page shows the invalid-link state (still a clean mount).
+  await page.goto('/reset-password', { waitUntil: 'load' });
+  await expect(page.getByTestId('reset-password-invalid')).toBeVisible();
+  expect(errors, `console errors on /reset-password: ${errors.join('; ')}`).toHaveLength(0);
 });

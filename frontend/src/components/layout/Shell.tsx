@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, lazy, Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useCurrentUser } from '../../auth/useCurrentUser';
+import { useAuthMode } from '../../auth/authMode';
 import { LanguageMenuItems } from './LanguageMenuItems';
 import { EmailNotificationMenuItems } from './EmailNotificationMenuItems';
 import { NavItem } from './NavItem';
@@ -26,7 +27,7 @@ import { useHealth } from '../../hooks/useHealth';
 import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
-import { LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon } from '../icons';
+import { LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon, LockIcon } from '../icons';
 import {
   navGroups, navItems, NAV_ICONS, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL, type HealthStatus,
 } from './shellNav';
@@ -53,9 +54,14 @@ export function Shell() {
   const { data: license } = useLicense();
   const licenseFeatures = license?.features ?? [];
   const location = useLocation();
+  const navigate = useNavigate();
+  const { data: authMode } = useAuthMode();
   const { currentProject } = useCurrentProject();
   // interactive == full read-write kiosk (LLM endpoint configured); also whether Tracey is usable.
-  const { interactive } = useKiosk();
+  const { interactive, enabled: kioskEnabled } = useKiosk();
+  // The account-security (MFA) page only applies to real local-auth sessions — not OIDC (managed by
+  // the IdP) and not the login-free kiosk.
+  const showAccountMenu = authMode?.mode === 'local' && !kioskEnabled;
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   // eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard shortcut key, not UI copy
@@ -247,6 +253,15 @@ export function Shell() {
           >
             <EmailNotificationMenuItems />
             <LanguageMenuItems />
+            {showAccountMenu && (
+              <Menu.Item
+                data-testid="account-security-btn"
+                icon={<LockIcon size={15} />}
+                onSelect={() => navigate('/account')}
+              >
+                <Trans>Account security</Trans>
+              </Menu.Item>
+            )}
             <Menu.Item
               data-testid="logout-btn"
               icon={<LogOutIcon size={15} />}

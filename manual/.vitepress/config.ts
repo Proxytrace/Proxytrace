@@ -28,6 +28,7 @@ export default defineConfig({
           items: [
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Choosing Your Language', link: '/guide/language' },
+            { text: 'Two-Factor Authentication', link: '/guide/two-factor-authentication' },
             { text: 'Proxy Setup', link: '/guide/proxy-setup' },
             { text: 'Capturing Traces', link: '/guide/capturing-traces' },
             { text: 'Agents', link: '/guide/agents' },

@@ -513,6 +513,40 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("StoredLicenseEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.MfaBackupCode.MfaBackupCodeEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("User")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodeHash")
+                        .IsUnique();
+
+                    b.HasIndex("User");
+
+                    b.ToTable("MfaBackupCodeEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Model.ModelEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -846,6 +880,43 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Agent", "ContentHash");
 
                     b.ToTable("OptimizationTheoryEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.PasswordResetToken.PasswordResetTokenEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("User")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("User");
+
+                    b.ToTable("PasswordResetTokenEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", b =>
@@ -1351,6 +1422,40 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("UserEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.UserTotpEnrollment.UserTotpEnrollmentEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("LastUsedStep")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Secret")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("User")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("User")
+                        .IsUnique();
+
+                    b.ToTable("UserTotpEnrollmentEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", b =>
                 {
                     b.HasOne("Proxytrace.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
@@ -1426,6 +1531,15 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.MfaBackupCode.MfaBackupCodeEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.User.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("User")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", b =>
                 {
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Model.ModelEntity", null)
@@ -1490,6 +1604,15 @@ namespace Proxytrace.Storage.Migrations
                     b.HasOne("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
                         .WithMany()
                         .HasForeignKey("Suite")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.PasswordResetToken.PasswordResetTokenEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.User.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("User")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1627,6 +1750,15 @@ namespace Proxytrace.Storage.Migrations
                     b.HasOne("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
                         .WithMany("TestSuiteEvaluators")
                         .HasForeignKey("TestSuiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.UserTotpEnrollment.UserTotpEnrollmentEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.User.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("User")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

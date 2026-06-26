@@ -227,6 +227,10 @@ msgstr "{0} evaluator"
 msgid "{0} failed"
 msgstr "{0} falliti"
 
+#. placeholder {0}: fmtDuration(ms)
+msgid "{0} faster"
+msgstr "{0} più veloce"
+
 #. placeholder {0}: proposal.kind
 #. placeholder {1}: proposal.agentName
 msgid "{0} for {1}"
@@ -305,6 +309,10 @@ msgstr "{0} superati"
 msgid "{0} pending"
 msgstr "{0} in attesa"
 
+#. placeholder {0}: points(delta.passPoints)
+msgid "{0} pt"
+msgstr "{0} pt"
+
 #. placeholder {0}: hits.length
 msgid "{0} recent"
 msgstr "{0} recenti"
@@ -316,6 +324,10 @@ msgstr "{0} run · {range}"
 #. placeholder {0}: selected.size
 msgid "{0} selected"
 msgstr "{0} selezionati"
+
+#. placeholder {0}: fmtDuration(-ms)
+msgid "{0} slower"
+msgstr "{0} più lento"
 
 #. placeholder {0}: Math.round(v)
 msgid "{0} t/s"
@@ -479,8 +491,17 @@ msgstr "{passed}/{total} superati · {failed} falliti"
 msgid "{passPercent}% pass"
 msgstr "{passPercent}% superati"
 
+msgid "{passRate}% · {passed}/{total} pass"
+msgstr "{passRate}% · {passed}/{total} pass"
+
 msgid "{pct}% cached"
 msgstr "{pct}% in cache"
+
+msgid "{pct}% cheaper"
+msgstr "{pct}% più economico"
+
+msgid "{pct}% pricier"
+msgstr "{pct}% più costoso"
 
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# Proposal pronta} other {# Proposals pronte}}"
@@ -636,6 +657,9 @@ msgstr "1 test suite"
 msgid "2 proposals"
 msgstr "2 proposal"
 
+msgid "6-digit code"
+msgstr "Codice a 6 cifre"
+
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "Un modello valutatore assegna un punteggio alle risposte su una scala fissa da 1 a 5 (Terrible → Excellent) con ragionamento opzionale. Scegli un preset o scrivi la tua rubric."
 
@@ -675,6 +699,9 @@ msgstr "Accettabile"
 
 msgid "Account Claimed"
 msgstr "Account reclamato"
+
+msgid "Account security"
+msgstr "Sicurezza dell'account"
 
 #. placeholder {0}: selectedEndpoints.length
 msgid "across <0>{0, plural, one {# model} other {# models}}</0> in parallel"
@@ -959,6 +986,9 @@ msgstr "Audit Log"
 msgid "Auth error: {0}"
 msgstr "Errore di autenticazione: {0}"
 
+msgid "Authentication code"
+msgstr "Codice di autenticazione"
+
 msgid "Auto"
 msgstr "Automatico"
 
@@ -1011,6 +1041,9 @@ msgstr "Azure"
 msgid "Azure AI Foundry"
 msgstr "Azure AI Foundry"
 
+msgid "Back to sign in"
+msgstr "Torna all'accesso"
+
 msgid "Bad"
 msgstr "Scarso"
 
@@ -1019,6 +1052,9 @@ msgstr "Base"
 
 msgid "baseline"
 msgstr "baseline"
+
+msgid "Baseline"
+msgstr "Baseline"
 
 msgid "Benchmark what matters"
 msgstr "Metti alla prova ciò che conta"
@@ -1031,9 +1067,6 @@ msgstr "Benchmark"
 
 msgid "best"
 msgstr "migliore"
-
-msgid "Best"
-msgstr "Migliore"
 
 msgid "Boundary inputs, unusual conversations, rare tool combinations."
 msgstr "Input limite, conversazioni insolite, rare combinazioni di Tool."
@@ -1059,8 +1092,14 @@ msgstr "Annulla"
 msgid "Cancel turn"
 msgstr "Annulla turno"
 
+msgid "Cancel validation"
+msgstr "Annulla validazione"
+
 msgid "Cancelled"
 msgstr "Annullato"
+
+msgid "Candidate"
+msgstr "Candidate"
 
 msgid "Candidate edited — "
 msgstr "Candidato modificato — "
@@ -1089,8 +1128,14 @@ msgstr "Casi"
 msgid "Change provider kind"
 msgstr "Cambia tipo di Provider"
 
-msgid "Cheap"
-msgstr "Economico"
+msgid "Cheapest"
+msgstr "Più economico"
+
+msgid "Check your inbox"
+msgstr "Controlla la tua inbox"
+
+msgid "Choose a new password"
+msgstr "Scegli una nuova password"
 
 msgid "Choose a tool or type a name…"
 msgstr "Scegli un Tool o digita un nome…"
@@ -1296,6 +1341,15 @@ msgstr "Impossibile elencare i modelli dal provider: {modelsError}. Inserisci ma
 
 msgid "Could not load the request for this case."
 msgstr "Impossibile caricare la richiesta per questo caso."
+
+msgid "Could not reset your password. Please try again."
+msgstr "Impossibile reimpostare la password. Riprova."
+
+msgid "Could not start setup. Please try again."
+msgstr "Impossibile avviare la configurazione. Riprova."
+
+msgid "Could not verify the code. Please try again."
+msgstr "Impossibile verificare il codice. Riprova."
 
 msgid "Couldn’t load this evaluation."
 msgstr "Impossibile caricare questa evaluation."
@@ -1520,8 +1574,17 @@ msgstr "Dettagli"
 msgid "Diff vs v{0}"
 msgstr "Diff vs v{0}"
 
+msgid "Disable"
+msgstr "Disabilita"
+
 msgid "Disable schedule"
 msgstr "Disabilita pianificazione"
+
+msgid "Disable two-factor authentication"
+msgstr "Disabilita l'autenticazione a due fattori"
+
+msgid "Disabled"
+msgstr "Disabilitata"
 
 msgid "Discard"
 msgstr "Annulla"
@@ -1555,6 +1618,9 @@ msgstr "Documenti"
 
 msgid "Done"
 msgstr "Fatto"
+
+msgid "Download"
+msgstr "Scarica"
 
 msgid "Download .md"
 msgstr "Scarica .md"
@@ -1664,6 +1730,15 @@ msgstr "Endpoint aggiornato"
 
 msgid "Endpoint URL"
 msgstr "URL dell'Endpoint"
+
+msgid "Enter the 6-digit code from your authenticator app, or one of your backup codes."
+msgstr "Inserisci il codice a 6 cifre della tua app di autenticazione, oppure uno dei tuoi codici di backup."
+
+msgid "Enter your email and we'll send a link to reset your password."
+msgstr "Inserisci la tua email e ti invieremo un link per reimpostare la password."
+
+msgid "Enter your password to turn off two-factor authentication. Your backup codes will be discarded."
+msgstr "Inserisci la tua password per disattivare l'autenticazione a due fattori. I tuoi codici di backup verranno scartati."
 
 msgid "Enterprise"
 msgstr "Enterprise"
@@ -1779,8 +1854,15 @@ msgstr "Scaduto / revocato"
 msgid "Expires"
 msgstr "Scade"
 
+#. placeholder {0}: new Date(expiresAt).toLocaleString()
+msgid "Expires {0}"
+msgstr "Scade {0}"
+
 msgid "External"
 msgstr "Esterno"
+
+msgid "External users sign in through your identity provider."
+msgstr "Gli utenti esterni accedono tramite il tuo identity provider."
 
 msgid "Extract a number from the response and check it within a tolerance."
 msgstr "Estrai un numero dalla risposta e verificane il valore entro una tolleranza."
@@ -1844,8 +1926,8 @@ msgstr "Casi di errore"
 msgid "Falls back to the environment-supplied license, or the Free tier."
 msgstr "Torna alla license fornita dall'ambiente, o al piano Free."
 
-msgid "Fast"
-msgstr "Veloce"
+msgid "Fastest"
+msgstr "Più veloce"
 
 msgid "Filter agents by name…"
 msgstr "Filtra gli Agents per nome…"
@@ -1861,6 +1943,9 @@ msgstr "Correggi license"
 
 msgid "Fixed"
 msgstr "Corretto"
+
+msgid "Forgot password?"
+msgstr "Hai dimenticato la password?"
 
 msgid "Free"
 msgstr "Free"
@@ -1958,6 +2043,9 @@ msgstr "Nascondi le trace dagli agenti di sistema"
 msgid "High"
 msgstr "Alto"
 
+msgid "Highest pass rate"
+msgstr "Tasso di passaggio più alto"
+
 msgid "History"
 msgstr "Cronologia"
 
@@ -1994,6 +2082,9 @@ msgstr "id"
 msgid "Idle"
 msgstr "Inattivo"
 
+msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
+msgstr "Se esiste un account per quell'email, le istruzioni per reimpostare la password sono in arrivo. Se l'invio delle email non è configurato su questo server, contatta il tuo amministratore per ottenere un link di reset."
+
 msgid "Improved"
 msgstr "Migliorato"
 
@@ -2003,11 +2094,20 @@ msgstr "Migliorato il tasso di superamento."
 msgid "Improvement confirmed"
 msgstr "Miglioramento confermato"
 
+msgid "in"
+msgstr "in"
+
 msgid "in {win}"
 msgstr "in {win}"
 
 msgid "In flight"
 msgstr "In corso"
+
+msgid "In production"
+msgstr "In produzione"
+
+msgid "Incorrect password."
+msgstr "Password non corretta."
 
 msgid "Index status"
 msgstr "Stato dell'index"
@@ -2064,12 +2164,21 @@ msgstr "Istruzioni inviate al modello prima dei messaggi User."
 msgid "Invalid"
 msgstr "Non valido"
 
+msgid "Invalid code. Check your authenticator app and try again."
+msgstr "Codice non valido. Controlla la tua app di autenticazione e riprova."
+
+msgid "Invalid code. Try again, or use one of your backup codes."
+msgstr "Codice non valido. Riprova, oppure usa uno dei tuoi codici di backup."
+
 msgid "Invalid email or password."
 msgstr "Email o password non valide."
 
 #. placeholder {0}: (e as Error).message
 msgid "Invalid JSON: {0}"
 msgstr "JSON non valido: {0}"
+
+msgid "Invalid reset link"
+msgstr "Link di reset non valido"
 
 msgid "Invalidated"
 msgstr "Invalidato"
@@ -2329,6 +2438,9 @@ msgstr "Basso"
 
 msgid "Manage"
 msgstr "Gestisci"
+
+msgid "Manage how you sign in to your account."
+msgstr "Gestisci come accedi al tuo account."
 
 msgid "Manage roles, project access, and invitations."
 msgstr "Gestisci ruoli, accesso ai progetti e inviti."
@@ -2993,6 +3105,9 @@ msgstr "Ottimizza con prove"
 msgid "Optimizer"
 msgstr "Optimizer"
 
+msgid "Or enter this key manually"
+msgstr "Oppure inserisci manualmente questa chiave"
+
 msgid "Order"
 msgstr "Ordine"
 
@@ -3059,6 +3174,9 @@ msgstr "Superato"
 msgid "PASS"
 msgstr "SUPERATO"
 
+msgid "pass rate"
+msgstr "tasso di passaggio"
+
 msgid "Pass rate"
 msgstr "Tasso di superamento"
 
@@ -3085,6 +3203,18 @@ msgstr "Superando"
 
 msgid "Password"
 msgstr "Password"
+
+msgid "Password Reset Completed"
+msgstr "Reimpostazione password completata"
+
+msgid "Password reset link — {email}"
+msgstr "Link di reset password — {email}"
+
+msgid "Password Reset Link Issued"
+msgstr "Link per reimpostazione password inviato"
+
+msgid "Password Reset Requested"
+msgstr "Richiesta di reimpostazione password inviata"
 
 msgid "past {range}"
 msgstr "ultimi {range}"
@@ -3181,6 +3311,9 @@ msgstr "Indirizza il tuo client a Proxytrace"
 
 msgid "Preparing questions…"
 msgstr "Preparazione delle domande…"
+
+msgid "Preparing…"
+msgstr "Preparazione…"
 
 msgid "Pres Penalty"
 msgstr "Pres Penalty"
@@ -3282,6 +3415,9 @@ msgstr "Prompt di sistema proposto"
 #. placeholder {0}: details.proposedTools.length
 msgid "Proposed tools ({0}): "
 msgstr "Tool proposti ({0}): "
+
+msgid "Protect your account with a time-based one-time code from an authenticator app, in addition to your password."
+msgstr "Proteggi il tuo account con un codice monouso basato sul tempo da un'app di autenticazione, oltre alla tua password."
 
 msgid "Proven gain"
 msgstr "Guadagno dimostrato"
@@ -3409,8 +3545,14 @@ msgstr "Reindicizzazione avviata"
 msgid "Reindexing"
 msgstr "Reindicizzazione"
 
+msgid "Reject"
+msgstr "Rifiuta"
+
 msgid "Reject (error)"
 msgstr "Rifiuta (errore)"
+
+msgid "Reject theory"
+msgstr "Rifiuta Theory"
 
 msgid "Rejected"
 msgstr "Rifiutato"
@@ -3473,6 +3615,9 @@ msgstr "Richiesta"
 msgid "Request · {model}"
 msgstr "Richiesta · {model}"
 
+msgid "Request a new link"
+msgstr "Richiedi un nuovo link"
+
 msgid "required"
 msgstr "obbligatorio"
 
@@ -3494,8 +3639,20 @@ msgstr "Ripristina tutte le impostazioni ai valori predefiniti dell'Agent"
 msgid "Reset all to agent defaults"
 msgstr "Ripristina tutto ai valori predefiniti dell'Agent"
 
+msgid "Reset MFA"
+msgstr "Reimposta MFA"
+
+msgid "Reset password"
+msgstr "Reimposta password"
+
 msgid "Reset to Proposed"
 msgstr "Ripristina a Proposto"
+
+msgid "Reset two-factor authentication"
+msgstr "Reimposta l'autenticazione a due fattori"
+
+msgid "Reset your password"
+msgstr "Reimposta la tua password"
 
 msgid "Response time"
 msgstr "Tempo di risposta"
@@ -3589,6 +3746,9 @@ msgstr "In esecuzione <0>{0, plural, one {# test case} other {# test case}}</0>"
 msgid "Running A/B test…"
 msgstr "Esecuzione A/B test…"
 
+msgid "running…"
+msgstr "in esecuzione…"
+
 msgid "Running…"
 msgstr "In esecuzione…"
 
@@ -3600,6 +3760,9 @@ msgstr "Run"
 
 msgid "Runtime"
 msgstr "Tempo di esecuzione"
+
+msgid "same"
+msgstr "uguale"
 
 msgid "Same version on both sides — nothing to compare."
 msgstr "Stessa versione su entrambi i lati — nulla da confrontare."
@@ -3628,8 +3791,17 @@ msgstr "Salva nome"
 msgid "Save schedule"
 msgstr "Salva pianificazione"
 
+msgid "Save these backup codes somewhere safe. Each can be used once to sign in if you lose your authenticator. They will not be shown again."
+msgstr "Salva questi codici di backup in un posto sicuro. Ognuno può essere usato una sola volta per accedere se perdi la tua app di autenticazione. Non verranno mostrati di nuovo."
+
+msgid "Save your backup codes"
+msgstr "Salva i tuoi codici di backup"
+
 msgid "Saving…"
 msgstr "Salvataggio…"
+
+msgid "Scan this QR code with an authenticator app (Google Authenticator, 1Password, Authy), then enter the 6-digit code it shows."
+msgstr "Scansiona questo codice QR con un'app di autenticazione (Google Authenticator, 1Password, Authy), poi inserisci il codice a 6 cifre che mostra."
 
 msgid "Scheduled"
 msgstr "Pianificato"
@@ -3846,6 +4018,9 @@ msgstr "Invia messaggio"
 msgid "Send notification alerts to your users by email."
 msgstr "Invia avvisi di notifica ai tuoi utenti via email."
 
+msgid "Send reset link"
+msgstr "Invia link di reset"
+
 msgid "Send result"
 msgstr "Invia risultato"
 
@@ -3855,11 +4030,17 @@ msgstr "Invia email di test"
 msgid "Set a password for your account"
 msgstr "Imposta una password per il tuo account"
 
+msgid "Set new password"
+msgstr "Imposta una nuova password"
+
 msgid "Set password & sign in"
 msgstr "Imposta la password e accedi"
 
 msgid "Set price →"
 msgstr "Imposta prezzo →"
+
+msgid "Set up two-factor authentication"
+msgstr "Configura l'autenticazione a due fattori"
 
 msgid "Settings"
 msgstr "Impostazioni"
@@ -3869,6 +4050,9 @@ msgstr "Le impostazioni corrispondono ai valori predefiniti dell'Agent"
 
 msgid "Share by segment"
 msgstr "Condividi per segmento"
+
+msgid "Share this one-time link with the user. It won't be shown again."
+msgstr "Condividi questo link monouso con l'utente. Non sarà mostrato di nuovo."
 
 msgid "Show"
 msgstr "Mostra"
@@ -3923,6 +4107,9 @@ msgstr "significativo"
 msgid "sk-…"
 msgstr "sk-…"
 
+msgid "Skipped"
+msgstr "Saltato"
+
 msgid "SMTP host"
 msgstr "Host SMTP"
 
@@ -3941,8 +4128,14 @@ msgstr "Qualcos'altro…"
 msgid "Something went wrong"
 msgstr "Qualcosa è andato storto"
 
+msgid "Something went wrong. Please try again."
+msgstr "Qualcosa è andato storto. Riprova."
+
 msgid "Source"
 msgstr "Origine"
+
+msgid "Speed"
+msgstr "Velocità"
 
 msgid "Split by model"
 msgstr "Dividi per modello"
@@ -3989,9 +4182,6 @@ msgstr "Step {0} di {total}"
 
 msgid "Step 0"
 msgstr "Step 0"
-
-msgid "Step limit reached"
-msgstr "Limite di step raggiunto"
 
 msgid "Still failing"
 msgstr "Ancora in errore"
@@ -4229,9 +4419,6 @@ msgstr "La licenza è fissata da questa distribuzione (modalità demo) e non pu�
 msgid "The native OpenAI API — works out of the box."
 msgstr "L'API native di OpenAI — funziona subito, senza configurazione."
 
-msgid "The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
-msgstr "Il turn ha raggiunto il budget per Tool-step prima che Tracey potesse rispondere. Chiedile di continuare."
-
 msgid "Theories"
 msgstr "Theory"
 
@@ -4299,8 +4486,14 @@ msgstr "Questa license è stata fornita tramite la variabile di ambiente PROXYTR
 msgid "this page"
 msgstr "questa pagina"
 
+msgid "This password reset link is missing or malformed. Request a new one."
+msgstr "Questo link di reset della password manca o non è valido. Richiedine uno nuovo."
+
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Questo elimina definitivamente il run e i suoi risultati. Questa azione non può essere annullata."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "Questo link di reset non è valido o è scaduto. Richiedine uno nuovo."
 
 msgid "This stops future runs. Existing runs it produced are kept."
 msgstr "Questo interrompe i run futuri. I run esistenti che ha prodotto vengono mantenuti."
@@ -4308,11 +4501,18 @@ msgstr "Questo interrompe i run futuri. I run esistenti che ha prodotto vengono 
 msgid "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
 msgstr "Questo interrompe i run futuri. I run esistenti che ha prodotto vengono mantenuti. Questa azione non può essere annullata."
 
+msgid "This theory was dismissed without running an A/B validation."
+msgstr "Questa Theory è stata scartata senza eseguire una validazione A/B."
+
 msgid "This trace has no response and cannot be promoted."
 msgstr "Questo trace non ha una response e non può essere promosso."
 
 msgid "This trace is not linked to an agent and cannot be promoted."
 msgstr "Questo trace non è collegato a un agent e non può essere promosso."
+
+#. placeholder {0}: confirmResetMfa.email
+msgid "This turns off two-factor authentication for {0} and discards their backup codes. They can set it up again from their account."
+msgstr "Questo disattiva l'autenticazione a due fattori per {0} e scarta i suoi codici di backup. Può configurarla di nuovo dal suo account."
 
 #. placeholder {0}: deleteTarget.name
 msgid "This will permanently remove <0>{0}</0> and detach it from all test suites."
@@ -4363,6 +4563,9 @@ msgstr "tolleranza"
 
 msgid "Tolerance"
 msgstr "Tolleranza"
+
+msgid "Too many attempts. Please wait a few minutes and try again."
+msgstr "Troppe richieste. Attendi qualche minuto e riprova."
 
 msgid "TOOL"
 msgstr "TOOL"
@@ -4417,11 +4620,6 @@ msgstr "Costo totale"
 
 msgid "Total runs"
 msgstr "Totale Run"
-
-#. placeholder {0}: stats.inputTokens.toLocaleString()
-#. placeholder {1}: stats.outputTokens.toLocaleString()
-msgid "Total tokens (input {0} · output {1})"
-msgstr "Token totali (input {0} · output {1})"
 
 #. placeholder {0}: trace.model
 msgid "Trace preview · {0}"
@@ -4481,6 +4679,12 @@ msgstr "Turn {0}"
 
 msgid "Turns"
 msgstr "Turni"
+
+msgid "Two-factor authentication"
+msgstr "Autenticazione a due fattori"
+
+msgid "Two-factor authentication is managed by your identity provider."
+msgstr "L'autenticazione a due fattori è gestita dal tuo identity provider."
 
 msgid "Type"
 msgstr "Tipo"
@@ -4615,6 +4819,12 @@ msgstr "variables"
 msgid "Verdict"
 msgstr "Verdetto"
 
+msgid "Verify"
+msgstr "Verifica"
+
+msgid "Verify & enable"
+msgstr "Verifica e abilita"
+
 msgid "Version history"
 msgstr "Cronologia versioni"
 
@@ -4679,11 +4889,14 @@ msgstr "visualizzazione"
 msgid "Volume appears once traces are captured."
 msgstr "Il volume appare una volta che le Traces sono state acquisite."
 
-msgid "vs best"
-msgstr "vs il migliore"
+msgid "vs baseline"
+msgstr "rispetto al baseline"
 
 msgid "vs prev period"
 msgstr "vs periodo precedente"
+
+msgid "vs production"
+msgstr "rispetto alla produzione"
 
 msgid "Wait stopped"
 msgstr "Attesa interrotta"

@@ -156,6 +156,23 @@ buttons for the proposed prompt / tools JSON / model name, a client-generated ma
 (`TheoryResetOutcome`) — refused if the spawned proposal was already Accepted or Adopted
 (`BlockedByAcceptedProposal`).
 
+It also supports **rejecting** an active theory on user request (`RejectAsync` →
+`TheoryRejectOutcome`, `POST /api/theories/{id}/reject`): a `Proposed` theory is dismissed without
+ever running A/B validation; a `Validating` theory has its in-flight A/B run cancelled. Both land in
+`Invalidated` with no A/B metrics — the absence of metrics (`Reject()` on the entity) is what
+distinguishes a manual dismissal from an A/B-disproven invalidation (the board copies adapt
+accordingly). Cancellation works because each validation registers a per-theory
+`CancellationTokenSource` (linked to the service stopping token) around the validator call;
+cancelling it aborts the candidate/baseline run through the test runner's linked-token path. A
+`Proposed` theory still queued is simply transitioned and skipped when the serial worker reaches it.
+
+**Validation is serial.** `TheoryValidationService` is a singleton hosted worker draining a
+single-reader channel with a sequential `await` loop, and each validation runs baseline then
+candidate back-to-back — so **at most one A/B run executes at a time** process-wide. The
+`MaxInFlightPerProject` quota bounds only the queued backlog, not parallelism. (Horizontal scaling to
+multiple replicas would need a distributed lease in `RecoverInFlightTheoriesAsync` to preserve this;
+the current deployment is single-process.)
+
 | Concern | File |
 |---|---|
 | Proposal SSE | `Streaming/Internal/ProposalBroadcaster.cs` |

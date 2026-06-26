@@ -35,6 +35,19 @@ The one deliberate exception to "audit only successes" is **failed sign-in** (`A
 emitted with `outcome: AuditOutcome.Failure` so brute-force / credential-stuffing attempts are visible.
 That is the sole producer of `AuditOutcome.Failure` today; every other action records `Success`.
 
+The **password-reset** actions follow the same shape: `PasswordResetRequested` is emitted for every
+forgot-password attempt (the submitted email is the target, even when no account matches — like
+`LoginFailed`, it records the attempt without revealing whether the address exists), `PasswordResetCompleted`
+when a reset token is redeemed, and `PasswordResetLinkIssued` when an admin mints a reset link from the
+Users page. The first two come from `AuthController` (`[RequireLocalMode]`); the third from `UsersController`
+(admin-only).
+
+The **MFA (TOTP)** actions are `MfaEnabled` (a user confirms enrollment), `MfaDisabled` (a user disables
+their own MFA, or an admin clears it for lockout recovery via `UsersController`), and `MfaChallengeFailed`
+(a wrong second-factor code — the `AuditOutcome.Failure` analog of `LoginFailed`). A **successful** MFA
+login emits the normal `UserLoggedIn`, so there is one uniform "logged in" signal regardless of factor.
+See [`docs/mfa.md`](mfa.md).
+
 **Authentication events are local-mode only.** The auth-lifecycle actions (`UserLoggedIn`,
 `LoginFailed`, `UserLoggedOut`, `UserSignedUp`, `AdminBootstrapped`, `LegacyAccountClaimed`,
 `UserInvited`, `InviteRevoked`) are emitted from `AuthController`, whose endpoints are
