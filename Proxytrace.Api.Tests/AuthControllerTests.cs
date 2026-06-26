@@ -92,6 +92,47 @@ public sealed class AuthControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Login_WhenMfaEnabled_ReturnsChallenge_ThenMfaVerifyIssuesSession()
+    {
+        IServiceProvider services = GetServices();
+
+        // Seed a local user and enable MFA for them.
+        var passwords = services.GetRequiredService<IPasswordService>();
+        var create = services.GetRequiredService<IUser.CreateNew>();
+        const string email = "mfa@example.test";
+        const string password = "StrongPass1!Foo";
+        var hash = passwords.Hash(create(email, null, "x", UserRole.Member), password);
+        var user = await create(email, null, hash, UserRole.Member).AddAsync(CancellationToken);
+
+        var mfa = services.GetRequiredService<IMfaService>();
+        var setup = await mfa.SetupAsync(user, CancellationToken)
+            ?? throw new InvalidOperationException("setup returned null");
+        var backupCodes = await mfa.ActivateAsync(
+                user,
+                new OtpNet.Totp(OtpNet.Base32Encoding.ToBytes(setup.Secret)).ComputeTotp(),
+                CancellationToken)
+            ?? throw new InvalidOperationException("activate returned null");
+
+        var controller = ResolveController(services);
+
+        // Step 1: password login returns an MFA challenge, not a session.
+        var login = await controller.Login(new LoginRequest(email, password), CancellationToken);
+        var challenge = login.Value ?? throw new InvalidOperationException("no login body");
+        challenge.MfaRequired.Should().BeTrue();
+        challenge.Token.Should().BeNull();
+        var challengeToken = challenge.MfaChallengeToken;
+        challengeToken.Should().NotBeNullOrEmpty();
+
+        // Step 2: completing the challenge (here with a backup code) issues a session.
+        var verified = await controller.MfaVerify(
+            new MfaVerifyRequest(challengeToken ?? string.Empty, backupCodes[0]),
+            CancellationToken);
+        var session = verified.Value ?? throw new InvalidOperationException("no verify body");
+        session.MfaRequired.Should().BeFalse();
+        session.Token.Should().NotBeNullOrEmpty();
+    }
+
+    [TestMethod]
     public async Task Preview_UnknownToken_ReturnsGone()
     {
         IServiceProvider services = GetServices();
@@ -238,6 +279,7 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<IInviteService>(),
         services.GetRequiredService<IInviteRepository>(),
         services.GetRequiredService<IPasswordResetService>(),
+        services.GetRequiredService<IMfaService>(),
         services.GetRequiredService<IPasswordPolicy>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),

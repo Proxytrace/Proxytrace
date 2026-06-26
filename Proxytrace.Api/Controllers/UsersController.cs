@@ -11,6 +11,7 @@ using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Domain.UserTotpEnrollment;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -24,6 +25,8 @@ public class UsersController : ControllerBase
     private readonly IUserAdministrationService administration;
     private readonly ICurrentUserAccessor currentUser;
     private readonly IPasswordResetService passwordReset;
+    private readonly IMfaService mfa;
+    private readonly IUserTotpEnrollmentRepository totpEnrollments;
     private readonly IConfiguration config;
     private readonly ILogger<Audit> audit;
 
@@ -33,6 +36,8 @@ public class UsersController : ControllerBase
         IUserAdministrationService administration,
         ICurrentUserAccessor currentUser,
         IPasswordResetService passwordReset,
+        IMfaService mfa,
+        IUserTotpEnrollmentRepository totpEnrollments,
         IConfiguration config,
         ILogger<Audit> audit)
     {
@@ -41,6 +46,8 @@ public class UsersController : ControllerBase
         this.administration = administration;
         this.currentUser = currentUser;
         this.passwordReset = passwordReset;
+        this.mfa = mfa;
+        this.totpEnrollments = totpEnrollments;
         this.config = config;
         this.audit = audit;
     }
@@ -53,14 +60,16 @@ public class UsersController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
-        return paged.Map(ToDto);
+        var mfaUsers = (await totpEnrollments.ListConfirmedUserIdsAsync(cancellationToken)).ToHashSet();
+        return paged.Map(u => ToDto(u, mfaUsers.Contains(u.Id)));
     }
 
     [HttpGet("me")]
     public async Task<ActionResult<UserDto>> Me(CancellationToken cancellationToken)
     {
         var user = await currentUser.GetCurrentUserAsync(cancellationToken);
-        return user is null ? Unauthorized() : ToDto(user);
+        if (user is null) return Unauthorized();
+        return ToDto(user, await mfa.IsEnabledAsync(user.Id, cancellationToken));
     }
 
     /// <summary>
@@ -107,7 +116,7 @@ public class UsersController : ControllerBase
         var user = await repository.FindAsync(id, cancellationToken);
         if (user is null)
             return NotFound();
-        return ToDto(user);
+        return ToDto(user, await mfa.IsEnabledAsync(user.Id, cancellationToken));
     }
 
     [HttpGet("{id:guid}/projects")]
@@ -136,7 +145,7 @@ public class UsersController : ControllerBase
         if (updated is null)
             return NotFound();
         audit.LogAudit(AuditAction.UserRoleChanged, nameof(IUser), id, updated.Email);
-        return ToDto(updated);
+        return ToDto(updated, await mfa.IsEnabledAsync(updated.Id, cancellationToken));
     }
 
     [HttpDelete("{id:guid}")]
@@ -183,6 +192,25 @@ public class UsersController : ControllerBase
         return $"{baseUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(token)}";
     }
 
-    private static UserDto ToDto(IUser u) =>
-        new(u.Id, u.Email, u.Role, u.ExternalSubject is not null, u.CreatedAt, u.UpdatedAt);
+    /// <summary>
+    /// Admin lockout recovery: turns off a user's two-factor authentication (removes the enrollment and
+    /// all backup codes). The only escape when a user has lost both their authenticator and backup
+    /// codes. Idempotent — succeeds whether or not the user currently had MFA.
+    /// </summary>
+    [HttpPost("{id:guid}/mfa/disable")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    public async Task<IActionResult> DisableMfa(Guid id, CancellationToken cancellationToken)
+    {
+        var target = await repository.FindAsync(id, cancellationToken);
+        if (target is null)
+            return NotFound();
+
+        var removed = await mfa.AdminDisableAsync(id, cancellationToken);
+        if (removed)
+            audit.LogAudit(AuditAction.MfaDisabled, nameof(IUser), id, target.Email);
+        return NoContent();
+    }
+
+    private static UserDto ToDto(IUser u, bool mfaEnabled) =>
+        new(u.Id, u.Email, u.Role, u.ExternalSubject is not null, u.CreatedAt, u.UpdatedAt, mfaEnabled);
 }

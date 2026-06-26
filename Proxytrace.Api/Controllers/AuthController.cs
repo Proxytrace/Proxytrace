@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
     private readonly IInviteService invites;
     private readonly IInviteRepository inviteRepo;
     private readonly IPasswordResetService passwordReset;
+    private readonly IMfaService mfa;
     private readonly IPasswordPolicy policy;
     private readonly ICurrentUserAccessor currentUser;
     private readonly IStreamTicketService streamTickets;
@@ -42,6 +43,7 @@ public class AuthController : ControllerBase
         IInviteService invites,
         IInviteRepository inviteRepo,
         IPasswordResetService passwordReset,
+        IMfaService mfa,
         IPasswordPolicy policy,
         ICurrentUserAccessor currentUser,
         IStreamTicketService streamTickets,
@@ -56,6 +58,7 @@ public class AuthController : ControllerBase
         this.invites = invites;
         this.inviteRepo = inviteRepo;
         this.passwordReset = passwordReset;
+        this.mfa = mfa;
         this.policy = policy;
         this.currentUser = currentUser;
         this.streamTickets = streamTickets;
@@ -123,19 +126,104 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     [RequireLocalMode]
-    public async Task<ActionResult<TokenResponse>> Login([FromBody] LoginRequest req, CancellationToken ct)
+    public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequest req, CancellationToken ct)
     {
-        var result = await login.LoginAsync(req.Email, req.Password, ct);
-        if (result is null)
+        var outcome = await login.LoginAsync(req.Email, req.Password, ct);
+        if (outcome is null)
         {
             // No user context on a failed login (pre-auth, anonymous) — recorded as the System actor
             // with the submitted email as the target so brute-force/credential-stuffing is visible.
             audit.LogAudit(AuditAction.LoginFailed, nameof(IUser), targetLabel: req.Email, outcome: AuditOutcome.Failure);
             return Unauthorized();
         }
+
+        // On a confirmed-MFA account no session is issued yet; the UserLoggedIn audit fires once the
+        // second factor is verified (mfa/verify). A non-MFA login is audited here.
+        if (outcome is LoginSucceeded s)
+        {
+            audit.LogAudit(AuditAction.UserLoggedIn, nameof(IUser), s.User.Id, s.User.Email);
+        }
+        return IssueLoginResponse(outcome);
+    }
+
+    // Sets the session cookie when a session was issued and shapes the response either way. Never
+    // audits — callers do that with the right action (login vs. reset vs. signup).
+    private LoginResponseDto IssueLoginResponse(LoginOutcome outcome)
+    {
+        if (outcome is LoginSucceeded s)
+        {
+            SessionCookie.Append(Response, s.Token, s.ExpiresAt);
+            return new LoginResponseDto(s.Token, s.ExpiresAt, MfaRequired: false, null, null);
+        }
+
+        var mfaRequired = (MfaRequired)outcome;
+        return new LoginResponseDto(null, null, MfaRequired: true, mfaRequired.ChallengeToken, mfaRequired.ChallengeExpiresAt);
+    }
+
+    // Completes the second step of login: verifies a TOTP code (or backup code) against the challenge
+    // ticket and, on success, issues the session. Rate-limited because the TOTP code space is small.
+    [HttpPost("mfa/verify")]
+    [AllowAnonymous]
+    [RequireLocalMode]
+    [EnableRateLimiting("auth-mfa")]
+    public async Task<ActionResult<LoginResponseDto>> MfaVerify([FromBody] MfaVerifyRequest req, CancellationToken ct)
+    {
+        var result = await mfa.VerifyChallengeAsync(req.ChallengeToken, req.Code, ct);
+        if (result is null)
+        {
+            audit.LogAudit(AuditAction.MfaChallengeFailed, nameof(IUser), outcome: AuditOutcome.Failure);
+            return Unauthorized();
+        }
+
         SessionCookie.Append(Response, result.Token, result.ExpiresAt);
         audit.LogAudit(AuditAction.UserLoggedIn, nameof(IUser), result.User.Id, result.User.Email);
-        return new TokenResponse(result.Token, result.ExpiresAt);
+        return new LoginResponseDto(result.Token, result.ExpiresAt, MfaRequired: false, null, null);
+    }
+
+    // Starts TOTP enrollment: returns a fresh secret + otpauth URI for the caller to add to their
+    // authenticator app. The enrollment is pending until confirmed via mfa/activate.
+    [HttpPost("mfa/setup")]
+    [Authorize]
+    [RequireLocalMode]
+    public async Task<ActionResult<MfaSetupResponse>> MfaSetup(CancellationToken ct)
+    {
+        var me = await currentUser.GetCurrentUserAsync(ct);
+        if (me is null) return Unauthorized();
+
+        var setupResult = await mfa.SetupAsync(me, ct);
+        if (setupResult is null) return Conflict("MFA is already enabled. Disable it before setting it up again.");
+        return new MfaSetupResponse(setupResult.Secret, setupResult.OtpAuthUri);
+    }
+
+    // Confirms enrollment with a first code, turning MFA on and returning one-time backup codes (shown once).
+    [HttpPost("mfa/activate")]
+    [Authorize]
+    [RequireLocalMode]
+    public async Task<ActionResult<MfaActivateResponse>> MfaActivate([FromBody] MfaActivateRequest req, CancellationToken ct)
+    {
+        var me = await currentUser.GetCurrentUserAsync(ct);
+        if (me is null) return Unauthorized();
+
+        var codes = await mfa.ActivateAsync(me, req.Code, ct);
+        if (codes is null) return BadRequest("Invalid code. Make sure your authenticator app is set up and try again.");
+
+        audit.LogAudit(AuditAction.MfaEnabled, nameof(IUser), me.Id, me.Email);
+        return new MfaActivateResponse(codes);
+    }
+
+    // Self-service disable: requires the account password as re-authentication.
+    [HttpPost("mfa/disable")]
+    [Authorize]
+    [RequireLocalMode]
+    public async Task<IActionResult> MfaDisable([FromBody] MfaDisableRequest req, CancellationToken ct)
+    {
+        var me = await currentUser.GetCurrentUserAsync(ct);
+        if (me is null) return Unauthorized();
+
+        var result = await mfa.DisableAsync(me, req.Password, ct);
+        if (result is null) return BadRequest("Incorrect password.");
+        if (result is true) audit.LogAudit(AuditAction.MfaDisabled, nameof(IUser), me.Id, me.Email);
+        return NoContent();
     }
 
     // The session rides in an httpOnly cookie (see SessionCookie), so the SPA cannot read
@@ -163,10 +251,12 @@ public class AuthController : ControllerBase
         var me = await currentUser.GetCurrentUserAsync(ct);
         if (me is null) return Unauthorized();
         var settings = await emailSettings.GetAsync(ct);
+        var mfaEnabled = await mfa.IsEnabledAsync(me.Id, ct);
         return new MeDto(
             me.Id, me.Email, me.Role, me.Language,
             me.EmailNotificationsEnabled, me.EmailNotificationMinSeverity,
-            EmailEnabled: settings?.Enabled ?? false);
+            EmailEnabled: settings?.Enabled ?? false,
+            MfaEnabled: mfaEnabled);
     }
 
     [HttpPost("signup")]
@@ -181,8 +271,8 @@ public class AuthController : ControllerBase
         if (user is null) return StatusCode(410, "Invite invalid, expired, or already used.");
         audit.LogAudit(AuditAction.UserSignedUp, nameof(IUser), user.Id, user.Email);
 
-        LoginResult? session = await login.LoginAsync(user.Email, req.Password, ct);
-        if (session is null) return NotFound();
+        // A freshly created user has no MFA enrollment, so the password login always yields a session.
+        if (await login.LoginAsync(user.Email, req.Password, ct) is not LoginSucceeded session) return NotFound();
         SessionCookie.Append(Response, session.Token, session.ExpiresAt);
         return new TokenResponse(session.Token, session.ExpiresAt);
     }
@@ -206,18 +296,25 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [RequireLocalMode]
     [EnableRateLimiting("auth-reset")]
-    public async Task<ActionResult<TokenResponse>> ResetPassword([FromBody] ResetPasswordRequest req, CancellationToken ct)
+    public async Task<ActionResult<LoginResponseDto>> ResetPassword([FromBody] ResetPasswordRequest req, CancellationToken ct)
     {
         var v = policy.Validate(req.Password);
         if (!v.IsValid) return BadRequest(v.Errors);
 
-        var result = await passwordReset.CompleteResetAsync(req.Token, req.Password, ct);
-        if (result is null) return StatusCode(410, "Reset link invalid, expired, or already used.");
+        var outcome = await passwordReset.CompleteResetAsync(req.Token, req.Password, ct);
+        if (outcome is null) return StatusCode(410, "Reset link invalid, expired, or already used.");
 
-        // Log the user straight in, mirroring signup — they have just proven control of the account.
-        SessionCookie.Append(Response, result.Token, result.ExpiresAt);
-        audit.LogAudit(AuditAction.PasswordResetCompleted, nameof(IUser), result.User.Id, result.User.Email);
-        return new TokenResponse(result.Token, result.ExpiresAt);
+        // The password was changed regardless of the second-factor outcome — audit the completion with
+        // the user from whichever branch we got. The session is only issued here when MFA is not
+        // enabled; an MFA account must still pass the challenge (mirrors the login flow).
+        var user = outcome switch
+        {
+            LoginSucceeded s => s.User,
+            MfaRequired m => m.User,
+            _ => throw new InvalidOperationException("Unknown reset outcome."),
+        };
+        audit.LogAudit(AuditAction.PasswordResetCompleted, nameof(IUser), user.Id, user.Email);
+        return IssueLoginResponse(outcome);
     }
 
     private string BuildResetUrl(string token)

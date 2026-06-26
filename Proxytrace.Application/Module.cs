@@ -421,6 +421,11 @@ public sealed class Module : Autofac.Module
             .As<IStreamTicketService>()
             .SingleInstance();
 
+        // In-memory, single-use MFA challenge tickets — SingleInstance so the dictionary is shared.
+        builder.RegisterType<MfaChallengeService>()
+            .As<IMfaChallengeService>()
+            .SingleInstance();
+
         builder.RegisterType<PasswordService>()
             .As<IPasswordService>()
             .SingleInstance();
@@ -459,6 +464,14 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<PasswordResetService>()
             .As<IPasswordResetService>()
+            .SingleInstance();
+
+        builder.RegisterType<TotpService>()
+            .As<ITotpService>()
+            .SingleInstance();
+
+        builder.RegisterType<MfaService>()
+            .As<IMfaService>()
             .SingleInstance();
 
         builder.RegisterInstance(Prompts.ResourceManager);

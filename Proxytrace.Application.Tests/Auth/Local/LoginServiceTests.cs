@@ -23,8 +23,9 @@ public sealed class LoginServiceTests : BaseTest<Module>
         var svc = s.GetRequiredService<ILoginService>();
         var result = await svc.LoginAsync("u@b.com", "Abcdef1!", CancellationToken);
 
-        result.Should().NotBeNull();
-        result.Token.Should().NotBeNullOrEmpty();
+        // No MFA enrollment → a session is issued outright.
+        result.Should().BeOfType<LoginSucceeded>();
+        ((LoginSucceeded)result!).Token.Should().NotBeNullOrEmpty();
     }
 
     [TestMethod]

@@ -43,6 +43,18 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(15),
                 QueueLimit = 0,
             }));
+
+    // The MFA verify endpoint validates a 6-digit code — a small space — so it is rate-limited per
+    // client IP (in addition to the per-challenge attempt cap) to blunt brute force.
+    options.AddPolicy("auth-mfa", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0,
+            }));
 });
 
 builder.Services.AddAuthorization(options =>

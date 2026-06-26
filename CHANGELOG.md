@@ -11,6 +11,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Two-factor authentication (TOTP).** Protect your account with a second factor from an
+  authenticator app (Google Authenticator, Authy, 1Password). Turn it on under **Account security**
+  (in the account menu): scan the QR code, confirm a code, and save the **10 one-time backup codes**
+  you're shown. After that, signing in asks for a 6-digit code — or a backup code if you've lost your
+  device. Disabling it requires your password. Admins can clear a locked-out user's MFA from
+  **Settings → Users** (**Reset MFA**). MFA is opt-in per user, free on every tier, and applies to
+  password (local) sign-in; SSO/OIDC handles MFA at your identity provider. Enabling, disabling, and
+  failed code attempts are recorded in the audit log, and the verification endpoint is rate-limited.
 - **Forgot your password? Self-service reset.** The sign-in screen now has a **Forgot password?**
   link. Enter your email and Proxytrace sends a one-time reset link — valid for 1 hour — that lets you
   choose a new password and signs you straight in. **No SMTP? You're still covered:** if outgoing

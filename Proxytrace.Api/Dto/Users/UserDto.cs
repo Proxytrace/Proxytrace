@@ -9,7 +9,8 @@ public record UserDto(
     UserRole Role,
     bool IsExternal,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    bool MfaEnabled);
 
 public record UpdateUserRoleRequest(UserRole Role);
 

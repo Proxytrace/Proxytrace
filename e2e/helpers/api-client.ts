@@ -91,6 +91,34 @@ export class ProxytraceApiClient {
     this.token = token;
   }
 
+  async mfaSetup(): Promise<{ secret: string; otpAuthUri: string }> {
+    const res = await this.request.post('/api/auth/mfa/setup', { headers: this.headers() });
+    if (!res.ok()) throw new Error(`mfa setup failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async mfaActivate(code: string): Promise<{ backupCodes: string[] }> {
+    const res = await this.request.post('/api/auth/mfa/activate', {
+      headers: this.headers(),
+      data: { code },
+    });
+    if (!res.ok()) throw new Error(`mfa activate failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async mfaDisable(password: string): Promise<void> {
+    const res = await this.request.post('/api/auth/mfa/disable', {
+      headers: this.headers(),
+      data: { password },
+    });
+    if (!res.ok()) throw new Error(`mfa disable failed: ${res.status()} ${await res.text()}`);
+  }
+
+  async adminDisableMfa(userId: string): Promise<void> {
+    const res = await this.request.post(`/api/users/${userId}/mfa/disable`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`admin disable mfa failed: ${res.status()} ${await res.text()}`);
+  }
+
   async completeSetup(opts: {
     providerName: string;
     providerEndpoint: string;

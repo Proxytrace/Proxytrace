@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import type { UserDto, UserRole } from '../../api/models';
-import { useCreateUserResetLink, useDeleteUser, useUpdateUserRole, useUsers } from './hooks/useUsers';
+import { useCreateUserResetLink, useDeleteUser, useDisableUserMfa, useUpdateUserRole, useUsers } from './hooks/useUsers';
 import { InviteUserForm } from './components/InviteUserForm';
 import { PendingInvitesTable } from './components/PendingInvitesTable';
 import { UsersTable } from './components/UsersTable';
@@ -21,7 +21,9 @@ export default function Users() {
   const updateRole = useUpdateUserRole();
   const deleteUser = useDeleteUser();
   const resetLink = useCreateUserResetLink();
+  const disableMfa = useDisableUserMfa();
   const [confirmDelete, setConfirmDelete] = useState<UserDto | null>(null);
+  const [confirmResetMfa, setConfirmResetMfa] = useState<UserDto | null>(null);
   const [manageProjects, setManageProjects] = useState<UserDto | null>(null);
   const [resetLinkFor, setResetLinkFor] = useState<{ email: string; link: string; expiresAt: string } | null>(null);
 
@@ -31,6 +33,10 @@ export default function Users() {
   const onConfirmDelete = () => {
     if (!confirmDelete) return;
     deleteUser.mutate(confirmDelete.id, { onSuccess: () => setConfirmDelete(null) });
+  };
+  const onConfirmResetMfa = () => {
+    if (!confirmResetMfa) return;
+    disableMfa.mutate(confirmResetMfa.id, { onSuccess: () => setConfirmResetMfa(null) });
   };
   const onResetPassword = (user: UserDto) =>
     resetLink.mutate(user.id, {
@@ -69,6 +75,7 @@ export default function Users() {
             onDelete={setConfirmDelete}
             onManageProjects={setManageProjects}
             onResetPassword={onResetPassword}
+            onResetMfa={setConfirmResetMfa}
           />
         )}
       </section>
@@ -81,6 +88,17 @@ export default function Users() {
           loading={deleteUser.isPending}
           onConfirm={onConfirmDelete}
           onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {confirmResetMfa && (
+        <ConfirmDialog
+          title={t`Reset two-factor authentication`}
+          message={t`This turns off two-factor authentication for ${confirmResetMfa.email} and discards their backup codes. They can set it up again from their account.`}
+          confirmLabel={t`Reset MFA`}
+          loading={disableMfa.isPending}
+          onConfirm={onConfirmResetMfa}
+          onCancel={() => setConfirmResetMfa(null)}
         />
       )}
 

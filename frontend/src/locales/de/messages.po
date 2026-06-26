@@ -657,6 +657,9 @@ msgstr "1 Test Suite"
 msgid "2 proposals"
 msgstr "2 Proposals"
 
+msgid "6-digit code"
+msgstr "6-stelliger Code"
+
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "Ein Grader-Modell bewertet Antworten auf einer festen Skala von 1–5 (Schlecht → Exzellent) mit optionaler Begründung. Wähle ein Preset oder schreibe dein eigenes Rubrik."
 
@@ -696,6 +699,9 @@ msgstr "Akzeptabel"
 
 msgid "Account Claimed"
 msgstr "Konto beansprucht"
+
+msgid "Account security"
+msgstr "Kontosicherheit"
 
 #. placeholder {0}: selectedEndpoints.length
 msgid "across <0>{0, plural, one {# model} other {# models}}</0> in parallel"
@@ -979,6 +985,9 @@ msgstr "Audit-Log"
 #. placeholder {0}: auth.error.message
 msgid "Auth error: {0}"
 msgstr "Authentifizierungsfehler: {0}"
+
+msgid "Authentication code"
+msgstr "Authentifizierungscode"
 
 msgid "Auto"
 msgstr "Auto"
@@ -1336,6 +1345,12 @@ msgstr "Die Anfrage für diesen Fall konnte nicht geladen werden."
 msgid "Could not reset your password. Please try again."
 msgstr "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es erneut."
 
+msgid "Could not start setup. Please try again."
+msgstr "Setup konnte nicht gestartet werden. Bitte erneut versuchen."
+
+msgid "Could not verify the code. Please try again."
+msgstr "Der Code konnte nicht verifiziert werden. Bitte erneut versuchen."
+
 msgid "Couldn’t load this evaluation."
 msgstr "Diese Evaluation konnte nicht geladen werden."
 
@@ -1559,8 +1574,17 @@ msgstr "Details"
 msgid "Diff vs v{0}"
 msgstr "Diff zu v{0}"
 
+msgid "Disable"
+msgstr "Deaktivieren"
+
 msgid "Disable schedule"
 msgstr "Zeitplan deaktivieren"
+
+msgid "Disable two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung deaktivieren"
+
+msgid "Disabled"
+msgstr "Deaktiviert"
 
 msgid "Discard"
 msgstr "Verwerfen"
@@ -1594,6 +1618,9 @@ msgstr "Dokumente"
 
 msgid "Done"
 msgstr "Fertig"
+
+msgid "Download"
+msgstr "Herunterladen"
 
 msgid "Download .md"
 msgstr ".md herunterladen"
@@ -1704,8 +1731,14 @@ msgstr "Endpoint aktualisiert"
 msgid "Endpoint URL"
 msgstr "Endpoint-URL"
 
+msgid "Enter the 6-digit code from your authenticator app, or one of your backup codes."
+msgstr "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App oder einen Ihrer Backup-Codes ein."
+
 msgid "Enter your email and we'll send a link to reset your password."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts."
+
+msgid "Enter your password to turn off two-factor authentication. Your backup codes will be discarded."
+msgstr "Geben Sie Ihr Passwort ein, um die Zwei-Faktor-Authentifizierung zu deaktivieren. Ihre Backup-Codes werden verworfen."
 
 msgid "Enterprise"
 msgstr "Enterprise"
@@ -2073,6 +2106,9 @@ msgstr "Läuft"
 msgid "In production"
 msgstr "In Produktion"
 
+msgid "Incorrect password."
+msgstr "Falsches Passwort."
+
 msgid "Index status"
 msgstr "Indexstatus"
 
@@ -2127,6 +2163,12 @@ msgstr "Anweisungen, die vor den Nachrichten des Users an das Modell gesendet we
 
 msgid "Invalid"
 msgstr "Ungültig"
+
+msgid "Invalid code. Check your authenticator app and try again."
+msgstr "Ungültiger Code. Prüfen Sie Ihre Authenticator-App und versuchen Sie es erneut."
+
+msgid "Invalid code. Try again, or use one of your backup codes."
+msgstr "Ungültiger Code. Versuchen Sie es erneut oder verwenden Sie einen Ihrer Backup-Codes."
 
 msgid "Invalid email or password."
 msgstr "Ungültige E-Mail oder ungültiges Passwort."
@@ -2396,6 +2438,9 @@ msgstr "Niedrig"
 
 msgid "Manage"
 msgstr "Verwalten"
+
+msgid "Manage how you sign in to your account."
+msgstr "Verwalten Sie, wie Sie sich bei Ihrem Konto anmelden."
 
 msgid "Manage roles, project access, and invitations."
 msgstr "Rollen, Projektzugriff und Einladungen verwalten."
@@ -3060,6 +3105,9 @@ msgstr "Mit Belegen optimieren"
 msgid "Optimizer"
 msgstr "Optimizer"
 
+msgid "Or enter this key manually"
+msgstr "Oder geben Sie diesen Schlüssel manuell ein"
+
 msgid "Order"
 msgstr "Reihenfolge"
 
@@ -3264,6 +3312,9 @@ msgstr "Richte deinen Client auf Proxytrace aus"
 msgid "Preparing questions…"
 msgstr "Fragen werden vorbereitet…"
 
+msgid "Preparing…"
+msgstr "Wird vorbereitet…"
+
 msgid "Pres Penalty"
 msgstr "Pres Penalty"
 
@@ -3364,6 +3415,9 @@ msgstr "Vorgeschlagener System Prompt"
 #. placeholder {0}: details.proposedTools.length
 msgid "Proposed tools ({0}): "
 msgstr "Vorgeschlagene Tools ({0}): "
+
+msgid "Protect your account with a time-based one-time code from an authenticator app, in addition to your password."
+msgstr "Schützen Sie Ihr Konto zusätzlich zu Ihrem Passwort mit einem zeitbasierten Einmalcode aus einer Authenticator-App."
 
 msgid "Proven gain"
 msgstr "Nachgewiesener Gewinn"
@@ -3585,11 +3639,17 @@ msgstr "Alle Einstellungen auf die Agent-Standardeinstellungen zurücksetzen"
 msgid "Reset all to agent defaults"
 msgstr "Alles auf Agent-Standardeinstellungen zurücksetzen"
 
+msgid "Reset MFA"
+msgstr "MFA zurücksetzen"
+
 msgid "Reset password"
 msgstr "Passwort zurücksetzen"
 
 msgid "Reset to Proposed"
 msgstr "Auf Vorgeschlagen zurücksetzen"
+
+msgid "Reset two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung zurücksetzen"
 
 msgid "Reset your password"
 msgstr "Setzen Sie Ihr Passwort zurück"
@@ -3731,8 +3791,17 @@ msgstr "Name speichern"
 msgid "Save schedule"
 msgstr "Zeitplan speichern"
 
+msgid "Save these backup codes somewhere safe. Each can be used once to sign in if you lose your authenticator. They will not be shown again."
+msgstr "Bewahren Sie diese Backup-Codes an einem sicheren Ort auf. Jeder kann einmal verwendet werden, um sich anzumelden, falls Sie Ihren Authenticator verlieren. Sie werden nicht erneut angezeigt."
+
+msgid "Save your backup codes"
+msgstr "Backup-Codes speichern"
+
 msgid "Saving…"
 msgstr "Speichert…"
+
+msgid "Scan this QR code with an authenticator app (Google Authenticator, 1Password, Authy), then enter the 6-digit code it shows."
+msgstr "Scannen Sie diesen QR-Code mit einer Authenticator-App (Google Authenticator, 1Password, Authy) und geben Sie dann den angezeigten 6-stelligen Code ein."
 
 msgid "Scheduled"
 msgstr "Geplant"
@@ -3969,6 +4038,9 @@ msgstr "Passwort festlegen & anmelden"
 
 msgid "Set price →"
 msgstr "Preis festlegen →"
+
+msgid "Set up two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung einrichten"
 
 msgid "Settings"
 msgstr "Einstellungen"
@@ -4438,6 +4510,10 @@ msgstr "Dieser Trace hat keine Antwort und kann nicht promoted werden."
 msgid "This trace is not linked to an agent and cannot be promoted."
 msgstr "Dieser Trace ist keinem Agent zugeordnet und kann nicht promoted werden."
 
+#. placeholder {0}: confirmResetMfa.email
+msgid "This turns off two-factor authentication for {0} and discards their backup codes. They can set it up again from their account."
+msgstr "Dadurch wird die Zwei-Faktor-Authentifizierung für {0} deaktiviert und deren Backup-Codes werden verworfen. Sie können sie später in ihrem Konto erneut einrichten."
+
 #. placeholder {0}: deleteTarget.name
 msgid "This will permanently remove <0>{0}</0> and detach it from all test suites."
 msgstr "Dadurch werden <0>{0}</0> dauerhaft entfernt und von allen Test Suites getrennt."
@@ -4604,6 +4680,12 @@ msgstr "Turn {0}"
 msgid "Turns"
 msgstr "Turns"
 
+msgid "Two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung"
+
+msgid "Two-factor authentication is managed by your identity provider."
+msgstr "Die Zwei-Faktor-Authentifizierung wird von Ihrem Identity Provider verwaltet."
+
 msgid "Type"
 msgstr "Typ"
 
@@ -4736,6 +4818,12 @@ msgstr "Variablen"
 
 msgid "Verdict"
 msgstr "Ergebnis"
+
+msgid "Verify"
+msgstr "Verifizieren"
+
+msgid "Verify & enable"
+msgstr "Verifizieren & aktivieren"
 
 msgid "Version history"
 msgstr "Versionsverlauf"

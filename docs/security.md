@@ -7,15 +7,19 @@ before touching encryption, hashing, the Data Protection key ring, or the secret
 
 A secret's treatment is decided by **how it is used**, not by what it is:
 
-- **Replayable secret** — Proxytrace must recover the plaintext and send it to a third party. These
-  are reversibly **encrypted** (`ISecretProtector`). Example: `ModelProvider.ApiKey` (the upstream
-  provider credential, replayed on every proxied/outbound call), the SMTP password.
+- **Replayable secret** — Proxytrace must recover the plaintext and send it to a third party (or
+  recompute against it). These are reversibly **encrypted** (`ISecretProtector`). Example:
+  `ModelProvider.ApiKey` (the upstream provider credential, replayed on every proxied/outbound call),
+  the SMTP password, and `UserTotpEnrollment.Secret` (the TOTP/MFA shared secret — the server must
+  reproduce it to verify each authenticator code, so it is encrypted in the storage mapper exactly
+  like `ApiKey`; see [`docs/mfa.md`](mfa.md)).
 - **Verify-only credential** — only ever compared against a presented value, never replayed. These
   are one-way **hashed** (`ISecretHasher`); the plaintext is shown once at creation and is
   unrecoverable afterwards. Example: `ApiKey.KeyHash` (inbound Proxytrace keys), `Invite.TokenHash`,
   `PasswordResetToken.TokenHash` (the forgot-password / admin reset link — 32-byte CSPRNG, 1-hour TTL,
   single-use; the raw token is emailed, logged for the operator, or returned as an admin link exactly
-  once).
+  once), and `MfaBackupCode.CodeHash` (the one-time MFA recovery codes — shown once at enrollment,
+  each consumed independently).
 
 Never hash a replayable secret (you could not replay it) and never reversibly encrypt a verify-only
 credential (a database dump would then yield usable credentials).

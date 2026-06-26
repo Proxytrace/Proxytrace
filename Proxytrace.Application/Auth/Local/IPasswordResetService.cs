@@ -2,9 +2,6 @@ using Proxytrace.Domain.User;
 
 namespace Proxytrace.Application.Auth.Local;
 
-/// <summary>The outcome of a successful password reset: the updated user plus a fresh session token.</summary>
-public sealed record PasswordResetCompleted(IUser User, string Token, DateTimeOffset ExpiresAt);
-
 /// <summary>An admin-minted, one-time reset link and the moment it expires.</summary>
 public sealed record PasswordResetLink(string Link, DateTimeOffset ExpiresAt);
 
@@ -31,8 +28,11 @@ public interface IPasswordResetService
     Task<PasswordResetLink?> IssueResetLinkAsync(Guid userId, Func<string, string> buildResetUrl, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Consumes a reset token, sets the new password and signs the user in. Returns <see langword="null"/>
-    /// if the token is unknown, expired or already used. The new password must already satisfy the policy.
+    /// Consumes a reset token and sets the new password. Returns <see langword="null"/> if the token is
+    /// unknown, expired or already used. On success returns a <see cref="LoginOutcome"/>: the session is
+    /// issued outright, unless the account has confirmed TOTP MFA — then a second-factor challenge is
+    /// required first (resetting the password proves email control, not possession of the device). The
+    /// new password must already satisfy the policy.
     /// </summary>
-    Task<PasswordResetCompleted?> CompleteResetAsync(string token, string newPassword, CancellationToken cancellationToken = default);
+    Task<LoginOutcome?> CompleteResetAsync(string token, string newPassword, CancellationToken cancellationToken = default);
 }

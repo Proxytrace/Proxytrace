@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import useLocalAuth from '../../hooks/useLocalAuth';
 import { AuthCard } from './components/AuthCard';
+import { MfaChallengeForm } from './components/MfaChallengeForm';
 
 export default function ResetPassword() {
   const { t } = useLingui();
@@ -19,12 +20,27 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Set when the account has MFA: the reset succeeded but a second factor is still required.
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const valid = passwordIsValid(password);
+
+  const completeLogin = (issued: string) => {
+    setToken(issued);
+    navigate('/');
+  };
 
   if (!token) {
     return (
       <AuthCard>
         <InvalidLink />
+      </AuthCard>
+    );
+  }
+
+  if (challengeToken) {
+    return (
+      <AuthCard>
+        <MfaChallengeForm challengeToken={challengeToken} onVerified={completeLogin} />
       </AuthCard>
     );
   }
@@ -40,9 +56,12 @@ export default function ResetPassword() {
           setErr(null);
           setSubmitting(true);
           try {
-            const r = await localAuthApi.resetPassword(token, password);
-            setToken(r.token);
-            navigate('/');
+            const outcome = await localAuthApi.resetPassword(token, password);
+            if (outcome.mfaRequired) {
+              setChallengeToken(outcome.challengeToken);
+            } else {
+              completeLogin(outcome.token);
+            }
           } catch (caught) {
             const status = (caught as { status?: number }).status;
             setErr(

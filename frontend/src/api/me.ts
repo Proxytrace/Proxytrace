@@ -14,6 +14,8 @@ export interface Me {
   emailNotificationMinSeverity: NotificationSeverity
   /** Whether the operator has email delivery enabled at all. */
   emailEnabled: boolean
+  /** Whether the user has confirmed TOTP two-factor authentication. */
+  mfaEnabled: boolean
 }
 
 export const meApi = {

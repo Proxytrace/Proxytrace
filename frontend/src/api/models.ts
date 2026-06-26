@@ -672,6 +672,8 @@ export interface UserDto {
   isExternal: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Whether the user has confirmed TOTP two-factor authentication. */
+  mfaEnabled: boolean;
 }
 
 /** Lightweight project reference for the user-centric project assignment editor. */

@@ -78,6 +78,18 @@ stays valid until it expires. To revoke access right away, delete the user.
 External (SSO) users have no Proxytrace password, so **Reset password** is disabled for them — manage
 their credentials at your identity provider.
 
+## Resetting two-factor authentication
+
+Users turn [two-factor authentication](/guide/two-factor-authentication) on and off themselves under
+**Account security**, and they get one-time backup codes for when they lose their device. If a user
+loses **both** their authenticator app and their backup codes, they're locked out — and only an admin
+can recover them.
+
+On the user's row, click **Reset MFA** (shown only for users who currently have it enabled) and
+confirm. This turns off two-factor authentication for that user and discards their backup codes; they
+can then sign in with just their password and set it up again. The reset is recorded in the
+[audit log](/admin/audit-log).
+
 ## How this works with OIDC (SSO)
 
 When Proxytrace is configured against an external **OIDC** identity provider, account creation is

@@ -1,0 +1,58 @@
+using System.ComponentModel.DataAnnotations;
+using Proxytrace.Common.Validation;
+using Proxytrace.Domain.Internal;
+using Proxytrace.Domain.User;
+
+namespace Proxytrace.Domain.UserTotpEnrollment.Internal;
+
+internal record UserTotpEnrollment : DomainEntity<IUserTotpEnrollment>, IUserTotpEnrollment
+{
+    public IUser User { get; }
+    public string Secret { get; }
+    public DateTimeOffset? ConfirmedAt { get; private init; }
+    public long? LastUsedStep { get; private init; }
+
+    public UserTotpEnrollment(
+        IUser user,
+        string secret,
+        IRepository<IUserTotpEnrollment> repository) : base(repository)
+    {
+        User = user;
+        Secret = secret;
+    }
+
+    public UserTotpEnrollment(
+        IUser user,
+        string secret,
+        DateTimeOffset? confirmedAt,
+        long? lastUsedStep,
+        IDomainEntityData existing,
+        IRepository<IUserTotpEnrollment> repository) : base(existing, repository)
+    {
+        User = user;
+        Secret = secret;
+        ConfirmedAt = confirmedAt;
+        LastUsedStep = lastUsedStep;
+    }
+
+    public Task<IUserTotpEnrollment> Confirm(long usedStep, CancellationToken cancellationToken = default)
+        => ApplyAsync(this with { ConfirmedAt = DateTimeOffset.UtcNow, LastUsedStep = usedStep }, cancellationToken);
+
+    public Task<IUserTotpEnrollment> RecordUsedStep(long step, CancellationToken cancellationToken = default)
+        => ApplyAsync(this with { LastUsedStep = step }, cancellationToken);
+
+    public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        foreach (var result in base.Validate(validationContext))
+        {
+            yield return result;
+        }
+
+        yield return Validation.NotNullOrWhiteSpace(Secret);
+
+        foreach (var result in User.Validate(validationContext))
+        {
+            yield return result;
+        }
+    }
+}

@@ -6,6 +6,7 @@ using Proxytrace.Application.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.PasswordResetToken;
 using Proxytrace.Domain.User;
+using Proxytrace.Domain.UserTotpEnrollment;
 
 namespace Proxytrace.Application.Auth.Local.Internal;
 
@@ -23,6 +24,8 @@ internal sealed class PasswordResetService : IPasswordResetService
     private readonly IEmailSettingsStore emailSettings;
     private readonly IEmailSender emailSender;
     private readonly ITransaction transaction;
+    private readonly IUserTotpEnrollmentRepository enrollments;
+    private readonly IMfaChallengeService challenges;
     private readonly ILogger<PasswordResetService> logger;
 
     public PasswordResetService(
@@ -35,6 +38,8 @@ internal sealed class PasswordResetService : IPasswordResetService
         IEmailSettingsStore emailSettings,
         IEmailSender emailSender,
         ITransaction transaction,
+        IUserTotpEnrollmentRepository enrollments,
+        IMfaChallengeService challenges,
         ILogger<PasswordResetService> logger)
     {
         this.tokens = tokens;
@@ -46,6 +51,8 @@ internal sealed class PasswordResetService : IPasswordResetService
         this.emailSettings = emailSettings;
         this.emailSender = emailSender;
         this.transaction = transaction;
+        this.enrollments = enrollments;
+        this.challenges = challenges;
         this.logger = logger;
     }
 
@@ -106,8 +113,8 @@ internal sealed class PasswordResetService : IPasswordResetService
         return await IssueAsync(user, buildResetUrl, cancellationToken);
     }
 
-    public Task<PasswordResetCompleted?> CompleteResetAsync(string token, string newPassword, CancellationToken cancellationToken = default)
-        => transaction.InvokeAsync<PasswordResetCompleted?>(async () =>
+    public Task<LoginOutcome?> CompleteResetAsync(string token, string newPassword, CancellationToken cancellationToken = default)
+        => transaction.InvokeAsync<LoginOutcome?>(async () =>
         {
             var resetToken = await tokens.FindByTokenAsync(token, cancellationToken);
             if (resetToken is null || resetToken.IsConsumed || resetToken.IsExpired(DateTimeOffset.UtcNow))
@@ -120,8 +127,16 @@ internal sealed class PasswordResetService : IPasswordResetService
             var updated = await user.ChangePasswordHash(hash, cancellationToken);
             await resetToken.MarkConsumedAsync(cancellationToken);
 
+            // A reset proves email control, not possession of the second factor: an MFA-enabled account
+            // must still pass the TOTP challenge before a session is issued.
+            if (await enrollments.FindByUserAsync(updated.Id, cancellationToken) is { IsConfirmed: true })
+            {
+                var challenge = challenges.Issue(updated);
+                return new MfaRequired(updated, challenge.Token, challenge.ExpiresAt);
+            }
+
             var issued = tokenIssuer.Issue(updated);
-            return new PasswordResetCompleted(updated, issued.Token, issued.ExpiresAt);
+            return new LoginSucceeded(updated, issued.Token, issued.ExpiresAt);
         });
 
     // Persist only the hash of the token; the raw value is returned once so the caller can build the

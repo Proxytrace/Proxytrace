@@ -57,4 +57,10 @@ public enum AuditAction
     PasswordResetRequested = 38,
     PasswordResetCompleted = 39,
     PasswordResetLinkIssued = 40,
+
+    // Multi-factor authentication (TOTP). UserLoggedIn still marks a successful MFA login; these add
+    // the enable/disable lifecycle and the failed second-factor attempt (the analog of LoginFailed).
+    MfaEnabled = 41,
+    MfaDisabled = 42,
+    MfaChallengeFailed = 43,
 }

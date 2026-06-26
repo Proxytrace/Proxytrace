@@ -85,8 +85,9 @@ public sealed class PasswordResetServiceTests : BaseTest<Module>
 
         var result = await svc.CompleteResetAsync(rawToken, NewPassword, CancellationToken);
 
-        result.Should().NotBeNull();
-        result.Token.Should().NotBeNullOrEmpty();
+        // No MFA on this account → the reset issues a session directly.
+        result.Should().BeOfType<LoginSucceeded>();
+        ((LoginSucceeded)result!).Token.Should().NotBeNullOrEmpty();
 
         var passwords = services.GetRequiredService<IPasswordService>();
         var stored = await services.GetRequiredService<IRepository<IUser>>().GetAsync(user.Id, CancellationToken);

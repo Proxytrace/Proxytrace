@@ -14,6 +14,7 @@ const ROUTES = [
   { path: '/playground', label: 'playground' },
   { path: '/evaluator-playground', label: 'evaluator-playground' },
   { path: '/proposals', label: 'proposals' },
+  { path: '/account', label: 'account security' },
   // Settings is an admin-only hub; smoke runs as admin (storageState). Providers, Users, and the
   // Error Log now live as sections under /settings. `/settings` itself redirects to general.
   { path: '/settings', label: 'settings (→ general)' },

@@ -21,4 +21,6 @@ export const usersApi = {
   listProjects: (id: string) => api.get<UserProjectDto[]>(`/api/users/${id}/projects`),
   /** Admin: mint a one-time password-reset link for a user (returned once, never emailed from here). */
   createResetLink: (id: string) => api.post<ResetLinkResponse>(`/api/users/${id}/reset-link`),
+  /** Admin: turn off a user's two-factor authentication (lockout recovery). Idempotent. */
+  disableMfa: (id: string) => api.post<void>(`/api/users/${id}/mfa/disable`),
 };

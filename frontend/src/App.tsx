@@ -54,6 +54,7 @@ const Signup = lazy(() => import('./features/auth/Signup'));
 const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./features/auth/ResetPassword'));
 const Users = lazy(() => import('./features/admin/Users'));
+const AccountSecurity = lazy(() => import('./features/account/AccountSecurity'));
 const ErrorLog = lazy(() => import('./features/error-log/ErrorLog'));
 const AuditLog = lazy(() => import('./features/audit-log/AuditLog'));
 
@@ -238,6 +239,8 @@ function AppRoutes() {
         <Route path="playground" element={wrap(<Playground />)} />
         <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />
         <Route path="upgrade" element={wrap(<UpgradePlaceholder />)} />
+        {/* Per-user account security (MFA) — available to every authenticated user, not admin-gated. */}
+        <Route path="account" element={wrap(<AccountSecurity />)} />
         <Route
           path="proposals"
           element={wrap(<RequiresFeature feature="OptimizationProposals"><Proposals /></RequiresFeature>)}
