@@ -120,6 +120,8 @@ app.UseCors("Frontend");
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<KioskReadOnlyMiddleware>();
+// Before UseAuthorization so it still runs when an authorization failure short-circuits with 403.
+app.UseMiddleware<AuditDeniedAccessMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

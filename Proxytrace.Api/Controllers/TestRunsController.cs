@@ -1,11 +1,14 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Api.Json;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestRun;
 
@@ -21,19 +24,22 @@ public class TestRunsController : ControllerBase
     private readonly ITestResultBroadcaster broadcaster;
     private readonly TestRunDtoMapper mapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<Audit> audit;
 
     public TestRunsController(
         ITestRunRepository repository,
         IAgentRepository agentRepository,
         ITestResultBroadcaster broadcaster,
         TestRunDtoMapper mapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
         this.broadcaster = broadcaster;
         this.mapper = mapper;
         this.accessGuard = accessGuard;
+        this.audit = audit;
     }
 
     [HttpGet]
@@ -161,9 +167,17 @@ public class TestRunsController : ControllerBase
             return NotFound();
         if (!await accessGuard.CanAccessProjectAsync(run.Group.Suite.Agent.Project.Id, cancellationToken))
             return NotFound();
-        return await this.DeleteOrConflictAsync(
+        var result = await this.DeleteOrConflictAsync(
             () => repository.RemoveAsync(id, cancellationToken),
             "This test run is still referenced by an optimization proposal. Remove the proposal before deleting the run.");
+        if (result is NoContentResult)
+        {
+            audit.LogAudit(
+                AuditAction.TestRunDeleted, nameof(ITestRun), id, run.Group.Suite.Name,
+                projectId: run.Group.Suite.Agent.Project.Id);
+        }
+
+        return result;
     }
 
     private async Task WriteEventAsync(TestRunEvent evt, CancellationToken cancellationToken)

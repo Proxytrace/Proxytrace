@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Common.Async;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Optimization.Internal.Validation;
@@ -330,7 +331,8 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
             Substitute.For<ITheoryBroadcaster>(),
             transaction,
             new NoOpAsyncLock(),
-            NullLogger<TheoryValidationService>.Instance);
+            NullLogger<TheoryValidationService>.Instance,
+            NullLogger<Audit>.Instance);
 
         return new Fixture
         {

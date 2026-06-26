@@ -1,4 +1,7 @@
+using Microsoft.Extensions.Logging;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Application.Auth.Internal;
@@ -8,15 +11,18 @@ internal class JitUserProvisioner : IJitUserProvisioner
     private readonly IUserRepository users;
     private readonly IUser.CreateNew createUser;
     private readonly ITransaction transaction;
+    private readonly ILogger<Audit> audit;
 
     public JitUserProvisioner(
         IUserRepository users,
         IUser.CreateNew createUser,
-        ITransaction transaction)
+        ITransaction transaction,
+        ILogger<Audit> audit)
     {
         this.users = users;
         this.createUser = createUser;
         this.transaction = transaction;
+        this.audit = audit;
     }
 
     public Task<IUser> EnsureProvisionedAsync(
@@ -34,6 +40,14 @@ internal class JitUserProvisioner : IJitUserProvisioner
             var total = await users.CountAsync(cancellationToken);
             var role = total == 0 ? UserRole.Admin : UserRole.Member;
             var user = createUser(email, externalSubject, passwordHash: null, role);
-            return await user.AddAsync(cancellationToken);
+            var added = await user.AddAsync(cancellationToken);
+
+            // Close the OIDC auditing gap: just-in-time provisioning is otherwise invisible (sign-in
+            // happens at the IdP). The first provisioned user becomes the admin; the rest are members.
+            audit.LogAudit(
+                role == UserRole.Admin ? AuditAction.AdminBootstrapped : AuditAction.UserSignedUp,
+                nameof(IUser), added.Id, added.Email);
+
+            return added;
         });
 }

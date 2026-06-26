@@ -50,6 +50,7 @@ export default defineConfig({
         '**/admin.spec.ts',
         '**/error-handling.spec.ts',
         '**/error-log.spec.ts',
+        '**/audit-log.spec.ts',
         '**/proposals.spec.ts',
         '**/proposals-kinds.spec.ts',
         '**/schedules.spec.ts',

@@ -214,6 +214,9 @@ public class TestRunGroupsController : ControllerBase
         if (group.Status is not TestRunStatus.Completed)
             return BadRequest("Only completed test run groups can be optimized.");
         await optimizerService.EnqueueAsync(group, cancellationToken);
+        audit.LogAudit(
+            AuditAction.TestRunGroupOptimizeRequested, nameof(ITestRunGroup), group.Id, group.Suite.Name,
+            projectId: group.Suite.Agent.Project.Id);
         return Accepted();
     }
 
@@ -226,6 +229,9 @@ public class TestRunGroupsController : ControllerBase
         if (!await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
             return NotFound();
         group = await runner.CancelAsync(group, cancellationToken);
+        audit.LogAudit(
+            AuditAction.TestRunGroupCancelled, nameof(ITestRunGroup), group.Id, group.Suite.Name,
+            projectId: group.Suite.Agent.Project.Id);
         return AcceptedAtAction(nameof(Get), new { id = group.Id }, await ToDtoAsync(group, cancellationToken));
     }
 
@@ -237,9 +243,17 @@ public class TestRunGroupsController : ControllerBase
             return NotFound();
         if (!await accessGuard.CanAccessProjectAsync(group.Suite.Agent.Project.Id, cancellationToken))
             return NotFound();
-        return await this.DeleteOrConflictAsync(
+        var result = await this.DeleteOrConflictAsync(
             () => groupRepository.RemoveAsync(id, cancellationToken),
             "This run group still has runs referenced by an optimization proposal. Remove the proposal first.");
+        if (result is NoContentResult)
+        {
+            audit.LogAudit(
+                AuditAction.TestRunGroupDeleted, nameof(ITestRunGroup), id, group.Suite.Name,
+                projectId: group.Suite.Agent.Project.Id);
+        }
+
+        return result;
     }
 
     private async Task<TestRunGroupDto> ToDtoAsync(ITestRunGroup group, CancellationToken cancellationToken)

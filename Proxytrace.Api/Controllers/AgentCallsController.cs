@@ -1,15 +1,18 @@
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Json;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Paging;
@@ -31,6 +34,7 @@ public class AgentCallsController : ControllerBase
     private readonly IAgentCall.CreateNew createCall;
     private readonly ICompletion.Create createCompletion;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<Audit> audit;
 
     public AgentCallsController(
         IAgentCallRepository repository,
@@ -41,7 +45,8 @@ public class AgentCallsController : ControllerBase
         AgentDtoMapper agentDtoMapper,
         IAgentCall.CreateNew createCall,
         ICompletion.Create createCompletion,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
@@ -52,6 +57,7 @@ public class AgentCallsController : ControllerBase
         this.createCall = createCall;
         this.createCompletion = createCompletion;
         this.accessGuard = accessGuard;
+        this.audit = audit;
     }
 
     // Resolve the effective owning project of a list query and verify access. Admins
@@ -281,6 +287,13 @@ public class AgentCallsController : ControllerBase
         if (!await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
             return NotFound();
         var removed = await repository.RemoveAsync(id, cancellationToken);
+        if (removed)
+        {
+            audit.LogAudit(
+                AuditAction.AgentCallDeleted, nameof(IAgentCall), id, call.Agent.Name,
+                projectId: call.Agent.Project.Id);
+        }
+
         return removed ? NoContent() : NotFound();
     }
 }

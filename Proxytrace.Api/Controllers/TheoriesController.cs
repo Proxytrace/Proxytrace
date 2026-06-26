@@ -1,12 +1,16 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
 using Proxytrace.Api.Dto.Theories;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationTheory;
@@ -33,6 +37,7 @@ public class TheoriesController : ControllerBase
     private readonly ITestSuite.CreateNew createSuite;
     private readonly TheoryDtoMapper mapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<Audit> audit;
 
     public TheoriesController(
         IOptimizationTheoryRepository repository,
@@ -45,7 +50,8 @@ public class TheoriesController : ControllerBase
         IRepository<IModelEndpoint> endpoints,
         ITestSuite.CreateNew createSuite,
         TheoryDtoMapper mapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.validationService = validationService;
@@ -58,6 +64,7 @@ public class TheoriesController : ControllerBase
         this.createSuite = createSuite;
         this.mapper = mapper;
         this.accessGuard = accessGuard;
+        this.audit = audit;
     }
 
     // Resolve the effective owning project of a list query and verify access. Admins
@@ -179,6 +186,14 @@ public class TheoriesController : ControllerBase
         }
 
         var result = await validationService.SubmitAsync(theory, cancellationToken);
+        if (result is { Outcome: TheorySubmissionOutcome.Accepted, Theory: { } acceptedTheory })
+        {
+            audit.LogAudit(
+                AuditAction.TheorySubmitted, nameof(IOptimizationTheory), acceptedTheory.Id, agent.Name,
+                projectId: agent.Project.Id,
+                details: JsonSerializer.Serialize(new { source = request.Source.ToString(), priority = request.Priority.ToString() }));
+        }
+
         return (result.Outcome, result.Theory) switch
         {
             (TheorySubmissionOutcome.Accepted, { } accepted) => Accepted(mapper.ToDto(accepted)),
@@ -205,6 +220,13 @@ public class TheoriesController : ControllerBase
             return NotFound($"Theory {id} does not exist.");
 
         var result = await validationService.ResetToProposedAsync(id, cancellationToken);
+        if (result.Outcome == TheoryResetOutcome.Reset)
+        {
+            audit.LogAudit(
+                AuditAction.TheoryReset, nameof(IOptimizationTheory), id, existing.Agent.Name,
+                projectId: existing.Agent.Project.Id);
+        }
+
         return (result.Outcome, result.Theory) switch
         {
             (TheoryResetOutcome.Reset, { } reset) => Ok(mapper.ToDto(reset)),
@@ -232,6 +254,13 @@ public class TheoriesController : ControllerBase
             return NotFound($"Theory {id} does not exist.");
 
         var result = await validationService.RejectAsync(id, cancellationToken);
+        if (result.Outcome == TheoryRejectOutcome.Rejected)
+        {
+            audit.LogAudit(
+                AuditAction.TheoryRejected, nameof(IOptimizationTheory), id, existing.Agent.Name,
+                projectId: existing.Agent.Project.Id);
+        }
+
         return (result.Outcome, result.Theory) switch
         {
             (TheoryRejectOutcome.Rejected, { } rejected) => Ok(mapper.ToDto(rejected)),

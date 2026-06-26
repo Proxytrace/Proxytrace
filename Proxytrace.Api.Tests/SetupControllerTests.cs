@@ -1,6 +1,8 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Api.Controllers;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain;
@@ -17,7 +19,8 @@ public sealed class SetupControllerTests : BaseTest<Module>
         services.GetRequiredService<IRepository<IUser>>(),
         services.GetRequiredService<IRepository<IProject>>(),
         services.GetRequiredService<IDataCleanupService>(),
-        services.GetRequiredService<ISetupService>());
+        services.GetRequiredService<ISetupService>(),
+        NullLogger<Audit>.Instance);
 
     [TestMethod]
     public async Task GetStatus_WhenNoUsersOrProjectsExist_ReturnsNotConfigured()

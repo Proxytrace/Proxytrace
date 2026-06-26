@@ -1052,6 +1052,38 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
+  // ── Audit log ──────────────────────────────────────────────────────────────
+  // Read the audit trail. Results are role-scoped by the API (admins see everything incl. global
+  // rows; members see only their projects' rows, never global). Action is the AuditAction enum name.
+  async getAuditLog(
+    params: {
+      page?: number;
+      pageSize?: number;
+      action?: string;
+      actor?: string;
+      projectId?: string;
+      targetType?: string;
+      targetId?: string;
+    } = {},
+  ): Promise<{
+    total: number;
+    items: Array<{
+      id: string;
+      action: string;
+      actorType: string;
+      actorEmail: string | null;
+      projectId: string | null;
+      targetType: string;
+      targetId: string | null;
+      targetLabel: string | null;
+      details: string | null;
+      outcome: string;
+      createdAt: string;
+    }>;
+  }> {
+    return this.getList('/api/audit-log', params);
+  }
+
   private async getList<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
     const qs = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v != null) qs.set(k, String(v));

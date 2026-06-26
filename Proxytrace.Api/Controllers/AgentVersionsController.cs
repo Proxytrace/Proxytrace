@@ -1,10 +1,14 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Agents;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentVersion;
+using Proxytrace.Domain.AuditLog;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -18,19 +22,22 @@ public class AgentVersionsController : ControllerBase
     private readonly ITransaction transaction;
     private readonly AgentDtoMapper mapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<Audit> audit;
 
     public AgentVersionsController(
         IAgentVersionRepository versions,
         IAgentRepository agents,
         ITransaction transaction,
         AgentDtoMapper mapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<Audit> audit)
     {
         this.versions = versions;
         this.agents = agents;
         this.transaction = transaction;
         this.mapper = mapper;
         this.accessGuard = accessGuard;
+        this.audit = audit;
     }
 
     [HttpGet("{id:guid}")]
@@ -115,6 +122,11 @@ public class AgentVersionsController : ControllerBase
                 }
             }
         });
+
+        audit.LogAudit(
+            AuditAction.AgentVersionMoved, nameof(IAgentVersion), version.Id, target.Name,
+            projectId: target.Project.Id,
+            details: JsonSerializer.Serialize(new { fromAgentId = source.Id, toAgentId = target.Id }));
 
         return NoContent();
     }

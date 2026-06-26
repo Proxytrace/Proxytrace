@@ -1,11 +1,14 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization.Internal.Validation;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Common.Async;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestRunGroup;
@@ -41,6 +44,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
     private readonly ITransaction transaction;
     private readonly IAsyncLock asyncLock;
     private readonly ILogger<TheoryValidationService> logger;
+    private readonly ILogger<Audit> audit;
 
     private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
         new UnboundedChannelOptions
@@ -66,7 +70,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         ITheoryBroadcaster theoryBroadcaster,
         ITransaction transaction,
         IAsyncLock asyncLock,
-        ILogger<TheoryValidationService> logger)
+        ILogger<TheoryValidationService> logger,
+        ILogger<Audit> audit)
     {
         this.theories = theories;
         this.proposals = proposals;
@@ -77,6 +82,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         this.transaction = transaction;
         this.asyncLock = asyncLock;
         this.logger = logger;
+        this.audit = audit;
     }
 
     public async Task<TheorySubmissionResult> SubmitAsync(IOptimizationTheory theory, CancellationToken cancellationToken = default)
@@ -308,6 +314,18 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
 
                 proposalBroadcaster.Publish(ProposalCreatedEvent.Create(persisted));
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(validated));
+                audit.LogAudit(
+                    AuditAction.TheoryValidated, nameof(IOptimizationTheory), validated.Id, validated.Agent.Name,
+                    projectId: validated.Agent.Project.Id,
+                    details: JsonSerializer.Serialize(new
+                    {
+                        baselinePassRate = outcome.BaselinePassRate,
+                        projectedPassRate = outcome.ProjectedPassRate,
+                        pValue = outcome.PValue,
+                    }));
+                audit.LogAudit(
+                    AuditAction.ProposalGenerated, nameof(IOptimizationProposal), persisted.Id, validated.Agent.Name,
+                    projectId: validated.Agent.Project.Id);
                 logger.LogInformation("Theory {TheoryId} validated; produced proposal {ProposalId}", theoryId, persisted.Id);
             }
             else
@@ -318,6 +336,15 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
                     outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue,
                     outcome.CandidateRunId ?? theory.ABTestRunId, cancellationToken);
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
+                audit.LogAudit(
+                    AuditAction.TheoryInvalidated, nameof(IOptimizationTheory), theory.Id, theory.Agent.Name,
+                    projectId: theory.Agent.Project.Id,
+                    details: JsonSerializer.Serialize(new
+                    {
+                        baselinePassRate = outcome.BaselinePassRate,
+                        projectedPassRate = outcome.ProjectedPassRate,
+                        pValue = outcome.PValue,
+                    }));
                 logger.LogInformation("Theory {TheoryId} invalidated — no improvement", theoryId);
             }
         }

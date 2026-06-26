@@ -1,8 +1,11 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Security;
 using Proxytrace.Common.Security;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Storage.Internal.Entities.ApiKey;
 using Proxytrace.Storage.Internal.Entities.Invite;
 using Proxytrace.Storage.Internal.Entities.ModelProvider;
@@ -31,15 +34,18 @@ internal sealed class SecretsBackfillService : IHostedService
     private readonly Func<StorageDbContext> contextFactory;
     private readonly ISecretProtector protector;
     private readonly ILogger<SecretsBackfillService> logger;
+    private readonly ILogger<Audit> audit;
 
     public SecretsBackfillService(
         Func<StorageDbContext> contextFactory,
         ISecretProtector protector,
-        ILogger<SecretsBackfillService> logger)
+        ILogger<SecretsBackfillService> logger,
+        ILogger<Audit> audit)
     {
         this.contextFactory = contextFactory;
         this.protector = protector;
         this.logger = logger;
+        this.audit = audit;
     }
 
     private const int MaxAttempts = 3;
@@ -50,12 +56,21 @@ internal sealed class SecretsBackfillService : IHostedService
         // Until a row is backfilled its lookup column still holds the pre-retrofit plaintext, so the
         // hashed/encrypted lookup cannot match it — the impact text below spells out what stops
         // working if a pass keeps failing.
-        await RunSafely(BackfillProvidersAsync, "provider API key",
+        var providerKeys = await RunSafely(BackfillProvidersAsync, "provider API key",
             "existing providers cannot authenticate upstream until this completes", cancellationToken);
-        await RunSafely(BackfillApiKeysAsync, "inbound API key",
+        var inboundKeys = await RunSafely(BackfillApiKeysAsync, "inbound API key",
             "existing API keys cannot authenticate at the proxy or MCP server until this completes", cancellationToken);
-        await RunSafely(BackfillInvitesAsync, "invite token",
+        var inviteTokens = await RunSafely(BackfillInvitesAsync, "invite token",
             "pending invites cannot be redeemed until this completes", cancellationToken);
+
+        // Audit the one-time at-rest protection only when it actually changed rows, so a re-run
+        // (everything already protected) records nothing. No request context here ⇒ System actor.
+        if (providerKeys + inboundKeys + inviteTokens > 0)
+        {
+            audit.LogAudit(
+                AuditAction.SecretsBackfilled, "Secrets",
+                details: JsonSerializer.Serialize(new { providerKeys, inboundKeys, inviteTokens }));
+        }
     }
 
     /// <summary>
@@ -64,14 +79,13 @@ internal sealed class SecretsBackfillService : IHostedService
     /// than failing host boot — but the impact is real, so the message is loud and actionable: a
     /// restart re-runs the backfill, and the affected credentials stay broken until it succeeds.
     /// </summary>
-    private async Task RunSafely(Func<CancellationToken, Task> pass, string what, string impact, CancellationToken cancellationToken)
+    private async Task<int> RunSafely(Func<CancellationToken, Task<int>> pass, string what, string impact, CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= MaxAttempts; attempt++)
         {
             try
             {
-                await pass(cancellationToken);
-                return;
+                return await pass(cancellationToken);
             }
             catch (Exception ex) when (attempt < MaxAttempts && !cancellationToken.IsCancellationRequested)
             {
@@ -84,12 +98,14 @@ internal sealed class SecretsBackfillService : IHostedService
                 logger.LogCritical(ex,
                     "Secrets backfill for {What} failed after {Max} attempts — {Impact}. Restart to retry.",
                     what, MaxAttempts, impact);
-                return;
+                return 0;
             }
         }
+
+        return 0;
     }
 
-    private async Task BackfillProvidersAsync(CancellationToken cancellationToken)
+    private async Task<int> BackfillProvidersAsync(CancellationToken cancellationToken)
     {
         var db = contextFactory();
         var rows = await db.Set<ModelProviderEntity>()
@@ -109,9 +125,11 @@ internal sealed class SecretsBackfillService : IHostedService
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Encrypted {Count} pre-existing provider API keys at rest.", rows.Count);
         }
+
+        return rows.Count;
     }
 
-    private async Task BackfillApiKeysAsync(CancellationToken cancellationToken)
+    private async Task<int> BackfillApiKeysAsync(CancellationToken cancellationToken)
     {
         var db = contextFactory();
         var rows = await db.Set<ApiKeyEntity>()
@@ -132,9 +150,11 @@ internal sealed class SecretsBackfillService : IHostedService
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Hashed {Count} pre-existing inbound API keys at rest.", rows.Count);
         }
+
+        return rows.Count;
     }
 
-    private async Task BackfillInvitesAsync(CancellationToken cancellationToken)
+    private async Task<int> BackfillInvitesAsync(CancellationToken cancellationToken)
     {
         var db = contextFactory();
         var rows = await db.Set<InviteEntity>()
@@ -150,6 +170,8 @@ internal sealed class SecretsBackfillService : IHostedService
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Hashed {Count} pre-existing invite tokens at rest.", rows.Count);
         }
+
+        return rows.Count;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

@@ -697,6 +697,9 @@ msgstr "Pruebas A/B"
 msgid "Acceptable"
 msgstr "Aceptable"
 
+msgid "Access Denied"
+msgstr "Acceso denegado"
+
 msgid "Account Claimed"
 msgstr "Cuenta reclamada"
 
@@ -831,6 +834,9 @@ msgstr "Playground de Agent"
 
 msgid "Agent stats · 30d"
 msgstr "Estadísticas de Agent · 30d"
+
+msgid "Agent Version Moved"
+msgstr "Versión de Agent movida"
 
 msgid "Agent:"
 msgstr "Agent:"
@@ -1494,6 +1500,9 @@ msgstr "Dashboard"
 
 msgid "Dashboard, agents, test suites & evaluators"
 msgstr "Dashboard, agents, test suites y evaluators"
+
+msgid "Data Purged"
+msgstr "Datos purgados"
 
 msgid "days"
 msgstr "días"
@@ -3093,6 +3102,9 @@ msgstr "Optimización cancelada."
 msgid "Optimization proposals"
 msgstr "Proposals de optimización"
 
+msgid "Optimization Requested"
+msgstr "Optimización solicitada"
+
 msgid "Optimization theories"
 msgstr "Theorys de optimización"
 
@@ -3390,6 +3402,12 @@ msgstr "Promoviendo…"
 
 msgid "Prompt rewrite"
 msgstr "Reescritura del Prompt"
+
+msgid "Proposal Auto-Adopted"
+msgstr "Proposal adoptada automáticamente"
+
+msgid "Proposal Generated"
+msgstr "Proposal generada"
 
 msgid "Proposal has not been benchmarked against a test suite yet."
 msgstr "La Proposal aún no se ha evaluado contra un test suite."
@@ -3803,6 +3821,18 @@ msgstr "Guardando…"
 msgid "Scan this QR code with an authenticator app (Google Authenticator, 1Password, Authy), then enter the 6-digit code it shows."
 msgstr "Escanea este código QR con una app de autenticación (Google Authenticator, 1Password, Authy), luego introduce el código de 6 dígitos que muestra."
 
+msgid "Schedule Created"
+msgstr "Programación creada"
+
+msgid "Schedule Deleted"
+msgstr "Programación eliminada"
+
+msgid "Schedule Run Now"
+msgstr "Ejecutar Schedule ahora"
+
+msgid "Schedule Updated"
+msgstr "Programación actualizada"
+
 msgid "Scheduled"
 msgstr "Programado"
 
@@ -3923,6 +3953,9 @@ msgstr "Buscando traces…"
 
 msgid "Searching…"
 msgstr "Buscando…"
+
+msgid "Secrets Backfilled"
+msgstr "Secrets completados retroactivamente"
 
 msgid "Security"
 msgstr "Seguridad"
@@ -4346,8 +4379,17 @@ msgstr "Ejecución de prueba"
 msgid "Test run {0}"
 msgstr "Ejecución de prueba {0}"
 
+msgid "Test Run Cancelled"
+msgstr "Test Run cancelado"
+
 msgid "Test run cancelled."
 msgstr "La ejecución de prueba se canceló."
+
+msgid "Test Run Deleted"
+msgstr "Test Run eliminado"
+
+msgid "Test Run Group Deleted"
+msgstr "Grupo de Test Run eliminado"
 
 msgid "Test Run Started"
 msgstr "Test Run iniciada"
@@ -4430,6 +4472,21 @@ msgstr "Theory"
 
 msgid "Theory & A/B test details"
 msgstr "Detalles de Theory y A/B test"
+
+msgid "Theory Invalidated"
+msgstr "Theory invalidada"
+
+msgid "Theory Rejected"
+msgstr "Theory rechazada"
+
+msgid "Theory Reset"
+msgstr "Theory restablecida"
+
+msgid "Theory Submitted"
+msgstr "Theory enviada"
+
+msgid "Theory Validated"
+msgstr "Theory validada"
 
 msgid "Thinking…"
 msgstr "Pensando…"
@@ -4620,6 +4677,9 @@ msgstr "Costo total"
 
 msgid "Total runs"
 msgstr "Total de runs"
+
+msgid "Trace Deleted"
+msgstr "Trace eliminada"
 
 #. placeholder {0}: trace.model
 msgid "Trace preview · {0}"

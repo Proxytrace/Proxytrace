@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;
@@ -295,5 +297,6 @@ public sealed class TestRunSchedulesControllerTests : BaseTest<Module>
         services.GetRequiredService<ITestRunSchedule.CreateNew>(),
         services.GetRequiredService<ITestRunnerService>(),
         services.GetRequiredService<TestRunDtoMapper>(),
-        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
+        NullLogger<Audit>.Instance);
 }
