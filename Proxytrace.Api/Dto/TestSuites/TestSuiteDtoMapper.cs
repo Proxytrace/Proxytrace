@@ -79,8 +79,11 @@ public sealed class TestSuiteDtoMapper
     /// window (null when no cases ran); AvgDurationMs is the mean of rows that recorded a duration;
     /// TotalCost sums recorded costs. RunCount is the row count.
     /// </summary>
-    public SuiteRunStatsDto ToRunStatsDto(IReadOnlyList<TestRunStats> runRows)
+    public SuiteRunStatsDto ToRunStatsDto(IReadOnlyList<TestRunStats> rawRows)
     {
+        // Collapse each (group, endpoint) cohort's samples to one row so RunCount and TotalCost
+        // reflect endpoints, not the number of samples per endpoint.
+        var runRows = rawRows.AggregateSamples();
         if (runRows.Count == 0)
             return new SuiteRunStatsDto(0, null, null, null);
 
@@ -112,7 +115,9 @@ public sealed class TestSuiteDtoMapper
     {
         public static RunAggregates From(IReadOnlyList<TestRunStats> runRows)
         {
-            TestRunStats[] ordered = runRows.OrderBy(r => r.RunCompletedAt).ToArray();
+            // One point per (group, endpoint) cohort — a sampled run counts as one run, and its
+            // latest/prev/trend points are the cohort means rather than individual samples.
+            TestRunStats[] ordered = runRows.AggregateSamples().OrderBy(r => r.RunCompletedAt).ToArray();
             double[] trend = ordered
                 .Where(r => r.PassRate.HasValue)
                 .Select(r => r.PassRate.GetValueOrDefault() * 100)

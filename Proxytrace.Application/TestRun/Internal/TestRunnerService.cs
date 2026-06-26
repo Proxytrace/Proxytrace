@@ -87,7 +87,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         Func<ITestRunGroup, CancellationToken, Task>? onGroupCreated = null,
         CancellationToken cancellationToken = default)
     {
-        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemTestRun, scheduleId: null, cancellationToken);
+        // A/B validation and direct/test invocations always use a single sample per endpoint.
+        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemTestRun, scheduleId: null, sampleCount: 1, cancellationToken);
         if (onGroupCreated is not null)
             await onGroupCreated(group, cancellationToken);
         return await ExecuteGroupAsync(group, customAgent, isSystemTestRun, cancellationToken);
@@ -97,9 +98,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
         Guid? scheduleId = null,
+        int sampleCount = 1,
         CancellationToken cancellationToken = default)
     {
-        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemRun: false, scheduleId, cancellationToken);
+        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemRun: false, scheduleId, sampleCount, cancellationToken);
         await channel.Writer.WriteAsync(group.Id, cancellationToken);
         return group;
     }
@@ -109,6 +111,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         IReadOnlyList<IModelEndpoint> endpoints,
         bool isSystemRun,
         Guid? scheduleId,
+        int sampleCount,
         CancellationToken cancellationToken)
     {
         if (endpoints.Count > ITestRunGroup.MaxModelEndpoints)
@@ -116,13 +119,24 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 $"A test suite can be run against at most {ITestRunGroup.MaxModelEndpoints} model endpoints.",
                 nameof(endpoints));
 
-        ITestRunGroup group = createTestRunGroup(suite, isSystemRun, scheduleId);
+        if (sampleCount is < 1 or > ITestRunGroup.MaxSampleCount)
+            throw new ArgumentException(
+                $"Sample count must be between 1 and {ITestRunGroup.MaxSampleCount}.",
+                nameof(sampleCount));
+
+        ITestRunGroup group = createTestRunGroup(suite, isSystemRun, scheduleId, sampleCount);
         group = await testRunGroupRepository.AddAsync(group, cancellationToken);
 
+        // One run per (endpoint, sample). All runs in a group share the suite; runs sharing an
+        // endpoint form a "cohort" that the UI averages and the optimization loop reduces to one
+        // representative run.
         foreach (var endpoint in endpoints)
         {
-            ITestRun newRun = createTestRun(group, endpoint);
-            await testRunRepository.AddAsync(newRun, cancellationToken);
+            for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++)
+            {
+                ITestRun newRun = createTestRun(group, endpoint, sampleIndex);
+                await testRunRepository.AddAsync(newRun, cancellationToken);
+            }
         }
 
         return group;

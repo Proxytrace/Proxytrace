@@ -116,7 +116,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
         if (configuration is null)
             Assert.Inconclusive("No LLM configuration in appsettings.local.json");
 
-        var (optimizer, group, run) = BuildScenario(
+        var (optimizer, group, cohort) = BuildScenario(
             services,
             agentSystemPrompt: "You are a math tutor. Answer math questions.",
             failingCases:
@@ -146,7 +146,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
                     FailReason: null),
             ]);
 
-        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [cohort], CancellationToken);
 
         theories.Should().ContainSingle();
         IOptimizationTheory proposal = theories[0];
@@ -171,7 +171,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
         if (configuration is null)
             Assert.Inconclusive("No LLM configuration in appsettings.local.json");
 
-        var (optimizer, group, run) = BuildScenario(
+        var (optimizer, group, cohort) = BuildScenario(
             services,
             agentSystemPrompt: "You convert user requests into data.",
             failingCases:
@@ -189,7 +189,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
             ],
             passingCases: []);
 
-        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [cohort], CancellationToken);
 
         theories.Should().ContainSingle();
         var promptProposal = (ISystemPromptTheory)theories[0];
@@ -207,7 +207,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
         if (configuration is null)
             Assert.Inconclusive("No LLM configuration in appsettings.local.json");
 
-        var (optimizer, group, run) = BuildScenario(
+        var (optimizer, group, cohort) = BuildScenario(
             services,
             agentSystemPrompt: "You are a support agent. Help users with their issues.",
             failingCases:
@@ -232,7 +232,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
                     FailReason: null),
             ]);
 
-        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [cohort], CancellationToken);
 
         theories.Should().ContainSingle();
         var promptProposal = (ISystemPromptTheory)theories[0];
@@ -243,7 +243,7 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
             .Should().BeTrue($"Expected prompt to address politeness, got: {promptProposal.ProposedSystemMessage}");
     }
 
-    private (UpdateSystemPromptOptimizer Optimizer, ITestRunGroup Group, ITestRun Run) BuildScenario(
+    private (UpdateSystemPromptOptimizer Optimizer, ITestRunGroup Group, RunCohort Cohort) BuildScenario(
         IServiceProvider services,
         string agentSystemPrompt,
         IReadOnlyList<TestCaseData> failingCases,
@@ -320,7 +320,10 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
             .OfType<UpdateSystemPromptOptimizer>()
             .Single();
 
-        return (optimizer, group, run);
+        // The optimizer consumes cohorts; this scenario is a single sample, so its aggregated stats
+        // equal the run's stats above.
+        var cohort = RunCohort.Build([run], new Dictionary<Guid, TestRunStats> { [runId] = stats })[0];
+        return (optimizer, group, cohort);
     }
 
     private static ITestResult CreateResult(TestCaseData data, bool passed)

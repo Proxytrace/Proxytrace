@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Optimization.Internal.Evidence;
-using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.Agent;
@@ -41,7 +40,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     public async Task DiscoverTheories_NoRunForCurrentEndpoint_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
-        ITestRun runForOtherEndpoint = fixture.CreateRun(
+        RunCohort cohortForOtherEndpoint = fixture.CreateRun(
             endpointId: Guid.NewGuid(),
             failed: 1,
             total: 1,
@@ -49,7 +48,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
-            [runForOtherEndpoint],
+            [cohortForOtherEndpoint],
             CancellationToken);
 
         theories.Should().BeEmpty();
@@ -59,7 +58,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     public async Task DiscoverTheories_ZeroFailures_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
-        ITestRun run = fixture.CreateRun(
+        RunCohort cohort = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 0,
             total: 5,
@@ -67,7 +66,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
-            [run],
+            [cohort],
             CancellationToken);
 
         theories.Should().BeEmpty();
@@ -77,7 +76,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     public async Task DiscoverTheories_HappyPath_ProducesSystemPromptProposal()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
-        ITestRun run = fixture.CreateRun(
+        RunCohort cohort = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
             total: 4,
@@ -85,7 +84,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
-            [run],
+            [cohort],
             CancellationToken);
 
         theories.Should().HaveCount(1);
@@ -95,7 +94,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             .Should().Be("You are an even better assistant.");
         theory.Source.Should().Be(TheorySource.Optimizer);
         theory.Rationale.Should().Contain("Failing cases lacked structured guidance.");
-        theory.EvidenceTestRunIds.Should().ContainSingle().Which.Should().Be(run.Id);
+        theory.EvidenceTestRunIds.Should().ContainSingle().Which.Should().Be(cohort.Representative.Id);
     }
 
     [TestMethod]
@@ -106,7 +105,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     public async Task DiscoverTheories_PriorityBuckets(int failed, int total, Priority expected)
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
-        ITestRun run = fixture.CreateRun(
+        RunCohort cohort = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: failed,
             total: total,
@@ -114,7 +113,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
-            [run],
+            [cohort],
             CancellationToken);
 
         theories.Should().ContainSingle()
@@ -125,7 +124,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     public async Task DiscoverTheories_MalformedJsonResponse_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(cannedResponse: "this is not JSON");
-        ITestRun run = fixture.CreateRun(
+        RunCohort cohort = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
             total: 1,
@@ -133,7 +132,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
-            [run],
+            [cohort],
             CancellationToken);
 
         theories.Should().BeEmpty();
@@ -144,7 +143,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     {
         OptimizerFixture fixture = BuildFixture(
             """{ "proposedSystemPrompt": "", "rationale": "blank" }""");
-        ITestRun run = fixture.CreateRun(
+        RunCohort cohort = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
             total: 1,
@@ -152,7 +151,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
-            [run],
+            [cohort],
             CancellationToken);
 
         theories.Should().BeEmpty();
@@ -169,9 +168,10 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
         public required UpdateSystemPromptOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
         public required Guid AgentEndpointId { get; init; }
-        public required IStatsReader<TestRunStats, TestRunStats.Filter> Statistics { get; init; }
 
-        public ITestRun CreateRun(
+        // Builds a single-sample cohort for the endpoint: the optimizer now reads the cohort's
+        // aggregated stats (one sample ⇒ those stats) rather than querying a stats reader.
+        public RunCohort CreateRun(
             Guid endpointId,
             int failed,
             int total,
@@ -187,12 +187,11 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             run.TestResults.Returns(results);
             run.Group.Returns(Group);
 
-            Guid groupId = Group.Id;
             TestRunStats stats = new(
                 TestRunId: runId,
                 AgentId: Guid.Empty,
                 EndpointId: endpointId,
-                GroupId: groupId,
+                GroupId: Group.Id,
                 SuiteId: Guid.Empty,
                 TestCases: total,
                 Passed: total - failed,
@@ -200,9 +199,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                 Usage: null,
                 Cost: null,
                 RunCompletedAt: DateTimeOffset.UtcNow);
-            Statistics.FindAsync(runId, Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult<TestRunStats?>(stats));
-            return run;
+            return RunCohort.Build([run], new Dictionary<Guid, TestRunStats> { [runId] = stats })[0];
         }
 
         public ITestResult CreateFailingResult()
@@ -290,21 +287,17 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 
-            var statistics = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
-
             var optimizer = new UpdateSystemPromptOptimizer(
                 theoryFactory,
                 prompts,
                 agents,
-                new OptimizerEvidenceBuilder(),
-                statistics);
+                new OptimizerEvidenceBuilder());
 
             return new OptimizerFixture
             {
                 Optimizer = optimizer,
                 Group = group,
                 AgentEndpointId = agentEndpointId,
-                Statistics = statistics,
             };
         }
     }

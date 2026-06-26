@@ -1,8 +1,8 @@
 using AwesomeAssertions;
 using NSubstitute;
 using Proxytrace.Application.Optimization.Internal;
-using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
@@ -27,7 +27,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("b", cost: 9m, latency: Sec(5)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
@@ -42,7 +42,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("alt", cost: 1m, latency: Sec(1), passed: 0, total: 0));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
@@ -56,7 +56,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("alt", cost: 10m, latency: Sec(10)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
@@ -72,7 +72,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altB", cost: 9.8m, latency: Sec(5)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
@@ -88,7 +88,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altB", cost: 9m, latency: Sec(6)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
@@ -103,7 +103,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altB", cost: 9m, latency: Sec(6), passed: 9));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
@@ -118,7 +118,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altB", cost: 9m, latency: Sec(5)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().HaveCount(1);
         Captured c = fixture.Captured;
@@ -140,7 +140,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altB", cost: 10m, latency: Sec(9)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().HaveCount(1);
         Captured c = fixture.Captured;
@@ -161,7 +161,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("F2", cost: 60m, latency: Sec(20)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().HaveCount(1);
         Captured c = fixture.Captured;
@@ -239,9 +239,12 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
         group.Id.Returns(groupId);
         group.Suite.Returns(suite);
 
-        var runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
-        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<TestRunStats>>(stats));
+        // The optimizer now consumes cohorts (built once by the CompositeOptimizer); here each spec
+        // is a distinct endpoint, so every cohort holds a single sample whose aggregated stats equal
+        // the spec's stats.
+        var cohorts = RunCohort.Build(
+            runsByName.Values.ToList(),
+            stats.ToDictionary(s => s.TestRunId));
 
         IModelSwitchTheory.CreateNew factory = (
             _, theorySuite, source, priority, rationale, proposedEndpoint, evidenceIds) =>
@@ -256,13 +259,13 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             return Substitute.For<IModelSwitchTheory>();
         };
 
-        var optimizer = new SwitchModelOptimizer(factory, runStats);
+        var optimizer = new SwitchModelOptimizer(factory);
 
         return new Fixture
         {
             Optimizer = optimizer,
             Group = group,
-            Runs = runsByName.Values.ToList(),
+            Cohorts = cohorts,
             Captured = captured,
             RunsByName = runsByName,
         };
@@ -280,7 +283,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
     {
         public required SwitchModelOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
-        public required IReadOnlyList<ITestRun> Runs { get; init; }
+        public required IReadOnlyList<RunCohort> Cohorts { get; init; }
         public required Captured Captured { get; init; }
         public required IReadOnlyDictionary<string, ITestRun> RunsByName { get; init; }
     }

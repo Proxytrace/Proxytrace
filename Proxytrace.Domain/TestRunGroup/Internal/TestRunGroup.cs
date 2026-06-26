@@ -14,11 +14,13 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
     public DateTimeOffset? CompletedAt { get; private init; }
     public bool IsSystemRun { get; }
     public Guid? ScheduleId { get; }
+    public int SampleCount { get; }
 
     public TestRunGroup(
         ITestSuite suite,
         bool isSystemRun,
         Guid? scheduleId,
+        int sampleCount,
         IRepository<ITestRunGroup> repository,
         ITestRunRepository testRuns) : base(repository)
     {
@@ -28,6 +30,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         CompletedAt = null;
         IsSystemRun = isSystemRun;
         ScheduleId = scheduleId;
+        SampleCount = sampleCount;
     }
 
     public TestRunGroup(
@@ -36,6 +39,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         DateTimeOffset? completedAt,
         bool isSystemRun,
         Guid? scheduleId,
+        int sampleCount,
         IDomainEntityData existing,
         IRepository<ITestRunGroup> repository,
         ITestRunRepository testRuns) : base(existing, repository)
@@ -46,6 +50,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         CompletedAt = completedAt;
         IsSystemRun = isSystemRun;
         ScheduleId = scheduleId;
+        SampleCount = sampleCount;
     }
 
     public Task<IReadOnlyList<ITestRun>> GetTestRuns(CancellationToken cancellationToken = default)
@@ -58,6 +63,13 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
 
         foreach (var result in Suite.Validate(validationContext))
             yield return result;
+
+        if (SampleCount is < 1 or > ITestRunGroup.MaxSampleCount)
+        {
+            yield return new ValidationResult(
+                $"Sample count must be between 1 and {ITestRunGroup.MaxSampleCount}.",
+                [nameof(SampleCount)]);
+        }
     }
 
     public Task<ITestRunGroup> SetRunning(CancellationToken cancellationToken = default)

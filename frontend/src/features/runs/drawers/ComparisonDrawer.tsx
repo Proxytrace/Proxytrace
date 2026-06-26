@@ -4,6 +4,7 @@ import { modelColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
 import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
 import { compositeColor, fixtureSummary } from '../results';
+import { buildCohorts } from '../cohorts';
 import { useComparisonFixtures } from '../hooks/useComparisonFixtures';
 import type { TestCaseFixtureDto, TestRunDto } from '../../../api/models';
 import { DrawerShell } from './DrawerShell';
@@ -19,22 +20,27 @@ import {
 
 interface Props {
   runs: TestRunDto[];
+  /** Samples per endpoint; >1 adds per-column "sample i/N" sub-labels. */
+  sampleCount?: number;
   caseId: string;
   caseSummary?: string;
   caseIdx?: number;
   total?: number;
-  focusRunId?: string;
+  /** Endpoint whose sample columns to highlight (the cohort cell the user clicked). */
+  focusEndpointId?: string;
   onClose: () => void;
   onPrev?: () => void;
   onNext?: () => void;
 }
 
-function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
+function ComparisonColumn({ run, caseId, fixture, isLoading, focused, sampleLabel }: {
   run: TestRunDto;
   caseId: string;
   fixture: TestCaseFixtureDto | undefined;
   isLoading: boolean;
   focused: boolean;
+  /** "sample i/N" shown under the endpoint name when the endpoint was sampled more than once. */
+  sampleLabel?: string;
 }) {
   const { t } = useLingui();
   const mc = modelColor(run.endpointName);
@@ -57,7 +63,10 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
       {/* Column header */}
       <div className="flex items-center gap-2 min-w-0">
         <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: mc }} />
-        <span className="mono text-body font-semibold truncate flex-1 min-w-0">{run.endpointName}</span>
+        <span className="flex flex-col min-w-0 flex-1">
+          <span className="mono text-body font-semibold truncate">{run.endpointName}</span>
+          {sampleLabel && <span className="mono text-caption text-muted truncate">{sampleLabel}</span>}
+        </span>
         <RequestPreviewButton runId={run.id} caseId={caseId} model={run.endpointName} />
         {fixture && <PassFailTag pass={allPass} />}
       </div>
@@ -91,9 +100,19 @@ function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
   );
 }
 
-export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, focusRunId, onClose, onPrev, onNext }: Props) {
+export function ComparisonDrawer({ runs, sampleCount = 1, caseId, caseSummary, caseIdx, total, focusEndpointId, onClose, onPrev, onNext }: Props) {
   const { t } = useLingui();
-  const queries = useComparisonFixtures(runs, caseId);
+
+  // Order columns endpoint-major (cohort by cohort), samples within a cohort by sample index, so the
+  // N samples of an endpoint sit together. Each column carries its cohort + a "sample i/N" sub-label.
+  const cohorts = buildCohorts(runs);
+  const columns = cohorts.flatMap(cohort => cohort.runs.map(run => ({
+    run,
+    endpointId: cohort.endpointId,
+    sampleLabel: cohort.sampleCount > 1 ? t`sample ${run.sampleIndex + 1}/${cohort.sampleCount}` : undefined,
+  })));
+  const orderedRuns = columns.map(c => c.run);
+  const queries = useComparisonFixtures(orderedRuns, caseId);
 
   // Shared context (input + expected) — identical across models for one case.
   const shared = queries.find(q => q.data)?.data;
@@ -108,7 +127,11 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
       onClose={onClose}
       onPrev={onPrev}
       onNext={onNext}
-      leading={<span className="px-2 py-[2px] rounded-full text-caption font-semibold shrink-0 bg-accent-subtle text-accent"><Trans>{runs.length} models</Trans></span>}
+      leading={
+        <span className="px-2 py-[2px] rounded-full text-caption font-semibold shrink-0 bg-accent-subtle text-accent">
+          <Trans>{cohorts.length} models</Trans>{sampleCount > 1 && <> · ×{sampleCount}</>}
+        </span>
+      }
     >
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
         {/* Shared input + expected */}
@@ -128,21 +151,22 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
         )}
 
         {/* Evaluator breakdown — divergent rows highlighted */}
-        <EvalBreakdown runs={runs} fixtures={queries.map(q => q.data)} />
+        <EvalBreakdown runs={orderedRuns} fixtures={queries.map(q => q.data)} />
 
-        {/* Per-model columns */}
+        {/* Per-sample columns, grouped by endpoint */}
         <section>
           <div className={SECTION_LABEL}><Trans>Per-model output</Trans></div>
           <div className="overflow-x-auto">
-            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${runs.length}, minmax(300px, 1fr))` }}>
-              {runs.map((run, i) => (
+            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(300px, 1fr))` }}>
+              {columns.map((col, i) => (
                 <ComparisonColumn
-                  key={run.id}
-                  run={run}
+                  key={col.run.id}
+                  run={col.run}
                   caseId={caseId}
                   fixture={queries[i].data}
                   isLoading={queries[i].isLoading}
-                  focused={run.id === focusRunId}
+                  focused={col.endpointId === focusEndpointId}
+                  sampleLabel={col.sampleLabel}
                 />
               ))}
             </div>

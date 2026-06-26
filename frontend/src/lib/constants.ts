@@ -22,6 +22,12 @@ export const ID_SHORT_LEN = 8;
  */
 export const MAX_RUN_ENDPOINTS = 3;
 
+/**
+ * Hard cap on the number of samples (repeated runs) per endpoint in one run.
+ * Mirrors the backend invariant (`ITestRunGroup.MaxSampleCount`); the API rejects more.
+ */
+export const MAX_SAMPLE_COUNT = 5;
+
 // Features that fetch list data use pageSize=200 intentionally to avoid
 // implementing paginated views for low-volume lists. A future migration
 // should add server-side pagination and use the <Pagination> component

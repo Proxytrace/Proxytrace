@@ -144,11 +144,14 @@ public class TestRunGroupsController : ControllerBase
         if (request.ModelEndpointIds.Count > ITestRunGroup.MaxModelEndpoints)
             return BadRequest($"A test suite can be run against at most {ITestRunGroup.MaxModelEndpoints} model endpoints.");
 
+        if (request.SampleCount is < 1 or > ITestRunGroup.MaxSampleCount)
+            return BadRequest($"Sample count must be between 1 and {ITestRunGroup.MaxSampleCount}.");
+
         var endpointList = await Task.WhenAll(
             request.ModelEndpointIds.Select(id => endpoints.GetAsync(id, cancellationToken)));
 
         var group = await runner.RunInBackgroundAsync(
-            suite, endpointList, cancellationToken: cancellationToken);
+            suite, endpointList, sampleCount: request.SampleCount, cancellationToken: cancellationToken);
 
         var projectId = await agentRepository.GetProjectIdAsync(suite.Agent.Id, cancellationToken);
         audit.LogAudit(AuditAction.TestRunStarted, nameof(ITestRunGroup), group.Id, suite.Name, projectId: projectId);
@@ -267,6 +270,7 @@ public class TestRunGroupsController : ControllerBase
             AgentName: group.Suite.Agent.Name,
             Status: group.Status,
             IsSystemRun: group.IsSystemRun,
+            SampleCount: group.SampleCount,
             CompletedAt: group.CompletedAt,
             Runs: runs.Select(runMapper.ToDto).ToArray(),
             CreatedAt: group.CreatedAt,

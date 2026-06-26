@@ -12,6 +12,20 @@ namespace Proxytrace.Storage.Tests;
 public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
 {
     [TestMethod]
+    public async Task AddAsync_RoundTripsSampleCount()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestRunGroupRepository>();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suite = await GetSuite(services);
+
+        var saved = await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 4), CancellationToken);
+        var reloaded = await repo.GetAsync(saved.Id, CancellationToken);
+
+        reloaded.SampleCount.Should().Be(4);
+    }
+
+    [TestMethod]
     public async Task GetByProjectPaged_ByDefault_ExcludesSystemRuns()
     {
         IServiceProvider services = GetServices();
@@ -19,8 +33,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
-        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null, sampleCount: 1), CancellationToken);
 
         var page = await repo.GetByProjectPagedAsync(suite.Agent.Project.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
 
@@ -36,8 +50,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
-        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null, sampleCount: 1), CancellationToken);
 
         var page = await repo.GetByProjectPagedAsync(suite.Agent.Project.Id, page: 1, pageSize: 50, includeSystem: true, CancellationToken);
 
@@ -53,7 +67,7 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null, sampleCount: 1), CancellationToken);
 
         var excluded = await repo.GetByAgentPagedAsync(suite.Agent.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
         var included = await repo.GetByAgentPagedAsync(suite.Agent.Id, page: 1, pageSize: 50, includeSystem: true, CancellationToken);
@@ -73,10 +87,10 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
             .GetRequiredService<IDomainEntityGenerator<ITestRunSchedule>>()
             .CreateAsync(CancellationToken);
 
-        var older = await repo.AddAsync(factory(suite, isSystemRun: false, schedule.Id), CancellationToken);
-        var newer = await repo.AddAsync(factory(suite, isSystemRun: false, schedule.Id), CancellationToken);
+        var older = await repo.AddAsync(factory(suite, isSystemRun: false, schedule.Id, sampleCount: 1), CancellationToken);
+        var newer = await repo.AddAsync(factory(suite, isSystemRun: false, schedule.Id, sampleCount: 1), CancellationToken);
         // An untagged manual run that must be excluded.
-        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
 
         var result = await repo.GetByScheduleAsync(schedule.Id, take: 5, CancellationToken);
 
@@ -95,8 +109,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var suiteA = await suiteGen.CreateAsync(CancellationToken);
         var suiteB = await suiteGen.CreateAsync(CancellationToken);
 
-        await repo.AddAsync(factory(suiteA, isSystemRun: false, null), CancellationToken);
-        await repo.AddAsync(factory(suiteB, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suiteA, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        await repo.AddAsync(factory(suiteB, isSystemRun: false, null, sampleCount: 1), CancellationToken);
 
         var page = await repo.GetBySuitePagedAsync(suiteA.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
 
@@ -113,8 +127,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
-        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null, sampleCount: 1), CancellationToken);
 
         var page = await repo.GetBySuitePagedAsync(suite.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
 
@@ -130,8 +144,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        var older = await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
-        var newer = await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+        var older = await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        var newer = await repo.AddAsync(factory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
 
         var page = await repo.GetBySuitePagedAsync(suite.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
 

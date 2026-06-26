@@ -160,6 +160,13 @@ concurrency token (see [Optimistic concurrency](#optimistic-concurrency)). It ch
 EF generates — no PostgreSQL schema change — so its `Up`/`Down` are empty; it exists to keep the
 model snapshot in sync for future migration diffs.
 
+The `AddSampleCount` migration adds two non-nullable columns for test-run **sampling** (running each
+endpoint N times and averaging): `TestRunGroupEntity.SampleCount` (default `1`, via `HasDefaultValue(1)`
+so pre-existing groups backfill to single-sample) and `TestRunEntity.SampleIndex` (default `0`). The
+per-run `TestRunStats` projection is unchanged; "one result per endpoint per group" readers collapse the
+sample dimension at read time via `TestRunStatsCohortExtensions.AggregateSamples` (see
+[`optimization-loop.md`](optimization-loop.md)).
+
 ## Optimistic concurrency
 
 Every entity derives from `Entity` and carries an `UpdatedAt` timestamp that `AbstractRepository`

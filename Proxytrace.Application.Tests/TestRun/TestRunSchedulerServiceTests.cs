@@ -54,6 +54,7 @@ public sealed class TestRunSchedulerServiceTests : BaseTest<Module>
             Arg.Any<ITestSuite>(),
             Arg.Any<IReadOnlyList<IModelEndpoint>>(),
             schedule.Id,
+            Arg.Any<int>(),
             Arg.Any<CancellationToken>());
 
         var reloaded = await scheduleRepo.FindAsync(schedule.Id, CancellationToken);
@@ -79,7 +80,7 @@ public sealed class TestRunSchedulerServiceTests : BaseTest<Module>
         // Persist an in-flight (Running) group attributed to this schedule.
         var createGroup = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var groupRepo = services.GetRequiredService<ITestRunGroupRepository>();
-        var group = createGroup(schedule.Suite, false, schedule.Id);
+        var group = createGroup(schedule.Suite, false, schedule.Id, sampleCount: 1);
         group = await groupRepo.AddAsync(group, CancellationToken);
         await group.SetRunning(CancellationToken);
 
@@ -91,6 +92,7 @@ public sealed class TestRunSchedulerServiceTests : BaseTest<Module>
             Arg.Any<ITestSuite>(),
             Arg.Any<IReadOnlyList<IModelEndpoint>>(),
             Arg.Any<Guid?>(),
+            Arg.Any<int>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -117,6 +119,7 @@ public sealed class TestRunSchedulerServiceTests : BaseTest<Module>
             Arg.Any<ITestSuite>(),
             Arg.Any<IReadOnlyList<IModelEndpoint>>(),
             Arg.Any<Guid?>(),
+            Arg.Any<int>(),
             Arg.Any<CancellationToken>());
 
         var reloaded = await scheduleRepo.FindAsync(schedule.Id, CancellationToken);

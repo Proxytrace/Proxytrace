@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import type { TestRunGroupListItemDto } from '../../../api/models';
+import type { TestRunGroupListItemDto, TestRunSummaryDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
 import { agentColor, modelColor } from '../../../lib/colors';
@@ -9,6 +9,7 @@ import { Pill } from '../../../components/ui/Pill';
 import { IconButton } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
 import { passRateColor, passRatePercent } from '../results';
+import { buildCohorts, type Cohort } from '../cohorts';
 
 /** Card in the left-hand run-group list. Identical layout for single- and multi-model groups. */
 export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
@@ -20,7 +21,8 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
 }) {
   const { t } = useLingui();
   const c = agentColor(group.agentId);
-  const runCount = group.runs.length;
+  const cohorts = buildCohorts(group.runs);
+  const endpointCount = cohorts.length;
 
   return (
     // Wrapper is a positioning + hover context so the delete control is a real
@@ -44,13 +46,16 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
           {group.isSystemRun && (
             <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-accent-subtle text-accent shrink-0"><Trans>A/B</Trans></span>
           )}
-          {runCount > 1 && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0"><Trans>{runCount} models</Trans></span>
+          {endpointCount > 1 && (
+            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0"><Trans>{endpointCount} models</Trans></span>
+          )}
+          {group.sampleCount > 1 && (
+            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">×{group.sampleCount}</span>
           )}
           <span className="text-caption text-muted ml-auto shrink-0">{fmtRelative(group.createdAt)}</span>
         </div>
 
-        <ModelStack runs={group.runs} />
+        <ModelStack cohorts={cohorts} />
       </RowButton>
 
       {onDelete && (
@@ -67,24 +72,32 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
   );
 }
 
-/** Per-model pass-rate stack — one row per model, used for both single- and multi-model cards. */
-function ModelStack({ runs }: { runs: TestRunGroupListItemDto['runs'] }) {
-  const rates = runs.map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases));
+/** Mean judged pass rate across a cohort's samples (0..100), or null when none judged. */
+function cohortMeanRate(cohort: Cohort<TestRunSummaryDto>): number | null {
+  const rates = cohort.runs
+    .map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases))
+    .filter((x): x is number => x !== null);
+  return rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : null;
+}
+
+/** Per-endpoint pass-rate stack — one row per endpoint cohort (its samples averaged). */
+function ModelStack({ cohorts }: { cohorts: Cohort<TestRunSummaryDto>[] }) {
+  const rates = cohorts.map(cohortMeanRate);
   const best = Math.max(...rates.map(r => r ?? -1));
-  const showWinner = runs.length > 1;
+  const showWinner = cohorts.length > 1;
 
   return (
     <div className="flex flex-col gap-1">
-      {runs.map((run, i) => {
+      {cohorts.map((cohort, i) => {
         const pr = rates[i];
         const prc = passRateColor(pr);
-        const mc = modelColor(run.endpointName);
+        const mc = modelColor(cohort.endpointName);
         const winner = showWinner && pr !== null && pr === best;
         return (
-          <div key={run.id} className="grid grid-cols-[84px_1fr_auto] gap-2 items-center">
+          <div key={cohort.endpointId} className="grid grid-cols-[84px_1fr_auto] gap-2 items-center">
             <span className="mono text-caption flex items-center gap-1 min-w-0" style={{ color: mc }}>
               <span className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ background: mc }} />
-              <span className="truncate">{run.endpointName}</span>
+              <span className="truncate">{cohort.endpointName}</span>
             </span>
             <span className="h-[5px] rounded-full bg-white/[0.06] overflow-hidden">
               <span className="block h-full rounded-full" style={{ width: `${pr ?? 0}%`, background: prc }} />

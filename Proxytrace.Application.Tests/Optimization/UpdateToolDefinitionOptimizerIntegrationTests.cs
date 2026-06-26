@@ -116,7 +116,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
         if (configuration is null)
             Assert.Inconclusive("No LLM configuration in appsettings.local.json");
 
-        var (optimizer, group, run) = BuildScenario(
+        var (optimizer, group, cohort) = BuildScenario(
             services,
             agentSystemPrompt: "You are a search assistant. Use the search tool to find information.",
             tools:
@@ -156,7 +156,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
                     FailReason: null),
             ]);
 
-        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [cohort], CancellationToken);
 
         theories.Should().ContainSingle();
         IOptimizationTheory proposal = theories[0];
@@ -183,7 +183,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
         if (configuration is null)
             Assert.Inconclusive("No LLM configuration in appsettings.local.json");
 
-        var (optimizer, group, run) = BuildScenario(
+        var (optimizer, group, cohort) = BuildScenario(
             services,
             agentSystemPrompt: "You are a helpdesk bot. Create support tickets for user issues.",
             tools:
@@ -218,7 +218,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
             ],
             passingCases: []);
 
-        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [cohort], CancellationToken);
 
         theories.Should().ContainSingle();
         var toolProposal = (IToolUpdateTheory)theories[0];
@@ -245,7 +245,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
         if (configuration is null)
             Assert.Inconclusive("No LLM configuration in appsettings.local.json");
 
-        var (optimizer, group, run) = BuildScenario(
+        var (optimizer, group, cohort) = BuildScenario(
             services,
             agentSystemPrompt: "You are an email assistant. Compose and send emails for the user.",
             tools:
@@ -280,7 +280,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
             ],
             passingCases: []);
 
-        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [cohort], CancellationToken);
 
         theories.Should().ContainSingle();
         var toolProposal = (IToolUpdateTheory)theories[0];
@@ -289,7 +289,7 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
         proposedTool.Description.Length.Should().BeGreaterThan("Sends an email".Length);
     }
 
-    private (UpdateToolDefinitionOptimizer Optimizer, ITestRunGroup Group, ITestRun Run) BuildScenario(
+    private (UpdateToolDefinitionOptimizer Optimizer, ITestRunGroup Group, RunCohort Cohort) BuildScenario(
         IServiceProvider services,
         string agentSystemPrompt,
         IReadOnlyList<ToolSpecification> tools,
@@ -367,7 +367,10 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
             .OfType<UpdateToolDefinitionOptimizer>()
             .Single();
 
-        return (optimizer, group, run);
+        // The optimizer consumes cohorts; this scenario is a single sample, so its aggregated stats
+        // equal the run's stats above.
+        var cohort = RunCohort.Build([run], new Dictionary<Guid, TestRunStats> { [runId] = stats })[0];
+        return (optimizer, group, cohort);
     }
 
     private static ITestResult CreateResult(TestCaseData data, bool passed)

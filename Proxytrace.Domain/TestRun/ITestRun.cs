@@ -15,6 +15,12 @@ public interface ITestRun : IDomainEntity<ITestRun>
     /// <summary>The endpoint to test against.</summary>
     IModelEndpoint Endpoint { get; }
 
+    /// <summary>
+    /// Zero-based index of this run within its endpoint's sample cohort (sample <c>i</c> of
+    /// <see cref="ITestRunGroup.SampleCount"/>). Always 0 for single-sample runs.
+    /// </summary>
+    int SampleIndex { get; }
+
     /// <summary>The current execution status of this run.</summary>
     TestRunStatus Status { get; }
 
@@ -27,12 +33,14 @@ public interface ITestRun : IDomainEntity<ITestRun>
     /// <summary>Factory delegate for creating a new test run.</summary>
     public delegate ITestRun CreateNew(
         ITestRunGroup group,
-        IModelEndpoint endpoint);
+        IModelEndpoint endpoint,
+        int sampleIndex);
 
     /// <summary>Factory delegate for reconstituting an existing test run from persistence.</summary>
     public delegate ITestRun CreateExisting(
         ITestRunGroup group,
         IModelEndpoint endpoint,
+        int sampleIndex,
         TestRunStatus status,
         DateTimeOffset? completedAt,
         IReadOnlyList<ITestResult> testResults,

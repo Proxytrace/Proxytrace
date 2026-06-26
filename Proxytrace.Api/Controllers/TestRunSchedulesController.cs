@@ -217,7 +217,7 @@ public class TestRunSchedulesController : ControllerBase
             return NotFound();
 
         await runner.RunInBackgroundAsync(
-            schedule.Suite, schedule.Endpoints.ToArray(), schedule.Id, cancellationToken);
+            schedule.Suite, schedule.Endpoints.ToArray(), schedule.Id, cancellationToken: cancellationToken);
         audit.LogAudit(
             AuditAction.TestRunScheduleRunNow, nameof(ITestRunSchedule), schedule.Id, schedule.Name,
             projectId: schedule.Suite.Agent.Project.Id);

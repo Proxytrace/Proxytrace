@@ -1,6 +1,7 @@
 import { Trans } from '@lingui/react/macro';
 import type { TestRunGroupDto } from '../../../api/models';
 import { buildEvaluatorHeatmap, scoreBucketColor, SCORE_LEVELS } from '../comparison';
+import { buildCohorts } from '../cohorts';
 import type { LiveProgress } from '../live';
 import { EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
@@ -8,15 +9,16 @@ import { Card } from '../../../components/ui/Card';
 import { ModelTag } from './ModelTag';
 import { DistributionBar } from './DistributionBar';
 
-/** Score-distribution table: evaluators (rows) × models (columns). Live evals fold in during a run. */
+/** Score-distribution table: evaluators (rows) × endpoints (columns), pooling each endpoint's samples.
+ * Live evals fold in during a run. */
 export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live?: LiveProgress }) {
-  const rows = buildEvaluatorHeatmap(group, live);
-  const runs = group.runs;
-  const multi = runs.length > 1;
+  const cohorts = buildCohorts(group.runs);
+  const rows = buildEvaluatorHeatmap(cohorts, live);
+  const multi = cohorts.length > 1;
   const hasJudgements = rows.some(r => r.cells.some(c => c.total > 0));
   if (rows.length === 0 || !hasJudgements) return null;
 
-  const gridCols = cn(`minmax(160px,1.4fr) repeat(${runs.length}, minmax(120px,1fr))`);
+  const gridCols = cn(`minmax(160px,1.4fr) repeat(${cohorts.length}, minmax(120px,1fr))`);
 
   return (
     <Card padding="none" data-testid="evaluator-heatmap">
@@ -32,9 +34,12 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
         <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
           {/* Header */}
           <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] flex items-center"><Trans>Evaluator</Trans></div>
-          {runs.map(run => (
-            <div key={run.id} className="px-3 py-2 border-b border-hairline flex items-center">
-              <ModelTag name={run.endpointName} size="xs" />
+          {cohorts.map(cohort => (
+            <div key={cohort.endpointId} className="px-3 py-2 border-b border-hairline flex items-center gap-1.5">
+              <ModelTag name={cohort.endpointName} size="xs" />
+              {cohort.sampleCount > 1 && (
+                <span className="mono px-1 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">×{cohort.sampleCount}</span>
+              )}
             </div>
           ))}
 

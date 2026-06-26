@@ -67,6 +67,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
         return factory(
             group: group,
             endpoint: endpoint,
+            sampleIndex: stored.SampleIndex,
             status: stored.Status,
             completedAt: stored.CompletedAt,
             testResults: results,
@@ -79,6 +80,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             Id = domain.Id,
             Group = domain.Group.Id,
             Endpoint = domain.Endpoint.Id,
+            SampleIndex = domain.SampleIndex,
             Status = domain.Status,
             CompletedAt = domain.CompletedAt,
             TestResults = domain.TestResults.Select(x => x.Id).ToArray(),

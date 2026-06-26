@@ -150,8 +150,8 @@ public sealed class TestRunGroupsControllerTests : BaseTest<Module>
         var suiteGen = services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>();
         var suiteA = await suiteGen.CreateAsync(CancellationToken);
         var suiteB = await suiteGen.CreateAsync(CancellationToken);
-        await repo.AddAsync(factory(suiteA, isSystemRun: false, null), CancellationToken);
-        await repo.AddAsync(factory(suiteB, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suiteA, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        await repo.AddAsync(factory(suiteB, isSystemRun: false, null, sampleCount: 1), CancellationToken);
 
         var result = await controller.GetAll(suiteId: suiteA.Id, cancellationToken: CancellationToken);
 

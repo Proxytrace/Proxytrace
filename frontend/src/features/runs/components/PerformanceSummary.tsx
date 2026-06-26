@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { TestRunGroupDto } from '../../../api/models';
 import { buildLeaderboard, comparisonGrid } from '../comparison';
+import { buildCohorts } from '../cohorts';
 import { runsComplete } from '../results';
 import { cn } from '../../../lib/cn';
 import { useCurrentEndpointId } from '../hooks/useAgentEndpoint';
@@ -19,7 +20,7 @@ export function PerformanceSummary({ group }: { group: TestRunGroupDto }) {
   const currentEndpointId = useCurrentEndpointId(group.agentId);
   const runs = group.runs;
   const complete = runsComplete(runs);
-  const entries = buildLeaderboard(runs, complete, currentEndpointId);
+  const entries = buildLeaderboard(buildCohorts(runs), complete, currentEndpointId);
   if (entries.length === 0) return null;
 
   const multi = entries.length > 1;

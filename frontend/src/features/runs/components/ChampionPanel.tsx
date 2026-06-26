@@ -38,7 +38,12 @@ export function ChampionPanel({ entry }: { entry: LeaderboardEntry }) {
       )}
     >
       <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
-        <ModelTag name={run.endpointName} />
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <ModelTag name={run.endpointName} />
+          {entry.sampleCount > 1 && (
+            <span className="text-caption text-muted"><Trans>avg of {entry.sampleCount} samples</Trans></span>
+          )}
+        </div>
         <ComparisonTag variant={entry.isProduction ? 'production' : 'baseline'} />
       </div>
 

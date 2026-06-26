@@ -306,6 +306,7 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
             var backdatedRun = testRunExisting(
                 group: fresh,
                 endpoint: run.Endpoint,
+                sampleIndex: run.SampleIndex,
                 status: run.Status,
                 completedAt: groupTime.AddMinutes(5),
                 testResults: run.TestResults,
@@ -319,6 +320,7 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
             completedAt: groupTime.AddMinutes(5),
             isSystemRun: fresh.IsSystemRun,
             scheduleId: fresh.ScheduleId,
+            sampleCount: fresh.SampleCount,
             existing: new BackdatedData(fresh.Id, groupTime, fresh.UpdatedAt));
         await backdatedGroup.UpdateAsync(cancellationToken);
     }

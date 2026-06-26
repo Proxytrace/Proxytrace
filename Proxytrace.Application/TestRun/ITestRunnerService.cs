@@ -20,13 +20,15 @@ public interface ITestRunnerService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Creates a group of runs — one per endpoint — executing the same suite for model comparison.
-    /// Queues all runs for background execution and returns immediately with the pending group.
+    /// Creates a group of runs — <paramref name="sampleCount"/> per endpoint — executing the same
+    /// suite for model comparison. Queues all runs for background execution and returns immediately
+    /// with the pending group. The per-endpoint samples are averaged in the UI.
     /// </summary>
     Task<ITestRunGroup> RunInBackgroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
         Guid? scheduleId = null,
+        int sampleCount = 1,
         CancellationToken cancellationToken = default);
 
     /// <summary>

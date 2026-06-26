@@ -11,6 +11,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
 {
     public ITestRunGroup Group { get; init; }
     public IModelEndpoint Endpoint { get; init; }
+    public int SampleIndex { get; init; }
     public TestRunStatus Status { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
     public IReadOnlyList<ITestResult> TestResults { get; init; }
@@ -18,10 +19,12 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
     public TestRun(
         ITestRunGroup group,
         IModelEndpoint endpoint,
+        int sampleIndex,
         IRepository<ITestRun> repository) : base(repository)
     {
         Group = group;
         Endpoint = endpoint;
+        SampleIndex = sampleIndex;
         Status = TestRunStatus.Pending;
         CompletedAt = null;
         TestResults = [];
@@ -30,6 +33,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
     public TestRun(
         ITestRunGroup group,
         IModelEndpoint endpoint,
+        int sampleIndex,
         TestRunStatus status,
         DateTimeOffset? completedAt,
         IReadOnlyList<ITestResult> testResults,
@@ -38,6 +42,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
     {
         Group = group;
         Endpoint = endpoint;
+        SampleIndex = sampleIndex;
         Status = status;
         CompletedAt = completedAt;
         TestResults = testResults.ToArray();

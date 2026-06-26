@@ -231,7 +231,7 @@ export function buildMatrixRows(runs: TestRunDto[], live?: LiveProgress): Matrix
 }
 
 /** Builds one (run, case) cell, preferring a finalized result and falling back to live progress. */
-function buildMatrixCell(run: TestRunDto, caseId: string, live?: LiveProgress): MatrixCell {
+export function buildMatrixCell(run: TestRunDto, caseId: string, live?: LiveProgress): MatrixCell {
   const idx = run.results.findIndex(r => r.testCaseId === caseId);
   if (idx >= 0) {
     const result = run.results[idx];

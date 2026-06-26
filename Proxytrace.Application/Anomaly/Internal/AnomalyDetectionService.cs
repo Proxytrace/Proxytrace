@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -116,19 +117,26 @@ internal sealed class AnomalyDetectionService : BackgroundService, IAnomalyDetec
     {
         var runs = await testRuns.GetByGroupAsync(group.Id, cancellationToken);
         var testCaseCount = group.Suite.TestCases.Count;
-        var runInputs = new List<AnomalyRunInput>(runs.Count);
 
-        foreach (var run in runs)
+        // Collapse the group's runs to one cohort per endpoint, so a sampled group raises at most one
+        // anomaly per endpoint (off the cohort mean) rather than N near-identical ones.
+        var groupStats = await runStats.QueryAsync(
+            new TestRunStats.Filter(GroupId: group.Id), cancellationToken);
+        var cohorts = RunCohort.Build(runs, groupStats.ToDictionary(s => s.TestRunId));
+        var runInputs = new List<AnomalyRunInput>(cohorts.Count);
+
+        foreach (var cohort in cohorts)
         {
-            var current = await runStats.FindAsync(run.Id, cancellationToken);
-            var baseline = await BuildBaselineAsync(group, run, cancellationToken);
+            var representative = cohort.Representative;
+            var current = cohort.Stats;
+            var baseline = await BuildBaselineAsync(group, cohort.EndpointId, cancellationToken);
 
             runInputs.Add(new AnomalyRunInput(
-                EndpointId: run.Endpoint.Id,
-                EndpointName: run.Endpoint.Model.Name,
-                RunFailed: run.Status == TestRunStatus.Failed,
+                EndpointId: cohort.EndpointId,
+                EndpointName: representative.Endpoint.Model.Name,
+                RunFailed: representative.Status == TestRunStatus.Failed,
                 TestCaseCount: testCaseCount,
-                ResultCount: run.TestResults.Count,
+                ResultCount: representative.TestResults.Count,
                 CurrentPassRate: current?.PassRate,
                 CurrentAverageLatency: AverageLatency(current),
                 BaselinePassRate: baseline.PassRate,
@@ -146,30 +154,44 @@ internal sealed class AnomalyDetectionService : BackgroundService, IAnomalyDetec
 
     private async Task<(double? PassRate, TimeSpan? AverageLatency, int SampleCount)> BuildBaselineAsync(
         ITestRunGroup group,
-        ITestRun run,
+        Guid endpointId,
         CancellationToken cancellationToken)
     {
         var history = await runStats.QueryAsync(
             new TestRunStats.Filter(
                 SuiteId: group.Suite.Id,
-                EndpointId: run.Endpoint.Id),
+                EndpointId: endpointId),
             cancellationToken);
 
-        var priorRuns = history
+        // Average each prior group's samples to a single baseline point first, so one sampled group
+        // counts once in the rolling window instead of crowding it out with N rows.
+        var priorGroups = history
             .Where(s => s.GroupId != group.Id)
-            .OrderByDescending(s => s.RunCompletedAt)
+            .GroupBy(s => s.GroupId)
+            .Select(g =>
+            {
+                var rates = g.Select(s => s.PassRate).OfType<double>().ToList();
+                var lats = g.Select(AverageLatency).OfType<TimeSpan>().ToList();
+                return (
+                    CompletedAt: g.Max(s => s.RunCompletedAt),
+                    PassRate: rates.Count > 0 ? (double?)rates.Average() : null,
+                    AverageLatency: lats.Count > 0
+                        ? (TimeSpan?)TimeSpan.FromTicks((long)lats.Average(l => l.Ticks))
+                        : null);
+            })
+            .OrderByDescending(x => x.CompletedAt)
             .Take(configuration.BaselineWindow)
             .ToList();
 
-        if (priorRuns.Count == 0)
+        if (priorGroups.Count == 0)
             return (null, null, 0);
 
-        var passRates = priorRuns
-            .Select(s => s.PassRate)
+        var passRates = priorGroups
+            .Select(x => x.PassRate)
             .OfType<double>()
             .ToList();
-        var latencies = priorRuns
-            .Select(AverageLatency)
+        var latencies = priorGroups
+            .Select(x => x.AverageLatency)
             .OfType<TimeSpan>()
             .ToList();
 
@@ -178,7 +200,7 @@ internal sealed class AnomalyDetectionService : BackgroundService, IAnomalyDetec
             ? TimeSpan.FromTicks((long)latencies.Average(l => l.Ticks))
             : null;
 
-        return (passRate, avgLatency, priorRuns.Count);
+        return (passRate, avgLatency, priorGroups.Count);
     }
 
     private static TimeSpan? AverageLatency(TestRunStats? stats)

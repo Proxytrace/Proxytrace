@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using JetBrains.Annotations;
 using Proxytrace.Application.Optimization.Internal.Evidence;
-using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
@@ -24,25 +24,22 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
-    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public UpdateToolDefinitionOptimizer(
         IToolUpdateTheory.CreateNew factory,
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
-        IOptimizerEvidenceBuilder evidenceBuilder,
-        IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
+        IOptimizerEvidenceBuilder evidenceBuilder)
     {
         this.factory = factory;
         this.prompts = prompts;
         this.agents = agents;
         this.evidenceBuilder = evidenceBuilder;
-        this.runStats = runStats;
     }
 
     public async Task<IReadOnlyList<IOptimizationTheory>> DiscoverTheories(
         ITestRunGroup testRunGroup,
-        IReadOnlyList<ITestRun> testRuns,
+        IReadOnlyList<RunCohort> cohorts,
         CancellationToken cancellationToken = default)
     {
         var agent = testRunGroup.Suite.Agent;
@@ -51,17 +48,20 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             return [];
         }
 
-        var currentRun = testRuns.FirstOrDefault(r => r.Endpoint.Id == agent.Endpoint.Id);
-        if (currentRun is null)
+        var cohort = cohorts.FirstOrDefault(c => c.EndpointId == agent.Endpoint.Id);
+        if (cohort is null)
         {
             return [];
         }
 
-        TestRunStats? stats = await runStats.FindAsync(currentRun.Id, cancellationToken);
+        // Aggregated stats across the endpoint's samples; gate on a non-zero failure count.
+        TestRunStats? stats = cohort.Stats;
         if (stats is null || stats.Failed == 0)
         {
             return [];
         }
+
+        ITestRun currentRun = cohort.Representative;
 
         IPromptTemplate systemPrompt = await prompts.GetAsync(PromptName, cancellationToken);
         IAgent optimizer = await agents.GetOrCreateAsync(

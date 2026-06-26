@@ -63,7 +63,11 @@ internal class AgentStatistics : IAgentStatistics
 
     internal async Task<IReadOnlyList<AgentSuitePassRate>> GetAgentLatestSuitePassRatesAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<TestRunStats> rows = await runStats.QueryAsync(new TestRunStats.Filter(AgentId: agentId), cancellationToken);
+        IReadOnlyList<TestRunStats> rawRows = await runStats.QueryAsync(new TestRunStats.Filter(AgentId: agentId), cancellationToken);
+
+        // Collapse each (group, endpoint) cohort's samples so the latest pass rate is the cohort mean
+        // rather than one arbitrary sample.
+        IReadOnlyList<TestRunStats> rows = rawRows.AggregateSamples();
 
         TestRunStats[] latestPerSuite = rows
             .GroupBy(r => r.SuiteId)

@@ -20,10 +20,10 @@ public sealed class TestRunValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var group = createGroup(suite, false, null);
+        var group = createGroup(suite, false, null, sampleCount: 1);
 
         // Act
-        var testRun = createRun(group, endpoint);
+        var testRun = createRun(group, endpoint, sampleIndex: 0);
 
         // Assert
         testRun.Should().NotBeNull();

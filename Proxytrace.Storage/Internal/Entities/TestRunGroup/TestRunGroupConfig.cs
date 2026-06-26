@@ -35,6 +35,11 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             .WithMany()
             .HasForeignKey(e => e.ScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Backfill pre-existing groups (created before sampling) to a single sample per endpoint.
+        builder
+            .Property(e => e.SampleCount)
+            .HasDefaultValue(1);
     }
 
     public async Task<ITestRunGroup> Map(TestRunGroupEntity stored, CancellationToken cancellationToken = default)
@@ -44,6 +49,7 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             completedAt: stored.CompletedAt,
             isSystemRun: stored.IsSystemRun,
             scheduleId: stored.ScheduleId,
+            sampleCount: stored.SampleCount,
             existing: stored);
 
     public Task<TestRunGroupEntity> Map(ITestRunGroup domain, CancellationToken cancellationToken = default)
@@ -55,6 +61,7 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             CompletedAt = domain.CompletedAt,
             IsSystemRun = domain.IsSystemRun,
             ScheduleId = domain.ScheduleId,
+            SampleCount = domain.SampleCount,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

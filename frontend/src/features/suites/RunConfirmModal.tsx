@@ -11,7 +11,7 @@ import { RunForm } from './components/RunForm';
 interface Props {
   suite: TestSuiteListItemDto;
   onClose: () => void;
-  onSubmit: (endpointIds: string[]) => void;
+  onSubmit: (endpointIds: string[], sampleCount: number) => void;
   loading: boolean;
   done: boolean;
 }
@@ -20,6 +20,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Pro
   const navigate = useNavigate();
   const { data: modelsData = [] } = useModelEndpoints();
   const [selectedEndpoints, setSelectedEndpoints] = useState<string[]>([]);
+  const [sampleCount, setSampleCount] = useState(1);
   const c = agentColor(suite.agentId);
   const isMulti = selectedEndpoints.length > 1;
 
@@ -45,11 +46,13 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Pro
           suite={suite}
           modelsData={modelsData as ModelEndpointDto[]}
           selectedEndpoints={selectedEndpoints}
+          sampleCount={sampleCount}
           loading={loading}
           isMulti={isMulti}
           onChange={setSelectedEndpoints}
+          onSampleCountChange={setSampleCount}
           onCancel={onClose}
-          onSubmit={() => onSubmit(selectedEndpoints)}
+          onSubmit={() => onSubmit(selectedEndpoints, sampleCount)}
         />
       )}
     </Modal>

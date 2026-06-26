@@ -7,9 +7,9 @@ import type {
   EvaluationResultDto,
   RunEvaluatorDto,
   TestRunDto,
-  TestRunGroupDto,
 } from '../../api/models';
-import { passRatePercent, type MatrixRow } from './results';
+import { passRatePercent } from './results';
+import type { Cohort } from './cohorts';
 import type { LiveProgress } from './live';
 
 const SUCCESS = 'var(--success)';
@@ -70,7 +70,10 @@ export interface MetricDeltas {
 }
 
 export interface LeaderboardEntry {
+  /** The cohort's representative run — carries the endpoint identity the card renders. */
   run: TestRunDto;
+  /** Samples averaged into this entry (1 for an un-sampled endpoint). */
+  sampleCount: number;
   passed: number;
   failed: number;
   pending: number;
@@ -96,6 +99,29 @@ type LbBase = Omit<LeaderboardEntry, 'isBest' | 'isFastest' | 'isCheapest' | 'is
 
 const dir = (n: number | null): boolean | null => (n === null ? null : n > 0 ? true : n < 0 ? false : null);
 
+const meanOf = (vals: (number | null)[]): number | null => {
+  const present = vals.filter((x): x is number => x !== null);
+  return present.length ? present.reduce((a, b) => a + b, 0) / present.length : null;
+};
+
+/** Averages a cohort's samples into one comparison row: mean pass rate, duration, cost and tokens. */
+function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
+  const runs = cohort.runs;
+  return {
+    run: cohort.representative,
+    sampleCount: cohort.sampleCount,
+    passed: Math.round(meanOf(runs.map(r => r.passedCases)) ?? 0),
+    failed: Math.round(meanOf(runs.map(r => r.failedCases)) ?? 0),
+    pending: Math.round(meanOf(runs.map(r => Math.max(0, r.totalCases - r.results.length))) ?? 0),
+    passRate: meanOf(runs.map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases))),
+    durationMs: meanOf(runs.map(r => r.durationMs)),
+    costUsd: meanOf(runs.map(r => r.costUsd)),
+    tokensIn: meanOf(runs.map(r => r.tokensIn)),
+    tokensOut: meanOf(runs.map(r => r.tokensOut)),
+    cachedTokensIn: meanOf(runs.map(r => r.cachedTokensIn)),
+  };
+}
+
 /** Raw per-axis deltas of a candidate against the baseline (see {@link MetricDeltas}). */
 function deltaVsBaseline(e: LbBase, base: LbBase): MetricDeltas {
   const passPoints = e.passRate !== null && base.passRate !== null ? e.passRate - base.passRate : null;
@@ -119,26 +145,21 @@ function deltaVsBaseline(e: LbBase, base: LbBase): MetricDeltas {
  * group has settled (`complete`); the in-production baseline is known immediately, the fallback is not.
  */
 export function buildLeaderboard(
-  runs: TestRunDto[],
+  cohorts: Cohort<TestRunDto>[],
   complete: boolean,
   currentEndpointId: string | null = null,
 ): LeaderboardEntry[] {
-  const base: LbBase[] = runs.map(run => ({
-    run,
-    passed: run.passedCases,
-    failed: run.failedCases,
-    pending: Math.max(0, run.totalCases - run.results.length),
-    passRate: passRatePercent(run.passedCases, run.passedCases + run.failedCases),
-    durationMs: run.durationMs,
-    costUsd: run.costUsd,
-    tokensIn: run.tokensIn,
-    tokensOut: run.tokensOut,
-    cachedTokensIn: run.cachedTokensIn,
-  }));
+  const rows = cohorts.map(cohort => ({ base: aggregateCohort(cohort), cohort }));
+  const base: LbBase[] = rows.map(r => r.base);
 
   // Winners are computed only once the whole group has settled — otherwise badges flip
-  // between models on partial data every SSE frame.
-  const pool = complete ? base.filter(e => e.run.status === TestRunStatus.Completed && e.passRate !== null) : [];
+  // between models on partial data every SSE frame. A cohort qualifies only when all its samples
+  // completed (a half-sampled endpoint isn't yet comparable).
+  const pool = complete
+    ? rows
+      .filter(r => r.cohort.runs.every(run => run.status === TestRunStatus.Completed) && r.base.passRate !== null)
+      .map(r => r.base)
+    : [];
   const pick = (items: LbBase[], better: (a: LbBase, b: LbBase) => boolean): LbBase | null =>
     items.reduce<LbBase | null>((best, x) => (best === null || better(x, best) ? x : best), null);
 
@@ -200,19 +221,20 @@ const emptyDist = (): Record<ScoreBucket, number> =>
   SCORE_BUCKETS.reduce((acc, b) => { acc[b] = 0; return acc; }, {} as Record<ScoreBucket, number>);
 
 /**
- * For each evaluator (rows) × each run (columns), tallies how its judgements were
- * distributed across the score buckets, plus the per-cell judged total and pass rate.
- * `live` (optional) folds in evaluations that have arrived for in-flight cases, so the
- * distribution grows per evaluator *during* a run rather than jumping only when a case ends.
+ * For each evaluator (rows) × each endpoint cohort (columns), tallies how its judgements were
+ * distributed across the score buckets, pooling every sample in the cohort — so a flaky evaluator
+ * shows as a split distribution (e.g. 3/5 Excellent + 2/5 Bad). `live` (optional) folds in evaluations
+ * that have arrived for in-flight cases. The cell's `run` is the cohort representative (column label).
  */
-export function buildEvaluatorHeatmap(group: TestRunGroupDto, live?: LiveProgress): HeatmapRow[] {
+export function buildEvaluatorHeatmap(cohorts: Cohort<TestRunDto>[], live?: LiveProgress): HeatmapRow[] {
   const evaluators = new Map<string, RunEvaluatorDto>();
-  group.runs.forEach(run => run.evaluators.forEach(ev => { if (!evaluators.has(ev.id)) evaluators.set(ev.id, ev); }));
+  cohorts.forEach(cohort => cohort.runs.forEach(run =>
+    run.evaluators.forEach(ev => { if (!evaluators.has(ev.id)) evaluators.set(ev.id, ev); })));
   const liveByRun = groupLiveByRun(live);
 
   return [...evaluators.values()].map(evaluator => ({
     evaluator,
-    cells: group.runs.map(run => {
+    cells: cohorts.map(cohort => {
       const dist = emptyDist();
       let total = 0;
       const tally = (e: { evaluatorId: string; errorMessage: string | null; score: EvaluationScore | null }) => {
@@ -221,10 +243,12 @@ export function buildEvaluatorHeatmap(group: TestRunGroupDto, live?: LiveProgres
         dist[bucket]++;
         total++;
       };
-      run.results.forEach(res => res.evaluations.forEach(tally));
-      (liveByRun.get(run.id) ?? []).forEach(tally);
+      cohort.runs.forEach(run => {
+        run.results.forEach(res => res.evaluations.forEach(tally));
+        (liveByRun.get(run.id) ?? []).forEach(tally);
+      });
       const passes = dist[EvaluationScore.Excellent] + dist[EvaluationScore.Good] + dist[EvaluationScore.Acceptable];
-      return { run, dist, total, passRate: total > 0 ? Math.round((passes / total) * 100) : null };
+      return { run: cohort.representative, dist, total, passRate: total > 0 ? Math.round((passes / total) * 100) : null };
     }),
   }));
 }
@@ -239,52 +263,4 @@ function groupLiveByRun(live: LiveProgress | undefined): Map<string, EvaluationR
     byRun.set(liveCase.runId, bucket);
   }
   return byRun;
-}
-
-// ── Matrix filter / sort ──────────────────────────────────────────────────────
-
-export type MatrixFilter = 'all' | 'divergent' | 'failing' | 'passing';
-export type MatrixSort = 'order' | 'worst';
-
-const rowFailing = (row: MatrixRow): boolean => row.cells.some(c => c.pass === false);
-const rowPassing = (row: MatrixRow): boolean =>
-  row.cells.some(c => c.result) && row.cells.filter(c => c.result).every(c => c.pass === true);
-const rowMinScore = (row: MatrixRow): number => {
-  const scores = row.cells.filter(c => c.result).map(c => c.score ?? 0);
-  return scores.length ? Math.min(...scores) : 1;
-};
-
-export interface MatrixCounts { all: number; divergent: number; failing: number; passing: number; }
-
-export const matrixCounts = (rows: MatrixRow[]): MatrixCounts => ({
-  all: rows.length,
-  divergent: rows.filter(r => r.divergent).length,
-  failing: rows.filter(rowFailing).length,
-  passing: rows.filter(rowPassing).length,
-});
-
-/**
- * Applies the toolbar filter, then orders the rows. Input is in stable suite order
- * (see {@link buildMatrixRows}).
- *
- * - `freezeOrder` (set while a run is active) keeps that stable order so rows never reshuffle
- *   mid-run as partial verdicts arrive — the cause of "frantic" flicker under parallel runs.
- * - Otherwise `'order'` surfaces divergent rows first, then most failures, then alphabetical;
- *   `'worst'` orders by lowest per-cell score.
- */
-export function filterSortMatrixRows(
-  rows: MatrixRow[],
-  filter: MatrixFilter,
-  sort: MatrixSort,
-  freezeOrder = false,
-): MatrixRow[] {
-  let out = rows;
-  if (filter === 'divergent') out = out.filter(r => r.divergent);
-  else if (filter === 'failing') out = out.filter(rowFailing);
-  else if (filter === 'passing') out = out.filter(rowPassing);
-
-  if (freezeOrder) return out;
-  if (sort === 'worst') return [...out].sort((a, b) => rowMinScore(a) - rowMinScore(b));
-  return [...out].sort((a, b) =>
-    (Number(b.divergent) - Number(a.divergent)) || (b.failCount - a.failCount) || a.summary.localeCompare(b.summary));
 }

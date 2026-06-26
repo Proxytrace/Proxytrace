@@ -22,6 +22,6 @@ internal class TestRunGroupGenerator : DomainEntityGenerator<ITestRunGroup>
     public override async Task<ITestRunGroup> GenerateAsync(CancellationToken cancellationToken = default)
     {
         var suite = await suiteGenerator.GetOrCreateAsync(cancellationToken);
-        return factory(suite, isSystemRun: false, scheduleId: null);
+        return factory(suite, isSystemRun: false, scheduleId: null, sampleCount: 1);
     }
 }

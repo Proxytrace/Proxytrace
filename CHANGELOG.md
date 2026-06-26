@@ -11,6 +11,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Sample a test run multiple times.** When you start a run you can now pick a **sample count (1–5)** —
+  Proxytrace runs each selected endpoint that many times and **averages the results per endpoint**, so
+  non-deterministic models don't hide flaky cases. The results matrix shows one column per endpoint with
+  a per-case **pass fraction (e.g. 4/5)** and average score, a new **Flaky** filter surfaces cases whose
+  samples disagree, and clicking a cell drills into the individual **sample i/N** runs. Anomaly detection
+  and the auto-optimization loop operate on **one representative run per endpoint**, so sampling never
+  fires duplicate anomalies or biases a proposal toward a single lucky sample. Existing single-sample
+  runs look exactly as before.
 - **Two-factor authentication (TOTP).** Protect your account with a second factor from an
   authenticator app (Google Authenticator, Authy, 1Password). Turn it on under **Account security**
   (in the account menu): scan the QR code, confirm a code, and save the **10 one-time backup codes**

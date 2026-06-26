@@ -24,6 +24,7 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
   const c = agentColor(group.agentId);
   const sc = runStatusColor(group.status);
   const active = group.runs.some(r => isActive(r.status));
+  const endpointCount = new Set(group.runs.map(r => r.endpointId)).size;
 
   return (
     <div
@@ -51,7 +52,13 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
           <span>·</span>
           <span>{fmtRelative(group.createdAt)}</span>
           <span>·</span>
-          <span><Plural value={group.runs.length} one="# model" other="# models" /></span>
+          <span><Plural value={endpointCount} one="# model" other="# models" /></span>
+          {group.sampleCount > 1 && (
+            <>
+              <span>·</span>
+              <span><Plural value={group.sampleCount} one="# sample each" other="# samples each" /></span>
+            </>
+          )}
         </div>
 
         {active && (

@@ -1,5 +1,5 @@
-using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
@@ -19,48 +19,46 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
     private const double MinMargin = 0.10;
 
     private readonly IModelSwitchTheory.CreateNew factory;
-    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
-    public SwitchModelOptimizer(
-        IModelSwitchTheory.CreateNew factory,
-        IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
+    public SwitchModelOptimizer(IModelSwitchTheory.CreateNew factory)
     {
         this.factory = factory;
-        this.runStats = runStats;
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<IOptimizationTheory>> DiscoverTheories(
+    public Task<IReadOnlyList<IOptimizationTheory>> DiscoverTheories(
         ITestRunGroup testRunGroup,
-        IReadOnlyList<ITestRun> testRuns,
+        IReadOnlyList<RunCohort> cohorts,
         CancellationToken cancellationToken = default)
     {
         var currentEndpointId = testRunGroup.Suite.Agent.Endpoint.Id;
-        var currentRun = testRuns.FirstOrDefault(x => x.Endpoint.Id == currentEndpointId);
-        var alternativeRuns = testRuns.Where(x => x.Endpoint.Id != currentEndpointId).ToList();
+        var currentCohort = cohorts.FirstOrDefault(c => c.EndpointId == currentEndpointId);
 
-        // we need a run for the currently used endpoint, plus at least one alternative
-        if (currentRun is null || alternativeRuns.Count == 0)
+        // we need a cohort for the currently used endpoint, plus at least one alternative
+        if (currentCohort is null || cohorts.All(c => c.EndpointId == currentEndpointId))
         {
-            return [];
+            return Empty;
         }
 
-        IReadOnlyList<TestRunStats> groupStats = await runStats.QueryAsync(
-            new TestRunStats.Filter(GroupId: testRunGroup.Id), cancellationToken);
+        // one aggregated stats row per endpoint cohort; pass rate is the regression gate, so drop
+        // cohorts that lack it (no projected/judged samples yet)
+        IReadOnlyList<TestRunStats> groupStats = cohorts
+            .Select(c => c.Stats)
+            .OfType<TestRunStats>()
+            .Where(s => s.PassRate.HasValue)
+            .ToList();
 
-        // pass rate is the regression gate for every comparison; drop runs that lack it
-        groupStats = groupStats.Where(x => x.PassRate.HasValue).ToList();
-
-        // need the current run's stats plus at least one alternative to compare against
+        // need the current cohort's stats plus at least one alternative to compare against
         if (groupStats.Count < 2)
         {
-            return [];
+            return Empty;
         }
 
-        var currentStats = groupStats.FirstOrDefault(x => x.TestRunId == currentRun.Id);
+        ITestRun currentRun = currentCohort.Representative;
+        var currentStats = groupStats.FirstOrDefault(s => s.TestRunId == currentRun.Id);
         if (currentStats is null)
         {
-            return [];
+            return Empty;
         }
 
         // evaluate both metric paths; pick the qualifying winner that saves most vs the current model
@@ -73,11 +71,11 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
 
         if (chosen is null)
         {
-            return [];
+            return Empty;
         }
 
         TestRunStats winner = chosen.Winner;
-        ITestRun bestRun = testRuns.First(r => r.Id == winner.TestRunId);
+        ITestRun bestRun = cohorts.First(c => c.Representative.Id == winner.TestRunId).Representative;
 
         Priority priority = chosen.RelativeSaving switch
         {
@@ -104,8 +102,11 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             proposedEndpoint: bestRun.Endpoint,
             evidenceTestRunIds: [currentRun.Id, bestRun.Id]);
 
-        return [theory];
+        return Task.FromResult<IReadOnlyList<IOptimizationTheory>>([theory]);
     }
+
+    private static Task<IReadOnlyList<IOptimizationTheory>> Empty
+        => Task.FromResult<IReadOnlyList<IOptimizationTheory>>([]);
 
     /// <summary>
     /// Ranks the alternative runs by <paramref name="metric"/> (lower is better) and returns a

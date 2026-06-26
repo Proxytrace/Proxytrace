@@ -1,26 +1,35 @@
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { ModelEndpointDto, TestSuiteListItemDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
-import { MAX_RUN_ENDPOINTS } from '../../../lib/constants';
+import { MAX_RUN_ENDPOINTS, MAX_SAMPLE_COUNT } from '../../../lib/constants';
 import { PlayFilledIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { MultiCombobox } from '../../../components/ui/MultiCombobox';
+import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 
 interface Props {
   suite: TestSuiteListItemDto;
   modelsData: ModelEndpointDto[];
   selectedEndpoints: string[];
+  sampleCount: number;
   loading: boolean;
   isMulti: boolean;
   onChange: (ids: string[]) => void;
+  onSampleCountChange: (n: number) => void;
   onCancel: () => void;
   onSubmit: () => void;
 }
 
-export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti, onChange, onCancel, onSubmit }: Props) {
+export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loading, isMulti, onChange, onSampleCountChange, onCancel, onSubmit }: Props) {
   const { t } = useLingui();
   const count = selectedEndpoints.length;
   const hasSelection = count > 0;
+  const totalRuns = count * sampleCount;
+  const sampleSegments = Array.from({ length: MAX_SAMPLE_COUNT }, (_, i) => ({
+    value: String(i + 1),
+    label: String(i + 1),
+    testId: `run-samples-${i + 1}`,
+  }));
 
   return (
     <>
@@ -59,6 +68,29 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
           aria-label={t`Model endpoints to evaluate`}
           data-testid="run-endpoints"
         />
+      </div>
+
+      <div className="mb-5">
+        <div className="text-caption text-muted font-semibold uppercase tracking-[0.08em] mb-2">
+          <Trans>Samples per endpoint</Trans>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <SegmentedControl
+            value={String(sampleCount)}
+            onChange={v => onSampleCountChange(Number(v))}
+            segments={sampleSegments}
+          />
+          {hasSelection && (
+            <span className="text-caption text-muted">
+              {sampleCount > 1
+                ? <Plural value={totalRuns} one="# run total" other="# runs total" />
+                : <Trans>Run each endpoint once</Trans>}
+            </span>
+          )}
+        </div>
+        <p className="text-[11.5px] text-muted mt-2 leading-[1.5]">
+          <Trans>Run each endpoint multiple times to surface flaky cases; results are averaged per endpoint.</Trans>
+        </p>
       </div>
 
       <div className="flex gap-2 justify-end">

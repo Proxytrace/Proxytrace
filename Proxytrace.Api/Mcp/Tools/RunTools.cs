@@ -203,6 +203,7 @@ internal sealed class RunTools
             AgentName: group.Suite.Agent.Name,
             Status: group.Status,
             IsSystemRun: group.IsSystemRun,
+            SampleCount: group.SampleCount,
             CompletedAt: group.CompletedAt,
             Runs: groupRuns.Select(mapper.ToDto).ToArray(),
             CreatedAt: group.CreatedAt,

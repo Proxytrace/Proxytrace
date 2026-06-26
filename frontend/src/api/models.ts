@@ -445,6 +445,8 @@ export interface TestRunDto {
   agentName: string;
   endpointId: string;
   endpointName: string;
+  /** Zero-based index of this run within its endpoint's sample cohort (0 for single-sample runs). */
+  sampleIndex: number;
   status: TestRunStatus;
   totalCases: number;
   passedCases: number;
@@ -473,6 +475,8 @@ export interface TestRunGroupDto {
   status: TestRunStatus;
   /** True for ephemeral A/B validation runs; hidden from the runs list unless explicitly shown. */
   isSystemRun: boolean;
+  /** Samples run per endpoint (1..5). Endpoints with >1 run form a cohort averaged in the UI. */
+  sampleCount: number;
   completedAt: string | null;
   runs: TestRunDto[];
   createdAt: string;
@@ -484,6 +488,8 @@ export interface TestRunSummaryDto {
   id: string;
   endpointId: string;
   endpointName: string;
+  /** Zero-based index of this run within its endpoint's sample cohort (0 for single-sample runs). */
+  sampleIndex: number;
   status: TestRunStatus;
   totalCases: number;
   passedCases: number;
@@ -501,6 +507,8 @@ export interface TestRunGroupListItemDto {
   agentName: string;
   status: TestRunStatus;
   isSystemRun: boolean;
+  /** Samples run per endpoint (1..5). Endpoints with >1 run form a cohort averaged in the UI. */
+  sampleCount: number;
   completedAt: string | null;
   runs: TestRunSummaryDto[];
   createdAt: string;

@@ -39,11 +39,16 @@ sync when the loop changes.
 A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEvaluator`**s.
 `ITestRunnerService` executes it:
 
-- `RunInBackgroundAsync(suite, endpoints)` — creates a **`TestRunGroup`** with one **`TestRun`**
-  per endpoint (model comparison), queues them, returns immediately. A suite may target **at most
-  `ITestRunGroup.MaxModelEndpoints` (3) endpoints** — a hard cap enforced in `CreateGroup` (throws),
-  in the controllers (400), and in `TestRunSchedule.Validate` for schedules; the UI caps selection
-  at 3 to match.
+- `RunInBackgroundAsync(suite, endpoints, scheduleId, sampleCount)` — creates a **`TestRunGroup`**
+  with **`sampleCount` `TestRun`s per endpoint** (model comparison × sampling), queues them, returns
+  immediately. A suite may target **at most `ITestRunGroup.MaxModelEndpoints` (3) endpoints** and
+  **`ITestRunGroup.MaxSampleCount` (5) samples** per endpoint — both hard caps enforced in
+  `CreateGroup` (throws), in the controllers (400), and (endpoints only) in `TestRunSchedule.Validate`;
+  the UI caps selection to match. So a group holds up to 3 × 5 = **15 runs**. Each `TestRun` carries a
+  zero-based `SampleIndex`; the group carries the requested `SampleCount` (1 for single-sample runs).
+  Runs sharing an endpoint form a **cohort** — averaged in the results UI and reduced to one
+  representative run for this loop (see below). Scheduled runs and A/B validation always use
+  `sampleCount = 1`.
 - `RunInForegroundAsync(...)` — synchronous single run; used internally (A/B validation) and in
   tests. Takes `customAgent` and an `isSystemTestRun` flag that **hides internal A/B runs** from
   the user's run list.
@@ -81,6 +86,23 @@ structural copy of `OptimizerService`), the pure `IAnomalyDetector` rule engine 
 endpoint unavailable, pass-rate drop or latency increase vs a rolling baseline computed from
 `TestRunStats`), and `AnomalyDetectionConfiguration` (thresholds + baseline window). Detected
 anomalies are delivered through `INotificationService` → the dashboard notification channel.
+
+**Sampling and the loop — cohort aggregation.** The per-run `TestRunStats` projection is left
+**unchanged** (one row per `TestRun`); the loop aggregates at read time so N samples never produce N
+near-identical anomalies or bias a proposal toward "sample 0":
+
+- `Proxytrace.Application/TestRun/RunCohort.cs` groups a group's runs by endpoint and resolves, per
+  cohort, a **representative run** — the **median sample by pass count** (tie → lowest `SampleIndex`;
+  fallback to a completed sample before stats project) — plus mean stats across the samples.
+- Both **optimizers** (`CompositeOptimizer` builds the cohorts once and hands `IReadOnlyList<RunCohort>`
+  to each `IOptimizerImplementation`) and **anomaly detection** consume cohorts: one input/proposal per
+  endpoint, off the representative + cohort mean.
+- The anomaly **baseline** (`AnomalyDetectionService.BuildBaselineAsync`) groups prior `TestRunStats` by
+  `GroupId`, averages each prior group's samples to one point, then takes the last `BaselineWindow`
+  **groups** — so one prior sampled run counts once in the rolling window.
+- Read-time consumers that report "one result per endpoint per group" (suite run aggregates, the
+  dashboard pass-rate sparkline, an agent's latest suite pass rates) call
+  `TestRunStatsCohortExtensions.AggregateSamples`, which collapses only the sample dimension.
 
 ## Stage 2 — Discover theories
 

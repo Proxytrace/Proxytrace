@@ -23,6 +23,7 @@ public record TestRunDto(
     string AgentName,
     Guid EndpointId,
     string EndpointName,
+    int SampleIndex,
     TestRunStatus Status,
     int TotalCases,
     int PassedCases,
@@ -61,6 +62,7 @@ public record TestRunGroupDto(
     string AgentName,
     TestRunStatus Status,
     bool IsSystemRun,
+    int SampleCount,
     DateTimeOffset? CompletedAt,
     IReadOnlyList<TestRunDto> Runs,
     DateTimeOffset CreatedAt,
@@ -75,6 +77,7 @@ public record TestRunSummaryDto(
     Guid Id,
     Guid EndpointId,
     string EndpointName,
+    int SampleIndex,
     TestRunStatus Status,
     int TotalCases,
     int PassedCases,
@@ -94,6 +97,7 @@ public record TestRunGroupListItemDto(
     string AgentName,
     TestRunStatus Status,
     bool IsSystemRun,
+    int SampleCount,
     DateTimeOffset? CompletedAt,
     IReadOnlyList<TestRunSummaryDto> Runs,
     DateTimeOffset CreatedAt,
@@ -101,4 +105,5 @@ public record TestRunGroupListItemDto(
 
 public record CreateTestRunGroupRequest(
     Guid TestSuiteId,
-    IReadOnlyList<Guid> ModelEndpointIds);
+    IReadOnlyList<Guid> ModelEndpointIds,
+    int SampleCount = 1);

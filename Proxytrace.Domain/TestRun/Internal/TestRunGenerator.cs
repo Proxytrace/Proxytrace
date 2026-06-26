@@ -32,7 +32,8 @@ internal class TestRunGenerator : DomainEntityGenerator<ITestRun>
     {
         ITestRun run = factory(
             group: await groupGenerator.GetOrCreateAsync(cancellationToken),
-            endpoint: await endpointGenerator.GetOrCreateAsync(cancellationToken));
+            endpoint: await endpointGenerator.GetOrCreateAsync(cancellationToken),
+            sampleIndex: 0);
 
         int resultCount = random.Int(0, run.Group.Suite.TestCases.Count);
         IReadOnlyCollection<ITestResult> results = await Enumerable.Range(0, resultCount)

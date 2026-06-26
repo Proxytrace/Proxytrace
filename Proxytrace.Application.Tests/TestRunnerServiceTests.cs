@@ -516,4 +516,44 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
             cancelOwned.Should().Throw<ObjectDisposedException>();
         }
     }
+
+    [TestMethod]
+    public async Task RunInBackground_WithSampleCount_CreatesSampleRunsPerEndpoint()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config => RegisterFakeModelClient(config, expectedOutput));
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var endpoints = await CreateEndpoints(services, 2);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+
+        // Runs are created synchronously in CreateGroup before the group is queued for execution.
+        var group = await runner.RunInBackgroundAsync(suite, endpoints, sampleCount: 3, cancellationToken: CancellationToken);
+
+        group.SampleCount.Should().Be(3);
+        var runs = await services.GetRequiredService<ITestRunRepository>().GetByGroupAsync(group.Id, CancellationToken);
+        runs.Should().HaveCount(6); // 2 endpoints × 3 samples
+        foreach (var endpoint in endpoints)
+        {
+            runs.Where(r => r.Endpoint.Id == endpoint.Id)
+                .Select(r => r.SampleIndex)
+                .Should().BeEquivalentTo([0, 1, 2]);
+        }
+    }
+
+    [TestMethod]
+    public async Task RunInBackground_WithSampleCountOutOfRange_Throws()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config => RegisterFakeModelClient(config, expectedOutput));
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var endpoints = await CreateEndpoints(services, 1);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+
+        await FluentActions
+            .Invoking(() => runner.RunInBackgroundAsync(suite, endpoints, sampleCount: 0, cancellationToken: CancellationToken))
+            .Should().ThrowAsync<ArgumentException>();
+        await FluentActions
+            .Invoking(() => runner.RunInBackgroundAsync(suite, endpoints, sampleCount: ITestRunGroup.MaxSampleCount + 1, cancellationToken: CancellationToken))
+            .Should().ThrowAsync<ArgumentException>();
+    }
 }

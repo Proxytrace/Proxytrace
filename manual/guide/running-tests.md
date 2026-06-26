@@ -9,7 +9,8 @@ A **Test Run** executes a [test suite](/guide/test-suites-and-cases) against a s
 2. Choose the agent (and version) to run it against.
 3. Pick the model endpoints to run against — select **one to three** to compare models side by
    side in a single run.
-4. Start the run.
+4. Choose a **sample count (1–5)** — how many times to run *each* endpoint.
+5. Start the run.
 
 Each case in the suite is executed against the agent, and every attached
 [evaluator](/guide/evaluators) scores the result.
@@ -17,6 +18,14 @@ Each case in the suite is executed against the agent, and every attached
 ::: tip Up to three endpoints
 A suite runs against **at most three model endpoints** at once. Once three are selected the
 remaining endpoints are disabled — deselect one to choose a different model.
+:::
+
+::: tip Sampling: catch flaky cases
+Models are non-deterministic — a case that passes once can fail the next time. Set the **sample
+count** above 1 to run each endpoint several times and **average the results per endpoint**, so a
+case that only sometimes passes shows up as such instead of looking solidly green or red. The form
+shows the total number of runs it will start (endpoints × samples, up to 15). Leave it at **1** for
+a single run per endpoint — exactly the classic behaviour.
 :::
 
 ## Watching progress
@@ -101,6 +110,23 @@ merged in), and the **tool definitions** the model receives. Use it to confirm t
 offering the tools a case expects; if a tool is missing here, the model can't call it. The
 request is rebuilt on demand from the agent's current configuration, so it reflects what a
 re-run would send.
+
+### Sampled runs
+
+When you run with a **sample count above 1**, each endpoint still gets a single matrix column —
+its sample runs are **averaged together**. The column header shows a **×N** badge, and each cell
+shows a **pass fraction** (for example `4/5`) with a small dot per sample instead of one
+pass/fail mark, so a flaky case stands out immediately. The column's footer pass rate is the mean
+across cases, and the model-comparison cards read *"avg of N samples."*
+
+A new **Flaky** filter (shown only for sampled runs) narrows the matrix to cases whose samples
+**disagree** — the ones worth investigating. Clicking a sampled cell opens the comparison drawer
+grouped by endpoint, with each sample labelled **sample i/N**, so you can read the individual runs
+that produced the average.
+
+Sampling stays out of the way of the rest of the loop: [anomaly detection](/guide/notifications)
+and the [optimization](/guide/optimization-theories) loop treat each endpoint's samples as **one
+representative run**, so a sampled run won't raise duplicate alerts or skew a proposal.
 
 ### Model comparison
 

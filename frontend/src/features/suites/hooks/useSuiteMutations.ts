@@ -8,14 +8,16 @@ import type { TestSuiteMessageDto } from '../../../api/models';
 interface StartRunArgs {
   suiteId: string;
   endpointIds: string[];
+  /** Samples to run per endpoint (1..5); the cohort is averaged in the results view. */
+  sampleCount: number;
 }
 
 /** Mutation to kick off a new test run group. Invalidates the run-groups list. */
 export function useStartRun(onSuccess: () => void) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ suiteId, endpointIds }: StartRunArgs) =>
-      testRunGroupsApi.create(suiteId, endpointIds),
+    mutationFn: ({ suiteId, endpointIds, sampleCount }: StartRunArgs) =>
+      testRunGroupsApi.create(suiteId, endpointIds, sampleCount),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
       onSuccess();

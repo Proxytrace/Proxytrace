@@ -29,9 +29,8 @@ import {
   buildLeaderboard,
   buildEvaluatorHeatmap,
   comparisonGrid,
-  matrixCounts,
-  filterSortMatrixRows,
 } from './comparison';
+import { buildCohorts } from './cohorts';
 
 function evaluation(over: Partial<EvaluationResultDto> = {}): EvaluationResultDto {
   return {
@@ -273,16 +272,21 @@ describe('buildMatrixRows', () => {
 describe('buildLeaderboard', () => {
   function lbRun(over: Partial<TestRunDto>): TestRunDto {
     return {
-      id: 'r', endpointId: 'ep', endpointName: 'm', status: TestRunStatus.Completed,
+      id: 'r', endpointId: 'ep', endpointName: 'm', sampleIndex: 0, status: TestRunStatus.Completed,
       totalCases: 10, passedCases: 8, failedCases: 2, results: new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}` })),
       durationMs: 1000, costUsd: 0.5, tokensIn: 100, tokensOut: 50, ...over,
     } as TestRunDto;
   }
 
+  // The leaderboard now works on cohorts (one per endpoint); with one run per endpoint each cohort
+  // holds a single run, so these single-sample cases read identically to the pre-sampling behaviour.
+  const lb = (runs: TestRunDto[], complete: boolean, ep: string | null = null) =>
+    buildLeaderboard(buildCohorts(runs), complete, ep);
+
   it('flags best pass rate, fastest and cheapest among completed runs', () => {
     const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
     const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
-    const [ea, eb] = buildLeaderboard([a, b], true);
+    const [ea, eb] = lb([a, b], true);
     expect(ea.passRate).toBe(90);
     expect(ea.isBest).toBe(true);
     expect(eb.isFastest).toBe(true);
@@ -292,7 +296,7 @@ describe('buildLeaderboard', () => {
   it('without a deployed endpoint, the best performer is the baseline and others read against it', () => {
     const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
     const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
-    const [ea, eb] = buildLeaderboard([a, b], true);
+    const [ea, eb] = lb([a, b], true);
     expect(ea.isBaseline).toBe(true);
     expect(ea.isProduction).toBe(false); // fallback baseline, not a deployed model
     expect(ea.delta).toBeNull();
@@ -305,7 +309,7 @@ describe('buildLeaderboard', () => {
   it('makes the in-production endpoint the baseline even when it is not the best', () => {
     const prod = lbRun({ id: 'p', endpointId: 'prod', endpointName: 'prod', passedCases: 8, failedCases: 2, durationMs: 2000, costUsd: 0.4 });
     const cand = lbRun({ id: 'c', endpointId: 'cand', endpointName: 'cand', passedCases: 10, failedCases: 0, durationMs: 1000, costUsd: 0.2 });
-    const entries = buildLeaderboard([prod, cand], true, 'prod');
+    const entries = lb([prod, cand], true, 'prod');
     const ep = entries.find(e => e.run.id === 'p');
     const ec = entries.find(e => e.run.id === 'c');
     expect(ep?.isBaseline).toBe(true);
@@ -318,7 +322,7 @@ describe('buildLeaderboard', () => {
   it('identifies the production baseline before the group settles, but withholds deltas', () => {
     const prod = lbRun({ id: 'p', endpointId: 'prod', endpointName: 'prod', status: TestRunStatus.Running });
     const cand = lbRun({ id: 'c', endpointId: 'cand', endpointName: 'cand', status: TestRunStatus.Running });
-    const entries = buildLeaderboard([prod, cand], false, 'prod');
+    const entries = lb([prod, cand], false, 'prod');
     expect(entries.find(e => e.run.id === 'p')?.isBaseline).toBe(true);
     expect(entries.find(e => e.run.id === 'p')?.isProduction).toBe(true);
     expect(entries.every(e => e.delta === null)).toBe(true);
@@ -327,7 +331,7 @@ describe('buildLeaderboard', () => {
 
   it('derives pending from totalCases minus delivered results', () => {
     const r = lbRun({ totalCases: 10, passedCases: 4, failedCases: 1, results: [{ testCaseId: 'c0' }, { testCaseId: 'c1' }, { testCaseId: 'c2' }, { testCaseId: 'c3' }, { testCaseId: 'c4' }] as TestResultDto[] });
-    const [e] = buildLeaderboard([r], true);
+    const [e] = lb([r], true);
     expect(e.pending).toBe(5);
     expect(e.passRate).toBe(80); // 4 / (4+1)
   });
@@ -335,7 +339,7 @@ describe('buildLeaderboard', () => {
   it('excludes non-completed runs from winner selection', () => {
     const done = lbRun({ id: 'd', endpointId: 'd', endpointName: 'd', passedCases: 5, failedCases: 5 });
     const running = lbRun({ id: 'x', endpointId: 'x', endpointName: 'x', status: TestRunStatus.Running, passedCases: 10, failedCases: 0 });
-    const entries = buildLeaderboard([done, running], true);
+    const entries = lb([done, running], true);
     expect(entries.find(e => e.run.id === 'd')?.isBest).toBe(true);
     expect(entries.find(e => e.run.id === 'x')?.isBest).toBe(false);
   });
@@ -343,7 +347,7 @@ describe('buildLeaderboard', () => {
   it('reports no winners, no baseline and null deltas while a candidates-only group is not yet complete', () => {
     const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', status: TestRunStatus.Running, passedCases: 9, failedCases: 1, durationMs: 1000, costUsd: 0.1 });
     const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', status: TestRunStatus.Running, passedCases: 6, failedCases: 4, durationMs: 3000, costUsd: 0.9 });
-    const entries = buildLeaderboard([a, b], false);
+    const entries = lb([a, b], false);
     expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest && !e.isBaseline)).toBe(true);
     expect(entries.every(e => e.delta === null)).toBe(true);
     expect(entries.find(e => e.run.id === 'a')?.passRate).toBe(90);
@@ -367,7 +371,7 @@ describe('comparisonGrid', () => {
 describe('buildEvaluatorHeatmap', () => {
   function hmRun(id: string, evaluations: EvaluationResultDto[][]): TestRunDto {
     return {
-      id, endpointName: id, status: TestRunStatus.Completed,
+      id, endpointId: id, endpointName: id, sampleIndex: 0, status: TestRunStatus.Completed,
       evaluators: [{ id: 'ev', kind: EvaluatorKind.ExactMatch, name: 'Exact' }],
       results: evaluations.map((evals, i) => ({ id: `${id}-${i}`, testCaseId: `c${i}`, testCaseSummary: '', actualResponse: '', evaluations: evals, durationMs: 1 })),
     } as TestRunDto;
@@ -380,7 +384,7 @@ describe('buildEvaluatorHeatmap', () => {
       [evaluation({ score: null, errorMessage: 'boom' })],
     ]);
     const group = { runs: [run] } as TestRunGroupDto;
-    const [row] = buildEvaluatorHeatmap(group);
+    const [row] = buildEvaluatorHeatmap(buildCohorts(group.runs));
     expect(row.evaluator.name).toBe('Exact');
     const cell = row.cells[0];
     expect(cell.total).toBe(3);
@@ -392,7 +396,7 @@ describe('buildEvaluatorHeatmap', () => {
 
   it('returns a null pass rate for a model with no judgements', () => {
     const group = { runs: [hmRun('m', [])] } as TestRunGroupDto;
-    const [row] = buildEvaluatorHeatmap(group);
+    const [row] = buildEvaluatorHeatmap(buildCohorts(group.runs));
     expect(row.cells[0].passRate).toBeNull();
   });
 
@@ -402,51 +406,11 @@ describe('buildEvaluatorHeatmap', () => {
       runId: 'm', testCaseId: 'c-live', inferenceDone: true,
       evaluations: [evaluation({ evaluatorId: 'ev', score: EvaluationScore.Bad })],
     }]]);
-    const [row] = buildEvaluatorHeatmap(group, live);
+    const [row] = buildEvaluatorHeatmap(buildCohorts(group.runs), live);
     const cell = row.cells[0];
     expect(cell.total).toBe(2); // one finalized + one live
     expect(cell.dist[EvaluationScore.Good]).toBe(1);
     expect(cell.dist[EvaluationScore.Bad]).toBe(1);
-  });
-});
-
-describe('matrixCounts / filterSortMatrixRows', () => {
-  function cr(testCaseId: string, evals: EvaluationResultDto[]): TestResultDto {
-    return { id: `${testCaseId}-r`, testCaseId, testCaseSummary: testCaseId, actualResponse: '', evaluations: evals, durationMs: 100 };
-  }
-  function run(id: string, results: TestResultDto[]): TestRunDto {
-    return { id, endpointName: id, results, testCases: [] as { id: string; summary: string }[] } as TestRunDto;
-  }
-  // a: divergent (pass/fail), b: all fail, c: all pass
-  const r1 = run('m1', [cr('a', [PASS]), cr('b', [FAIL]), cr('c', [PASS])]);
-  const r2 = run('m2', [cr('a', [FAIL]), cr('b', [FAIL]), cr('c', [PASS])]);
-  const rows = buildMatrixRows([r1, r2]);
-
-  it('counts each filter category', () => {
-    expect(matrixCounts(rows)).toEqual({ all: 3, divergent: 1, failing: 2, passing: 1 });
-  });
-
-  it('orders divergent first, then by fail count (sort=order)', () => {
-    // buildMatrixRows gives stable [a, b, c]; sort=order surfaces divergent a, then b (a fail), then c.
-    expect(filterSortMatrixRows(rows, 'all', 'order').map(r => r.caseId)).toEqual(['a', 'b', 'c']);
-  });
-
-  it('freezeOrder keeps the stable suite order regardless of sort', () => {
-    const stable = buildMatrixRows([run('m1', [cr('z', [FAIL]), cr('a', [PASS])])]);
-    expect(filterSortMatrixRows(stable, 'all', 'order', true).map(r => r.caseId)).toEqual(['z', 'a']);
-  });
-
-  it('filters to divergent / failing / passing', () => {
-    expect(filterSortMatrixRows(rows, 'divergent', 'order').map(r => r.caseId)).toEqual(['a']);
-    expect(filterSortMatrixRows(rows, 'passing', 'order').map(r => r.caseId)).toEqual(['c']);
-    expect(filterSortMatrixRows(rows, 'failing', 'order').map(r => r.caseId).sort()).toEqual(['a', 'b']);
-  });
-
-  it('sorts worst-first by minimum cell score', () => {
-    // distinct per-cell scores: b → 0, a → 0.5, c → 1
-    const wr = run('m', [cr('a', [PASS, FAIL]), cr('b', [FAIL, FAIL]), cr('c', [PASS, PASS])]);
-    const worst = filterSortMatrixRows(buildMatrixRows([wr]), 'all', 'worst').map(r => r.caseId);
-    expect(worst).toEqual(['b', 'a', 'c']);
   });
 });
 

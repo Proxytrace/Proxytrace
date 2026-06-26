@@ -89,7 +89,7 @@ internal sealed class TestRunSchedulerService : BackgroundService
                 }
 
                 var group = await runner.RunInBackgroundAsync(
-                    schedule.Suite, schedule.Endpoints.ToArray(), schedule.Id, cancellationToken);
+                    schedule.Suite, schedule.Endpoints.ToArray(), schedule.Id, cancellationToken: cancellationToken);
                 await schedule.RecordFired(now, cancellationToken);
 
                 // Scheduled fire: no request context, so this is attributed to the System actor.

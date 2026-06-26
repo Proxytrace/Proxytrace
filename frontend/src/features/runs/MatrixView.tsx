@@ -6,22 +6,32 @@ import { FOCUS_RING } from '../../lib/constants';
 import { cn } from '../../lib/cn';
 import { fmtDuration } from '../../lib/format';
 import { Card } from '../../components/ui/Card';
-import { passRateColor, passRatePercent, avgLatency, buildMatrixRows, isActive } from './results';
+import { passRateColor, isActive } from './results';
 import type { LiveProgress } from './live';
-import { matrixCounts, filterSortMatrixRows, type MatrixFilter, type MatrixSort } from './comparison';
+import {
+  buildCohorts,
+  buildCohortRows,
+  cohortPassRate,
+  matrixCounts,
+  filterSortMatrixRows,
+  type CohortVerdict,
+  type MatrixFilter,
+  type MatrixSort,
+} from './cohorts';
 import { ModelTag } from './components/ModelTag';
-import { MatrixCellContent } from './components/MatrixCell';
+import { MatrixCohortCell } from './components/MatrixCell';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { RowButton } from '../../components/ui/RowButton';
 import { ComparisonDrawer } from './drawers';
 
-/** Cases × models grid, divergence-first. Live progress overlays in-flight cases during a run. */
+/** Cases × endpoints grid, divergence-first. Each column averages an endpoint's N samples; live
+ * progress overlays in-flight cases. Single-sample endpoints render exactly as a one-run column. */
 export function MatrixView({ group, live }: {
   group: TestRunGroupDto;
   live?: LiveProgress;
 }) {
   const { t } = useLingui();
-  const runs = group.runs;
+  const cohorts = useMemo(() => buildCohorts(group.runs), [group.runs]);
   const [searchParams, setSearchParams] = useSearchParams();
   // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
   const caseParam = searchParams.get('case');
@@ -29,18 +39,18 @@ export function MatrixView({ group, live }: {
   const [filter, setFilter] = useState<MatrixFilter>('all');
   // eslint-disable-next-line lingui/no-unlocalized-strings -- sort state token, not UI copy
   const [sort, setSort] = useState<MatrixSort>('order');
-  const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
+  const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusEndpointId?: string } | null>(null);
 
   // Freeze row order while any run is in flight so rows don't reshuffle on every partial verdict.
-  const active = runs.some(r => isActive(r.status));
-  const allRows = useMemo(() => buildMatrixRows(runs, live), [runs, live]);
+  const active = group.runs.some(r => isActive(r.status));
+  const allRows = useMemo(() => buildCohortRows(cohorts, live), [cohorts, live]);
 
   // Deep link (?case=) opens the drawer for one case. Derived from the URL (no effect) so it
   // appears as soon as the row loads; local selection takes precedence once the user clicks.
   const urlCase = useMemo(() => {
     if (!caseParam) return null;
     const row = allRows.find(r => r.caseId === caseParam);
-    return row ? { caseId: row.caseId, summary: row.summary, focusRunId: undefined as string | undefined } : null;
+    return row ? { caseId: row.caseId, summary: row.summary, focusEndpointId: undefined as string | undefined } : null;
   }, [caseParam, allRows]);
   const openCase = selectedCase ?? urlCase;
 
@@ -54,8 +64,9 @@ export function MatrixView({ group, live }: {
   const counts = matrixCounts(allRows);
   const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort, active), [allRows, filter, sort, active]);
 
-  const multi = runs.length > 1;
-  const gridCols = cn(`minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`);
+  const multi = cohorts.length > 1;
+  const sampled = cohorts.some(c => c.sampleCount > 1);
+  const gridCols = cn(`minmax(240px,2.2fr) 72px repeat(${cohorts.length}, minmax(150px,1fr))`);
   const selIdx = openCase ? rows.findIndex(r => r.caseId === openCase.caseId) : -1;
 
   return (
@@ -66,8 +77,9 @@ export function MatrixView({ group, live }: {
           <span className="text-h2 font-semibold"><Trans>Test case matrix</Trans></span>
           <span className="text-body-sm text-muted">
             {multi
-              ? <Trans>{counts.all} cases × {runs.length} models — divergent rows striped</Trans>
+              ? <Trans>{counts.all} cases × {cohorts.length} models</Trans>
               : <Trans>{counts.all} cases × 1 model</Trans>}
+            {sampled && <> · <Trans>×{group.sampleCount} samples</Trans></>}
           </span>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -77,6 +89,7 @@ export function MatrixView({ group, live }: {
             segments={[
               { value: 'all', label: t`All`, count: counts.all },
               ...(multi ? [{ value: 'divergent' as const, label: t`Divergent`, count: counts.divergent }] : []),
+              ...(sampled ? [{ value: 'flaky' as const, label: t`Flaky`, count: counts.flaky }] : []),
               { value: 'failing', label: t`Failing`, count: counts.failing },
               { value: 'passing', label: t`Passing`, count: counts.passing },
             ]}
@@ -98,22 +111,25 @@ export function MatrixView({ group, live }: {
             {/* Header */}
             <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]"><Trans>Test case</Trans></div>
             <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right"><Trans>Lat</Trans></div>
-            {runs.map(run => (
-              <div key={run.id} data-testid={`matrix-col-${run.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center">
-                <ModelTag name={run.endpointName} size="xs" />
+            {cohorts.map(cohort => (
+              <div key={cohort.endpointId} data-testid={`matrix-col-${cohort.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center gap-1.5">
+                <ModelTag name={cohort.endpointName} size="xs" />
+                {cohort.sampleCount > 1 && (
+                  <span className="mono px-1 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">×{cohort.sampleCount}</span>
+                )}
               </div>
             ))}
 
             {/* Rows */}
             {rows.map((row, ri) => {
-              const withResult = row.cells.filter(c => c.result);
-              const passes = withResult.filter(c => c.pass === true).length;
-              const total = withResult.length;
+              const judged = row.cells.filter(c => c.verdict !== null);
+              const passes = judged.filter(c => c.verdict === 'pass').length;
+              const total = judged.length;
               const isSelected = openCase?.caseId === row.caseId;
               const stripe = row.divergent ? cn('shadow-[inset_3px_0_0_var(--warn)]') : '';
               const selBg = isSelected ? cn('bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]') : '';
-              const avg = row.cells.map(c => c.result?.durationMs).filter((d): d is number => d != null);
-              const avgMs = avg.length ? avg.reduce((a, b) => a + b, 0) / avg.length : null;
+              const durations = row.cells.flatMap(c => c.samples).map(s => s.result?.durationMs).filter((d): d is number => d != null);
+              const avgMs = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
 
               return (
                 <Fragment key={row.caseId}>
@@ -130,7 +146,7 @@ export function MatrixView({ group, live }: {
                     {multi ? (
                       <span className={cn('mono text-caption font-bold px-1 py-0.5 rounded-sm shrink-0', divChipClass(row.divergent, passes, total))}>{passes}/{total}</span>
                     ) : (
-                      <span className={cn('w-2 h-2 rounded-full shrink-0', verdictDotClass(withResult[0]?.pass))} />
+                      <span className={cn('w-2 h-2 rounded-full shrink-0', verdictDotClass(row.cells[0]?.verdict))} />
                     )}
                     <span className="flex flex-col min-w-0">
                       <span className="truncate text-body">{row.summary}</span>
@@ -143,12 +159,12 @@ export function MatrixView({ group, live }: {
                     <span className="mono text-caption text-muted">{avgMs !== null ? fmtDuration(avgMs) : '—'}</span>
                   </div>
 
-                  {/* Per-model cells */}
+                  {/* Per-endpoint cohort cells */}
                   {row.cells.map((cell, ci) => (
                     <div key={ci} className={cn('flex items-stretch', selBg)}>
-                      <MatrixCellContent
+                      <MatrixCohortCell
                         cell={cell}
-                        onCompare={runId => setSelectedCase({ caseId: row.caseId, summary: row.summary, focusRunId: runId })}
+                        onCompare={endpointId => setSelectedCase({ caseId: row.caseId, summary: row.summary, focusEndpointId: endpointId })}
                       />
                     </div>
                   ))}
@@ -156,14 +172,15 @@ export function MatrixView({ group, live }: {
               );
             })}
 
-            {/* Footer: pass rate + avg latency per model */}
+            {/* Footer: pass rate + avg latency per endpoint */}
             <div className="sticky bottom-0 z-20 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary"><Trans>Pass rate</Trans></div>
             <div className="sticky bottom-0 z-20 bg-card border-t border-hairline" />
-            {runs.map(run => {
-              const pr = passRatePercent(run.passedCases, run.passedCases + run.failedCases);
-              const avg = avgLatency(run);
+            {cohorts.map((cohort, i) => {
+              const pr = cohortPassRate(allRows, i);
+              const latencies = cohort.runs.flatMap(r => r.results.map(res => res.durationMs));
+              const avg = latencies.length ? latencies.reduce((a, b) => a + b, 0) / latencies.length : null;
               return (
-                <div key={run.id} className="sticky bottom-0 z-20 bg-card px-3 py-2 border-t border-hairline flex flex-col items-start justify-center gap-0.5">
+                <div key={cohort.endpointId} className="sticky bottom-0 z-20 bg-card px-3 py-2 border-t border-hairline flex flex-col items-start justify-center gap-0.5">
                   <span className="mono text-title font-bold" style={{ color: active ? 'var(--text-muted)' : passRateColor(pr) }}>{pr !== null ? `${pr}%` : '—'}</span>
                   <span className="mono text-caption text-muted">{avg !== null ? `~${fmtDuration(avg)}` : '—'}</span>
                 </div>
@@ -175,12 +192,13 @@ export function MatrixView({ group, live }: {
 
       {openCase && selIdx >= 0 && (
         <ComparisonDrawer
-          runs={runs}
+          runs={group.runs}
+          sampleCount={group.sampleCount}
           caseId={openCase.caseId}
           caseSummary={openCase.summary}
           caseIdx={selIdx}
           total={rows.length}
-          focusRunId={openCase.focusRunId}
+          focusEndpointId={openCase.focusEndpointId}
           onClose={closeDrawer}
           onPrev={selIdx > 0 ? () => { const p = rows[selIdx - 1]; setSelectedCase({ caseId: p.caseId, summary: p.summary }); } : undefined}
           onNext={selIdx < rows.length - 1 ? () => { const n = rows[selIdx + 1]; setSelectedCase({ caseId: n.caseId, summary: n.summary }); } : undefined}
@@ -190,8 +208,11 @@ export function MatrixView({ group, live }: {
   );
 }
 
-function verdictDotClass(pass: boolean | null | undefined): string {
-  return pass === true ? cn('bg-success') : pass === false ? cn('bg-danger') : cn('bg-[var(--text-muted)]');
+function verdictDotClass(verdict: CohortVerdict | undefined): string {
+  return verdict === 'pass' ? cn('bg-success')
+    : verdict === 'fail' ? cn('bg-danger')
+      : verdict === 'mixed' ? cn('bg-warn')
+        : cn('bg-[var(--text-muted)]');
 }
 
 function divChipClass(divergent: boolean, passes: number, total: number): string {

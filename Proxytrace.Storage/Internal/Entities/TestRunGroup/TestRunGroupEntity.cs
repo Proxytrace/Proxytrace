@@ -11,4 +11,5 @@ internal record TestRunGroupEntity : Entity
     public DateTimeOffset? CompletedAt { get; init; }
     public bool IsSystemRun { get; init; }
     public Guid? ScheduleId { get; init; }
+    public int SampleCount { get; init; } = 1;
 }

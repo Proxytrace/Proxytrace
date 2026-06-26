@@ -104,13 +104,13 @@ internal sealed class TestRunSeedScenario : IDemoScenario
             if (!ctx.SuitesByKey.TryGetValue(spec.SuiteKey, out var suite))
                 throw new InvalidOperationException($"Test suite '{spec.SuiteKey}' not seeded.");
 
-            var group = await createGroup(suite, isSystemRun: false, null).AddAsync(cancellationToken);
+            var group = await createGroup(suite, isSystemRun: false, null, sampleCount: 1).AddAsync(cancellationToken);
             await group.SetRunning(cancellationToken);
 
             foreach (var pick in spec.Endpoints)
             {
                 var endpoint = pick.SelectEndpoint(ctx);
-                var run = await createRun(group, endpoint).AddAsync(cancellationToken);
+                var run = await createRun(group, endpoint, sampleIndex: 0).AddAsync(cancellationToken);
 
                 var cases = suite.TestCases.ToArray();
                 int passing = (int)Math.Round(pick.PassRate * cases.Length);

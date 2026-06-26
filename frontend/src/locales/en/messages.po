@@ -94,10 +94,6 @@ msgstr "{0, plural, one {# message} other {# messages}}"
 msgid "{0, plural, one {# model discovered.} other {# models discovered.}}"
 msgstr "{0, plural, one {# model discovered.} other {# models discovered.}}"
 
-#. placeholder {0}: group.runs.length
-msgid "{0, plural, one {# model} other {# models}}"
-msgstr "{0, plural, one {# model} other {# models}}"
-
 #. placeholder {0}: tool.arguments.length
 msgid "{0, plural, one {# param} other {# params}}"
 msgstr "{0, plural, one {# param} other {# params}}"
@@ -109,6 +105,10 @@ msgstr "{0, plural, one {# result} other {# results}}"
 #. placeholder {0}: rows.length
 msgid "{0, plural, one {# row} other {# rows}}"
 msgstr "{0, plural, one {# row} other {# rows}}"
+
+#. placeholder {0}: group.sampleCount
+msgid "{0, plural, one {# sample each} other {# samples each}}"
+msgstr "{0, plural, one {# sample each} other {# samples each}}"
 
 #. placeholder {0}: latencyStats.samples
 msgid "{0, plural, one {# sample} other {# samples}}"
@@ -201,9 +201,9 @@ msgid "{0} cases"
 msgstr "{0} cases"
 
 #. placeholder {0}: counts.all
-#. placeholder {1}: runs.length
-msgid "{0} cases × {1} models — divergent rows striped"
-msgstr "{0} cases × {1} models — divergent rows striped"
+#. placeholder {1}: cohorts.length
+msgid "{0} cases × {1} models"
+msgstr "{0} cases × {1} models"
 
 #. placeholder {0}: counts.all
 msgid "{0} cases × 1 model"
@@ -267,7 +267,7 @@ msgstr "{0} judged"
 msgid "{0} messages"
 msgstr "{0} messages"
 
-#. placeholder {0}: runs.length
+#. placeholder {0}: cohorts.length
 msgid "{0} models"
 msgstr "{0} models"
 
@@ -448,6 +448,12 @@ msgstr "{count, plural, one {# unsaved change} other {# unsaved changes}}"
 msgid "{count, plural, one {Run on # endpoint} other {Run on # endpoints}}"
 msgstr "{count, plural, one {Run on # endpoint} other {Run on # endpoints}}"
 
+msgid "{endpointCount, plural, one {# model} other {# models}}"
+msgstr "{endpointCount, plural, one {# model} other {# models}}"
+
+msgid "{endpointCount} models"
+msgstr "{endpointCount} models"
+
 msgid "{evaluatorName}’s verdict"
 msgstr "{evaluatorName}’s verdict"
 
@@ -481,6 +487,19 @@ msgstr "{n} projects"
 
 msgid "{n} test suites"
 msgstr "{n} test suites"
+
+#. placeholder {0}: cell.doneSamples
+#. placeholder {1}: cell.sampleCount
+msgid "{name}: {0}/{1} samples done"
+msgstr "{name}: {0}/{1} samples done"
+
+#. placeholder {0}: cell.passCount
+#. placeholder {1}: cell.judgedCount
+msgid "{name}: {0}/{1} samples passed — click to compare"
+msgstr "{name}: {0}/{1} samples passed — click to compare"
+
+msgid "{name}: queued"
+msgstr "{name}: queued"
 
 msgid "{passed}/{total} passed"
 msgstr "{passed}/{total} passed"
@@ -520,9 +539,6 @@ msgstr "{resultBytes} B"
 msgid "{runCount, plural, one {run} other {runs}}"
 msgstr "{runCount, plural, one {run} other {runs}}"
 
-msgid "{runCount} models"
-msgstr "{runCount} models"
-
 msgid "{sizeB} B"
 msgstr "{sizeB} B"
 
@@ -537,6 +553,9 @@ msgstr "{total, plural, one {error} other {errors}}"
 
 msgid "{total, plural, one {event} other {events}}"
 msgstr "{total, plural, one {event} other {events}}"
+
+msgid "{totalRuns, plural, one {# run total} other {# runs total}}"
+msgstr "{totalRuns, plural, one {# run total} other {# runs total}}"
 
 msgid "{traces, plural, one {# trace} other {# traces}}"
 msgstr "{traces, plural, one {# trace} other {# traces}}"
@@ -594,6 +613,10 @@ msgstr "+7pt"
 #. placeholder {0}: fmtLatency(stats.latencyStdDevMs)
 msgid "± {0}"
 msgstr "± {0}"
+
+#. placeholder {0}: group.sampleCount
+msgid "×{0} samples"
+msgstr "×{0} samples"
 
 #. placeholder {0}: visibleAgents.length
 msgid "<0>{0}</0> detected · tap to inspect"
@@ -1025,6 +1048,10 @@ msgstr "Avg latency"
 
 msgid "Avg Latency"
 msgstr "Avg Latency"
+
+#. placeholder {0}: entry.sampleCount
+msgid "avg of {0} samples"
+msgstr "avg of {0} samples"
 
 msgid "Avg score"
 msgstr "Avg score"
@@ -1952,6 +1979,9 @@ msgstr "Fix license"
 
 msgid "Fixed"
 msgstr "Fixed"
+
+msgid "Flaky"
+msgstr "Flaky"
 
 msgid "Forgot password?"
 msgstr "Forgot password?"
@@ -3730,6 +3760,12 @@ msgstr "Run comparison · {0}"
 msgid "Run completion on current conversation"
 msgstr "Run completion on current conversation"
 
+msgid "Run each endpoint multiple times to surface flaky cases; results are averaged per endpoint."
+msgstr "Run each endpoint multiple times to surface flaky cases; results are averaged per endpoint."
+
+msgid "Run each endpoint once"
+msgstr "Run each endpoint once"
+
 msgid "Run evaluator"
 msgstr "Run evaluator"
 
@@ -3787,6 +3823,14 @@ msgstr "Same version on both sides — nothing to compare."
 
 msgid "Sample"
 msgstr "Sample"
+
+#. placeholder {0}: run.sampleIndex + 1
+#. placeholder {1}: cohort.sampleCount
+msgid "sample {0}/{1}"
+msgstr "sample {0}/{1}"
+
+msgid "Samples per endpoint"
+msgstr "Samples per endpoint"
 
 msgid "Sampling and budget controls."
 msgstr "Sampling and budget controls."

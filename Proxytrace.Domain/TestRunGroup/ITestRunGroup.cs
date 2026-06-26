@@ -14,8 +14,22 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
     /// </summary>
     public const int MaxModelEndpoints = 3;
 
+    /// <summary>
+    /// Hard cap on the number of samples (repeated runs) a single endpoint may be run for in one
+    /// group. Enforced in the runner service and the API. A group holds up to
+    /// <see cref="MaxModelEndpoints"/> × <see cref="MaxSampleCount"/> runs.
+    /// </summary>
+    public const int MaxSampleCount = 5;
+
     /// <summary>The test suite executed by all runs in this group.</summary>
     ITestSuite Suite { get; }
+
+    /// <summary>
+    /// How many times each endpoint is run (1..<see cref="MaxSampleCount"/>). The per-endpoint runs
+    /// (a "cohort") are averaged in the UI and aggregated to one representative run for the
+    /// optimization loop. 1 for legacy/manual single-sample runs.
+    /// </summary>
+    int SampleCount { get; }
 
     /// <summary>The aggregate execution status across all child runs.</summary>
     TestRunStatus Status { get; }
@@ -33,7 +47,7 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
     Guid? ScheduleId { get; }
 
     /// <summary>Factory delegate for creating a new test run group.</summary>
-    public delegate ITestRunGroup CreateNew(ITestSuite suite, bool isSystemRun, Guid? scheduleId);
+    public delegate ITestRunGroup CreateNew(ITestSuite suite, bool isSystemRun, Guid? scheduleId, int sampleCount);
 
     /// <summary>Factory delegate for reconstituting an existing test run group from persistence.</summary>
     public delegate ITestRunGroup CreateExisting(
@@ -42,6 +56,7 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
         DateTimeOffset? completedAt,
         bool isSystemRun,
         Guid? scheduleId,
+        int sampleCount,
         IDomainEntityData existing);
 
     Task<ITestRunGroup> SetRunning(CancellationToken cancellationToken = default);

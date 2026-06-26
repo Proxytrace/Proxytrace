@@ -44,6 +44,13 @@ left-rail list (whose pass rates are static mid-run by design). It also invalida
 `testRunSchedulesRoot` (a schedule's recent-runs change) and `testSuitesRoot` (the owning suite's
 aggregates and windowed run-stats change once a run finishes). See `frontend/src/features/runs/`.
 
+**Sampling is read-side only.** Running each endpoint N times (a cohort of sample runs) adds **no new
+events and no payload changes** — events stay keyed by `runId`/`testCaseId`, one per sample run, and the
+group stream fires `group-run-complete` once when all N×M runs finish. The cohort averaging (per-case
+pass fraction, per-endpoint columns) is a pure client-side derive over the per-run cache
+(`frontend/src/features/runs/cohorts.ts`), so live updates keep working unchanged as each sample run
+patches independently.
+
 The Playground (`/api/playground/...`) and Tracey chat also stream over `text/event-stream`, but they
 stream raw model tokens for one request rather than domain broadcaster events — not part of this catalog.
 

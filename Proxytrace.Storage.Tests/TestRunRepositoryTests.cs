@@ -14,6 +14,24 @@ namespace Proxytrace.Storage.Tests;
 public sealed class TestRunRepositoryTests : BaseTest<Module>
 {
     [TestMethod]
+    public async Task AddAsync_RoundTripsSampleIndex()
+    {
+        IServiceProvider services = GetServices();
+        var groupGen = services.GetRequiredService<IDomainEntityGenerator<ITestRunGroup>>();
+        var endpointGen = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var runFactory = services.GetRequiredService<ITestRun.CreateNew>();
+        var runRepo = services.GetRequiredService<ITestRunRepository>();
+
+        var group = await groupGen.GetOrCreateAsync(CancellationToken);
+        var endpoint = await endpointGen.GetOrCreateAsync(CancellationToken);
+
+        var saved = await runRepo.AddAsync(runFactory(group, endpoint, sampleIndex: 3), CancellationToken);
+        var reloaded = await runRepo.GetAsync(saved.Id, CancellationToken);
+
+        reloaded.SampleIndex.Should().Be(3);
+    }
+
+    [TestMethod]
     public async Task GetByAgentPaged_ByDefault_ExcludesRunsOfSystemGroups()
     {
         IServiceProvider services = GetServices();
@@ -114,10 +132,10 @@ public sealed class TestRunRepositoryTests : BaseTest<Module>
         var suite = await suiteGen.CreateAsync(CancellationToken);
         var endpoint = await endpointGen.GetOrCreateAsync(CancellationToken);
 
-        var userGroup = await groupRepo.AddAsync(groupFactory(suite, isSystemRun: false, null), CancellationToken);
-        var systemGroup = await groupRepo.AddAsync(groupFactory(suite, isSystemRun: true, null), CancellationToken);
-        var userRun = await runRepo.AddAsync(runFactory(userGroup, endpoint), CancellationToken);
-        var systemRun = await runRepo.AddAsync(runFactory(systemGroup, endpoint), CancellationToken);
+        var userGroup = await groupRepo.AddAsync(groupFactory(suite, isSystemRun: false, null, sampleCount: 1), CancellationToken);
+        var systemGroup = await groupRepo.AddAsync(groupFactory(suite, isSystemRun: true, null, sampleCount: 1), CancellationToken);
+        var userRun = await runRepo.AddAsync(runFactory(userGroup, endpoint, sampleIndex: 0), CancellationToken);
+        var systemRun = await runRepo.AddAsync(runFactory(systemGroup, endpoint, sampleIndex: 0), CancellationToken);
 
         return (suite, userRun, systemRun);
     }
@@ -135,7 +153,7 @@ public sealed class TestRunRepositoryTests : BaseTest<Module>
         var testCase = group.Suite.TestCases.First();
         var result = await resultGen.CreateAsync(testCase, CancellationToken);
 
-        var run = runFactory(group, endpoint);
+        var run = runFactory(group, endpoint, sampleIndex: 0);
         run = await runRepo.AddAsync(run, CancellationToken);
         // SetTestResult self-persists (domain transition), so the run row already exists.
         run = await run.SetTestResult(result, CancellationToken);

@@ -223,7 +223,7 @@ export default function Suites() {
         <RunConfirmModal
           suite={runSuite}
           onClose={closeRunModal}
-          onSubmit={ids => startRun.mutate({ suiteId: runSuite.id, endpointIds: ids })}
+          onSubmit={(ids, sampleCount) => startRun.mutate({ suiteId: runSuite.id, endpointIds: ids, sampleCount })}
           loading={startRun.isPending}
           done={runDone}
         />

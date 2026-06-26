@@ -248,8 +248,8 @@ public class ProposalsController : ControllerBase
         var suite = await suites.AddAsync(
             createSuite($"Seeded proposal suite {DateTimeOffset.UtcNow:O}", agent, [], []),
             cancellationToken);
-        var group = await groups.AddAsync(createGroup(suite, isSystemRun: true, null), cancellationToken);
-        return await testRuns.AddAsync(createRun(group, agent.Endpoint), cancellationToken);
+        var group = await groups.AddAsync(createGroup(suite, isSystemRun: true, null, sampleCount: 1), cancellationToken);
+        return await testRuns.AddAsync(createRun(group, agent.Endpoint, sampleIndex: 0), cancellationToken);
     }
 
     [HttpPatch("{id:guid}/status")]

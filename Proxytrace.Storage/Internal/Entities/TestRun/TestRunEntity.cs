@@ -7,6 +7,7 @@ internal record TestRunEntity : Entity
 {
     public required Guid Group { get; init; }
     public required Guid Endpoint { get; init; }
+    public int SampleIndex { get; init; }
     public required TestRunStatus Status { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
     public required IReadOnlyCollection<Guid> TestResults { get; init; }

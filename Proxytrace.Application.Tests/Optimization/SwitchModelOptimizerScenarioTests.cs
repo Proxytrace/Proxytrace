@@ -1,8 +1,8 @@
 using AwesomeAssertions;
 using NSubstitute;
 using Proxytrace.Application.Optimization.Internal;
-using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
@@ -35,7 +35,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("claude-3-haiku", cost: 4.0m, latency: Sec(5), passed: 9));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().ContainSingle();
         Captured c = fixture.Captured;
@@ -58,7 +58,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("gpt-4o", cost: 6.0m, latency: Sec(6), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().ContainSingle();
         Captured c = fixture.Captured;
@@ -79,7 +79,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("gpt-4o", cost: 8.0m, latency: Sec(5), passed: 10));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
     }
@@ -100,7 +100,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("premium-model", cost: 15.0m, latency: Sec(8), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         // Cost path: budget-model (2) is cheapest, but its latency (50s) regresses current (10s) => disqualified.
         // Latency path: balanced-model (6s) beats current (10s) by 40% ✓, its cost (5) doesn't
@@ -124,7 +124,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("cheap-b", cost: 2.4m, latency: Sec(5), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
     }
@@ -142,7 +142,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("model-c", cost: 5.0m, latency: Sec(5), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().BeEmpty();
     }
@@ -159,7 +159,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("cheapest", cost: 8.0m, latency: Sec(5), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().ContainSingle();
         fixture.Captured.Priority.Should().Be(Priority.Medium); // 30% saving
@@ -177,7 +177,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("runner-up", cost: 9.8m, latency: Sec(5), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().ContainSingle();
         fixture.Captured.Priority.Should().Be(Priority.Low); // 15% saving
@@ -195,7 +195,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("alternative", cost: 4.0m, latency: Sec(4), passed: 8));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
-            fixture.Group, fixture.Runs, CancellationToken);
+            fixture.Group, fixture.Cohorts, CancellationToken);
 
         theories.Should().ContainSingle();
         Captured c = fixture.Captured;
@@ -272,9 +272,9 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
         group.Id.Returns(groupId);
         group.Suite.Returns(suite);
 
-        var runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
-        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<TestRunStats>>(stats));
+        var cohorts = RunCohort.Build(
+            runsByName.Values.ToList(),
+            stats.ToDictionary(s => s.TestRunId));
 
         IModelSwitchTheory.CreateNew factory = (
             _, theorySuite, source, priority, rationale, proposedEndpoint, evidenceIds) =>
@@ -289,13 +289,13 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             return Substitute.For<IModelSwitchTheory>();
         };
 
-        var optimizer = new SwitchModelOptimizer(factory, runStats);
+        var optimizer = new SwitchModelOptimizer(factory);
 
         return new Fixture
         {
             Optimizer = optimizer,
             Group = group,
-            Runs = runsByName.Values.ToList(),
+            Cohorts = cohorts,
             Captured = captured,
             RunsByName = runsByName,
         };
@@ -313,7 +313,7 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
     {
         public required SwitchModelOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
-        public required IReadOnlyList<ITestRun> Runs { get; init; }
+        public required IReadOnlyList<RunCohort> Cohorts { get; init; }
         public required Captured Captured { get; init; }
         public required IReadOnlyDictionary<string, ITestRun> RunsByName { get; init; }
     }

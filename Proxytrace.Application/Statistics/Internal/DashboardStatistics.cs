@@ -158,7 +158,9 @@ internal class DashboardStatistics : IDashboardStatistics
 
         TestRunStats.Filter runFilter = await ToRunFilterAsync(filter, cancellationToken);
         IReadOnlyList<TestRunStats> runs = await runStats.QueryAsync(runFilter, cancellationToken);
+        // One sparkline point per (group, endpoint) cohort so sampled runs don't cluster N points.
         double[] passRate = runs
+            .AggregateSamples()
             .Where(r => r.TestCases > 0)
             .OrderBy(r => r.RunCompletedAt)
             .Select(r => r.Passed / (double)r.TestCases * 100d)
