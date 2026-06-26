@@ -31,9 +31,23 @@ row — a repeated delete of an already-archived entity is a 404 no-op and recor
 `projectId` for project-scoped actions; leave it null for global actions (e.g. license changes).
 `details` is a pre-serialized JSON string of any action-specific context.
 
-The one deliberate exception to "audit only successes" is **failed sign-in** (`AuditAction.LoginFailed`),
-emitted with `outcome: AuditOutcome.Failure` so brute-force / credential-stuffing attempts are visible.
-That is the sole producer of `AuditOutcome.Failure` today; every other action records `Success`.
+Most actions record `Success`; the deliberate `outcome: AuditOutcome.Failure` producers are
+**failed sign-in** (`AuditAction.LoginFailed`) and **failed second factor** (`MfaChallengeFailed`),
+so brute-force / credential-stuffing is visible, plus **denied access** (`AuditAction.AccessDenied`):
+`AuditDeniedAccessMiddleware` records a failure when a state-changing request (POST/PUT/PATCH/DELETE)
+is rejected with **403 Forbidden** — an authenticated caller attempting something beyond their
+permission (non-admin hitting an admin route, a member acting on another project, a license-gated
+feature). It is attributed to the caller (their id was stashed at authentication time), so
+privilege-probing is visible. **Scope/limits:** only `403` is captured — `401` (unauthenticated)
+carries no actor and overlaps `LoginFailed`, so it is intentionally skipped; and access checks that
+hide existence behind a `404` (the `IProjectAccessGuard` paths) are indistinguishable from genuine
+404s at the response layer and are **not** recorded. The middleware sits *before* `UseAuthorization`
+in the pipeline so it still runs when authorization short-circuits the request.
+
+Several actions are recorded by background/system work with **no request context** ⇒ the System
+actor: the test-run scheduler (`TestRunStarted`), the theory A/B validation pipeline
+(`TheoryValidated` / `TheoryInvalidated` / `ProposalGenerated`), automatic proposal adoption
+(`ProposalAutoAdopted`), and the one-time secrets backfill (`SecretsBackfilled`).
 
 The **password-reset** actions follow the same shape: `PasswordResetRequested` is emitted for every
 forgot-password attempt (the submitted email is the target, even when no account matches — like
@@ -51,9 +65,11 @@ See [`docs/mfa.md`](mfa.md).
 **Authentication events are local-mode only.** The auth-lifecycle actions (`UserLoggedIn`,
 `LoginFailed`, `UserLoggedOut`, `UserSignedUp`, `AdminBootstrapped`, `LegacyAccountClaimed`,
 `UserInvited`, `InviteRevoked`) are emitted from `AuthController`, whose endpoints are
-`[RequireLocalMode]`. Under OIDC, sign-in and just-in-time user/admin provisioning happen at the IdP /
-in `JitUserProvisioner` and are **not** audited today (those events live in the IdP's logs); all
-*non-auth* actions are still recorded in OIDC mode. Auditing the OIDC JIT path is a known gap.
+`[RequireLocalMode]`. Under OIDC, interactive sign-in of an **existing** user happens at the IdP and
+is not re-recorded here (it lives in the IdP's logs). **Just-in-time provisioning of a new user is
+audited**, though: `JitUserProvisioner` emits `AdminBootstrapped` for the first provisioned user and
+`UserSignedUp` for each subsequent one (the new user is the target; System actor, since the user's id
+is not yet stashed at provisioning time). All *non-auth* actions are recorded in OIDC mode as usual.
 
 `LogAudit` packs the fields into a strongly-typed `AuditState` and logs at `Information` with
 `EventId = (int)action`. The strong typing — rather than a `{Placeholder}` message template — is what

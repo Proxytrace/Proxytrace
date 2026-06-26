@@ -1,11 +1,14 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Proxytrace.Api.Dto.Theories;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
@@ -44,6 +47,7 @@ internal sealed class TheoryTools
     private readonly IToolUpdateTheory.CreateNew createToolUpdate;
     private readonly TheoryDtoMapper mapper;
     private readonly ILicenseService license;
+    private readonly ILogger<Audit> audit;
 
     public TheoryTools(
         IMcpProjectAccessor project,
@@ -56,7 +60,8 @@ internal sealed class TheoryTools
         IModelSwitchTheory.CreateNew createModelSwitch,
         IToolUpdateTheory.CreateNew createToolUpdate,
         TheoryDtoMapper mapper,
-        ILicenseService license)
+        ILicenseService license,
+        ILogger<Audit> audit)
     {
         this.project = project;
         this.repository = repository;
@@ -69,6 +74,7 @@ internal sealed class TheoryTools
         this.createToolUpdate = createToolUpdate;
         this.mapper = mapper;
         this.license = license;
+        this.audit = audit;
     }
 
     [McpServerTool(Name = "list_theories")]
@@ -144,6 +150,14 @@ internal sealed class TheoryTools
         };
 
         var result = await validation.SubmitAsync(theory, cancellationToken);
+        if (result is { Outcome: TheorySubmissionOutcome.Accepted, Theory: { } acceptedTheory })
+        {
+            audit.LogAudit(
+                AuditAction.TheorySubmitted, nameof(IOptimizationTheory), acceptedTheory.Id, agent.Name,
+                projectId: p.Id,
+                details: JsonSerializer.Serialize(new { source = TheorySource.External.ToString(), kind = kind.ToString() }));
+        }
+
         return (result.Outcome, result.Theory) switch
         {
             (TheorySubmissionOutcome.Accepted, { } accepted) => mapper.ToDto(accepted),

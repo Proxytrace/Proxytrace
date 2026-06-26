@@ -73,8 +73,13 @@ services:
     build:
       context: .
       dockerfile: Proxytrace.Api/Dockerfile
+      # Release (matches the primary `api`): a Debug build compiles in DebugLoginSeederHostedService,
+      # which seeds debug@proxytrace.dev into the SHARED Postgres DB at boot — that makes
+      # AnyUsersExist() true before auth.setup runs, so the setup spec's empty-DB precondition fails
+      # and the whole suite is blocked. Tier is env-driven (empty PROXYTRACE_LICENSE = Free), not
+      # build-config driven, so Release serves the Free tier just fine.
       args:
-        BUILD_CONFIGURATION: Debug
+        BUILD_CONFIGURATION: Release
     depends_on:
       postgres:
         condition: service_healthy

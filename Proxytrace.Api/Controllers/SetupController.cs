@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Setup;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
 
@@ -18,17 +21,20 @@ public class SetupController : ControllerBase
     private readonly IRepository<IProject> projectRepository;
     private readonly IDataCleanupService cleanup;
     private readonly ISetupService setup;
+    private readonly ILogger<Audit> audit;
 
     public SetupController(
         IRepository<IUser> userRepository,
         IRepository<IProject> projectRepository,
         IDataCleanupService cleanup,
-        ISetupService setup)
+        ISetupService setup,
+        ILogger<Audit> audit)
     {
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
         this.cleanup = cleanup;
         this.setup = setup;
+        this.audit = audit;
     }
 
     [HttpGet("status")]
@@ -106,6 +112,7 @@ public class SetupController : ControllerBase
     public async Task<IActionResult> CleanupNonModelData(CancellationToken cancellationToken)
     {
         await cleanup.DeleteAllNonModelDataAsync(cancellationToken);
+        audit.LogAudit(AuditAction.SetupCleanupPurged, "Setup");
         return NoContent();
     }
 }

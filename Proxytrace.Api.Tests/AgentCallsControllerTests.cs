@@ -1,10 +1,12 @@
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
@@ -154,5 +156,6 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         services.GetRequiredService<AgentDtoMapper>(),
         services.GetRequiredService<Proxytrace.Domain.AgentCall.IAgentCall.CreateNew>(),
         services.GetRequiredService<Proxytrace.Domain.Completion.ICompletion.Create>(),
-        guard);
+        guard,
+        NullLogger<Audit>.Instance);
 }

@@ -63,4 +63,37 @@ public enum AuditAction
     MfaEnabled = 41,
     MfaDisabled = 42,
     MfaChallengeFailed = 43,
+
+    // Optimization theory lifecycle. Submit/reset/reject are user-initiated; validated/invalidated
+    // and proposal generation are decided by the background A/B validation pipeline (System actor).
+    TheorySubmitted = 44,
+    TheoryReset = 45,
+    TheoryRejected = 46,
+    TheoryValidated = 47,
+    TheoryInvalidated = 48,
+    ProposalGenerated = 49,
+    ProposalAutoAdopted = 50,
+
+    // Test-run lifecycle (groups, individual runs) and recurring schedules.
+    TestRunGroupOptimizeRequested = 51,
+    TestRunGroupCancelled = 52,
+    TestRunGroupDeleted = 53,
+    TestRunDeleted = 54,
+    TestRunScheduleCreated = 55,
+    TestRunScheduleUpdated = 56,
+    TestRunScheduleDeleted = 57,
+    TestRunScheduleRunNow = 58,
+
+    // Trace deletion and agent-version moves.
+    AgentCallDeleted = 59,
+    AgentVersionMoved = 60,
+
+    // Destructive operator action: purge of all non-model domain data.
+    SetupCleanupPurged = 61,
+
+    // One-time at-rest protection of plaintext secrets (System actor).
+    SecretsBackfilled = 62,
+
+    // Authorization denial on a state-changing request (recorded with AuditOutcome.Failure).
+    AccessDenied = 63,
 }

@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -30,6 +33,7 @@ public class TestRunSchedulesController : ControllerBase
     private readonly ITestRunnerService runner;
     private readonly TestRunDtoMapper runMapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<Audit> audit;
 
     public TestRunSchedulesController(
         ITestRunScheduleRepository scheduleRepository,
@@ -41,7 +45,8 @@ public class TestRunSchedulesController : ControllerBase
         ITestRunSchedule.CreateNew createSchedule,
         ITestRunnerService runner,
         TestRunDtoMapper runMapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<Audit> audit)
     {
         this.scheduleRepository = scheduleRepository;
         this.groupRepository = groupRepository;
@@ -53,6 +58,7 @@ public class TestRunSchedulesController : ControllerBase
         this.runner = runner;
         this.runMapper = runMapper;
         this.accessGuard = accessGuard;
+        this.audit = audit;
     }
 
     // Resolve the effective owning project of a list query and verify access. Admins
@@ -138,6 +144,9 @@ public class TestRunSchedulesController : ControllerBase
             request.Name, suite, endpointList, TimeSpan.FromMinutes(request.IntervalMinutes), request.Enabled,
             request.AnchorAt ?? DateTimeOffset.UtcNow);
         schedule = await scheduleRepository.AddAsync(schedule, cancellationToken);
+        audit.LogAudit(
+            AuditAction.TestRunScheduleCreated, nameof(ITestRunSchedule), schedule.Id, schedule.Name,
+            projectId: schedule.Suite.Agent.Project.Id);
 
         return CreatedAtAction(nameof(Get), new { id = schedule.Id }, await ToDtoAsync(schedule, cancellationToken));
     }
@@ -171,6 +180,9 @@ public class TestRunSchedulesController : ControllerBase
         schedule = await schedule.Update(
             request.Name, endpointList, TimeSpan.FromMinutes(request.IntervalMinutes), request.Enabled,
             request.AnchorAt ?? schedule.AnchorAt, DateTimeOffset.UtcNow, cancellationToken);
+        audit.LogAudit(
+            AuditAction.TestRunScheduleUpdated, nameof(ITestRunSchedule), schedule.Id, schedule.Name,
+            projectId: schedule.Suite.Agent.Project.Id);
 
         return await ToDtoAsync(schedule, cancellationToken);
     }
@@ -187,6 +199,9 @@ public class TestRunSchedulesController : ControllerBase
             return NotFound();
 
         await scheduleRepository.RemoveAsync(id, cancellationToken);
+        audit.LogAudit(
+            AuditAction.TestRunScheduleDeleted, nameof(ITestRunSchedule), id, schedule.Name,
+            projectId: schedule.Suite.Agent.Project.Id);
         return NoContent();
     }
 
@@ -203,6 +218,9 @@ public class TestRunSchedulesController : ControllerBase
 
         await runner.RunInBackgroundAsync(
             schedule.Suite, schedule.Endpoints.ToArray(), schedule.Id, cancellationToken);
+        audit.LogAudit(
+            AuditAction.TestRunScheduleRunNow, nameof(ITestRunSchedule), schedule.Id, schedule.Name,
+            projectId: schedule.Suite.Agent.Project.Id);
 
         return await ToDtoAsync(schedule, cancellationToken);
     }

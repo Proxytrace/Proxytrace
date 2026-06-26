@@ -1,5 +1,14 @@
 # Implementation Plan — Expand Audit Log Scope
 
+> **Status: IMPLEMENTED** (branch `fix/various_bugfixes`). Deviations from the plan below:
+> - In-flight MFA work already claimed enum values `41–43` (`MfaEnabled`/`MfaDisabled`/
+>   `MfaChallengeFailed`), so the new actions were appended at **`44–63`** instead of `41–61`.
+> - **`TestCaseUpdated` was deferred**, not implemented — a test case's owning project can't be
+>   resolved cheaply (suite→test-case is a serialized JSON `Guid[]`, no reverse FK; the request
+>   carries no `suiteId`). Tracked as **#242**; the enum value was left out to avoid a dead action.
+> - `AccessDenied` fires on **403 only** (not 401 — overlaps `LoginFailed` / unauthenticated noise).
+> - A pre-existing flaky test surfaced during verification → **#243**.
+
 ## Context
 
 The audit log (`docs/audit-log.md`) records *who did what, to which target, in which project* for

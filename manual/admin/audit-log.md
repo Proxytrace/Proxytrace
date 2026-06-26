@@ -21,6 +21,9 @@ Each entry captures:
 - **Project** — the project the action belongs to, or *(global)* for instance-wide actions.
 - **Target** — the type, id, and a human-readable label of the thing acted on.
 - **Details** — optional action-specific context (e.g. the scopes granted to a new API key).
+- **Outcome** — whether the action **succeeded** or **failed**. Most entries are successes; failed
+  sign-ins, failed second-factor (MFA) attempts, and denied access are recorded as **failures** so
+  abuse and probing are visible.
 - **When** — when the action occurred.
 
 The actions recorded today:
@@ -28,21 +31,26 @@ The actions recorded today:
 | Area | Actions |
 | --- | --- |
 | Authentication | Signed in, failed sign-in, signed out, first-admin setup, legacy account claimed |
-| Users & access | User invited, invite revoked, sign-up, role changed, user deleted |
-| Test runs | Test run started (manual, scheduled, or via MCP) |
+| Users & access | User invited, invite revoked, sign-up, role changed, user deleted; **access denied** (a forbidden attempt to change something) |
+| Test runs | Test run started (manual, scheduled, or via MCP); run cancelled; run, run group, or optimization request; run/run-group deleted |
+| Scheduled runs | Schedule created, updated, deleted, or run now |
 | API keys | API key minted, API key deleted |
 | Projects | Project created, renamed, deleted; member added/removed |
-| Agents | Agent endpoint changed, agent deleted |
+| Agents | Agent endpoint changed, agent deleted, agent version moved |
+| Traces | Trace deleted |
 | Test suites | Test suite created, updated, deleted; test case added/removed |
 | Evaluators | Evaluator created, updated, deleted |
 | Providers | Provider created/updated/deleted, model endpoint created/updated/deleted |
-| Optimization | Proposal status changed (approved / rejected / adopted) |
+| Optimization | Theory submitted, reset, or rejected; theory validated/invalidated by A/B run; proposal generated; proposal status changed (approved / rejected / adopted); proposal auto-adopted |
 | Licensing | License set, license removed |
+| Operations | Non-model data purged; secrets backfilled at rest |
 
 ::: info Authentication events are local-mode
 Sign-in, sign-out, sign-up, setup, and legacy-claim events are recorded only when Proxytrace runs its
-**built-in (local) authentication**. Under OIDC, authentication happens at your identity provider, so
-those events live in the IdP's logs; all other actions above are still audited in OIDC mode.
+**built-in (local) authentication**. Under OIDC, interactive sign-in happens at your identity
+provider, so those events live in the IdP's logs. The **first-time provisioning of a new OIDC user**
+*is* recorded (as first-admin setup or sign-up); all other actions above are still audited in OIDC
+mode.
 :::
 
 ::: info Records survive deletion

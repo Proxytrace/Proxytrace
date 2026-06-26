@@ -1,10 +1,13 @@
+using System.Text.Json;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentVersion;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.OptimizationProposal;
 
@@ -35,6 +38,7 @@ internal sealed class ProposalAdoptionService : BackgroundService
     private readonly ProposalAdoptionMatcher matcher;
     private readonly IProposalBroadcaster proposalBroadcaster;
     private readonly ILogger<ProposalAdoptionService> logger;
+    private readonly ILogger<Audit> audit;
 
     public ProposalAdoptionService(
         IEntityEventService entityEvents,
@@ -42,7 +46,8 @@ internal sealed class ProposalAdoptionService : BackgroundService
         IRepository<IAgentVersion> versions,
         ProposalAdoptionMatcher matcher,
         IProposalBroadcaster proposalBroadcaster,
-        ILogger<ProposalAdoptionService> logger)
+        ILogger<ProposalAdoptionService> logger,
+        ILogger<Audit> audit)
     {
         this.entityEvents = entityEvents;
         this.proposals = proposals;
@@ -50,6 +55,7 @@ internal sealed class ProposalAdoptionService : BackgroundService
         this.matcher = matcher;
         this.proposalBroadcaster = proposalBroadcaster;
         this.logger = logger;
+        this.audit = audit;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -190,6 +196,14 @@ internal sealed class ProposalAdoptionService : BackgroundService
     {
         var adopted = await proposal.MarkAdopted(adoptedVersion, manual: false, cancellationToken);
         proposalBroadcaster.Publish(ProposalStatusChangedEvent.Create(adopted));
+        audit.LogAudit(
+            AuditAction.ProposalAutoAdopted, nameof(IOptimizationProposal), adopted.Id, adopted.Agent.Name,
+            projectId: adopted.Agent.Project.Id,
+            details: JsonSerializer.Serialize(new
+            {
+                kind = adopted.Kind.ToString(),
+                adoptedVersion = adoptedVersion?.VersionNumber,
+            }));
         logger.LogInformation(
             "Proposal {ProposalId} ({Kind}) adopted by agent {AgentId}{VersionSuffix}",
             adopted.Id, adopted.Kind, adopted.Agent.Id,

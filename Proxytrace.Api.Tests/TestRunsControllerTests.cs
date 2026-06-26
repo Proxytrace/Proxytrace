@@ -2,8 +2,10 @@ using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -163,5 +165,6 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
         services.GetRequiredService<IAgentRepository>(),
         services.GetRequiredService<ITestResultBroadcaster>(),
         services.GetRequiredService<TestRunDtoMapper>(),
-        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
+        NullLogger<Audit>.Instance);
 }
