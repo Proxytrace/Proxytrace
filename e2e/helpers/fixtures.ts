@@ -40,15 +40,13 @@ export const test = base.extend<{ _reset: void }, { _apiContext: APIRequestConte
   _reset: [
     async ({ _apiContext }, use, testInfo) => {
       if (RESET_PROJECTS.has(testInfo.project.name)) {
-        const login = await _apiContext.post('/api/auth/login', {
-          data: { email: 'admin@e2e.test', password: 'E2ePassword1!' },
-        });
-        if (login.ok()) {
-          const { token } = await login.json();
-          await _apiContext.post('/api/test/reset', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        }
+        // The reset endpoint is anonymous (test-only, see TestSupportController) so it does NOT
+        // depend on an admin login. That matters: an MFA spec can leave the shared admin behind a
+        // second factor, where a password login yields no session token — the old "login then reset
+        // with that token" flow then silently skipped the reset (Bearer null → 401), so the very
+        // truncate that clears the MFA enrollment never ran. Calling reset directly always restores
+        // the clean, MFA-disabled baseline.
+        await _apiContext.post('/api/test/reset');
       }
       await use();
     },

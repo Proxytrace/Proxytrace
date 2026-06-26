@@ -6,7 +6,7 @@ import { Spinner } from '../../../../components/ui/Spinner';
 import { ProgressBar } from '../../../../components/ui/ProgressBar';
 import { agentColor } from '../../../../lib/colors';
 import { TestRunStatus, type TestRunGroupDto } from '../../../../api/models';
-import { isActive, passRateColor } from '../../../runs/results';
+import { isActive, passRateColor } from '../../../../lib/runResults';
 import { ToolUIFrame } from './ToolUIFrame';
 import { RUN_STATUS_VARIANT } from './badge-variants';
 import { useLiveTestRunGroup } from './useLiveTestRunGroup';

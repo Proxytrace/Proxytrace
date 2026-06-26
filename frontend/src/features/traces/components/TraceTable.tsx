@@ -1,6 +1,6 @@
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
-import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, TRACE_GRID_CLS } from '../tracesMeta';
+import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, TRACE_GRID_CLS, traceListView } from '../tracesMeta';
 import type { TraceRow } from '../tracesMeta';
 import { cn } from '../../../lib/cn';
 import { FlatTraceRow } from './FlatTraceRow';
@@ -47,19 +47,17 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
           ))}
         </div>
 
-        {rows.length === 0 ? (
-          isFetching ? (
-            <div className="p-3"><SkeletonList rows={10} height={36} gap={4} /></div>
-          ) : filtered ? (
+        {(() => {
+          const view = traceListView(rows.length, isFetching, filtered);
+          if (view === 'loading') return <div className="p-3"><SkeletonList rows={10} height={36} gap={4} /></div>;
+          if (view === 'empty-filtered') return (
             <div data-testid="traces-empty-state" className="py-12 flex flex-col items-center gap-1 text-center">
               <span className="text-secondary text-body"><Trans>No traces match your filters.</Trans></span>
               <span className="text-muted text-body-sm"><Trans>Try widening the time range, agent, or search.</Trans></span>
             </div>
-          ) : (
-            <TracesEmptyState />
-          )
-        ) : (
-          rows.map(row =>
+          );
+          if (view === 'empty-setup') return <TracesEmptyState />;
+          return rows.map(row =>
             row.type === 'flat' ? (
               <FlatTraceRow
                 key={row.trace.id}
@@ -77,8 +75,8 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
                 onSelectTrace={onSelectTrace}
               />
             ),
-          )
-        )}
+          );
+        })()}
       </div>
     </div>
   );

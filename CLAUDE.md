@@ -16,6 +16,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/licensing.md`](docs/licensing.md) | Gating a feature/limit behind a license tier (`ILicenseService`) |
 | [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
 | [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |
+| [`docs/performance-testing.md`](docs/performance-testing.md) | Touching the perf suite (`perf/`) — seeding at scale, the DB-layer/HTTP/benchmark scopes, or the budgets |
 | [`docs/sse-events.md`](docs/sse-events.md) | Adding/changing a real-time stream (SSE broadcasters, event payloads, client hooks) |
 | [`docs/mcp.md`](docs/mcp.md) | Touching the MCP server (the `/mcp` endpoint, `McpApiKey` auth scheme, MCP tools) |
 | [`docs/audit-log.md`](docs/audit-log.md) | Emitting an audit event, or touching the audit capture pipeline / read API / retention |
@@ -47,6 +48,15 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
   letting it slide. Invoke the `file-issue` skill (`.claude/skills/file-issue/SKILL.md`) — it covers
   dedup, title/body quality, and labels — then carry on with your task.
 - **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
+- **Perf at scale** — whenever you touch a query, repository, EF mapping, or index on a high-volume
+  entity (above all `AgentCallEntity`/traces, but any table that grows unboundedly), you MUST add or
+  extend a perf test in [`perf/`](perf/) that measures the changed path against a budget in
+  `perf/perf-budgets.json` — a correctness test on a few in-memory rows does **not** catch
+  client-side evaluation, bad query plans (e.g. a nested loop from stale planner statistics), or
+  O(rows) blow-ups that only bite at scale. Sanity-check with `ToQueryString()` (server-side
+  `GROUP BY`, not a full-row scan) and `EXPLAIN (ANALYZE)` (estimated vs actual rows) and run
+  `perf/run.sh --size 1000000`. See [`docs/performance-testing.md`](docs/performance-testing.md) and
+  the `run-perf-tests` skill.
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
   [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the
   GitHub release notes verbatim — see [`docs/releasing.md`](docs/releasing.md)).

@@ -104,7 +104,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
                 e.ResponseToolRequestCount,
                 e.CreatedAt,
                 e.UpdatedAt,
-                e.ConversationId))
+                e.ConversationId,
+                e.OutlierFlags))
             .ToListAsync(cancellationToken);
 
         // Resolve the agent/endpoint metadata the list shows from the cached entity repositories
@@ -147,7 +148,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
                 Cost: cost,
                 CreatedAt: r.CreatedAt,
                 UpdatedAt: r.UpdatedAt,
-                ConversationId: r.ConversationId);
+                ConversationId: r.ConversationId,
+                OutlierFlags: r.OutlierFlags);
         }).ToArray();
 
         return (items, total);
@@ -168,7 +170,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         int ResponseToolRequestCount,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
-        Guid? ConversationId);
+        Guid? ConversationId,
+        OutlierFlags OutlierFlags);
 
     public async Task<IReadOnlyList<AgentCallHistogramBucket>> GetHistogramAsync(
         AgentCallFilter filter,
@@ -298,6 +301,11 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         if (filter.HttpStatus.HasValue)
         {
             query = query.Where(e => e.HttpStatus == filter.HttpStatus.Value);
+        }
+
+        if (filter.OutlierOnly)
+        {
+            query = query.Where(e => e.OutlierFlags != OutlierFlags.None);
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Query))

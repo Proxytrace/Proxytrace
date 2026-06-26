@@ -24,4 +24,5 @@ public sealed record AgentCallListItem(
     decimal? Cost,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    Guid? ConversationId);
+    Guid? ConversationId,
+    OutlierFlags OutlierFlags);

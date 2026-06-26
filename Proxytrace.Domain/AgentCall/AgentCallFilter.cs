@@ -10,4 +10,5 @@ public record AgentCallFilter(
     int? HttpStatus = null,
     bool IncludeSystemAgents = true,
     string? Query = null,
-    Guid? ConversationId = null);
+    Guid? ConversationId = null,
+    bool OutlierOnly = false);

@@ -1,10 +1,16 @@
+using System.Data.Common;
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using OtpNet;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
+using Proxytrace.Domain;
 using Proxytrace.Domain.MfaBackupCode;
 using Proxytrace.Domain.User;
+using Proxytrace.Domain.UserTotpEnrollment;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests.Auth.Local;
@@ -60,6 +66,69 @@ public sealed class MfaServiceTests : BaseTest<Module>
 
         (await mfa.ActivateAsync(user, "000000", CancellationToken)).Should().BeNull();
         (await mfa.IsEnabledAsync(user.Id, CancellationToken)).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task Setup_CalledTwiceBeforeActivation_ReplacesPendingEnrollment()
+    {
+        var services = GetServices();
+        var user = await SeedUser(services);
+        var mfa = services.GetRequiredService<IMfaService>();
+
+        var first = await mfa.SetupAsync(user, CancellationToken);
+        var second = await mfa.SetupAsync(user, CancellationToken);
+
+        first.Should().NotBeNull();
+        second.Should().NotBeNull();
+        second!.Secret.Should().NotBe(first!.Secret);
+
+        // The replaced pending enrollment is gone; the latest secret is the one that activates.
+        (await mfa.IsEnabledAsync(user.Id, CancellationToken)).Should().BeFalse();
+        var codes = await mfa.ActivateAsync(user, ComputeCode(second.Secret), CancellationToken);
+        codes.Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// Two near-simultaneous setups (e.g. a double-submitted request) race on the per-user unique
+    /// index. The loser's insert violates IX_UserTotpEnrollmentEntity_User; rather than surfacing a
+    /// 500 it must return the enrollment that actually landed so the user scans a secret that verifies.
+    /// The EF in-memory provider does not enforce unique indexes, so the violation is simulated.
+    /// </summary>
+    [TestMethod]
+    public async Task Setup_WhenConcurrentSetupWinsTheUniqueRace_ReturnsTheEnrollmentThatLanded()
+    {
+        const string winnerSecret = "JBSWY3DPEHPK3PXP";
+        var enrollments = Substitute.For<IUserTotpEnrollmentRepository>();
+
+        var services = GetServices(builder =>
+            builder.RegisterInstance(enrollments)
+                .As<IUserTotpEnrollmentRepository>()
+                .As<IRepository<IUserTotpEnrollment>>());
+
+        var user = await SeedUser(services);
+        var winner = services.GetRequiredService<IUserTotpEnrollment.CreateNew>()(user, winnerSecret);
+
+        // No enrollment when we first read; the concurrent winner's pending row once we re-read.
+        enrollments.FindByUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IUserTotpEnrollment?>(null), Task.FromResult<IUserTotpEnrollment?>(winner));
+        // Our own insert loses the race against the per-user unique index.
+        enrollments.AddAsync(Arg.Any<IUserTotpEnrollment>(), Arg.Any<CancellationToken>())
+            .Throws(new Exception("save failed", new FakeUniqueViolation()));
+
+        var mfa = services.GetRequiredService<IMfaService>();
+
+        var setup = await mfa.SetupAsync(user, CancellationToken);
+
+        setup.Should().NotBeNull();
+        setup!.Secret.Should().Be(winnerSecret);
+    }
+
+    /// <summary>A <see cref="DbException"/> carrying PostgreSQL SQLSTATE 23505 (unique_violation).</summary>
+    private sealed class FakeUniqueViolation : DbException
+    {
+        public FakeUniqueViolation() : base("duplicate key value violates unique constraint") { }
+
+        public override string SqlState => "23505";
     }
 
     [TestMethod]

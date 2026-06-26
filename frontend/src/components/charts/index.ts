@@ -6,4 +6,5 @@ export { StackedBar } from './StackedBar';
 export { Donut, type DonutSegment } from './Donut';
 export { SegmentedGauge } from './SegmentedGauge';
 export { MiniArea } from './MiniArea';
+export { MiniHistogram } from './MiniHistogram';
 export * from './chart-math';

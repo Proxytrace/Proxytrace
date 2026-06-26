@@ -168,6 +168,47 @@ public record AgentOverviewStat(
     IReadOnlyList<AgentSuitePassRate> SuitePassRates,
     AgentEntityCounts Counts);
 
+/// <summary>One equal-width histogram bin: the half-open value range and how many samples fell in it.</summary>
+public record HistogramBin(double Start, double End, int Count);
+
+/// <summary>
+/// Mean and (sample) standard deviation of one metric over its sample set, the min/max, the sample
+/// count, and an equal-width <see cref="Histogram"/> of the samples (so the UI can plot the real
+/// shape, not a synthesized curve). <see cref="StdDev"/> is 0 when fewer than two samples exist.
+/// </summary>
+public record MetricDistribution(
+    double Mean,
+    double StdDev,
+    int SampleCount,
+    double Min,
+    double Max,
+    IReadOnlyList<HistogramBin> Histogram)
+{
+    public static MetricDistribution Empty => new(0d, 0d, 0, 0d, 0d, []);
+}
+
+/// <summary>
+/// Distribution (mean ± std) of the agent's ingested calls over a window. Token and latency metrics
+/// are sampled per call; cost, cache-hit-rate and tool-call metrics are sampled per conversation
+/// (<c>ConversationId ?? AgentCallId</c>). Cache hit rate only samples conversations with a turn ≥ 2.
+/// </summary>
+public record AgentCallDistributions(
+    MetricDistribution InputTokensPerCall,
+    MetricDistribution OutputTokensPerCall,
+    MetricDistribution LatencyMsPerCall,
+    MetricDistribution CostPerConversationEur,
+    MetricDistribution CacheHitRatePerConversation,
+    MetricDistribution ToolCallsPerConversation)
+{
+    public static AgentCallDistributions Empty => new(
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty);
+}
+
 public record EvaluatorSummary(
     int TotalEvaluations,
     double? AvgScore,

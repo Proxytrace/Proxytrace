@@ -1,11 +1,13 @@
 using AwesomeAssertions;
 using Autofac;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Users;
 using Proxytrace.Application.Auth;
+using Proxytrace.Application.Auth.Local;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Notification;
@@ -247,6 +249,34 @@ public sealed class UsersControllerTests : BaseTest<Module>
         result.Result.Should().BeOfType<NotFoundResult>();
     }
 
+    [TestMethod]
+    public async Task CreateResetLink_BuildsAdminResetLinkFromAllowedOrigin()
+    {
+        Func<string, string>? capturedBuilder = null;
+        var resetService = Substitute.For<IPasswordResetService>();
+        resetService
+            .IssueResetLinkAsync(Arg.Any<Guid>(), Arg.Do<Func<string, string>>(b => capturedBuilder = b), Arg.Any<CancellationToken>())
+            .Returns(new PasswordResetLink("ignored", DateTimeOffset.UtcNow.AddHours(1)));
+
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(resetService).As<IPasswordResetService>());
+        var target = await CreateUserAsync(services, UserRole.Member);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Frontend:AllowedOrigin"] = "https://app.example.test",
+            })
+            .Build();
+        var controller = ResolveController(services, config);
+
+        await controller.CreateResetLink(target.Id, CancellationToken);
+
+        // The admin-panel reset link shares the same fallback as the self-service one: with no
+        // Frontend:BaseUrl it must build from the configured frontend origin, not the API host.
+        capturedBuilder.Should().NotBeNull();
+        var url = capturedBuilder?.Invoke("tok-123");
+        url.Should().Be("https://app.example.test/reset-password?token=tok-123");
+    }
+
     private static ICurrentUserAccessor RegisterAccessor(ContainerBuilder builder)
     {
         var accessor = Substitute.For<ICurrentUserAccessor>();
@@ -261,14 +291,14 @@ public sealed class UsersControllerTests : BaseTest<Module>
         return await services.GetRequiredService<IRepository<IUser>>().AddAsync(user, CancellationToken);
     }
 
-    private static UsersController ResolveController(IServiceProvider services) => new(
+    private static UsersController ResolveController(IServiceProvider services, IConfiguration? config = null) => new(
         services.GetRequiredService<IRepository<IUser>>(),
         services.GetRequiredService<IProjectRepository>(),
         services.GetRequiredService<IUserAdministrationService>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
-        services.GetRequiredService<Proxytrace.Application.Auth.Local.IPasswordResetService>(),
+        services.GetRequiredService<IPasswordResetService>(),
         services.GetRequiredService<Proxytrace.Application.Auth.Local.IMfaService>(),
         services.GetRequiredService<Proxytrace.Domain.UserTotpEnrollment.IUserTotpEnrollmentRepository>(),
-        new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+        config ?? new ConfigurationBuilder().Build(),
         Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
 }

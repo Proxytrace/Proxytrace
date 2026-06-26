@@ -1,3 +1,4 @@
+using System.Net;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Statistics;
@@ -317,5 +318,239 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
 
         series.Should().BeEmpty();
         summary.TotalTraces.Should().Be(0);
+    }
+
+    private static readonly DateTimeOffset WindowFrom = DateTimeOffset.UtcNow.AddHours(-1);
+    private static readonly DateTimeOffset WindowTo = DateTimeOffset.UtcNow.AddHours(1);
+
+    [TestMethod]
+    public async Task GetAgentDistributions_EmptyDb_ReturnsEmptyDistributions()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+
+        var dist = await reader.GetAgentDistributionsAsync(Guid.NewGuid(), WindowFrom, WindowTo, CancellationToken);
+
+        dist.InputTokensPerCall.SampleCount.Should().Be(0);
+        dist.CostPerConversationEur.SampleCount.Should().Be(0);
+        dist.CacheHitRatePerConversation.SampleCount.Should().Be(0);
+        dist.ToolCallsPerConversation.SampleCount.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_PerCallMetrics_ComputeMeanAndSampleStdDev()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        // inputs {100,200,300} → mean 200, sample-std 100; outputs {10,20,30} → mean 20, std 10;
+        // latencies {50,100,150} → mean 100, std 50. Each call is its own (null) conversation.
+        var cells = new[] { (100UL, 10UL, 50d), (200UL, 20UL, 100d), (300UL, 30UL, 150d) };
+        foreach (var (input, output, latency) in cells)
+        {
+            await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+                new TokenUsage(input, output, 0), latency, toolCount: 0, HttpStatusCode.OK);
+        }
+
+        var dist = await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken);
+
+        dist.InputTokensPerCall.SampleCount.Should().Be(3);
+        dist.InputTokensPerCall.Mean.Should().BeApproximately(200d, 1e-6);
+        dist.InputTokensPerCall.StdDev.Should().BeApproximately(100d, 1e-6);
+        dist.OutputTokensPerCall.Mean.Should().BeApproximately(20d, 1e-6);
+        dist.OutputTokensPerCall.StdDev.Should().BeApproximately(10d, 1e-6);
+        dist.LatencyMsPerCall.Mean.Should().BeApproximately(100d, 1e-6);
+        dist.LatencyMsPerCall.StdDev.Should().BeApproximately(50d, 1e-6);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_Histogram_BinsCoverAllSamplesWithMinMax()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        foreach (ulong input in new ulong[] { 100, 200, 300 })
+        {
+            await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+                new TokenUsage(input, 10, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        }
+
+        var h = (await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken)).InputTokensPerCall;
+
+        h.Min.Should().Be(100d);
+        h.Max.Should().Be(300d);
+        h.Histogram.Should().HaveCount(3);                       // distinct values → one bar each
+        h.Histogram.Sum(b => b.Count).Should().Be(3);            // every sample lands in exactly one bin
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_Histogram_IdenticalSamples_CollapseToSingleBin()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(500, 10, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(500, 10, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+
+        var h = (await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken)).InputTokensPerCall;
+
+        h.Histogram.Should().ContainSingle().Which.Count.Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_SingleCall_StdDevIsZero()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(123, 7, 0), latencyMs: 42, toolCount: 0, HttpStatusCode.OK);
+
+        var dist = await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken);
+
+        dist.InputTokensPerCall.SampleCount.Should().Be(1);
+        dist.InputTokensPerCall.Mean.Should().BeApproximately(123d, 1e-6);
+        dist.InputTokensPerCall.StdDev.Should().Be(0d);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_OnlyCountsSuccessfulCalls()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(100, 50, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(9999, 9999, 0), latencyMs: 999, toolCount: 0, HttpStatusCode.InternalServerError);
+
+        var dist = await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken);
+
+        dist.InputTokensPerCall.SampleCount.Should().Be(1);
+        dist.InputTokensPerCall.Mean.Should().BeApproximately(100d, 1e-6);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_CacheHitRate_ExcludesFirstTurnAndSingletons()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        Guid conv = Guid.NewGuid();
+        // Turn 1 (seeded first → earliest): fully cached, must be EXCLUDED.
+        await SeedCallAsync(services, agent, endpoint, sample, conv,
+            new TokenUsage(1000, 100, 1000), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        // Turn 2: 400/1000 = 0.4 cache hit — the only sampled turn for this conversation.
+        await SeedCallAsync(services, agent, endpoint, sample, conv,
+            new TokenUsage(1000, 100, 400), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        // A single-turn conversation contributes no cache sample.
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(500, 50, 500), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+
+        var dist = await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken);
+
+        dist.CacheHitRatePerConversation.SampleCount.Should().Be(1);
+        dist.CacheHitRatePerConversation.Mean.Should().BeApproximately(0.4d, 1e-9);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_ToolCallsPerConversation_SumsTurnsAndCountsSingleton()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        Guid conv = Guid.NewGuid();
+        await SeedCallAsync(services, agent, endpoint, sample, conv,
+            new TokenUsage(100, 50, 0), latencyMs: 10, toolCount: 1, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpoint, sample, conv,
+            new TokenUsage(100, 50, 0), latencyMs: 10, toolCount: 2, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(100, 50, 0), latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+
+        var dist = await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken);
+
+        // Per-conversation tool counts {3 (1+2), 0 (singleton)} → mean 1.5 over two samples.
+        dist.ToolCallsPerConversation.SampleCount.Should().Be(2);
+        dist.ToolCallsPerConversation.Mean.Should().BeApproximately(1.5d, 1e-9);
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_CostPerConversation_SumsAcrossEndpointsAndTreatsNullConvAsSingleton()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        IModelEndpoint endpointX = await CreatePricedEndpointAsync(services, inputCost: 2.5m, outputCost: 10m, cachedCost: 1m);
+        IModelEndpoint endpointY = await CreatePricedEndpointAsync(services, inputCost: 5m, outputCost: 20m, cachedCost: 2m);
+
+        // Conversation A spans two endpoints; conversation B is a single null-conversation call.
+        Guid convA = Guid.NewGuid();
+        var usageX = new TokenUsage(1000, 500, 0);
+        var usageY = new TokenUsage(1000, 500, 0);
+        var usageB = new TokenUsage(2000, 1000, 0);
+        await SeedCallAsync(services, agent, endpointX, sample, convA, usageX, latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpointY, sample, convA, usageY, latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpointX, sample, conversationId: null, usageB, latencyMs: 10, toolCount: 0, HttpStatusCode.OK);
+
+        var dist = await reader.GetAgentDistributionsAsync(agent.Id, WindowFrom, WindowTo, CancellationToken);
+
+        decimal costA = (endpointX.CalculateCost(usageX) ?? 0m) + (endpointY.CalculateCost(usageY) ?? 0m);
+        decimal costB = endpointX.CalculateCost(usageB) ?? 0m;
+        double expectedMean = (double)(costA + costB) / 2d;
+
+        dist.CostPerConversationEur.SampleCount.Should().Be(2);
+        dist.CostPerConversationEur.Mean.Should().BeApproximately(expectedMean, 1e-9);
+    }
+
+    private async Task<IModelEndpoint> CreatePricedEndpointAsync(
+        IServiceProvider services, decimal inputCost, decimal outputCost, decimal cachedCost)
+    {
+        var seed = await services.GetRequiredService<IDomainObjectGenerator<IModelEndpoint>>().CreateAsync(CancellationToken);
+        var createEndpoint = services.GetRequiredService<IModelEndpoint.CreateNew>();
+        var endpointRepo = services.GetRequiredService<IRepository<IModelEndpoint>>();
+        return await endpointRepo.AddAsync(
+            createEndpoint(seed.Model, seed.Provider, inputTokenCost: inputCost, outputTokenCost: outputCost, cachedInputTokenCost: cachedCost),
+            CancellationToken);
+    }
+
+    private async Task<IAgentCall> SeedCallAsync(
+        IServiceProvider services, IAgent agent, IModelEndpoint endpoint, AssistantMessage sample,
+        Guid? conversationId, TokenUsage usage, double latencyMs, int toolCount, HttpStatusCode status)
+    {
+        var createCompletion = services.GetRequiredService<ICompletion.Create>();
+        var conversationGen = services.GetRequiredService<IDomainObjectGenerator<Conversation>>();
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var callRepo = services.GetRequiredService<IRepository<IAgentCall>>();
+
+        var toolRequests = Enumerable.Range(0, toolCount).Select(i => new ToolRequest($"tr{i}", "tool", "{}")).ToList();
+        var response = createCompletion(new AssistantMessage(sample.Contents, toolRequests), usage, TimeSpan.FromMilliseconds(latencyMs));
+        var request = await conversationGen.CreateAsync(CancellationToken);
+        var call = createCall(agent, agent.CurrentVersion, endpoint, request, response, status, conversationId: conversationId);
+        return await callRepo.AddAsync(call, CancellationToken);
     }
 }

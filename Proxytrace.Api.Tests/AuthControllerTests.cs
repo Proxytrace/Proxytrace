@@ -269,9 +269,111 @@ public sealed class AuthControllerTests : BaseTest<Module>
         result.Value.EmailEnabled.Should().BeTrue();
     }
 
+    [TestMethod]
+    public async Task CreateInvite_FallsBackToAllowedOriginForLink()
+    {
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(accessor).As<ICurrentUserAccessor>());
+        var admin = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(admin);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Frontend:AllowedOrigin"] = "https://app.example.test",
+            })
+            .Build();
+        var controller = ResolveController(services, config: config);
+
+        var result = await controller.Create(new CreateInviteRequest("invitee@example.com", UserRole.Member), CancellationToken);
+
+        // No Frontend:BaseUrl is set, so the link must use the configured frontend origin — not the
+        // API server's own host (which would point the browser at the wrong port).
+        result.Value.Should().NotBeNull();
+        result.Value.Url.Should().StartWith("https://app.example.test/signup?token=");
+    }
+
+    [TestMethod]
+    public async Task ForgotPassword_BuildsResetLinkFromAllowedOrigin()
+    {
+        Func<string, string>? capturedBuilder = null;
+        var resetService = Substitute.For<IPasswordResetService>();
+        resetService
+            .RequestResetAsync(Arg.Any<string>(), Arg.Do<Func<string, string>>(b => capturedBuilder = b), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(resetService).As<IPasswordResetService>());
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Frontend:AllowedOrigin"] = "https://app.example.test",
+            })
+            .Build();
+        var controller = ResolveController(services, config: config);
+
+        await controller.ForgotPassword(new ForgotPasswordRequest("user@example.com"), CancellationToken);
+
+        // No Frontend:BaseUrl is set, so the reset link the controller hands the service must build
+        // from the configured frontend origin — not the API server's own host (the wrong-port bug).
+        capturedBuilder.Should().NotBeNull();
+        var url = capturedBuilder?.Invoke("tok-123");
+        url.Should().Be("https://app.example.test/reset-password?token=tok-123");
+    }
+
+    [TestMethod]
+    public async Task ForgotPassword_PrefersExplicitBaseUrlOverAllowedOrigin()
+    {
+        Func<string, string>? capturedBuilder = null;
+        var resetService = Substitute.For<IPasswordResetService>();
+        resetService
+            .RequestResetAsync(Arg.Any<string>(), Arg.Do<Func<string, string>>(b => capturedBuilder = b), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(resetService).As<IPasswordResetService>());
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Frontend:BaseUrl"] = "https://explicit.example.test",
+                ["Frontend:AllowedOrigin"] = "https://app.example.test",
+            })
+            .Build();
+        var controller = ResolveController(services, config: config);
+
+        await controller.ForgotPassword(new ForgotPasswordRequest("user@example.com"), CancellationToken);
+
+        // Frontend:BaseUrl is the explicit override and must win over AllowedOrigin when both are set.
+        capturedBuilder.Should().NotBeNull();
+        var url = capturedBuilder?.Invoke("tok");
+        url.Should().Be("https://explicit.example.test/reset-password?token=tok");
+    }
+
+    [TestMethod]
+    public async Task ForgotPassword_WithNoFrontendConfig_FallsBackToRequestHost()
+    {
+        Func<string, string>? capturedBuilder = null;
+        var resetService = Substitute.For<IPasswordResetService>();
+        resetService
+            .RequestResetAsync(Arg.Any<string>(), Arg.Do<Func<string, string>>(b => capturedBuilder = b), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        IServiceProvider services = GetServices(builder => builder.RegisterInstance(resetService).As<IPasswordResetService>());
+        var controller = ResolveController(services);
+        controller.ControllerContext.HttpContext.Request.Scheme = "https";
+        controller.ControllerContext.HttpContext.Request.Host = new HostString("backend.local:5000");
+
+        await controller.ForgotPassword(new ForgotPasswordRequest("user@example.com"), CancellationToken);
+
+        // With neither Frontend key set, the documented last resort is the request host. Pinning this
+        // keeps the three-tier fallback honest: dropping or reordering a tier would change this URL.
+        capturedBuilder.Should().NotBeNull();
+        var url = capturedBuilder?.Invoke("tok");
+        url.Should().Be("https://backend.local:5000/reset-password?token=tok");
+    }
+
     private static AuthController ResolveController(
         IServiceProvider services,
-        IEmailSettingsStore? emailSettings = null) => new(
+        IEmailSettingsStore? emailSettings = null,
+        IConfiguration? config = null) => new(
         new AuthOptions(),
         services.GetRequiredService<ISetupService>(),
         services.GetRequiredService<ILoginService>(),
@@ -283,7 +385,7 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<IPasswordPolicy>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),
-        new ConfigurationBuilder().Build(),
+        config ?? new ConfigurationBuilder().Build(),
         Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance,
         emailSettings ?? Substitute.For<IEmailSettingsStore>())
     {

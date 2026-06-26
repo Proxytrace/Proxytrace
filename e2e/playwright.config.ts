@@ -44,6 +44,7 @@ export default defineConfig({
         '**/suites.spec.ts',
         '**/traces.spec.ts',
         '**/traces-grouping.spec.ts',
+        '**/outliers.spec.ts',
         '**/evaluators.spec.ts',
         '**/dashboard.spec.ts',
         '**/settings.spec.ts',

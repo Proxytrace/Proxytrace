@@ -16,6 +16,14 @@ test.describe('Two-factor authentication', () => {
     api.setToken(token);
   });
 
+  // Restore the shared admin to its MFA-disabled baseline after each test. The per-test reset only
+  // runs *before* a test, so without this the admin would stay behind a second factor for whatever
+  // runs next — and a project that does not reset (auth-flows) would then fail its password login.
+  // Reset is anonymous (test-only), so it works even though this account now needs an MFA challenge.
+  test.afterEach(async ({ request }) => {
+    await request.post('/api/test/reset');
+  });
+
   test('enabling MFA gates sign-in behind a second factor, satisfied by a backup code', async ({ page }) => {
     // Enroll over the API: fetch a secret, confirm it with a freshly computed TOTP code.
     const { secret } = await api.mfaSetup();

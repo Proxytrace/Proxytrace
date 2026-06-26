@@ -4,7 +4,7 @@ The domain (`Proxytrace.Domain/`) currently models:
 
 - **User, Project** — Tenancy. `Project` references one `IModelEndpoint` (`SystemEndpoint`) used by built-in system agents (e.g. agent-name generation, optimizers).
 - **Agent** — An AI agent: `Name`, `SystemPrompt` (`IPromptTemplate`), `Tools` (`IReadOnlyList<ToolSpecification>`), `Endpoint` (`IModelEndpoint`), `Project`, `IsSystemAgent` flag.
-- **AgentCall** — A captured LLM interaction (one trace entry).
+- **AgentCall** — A captured LLM interaction (one trace entry). Carries an `OutlierFlags` bitmask (`Proxytrace.Domain.AgentCall.OutlierFlags`, stored as a byte) recording which per-call characteristics — high tokens, high latency, low turn-2+ cache hit, many tool calls — flagged it as an outlier at ingestion; `None` means not an outlier. Detection lives in `Proxytrace.Application/Outliers/`: `IOutlierDetector` (per-agent mean ± N·stddev), backed by the bounded-window `IOutlierBaselineReader` and the admin-tunable single-row `IOutlierSettingsStore`. The detector runs inside `AgentCallProcessor` at ingestion; the Traces list filters on `OutlierOnly` (`AgentCallFilter`).
 - **ModelProvider, Model, ModelEndpoint** — `ModelProvider` is the upstream API (OpenAI, Anthropic, …). `ModelEndpoint` pairs a `Model` with a `ModelProvider` and stores per-token costs (`InputTokenCost`, `OutputTokenCost`); has `CalculateCost(TokenUsage)`.
 - **ApiKey** — Proxytrace-issued key for clients hitting the OpenAI proxy. Tied to a `Project` + `ModelProvider`.
 - **TestSuite, TestCase** — Curated benchmark inputs. `TestSuite` has N:M with `IEvaluator` (junction `TestSuiteEvaluatorEntity`).

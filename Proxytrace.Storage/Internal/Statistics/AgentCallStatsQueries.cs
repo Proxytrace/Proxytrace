@@ -139,14 +139,14 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context, StatisticsFilter filter, CancellationToken cancellationToken)
     {
         var (where, parameters) = BuildLatencyWhere(context, filter);
+        // One ordered-set aggregate over an ARRAY of probabilities: PostgreSQL computes p50/p95/p99
+        // from a single ordered pass and returns a double[] (vs. three separate percentile_cont calls).
         string sql = $"""
             SELECT "EndpointId",
                    count(*) AS cnt,
                    min("LatencyMs") AS mn,
                    max("LatencyMs") AS mx,
-                   percentile_cont(0.5)  WITHIN GROUP (ORDER BY "LatencyMs") AS p50,
-                   percentile_cont(0.95) WITHIN GROUP (ORDER BY "LatencyMs") AS p95,
-                   percentile_cont(0.99) WITHIN GROUP (ORDER BY "LatencyMs") AS p99
+                   percentile_cont(ARRAY[0.5, 0.95, 0.99]) WITHIN GROUP (ORDER BY "LatencyMs") AS ps
             FROM "AgentCallEntity"
             WHERE "LatencyMs" IS NOT NULL{where}
             GROUP BY "EndpointId"
@@ -170,11 +170,12 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
+                double[] percentiles = reader.GetFieldValue<double[]>(4);
                 result.Add(new LatencyStat(
                     EndpointId: reader.GetGuid(0),
-                    P50Ms: reader.GetDouble(4),
-                    P95Ms: reader.GetDouble(5),
-                    P99Ms: reader.GetDouble(6),
+                    P50Ms: percentiles[0],
+                    P95Ms: percentiles[1],
+                    P99Ms: percentiles[2],
                     MinMs: reader.GetDouble(2),
                     MaxMs: reader.GetDouble(3),
                     SampleCount: (int)reader.GetInt64(1)));
@@ -603,6 +604,96 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         return (series, summary);
     }
 
+    public async Task<AgentCallDistributions> GetAgentDistributionsAsync(
+        Guid agentId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
+    {
+        StorageDbContext context = contextFactory();
+
+        IQueryable<Guid> versionIdsForAgent = context.Set<AgentVersionEntity>()
+            .AsNoTracking()
+            .Where(v => v.AgentId == agentId)
+            .Select(v => v.Id);
+
+        // Single materialise-and-compute pass. Scoped to one agent over a bounded window, so pulling
+        // the minimal per-call projection into memory is cheap. Std-dev needs no ordered-set aggregate
+        // (unlike the latency percentiles above), and cost-per-conversation needs C# endpoint pricing,
+        // so every distribution is computed here rather than splitting relational/in-memory paths.
+        var calls = await context.Set<AgentCallEntity>()
+            .AsNoTracking()
+            .Where(c => versionIdsForAgent.Contains(c.AgentVersionId)
+                && c.CreatedAt >= from && c.CreatedAt <= to
+                && c.HttpStatus >= 200 && c.HttpStatus < 300)
+            .Select(c => new
+            {
+                ConvKey = c.ConversationId ?? c.Id,
+                c.EndpointId,
+                c.CreatedAt,
+                c.InputTokens,
+                c.OutputTokens,
+                c.CachedInputTokens,
+                c.LatencyMs,
+                Tools = c.ResponseToolRequestCount,
+            })
+            .ToListAsync(cancellationToken);
+
+        if (calls.Count == 0)
+        {
+            return AgentCallDistributions.Empty;
+        }
+
+        // Per-call metrics.
+        MetricDistribution inputTokens = Distribution(calls.Select(c => (double)(c.InputTokens ?? 0UL)).ToArray());
+        MetricDistribution outputTokens = Distribution(calls.Select(c => (double)(c.OutputTokens ?? 0UL)).ToArray());
+        MetricDistribution latency = Distribution(
+            calls.Where(c => c.LatencyMs != null).Select(c => c.LatencyMs ?? 0d).ToArray());
+
+        // Per-conversation metrics. Cost is linear in tokens, so a conversation's cost is the sum over
+        // its calls of CostOf(endpoint, tokens); load each endpoint's pricing once. Unpriced endpoints
+        // contribute 0 (matches GetCostEstimateAsync/GetAgentWindowAsync).
+        Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
+            context, calls.Select(c => c.EndpointId).Distinct().ToArray(), cancellationToken);
+
+        decimal CostOf(Guid endpointId, long input, long output, long cached)
+            => endpoints.TryGetValue(endpointId, out IModelEndpoint? e)
+                ? e.CalculateCost(new TokenUsage(
+                    (ulong)Math.Max(input, 0L), (ulong)Math.Max(output, 0L), (ulong)Math.Max(cached, 0L))) ?? 0m
+                : 0m;
+
+        var costSamples = new List<double>();
+        var toolSamples = new List<double>();
+        var cacheSamples = new List<double>();
+
+        foreach (var conv in calls.GroupBy(c => c.ConvKey))
+        {
+            decimal cost = conv.Sum(c => CostOf(
+                c.EndpointId, (long)(c.InputTokens ?? 0UL), (long)(c.OutputTokens ?? 0UL), (long)(c.CachedInputTokens ?? 0UL)));
+            costSamples.Add((double)cost);
+
+            toolSamples.Add(conv.Sum(c => (double)c.Tools));
+
+            // Cache hit rate for turn ≥ 2: drop the earliest call; sample only when later turns sent
+            // input (turn 1 cannot be a cache hit; single-turn conversations contribute nothing).
+            var laterTurns = conv.OrderBy(c => c.CreatedAt).Skip(1).ToArray();
+            if (laterTurns.Length > 0)
+            {
+                long laterInput = laterTurns.Sum(c => (long)(c.InputTokens ?? 0UL));
+                if (laterInput > 0L)
+                {
+                    long laterCached = laterTurns.Sum(c => (long)(c.CachedInputTokens ?? 0UL));
+                    cacheSamples.Add(Math.Clamp(laterCached / (double)laterInput, 0d, 1d));
+                }
+            }
+        }
+
+        return new AgentCallDistributions(
+            InputTokensPerCall: inputTokens,
+            OutputTokensPerCall: outputTokens,
+            LatencyMsPerCall: latency,
+            CostPerConversationEur: Distribution(costSamples),
+            CacheHitRatePerConversation: Distribution(cacheSamples),
+            ToolCallsPerConversation: Distribution(toolSamples));
+    }
+
     private async Task<Dictionary<Guid, IModelEndpoint>> LoadEndpointsAsync(
         StorageDbContext context, IReadOnlyCollection<Guid> endpointIds, CancellationToken cancellationToken)
     {
@@ -689,6 +780,67 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             query = query.Where(c => !systemVersionIds.Contains(c.AgentVersionId));
         }
         return query;
+    }
+
+    /// <summary>
+    /// Mean, sample (n−1) standard deviation, min/max and an equal-width histogram of
+    /// <paramref name="samples"/>. Std-dev is 0 when fewer than two samples exist; an empty set yields
+    /// <see cref="MetricDistribution.Empty"/>.
+    /// </summary>
+    private static MetricDistribution Distribution(IReadOnlyList<double> samples)
+    {
+        int n = samples.Count;
+        if (n == 0)
+        {
+            return MetricDistribution.Empty;
+        }
+
+        double mean = samples.Sum() / n;
+        double std = 0d;
+        if (n >= 2)
+        {
+            double sumSq = 0d;
+            foreach (double v in samples)
+            {
+                double d = v - mean;
+                sumSq += d * d;
+            }
+            std = Math.Sqrt(sumSq / (n - 1));
+        }
+
+        double min = samples.Min();
+        double max = samples.Max();
+        return new MetricDistribution(mean, std, n, min, max, BuildHistogram(samples, min, max));
+    }
+
+    /// <summary>
+    /// Bins <paramref name="samples"/> into up to 24 equal-width buckets over [min, max]. The bin count
+    /// is capped at the number of distinct values, so small discrete metrics (e.g. tool counts) get one
+    /// bar per value rather than fractional empties. When every sample is identical, a single bin holds
+    /// them all. The max value lands in the last bin (the top edge is treated as inclusive).
+    /// </summary>
+    private static IReadOnlyList<HistogramBin> BuildHistogram(IReadOnlyList<double> samples, double min, double max)
+    {
+        if (max <= min)
+        {
+            return [new HistogramBin(min, max, samples.Count)];
+        }
+
+        int bins = Math.Clamp(samples.Distinct().Count(), 1, 24);
+        double width = (max - min) / bins;
+        var counts = new int[bins];
+        foreach (double v in samples)
+        {
+            int idx = (int)((v - min) / width);
+            counts[Math.Clamp(idx, 0, bins - 1)]++;
+        }
+
+        var result = new HistogramBin[bins];
+        for (int i = 0; i < bins; i++)
+        {
+            result[i] = new HistogramBin(min + (i * width), min + ((i + 1) * width), counts[i]);
+        }
+        return result;
     }
 
     private static double Percentile(double[] sorted, double p)

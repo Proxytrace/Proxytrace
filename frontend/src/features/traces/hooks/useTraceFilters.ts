@@ -5,7 +5,7 @@ import { useLocalStorageState } from '../../../hooks/useLocalStorageState';
 /**
  * Owns the persisted Traces filter bar so the page survives refresh / navigation.
  *
- * `timeRange`, `search`, and `showSystem` are project-agnostic and stored under fixed keys.
+ * `timeRange`, `search`, `showSystem`, and `outlierOnly` are project-agnostic and stored under fixed keys.
  * `agentFilter` is **project-scoped** — agent ids belong to one project and the Traces page
  * stays mounted across project switches, so its value is keyed per project and re-read when the
  * project changes (the others can stay on the simpler `useLocalStorageState`).
@@ -50,6 +50,8 @@ export interface TraceFilters {
   setSearch: (value: string) => void;
   showSystem: boolean;
   setShowSystem: (value: boolean) => void;
+  outlierOnly: boolean;
+  setOutlierOnly: (value: boolean) => void;
   agentFilter: string;
   setAgentFilter: (id: string) => void;
   /** True when a saved time range was restored at mount (suppresses first-load auto-default). */
@@ -61,6 +63,7 @@ export function useTraceFilters(projectId: string | null): TraceFilters {
   const timeRange = isValidTimeRange(rawRange) ? rawRange : ALL_TIME;
   const [search, setSearch] = useLocalStorageState<string>('traces.search', '');
   const [showSystem, setShowSystem] = useLocalStorageState<boolean>('traces.showSystem', false);
+  const [outlierOnly, setOutlierOnly] = useLocalStorageState<boolean>('traces.outlierOnly', false);
 
   const [rangeWasRestored] = useState(() => {
     try {
@@ -102,6 +105,8 @@ export function useTraceFilters(projectId: string | null): TraceFilters {
     setSearch,
     showSystem,
     setShowSystem,
+    outlierOnly,
+    setOutlierOnly,
     agentFilter,
     setAgentFilter,
     rangeWasRestored,

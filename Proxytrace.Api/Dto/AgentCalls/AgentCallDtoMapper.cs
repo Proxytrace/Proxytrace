@@ -63,7 +63,8 @@ public sealed class AgentCallDtoMapper
         c.Cost,
         c.CreatedAt,
         c.UpdatedAt,
-        c.ConversationId);
+        c.ConversationId,
+        (int)c.OutlierFlags);
 
     /// <summary>
     /// Lightweight projection for the dashboard recent-traces strip (a small fixed count) from a
@@ -88,7 +89,8 @@ public sealed class AgentCallDtoMapper
         ComputeCost(c),
         c.CreatedAt,
         c.UpdatedAt,
-        c.ConversationId);
+        c.ConversationId,
+        (int)c.OutlierFlags);
 
     /// <summary>First user message in the request with collapsed whitespace; null when none/empty.
     /// Mirrors the frontend's old <c>firstUserMessage</c> so the list row reads a ready-made preview.</summary>

@@ -47,8 +47,6 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         this.endpoints = endpoints;
     }
 
-    private const int RequestPreviewMaxLength = 1000;
-
     public override void Configure(EntityTypeBuilder<AgentCallEntity> builder)
     {
         // Composite (AgentVersionId, CreatedAt): serves the agent/project-scoped trace list and
@@ -65,8 +63,14 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.HasIndex(e => e.CreatedAt);
         builder.Property(e => e.FinishReason).HasMaxLength(64);
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
-        builder.Property(e => e.RequestPreview).HasMaxLength(RequestPreviewMaxLength);
+        builder.Property(e => e.RequestPreview).HasMaxLength(AgentCallPreview.MaxLength);
         builder.HasIndex(e => e.ConversationId);
+
+        // Partial index serving the "outliers only" trace filter (WHERE OutlierFlags <> 0). Outliers
+        // are a small fraction of rows, so a filtered index stays tiny and is the cheapest way to page
+        // them on this high-volume table. The filter is relational metadata; the in-memory provider
+        // (kiosk/tests) ignores indexes, so this is a no-op there.
+        builder.HasIndex(e => e.OutlierFlags).HasFilter("\"OutlierFlags\" <> 0");
 
         builder
             .Property(e => e.Request)
@@ -126,7 +130,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             errorMessage: stored.ErrorMessage,
             modelParameters: modelParameters,
             existing: stored,
-            conversationId: stored.ConversationId);
+            conversationId: stored.ConversationId,
+            outlierFlags: stored.OutlierFlags);
     }
 
     public Task<AgentCallEntity> Map(IAgentCall domain, CancellationToken cancellationToken = default)
@@ -146,29 +151,12 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             ErrorMessage = domain.ErrorMessage,
             ModelParameters = AgentConfig.ToData(domain.ModelParameters),
             ConversationId = domain.ConversationId,
-            RequestPreview = BuildPreview(domain.Request),
+            OutlierFlags = domain.OutlierFlags,
+            RequestPreview = AgentCallPreview.Build(domain.Request),
             ResponseToolRequestCount = domain.Response?.Response is AssistantMessage assistant
                 ? assistant.ToolRequests.Count
                 : 0,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
-
-    /// <summary>
-    /// First user message in the request, whitespace-collapsed and truncated, stored so the traces
-    /// list renders a preview without loading the full request payload. Mirrors the API list mapper.
-    /// </summary>
-    private static string? BuildPreview(Conversation request)
-    {
-        string? text = request.Messages.OfType<UserMessage>().FirstOrDefault()?.GetText();
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return null;
-        }
-
-        string collapsed = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
-        return collapsed.Length > RequestPreviewMaxLength
-            ? collapsed[..RequestPreviewMaxLength]
-            : collapsed;
-    }
 }

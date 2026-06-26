@@ -67,8 +67,35 @@ Set the connection string in:
   only and returns `AgentCallListItem`, so a page never reads or deserialises the `Request`,
   `Response` or `ModelParameters` payload columns. Two denormalised columns populated at write time
   back this: `RequestPreview` (first user message, collapsed + truncated) and
-  `ResponseToolRequestCount`. The full payload is loaded per-selection via `FindAsync`. (Rows written
-  before these columns existed show no preview until they age out via retention.)
+  `ResponseToolRequestCount`. The full payload is loaded per-selection via `FindAsync`. The shared
+  `AgentCallPreview.Build` computes the preview, used both at ingestion (`AgentCallConfig`) and by the
+  backfill below. (Rows written before `RequestPreview` existed start with it `null`; a one-time,
+  idempotent startup backfill — `AgentCallPreviewBackfillService`, registered after the DB initializer
+  — recomputes their preview in bounded batches `WHERE RequestPreview IS NULL`, so they regain it on
+  the next boot. A request with no user message is marked with an empty string rather than `null` so
+  the candidate set strictly shrinks and a re-run is a no-op; the client renders an empty preview as
+  the same em-dash placeholder as `null`. `ResponseToolRequestCount` is not backfilled — older rows
+  keep its `0` default.)
+- **Outlier flag + partial index.** `OutlierFlags` (a byte bitmask, `0` = not an outlier) is written at
+  ingestion by the outlier detector. A **partial index** (`WHERE "OutlierFlags" <> 0`) backs the
+  "outliers only" trace filter cheaply — outliers are a small fraction of this high-volume table. The
+  filter is relational metadata; the in-memory provider ignores it. See [`domain-concepts.md`](domain-concepts.md).
+
+> **Gotcha — keep planner statistics fresh on AgentCallEntity (issue #246).** The dashboard/statistics
+> aggregates (`AgentCallStatsQueries`) translate to server-side `GROUP BY` / `sum` / `percentile_cont` —
+> they do **not** client-evaluate. (The token columns are `ulong?` → `numeric(20,0)`; `Queryable.Sum`
+> has no `ulong` overload, so they cast inside the aggregate, e.g.
+> `g.Sum(c => (long?)c.InputTokens ?? 0L)` → `sum(coalesce("InputTokens"::bigint,0))`. That casts to
+> bigint server-side and is fine — `(decimal?)` translates too but sums as the slower `numeric`.) The
+> real cliff is **stale planner statistics**: right after a bulk load/restore the table has no stats, so
+> Postgres defaults to a wildly low row estimate and flips the windowed aggregate from a parallel
+> seq-scan aggregate to a **nested loop that random-reads the whole table** — ~3.5s at 1M vs
+> ~270-480ms once analyzed (*same SQL*, confirmed by `EXPLAIN ANALYZE`). A production database accrues
+> rows incrementally and autovacuum keeps stats current; a one-shot bulk import does not. **Rules:** run
+> `ANALYZE` after any bulk import/restore (the perf seeder does); `autovacuum_analyze_scale_factor` is
+> lowered on this table (migration `TuneAgentCallAutovacuum`) so growth keeps stats fresh; and when a
+> server-side aggregate is unexpectedly slow, `EXPLAIN (ANALYZE)` it and compare the planner's **estimated
+> vs actual** row counts before assuming the query itself is wrong.
 
 ## Migrations
 
@@ -99,6 +126,10 @@ English — see [`i18n.md`](i18n.md).
 The `AddApiKeyScopes` migration adds a non-nullable `ApiKeyEntity.Scopes` column (an `ApiKeyScopes`
 flags enum stored as `int`) with a SQL default of `1` (`Ingestion`), backfilling existing keys to
 ingestion-only so no legacy key silently gains MCP capabilities — see [`mcp.md`](mcp.md).
+
+The `AddOutlierDetection` migration adds the non-nullable `AgentCallEntity.OutlierFlags` byte column
+(default `0`) plus its partial index, and the single-row `OutlierSettingsEntity` table (the
+admin-tunable detection sensitivity). Detection is going-forward only — existing rows keep `0`.
 
 The `AddApiKeyOwner` migration adds a non-nullable `ApiKeyEntity.Owner` FK to `UserEntity`
 (`OnDelete: Cascade` — a key cannot outlive its owner). Since there is no sensible owner to backfill
@@ -212,6 +243,14 @@ columns. The `Password` column holds ciphertext only; `EmailSettingsStore` encry
 `ISecretProtector.Protect` on save and decrypts via `Unprotect` on read. No FK constraints; no
 `[StoredDomainEntity]` attribute (registered manually in `Storage.Module`, like
 `StoredLicenseStore`).
+
+The `TuneAgentCallAutovacuum` migration lowers `autovacuum_analyze_scale_factor` (to `0.02`, plus an
+`autovacuum_analyze_threshold` of `5000`) on the high-volume `AgentCallEntity` table via raw
+`ALTER TABLE … SET (…)`. The default scale factor (`0.10`) only re-analyzes after ~10% of rows change,
+which lets planner statistics lag during rapid ingestion and can flip the statistics aggregates onto a
+nested-loop plan (issue #246 — see the gotcha under [High-volume tables](#high-volume-tables-agentcall)).
+It is PostgreSQL-only relational metadata, so its `Up`/`Down` are raw SQL and the in-memory provider
+ignores it.
 
 ## Quick start
 

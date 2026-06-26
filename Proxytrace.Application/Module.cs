@@ -25,6 +25,7 @@ using Proxytrace.Application.Licensing;
 using Proxytrace.Application.Licensing.Internal;
 using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Notifications.Internal;
+using Proxytrace.Application.Outliers;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Application.Pricing.Internal;
@@ -285,6 +286,13 @@ public sealed class Module : Autofac.Module
             .AsSelf()
             .SingleInstance()
             .IfNotRegistered(typeof(AgentCallProcessor));
+
+        // Ingestion-time per-call outlier detection. Stateless apart from its stores (which resolve a
+        // fresh DbContext per call), so a singleton is safe — mirrors AgentCallProcessor above.
+        builder.RegisterType<Outliers.Internal.OutlierDetector>()
+            .As<IOutlierDetector>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(Outliers.Internal.OutlierDetector));
 
         // Shared in-process ingestion core. Used by the stream consumer per envelope AND directly by
         // same-process producers (Tracey) so they don't round-trip through the Redis transport.

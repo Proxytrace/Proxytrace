@@ -3,7 +3,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows } from './tracesMeta';
+import { buildRows, hasActiveTraceFilters } from './tracesMeta';
 import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRange';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
@@ -32,7 +32,7 @@ export default function Traces() {
   // Guard against a stale/garbage stored value — only accept a known option.
   const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
   // Filter bar persists across refresh / navigation (agent filter is project-scoped).
-  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, agentFilter, setAgentFilter, rangeWasRestored } =
+  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, outlierOnly, setOutlierOnly, agentFilter, setAgentFilter, rangeWasRestored } =
     useTraceFilters(currentProjectId);
   // Previous windows pushed by each zoom-in; double-clicking the timeline pops one.
   const [zoomStack, setZoomStack] = useState<TimeRange[]>([]);
@@ -61,6 +61,7 @@ export default function Traces() {
     agentFilter,
     debouncedSearch,
     showSystem,
+    outlierOnly,
     from,
     to,
   });
@@ -185,6 +186,11 @@ export default function Traces() {
     setPage(1);
   }
 
+  function handleOutlierOnlyChange(v: boolean) {
+    setOutlierOnly(v);
+    setPage(1);
+  }
+
   return (
     // md+: fixed-height column, the table scrolls internally. Below md the toolbar/KPIs leave the
     // table only a sliver, so the page scrolls naturally instead and the table takes its content height.
@@ -194,11 +200,13 @@ export default function Traces() {
         timeRange={timeRange}
         agentFilter={agentFilter}
         showSystem={showSystem}
+        outlierOnly={outlierOnly}
         agents={agents}
         onSearchChange={handleSearchChange}
         onTimeRangeChange={handleTimeRangeChange}
         onAgentFilterChange={handleAgentFilterChange}
         onShowSystemChange={handleShowSystemChange}
+        onOutlierOnlyChange={handleOutlierOnlyChange}
       />
 
       {/* Keep the timeline mounted whenever the window is concrete — even if it holds no traces
@@ -219,7 +227,7 @@ export default function Traces() {
       <TraceTable
         rows={rows}
         isFetching={isFetching}
-        filtered={!!agentFilter || debouncedSearch.trim().length > 0 || from != null}
+        filtered={hasActiveTraceFilters({ agentFilter, search: debouncedSearch, timeRangeActive: from != null, outlierOnly })}
         selectedId={selectedTrace?.id ?? null}
         expandedConvs={expandedConvs}
         onSelectTrace={t => selectTrace(t.id)}

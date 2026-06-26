@@ -188,7 +188,10 @@ public class UsersController : ControllerBase
 
     private string BuildResetUrl(string token)
     {
-        var baseUrl = config["Frontend:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        // Fall back to the configured frontend origin (the browser-facing URL, set per environment)
+        // before the request host — Request.Host is the backend's own port, which is not where the
+        // user opens the reset link.
+        var baseUrl = config["Frontend:BaseUrl"] ?? config["Frontend:AllowedOrigin"] ?? $"{Request.Scheme}://{Request.Host}";
         return $"{baseUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(token)}";
     }
 

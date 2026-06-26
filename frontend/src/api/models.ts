@@ -94,6 +94,8 @@ export interface AgentCallDto {
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
+  /** Outlier characteristics flagged at ingestion (bitmask; 0 = not an outlier). See {@link lib/outliers}. */
+  outlierFlags: number;
 }
 
 /** Lightweight agent-call projection for the traces table / dashboard live stream. Carries row
@@ -122,6 +124,8 @@ export interface AgentCallListItemDto {
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
+  /** Outlier characteristics flagged at ingestion (bitmask; 0 = not an outlier). See {@link lib/outliers}. */
+  outlierFlags: number;
 }
 
 /* ── Agents ── */
@@ -309,6 +313,30 @@ export interface AgentOverviewDto {
   passRateTrend: AgentPassRatePointDto[];
   suitePassRates: AgentSuitePassRateDto[];
   counts: AgentEntityCountsDto;
+}
+/** One equal-width histogram bin: the value range and how many samples fell in it. */
+export interface HistogramBinDto {
+  start: number;
+  end: number;
+  count: number;
+}
+/** Mean ± sample std-dev of a single metric, its min/max, and a histogram of the samples. */
+export interface MetricDistributionDto {
+  mean: number;
+  stdDev: number;
+  sampleCount: number;
+  min: number;
+  max: number;
+  histogram: HistogramBinDto[];
+}
+/** Distribution of an agent's successful calls: tokens/latency per call, cost/cache/tools per conversation. */
+export interface AgentDistributionsDto {
+  inputTokensPerCall: MetricDistributionDto;
+  outputTokensPerCall: MetricDistributionDto;
+  latencyMsPerCall: MetricDistributionDto;
+  costPerConversationEur: MetricDistributionDto;
+  cacheHitRatePerConversation: MetricDistributionDto;
+  toolCallsPerConversation: MetricDistributionDto;
 }
 
 /* ── Test Suites ── */
@@ -794,6 +822,8 @@ export interface AgentCallFilter {
   includeSystemAgents?: boolean;
   q?: string;
   conversationId?: string;
+  /** When true, return only calls flagged as outliers (any {@link AgentCallListItemDto.outlierFlags} bit set). */
+  outlierOnly?: boolean;
   page?: number;
   pageSize?: number;
 }

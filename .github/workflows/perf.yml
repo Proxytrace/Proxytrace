@@ -1,0 +1,75 @@
+name: Performance
+
+# Manual only — the perf suite seeds ~1M rows and boots a full stack, so it is never run on push/PR.
+# Trigger it from the Actions tab when you want a performance check (e.g. around a perf-sensitive change
+# or before a release). A budget breach in any scope fails the job.
+on:
+  workflow_dispatch:
+    inputs:
+      size:
+        description: "Number of agent calls to seed"
+        type: string
+        default: "1000000"
+      scopes:
+        description: "Scopes to run"
+        type: choice
+        default: all
+        options:
+          - all
+          - db-layer
+          - http
+          - benchmarks
+          - "db-layer,http"
+      vus:
+        description: "k6 virtual users (http scope)"
+        type: string
+        default: "10"
+      duration:
+        description: "k6 duration (http scope)"
+        type: string
+        default: "30s"
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install k6
+        if: ${{ contains(inputs.scopes, 'http') || inputs.scopes == 'all' }}
+        run: |
+          curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz \
+            | sudo tar -xz --strip-components=1 -C /usr/local/bin k6-v0.52.0-linux-amd64/k6
+          k6 version
+
+      - name: Run performance suite
+        run: ./perf/run.sh --size "${{ inputs.size }}" --scopes "${{ inputs.scopes }}" --vus "${{ inputs.vus }}" --duration "${{ inputs.duration }}"
+
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo "## Performance results"
+            echo '```'
+            for f in perf/results/*.json; do
+              [ -f "$f" ] && echo "### $(basename "$f")" && cat "$f"
+            done
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-results
+          path: |
+            perf/results/**
+            BenchmarkDotNet.Artifacts/**
+          retention-days: 14

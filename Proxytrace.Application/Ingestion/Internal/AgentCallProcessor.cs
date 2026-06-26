@@ -2,10 +2,12 @@ using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.Outliers;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AgentVersion;
+using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Licensing;
 
@@ -22,6 +24,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
     private readonly IAgentVersionMatcher matcher;
     private readonly ITraceBroadcaster traceBroadcaster;
     private readonly ILicenseService license;
+    private readonly IOutlierDetector outlierDetector;
     private readonly ILogger<AgentCallProcessor> logger;
 
     public AgentCallProcessor(
@@ -34,6 +37,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         IAgentVersionMatcher matcher,
         ITraceBroadcaster traceBroadcaster,
         ILicenseService license,
+        IOutlierDetector outlierDetector,
         ILogger<AgentCallProcessor> logger)
     {
         this.agentCallRepository = agentCallRepository;
@@ -45,6 +49,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         this.matcher = matcher;
         this.traceBroadcaster = traceBroadcaster;
         this.license = license;
+        this.outlierDetector = outlierDetector;
         this.logger = logger;
     }
 
@@ -116,6 +121,9 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
                 agent = await agent.ChangeModelParameters(parsed.ModelParameters, cancellationToken);
             }
 
+            var outlierFlags = await DetectOutliersAsync(
+                agent, parsed.Response, isTurn2Plus: priorConversationCall is not null, cancellationToken);
+
             var call = createNewCall(
                 agent: agent,
                 version: version,
@@ -126,7 +134,8 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
                 finishReason: parsed.FinishReason,
                 errorMessage: parsed.ErrorMessage,
                 modelParameters: parsed.ModelParameters,
-                conversationId: conversationId);
+                conversationId: conversationId,
+                outlierFlags: outlierFlags);
 
             call = await agentCallRepository.AddAsync(call, cancellationToken);
             traceBroadcaster.Publish(TraceCreatedEvent.Create(call));
@@ -275,6 +284,42 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             cancellationToken: cancellationToken);
 
         return newAgent.CurrentVersion;
+    }
+
+    /// <summary>
+    /// Flags the call's outlier characteristics against the agent's recent baseline. Only successful
+    /// calls (with a response) are evaluated — errors carry no usable token/latency metrics and are
+    /// excluded from the baseline too. Cache-hit is only meaningful from turn 2 onward, so it is passed
+    /// as <see langword="null"/> for the first turn of a conversation.
+    /// </summary>
+    private async Task<OutlierFlags> DetectOutliersAsync(
+        IAgent agent,
+        ICompletion? response,
+        bool isTurn2Plus,
+        CancellationToken cancellationToken)
+    {
+        if (response is null)
+        {
+            return OutlierFlags.None;
+        }
+
+        ulong inputTokens = response.Usage?.InputTokenCount ?? 0UL;
+        ulong outputTokens = response.Usage?.OutputTokenCount ?? 0UL;
+        ulong cachedInputTokens = response.Usage?.CachedInputTokenCount ?? 0UL;
+
+        double? cacheHitRate = isTurn2Plus && inputTokens > 0UL
+            ? Math.Clamp(cachedInputTokens / (double)inputTokens, 0d, 1d)
+            : null;
+
+        int toolCalls = response.Response.ToolRequests.Count;
+
+        var metrics = new OutlierMetrics(
+            TotalTokens: inputTokens + outputTokens,
+            LatencyMs: response.Latency.TotalMilliseconds,
+            CacheHitRate: cacheHitRate,
+            ToolCalls: toolCalls);
+
+        return await outlierDetector.EvaluateAsync(agent.Id, metrics, cancellationToken);
     }
 
     private async Task<(Guid? conversationId, IAgentCall? priorCall)> ResolveConversationAsync(

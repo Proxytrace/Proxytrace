@@ -70,6 +70,7 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>, IAgentCal
             errorMessage: agentCall.ErrorMessage,
             modelParameters: agentCall.ModelParameters,
             conversationId: agentCall.ConversationId,
+            outlierFlags: agentCall.OutlierFlags,
             existing: new ModifiedDomainEntityData(agentCall.Id, CreatedAt: createdAt, agentCall.UpdatedAt));
         return await modified.UpdateAsync(cancellationToken);
     }

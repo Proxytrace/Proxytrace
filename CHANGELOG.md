@@ -11,6 +11,24 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Outlier detection for traces.** Each ingested call is now flagged when it deviates from its
+  agent's own recent behaviour on any of four per-call metrics — **high token count** (also the cost
+  signal), **high latency**, **low turn-2+ cache hit**, and **many tool calls**. Detection is
+  per-agent and adaptive: a call is flagged when a metric exceeds the agent's recent **mean ± N
+  standard deviations**, so a cheap fast agent and an expensive reasoner each get their own "normal".
+  Flagged calls show an amber marker in the **Traces** list, where a new **Outliers only** toggle
+  filters the list to just the outliers, and the agent detail page gains a **Recent outliers** widget
+  that lists why each recent call was flagged. Admins tune the sensitivity (enable/disable, sigma,
+  minimum samples, baseline window) under **Settings → Outlier detection**. Existing traces are not
+  retroactively flagged; detection applies to calls ingested from now on.
+- **Call distribution stats on the agent page.** The agent detail view now shows a **Distribution**
+  widget with the **mean ± standard deviation** of an agent's successful calls over the selected
+  range: **input** and **output tokens** and **latency** (per call), and **cost**, **cache hit rate**
+  (turns after the first, which can't be cache hits) and **tool calls** (per conversation). Each metric
+  also gets a small **interactive histogram** of the real sample shape — hover a bar to see its value
+  range and how many calls (or conversations) fall in it. It updates live as new traces arrive and
+  respects the time-range selector, so you can see not just the totals but how consistent — or skewed —
+  your agent's calls are.
 - **Sample a test run multiple times.** When you start a run you can now pick a **sample count (1–5)** —
   Proxytrace runs each selected endpoint that many times and **averages the results per endpoint**, so
   non-deterministic models don't hide flaky cases. The results matrix shows one column per endpoint with
@@ -77,6 +95,29 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Enabling MFA no longer fails when the setup request is sent twice.** Two near-simultaneous
+  "set up MFA" requests for the same account (e.g. a double-click or a retried request) raced on the
+  one-enrollment-per-user rule and the second crashed with a server error. Setup now tolerates the
+  race and returns the enrollment that took effect, so the QR code always matches the stored secret.
+- **Traces show their message preview again.** Traces ingested before the list's denormalised preview
+  column was introduced rendered with a blank message preview. A one-time, idempotent startup backfill
+  now recomputes the preview (the first user message) for those rows in bounded batches, so every trace
+  shows its preview after the next restart — no longer only the ones captured since the column was added.
+- **Password reset and invite links point at the right address.** The emailed reset/invite links fell
+  back to the API server's own host and port when no explicit frontend URL was configured, producing a
+  link the browser couldn't open. They now use the configured frontend origin (`Frontend:AllowedOrigin`),
+  so the links work out of the box in every environment.
+- **"No traces" message instead of setup instructions when filters exclude everything.** The Traces
+  page treated an empty list from the new **Outliers only** filter as an empty project and showed the
+  first-time setup instructions. It now shows "No traces match your filters" when any filter (including
+  Outliers only) is active, and keeps the setup instructions only for a project with no traces at all.
+- **Dashboard and statistics stay fast on large datasets.** On a database with a lot of history the
+  dashboard and statistics aggregates could take several seconds because PostgreSQL's query planner,
+  working from out-of-date table statistics, chose a plan that scanned the whole traces table the slow
+  way. Proxytrace now keeps the planner's statistics fresh on the high-volume traces table (more
+  frequent auto-analysis), so the same queries run in a few hundred milliseconds. If you bulk-import or
+  restore a large database, run `ANALYZE` once afterwards so the speed-up applies immediately rather
+  than after the next automatic analysis.
 - **Tracey's own traces are captured reliably again.** Tracey runs inside the app, but her captured
   calls were being routed through the same Redis message stream used to bridge the standalone
   ingestion proxy — so whenever that stream was unavailable, every Tracey trace was silently dropped

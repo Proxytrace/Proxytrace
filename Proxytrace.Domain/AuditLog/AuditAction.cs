@@ -96,4 +96,7 @@ public enum AuditAction
 
     // Authorization denial on a state-changing request (recorded with AuditOutcome.Failure).
     AccessDenied = 63,
+
+    // Operator outlier-detection sensitivity configuration.
+    OutlierSettingsUpdated = 64,
 }

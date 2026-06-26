@@ -50,6 +50,12 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
     /// </summary>
     Guid? ConversationId { get; }
 
+    /// <summary>
+    /// Which per-call characteristics flagged this call as an outlier relative to its agent's recent
+    /// baseline, computed once at ingestion. <see cref="OutlierFlags.None"/> means not an outlier.
+    /// </summary>
+    OutlierFlags OutlierFlags { get; }
+
     SearchKind ISearchable.SearchKind => SearchKind.AgentCall;
 
     public delegate IAgentCall CreateNew(
@@ -62,7 +68,8 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
         string? finishReason = null,
         string? errorMessage = null,
         IModelParameters? modelParameters = null,
-        Guid? conversationId = null);
+        Guid? conversationId = null,
+        OutlierFlags outlierFlags = OutlierFlags.None);
 
     public delegate IAgentCall CreateExisting(
         IAgent agent,
@@ -75,5 +82,6 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
         string? errorMessage,
         IModelParameters modelParameters,
         IDomainEntityData existing,
-        Guid? conversationId = null);
+        Guid? conversationId = null,
+        OutlierFlags outlierFlags = OutlierFlags.None);
 }

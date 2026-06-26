@@ -6,16 +6,27 @@ import { XIcon, ChevronRightIcon } from '../../../components/icons';
 import { ID_SHORT_LEN } from '../../../lib/constants';
 import { useDrawerKeys } from './useDrawerKeys';
 
-interface Props {
-  /** Tailwind width classes for the sliding panel. */
-  widthClass: string;
-  caseId: string;
-  caseSummary?: string;
-  caseIdx?: number;
+/** Identity + position of the case a drawer is showing (for the title + "i/N" counter). */
+export interface DrawerCase {
+  id: string;
+  summary?: string;
+  /** 0-based position within the filtered list. */
+  idx?: number;
   total?: number;
+}
+
+/** Close + prev/next handlers for the drawer's case navigation. */
+export interface DrawerNav {
   onClose: () => void;
   onPrev?: () => void;
   onNext?: () => void;
+}
+
+interface Props {
+  /** Tailwind width classes for the sliding panel. */
+  widthClass: string;
+  caseInfo: DrawerCase;
+  nav: DrawerNav;
   /** Left-of-title slot (e.g. pass/fail dot or a "N models" badge). */
   leading?: ReactNode;
   /** Right-of-title slot before the index counter (e.g. a PASS/FAIL pill). */
@@ -26,24 +37,13 @@ interface Props {
 
 /**
  * Portal + backdrop + right-side sliding panel with a sticky header (case id,
- * summary, index counter, prev/next/close nav). Shared by FixtureDrawer and
- * ComparisonDrawer; keyboard nav handled by useDrawerKeys.
+ * summary, index counter, prev/next/close nav). Used by ComparisonDrawer;
+ * keyboard nav handled by useDrawerKeys.
  */
-export function DrawerShell({
-  widthClass,
-  caseId,
-  caseSummary,
-  caseIdx,
-  total,
-  onClose,
-  onPrev,
-  onNext,
-  leading,
-  trailing,
-  children,
-}: Props) {
+export function DrawerShell({ widthClass, caseInfo, nav, leading, trailing, children }: Props) {
   const { t } = useLingui();
-  useDrawerKeys({ onClose, onPrev, onNext });
+  const { onClose, onPrev, onNext } = nav;
+  useDrawerKeys(nav);
 
   return createPortal(
     <>
@@ -57,16 +57,16 @@ export function DrawerShell({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="mono shrink-0 px-1.5 py-px rounded-sm bg-card-2 text-muted text-body-sm">
-                {caseId.slice(0, ID_SHORT_LEN)}
+                {caseInfo.id.slice(0, ID_SHORT_LEN)}
               </span>
-              <span className="text-h2 font-semibold truncate">{caseSummary ?? t`Test Case`}</span>
+              <span className="text-h2 font-semibold truncate">{caseInfo.summary ?? t`Test Case`}</span>
             </div>
           </div>
 
           {trailing}
 
-          {caseIdx != null && total != null && (
-            <span className="text-body-sm text-muted shrink-0">{caseIdx + 1}/{total}</span>
+          {caseInfo.idx != null && caseInfo.total != null && (
+            <span className="text-body-sm text-muted shrink-0">{caseInfo.idx + 1}/{caseInfo.total}</span>
           )}
 
           <div className="flex gap-[3px] shrink-0">

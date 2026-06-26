@@ -216,6 +216,7 @@ internal sealed class Module : Autofac.Module
         builder.RegisterType<OptimizationProposalDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<Dto.Notifications.NotificationDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<Dto.EmailSettings.EmailSettingsDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<Dto.OutlierSettings.OutlierSettingsDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<Dto.Theories.TheoryDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<EvaluatorDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<ModelProviderDtoMapper>().AsSelf().SingleInstance();

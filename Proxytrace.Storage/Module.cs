@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Demo;
+using Proxytrace.Application.Outliers;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.TestSupport;
 using Proxytrace.Common.DependencyInjection;
@@ -67,6 +68,15 @@ public sealed class Module : Autofac.Module
                 .SingleInstance();
             builder.RegisterServiceCollection(services =>
                 services.AddHostedService(sp => sp.GetRequiredService<SecretsBackfillService>()));
+
+            // One-time, idempotent backfill of the denormalised trace message preview for rows ingested
+            // before that column existed. Registered after the DB initializer so it runs once migrations
+            // have applied. Resolvable as itself so tests can drive it directly.
+            builder.RegisterType<AgentCallPreviewBackfillService>()
+                .AsSelf()
+                .SingleInstance();
+            builder.RegisterServiceCollection(services =>
+                services.AddHostedService(sp => sp.GetRequiredService<AgentCallPreviewBackfillService>()));
         }
 
         builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();
@@ -125,8 +135,16 @@ public sealed class Module : Autofac.Module
             .AsImplementedInterfaces()
             .InstancePerDependency();
 
+        builder.RegisterType<Internal.Entities.OutlierSettings.OutlierSettingsStore>()
+            .AsImplementedInterfaces()
+            .InstancePerDependency();
+
         builder.RegisterType<AgentCallStatsQueries>()
             .As<IAgentCallStatsReader>()
+            .InstancePerDependency();
+
+        builder.RegisterType<OutlierBaselineQueries>()
+            .As<IOutlierBaselineReader>()
             .InstancePerDependency();
 
         builder.RegisterType<EvaluatorStatsQueries>()
