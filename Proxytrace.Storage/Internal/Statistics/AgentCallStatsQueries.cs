@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Usage;
+using Proxytrace.Storage.Internal.Entities.Agent;
 using Proxytrace.Storage.Internal.Entities.AgentCall;
 using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Model;
@@ -674,6 +675,18 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         if (filter.To is { } to)
         {
             query = query.Where(c => c.CreatedAt <= to);
+        }
+        if (filter.ExcludeSystemAgents)
+        {
+            // A call links to its agent via AgentVersion → Agent; drop the versions of system agents
+            // so every aggregate built from this query (summary, model/agent breakdown, token series)
+            // ignores the platform's own calls (Tracey, evaluators).
+            IQueryable<Guid> systemVersionIds = context.Set<AgentVersionEntity>()
+                .AsNoTracking()
+                .Join(context.Set<AgentEntity>(), v => v.AgentId, a => a.Id, (v, a) => new { v.Id, a.IsSystemAgent })
+                .Where(x => x.IsSystemAgent)
+                .Select(x => x.Id);
+            query = query.Where(c => !systemVersionIds.Contains(c.AgentVersionId));
         }
         return query;
     }

@@ -2,7 +2,7 @@ import { api, qs, type RequestOptions } from './client';
 import type { ModelRequestPreviewDto, PagedResult, TestCaseFixtureDto, TestRunDto } from './models';
 
 export const testRunsApi = {
-  list: (params?: { agentId?: string; page?: number; pageSize?: number }) =>
+  list: (params?: { agentId?: string; includeSystem?: boolean; page?: number; pageSize?: number }) =>
     api.get<PagedResult<TestRunDto>>(`/api/test-runs${qs(params ?? {})}`),
   get: (id: string, opts?: RequestOptions) => api.get<TestRunDto>(`/api/test-runs/${id}`, opts),
   cancel: (id: string) => api.post<void>(`/api/test-runs/${id}/cancel`),

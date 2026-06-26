@@ -46,6 +46,7 @@ internal class TestRunRepository : AbstractRepository<ITestRun, TestRunEntity>, 
         Guid agentId,
         int page,
         int pageSize,
+        bool includeSystem = false,
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
@@ -60,8 +61,36 @@ internal class TestRunRepository : AbstractRepository<ITestRun, TestRunEntity>, 
             .Join(context.Set<TestSuiteEntity>(),
                 x => x.Group.Suite,
                 s => s.Id,
-                (x, s) => new { x.Run, Suite = s })
-            .Where(x => x.Suite.Agent == agentId)
+                (x, s) => new { x.Run, x.Group, Suite = s })
+            .Where(x => x.Suite.Agent == agentId && (includeSystem || !x.Group.IsSystemRun))
+            .Select(x => x.Run);
+
+        int total = await query.CountAsync(cancellationToken);
+        var stored = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ITestRun>(await Map(stored, cancellationToken), total, page, pageSize);
+    }
+
+    public async Task<PagedResult<ITestRun>> GetAllPagedAsync(
+        int page,
+        int pageSize,
+        bool includeSystem = false,
+        CancellationToken cancellationToken = default)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var context = contextFactory();
+        var query = context
+            .Set<TestRunEntity>()
+            .AsNoTracking()
+            .Join(context.Set<TestRunGroupEntity>(),
+                r => r.Group,
+                g => g.Id,
+                (r, g) => new { Run = r, Group = g })
+            .Where(x => includeSystem || !x.Group.IsSystemRun)
             .Select(x => x.Run);
 
         int total = await query.CountAsync(cancellationToken);

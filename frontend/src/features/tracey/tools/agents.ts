@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentsApi } from '../../../api/agents';
-import { type ToolFactory, tool, presentArg, ignore404, listDigest } from './shared';
+import { type ToolFactory, tool, presentArg, includeSystemArg, ignore404, listDigest } from './shared';
 
 export const createAgentTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -10,11 +10,13 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
         'List the agents in the current project. Returns a compact index (each agent\'s id, name, ' +
         'model endpoint, tool count) plus a reference; the full list is rendered to the user as a ' +
         'card. Use this index directly — only call get_agent when the user asks about one ' +
-        'specific agent in detail.',
-      parameters: z.object({ present: presentArg }),
+        'specific agent in detail. Hides internal system agents (Tracey, evaluators) unless ' +
+        'includeSystem is true.',
+      parameters: z.object({ present: presentArg, includeSystem: includeSystemArg }),
       confirm: false,
-      execute: async () => {
-        const items = (await agentsApi.list({ projectId })).items;
+      execute: async ({ includeSystem }) => {
+        const all = (await agentsApi.list({ projectId })).items;
+        const items = includeSystem ? all : all.filter((a) => !a.isSystemAgent);
         return store('agent-list', items, listDigest(items, 25, (a) => ({
           id: a.id,
           name: a.name,

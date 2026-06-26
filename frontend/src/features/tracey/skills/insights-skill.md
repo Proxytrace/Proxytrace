@@ -12,11 +12,15 @@ Cross-cutting reads that aren't tied to a single agent or suite.
   Its digest also carries `byAgent` and `byModel` usage breakdowns (calls + tokens per agent /
   model) — chart usage comparisons straight from it (`show_chart` / `show_table`); do **not**
   list agents and fetch each one's stats. Lead with the component, then one sentence of insight.
+  All figures (totals, per-model, and per-agent) exclude internal system agents (Tracey,
+  evaluators) — pass `includeSystem: true` only if the user asks to see their usage too.
 - `get_provider` — a single model provider's details (renders a clickable card when you pass
   `present: true`).
 - `find_traces` — search the captured traces by agent, free text, or HTTP status (newest first).
   Use it to FIND calls — errors, a phrase the user remembers, an agent's recent activity. Silent
-  while you're hunting; pass `present: true` only when the matching list itself is the answer.
+  while you're hunting; pass `present: true` only when the matching list itself is the answer. It
+  hides traces of internal system agents (Tracey, evaluators) — pass `includeSystem: true` only
+  when the user explicitly wants a system agent's calls.
 - `get_trace` — a single captured trace (agent call) with model, status, token usage, latency, and
   cost (pass `present: true` to render its clickable card). Use it to inspect one specific call
   (often one `find_traces` surfaced).

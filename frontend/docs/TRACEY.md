@@ -212,6 +212,33 @@ is unit-tested. The prompt's "card economy" rules tell the model to keep reads s
 so `get_suite` is gated while those writes (same `SuiteCardToolUI`) are not. The gate is applied
 per registry entry, so the same component is gated for a read yet full for a write.
 
+## System agents hidden by default
+
+Proxytrace runs internal **system agents** — Tracey herself and the evaluators (e.g. a helpfulness
+judge) — flagged `isSystemAgent` on `AgentDto`/`AgentListItemDto` (and ephemeral A/B validation
+**system runs**, `isSystemRun` on the run groups). They make real LLM calls, so without filtering
+they'd show up in "list my agents", token-usage charts, "recent runs", and trace searches as noise.
+So the read/search tools exclude them **by default**, and expose an `includeSystem` flag
+(`includeSystemArg`, `tools/shared.ts`) the model sets only when the user explicitly asks about a
+system agent (names Tracey or an evaluator, or says "system"/"internal"):
+
+| Tool | Default | How it filters | `includeSystem: true` |
+|------|---------|----------------|-----------------------|
+| `list_agents` | hides system agents | client-side `!a.isSystemAgent` (digest **and** stored card) | lists them |
+| `list_runs` | hides system A/B runs | `GET /api/test-runs?includeSystem=false` (backend drops runs of `IsSystemRun` groups) | lists them |
+| `find_traces` | hides system-agent traces | passes `includeSystemAgents: false` (the backend default is **true**, so we send it explicitly) | includes them |
+| `get_dashboard_stats` | excludes system agents from **all** figures | passes `excludeSystemAgents: true` to `GET /api/statistics/dashboard`; the backend drops system-agent calls from the summary, per-model, and per-agent aggregates (and the agents list), so totals aren't inflated by Tracey/evaluator activity | includes them |
+
+Single-entity `get_*` by id (`get_agent`, `get_agent_stats`, `get_run`, `get_trace`) are **not**
+gated — an id is already an explicit request; the model reaches a system agent's id by listing with
+`includeSystem: true` first. The prompt (`tracey-prompt.ts`) and the `optimize-agent` /
+`project-insights` / `test-suites-and-runs` skills carry the when-to-include nuance. The backend
+filters mirror `/api/test-run-groups`' existing `includeSystem` (default false): runs via
+`ITestRunRepository.GetByAgentPagedAsync` / `GetAllPagedAsync`, and stats via
+`StatisticsFilter.ExcludeSystemAgents` applied at the `AgentCallStatsQueries.Query` chokepoint (so
+every dashboard aggregate is filtered at once). The `/api/statistics/dashboard` and
+`/api/test-runs` defaults are unchanged for every other caller — only Tracey opts in.
+
 ## Tools: read, write, render, wait, interactive
 
 `TraceyToolContext` (`{ projectId, artifactScope, navigate, confirm }`, `tools/shared.ts`) is

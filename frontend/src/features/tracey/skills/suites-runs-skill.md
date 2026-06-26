@@ -11,7 +11,9 @@ Work with the project's benchmark suites and their executions.
 ## Read
 
 - `list_suites` — the suites in the project; `get_suite` for one suite's cases and evaluators.
-- `list_runs` — recent runs; `get_run` for a single run's per-case results and pass rate.
+- `list_runs` — recent runs; `get_run` for a single run's per-case results and pass rate. It hides
+  internal A/B validation (system) runs by default; pass `includeSystem: true` only if the user
+  asks to see those.
 - `get_run_failures` — a run's FAILING cases with each evaluator's verdict + reasoning. Reach for
   this whenever the user asks *why* a run failed — don't stop at the pass rate.
 - `compare_runs` — case-by-case movement between two runs (fixed / regressed / unchanged). Use it

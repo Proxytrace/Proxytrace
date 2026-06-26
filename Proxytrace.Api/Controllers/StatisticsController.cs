@@ -40,6 +40,7 @@ public class StatisticsController : ControllerBase
         [FromQuery] Guid? projectId = null,
         [FromQuery] int? recentTraceCount = null,
         [FromQuery] int? agentLimit = null,
+        [FromQuery] bool excludeSystemAgents = false,
         CancellationToken cancellationToken = default)
     {
         if (from is not null && to is not null && from.Value >= to.Value)
@@ -48,7 +49,7 @@ public class StatisticsController : ControllerBase
             recentTraceCount ?? options.DefaultRecentTraceCount, 1, options.MaxRecentTraceCount);
         var resolvedAgentLimit = Math.Clamp(
             agentLimit ?? options.DefaultAgentLimit, 1, options.MaxAgentLimit);
-        var filter = new StatisticsFilter(from, to, projectId);
+        var filter = new StatisticsFilter(from, to, projectId, ExcludeSystemAgents: excludeSystemAgents);
         DashboardView view = await dashboard.GetDashboardViewAsync(filter, resolvedRecentTraceCount, resolvedAgentLimit, cancellationToken);
 
         return new DashboardViewDto(

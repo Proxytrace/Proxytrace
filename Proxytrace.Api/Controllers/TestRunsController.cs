@@ -45,16 +45,19 @@ public class TestRunsController : ControllerBase
     [HttpGet]
     public async Task<PagedResult<TestRunDto>> GetAll(
         [FromQuery] Guid? agentId = null,
+        [FromQuery] bool includeSystem = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        // includeSystem false (default) hides ephemeral A/B validation runs, matching the runs page
+        // and /api/test-run-groups; pass true only to surface those internal system runs.
         if (agentId.HasValue)
         {
             var agent = await agentRepository.FindAsync(agentId.Value, cancellationToken);
             if (agent is null || !await accessGuard.CanAccessProjectAsync(agent.Project.Id, cancellationToken))
                 return new PagedResult<TestRunDto>([], 0, page, pageSize);
-            var pagedByAgent = await repository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken);
+            var pagedByAgent = await repository.GetByAgentPagedAsync(agentId.Value, page, pageSize, includeSystem, cancellationToken);
             return pagedByAgent.Map(mapper.ToDto);
         }
 
@@ -62,7 +65,7 @@ public class TestRunsController : ControllerBase
         if (await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken) is not null)
             return new PagedResult<TestRunDto>([], 0, page, pageSize);
 
-        var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
+        var paged = await repository.GetAllPagedAsync(page, pageSize, includeSystem, cancellationToken);
         return paged.Map(mapper.ToDto);
     }
 

@@ -152,6 +152,76 @@ describe('tracey read tools', () => {
   });
 });
 
+describe('tracey hides system agents by default', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const agents = [
+    { id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 2, isSystemAgent: false },
+    { id: 'sys', name: 'Tracey', endpointName: 'gpt-4o', toolCount: 9, isSystemAgent: true },
+  ];
+
+  it('list_agents drops system agents from the digest and the stored card', async () => {
+    agentsApi.list.mockResolvedValue({ items: agents });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx) as {
+      artifactRef: string; summary: { count: number; items: { id: string }[] };
+    };
+
+    expect(result.summary.count).toBe(1);
+    expect(result.summary.items).toEqual([{ id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 2 }]);
+    // The card resolves the artifact, so it must be filtered too — not just the model digest.
+    expect(await getArtifact(result.artifactRef)).toEqual([agents[0]]);
+  });
+
+  it('list_agents includes system agents when includeSystem is true', async () => {
+    agentsApi.list.mockResolvedValue({ items: agents });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).list_agents, { includeSystem: true }, ctx) as {
+      summary: { count: number };
+    };
+
+    expect(result.summary.count).toBe(2);
+  });
+
+  it('list_runs asks the API to exclude system runs by default, and to include them on request', async () => {
+    testRunsApi.list.mockResolvedValue({ items: [] });
+    const ctx = makeCtx();
+
+    await exec(createTraceyTools(ctx).list_runs, {}, ctx);
+    expect(testRunsApi.list).toHaveBeenLastCalledWith({ agentId: undefined, includeSystem: undefined });
+
+    await exec(createTraceyTools(ctx).list_runs, { includeSystem: true }, ctx);
+    expect(testRunsApi.list).toHaveBeenLastCalledWith({ agentId: undefined, includeSystem: true });
+  });
+
+  it('find_traces passes includeSystem through and defaults the backend flag to false', async () => {
+    agentCallsApi.list.mockResolvedValue({ items: [] });
+    const ctx = makeCtx();
+
+    await exec(createTraceyTools(ctx).find_traces, { includeSystem: true }, ctx);
+    expect(agentCallsApi.list).toHaveBeenLastCalledWith(
+      expect.objectContaining({ includeSystemAgents: true }),
+    );
+  });
+
+  it('get_dashboard_stats excludes system agents server-side by default, includes them on request', async () => {
+    // Filtering is server-side now (so the summary + per-model figures are filtered too, not just
+    // per-agent), so the tool only has to pass the flag through to the dashboard query.
+    statisticsApi.dashboard.mockResolvedValue({
+      summary: {}, agentBreakdown: [], tokenUsageByAgent: [], modelBreakdown: [], agents: [],
+    });
+    const ctx = makeCtx();
+
+    await exec(createTraceyTools(ctx).get_dashboard_stats, {}, ctx);
+    expect(statisticsApi.dashboard).toHaveBeenLastCalledWith({ projectId: 'proj-1', excludeSystemAgents: true });
+
+    await exec(createTraceyTools(ctx).get_dashboard_stats, { includeSystem: true }, ctx);
+    expect(statisticsApi.dashboard).toHaveBeenLastCalledWith({ projectId: 'proj-1', excludeSystemAgents: false });
+  });
+});
+
 describe('tracey write tools confirmation gating', () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -290,7 +360,8 @@ describe('tracey entity-fetch tools', () => {
     ) as { kind: string; summary: { count: number; items: { id: string; error?: string; tokens: number }[] } };
 
     expect(agentCallsApi.list).toHaveBeenCalledWith({
-      projectId: 'proj-1', agentId: 'a1', q: undefined, httpStatus: 500, pageSize: 5,
+      projectId: 'proj-1', agentId: 'a1', q: undefined, httpStatus: 500,
+      includeSystemAgents: false, pageSize: 5,
     });
     expect(result.kind).toBe('trace-list');
     expect(result.summary.count).toBe(1);

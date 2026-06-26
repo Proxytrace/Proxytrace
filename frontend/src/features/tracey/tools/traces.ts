@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentCallsApi } from '../../../api/agent-calls';
-import { type ToolFactory, tool, ignore404, presentArg } from './shared';
+import { type ToolFactory, tool, ignore404, presentArg, includeSystemArg } from './shared';
 import { clip } from './run-analysis';
 
 export const createTraceTools: ToolFactory = (ctx, store) => ({
@@ -9,7 +9,8 @@ export const createTraceTools: ToolFactory = (ctx, store) => ({
       'Search the captured traces (real LLM calls) of this project — by agent, free-text query, ' +
       'or HTTP status — newest first. Use it to ground a tuning hypothesis in what the agent ' +
       'actually said: find failing or suspicious calls, then `get_trace` one for full detail. ' +
-      'The matching traces are rendered to the user as a card.',
+      'The matching traces are rendered to the user as a card. Hides traces of internal system ' +
+      'agents (Tracey, evaluators) unless includeSystem is true.',
     parameters: z.object({
       present: presentArg,
       agentId: z.string().optional().describe('Only traces of this agent.'),
@@ -17,14 +18,17 @@ export const createTraceTools: ToolFactory = (ctx, store) => ({
       httpStatus: z.number().int().optional()
         .describe('Only calls with this exact upstream HTTP status (e.g. 500 for errors).'),
       limit: z.number().int().min(1).max(20).optional().describe('Max traces to return (default 10).'),
+      includeSystem: includeSystemArg,
     }),
     confirm: false,
-    execute: async ({ agentId, query, httpStatus, limit }) => {
+    execute: async ({ agentId, query, httpStatus, limit, includeSystem }) => {
       const { items } = await agentCallsApi.list({
         projectId: ctx.projectId,
         agentId,
         q: query,
         httpStatus,
+        // The backend defaults this to true; pass false explicitly so system-agent traces stay hidden.
+        includeSystemAgents: includeSystem ?? false,
         pageSize: limit ?? 10,
       });
       return store('trace-list', items, {

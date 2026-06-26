@@ -9,7 +9,11 @@ public record StatisticsFilter(
     DateTimeOffset? To = null,
     Guid? ProjectId = null,
     Guid? AgentId = null,
-    Guid? EndpointId = null);
+    Guid? EndpointId = null,
+    // When true, drops calls attributed to system agents (the Tracey assistant, evaluators) from
+    // every aggregate. Default false keeps project-wide totals. Used by the Tracey dashboard tool so
+    // its usage figures are about the user's own agents, not the platform's own activity.
+    bool ExcludeSystemAgents = false);
 
 public record StatisticsSummary(
     long TotalCalls,

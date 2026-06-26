@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
-import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest, presentArg } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest, presentArg, includeSystemArg } from './shared';
 import { clip, compareRuns, failingResults } from './run-analysis';
 import { isRunTerminal } from './await';
 
@@ -13,15 +13,17 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
       'List recent test runs, newest first. Pass agentId to list only that agent\'s runs (use this ' +
       'when optimizing or inspecting one agent); omit it for the whole project. Returns a compact ' +
       'index (id, suite, agent, status, pass rate) plus a reference; the full list is rendered to ' +
-      'the user. To inspect one run, call get_run.',
+      'the user. To inspect one run, call get_run. Hides internal A/B validation (system) runs ' +
+      'unless includeSystem is true.',
     parameters: z.object({
       present: presentArg,
       agentId: z.string().optional().describe('Restrict to the runs of this agent (an id from list_agents).'),
+      includeSystem: includeSystemArg,
     }),
     confirm: false,
-    execute: async ({ agentId }) => {
+    execute: async ({ agentId, includeSystem }) => {
       if (agentId !== undefined && !isEntityId(agentId)) return { notFound: agentId };
-      const items = (await testRunsApi.list({ agentId })).items;
+      const items = (await testRunsApi.list({ agentId, includeSystem })).items;
       return store('run-list', items, listDigest(items, 20, (r) => ({
         id: r.id, suiteName: r.suiteName, agentName: r.agentName, status: r.status, passRate: r.passRate,
       })));

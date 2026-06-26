@@ -14,10 +14,12 @@ that tool renders shows the live result.
 
 ## Preconditions (check before theorizing)
 
-1. **The agent exists.** The user names the agent ("the Tracey agent"), so resolve that name to an
+1. **The agent exists.** The user names the agent ("the Returns agent"), so resolve that name to an
    id with `list_agents` FIRST, then `get_agent` with the matched id — never pass the typed name as
    `agentId` (it is a name, not an id, and 404s). If nothing matches, say so and stop; if several
-   match, disambiguate with `ask_questions`.
+   match, disambiguate with `ask_questions`. `list_agents` hides internal system agents by default,
+   so if the user explicitly names one (the Tracey assistant, an evaluator), pass
+   `includeSystem: true` so it shows up.
 2. **The agent has a test suite.** Call `list_suites({ agentId })` with the target agent's id — it
    returns only that agent's suites (each row also carries `agentId`/`agentName`). A theory is
    validated against a suite, so this is required.
