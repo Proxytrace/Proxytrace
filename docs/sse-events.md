@@ -87,6 +87,33 @@ The client prefers a **short-lived single-use stream ticket** from `GET /api/aut
 SSE responses set `Content-Type: text/event-stream`, `Cache-Control: no-cache`, and
 `X-Accel-Buffering: no` (disables proxy buffering so frames flush immediately).
 
+## Connection sharing & the HTTP/1.1 budget
+
+The SPA is served over **HTTP/1.1** (nginx `listen 80`), where browsers cap concurrency at
+**~6 connections per host**. An `EventSource` is a *long-lived* connection that never returns to
+the pool, so every open stream permanently spends one of those six slots. Several hooks legitimately
+want the same stream at once — the agent-detail page alone mounts `/api/agent-calls/stream` **four**
+times (`useAgentStats` + the recent-traces, outliers, and distributions widgets). Opening one
+`EventSource` per subscriber would burn four slots on identical streams (plus the proposal and
+notification streams = six), leaving **zero** for ordinary fetches: a delete/save fired while the
+detail is open never gets a socket, so the request silently never leaves the browser — no response,
+no server-side effect (this was the agent-delete bug).
+
+So `useEventStream` **multiplexes**: it keeps **one shared `EventSource` per `(url, events)`** and
+fans each frame out to every subscriber, ref-counted — the first subscriber opens it, the last
+closes it. The four trace-stream hooks therefore share a single connection. Terminal streams (the
+single-run / group views that self-close on a `completeEvent`) stay per-instance — each has a unique
+URL and its own close-on-complete lifecycle, so sharing buys nothing.
+
+Practical rules:
+
+- **Always consume a stream through the typed hooks** (`useTraceStream`, `useProposalStream`, …) /
+  `useEventStream` — never `new EventSource(...)` directly, or you lose the sharing and re-introduce
+  the connection-exhaustion bug.
+- **Subscribing to the same stream from N components is cheap** — they collapse to one connection.
+- **Keep a single page's distinct long-lived streams comfortably under six.** Adding a fifth or
+  sixth *different* stream type to one view is the warning sign; reuse an existing one or reconsider.
+
 ## Adding a new SSE stream
 
 1. Add an event `record` + broadcaster interface in `Proxytrace.Application/Streaming/` (mirror

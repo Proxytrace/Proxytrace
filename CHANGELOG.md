@@ -95,6 +95,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Deleting an agent from its detail page works again.** With an agent open, the detail view kept
+  several live-update streams connected at once, which on the bundled (HTTP/1.1) setup could use up
+  the browser's small per-site connection budget. A delete then had no connection left and silently
+  never reached the server — the confirmation closed but the agent stayed in the list. The detail
+  view now shares one connection across those streams, freeing capacity so Delete (and other actions
+  taken while viewing an agent) go through reliably.
 - **Enabling MFA no longer fails when the setup request is sent twice.** Two near-simultaneous
   "set up MFA" requests for the same account (e.g. a double-click or a retried request) raced on the
   one-enrollment-per-user rule and the second crashed with a server error. Setup now tolerates the
