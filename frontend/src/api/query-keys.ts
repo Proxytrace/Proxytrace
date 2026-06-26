@@ -21,6 +21,7 @@ export const QUERY_KEYS = {
   statisticsCostEstimate: (from?: string, agentId?: string, projectId?: string) => ['statistics-cost-estimate', from, agentId, projectId ?? null] as const,
 
   agentStatsOverview: (agentId: string, rangeKey: string) => ['agent-stats-overview', agentId, rangeKey] as const,
+  agentStatsDistributions: (agentId: string, rangeKey: string) => ['agent-stats-distributions', agentId, rangeKey] as const,
   agentSuitePassRates: (agentId: string) => ['agent-suite-pass-rates', agentId] as const,
   agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
 

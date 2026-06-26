@@ -310,6 +310,21 @@ export interface AgentOverviewDto {
   suitePassRates: AgentSuitePassRateDto[];
   counts: AgentEntityCountsDto;
 }
+/** Mean ± sample std-dev of a single metric over its sample set (std is 0 when fewer than two samples). */
+export interface MetricDistributionDto {
+  mean: number;
+  stdDev: number;
+  sampleCount: number;
+}
+/** Distribution of an agent's successful calls: tokens/latency per call, cost/cache/tools per conversation. */
+export interface AgentDistributionsDto {
+  inputTokensPerCall: MetricDistributionDto;
+  outputTokensPerCall: MetricDistributionDto;
+  latencyMsPerCall: MetricDistributionDto;
+  costPerConversationEur: MetricDistributionDto;
+  cacheHitRatePerConversation: MetricDistributionDto;
+  toolCallsPerConversation: MetricDistributionDto;
+}
 
 /* ── Test Suites ── */
 export interface ToolRequestInputDto { name: string; arguments: string; id?: string | null; }

@@ -85,12 +85,33 @@ Pick an agent from the searchable list on the left to open its detail panel:
   version to view its system prompt and tools in the main column; use **Move…** to
   re-parent a version (see [Fixing a misclassification](#fixing-a-misclassification)).
   Below it, **suite pass rates** show how the agent scores per test suite — click a row to
-  jump to that suite — followed by **recent traces** (the latest calls for the agent; click
-  one to open it in the [Traces](/guide/capturing-traces) view), and the full
-  model-parameter set sits in a collapsible panel that summarises temperature and max
-  tokens when collapsed.
+  jump to that suite — followed by the **distribution** widget (see below), **recent traces**
+  (the latest calls for the agent; click one to open it in the
+  [Traces](/guide/capturing-traces) view), and the full model-parameter set sits in a
+  collapsible panel that summarises temperature and max tokens when collapsed.
 
-The performance stats and suite pass rates update live as new traces arrive.
+The performance stats, suite pass rates, and distribution update live as new traces arrive.
+
+### Distribution
+
+Where the **Performance** card shows totals and averages, the **Distribution** widget shows
+how *consistent* the agent's calls are: the **mean ± standard deviation** of each metric over
+the same time window, computed from the agent's **successful** calls only. A large spread
+(big ± value) means the metric swings widely from call to call; a small one means it is steady.
+
+![The Distribution widget on the agent detail page, showing input and output tokens and latency per call, and cost, cache hit rate, and tool calls per conversation — each as a mean ± standard deviation.](/screenshots/agents/distribution.png)
+
+| Metric | Measured per | Notes |
+| --- | --- | --- |
+| **Input / output tokens** | call | Prompt and completion token counts. |
+| **Latency** | call | Wall-clock time per call. |
+| **Cost** | conversation | Summed across every call in the conversation. |
+| **Cache hit (t≥2)** | conversation | Share of input tokens served from the provider cache, across the conversation's **second and later turns** — the first turn can never be a cache hit, so it is excluded. Single-turn conversations don't count. |
+| **Tool calls** | conversation | How many tool calls the agent made across the conversation. |
+
+Calls that aren't part of a tracked conversation are treated as their own single-turn
+conversation. Each row's tooltip shows how many samples it is based on, and a metric with no
+samples in the window shows **—**.
 
 **Deleting an agent** removes it from the agent list and frees its licensed-agent slot, but keeps
 its captured traces, versions, and test suites intact for historical reference. Built-in **system

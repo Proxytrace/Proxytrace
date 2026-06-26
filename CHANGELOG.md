@@ -11,6 +11,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Call distribution stats on the agent page.** The agent detail view now shows a **Distribution**
+  widget with the **mean ± standard deviation** of an agent's successful calls over the selected
+  range: **input** and **output tokens** and **latency** (per call), and **cost**, **cache hit rate**
+  (turns after the first, which can't be cache hits) and **tool calls** (per conversation). It updates
+  live as new traces arrive and respects the time-range selector, so you can see not just the totals
+  but how consistent your agent's calls are.
 - **Sample a test run multiple times.** When you start a run you can now pick a **sample count (1–5)** —
   Proxytrace runs each selected endpoint that many times and **averages the results per endpoint**, so
   non-deterministic models don't hide flaky cases. The results matrix shows one column per endpoint with

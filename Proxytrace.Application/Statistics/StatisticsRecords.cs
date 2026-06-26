@@ -168,6 +168,37 @@ public record AgentOverviewStat(
     IReadOnlyList<AgentSuitePassRate> SuitePassRates,
     AgentEntityCounts Counts);
 
+/// <summary>
+/// Mean and (sample) standard deviation of one metric over its sample set, plus the sample count.
+/// <see cref="StdDev"/> is 0 when fewer than two samples exist.
+/// </summary>
+public record MetricDistribution(double Mean, double StdDev, int SampleCount)
+{
+    public static MetricDistribution Empty => new(0d, 0d, 0);
+}
+
+/// <summary>
+/// Distribution (mean ± std) of the agent's ingested calls over a window. Token and latency metrics
+/// are sampled per call; cost, cache-hit-rate and tool-call metrics are sampled per conversation
+/// (<c>ConversationId ?? AgentCallId</c>). Cache hit rate only samples conversations with a turn ≥ 2.
+/// </summary>
+public record AgentCallDistributions(
+    MetricDistribution InputTokensPerCall,
+    MetricDistribution OutputTokensPerCall,
+    MetricDistribution LatencyMsPerCall,
+    MetricDistribution CostPerConversationEur,
+    MetricDistribution CacheHitRatePerConversation,
+    MetricDistribution ToolCallsPerConversation)
+{
+    public static AgentCallDistributions Empty => new(
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty,
+        MetricDistribution.Empty);
+}
+
 public record EvaluatorSummary(
     int TotalEvaluations,
     double? AvgScore,

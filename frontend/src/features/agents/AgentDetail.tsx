@@ -9,6 +9,7 @@ import { SystemPromptWidget } from './widgets/SystemPromptWidget';
 import { ToolsWidget } from './widgets/ToolsWidget';
 import { ModelParametersWidget } from './widgets/ModelParametersWidget';
 import { SuitePassRatesWidget } from './widgets/SuitePassRatesWidget';
+import { DistributionWidget } from './widgets/DistributionWidget';
 import { RecentTracesWidget } from './widgets/RecentTracesWidget';
 import { VersionsWidget } from './VersionsWidget';
 
@@ -65,6 +66,8 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
               <SuitePassRatesWidget suitePassRates={overview.suitePassRates} agentId={agent.id} />
             )
           )}
+
+          <DistributionWidget agentId={agent.id} range={range} />
 
           <RecentTracesWidget agentId={agent.id} />
 

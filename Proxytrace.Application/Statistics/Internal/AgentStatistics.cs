@@ -45,6 +45,9 @@ internal class AgentStatistics : IAgentStatistics
             Counts: countsTask.Result);
     }
 
+    public Task<AgentCallDistributions> GetAgentDistributionsAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
+        => callStats.GetAgentDistributionsAsync(agentId, from, to, cancellationToken);
+
     internal async Task<IReadOnlyList<AgentPassRatePoint>> GetAgentPassRateTrendAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<TestRunStats> rows = await runStats.QueryAsync(

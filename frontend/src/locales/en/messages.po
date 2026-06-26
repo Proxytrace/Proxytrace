@@ -321,6 +321,10 @@ msgstr "{0} recent"
 msgid "{0} runs · {range}"
 msgstr "{0} runs · {range}"
 
+#. placeholder {0}: r.dist.sampleCount
+msgid "{0} samples"
+msgstr "{0} samples"
+
 #. placeholder {0}: selected.size
 msgid "{0} selected"
 msgstr "{0} selected"
@@ -578,6 +582,12 @@ msgstr "{wordCount, plural, one {# word} other {# words}}"
 msgid "{words, plural, one {# word} other {# words}}"
 msgstr "{words, plural, one {# word} other {# words}}"
 
+msgid "/ call"
+msgstr "/ call"
+
+msgid "/ conv"
+msgstr "/ conv"
+
 msgid "← Back"
 msgstr "← Back"
 
@@ -673,6 +683,9 @@ msgstr "1 agent"
 
 msgid "1 project"
 msgstr "1 project"
+
+msgid "1 sample"
+msgstr "1 sample"
 
 msgid "1 test suite"
 msgstr "1 test suite"
@@ -1109,6 +1122,9 @@ msgstr "Building chart…"
 
 msgid "Building table…"
 msgstr "Building table…"
+
+msgid "Cache hit (t≥2)"
+msgstr "Cache hit (t≥2)"
 
 msgid "Cached"
 msgstr "Cached"
@@ -1642,6 +1658,9 @@ msgstr "Dismissed — a reviewer chose not to apply this change."
 
 msgid "Disproven by A/B"
 msgstr "Disproven by A/B"
+
+msgid "Distribution"
+msgstr "Distribution"
 
 msgid "Divergent"
 msgstr "Divergent"
@@ -2743,6 +2762,9 @@ msgstr "No API keys yet"
 
 msgid "No audit events"
 msgstr "No audit events"
+
+msgid "No calls in this range yet"
+msgstr "No calls in this range yet"
 
 msgid "No cases match this filter."
 msgstr "No cases match this filter."
@@ -4676,6 +4698,9 @@ msgstr "Tool arguments (JSON)"
 
 msgid "tool call"
 msgstr "tool call"
+
+msgid "Tool calls"
+msgstr "Tool calls"
 
 msgid "Tool definition diff"
 msgstr "Tool definition diff"

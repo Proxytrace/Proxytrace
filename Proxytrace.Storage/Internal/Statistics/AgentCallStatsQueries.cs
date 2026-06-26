@@ -603,6 +603,96 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         return (series, summary);
     }
 
+    public async Task<AgentCallDistributions> GetAgentDistributionsAsync(
+        Guid agentId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
+    {
+        StorageDbContext context = contextFactory();
+
+        IQueryable<Guid> versionIdsForAgent = context.Set<AgentVersionEntity>()
+            .AsNoTracking()
+            .Where(v => v.AgentId == agentId)
+            .Select(v => v.Id);
+
+        // Single materialise-and-compute pass. Scoped to one agent over a bounded window, so pulling
+        // the minimal per-call projection into memory is cheap. Std-dev needs no ordered-set aggregate
+        // (unlike the latency percentiles above), and cost-per-conversation needs C# endpoint pricing,
+        // so every distribution is computed here rather than splitting relational/in-memory paths.
+        var calls = await context.Set<AgentCallEntity>()
+            .AsNoTracking()
+            .Where(c => versionIdsForAgent.Contains(c.AgentVersionId)
+                && c.CreatedAt >= from && c.CreatedAt <= to
+                && c.HttpStatus >= 200 && c.HttpStatus < 300)
+            .Select(c => new
+            {
+                ConvKey = c.ConversationId ?? c.Id,
+                c.EndpointId,
+                c.CreatedAt,
+                c.InputTokens,
+                c.OutputTokens,
+                c.CachedInputTokens,
+                c.LatencyMs,
+                Tools = c.ResponseToolRequestCount,
+            })
+            .ToListAsync(cancellationToken);
+
+        if (calls.Count == 0)
+        {
+            return AgentCallDistributions.Empty;
+        }
+
+        // Per-call metrics.
+        MetricDistribution inputTokens = Distribution(calls.Select(c => (double)(c.InputTokens ?? 0UL)).ToArray());
+        MetricDistribution outputTokens = Distribution(calls.Select(c => (double)(c.OutputTokens ?? 0UL)).ToArray());
+        MetricDistribution latency = Distribution(
+            calls.Where(c => c.LatencyMs != null).Select(c => c.LatencyMs ?? 0d).ToArray());
+
+        // Per-conversation metrics. Cost is linear in tokens, so a conversation's cost is the sum over
+        // its calls of CostOf(endpoint, tokens); load each endpoint's pricing once. Unpriced endpoints
+        // contribute 0 (matches GetCostEstimateAsync/GetAgentWindowAsync).
+        Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
+            context, calls.Select(c => c.EndpointId).Distinct().ToArray(), cancellationToken);
+
+        decimal CostOf(Guid endpointId, long input, long output, long cached)
+            => endpoints.TryGetValue(endpointId, out IModelEndpoint? e)
+                ? e.CalculateCost(new TokenUsage(
+                    (ulong)Math.Max(input, 0L), (ulong)Math.Max(output, 0L), (ulong)Math.Max(cached, 0L))) ?? 0m
+                : 0m;
+
+        var costSamples = new List<double>();
+        var toolSamples = new List<double>();
+        var cacheSamples = new List<double>();
+
+        foreach (var conv in calls.GroupBy(c => c.ConvKey))
+        {
+            decimal cost = conv.Sum(c => CostOf(
+                c.EndpointId, (long)(c.InputTokens ?? 0UL), (long)(c.OutputTokens ?? 0UL), (long)(c.CachedInputTokens ?? 0UL)));
+            costSamples.Add((double)cost);
+
+            toolSamples.Add(conv.Sum(c => (double)c.Tools));
+
+            // Cache hit rate for turn ≥ 2: drop the earliest call; sample only when later turns sent
+            // input (turn 1 cannot be a cache hit; single-turn conversations contribute nothing).
+            var laterTurns = conv.OrderBy(c => c.CreatedAt).Skip(1).ToArray();
+            if (laterTurns.Length > 0)
+            {
+                long laterInput = laterTurns.Sum(c => (long)(c.InputTokens ?? 0UL));
+                if (laterInput > 0L)
+                {
+                    long laterCached = laterTurns.Sum(c => (long)(c.CachedInputTokens ?? 0UL));
+                    cacheSamples.Add(Math.Clamp(laterCached / (double)laterInput, 0d, 1d));
+                }
+            }
+        }
+
+        return new AgentCallDistributions(
+            InputTokensPerCall: inputTokens,
+            OutputTokensPerCall: outputTokens,
+            LatencyMsPerCall: latency,
+            CostPerConversationEur: Distribution(costSamples),
+            CacheHitRatePerConversation: Distribution(cacheSamples),
+            ToolCallsPerConversation: Distribution(toolSamples));
+    }
+
     private async Task<Dictionary<Guid, IModelEndpoint>> LoadEndpointsAsync(
         StorageDbContext context, IReadOnlyCollection<Guid> endpointIds, CancellationToken cancellationToken)
     {
@@ -689,6 +779,33 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             query = query.Where(c => !systemVersionIds.Contains(c.AgentVersionId));
         }
         return query;
+    }
+
+    /// <summary>
+    /// Mean and sample (n−1) standard deviation of <paramref name="samples"/>. Std-dev is 0 when
+    /// fewer than two samples exist; an empty set yields <see cref="MetricDistribution.Empty"/>.
+    /// </summary>
+    private static MetricDistribution Distribution(IReadOnlyList<double> samples)
+    {
+        int n = samples.Count;
+        if (n == 0)
+        {
+            return MetricDistribution.Empty;
+        }
+
+        double mean = samples.Sum() / n;
+        if (n < 2)
+        {
+            return new MetricDistribution(mean, 0d, n);
+        }
+
+        double sumSq = 0d;
+        foreach (double v in samples)
+        {
+            double d = v - mean;
+            sumSq += d * d;
+        }
+        return new MetricDistribution(mean, Math.Sqrt(sumSq / (n - 1)), n);
     }
 
     private static double Percentile(double[] sorted, double p)

@@ -95,6 +95,19 @@ public record AgentOverviewDto(
     IReadOnlyList<AgentSuitePassRateDto> SuitePassRates,
     AgentEntityCountsDto Counts);
 
+public record MetricDistributionDto(
+    double Mean,
+    double StdDev,
+    int SampleCount);
+
+public record AgentDistributionsDto(
+    MetricDistributionDto InputTokensPerCall,
+    MetricDistributionDto OutputTokensPerCall,
+    MetricDistributionDto LatencyMsPerCall,
+    MetricDistributionDto CostPerConversationEur,
+    MetricDistributionDto CacheHitRatePerConversation,
+    MetricDistributionDto ToolCallsPerConversation);
+
 public record EvaluatorSummaryDto(
     int TotalEvaluations,
     double? AvgScore,

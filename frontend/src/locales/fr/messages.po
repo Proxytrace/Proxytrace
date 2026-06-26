@@ -321,6 +321,10 @@ msgstr "{0} récents"
 msgid "{0} runs · {range}"
 msgstr "{0} runs · {range}"
 
+#. placeholder {0}: r.dist.sampleCount
+msgid "{0} samples"
+msgstr "{0} échantillons"
+
 #. placeholder {0}: selected.size
 msgid "{0} selected"
 msgstr "{0} sélectionnés"
@@ -578,6 +582,12 @@ msgstr "{wordCount, plural, one {# mot} other {# mots}}"
 msgid "{words, plural, one {# word} other {# words}}"
 msgstr "{words, plural, one {# mot} other {# mots}}"
 
+msgid "/ call"
+msgstr "/ appel"
+
+msgid "/ conv"
+msgstr "/ conv"
+
 msgid "← Back"
 msgstr "← Retour"
 
@@ -673,6 +683,9 @@ msgstr "1 agent"
 
 msgid "1 project"
 msgstr "1 projet"
+
+msgid "1 sample"
+msgstr "1 échantillon"
 
 msgid "1 test suite"
 msgstr "1 suite de tests"
@@ -1109,6 +1122,9 @@ msgstr "Construction du graphique…"
 
 msgid "Building table…"
 msgstr "Construction du tableau…"
+
+msgid "Cache hit (t≥2)"
+msgstr "Cache hit (t≥2)"
 
 msgid "Cached"
 msgstr "Mis en cache"
@@ -1642,6 +1658,9 @@ msgstr "Ignoré — un évaluateur a choisi de ne pas appliquer ce changement."
 
 msgid "Disproven by A/B"
 msgstr "Infirmé par A/B"
+
+msgid "Distribution"
+msgstr "Distribution"
 
 msgid "Divergent"
 msgstr "Divergent"
@@ -2743,6 +2762,9 @@ msgstr "Aucune API key pour le moment"
 
 msgid "No audit events"
 msgstr "Aucun événement d'audit"
+
+msgid "No calls in this range yet"
+msgstr "Aucun appel dans cette plage pour le moment"
 
 msgid "No cases match this filter."
 msgstr "Aucun cas ne correspond à ce filtre."
@@ -4676,6 +4698,9 @@ msgstr "Arguments de l’Tool (JSON)"
 
 msgid "tool call"
 msgstr "appel d’Tool"
+
+msgid "Tool calls"
+msgstr "Tool calls"
 
 msgid "Tool definition diff"
 msgstr "Diff de définition de l’Tool"

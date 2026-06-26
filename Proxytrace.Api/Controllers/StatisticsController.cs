@@ -93,6 +93,31 @@ public class StatisticsController : ControllerBase
             Counts: ToDto(result.Counts));
     }
 
+    [HttpGet("agents/{agentId:guid}/distributions")]
+    public async Task<ActionResult<AgentDistributionsDto>> GetAgentDistributions(
+        Guid agentId,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+        if (from.Value >= to.Value)
+            return BadRequest("Query parameter 'from' must be before 'to'.");
+
+        AgentCallDistributions result = await agentStatistics.GetAgentDistributionsAsync(agentId, from.Value, to.Value, cancellationToken);
+        return new AgentDistributionsDto(
+            InputTokensPerCall: ToDto(result.InputTokensPerCall),
+            OutputTokensPerCall: ToDto(result.OutputTokensPerCall),
+            LatencyMsPerCall: ToDto(result.LatencyMsPerCall),
+            CostPerConversationEur: ToDto(result.CostPerConversationEur),
+            CacheHitRatePerConversation: ToDto(result.CacheHitRatePerConversation),
+            ToolCallsPerConversation: ToDto(result.ToolCallsPerConversation));
+    }
+
+    private static MetricDistributionDto ToDto(MetricDistribution d) =>
+        new(d.Mean, d.StdDev, d.SampleCount);
+
     private static AgentTimeSummaryDto ToDto(AgentTimeSummary s) =>
         new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCachedInputTokens, s.TotalCostEur, s.AvgLatencyMs);
 

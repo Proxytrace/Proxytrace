@@ -34,4 +34,11 @@ public interface IAgentCallStatsReader
 
     Task<(IReadOnlyList<AgentTimeSeriesPoint> Series, AgentTimeSummary Summary)> GetAgentWindowAsync(
         Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Distribution (mean ± std) of the agent's successful (2xx) calls over <paramref name="from"/>..<paramref name="to"/>.
+    /// Token and latency metrics are per call; cost, cache-hit-rate and tool-call metrics are per conversation.
+    /// </summary>
+    Task<AgentCallDistributions> GetAgentDistributionsAsync(
+        Guid agentId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default);
 }
