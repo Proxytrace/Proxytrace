@@ -95,6 +95,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Enabling MFA no longer fails when the setup request is sent twice.** Two near-simultaneous
+  "set up MFA" requests for the same account (e.g. a double-click or a retried request) raced on the
+  one-enrollment-per-user rule and the second crashed with a server error. Setup now tolerates the
+  race and returns the enrollment that took effect, so the QR code always matches the stored secret.
 - **Traces show their message preview again.** Traces ingested before the list's denormalised preview
   column was introduced rendered with a blank message preview. A one-time, idempotent startup backfill
   now recomputes the preview (the first user message) for those rows in bounded batches, so every trace

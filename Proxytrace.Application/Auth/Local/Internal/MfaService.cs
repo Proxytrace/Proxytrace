@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Security.Cryptography;
 using Proxytrace.Application.Security;
 using Proxytrace.Domain;
@@ -11,6 +12,11 @@ internal sealed class MfaService : IMfaService
 {
     private const int BackupCodeCount = 10;
     private const int BackupCodeChars = 10;
+
+    // PostgreSQL SQLSTATE 23505 = unique_violation. The only unique index a setup insert can trip is
+    // IX_UserTotpEnrollmentEntity_User (one enrollment per user), so this unambiguously means a
+    // concurrent setup for the same user beat us to it.
+    private const string UniqueViolation = "23505";
 
     // 32-symbol alphabet without the visually ambiguous I/O/0/1.
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -66,18 +72,48 @@ internal sealed class MfaService : IMfaService
         }
 
         var secret = totp.GenerateSecret();
-        return await transaction.InvokeAsync(async () =>
+        try
         {
-            // Replace any stale, never-confirmed enrollment so a user can restart setup cleanly.
-            if (existing is not null)
+            return await transaction.InvokeAsync(async () =>
             {
-                await existing.RemoveAsync(cancellationToken);
-            }
+                // Replace any stale, never-confirmed enrollment so a user can restart setup cleanly.
+                if (existing is not null)
+                {
+                    await existing.RemoveAsync(cancellationToken);
+                }
 
-            var enrollment = createEnrollment(user, secret);
-            await enrollment.AddAsync(cancellationToken);
-            return new MfaSetup(secret, totp.BuildOtpAuthUri(user.Email, secret));
-        }, cancellationToken);
+                var enrollment = createEnrollment(user, secret);
+                await enrollment.AddAsync(cancellationToken);
+                return new MfaSetup(secret, totp.BuildOtpAuthUri(user.Email, secret));
+            }, cancellationToken);
+        }
+        catch (Exception ex) when (IsPerUserUniqueViolation(ex))
+        {
+            // A concurrent setup (e.g. a double-submitted request) won the race against the per-user
+            // unique index; our transaction rolled back, so nothing of ours persisted. Return the
+            // enrollment that actually landed so the response matches stored state and the user's
+            // authenticator scans a secret that will verify — never a 500. If it has since been
+            // confirmed, fall through to the "already enabled" contract (null → 409).
+            var raced = await enrollments.FindByUserAsync(user.Id, cancellationToken);
+            return raced is { IsConfirmed: false }
+                ? new MfaSetup(raced.Secret, totp.BuildOtpAuthUri(user.Email, raced.Secret))
+                : null;
+        }
+    }
+
+    // Walks the inner-exception chain for a unique-constraint violation, identified through the BCL
+    // DbException.SqlState rather than the Npgsql/EF type so the application layer keeps no hard
+    // provider reference. Mirrors AgentCallProcessor.IsRetryable.
+    private static bool IsPerUserUniqueViolation(Exception ex)
+    {
+        for (Exception? e = ex; e is not null; e = e.InnerException)
+        {
+            if (e is DbException { SqlState: UniqueViolation })
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public async Task<IReadOnlyList<string>?> ActivateAsync(IUser user, string code, CancellationToken cancellationToken = default)

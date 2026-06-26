@@ -46,7 +46,10 @@ reset-password pages.
 - `POST /api/auth/mfa/setup` → `MfaService.SetupAsync` creates/replaces a **pending** enrollment
   (`ConfirmedAt == null`) and returns `{ secret, otpAuthUri }`. The QR code is rendered **client-side**
   from the otpauth URI (`qrcode.react`) — no backend QR dependency. Returns 409 if MFA is already
-  confirmed (disable first).
+  confirmed (disable first). The per-user unique index is the source of truth for "one enrollment per
+  user": two concurrent setups race on it, and the loser catches the `23505` unique-violation,
+  re-reads, and returns the pending enrollment that landed (so the response never 500s and the
+  returned secret matches the stored row) — see `MfaService.SetupAsync`.
 - `POST /api/auth/mfa/activate` `{ code }` → verifies the first code against the pending secret, sets
   `ConfirmedAt`, generates + returns the 10 backup codes once (transactional), audits `MfaEnabled`.
 - `POST /api/auth/mfa/disable` `{ password }` → re-auth with the password, then remove the enrollment
