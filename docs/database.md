@@ -67,8 +67,15 @@ Set the connection string in:
   only and returns `AgentCallListItem`, so a page never reads or deserialises the `Request`,
   `Response` or `ModelParameters` payload columns. Two denormalised columns populated at write time
   back this: `RequestPreview` (first user message, collapsed + truncated) and
-  `ResponseToolRequestCount`. The full payload is loaded per-selection via `FindAsync`. (Rows written
-  before these columns existed show no preview until they age out via retention.)
+  `ResponseToolRequestCount`. The full payload is loaded per-selection via `FindAsync`. The shared
+  `AgentCallPreview.Build` computes the preview, used both at ingestion (`AgentCallConfig`) and by the
+  backfill below. (Rows written before `RequestPreview` existed start with it `null`; a one-time,
+  idempotent startup backfill — `AgentCallPreviewBackfillService`, registered after the DB initializer
+  — recomputes their preview in bounded batches `WHERE RequestPreview IS NULL`, so they regain it on
+  the next boot. A request with no user message is marked with an empty string rather than `null` so
+  the candidate set strictly shrinks and a re-run is a no-op; the client renders an empty preview as
+  the same em-dash placeholder as `null`. `ResponseToolRequestCount` is not backfilled — older rows
+  keep its `0` default.)
 - **Outlier flag + partial index.** `OutlierFlags` (a byte bitmask, `0` = not an outlier) is written at
   ingestion by the outlier detector. A **partial index** (`WHERE "OutlierFlags" <> 0`) backs the
   "outliers only" trace filter cheaply — outliers are a small fraction of this high-volume table. The

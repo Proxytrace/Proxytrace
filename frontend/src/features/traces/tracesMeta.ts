@@ -39,6 +39,42 @@ export function toolCount(trace: AgentCallListItemDto): number {
   return trace.toolCount;
 }
 
+/**
+ * Whether any user-applied filter is narrowing the traces list. Drives the empty state: an empty
+ * list with a filter active shows "no traces match your filters"; with none, the first-time setup
+ * instructions. Every filter that can hide rows MUST be reflected here — omitting one (e.g. the
+ * outliers-only toggle) makes a filtered-empty list look like an empty project and wrongly shows the
+ * setup instructions. `showSystem` is deliberately excluded: its default (system traces hidden) is
+ * the baseline view, so counting it would mark a genuinely empty project as filtered.
+ */
+export function hasActiveTraceFilters(input: {
+  agentFilter: string;
+  search: string;
+  timeRangeActive: boolean;
+  outlierOnly: boolean;
+}): boolean {
+  return (
+    !!input.agentFilter ||
+    input.search.trim().length > 0 ||
+    input.timeRangeActive ||
+    input.outlierOnly
+  );
+}
+
+export type TraceListView = 'rows' | 'loading' | 'empty-filtered' | 'empty-setup';
+
+/**
+ * Which view the traces list should render. Extracted from TraceTable's JSX so the bug-prone
+ * "filtered-empty vs genuinely-empty" decision is unit-testable in isolation: a filtered-empty list
+ * MUST be `empty-filtered` (the "no traces match your filters" message), never `empty-setup` (the
+ * first-time setup instructions). `filtered` comes from {@link hasActiveTraceFilters}.
+ */
+export function traceListView(rowCount: number, isFetching: boolean, filtered: boolean): TraceListView {
+  if (rowCount > 0) return 'rows';
+  if (isFetching) return 'loading';
+  return filtered ? 'empty-filtered' : 'empty-setup';
+}
+
 // ── Column layout (shared between header row and all trace rows) ───────────────
 
 // Minimums are sized so the row still fits a ~900px list (1024px viewport with collapsed

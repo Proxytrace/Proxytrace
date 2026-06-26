@@ -95,6 +95,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Traces show their message preview again.** Traces ingested before the list's denormalised preview
+  column was introduced rendered with a blank message preview. A one-time, idempotent startup backfill
+  now recomputes the preview (the first user message) for those rows in bounded batches, so every trace
+  shows its preview after the next restart — no longer only the ones captured since the column was added.
+- **Password reset and invite links point at the right address.** The emailed reset/invite links fell
+  back to the API server's own host and port when no explicit frontend URL was configured, producing a
+  link the browser couldn't open. They now use the configured frontend origin (`Frontend:AllowedOrigin`),
+  so the links work out of the box in every environment.
+- **"No traces" message instead of setup instructions when filters exclude everything.** The Traces
+  page treated an empty list from the new **Outliers only** filter as an empty project and showed the
+  first-time setup instructions. It now shows "No traces match your filters" when any filter (including
+  Outliers only) is active, and keeps the setup instructions only for a project with no traces at all.
 - **Dashboard and statistics stay fast on large datasets.** On a database with a lot of history the
   dashboard and statistics aggregates could take several seconds because PostgreSQL's query planner,
   working from out-of-date table statistics, chose a plan that scanned the whole traces table the slow

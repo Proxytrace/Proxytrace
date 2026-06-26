@@ -68,6 +68,15 @@ public sealed class Module : Autofac.Module
                 .SingleInstance();
             builder.RegisterServiceCollection(services =>
                 services.AddHostedService(sp => sp.GetRequiredService<SecretsBackfillService>()));
+
+            // One-time, idempotent backfill of the denormalised trace message preview for rows ingested
+            // before that column existed. Registered after the DB initializer so it runs once migrations
+            // have applied. Resolvable as itself so tests can drive it directly.
+            builder.RegisterType<AgentCallPreviewBackfillService>()
+                .AsSelf()
+                .SingleInstance();
+            builder.RegisterServiceCollection(services =>
+                services.AddHostedService(sp => sp.GetRequiredService<AgentCallPreviewBackfillService>()));
         }
 
         builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();

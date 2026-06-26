@@ -8,10 +8,11 @@ import type { AgentCallListItemDto } from '../api/models';
 /**
  * Preview text for a trace row: the first user message in the request, with collapsed whitespace
  * (precomputed by the backend into {@link AgentCallListItemDto.messagePreview}). Null when the
- * request had no user message (callers render an em-dash placeholder).
+ * request had no user message — including the empty-string marker the preview backfill writes for
+ * such rows — so callers render an em-dash placeholder.
  */
 export function tracePreview(call: AgentCallListItemDto): string | null {
-  return call.messagePreview;
+  return call.messagePreview || null;
 }
 
 // ── Conversation grouping ──────────────────────────────────────────────────────

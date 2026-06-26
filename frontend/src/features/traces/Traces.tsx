@@ -3,7 +3,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows } from './tracesMeta';
+import { buildRows, hasActiveTraceFilters } from './tracesMeta';
 import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRange';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
@@ -227,7 +227,7 @@ export default function Traces() {
       <TraceTable
         rows={rows}
         isFetching={isFetching}
-        filtered={!!agentFilter || debouncedSearch.trim().length > 0 || from != null}
+        filtered={hasActiveTraceFilters({ agentFilter, search: debouncedSearch, timeRangeActive: from != null, outlierOnly })}
         selectedId={selectedTrace?.id ?? null}
         expandedConvs={expandedConvs}
         onSelectTrace={t => selectTrace(t.id)}
