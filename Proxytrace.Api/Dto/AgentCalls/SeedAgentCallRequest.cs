@@ -13,4 +13,7 @@ public record SeedAgentCallRequest(
     int InputTokens,
     int OutputTokens,
     int DurationMs,
-    Guid? ConversationId);
+    Guid? ConversationId,
+    // Raw OutlierFlags bitmask to stamp on the seeded call (the seed bypasses ingestion, so the
+    // detector never runs). Lets e2e create a deterministic outlier without building a baseline.
+    int? OutlierFlags = null);

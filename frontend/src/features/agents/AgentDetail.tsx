@@ -10,6 +10,7 @@ import { ToolsWidget } from './widgets/ToolsWidget';
 import { ModelParametersWidget } from './widgets/ModelParametersWidget';
 import { SuitePassRatesWidget } from './widgets/SuitePassRatesWidget';
 import { DistributionWidget } from './widgets/DistributionWidget';
+import { RecentOutliersWidget } from './widgets/RecentOutliersWidget';
 import { RecentTracesWidget } from './widgets/RecentTracesWidget';
 import { VersionsWidget } from './VersionsWidget';
 
@@ -68,6 +69,8 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
           )}
 
           <DistributionWidget agentId={agent.id} range={range} />
+
+          <RecentOutliersWidget agentId={agent.id} />
 
           <RecentTracesWidget agentId={agent.id} />
 

@@ -54,4 +54,5 @@ public record AgentCallListItemDto(
     decimal? CostEur,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    Guid? ConversationId);
+    Guid? ConversationId,
+    int OutlierFlags);

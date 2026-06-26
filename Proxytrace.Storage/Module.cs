@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Demo;
+using Proxytrace.Application.Outliers;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.TestSupport;
 using Proxytrace.Common.DependencyInjection;
@@ -125,8 +126,16 @@ public sealed class Module : Autofac.Module
             .AsImplementedInterfaces()
             .InstancePerDependency();
 
+        builder.RegisterType<Internal.Entities.OutlierSettings.OutlierSettingsStore>()
+            .AsImplementedInterfaces()
+            .InstancePerDependency();
+
         builder.RegisterType<AgentCallStatsQueries>()
             .As<IAgentCallStatsReader>()
+            .InstancePerDependency();
+
+        builder.RegisterType<OutlierBaselineQueries>()
+            .As<IOutlierBaselineReader>()
             .InstancePerDependency();
 
         builder.RegisterType<EvaluatorStatsQueries>()

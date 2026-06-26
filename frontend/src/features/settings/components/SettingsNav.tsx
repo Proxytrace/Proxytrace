@@ -36,6 +36,7 @@ const SECTIONS: NavSection[] = [
       { label: msg`License`, to: '/settings/license', testId: 'settings-nav-license' },
       { label: msg`Error log`, to: '/settings/error-log', testId: 'settings-nav-error-log' },
       { label: msg`Email notifications`, to: '/settings/email-notifications', testId: 'settings-nav-email-notifications' },
+      { label: msg`Outlier detection`, to: '/settings/outlier-detection', testId: 'settings-nav-outlier-detection' },
       { label: msg`Audit log`, to: '/settings/audit-log', testId: 'settings-nav-audit-log' },
       { label: msg`Danger zone`, to: '/settings/danger', testId: 'settings-nav-danger' },
     ],

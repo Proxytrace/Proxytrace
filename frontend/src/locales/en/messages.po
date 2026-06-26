@@ -696,8 +696,14 @@ msgstr "2 proposals"
 msgid "6-digit code"
 msgstr "6-digit code"
 
+msgid "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
+msgstr "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
+
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
+
+msgid "A metric is only judged once the agent has at least this many recent calls."
+msgstr "A metric is only judged once the agent has at least this many recent calls."
 
 msgid "A proposal is created only once the A/B test shows an improvement."
 msgstr "A proposal is created only once the A/B test shows an improvement."
@@ -1101,6 +1107,9 @@ msgstr "baseline"
 
 msgid "Baseline"
 msgstr "Baseline"
+
+msgid "Baseline window (calls)"
+msgstr "Baseline window (calls)"
 
 msgid "Benchmark what matters"
 msgstr "Benchmark what matters"
@@ -1759,6 +1768,9 @@ msgstr "Email settings saved"
 msgid "Enable email notifications"
 msgstr "Enable email notifications"
 
+msgid "Enable outlier detection"
+msgstr "Enable outlier detection"
+
 msgid "Enable schedule"
 msgstr "Enable schedule"
 
@@ -1999,6 +2011,9 @@ msgstr "Fix license"
 msgid "Fixed"
 msgstr "Fixed"
 
+msgid "Flag agent calls that deviate from their agent's recent behaviour."
+msgstr "Flag agent calls that deviate from their agent's recent behaviour."
+
 msgid "Flaky"
 msgstr "Flaky"
 
@@ -2101,6 +2116,12 @@ msgstr "Hide traces from system agents"
 msgid "High"
 msgstr "High"
 
+msgid "High latency"
+msgstr "High latency"
+
+msgid "High token count"
+msgstr "High token count"
+
 msgid "Highest pass rate"
 msgstr "Highest pass rate"
 
@@ -2121,6 +2142,9 @@ msgstr "Hover or pick a past evaluation to preview it."
 
 msgid "How can I help?"
 msgstr "How can I help?"
+
+msgid "How many of the agent's most recent successful calls form the baseline."
+msgstr "How many of the agent's most recent successful calls form the baseline."
 
 msgid "https://api.openai.com/v1"
 msgstr "https://api.openai.com/v1"
@@ -2494,6 +2518,9 @@ msgstr "Logout"
 msgid "Low"
 msgstr "Low"
 
+msgid "Low cache hit"
+msgstr "Low cache hit"
+
 msgid "Manage"
 msgstr "Manage"
 
@@ -2505,6 +2532,9 @@ msgstr "Manage roles, project access, and invitations."
 
 msgid "Manage this installation's license key."
 msgstr "Manage this installation's license key."
+
+msgid "Many tool calls"
+msgstr "Many tool calls"
 
 msgid "Mark adopted"
 msgstr "Mark adopted"
@@ -2565,6 +2595,9 @@ msgstr "Metadata"
 
 msgid "Min"
 msgstr "Min"
+
+msgid "Minimum samples"
+msgstr "Minimum samples"
 
 msgid "Minimum severity"
 msgstr "Minimum severity"
@@ -2867,6 +2900,9 @@ msgstr "No optimization theories yet"
 
 msgid "No options available."
 msgstr "No options available."
+
+msgid "No outliers detected."
+msgstr "No outliers detected."
 
 msgid "No output returned."
 msgstr "No output returned."
@@ -3180,6 +3216,18 @@ msgstr "Other"
 
 msgid "out"
 msgstr "out"
+
+msgid "Outlier detection"
+msgstr "Outlier detection"
+
+msgid "Outlier settings saved"
+msgstr "Outlier settings saved"
+
+msgid "Outlier: {reasons}"
+msgstr "Outlier: {reasons}"
+
+msgid "Outliers only"
+msgstr "Outliers only"
 
 msgid "Output"
 msgstr "Output"
@@ -3596,6 +3644,9 @@ msgstr "Recent"
 
 msgid "Recent evaluations"
 msgstr "Recent evaluations"
+
+msgid "Recent outliers"
+msgstr "Recent outliers"
 
 msgid "Recent traces"
 msgstr "Recent traces"
@@ -4126,6 +4177,12 @@ msgstr "Send result"
 msgid "Send test email"
 msgstr "Send test email"
 
+msgid "Sensitivity (standard deviations)"
+msgstr "Sensitivity (standard deviations)"
+
+msgid "Sensitivity must be above 0, and the sample counts at least 1."
+msgstr "Sensitivity must be above 0, and the sample counts at least 1."
+
 msgid "Set a password for your account"
 msgstr "Set a password for your account"
 
@@ -4156,6 +4213,9 @@ msgstr "Share this one-time link with the user. It won't be shown again."
 msgid "Show"
 msgstr "Show"
 
+msgid "Show all traces"
+msgstr "Show all traces"
+
 msgid "Show available tools"
 msgstr "Show available tools"
 
@@ -4164,6 +4224,9 @@ msgstr "Show ephemeral A/B validation runs"
 
 msgid "Show less"
 msgstr "Show less"
+
+msgid "Show only outlier traces"
+msgstr "Show only outlier traces"
 
 msgid "Show system agents"
 msgstr "Show system agents"
@@ -5059,6 +5122,9 @@ msgstr "When"
 
 msgid "When disabled, search returns no results and indexing pauses."
 msgstr "When disabled, search returns no results and indexing pauses."
+
+msgid "When on, each ingested call is flagged if it deviates from the agent's recent baseline."
+msgstr "When on, each ingested call is flagged if it deviates from the agent's recent baseline."
 
 msgid "When on, notifications are emailed to users who opt in."
 msgstr "When on, notifications are emailed to users who opt in."

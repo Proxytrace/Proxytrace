@@ -112,6 +112,9 @@ export const QUERY_KEYS = {
   /** Operator email/SMTP settings (admin). */
   emailSettings: ['email-settings'] as const,
 
+  /** Operator outlier-detection sensitivity (admin). */
+  outlierSettings: ['outlier-settings'] as const,
+
   notifications: (projectId?: string) => ['notifications', projectId ?? null] as const,
   /** Prefix matching every notifications query — use for invalidation. */
   notificationsRoot: ['notifications'] as const,

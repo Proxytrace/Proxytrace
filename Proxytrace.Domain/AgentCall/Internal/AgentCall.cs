@@ -23,6 +23,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
     public string? ErrorMessage { get; }
     public IModelParameters ModelParameters { get; }
     public Guid? ConversationId { get; }
+    public OutlierFlags OutlierFlags { get; }
     public IProject Project => Agent.Project;
 
     public AgentCall(
@@ -36,6 +37,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         string? errorMessage,
         IModelParameters? modelParameters,
         Guid? conversationId,
+        OutlierFlags outlierFlags,
         IRepository<IAgentCall> repository) : base(repository)
     {
         Agent = agent;
@@ -48,6 +50,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         ErrorMessage = errorMessage;
         ModelParameters = modelParameters ?? Inference.Internal.ModelParameters.Empty;
         ConversationId = conversationId;
+        OutlierFlags = outlierFlags;
     }
 
     public AgentCall(
@@ -62,6 +65,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IModelParameters modelParameters,
         IDomainEntityData existing,
         Guid? conversationId,
+        OutlierFlags outlierFlags,
         IRepository<IAgentCall> repository) : base(existing, repository)
     {
         Agent = agent;
@@ -74,6 +78,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         ErrorMessage = errorMessage;
         ModelParameters = modelParameters;
         ConversationId = conversationId;
+        OutlierFlags = outlierFlags;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -48,6 +48,14 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
   letting it slide. Invoke the `file-issue` skill (`.claude/skills/file-issue/SKILL.md`) — it covers
   dedup, title/body quality, and labels — then carry on with your task.
 - **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
+- **Perf at scale** — whenever you touch a query, repository, EF mapping, or index on a high-volume
+  entity (above all `AgentCallEntity`/traces, but any table that grows unboundedly), you MUST add or
+  extend a perf test in [`perf/`](perf/) that measures the changed path against a budget in
+  `perf/perf-budgets.json` — a correctness test on a few in-memory rows does **not** catch
+  client-side evaluation or O(rows) blow-ups that only bite at scale. Verify the aggregate is
+  server-side (`ToQueryString()` shows a `GROUP BY`, not a full-row scan) and run
+  `perf/run.sh --size 1000000`. See [`docs/performance-testing.md`](docs/performance-testing.md) and
+  the `run-perf-tests` skill.
 - **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
   [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the
   GitHub release notes verbatim — see [`docs/releasing.md`](docs/releasing.md)).

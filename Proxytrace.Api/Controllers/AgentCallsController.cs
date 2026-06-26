@@ -91,6 +91,7 @@ public class AgentCallsController : ControllerBase
         [FromQuery] bool includeSystemAgents = true,
         [FromQuery] string? q = null,
         [FromQuery] Guid? conversationId = null,
+        [FromQuery] bool outlierOnly = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -98,7 +99,7 @@ public class AgentCallsController : ControllerBase
         (page, pageSize) = Paging.Clamp(page, pageSize);
         if (!await CanListAsync(projectId, agentId, cancellationToken))
             return new PagedResult<AgentCallListItemDto>([], 0, page, pageSize);
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
+        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId, outlierOnly);
         var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallListItem>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
     }
@@ -244,7 +245,8 @@ public class AgentCallsController : ControllerBase
                 finishReason: "stop",
                 errorMessage: null,
                 modelParameters: agent.ModelParameters,
-                conversationId: request.ConversationId),
+                conversationId: request.ConversationId,
+                outlierFlags: (OutlierFlags)(request.OutlierFlags ?? 0)),
             cancellationToken);
 
         // Publish to the trace SSE broadcaster exactly as the ingestion pipeline does, so

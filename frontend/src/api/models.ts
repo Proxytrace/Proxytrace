@@ -94,6 +94,8 @@ export interface AgentCallDto {
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
+  /** Outlier characteristics flagged at ingestion (bitmask; 0 = not an outlier). See {@link lib/outliers}. */
+  outlierFlags: number;
 }
 
 /** Lightweight agent-call projection for the traces table / dashboard live stream. Carries row
@@ -122,6 +124,8 @@ export interface AgentCallListItemDto {
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
+  /** Outlier characteristics flagged at ingestion (bitmask; 0 = not an outlier). See {@link lib/outliers}. */
+  outlierFlags: number;
 }
 
 /* ── Agents ── */
@@ -818,6 +822,8 @@ export interface AgentCallFilter {
   includeSystemAgents?: boolean;
   q?: string;
   conversationId?: string;
+  /** When true, return only calls flagged as outliers (any {@link AgentCallListItemDto.outlierFlags} bit set). */
+  outlierOnly?: boolean;
   page?: number;
   pageSize?: number;
 }

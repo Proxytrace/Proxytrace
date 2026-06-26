@@ -696,8 +696,14 @@ msgstr "2 propositions"
 msgid "6-digit code"
 msgstr "Code à 6 chiffres"
 
+msgid "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
+msgstr "Un call est signalé lorsqu’une métrique se situe à ce nombre d’écarts types de la moyenne récente de l’Agent. Une valeur plus basse est plus sensible."
+
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "Un modèle évaluateur attribue une note aux réponses sur une échelle fixe de 1 à 5 (Terrible → Excellent) avec un raisonnement facultatif. Choisissez un preset ou rédigez votre propre rubric."
+
+msgid "A metric is only judged once the agent has at least this many recent calls."
+msgstr "Une métrique n’est évaluée que lorsque l’Agent a au moins ce nombre de calls récents."
 
 msgid "A proposal is created only once the A/B test shows an improvement."
 msgstr "Une proposal n’est créée que lorsque le A/B test montre une amélioration."
@@ -1101,6 +1107,9 @@ msgstr "baseline"
 
 msgid "Baseline"
 msgstr "Référence"
+
+msgid "Baseline window (calls)"
+msgstr "Fenêtre de base (calls)"
 
 msgid "Benchmark what matters"
 msgstr "Benchmark ce qui compte"
@@ -1759,6 +1768,9 @@ msgstr "Paramètres d’email enregistrés"
 msgid "Enable email notifications"
 msgstr "Activer les notifications par email"
 
+msgid "Enable outlier detection"
+msgstr "Activer la détection des outliers"
+
 msgid "Enable schedule"
 msgstr "Activer le planning"
 
@@ -1999,6 +2011,9 @@ msgstr "Corriger la licence"
 msgid "Fixed"
 msgstr "Corrigé"
 
+msgid "Flag agent calls that deviate from their agent's recent behaviour."
+msgstr "Signaler les calls de l’Agent qui s’écartent du comportement récent de leur Agent."
+
 msgid "Flaky"
 msgstr "Instable"
 
@@ -2101,6 +2116,12 @@ msgstr "Masquer les traces des agents système"
 msgid "High"
 msgstr "Élevé"
 
+msgid "High latency"
+msgstr "Latence élevée"
+
+msgid "High token count"
+msgstr "Nombre élevé de Tokens"
+
 msgid "Highest pass rate"
 msgstr "Taux de réussite le plus élevé"
 
@@ -2121,6 +2142,9 @@ msgstr "Survolez ou sélectionnez une évaluation passée pour la prévisualiser
 
 msgid "How can I help?"
 msgstr "Comment puis-je vous aider ?"
+
+msgid "How many of the agent's most recent successful calls form the baseline."
+msgstr "Nombre de calls réussis les plus récents de l’Agent qui servent de base."
 
 msgid "https://api.openai.com/v1"
 msgstr "https://api.openai.com/v1"
@@ -2494,6 +2518,9 @@ msgstr "Déconnexion"
 msgid "Low"
 msgstr "Faible"
 
+msgid "Low cache hit"
+msgstr "Faible taux de cache hit"
+
 msgid "Manage"
 msgstr "Gérer"
 
@@ -2505,6 +2532,9 @@ msgstr "Gérez les rôles, l’accès aux projets et les invitations."
 
 msgid "Manage this installation's license key."
 msgstr "Gérez la clé de licence de cette installation."
+
+msgid "Many tool calls"
+msgstr "Nombreux Tool calls"
 
 msgid "Mark adopted"
 msgstr "Marquer comme adopté"
@@ -2565,6 +2595,9 @@ msgstr "Métadonnées"
 
 msgid "Min"
 msgstr "Min"
+
+msgid "Minimum samples"
+msgstr "Nombre minimum d’échantillons"
 
 msgid "Minimum severity"
 msgstr "Sévérité minimale"
@@ -2867,6 +2900,9 @@ msgstr "Aucune théorie d’optimisation pour le moment"
 
 msgid "No options available."
 msgstr "Aucune option disponible."
+
+msgid "No outliers detected."
+msgstr "Aucun outlier détecté."
 
 msgid "No output returned."
 msgstr "Aucune sortie renvoyée."
@@ -3180,6 +3216,18 @@ msgstr "Autre"
 
 msgid "out"
 msgstr "sortie"
+
+msgid "Outlier detection"
+msgstr "Détection des outliers"
+
+msgid "Outlier settings saved"
+msgstr "Paramètres des outliers enregistrés"
+
+msgid "Outlier: {reasons}"
+msgstr "Outlier : {reasons}"
+
+msgid "Outliers only"
+msgstr "Outliers uniquement"
 
 msgid "Output"
 msgstr "Sortie"
@@ -3596,6 +3644,9 @@ msgstr "Récent"
 
 msgid "Recent evaluations"
 msgstr "Évaluations récentes"
+
+msgid "Recent outliers"
+msgstr "Outliers récents"
 
 msgid "Recent traces"
 msgstr "Traces récentes"
@@ -4126,6 +4177,12 @@ msgstr "Envoyer le résultat"
 msgid "Send test email"
 msgstr "Envoyer un email de test"
 
+msgid "Sensitivity (standard deviations)"
+msgstr "Sensibilité (écarts types)"
+
+msgid "Sensitivity must be above 0, and the sample counts at least 1."
+msgstr "La sensibilité doit être supérieure à 0, et le nombre d’échantillons au moins égal à 1."
+
 msgid "Set a password for your account"
 msgstr "Définir un mot de passe pour votre compte"
 
@@ -4156,6 +4213,9 @@ msgstr "Partagez ce lien à usage unique avec l'utilisateur. Il ne sera plus aff
 msgid "Show"
 msgstr "Afficher"
 
+msgid "Show all traces"
+msgstr "Afficher tous les Traces"
+
 msgid "Show available tools"
 msgstr "Afficher les Tools disponibles"
 
@@ -4164,6 +4224,9 @@ msgstr "Afficher les exécutions de validation A/B éphémères"
 
 msgid "Show less"
 msgstr "Afficher moins"
+
+msgid "Show only outlier traces"
+msgstr "Afficher uniquement les Traces d’outlier"
 
 msgid "Show system agents"
 msgstr "Afficher les Agents système"
@@ -5059,6 +5122,9 @@ msgstr "Quand"
 
 msgid "When disabled, search returns no results and indexing pauses."
 msgstr "Quand cette option est désactivée, la recherche ne renvoie aucun résultat et l'indexation se met en pause."
+
+msgid "When on, each ingested call is flagged if it deviates from the agent's recent baseline."
+msgstr "Lorsque cette option est activée, chaque call ingéré est signalé s’il s’écarte de la base récente de l’Agent."
 
 msgid "When on, notifications are emailed to users who opt in."
 msgstr "Lorsque cette option est activée, les notifications sont envoyées par email aux utilisateurs qui ont choisi de les recevoir."

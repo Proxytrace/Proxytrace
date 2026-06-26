@@ -35,6 +35,7 @@ import { ProjectsSection } from './features/settings/sections/ProjectsSection';
 import { DangerZoneSection } from './features/settings/sections/DangerZoneSection';
 import { LicenseSection } from './features/settings/sections/LicenseSection';
 import { EmailNotificationsSection } from './features/settings/sections/EmailNotificationsSection';
+import { OutlierSettingsSection } from './features/settings/sections/OutlierSettingsSection';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -260,6 +261,7 @@ function AppRoutes() {
             <Route path="license" element={<LicenseSection />} />
             <Route path="error-log" element={wrap(<ErrorLog />)} />
             <Route path="email-notifications" element={<EmailNotificationsSection />} />
+            <Route path="outlier-detection" element={<OutlierSettingsSection />} />
             <Route path="audit-log" element={wrap(<AuditLog />)} />
             <Route path="danger" element={<DangerZoneSection />} />
           </Route>

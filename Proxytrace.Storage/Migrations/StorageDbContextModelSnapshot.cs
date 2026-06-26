@@ -114,6 +114,9 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<byte>("OutlierFlags")
+                        .HasColumnType("smallint");
+
                     b.Property<decimal?>("OutputTokens")
                         .HasColumnType("numeric(20,0)");
 
@@ -142,6 +145,9 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("EndpointId");
+
+                    b.HasIndex("OutlierFlags")
+                        .HasFilter("\"OutlierFlags\" <> 0");
 
                     b.HasIndex("AgentVersionId", "CreatedAt");
 
@@ -880,6 +886,36 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Agent", "ContentHash");
 
                     b.ToTable("OptimizationTheoryEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OutlierSettings.OutlierSettingsEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MinSampleCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SampleWindow")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("SigmaMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OutlierSettingsEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.PasswordResetToken.PasswordResetTokenEntity", b =>

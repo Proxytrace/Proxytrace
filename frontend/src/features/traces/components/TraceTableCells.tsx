@@ -1,9 +1,11 @@
 // Shared cell renderers used by FlatTraceRow and ConversationGroupRow.
 // Each is a tiny presentational component (< 20 lines) with no state.
 
+import { useLingui } from '@lingui/react/macro';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens, cachedPct } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
+import { OUTLIER_FLAG_LABEL, isOutlier, outlierFlagKeys } from '../../../lib/outliers';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { latencyBarPct } from '../tracesMeta';
 
@@ -26,11 +28,28 @@ export function MessagePreviewCell({ trace }: { trace: AgentCallListItemDto }) {
   const preview = tracePreview(trace);
   return (
     <span className="flex items-center gap-2 min-w-0">
+      <OutlierMarker flags={trace.outlierFlags} />
       <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
       <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
         {preview ?? <span className="text-muted">—</span>}
       </span>
     </span>
+  );
+}
+
+/** Amber dot shown on a flagged trace; its title lists which characteristics tripped. */
+export function OutlierMarker({ flags }: { flags: number }) {
+  const { t, i18n } = useLingui();
+  if (!isOutlier(flags)) return null;
+  const reasons = outlierFlagKeys(flags).map(key => i18n._(OUTLIER_FLAG_LABEL[key])).join(', ');
+  const title = t`Outlier: ${reasons}`;
+  return (
+    <span
+      data-testid={`trace-outlier-marker-${flags}`}
+      title={title}
+      aria-label={title}
+      className="shrink-0 w-1.5 h-1.5 rounded-full bg-warn"
+    />
   );
 }
 

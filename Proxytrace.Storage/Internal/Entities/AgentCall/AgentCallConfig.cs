@@ -68,6 +68,12 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.Property(e => e.RequestPreview).HasMaxLength(RequestPreviewMaxLength);
         builder.HasIndex(e => e.ConversationId);
 
+        // Partial index serving the "outliers only" trace filter (WHERE OutlierFlags <> 0). Outliers
+        // are a small fraction of rows, so a filtered index stays tiny and is the cheapest way to page
+        // them on this high-volume table. The filter is relational metadata; the in-memory provider
+        // (kiosk/tests) ignores indexes, so this is a no-op there.
+        builder.HasIndex(e => e.OutlierFlags).HasFilter("\"OutlierFlags\" <> 0");
+
         builder
             .Property(e => e.Request)
             .HasConversion(
@@ -126,7 +132,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             errorMessage: stored.ErrorMessage,
             modelParameters: modelParameters,
             existing: stored,
-            conversationId: stored.ConversationId);
+            conversationId: stored.ConversationId,
+            outlierFlags: stored.OutlierFlags);
     }
 
     public Task<AgentCallEntity> Map(IAgentCall domain, CancellationToken cancellationToken = default)
@@ -146,6 +153,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             ErrorMessage = domain.ErrorMessage,
             ModelParameters = AgentConfig.ToData(domain.ModelParameters),
             ConversationId = domain.ConversationId,
+            OutlierFlags = domain.OutlierFlags,
             RequestPreview = BuildPreview(domain.Request),
             ResponseToolRequestCount = domain.Response?.Response is AssistantMessage assistant
                 ? assistant.ToolRequests.Count

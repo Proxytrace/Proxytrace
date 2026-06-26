@@ -69,6 +69,23 @@ Set the connection string in:
   back this: `RequestPreview` (first user message, collapsed + truncated) and
   `ResponseToolRequestCount`. The full payload is loaded per-selection via `FindAsync`. (Rows written
   before these columns existed show no preview until they age out via retention.)
+- **Outlier flag + partial index.** `OutlierFlags` (a byte bitmask, `0` = not an outlier) is written at
+  ingestion by the outlier detector. A **partial index** (`WHERE "OutlierFlags" <> 0`) backs the
+  "outliers only" trace filter cheaply — outliers are a small fraction of this high-volume table. The
+  filter is relational metadata; the in-memory provider ignores it. See [`domain-concepts.md`](domain-concepts.md).
+
+> **Gotcha — `ulong?` columns silently kill aggregate translation.** The token columns
+> (`InputTokens` / `OutputTokens` / `CachedInputTokens`) are `ulong?`, mapped to `numeric(20,0)`
+> (Postgres has no unsigned types). `Queryable.Sum` has **no `ulong` overload**, so it is tempting to
+> cast per-row: `g.Sum(c => (long?)c.InputTokens ?? 0L)`. That per-row `Convert` + in-aggregate
+> coalesce does **not** translate on Npgsql, and EF does **not throw** — it falls back to **client
+> evaluation**, materialising every matching `AgentCallEntity` (including the value-converted
+> `Request`/`Response` JSON payloads) and summing in C#. At 1M rows this is ~4s + heavy allocation vs
+> <1ms for the raw `GROUP BY` (issue #246). The fast `COUNT`-only aggregates prove the scan is fine —
+> only the Sum breaks. **Rule:** sum over the column's natural store type and move the coalesce/cast
+> onto the tiny materialised result — `g.Sum(c => (decimal?)c.InputTokens)` then `(long)(x ?? 0m)`
+> client-side. Because client-eval here is silent, **verify the generated SQL is a single server-side
+> `GROUP BY` with `sum(...)` via `ToQueryString()`** — never assume an aggregate translated.
 
 ## Migrations
 
@@ -99,6 +116,10 @@ English — see [`i18n.md`](i18n.md).
 The `AddApiKeyScopes` migration adds a non-nullable `ApiKeyEntity.Scopes` column (an `ApiKeyScopes`
 flags enum stored as `int`) with a SQL default of `1` (`Ingestion`), backfilling existing keys to
 ingestion-only so no legacy key silently gains MCP capabilities — see [`mcp.md`](mcp.md).
+
+The `AddOutlierDetection` migration adds the non-nullable `AgentCallEntity.OutlierFlags` byte column
+(default `0`) plus its partial index, and the single-row `OutlierSettingsEntity` table (the
+admin-tunable detection sensitivity). Detection is going-forward only — existing rows keep `0`.
 
 The `AddApiKeyOwner` migration adds a non-nullable `ApiKeyEntity.Owner` FK to `UserEntity`
 (`OnDelete: Cascade` — a key cannot outlive its owner). Since there is no sensible owner to backfill
