@@ -206,13 +206,10 @@ test.describe('@llm test run', () => {
     // The modal confirms the run started.
     await expect(page.getByText(/Evaluation started|Parallel evaluation started/)).toBeVisible({ timeout: 15_000 });
 
-    // A run group for this suite eventually appears under /runs.
-    await expect.poll(
-      async () => {
-        await page.goto('/runs', { waitUntil: 'load' });
-        return page.getByText(suiteName).first().isVisible().catch(() => false);
-      },
-      { timeout: 30_000, intervals: [3_000], message: 'run group did not appear under /runs' },
-    ).toBe(true);
+    // A run group for this suite eventually appears under /runs. Navigate once and use an
+    // auto-retrying visibility assertion (mirrors the sibling test above) so it waits out the
+    // SSE-driven async render of the runs list instead of racing it with an instant isVisible().
+    await page.goto('/runs', { waitUntil: 'load' });
+    await expect(page.getByText(suiteName).first()).toBeVisible({ timeout: 30_000 });
   });
 });
