@@ -191,7 +191,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     /// <summary>
     /// Builds the parameterised <c>WHERE</c> fragment (and its parameters) mirroring
     /// <see cref="Query"/> for the raw-SQL percentile paths. Kept in lockstep with the table/column
-    /// names in <c>AgentCallConfig</c>/<c>AgentVersionConfig</c>.
+    /// names in <c>AgentCallConfig</c>/<c>AgentVersionConfig</c>/<c>AgentConfig</c>.
     /// </summary>
     private static (string Where, IReadOnlyList<(string Name, object Value)> Parameters) BuildLatencyWhere(
         StorageDbContext context, StatisticsFilter filter)
@@ -223,6 +223,13 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         {
             clauses.Add("\"CreatedAt\" <= @to");
             parameters.Add(("@to", to));
+        }
+        if (filter.ExcludeSystemAgents)
+        {
+            // Mirror Query(): drop calls whose AgentVersion belongs to a system agent (Tracey,
+            // evaluators) so the raw-SQL percentile paths honour ExcludeSystemAgents like the LINQ
+            // chokepoint. No parameter — the subquery is fully self-contained.
+            clauses.Add("\"AgentVersionId\" NOT IN (SELECT v.\"Id\" FROM \"AgentVersionEntity\" v JOIN \"AgentEntity\" a ON v.\"AgentId\" = a.\"Id\" WHERE a.\"IsSystemAgent\")");
         }
 
         string where = clauses.Count == 0 ? string.Empty : " AND " + string.Join(" AND ", clauses);
