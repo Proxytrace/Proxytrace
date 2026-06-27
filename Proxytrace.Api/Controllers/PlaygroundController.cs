@@ -1,10 +1,12 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Playground;
 using Proxytrace.Api.Json;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Playground.Internal;
+using Proxytrace.Domain.Agent;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -14,10 +16,17 @@ namespace Proxytrace.Api.Controllers;
 public class PlaygroundController : ControllerBase
 {
     private readonly IPlaygroundService service;
+    private readonly IAgentRepository agents;
+    private readonly IProjectAccessGuard accessGuard;
 
-    public PlaygroundController(IPlaygroundService service)
+    public PlaygroundController(
+        IPlaygroundService service,
+        IAgentRepository agents,
+        IProjectAccessGuard accessGuard)
     {
         this.service = service;
+        this.agents = agents;
+        this.accessGuard = accessGuard;
     }
 
     /// <summary>
@@ -29,6 +38,16 @@ public class PlaygroundController : ControllerBase
         [FromBody] PlaygroundCompleteRequestDto request,
         CancellationToken cancellationToken)
     {
+        // Authorize before opening the stream: a playground completion runs on the agent's endpoint,
+        // spending the owning project's upstream provider credential. Resolve the agent's project and
+        // hide it behind a 404 when the caller is not a member (no existence oracle).
+        var projectId = await agents.GetProjectIdAsync(request.AgentId, cancellationToken);
+        if (projectId is null || !await accessGuard.CanAccessProjectAsync(projectId.Value, cancellationToken))
+        {
+            Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
         Response.Headers.Append("Content-Type", "text/event-stream");
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("X-Accel-Buffering", "no");

@@ -1,7 +1,9 @@
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
+using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluation;
@@ -124,10 +126,52 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
         return (testCase, result);
     }
 
-    private static EvaluatorTestBenchController ResolveController(IServiceProvider services) => new(
+    [TestMethod]
+    public async Task Run_WhenEvaluatorInaccessible_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        var (testCase, _) = await SeedScoredResult(services, evaluator, EvaluationScore.Good);
+        var controller = ResolveController(services, DenyingGuard());
+
+        var result = await controller.Run(evaluator.Id, new(testCase.Id, null), CancellationToken);
+
+        // The evaluator exists, but the caller is not a member of its project → hidden behind a 404.
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task Load_WhenEvaluatorInaccessible_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        var (testCase, _) = await SeedScoredResult(services, evaluator, EvaluationScore.Good);
+        var controller = ResolveController(services, DenyingGuard());
+
+        var result = await controller.Load(evaluator.Id, testCase.Id, CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    // Non-admin member of nothing: denied every project.
+    private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
+    {
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
+        guard.GetAccessibleProjectIdsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyCollection<Guid>?>([]));
+        return guard;
+    }
+
+    private static EvaluatorTestBenchController ResolveController(IServiceProvider services)
+        => ResolveController(services, services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
+
+    private static EvaluatorTestBenchController ResolveController(
+        IServiceProvider services, Proxytrace.Api.Auth.IProjectAccessGuard guard) => new(
         services.GetRequiredService<IEvaluatorRepository>(),
         services.GetRequiredService<ITestCaseRepository>(),
         services.GetRequiredService<ITestResultRepository>(),
         services.GetRequiredService<ICompletion.Create>(),
-        services.GetRequiredService<ITestResult.CreateNew>());
+        services.GetRequiredService<ITestResult.CreateNew>(),
+        guard);
 }

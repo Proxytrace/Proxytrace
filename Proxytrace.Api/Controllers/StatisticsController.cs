@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Application.Statistics;
+using Proxytrace.Domain.Agent;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -15,22 +17,28 @@ public class StatisticsController : ControllerBase
 {
     private readonly IDashboardStatistics dashboard;
     private readonly IAgentStatistics agentStatistics;
+    private readonly IAgentRepository agents;
     private readonly AgentCallDtoMapper agentCallDtoMapper;
     private readonly AgentDtoMapper agentDtoMapper;
     private readonly StatisticsOptions options;
+    private readonly IProjectAccessGuard accessGuard;
 
     public StatisticsController(
         IDashboardStatistics dashboard,
         IAgentStatistics agentStatistics,
+        IAgentRepository agents,
         AgentCallDtoMapper agentCallDtoMapper,
         AgentDtoMapper agentDtoMapper,
-        StatisticsOptions options)
+        StatisticsOptions options,
+        IProjectAccessGuard accessGuard)
     {
         this.dashboard = dashboard;
         this.agentStatistics = agentStatistics;
+        this.agents = agents;
         this.agentCallDtoMapper = agentCallDtoMapper;
         this.agentDtoMapper = agentDtoMapper;
         this.options = options;
+        this.accessGuard = accessGuard;
     }
 
     [HttpGet("dashboard")]
@@ -45,6 +53,20 @@ public class StatisticsController : ControllerBase
     {
         if (from is not null && to is not null && from.Value >= to.Value)
             return BadRequest("Query parameter 'from' must be before 'to'.");
+
+        // Tenant scoping: a supplied projectId must be one the caller can access (hidden behind 404).
+        // Omitting projectId yields a cross-tenant global aggregate, which only an admin may see — a
+        // non-admin (non-null accessible set) is refused rather than served every tenant's data.
+        if (projectId is { } requestedProjectId)
+        {
+            if (!await accessGuard.CanAccessProjectAsync(requestedProjectId, cancellationToken))
+                return NotFound();
+        }
+        else if (await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken) is not null)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
         var resolvedRecentTraceCount = Math.Clamp(
             recentTraceCount ?? options.DefaultRecentTraceCount, 1, options.MaxRecentTraceCount);
         var resolvedAgentLimit = Math.Clamp(
@@ -83,6 +105,8 @@ public class StatisticsController : ControllerBase
             return BadRequest("Query parameters 'from' and 'to' are required.");
         if (from.Value >= to.Value)
             return BadRequest("Query parameter 'from' must be before 'to'.");
+        if (!await CanAccessAgentAsync(agentId, cancellationToken))
+            return NotFound();
 
         var result = await agentStatistics.GetAgentOverviewAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
         return new AgentOverviewDto(
@@ -104,6 +128,8 @@ public class StatisticsController : ControllerBase
             return BadRequest("Query parameters 'from' and 'to' are required.");
         if (from.Value >= to.Value)
             return BadRequest("Query parameter 'from' must be before 'to'.");
+        if (!await CanAccessAgentAsync(agentId, cancellationToken))
+            return NotFound();
 
         AgentCallDistributions result = await agentStatistics.GetAgentDistributionsAsync(agentId, from.Value, to.Value, cancellationToken);
         return new AgentDistributionsDto(
@@ -113,6 +139,14 @@ public class StatisticsController : ControllerBase
             CostPerConversationEur: ToDto(result.CostPerConversationEur),
             CacheHitRatePerConversation: ToDto(result.CacheHitRatePerConversation),
             ToolCallsPerConversation: ToDto(result.ToolCallsPerConversation));
+    }
+
+    // Agent-scoped statistics take a raw agentId. Resolve its project and hide it behind a 404 when
+    // the caller is not a member (no existence oracle); a missing agent is indistinguishable.
+    private async Task<bool> CanAccessAgentAsync(Guid agentId, CancellationToken cancellationToken)
+    {
+        var projectId = await agents.GetProjectIdAsync(agentId, cancellationToken);
+        return projectId is not null && await accessGuard.CanAccessProjectAsync(projectId.Value, cancellationToken);
     }
 
     private static MetricDistributionDto ToDto(MetricDistribution d) =>

@@ -347,7 +347,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task PromoteFromTraces_CallIdNotFound_ReturnsBadRequest()
+    public async Task PromoteFromTraces_CallIdNotFound_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();
         var controller = ResolveController(services);
@@ -357,7 +357,9 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             new PromoteTracesRequest(Name: "x", AgentId: agent.Id, AgentCallIds: [Guid.NewGuid()]),
             CancellationToken);
 
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        // A missing call and an inaccessible (foreign) call return the same 404, so a crafted id
+        // cannot be used as a cross-tenant existence oracle.
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [TestMethod]
@@ -545,7 +547,9 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
     }
 
     private static TestSuitesController ResolveController(
-        IServiceProvider services, ILicenseService? license = null) =>
+        IServiceProvider services,
+        ILicenseService? license = null,
+        Proxytrace.Api.Auth.IProjectAccessGuard? accessGuard = null) =>
         new(
             services.GetRequiredService<ITestSuiteRepository>(),
             services.GetRequiredService<IAgentRepository>(),
@@ -560,8 +564,54 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<TestSuiteDtoMapper>(),
             services.GetRequiredService<IStatsReader<TestRunStats, TestRunStats.Filter>>(),
             license ?? UnlimitedLicense(),
-            services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
+            accessGuard ?? services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+
+    [TestMethod]
+    public async Task PromoteFromTraces_WhenTraceInForeignProject_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+
+        // Create the trace first so it claims the generators' default project; then mint a *separate*
+        // project and put the suite's agent there. The two now live in genuinely different projects.
+        var foreignCall = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+        var agent = await CreateAgentInFreshProject(services);
+
+        // Caller is a member of the suite's agent project only — not the trace's project.
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
+        guard.CanAccessProjectAsync(agent.Project.Id, Arg.Any<CancellationToken>()).Returns(true);
+        var controller = ResolveController(services, accessGuard: guard);
+
+        var request = new PromoteTracesRequest(
+            Name: "Cross-tenant promote",
+            AgentId: agent.Id,
+            AgentCallIds: [foreignCall.Id]);
+
+        var result = await controller.PromoteFromTraces(request, CancellationToken);
+
+        // The foreign trace must not be copied into the caller's suite — hidden behind a 404.
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    // The agent generators reuse one shared project (GetOrCreate), so build an agent in a brand-new
+    // project directly through the repository to get a genuinely distinct tenant.
+    private async Task<IAgent> CreateAgentInFreshProject(IServiceProvider services)
+    {
+        var project = await services.GetRequiredService<IDomainEntityGenerator<Proxytrace.Domain.Project.IProject>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<Proxytrace.Domain.ModelEndpoint.IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var prompt = await services.GetRequiredService<IDomainObjectGenerator<Proxytrace.Domain.Prompt.IPromptTemplate>>().CreateAsync(CancellationToken);
+        var modelParameters = await services.GetRequiredService<IDomainObjectGenerator<Proxytrace.Domain.Inference.IModelParameters>>().CreateAsync(CancellationToken);
+        return await services.GetRequiredService<IAgentRepository>().CreateWithInitialVersionAsync(
+            name: "Suite agent",
+            systemPrompt: prompt,
+            tools: [],
+            project: project,
+            endpoint: endpoint,
+            modelParameters: modelParameters,
+            isSystemAgent: false,
+            cancellationToken: CancellationToken);
+    }
 
     private static ILicenseService UnlimitedLicense()
     {

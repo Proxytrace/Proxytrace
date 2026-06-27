@@ -145,6 +145,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   tool call with no text, the **reference** showed "—" and the **candidate** was blank (the scoring
   itself was unaffected). Both now render the tool call (e.g. `[tool call] get_weather({…})`).
 
+### Security
+
+- **Closed cross-tenant access gaps on statistics, the playground, the evaluator test bench, trace
+  promotion, and theory submission.** Several endpoints accepted a project, agent, trace, or evaluator
+  id without checking that the caller is a member of the owning project, so any signed-in user could
+  read another tenant's data — or, worse, run a model completion on another tenant's provider
+  credential (the playground and the evaluator test bench's *run*). All of these now resolve the
+  owning project and return **404** when the caller lacks access (no existence oracle). The dashboard
+  additionally refuses the unscoped, all-tenant aggregate to non-admins: a normal user must request a
+  project they belong to (the app already does this), while administrators keep the global view.
+
 ## [1.2.0] - 2026-06-24
 
 ### Added

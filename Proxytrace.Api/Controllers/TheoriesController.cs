@@ -143,6 +143,12 @@ public class TheoriesController : ControllerBase
         if (suite is null)
             return NotFound($"Suite {request.SuiteId} does not exist.");
 
+        // The suite is supplied by id, independently of the agent — verify the caller can access its
+        // project too, otherwise a foreign suite could be paired with the caller's agent. (The
+        // proposed endpoint is a globally-shared resource with no project owner, so it needs no check.)
+        if (!await accessGuard.CanAccessProjectAsync(suite.Agent.Project.Id, cancellationToken))
+            return NotFound($"Suite {request.SuiteId} does not exist.");
+
         IOptimizationTheory theory;
         switch (request.Details)
         {
