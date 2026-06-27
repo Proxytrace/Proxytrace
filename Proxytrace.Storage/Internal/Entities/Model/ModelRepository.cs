@@ -44,7 +44,25 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
         }
 
         var model = factory(name: name);
-        return await AddAsync(model, cancellationToken);
+        try
+        {
+            return await AddAsync(model, cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // The IAsyncLock only serializes creates within this process; another instance can win
+            // the create race and trip the unique index on Name. Re-resolve and return the row the
+            // winner inserted (mirrors AgentRepository.GetOrCreateAsync).
+            var raced = await contextFactory()
+                .Set<ModelEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Name.ToLower() == loweredName, cancellationToken);
+            if (raced is not null)
+            {
+                return await mapper.Map(raced, cancellationToken);
+            }
+            throw;
+        }
     }
 }
 

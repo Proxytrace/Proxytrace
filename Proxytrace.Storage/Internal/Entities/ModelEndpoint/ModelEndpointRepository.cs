@@ -67,7 +67,24 @@ internal class ModelEndpointRepository : ArchivableRepository<IModelEndpoint, Mo
         }
 
         var endpoint = createNewEndpoint(modelEntity, provider, null, null, null);
-        return await AddAsync(endpoint, cancellationToken);
+        try
+        {
+            return await AddAsync(endpoint, cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // The IAsyncLock only serializes creates within this process; another instance can win
+            // the create race and trip the (Model, Provider) unique index. Re-resolve and return the
+            // row the winner inserted (mirrors AgentRepository.GetOrCreateAsync).
+            var raced = await contextFactory().Set<ModelEndpointEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Model == modelEntity.Id && e.Provider == provider.Id, cancellationToken);
+            if (raced is not null)
+            {
+                return await mapper.Map(raced, cancellationToken);
+            }
+            throw;
+        }
     }
 
     public async Task<IReadOnlyList<IModelEndpoint>> GetByProviderAsync(
