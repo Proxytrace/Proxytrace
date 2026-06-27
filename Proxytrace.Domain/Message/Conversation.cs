@@ -8,25 +8,30 @@ namespace Proxytrace.Domain.Message;
 /// </summary>
 public sealed record Conversation : IDomainObject
 {
-    private IList<Message> messages = [];
-    
+    // Immutable backing list: assigned once in the constructor and never mutated. Every "mutation"
+    // (With/WithSystemMessage/WithoutSystemMessage) returns a NEW Conversation, so a captured
+    // instance can never change underfoot — important because this is a content-folding record
+    // (Equals/GetHashCode fold the messages) used as a value object.
+    private readonly IReadOnlyList<Message> messages;
+
     /// <summary>
     /// The messages in the conversation
     /// </summary>
-    public IReadOnlyList<Message> Messages 
-        => messages.ToArray();
-    
-    public SystemMessage? SystemMessage 
+    public IReadOnlyList<Message> Messages
+        => messages;
+
+    public SystemMessage? SystemMessage
         => Messages.FirstOrDefault(x => x.Role == Role.System) as SystemMessage;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Conversation"/> class with the specified id, title, user name, and messages.
+    /// Initializes a new instance of the <see cref="Conversation"/> class with the specified messages.
     /// </summary>
     /// <param name="messages">The messages in the conversation.</param>
     public Conversation(
         IReadOnlyList<Message> messages)
     {
-        this.messages = messages.ToList();
+        // Defensive copy so a caller mutating the passed-in list cannot mutate this value object.
+        this.messages = messages.ToArray();
     }
 
     /// <summary>
@@ -36,29 +41,31 @@ public sealed record Conversation : IDomainObject
         => new([]);
 
     /// <summary>
-    /// Adds a message to the conversation
+    /// Returns a new conversation with <paramref name="message"/> appended.
     /// </summary>
-    public void Add(Message message)
+    [Pure]
+    public Conversation With(Message message)
     {
         if (message.Role == Role.System)
         {
-            throw new InvalidOperationException("System messages must be added using AddSystemMessage");
+            throw new InvalidOperationException("System messages must be added using WithSystemMessage");
         }
-        messages = [..Messages, message];
+        return new Conversation([..messages, message]);
     }
 
     /// <summary>
-    /// Adds a system message to the start of the conversation
+    /// Returns a new conversation with <paramref name="systemMessage"/> prepended.
     /// </summary>
-    public void AddSystemMessage(SystemMessage systemMessage)
+    [Pure]
+    public Conversation WithSystemMessage(SystemMessage systemMessage)
     {
-        if (Messages.Any(x => x.Role == Role.System))
+        if (messages.Any(x => x.Role == Role.System))
         {
             throw new InvalidOperationException("Conversation already contains a system message");
         }
-        messages = [systemMessage, ..Messages];
+        return new Conversation([systemMessage, ..messages]);
     }
-    
+
     /// <summary>
     /// Returns the Conversation without the system message
     /// </summary>
@@ -80,8 +87,8 @@ public sealed record Conversation : IDomainObject
     /// <inheritdoc />
     public override int GetHashCode()
     {
-        // Hash the backing field's elements, not the Messages property (which allocates a fresh array
-        // each call and would hash by reference, yielding a different value on every invocation).
+        // Fold the messages' elements (Equals uses SequenceEqual); hashing the list reference would
+        // give equal-content instances different hashes and break the Equals/GetHashCode contract.
         var hash = new HashCode();
         foreach (Message message in messages)
         {
@@ -95,11 +102,7 @@ public sealed record Conversation : IDomainObject
     /// </summary>
     [Pure]
     public static Conversation ReplaceSystemMessage(Conversation conversation, SystemMessage systemMessage)
-    {
-        var newConversation = conversation.WithoutSystemMessage();
-        newConversation.AddSystemMessage(systemMessage);
-        return newConversation;
-    }
+        => conversation.WithoutSystemMessage().WithSystemMessage(systemMessage);
 
     public override string ToString() 
         => string.Join(Environment.NewLine, messages.Select(x => x.ToString()));

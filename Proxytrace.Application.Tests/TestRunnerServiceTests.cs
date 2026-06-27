@@ -44,8 +44,8 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var agent = await agentGenerator.GetOrCreateAsync(ct);
         var evaluator = await evaluatorGenerator.GetOrCreateAsync(ct);
 
-        var input = Conversation.Create();
-        input.Add(new UserMessage([Content.FromText("What is the capital of France?")]));
+        var input = Conversation.Create()
+            .With(new UserMessage([Content.FromText("What is the capital of France?")]));
 
         var testCase = createTestCase(input, expectedOutput);
         await testCaseRepo.AddAsync(testCase, ct);
@@ -74,8 +74,8 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var exactMatch = await exactGenerator.CreateAsync(ct);
         var agentic = await agenticGenerator.CreateAsync(ct);
 
-        var input = Conversation.Create();
-        input.Add(new UserMessage([Content.FromText("What is the capital of France?")]));
+        var input = Conversation.Create()
+            .With(new UserMessage([Content.FromText("What is the capital of France?")]));
 
         var testCase = createTestCase(input, expectedOutput);
         await testCaseRepo.AddAsync(testCase, ct);

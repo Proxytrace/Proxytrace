@@ -48,7 +48,13 @@ internal record Invite : DomainEntity<IInvite>, IInvite
     }
 
     public Task<IInvite> MarkConsumedAsync(CancellationToken cancellationToken = default)
-        => ApplyAsync(this with { ConsumedAt = DateTimeOffset.UtcNow }, cancellationToken);
+    {
+        if (ConsumedAt is not null)
+        {
+            throw new InvalidOperationException($"Invite {Id} has already been consumed.");
+        }
+        return ApplyAsync(this with { ConsumedAt = DateTimeOffset.UtcNow }, cancellationToken);
+    }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

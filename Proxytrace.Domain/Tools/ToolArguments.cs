@@ -50,6 +50,27 @@ namespace Proxytrace.Domain.Tools
             JsonSchema = ToJsonSchema(arguments);
         }
 
+        /// <inheritdoc />
+        public bool Equals(ToolArguments? other)
+            => other is not null
+               && JsonSchema == other.JsonSchema
+               && Arguments.SequenceEqual(other.Arguments);
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            // Fold the arguments' elements (Equals uses SequenceEqual); hashing the list reference
+            // would give equal-content instances different hashes and break the
+            // Equals/GetHashCode contract — the same idiom as Message/Conversation/ModelParameters.
+            var hash = new HashCode();
+            hash.Add(JsonSchema);
+            foreach (IToolArgument argument in Arguments)
+            {
+                hash.Add(argument);
+            }
+            return hash.ToHashCode();
+        }
+
         /// <summary>
         /// Generates a JSON schema from the provided tool argument metadata
         /// </summary>

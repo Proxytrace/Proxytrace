@@ -243,8 +243,8 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
 
         public ITestResult CreateFailingResult()
         {
-            var input = Conversation.Create();
-            input.Add(new UserMessage([Content.FromText("search please")]));
+            var input = Conversation.Create()
+                .With(new UserMessage([Content.FromText("search please")]));
             var expected = new AssistantMessage([Content.FromText("ok")], []);
             var actual = new AssistantMessage([Content.FromText("err")], []);
 

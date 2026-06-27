@@ -19,11 +19,10 @@ internal class ConversationGenerator : DomainObjectGenerator<Conversation>
 
     public override async Task<Conversation> CreateAsync(CancellationToken cancellationToken = default)
     {
-        var conversation = Conversation.Create();
         var userMessage = await userMessageGenerator.CreateAsync(cancellationToken);
         var assistantMessage = await assistantMessageGenerator.CreateAsync(cancellationToken);
-        conversation.Add(userMessage);
-        conversation.Add(assistantMessage);
-        return conversation;
+        return Conversation.Create()
+            .With(userMessage)
+            .With(assistantMessage);
     }
 }

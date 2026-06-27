@@ -33,7 +33,13 @@ internal record MfaBackupCode : DomainEntity<IMfaBackupCode>, IMfaBackupCode
     }
 
     public Task<IMfaBackupCode> MarkConsumedAsync(CancellationToken cancellationToken = default)
-        => ApplyAsync(this with { ConsumedAt = DateTimeOffset.UtcNow }, cancellationToken);
+    {
+        if (ConsumedAt is not null)
+        {
+            throw new InvalidOperationException($"MFA backup code {Id} has already been consumed.");
+        }
+        return ApplyAsync(this with { ConsumedAt = DateTimeOffset.UtcNow }, cancellationToken);
+    }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
