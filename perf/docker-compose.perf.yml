@@ -10,8 +10,12 @@
 name: proxytrace-perf
 
 services:
+  # NOTE: use `!override` (not `!reset`) to replace the base file's port mappings. On Compose v2.20+
+  # (`!reset` semantics), `ports: !reset` *removes* the key entirely, so Postgres/API publish NO host
+  # ports and the host-side PerfHarness seeder fails with "connection refused" on :5433. `!override`
+  # replaces the merged list with the value below, which is what we want.
   postgres:
-    ports: !reset
+    ports: !override
       - "5433:5432"
     # Light tuning so query plans/buffers are a touch more production-like than the tiny defaults.
     command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=200", "-c", "work_mem=16MB"]
@@ -30,7 +34,7 @@ services:
       retries: 10
 
   api:
-    ports: !reset
+    ports: !override
       - "5230:8080"
     depends_on:
       postgres:
