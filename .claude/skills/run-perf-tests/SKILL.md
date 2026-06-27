@@ -13,9 +13,10 @@ description: >-
   slow down queries", "what's the dashboard latency at scale". Covers picking a
   scope (db-layer / http / benchmarks), full-run vs seed-once-iterate, the
   Postgres/API ports, reading `perf/results/*.json`, and the budgets in
-  `perf/perf-budgets.json` — including the metrics that are INTENTIONALLY RED
-  until issue #246 lands. This is for RUNNING the suite — to change what it
-  measures, read `docs/performance-testing.md` and edit `perf/` directly.
+  `perf/perf-budgets.json` (recalibrated to real measured p95 — the suite should
+  run all-green, so any red is a regression to chase). This is for RUNNING the
+  suite — to change what it measures, read `docs/performance-testing.md` and edit
+  `perf/` directly.
 ---
 
 # Running & Interpreting the Proxytrace Performance Suite
@@ -59,16 +60,18 @@ Flags: `--size N` · `--scopes all|db-layer,http,benchmarks` · `--vus N` ·
 `--duration 30s` · `--keep`. Each scope **exits non-zero on a budget breach**, and
 `run.sh` returns non-zero if any scope failed.
 
-## Size matters — the #246 regression only shows at scale
+## Size matters — scan-bound costs only show at scale
 
-The headline finding (slow statistics, issue #246) is a **client-side-evaluation
-cliff that only appears at ~1M rows**. At `--size 100000` the slow aggregations
-still finish inside their target budgets, so a 100k run looks all-green and
-**hides** the regression. Use:
+The heavy statistics aggregations are **scan-bound**: their real cost only appears
+at ~1M rows. At `--size 100000` they finish well inside budget regardless, so a
+100k run **can't** catch a planner/index regression or a return of the old issue
+#246 client-eval cliff (now fixed — see below). Use:
 - `--size 100000` for a fast "did I break the wiring / the fast queries" check.
-- `--size 1000000` (the default) to actually exercise the at-scale behaviour and
-  reproduce the #246 reds. Seeding 1M takes ~3.5 min (~5k rows/s); the db-layer
-  run is then dominated by the slow #246 queries (a few minutes).
+- `--size 1000000` (the default) to actually exercise the at-scale query plans.
+  Seeding 1M takes ~3.5 min (~5k rows/s); the seeder then runs **`ANALYZE`** so the
+  planner has fresh statistics (a bulk load *without* it picks a nested-loop plan
+  and the stats queries balloon to ~4 s — that is the original #246 symptom). The
+  db-layer run itself is then a couple of minutes.
 
 ## Full run vs seed-once-and-iterate
 
@@ -130,52 +133,63 @@ result to `perf/results/` (`db-layer.json`, `k6-summary.json`, `benchmarks.json`
 **`perf/perf-budgets.json`** — the single source of absolute budgets shared by all
 three scopes.
 
-### Several FAILs are EXPECTED — the suite is intentionally red (issue #246)
-The suite is currently **designed to be red** on the statistics aggregations.
-These metrics WILL FAIL at ~1M rows and that is the intended, tracked signal —
-**do not report the suite as broken**:
+### The suite should be all-green — a red is a real regression
+Issue #246 (statistics aggregations client-evaluating to ~4 s at 1M) is **fixed
+and closed**. The fix was *not* a query rewrite — the token-sum casts already
+translate to a server-side `bigint` `SUM`. The real cause was **stale planner
+statistics** after the bulk seed (a nested-loop plan random-reading ~900k heap
+blocks → ~3.5 s; the same SQL drops to <500 ms once analyzed). What landed: the
+seeder runs **`ANALYZE` after seeding**, a migration (`TuneAgentCallAutovacuum`)
+lowers the autovacuum analyze threshold on `AgentCallEntity`, `GetLatencyAsync`
+uses `percentile_cont(ARRAY[…])`, and the budgets in `perf-budgets.json` were
+**recalibrated to real measured p95**. So every metric is now **green-expected** —
+a FAIL is a regression to chase, not a known signal.
 
-| Metric (scope) | Currently | Budget (target) |
-|----------------|-----------|-----------------|
-| `statsSummary`, `statsTokenUsage`, `statsModelBreakdown`, `statsCostEstimate`, `statsCallTrends`, `statsLatencyPercentiles` (db-layer) | ~3.7–4.4 s | a few hundred ms |
-| `statisticsDashboard` (http) | ~5–6 s | 1500 ms |
+Reference numbers from a healthy 1M run (≈measured | budget, all PASS):
 
-Root cause: those aggregates `Sum()` the `ulong?→numeric` token columns, which EF
-can't translate, so it **client-evaluates — materialising every row including the
-JSON payloads**. The raw SQL aggregate is <1ms, so the targets are achievable; the
-budgets are kept at target (not at the measured ~4s) **on purpose** so the suite
-stays an active reminder until #246 lands. When #246 is fixed, these should go
-green at the target — re-run `perf/run.sh --scopes db-layer,http` to confirm.
+| Metric (db-layer) | ≈measured | budget |
+|-------------------|-----------|--------|
+| `agentCallsList` / `…ByAgent` / `…ByTimeRange` / `…Histogram` | 6–31 ms | 40–150 ms |
+| `statsSummary` / `statsAgentBreakdown` | 224–257 ms | 500 ms |
+| `statsModelBreakdown` / `statsCostEstimate` | 289–299 ms | 600 ms |
+| `statsCallTrends` | ~743 ms | 1100 ms |
+| `statsLatencyPercentiles` / `statsTokenUsage` | 826–836 ms | 1200 ms |
+| `agentOverview` / `agentDistributions` | 57–68 ms | 250 ms |
+| `testRunStatsBySuite` / `…BySuitePage` | 1–22 ms | 60–90 ms |
+| `ingestThroughput` | ~846 calls/s | ≥150 calls/s |
 
-Everything else should be **green**: the index-backed list/histogram queries
-(7–84 ms), `statsAgentBreakdown` (count-only, ~320 ms), `agentOverview` /
-`agentDistributions` (~120 ms), and ingestion throughput.
+The three heaviest stats queries (`statsCallTrends`, `statsLatencyPercentiles`,
+`statsTokenUsage`, ~740–880 ms) are **scan-bound** — comfortably under budget at
+1M, but the first thing to watch at 10M; pre-aggregated rollups are the only
+sub-second-at-10M lever. Benchmarks (JSON serialize/deserialize) run ~1–3 ms vs
+40–80 ms budgets.
 
 ### So: how to read a run
-1. Are the **green-expected** metrics green? If one went red, **that is a real
-   regression you (or your change) introduced** — investigate it.
-2. Are the **#246 reds** the only reds? Then the suite is behaving as designed —
-   report "red as expected on the #246 statistics metrics; everything else green".
-3. A **new** red outside the #246 set, or a #246 metric that got *dramatically*
-   worse, is the signal to chase.
+1. **Every metric is green-expected.** A FAIL is a real regression your change (or
+   the data shape) introduced — investigate the query / index / plan.
+2. If the heavy stats queries jumped back to **multi-second**, suspect a missing
+   `ANALYZE` / stale stats (was the seed interrupted before the analyze step?) or a
+   plan regression — `EXPLAIN (ANALYZE)` and compare **estimated vs actual** rows
+   before blaming translation.
+3. An infra failure (seed / migration / Docker) is **not** a perf signal — see triage.
 
-## Triage: real regression vs known-red vs infra
+## Triage: real regression vs stale-stats vs infra
 
 ```dot
 digraph triage {
   "A metric is FAIL" [shape=diamond];
-  "It's one of the #246 stats metrics" [shape=box];
-  "A green-expected metric went red" [shape=box];
+  "A query metric went red" [shape=box];
+  "heavy stats back to multi-second" [shape=box];
   "http scope didn't run at all" [shape=box];
   "stack/seed errored before any metric" [shape=box];
 
-  "EXPECTED: report red-by-design, tied to #246" [shape=box];
-  "REGRESSION: your change (or the data) slowed it — investigate the query/index" [shape=box];
+  "REGRESSION: your change (or the data) slowed it — investigate the query/index/plan" [shape=box];
+  "STALE STATS / plan regression — check the seed ran ANALYZE; EXPLAIN ANALYZE est-vs-actual rows" [shape=box];
   "k6 missing or API unhealthy — install k6 / check the stack" [shape=box];
   "INFRA: Docker/migrations/seed failure — not a perf signal" [shape=box];
 
-  "A metric is FAIL" -> "It's one of the #246 stats metrics" -> "EXPECTED: report red-by-design, tied to #246";
-  "A metric is FAIL" -> "A green-expected metric went red" -> "REGRESSION: your change (or the data) slowed it — investigate the query/index";
+  "A metric is FAIL" -> "A query metric went red" -> "REGRESSION: your change (or the data) slowed it — investigate the query/index/plan";
+  "A metric is FAIL" -> "heavy stats back to multi-second" -> "STALE STATS / plan regression — check the seed ran ANALYZE; EXPLAIN ANALYZE est-vs-actual rows";
   "A metric is FAIL" -> "http scope didn't run at all" -> "k6 missing or API unhealthy — install k6 / check the stack";
   "A metric is FAIL" -> "stack/seed errored before any metric" -> "INFRA: Docker/migrations/seed failure — not a perf signal";
 }
@@ -185,8 +199,8 @@ digraph triage {
 
 | Symptom | Cause | Action |
 |---------|-------|--------|
-| All `stats*` aggregates ~4s, dashboard ~5s, FAIL | Issue #246 (client-eval) | Expected red-by-design — report as such |
-| All-green at `--size 100000`, reds at `1000000` | #246 only bites at scale | Re-run at ~1M to see the real behaviour |
+| Heavy `stats*` aggregates back to ~4s, dashboard ~5s, FAIL | Stale planner stats — the seed's post-load `ANALYZE` didn't run (interrupted seed?), or a plan regression (the old #246 symptom) | Re-seed cleanly (or `ANALYZE` the DB); `EXPLAIN (ANALYZE)` est-vs-actual rows before blaming translation |
+| Green at `--size 100000` but a query regressed at `1000000` | Scan-bound costs only bite at scale | Validate query changes at ~1M, not 100k |
 | `http` scope says "k6 not installed — skipping" | No k6 on PATH | Install k6; only then does the http scope run |
 | Seed fails on `IX_AgentVersionEntity_Project_Fingerprint` / `IX_ModelEndpoint…` | Stale/dirty DB from a half-run | `docker compose -f docker-compose.yml -f perf/docker-compose.perf.yml down -v`, re-run (the seeder assumes a fresh DB) |
 | `No agent calls found — run seed first` (db-layer) | Ran db-layer against an unseeded DB | Run `seed` (or `run.sh`, which seeds) first |
@@ -202,15 +216,16 @@ api :5100) and the `./dev.sh` stack (:4201/:5001). Point `curl`/k6/the connectio
 string at **:5433 / :5230** during a perf run.
 
 ## Reporting back — be honest
-- State the verdict plainly, and **separate the by-design #246 reds from any new
-  red**. "Red as expected on the 6 #246 statistics metrics + http dashboard;
-  everything else green" is the correct phrasing — not "suite failing".
-- For a **new** red (a green-expected metric flipped), give the metric, the
-  measured-vs-budget, and your read (query change / missing index / data shape).
+- State the verdict plainly. The suite is **green-expected end to end**, so
+  "overall PASS — every db-layer/benchmark metric under budget" is the healthy
+  report. Any FAIL is a regression — don't wave it off as expected.
+- For a red, give the metric, the measured-vs-budget, and your read (query change /
+  missing index / stale stats / data shape).
 - Quote actual numbers from `perf/results/*.json`, not impressions.
 - If **Docker is unavailable**, say so — do not claim the suite passed. You can
   still run `--scopes benchmarks` (no Docker) and report that the DB-layer/HTTP
   scopes could not run.
-- If you ran at `--size 100000`, **say so** and note the #246 reds won't appear at
-  that size — an all-green small run is not evidence the at-scale path is healthy.
+- If you ran at `--size 100000`, **say so** — scan-bound query costs don't appear
+  at that size, so an all-green small run is not evidence the at-scale path is
+  healthy.
 ```
