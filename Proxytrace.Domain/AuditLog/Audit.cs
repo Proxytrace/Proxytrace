@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.AuditLog;
+namespace Proxytrace.Domain.AuditLog;
 
 /// <summary>
 /// Logger category marker for audit events. Inject <c>ILogger&lt;Audit&gt;</c> and call

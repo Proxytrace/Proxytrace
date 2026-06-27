@@ -122,7 +122,7 @@ Implemented by `Proxytrace.Storage/Internal/Entities/EmailSettings/EmailSettings
 
 ### `ISecretProtector` — at-rest encryption
 
-`Proxytrace.Application/Security/ISecretProtector.cs`
+`Proxytrace.Domain/Security/ISecretProtector.cs`
 
 A reusable seam for reversible at-rest encryption, backed by ASP.NET Data Protection:
 
@@ -134,7 +134,7 @@ public interface ISecretProtector
 }
 ```
 
-`DataProtectionSecretProtector` (`Proxytrace.Application/Security/Internal/`) creates a
+`DataProtectionSecretProtector` (`Proxytrace.Infrastructure/Security/Internal/`) creates a
 protector with purpose `"Proxytrace.Secrets.v1"`. The key ring is stored under
 `PROXYTRACE_DATA_DIR` in container deployments — without a persistent volume the keys are
 ephemeral and a restart invalidates any stored ciphertext.

@@ -2,10 +2,10 @@ using System.Security.Cryptography;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.Security;
+using Proxytrace.Domain.Security;
 using Proxytrace.Common.Time;
-using AppEmailSettings = Proxytrace.Application.Notifications.EmailSettings;
-using IEmailSettingsStore = Proxytrace.Application.Notifications.IEmailSettingsStore;
+using AppEmailSettings = Proxytrace.Domain.Notifications.EmailSettings;
+using IEmailSettingsStore = Proxytrace.Domain.Notifications.IEmailSettingsStore;
 
 namespace Proxytrace.Storage.Internal.Entities.EmailSettings;
 

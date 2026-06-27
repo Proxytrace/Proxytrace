@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using AwesomeAssertions;
 using Autofac;
 using Microsoft.AspNetCore.Mvc;
@@ -300,5 +301,5 @@ public sealed class UsersControllerTests : BaseTest<Module>
         services.GetRequiredService<Proxytrace.Application.Auth.Local.IMfaService>(),
         services.GetRequiredService<Proxytrace.Domain.UserTotpEnrollment.IUserTotpEnrollmentRepository>(),
         config ?? new ConfigurationBuilder().Build(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 }

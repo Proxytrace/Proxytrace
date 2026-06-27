@@ -1,6 +1,7 @@
 using Proxytrace.Common.Security;
+using Proxytrace.Domain.Security;
 
-namespace Proxytrace.Application.Security.Internal;
+namespace Proxytrace.Infrastructure.Security.Internal;
 
 internal sealed class Sha256SecretHasher : ISecretHasher
 {

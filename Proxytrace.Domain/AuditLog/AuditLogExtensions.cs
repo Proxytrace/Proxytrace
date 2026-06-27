@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.AuditLog.Internal;
-using Proxytrace.Domain.AuditLog;
 
-namespace Proxytrace.Application.AuditLog;
+namespace Proxytrace.Domain.AuditLog;
 
 /// <summary>
 /// ILogger-native API for recording audit events. Call sites inject <see cref="ILogger{Audit}"/> and

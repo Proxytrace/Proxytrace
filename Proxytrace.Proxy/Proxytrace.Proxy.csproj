@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Proxytrace.Domain\Proxytrace.Domain.csproj" />
+    <ProjectReference Include="..\Proxytrace.Infrastructure\Proxytrace.Infrastructure.csproj" />
     <ProjectReference Include="..\Proxytrace.Messaging\Proxytrace.Messaging.csproj" />
     <ProjectReference Include="..\Proxytrace.Storage\Proxytrace.Storage.csproj" />
   </ItemGroup>

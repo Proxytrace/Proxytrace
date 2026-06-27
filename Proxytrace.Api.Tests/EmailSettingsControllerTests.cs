@@ -1,3 +1,5 @@
+using Proxytrace.Domain.AuditLog;
+using Proxytrace.Domain.Notifications;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +8,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.EmailSettings;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Notifications;
 using Proxytrace.Domain.Notification;

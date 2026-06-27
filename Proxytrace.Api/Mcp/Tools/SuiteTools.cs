@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Proxytrace.Api.Dto.TestSuites;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AuditLog;

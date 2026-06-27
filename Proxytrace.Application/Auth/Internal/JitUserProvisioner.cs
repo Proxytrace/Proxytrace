@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.User;

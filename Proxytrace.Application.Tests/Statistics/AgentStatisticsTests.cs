@@ -1,8 +1,8 @@
+using Proxytrace.Domain.Statistics;
 using AwesomeAssertions;
 using NSubstitute;
-using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.Internal;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.OptimizationProposal;

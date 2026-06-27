@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Proxytrace.Application.Security;
+using Proxytrace.Domain.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Invite;
 using Proxytrace.Domain.User;

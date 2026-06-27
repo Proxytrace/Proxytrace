@@ -1,7 +1,7 @@
+using Proxytrace.Domain.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.EmailSettings;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Notifications;

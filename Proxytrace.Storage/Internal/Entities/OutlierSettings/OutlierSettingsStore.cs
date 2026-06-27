@@ -1,8 +1,8 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Common.Time;
-using AppOutlierSettings = Proxytrace.Application.Outliers.OutlierSettings;
-using IOutlierSettingsStore = Proxytrace.Application.Outliers.IOutlierSettingsStore;
+using AppOutlierSettings = Proxytrace.Domain.Outliers.OutlierSettings;
+using IOutlierSettingsStore = Proxytrace.Domain.Outliers.IOutlierSettingsStore;
 
 namespace Proxytrace.Storage.Internal.Entities.OutlierSettings;
 

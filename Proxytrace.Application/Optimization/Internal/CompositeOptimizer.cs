@@ -1,5 +1,5 @@
-using Proxytrace.Application.Statistics;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Common.Async;
 using Proxytrace.Domain.OptimizationTheory;

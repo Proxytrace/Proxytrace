@@ -1,10 +1,10 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using Proxytrace.Application.Statistics;
+using Proxytrace.Domain.Statistics;
 using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Application.Statistics.Internal.Worker;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Testing;

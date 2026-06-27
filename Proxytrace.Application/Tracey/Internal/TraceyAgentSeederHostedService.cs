@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Demo;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
 

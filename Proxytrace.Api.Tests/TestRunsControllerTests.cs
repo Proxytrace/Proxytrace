@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -5,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;

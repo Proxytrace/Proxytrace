@@ -1,4 +1,5 @@
 using Autofac;
+using Proxytrace.Domain.Statistics;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AgentCall;

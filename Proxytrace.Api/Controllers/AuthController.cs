@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Notifications;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -5,10 +6,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Auth;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
-using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Invite;

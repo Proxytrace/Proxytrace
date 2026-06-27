@@ -1,4 +1,5 @@
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.OptimizationProposal;

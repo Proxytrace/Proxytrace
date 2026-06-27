@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Users;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Domain;

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Projects;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Tracey;

@@ -1,7 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Proxytrace.Application.Statistics;
+using Proxytrace.Domain.Statistics;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluation;

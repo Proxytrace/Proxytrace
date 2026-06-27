@@ -24,11 +24,17 @@ A secret's treatment is decided by **how it is used**, not by what it is:
 Never hash a replayable secret (you could not replay it) and never reversibly encrypt a verify-only
 credential (a database dump would then yield usable credentials).
 
-## The two seams (`Proxytrace.Application/Security/`)
+## The two seams (interfaces in `Proxytrace.Domain.Security`; implementation in `Proxytrace.Infrastructure.Security`)
+
+The seam **interfaces** (`ISecretProtector`, `ISecretHasher`) live in `Proxytrace.Domain.Security`, so the
+storage layer can consume them without referencing `Application` (issue #270). Their Data Protection-backed
+**implementations** (`DataProtectionSecretProtector`, `Sha256SecretHasher`) and the DI module
+(`SecretProtectionModule`) live in `Proxytrace.Infrastructure.Security` — the lowest layer both the API host
+and the lean ingestion proxy can reach without loading `Application`.
 
 - **`ISecretProtector`** — `Protect`/`Unprotect`, backed by ASP.NET Core Data Protection
   (`DataProtectionSecretProtector`, purpose `"Proxytrace.Secrets.v1"`). The seam and its key ring are
-  registered together in `Proxytrace.Application/Security/SecretProtectionModule.cs` (application name
+  registered together in `Proxytrace.Infrastructure/Security/SecretProtectionModule.cs` (application name
   `"Proxytrace"`, persisted to `PROXYTRACE_DATA_DIR/dataprotection-keys`); without it the ring is
   ephemeral and ciphertext does not survive a restart. **Both hosts that touch encrypted secrets — the
   API (writer) and the lean ingestion proxy (reader, which decrypts the upstream provider key before

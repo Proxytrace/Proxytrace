@@ -1,8 +1,8 @@
+using Proxytrace.Domain.AuditLog;
 using AwesomeAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Common.Async;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Optimization.Internal.Validation;

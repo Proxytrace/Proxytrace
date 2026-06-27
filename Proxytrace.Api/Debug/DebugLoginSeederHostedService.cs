@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Auth.Local;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Demo;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Debug;

@@ -1,7 +1,7 @@
 using System.Net;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Proxytrace.Application.Outliers;
+using Proxytrace.Domain.Outliers;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;

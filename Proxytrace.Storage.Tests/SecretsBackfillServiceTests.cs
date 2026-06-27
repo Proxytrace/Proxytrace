@@ -3,7 +3,7 @@ using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Proxytrace.Application.Security;
+using Proxytrace.Domain.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;

@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.TestSupport;
+namespace Proxytrace.Domain.TestSupport;
 
 /// <summary>
 /// Test-only hook that clears all per-run domain content (agents, traces, evaluators, suites,

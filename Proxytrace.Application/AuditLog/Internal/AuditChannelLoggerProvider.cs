@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

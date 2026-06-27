@@ -49,11 +49,13 @@ internal sealed class Module : Autofac.Module
         // The repositories the proxy resolves during API-key resolution (IApiKeyRepository,
         // IModelProviderRepository) map secret-bearing columns, so they need the at-rest secret seams:
         // ISecretHasher for the inbound-key blind index, and ISecretProtector to decrypt the upstream
-        // provider key before replaying it. Those seams live in the application layer this lean host
-        // does NOT load, so register them directly. The shared key-ring configuration (same app name +
-        // PROXYTRACE_DATA_DIR) lets the proxy decrypt keys the API encrypted — both hosts MUST point
-        // PROXYTRACE_DATA_DIR at the same volume. See docs/security.md.
-        builder.RegisterModule<Proxytrace.Application.Security.SecretProtectionModule>();
+        // provider key before replaying it. The seam interfaces live in the domain layer and their
+        // Data Protection-backed implementation + DI module in the infrastructure layer; this lean host
+        // does NOT load Application, so it registers that infrastructure module directly (#270). The
+        // shared key-ring configuration (same app name + PROXYTRACE_DATA_DIR) lets the proxy decrypt
+        // keys the API encrypted — both hosts MUST point PROXYTRACE_DATA_DIR at the same volume. See
+        // docs/security.md.
+        builder.RegisterModule<Proxytrace.Infrastructure.Security.SecretProtectionModule>();
 
         // The storage model-building graph references IAgentNameGenerator (implemented in the
         // application layer we do not load). The proxy never creates agents, so a stub suffices.

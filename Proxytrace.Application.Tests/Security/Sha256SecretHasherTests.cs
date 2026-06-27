@@ -1,6 +1,6 @@
 using AwesomeAssertions;
-using Proxytrace.Application.Security;
-using Proxytrace.Application.Security.Internal;
+using Proxytrace.Domain.Security;
+using Proxytrace.Infrastructure.Security.Internal;
 
 namespace Proxytrace.Application.Tests.Security;
 

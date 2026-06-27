@@ -1,4 +1,4 @@
-using Proxytrace.Application.Statistics;
+using Proxytrace.Domain.Statistics;
 
 namespace Proxytrace.Api.Dto.Statistics;
 

@@ -2,7 +2,6 @@ using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.User;

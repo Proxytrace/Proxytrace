@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Proxytrace.Application\Proxytrace.Application.csproj" />
       <ProjectReference Include="..\Proxytrace.Domain\Proxytrace.Domain.csproj" />
     </ItemGroup>
     

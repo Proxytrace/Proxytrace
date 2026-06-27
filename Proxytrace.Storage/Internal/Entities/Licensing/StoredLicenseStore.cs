@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Proxytrace.Application.Licensing;
+using Proxytrace.Domain.Licensing;
 using Proxytrace.Common.Time;
 
 namespace Proxytrace.Storage.Internal.Entities.Licensing;

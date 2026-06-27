@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -439,9 +440,11 @@ public sealed class Module : Autofac.Module
             .As<IPasswordService>()
             .SingleInstance();
 
-        // Secret seams (ISecretProtector / ISecretHasher) + the Data Protection key ring. Shared with
-        // the lean proxy host via this module so both resolve an identical key ring. See docs/security.md.
-        builder.RegisterModule<Security.SecretProtectionModule>();
+        // Secret seams (ISecretProtector / ISecretHasher) + the Data Protection key ring now live in
+        // Infrastructure (Infrastructure.Security.SecretProtectionModule) so the lean proxy — which must
+        // not load Application — can register them too. The composition roots (API host, proxy host and
+        // the test/perf harnesses) register that module directly, not Application.Module. See
+        // docs/security.md (#270).
 
         builder.RegisterType<Notifications.Internal.SmtpEmailSender>()
             .As<Notifications.IEmailSender>()

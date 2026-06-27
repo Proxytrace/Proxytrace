@@ -2,7 +2,7 @@ using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Usage;
 
-namespace Proxytrace.Application.Statistics;
+namespace Proxytrace.Domain.Statistics;
 
 public record StatisticsFilter(
     DateTimeOffset? From = null,

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Proxytrace.Application.Statistics;
+using Proxytrace.Domain.Statistics;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Storage.Internal.Entities.Evaluator;
 using Proxytrace.Storage.Internal.Entities.TestResult;

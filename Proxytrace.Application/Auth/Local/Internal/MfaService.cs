@@ -1,6 +1,6 @@
 using System.Data.Common;
 using System.Security.Cryptography;
-using Proxytrace.Application.Security;
+using Proxytrace.Domain.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.MfaBackupCode;
 using Proxytrace.Domain.User;

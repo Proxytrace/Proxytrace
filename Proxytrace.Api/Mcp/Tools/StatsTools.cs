@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Statistics;
 using System.ComponentModel;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;

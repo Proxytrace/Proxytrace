@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Licensing;
+namespace Proxytrace.Domain.Licensing;
 
 /// <summary>
 /// Persistence for the runtime-set license JWT (set via the setup wizard or the settings UI).

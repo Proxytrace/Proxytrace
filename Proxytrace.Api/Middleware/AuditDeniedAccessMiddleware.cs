@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.AuditLog;
 
 namespace Proxytrace.Api.Middleware;

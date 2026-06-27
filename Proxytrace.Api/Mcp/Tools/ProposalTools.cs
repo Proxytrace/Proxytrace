@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Proxytrace.Api.Dto.Proposals;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.OptimizationProposal;

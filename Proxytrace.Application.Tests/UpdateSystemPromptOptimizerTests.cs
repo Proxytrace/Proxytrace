@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Optimization.Internal.Evidence;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Evaluation;

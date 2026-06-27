@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Json;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;

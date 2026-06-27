@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Statistics;
+namespace Proxytrace.Domain.Statistics;
 
 /// <summary>
 /// Read-only aggregations over <c>AgentCallEntity</c> rows.

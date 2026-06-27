@@ -1,11 +1,12 @@
+using Proxytrace.Domain.AuditLog;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestSuites;
-using Proxytrace.Application.Statistics;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -589,7 +590,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<IStatsReader<TestRunStats, TestRunStats.Filter>>(),
             license ?? UnlimitedLicense(),
             accessGuard ?? services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 
     [TestMethod]
     public async Task PromoteFromTraces_WhenTraceInForeignProject_ReturnsNotFound()

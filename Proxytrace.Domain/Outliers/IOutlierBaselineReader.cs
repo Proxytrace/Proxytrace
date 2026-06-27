@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Outliers;
+namespace Proxytrace.Domain.Outliers;
 
 /// <summary>Mean and sample (n−1) standard deviation of one metric over an agent's recent calls.</summary>
 /// <param name="Mean">Arithmetic mean of the samples (0 when none).</param>

@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Notifications;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;

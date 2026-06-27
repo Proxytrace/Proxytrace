@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using System.Security.Claims;
 using Autofac;
 using AwesomeAssertions;
@@ -259,7 +260,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             services.GetRequiredService<Proxytrace.Application.Evaluator.IDefaultEvaluatorProvisioner>(),
             services.GetRequiredService<ICurrentUserAccessor>(),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
         if (context is not null)
             controller.ControllerContext = context;
         return controller;

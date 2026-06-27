@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Licensing;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Licensing;

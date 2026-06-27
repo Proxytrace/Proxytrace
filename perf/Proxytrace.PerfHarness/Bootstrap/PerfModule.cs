@@ -57,13 +57,18 @@ internal sealed class PerfModule : Autofac.Module
 
         // --- real storage + application graph, pointed at Postgres ---
         builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.Postgres(connectionString)));
+        // #270: Storage.Module no longer references/registers Application; this composition root now
+        // registers Application.Module and Infrastructure's secret seams explicitly (previously they
+        // were pulled in transitively via Storage.Module).
+        builder.RegisterModule<Proxytrace.Application.Module>();
+        builder.RegisterModule<Proxytrace.Infrastructure.Security.SecretProtectionModule>();
         builder.RegisterModule<Proxytrace.Serialization.Module>();
 
         // --- substitute the infrastructure seams the data/ingestion graph depends on ---
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
         builder.RegisterStub<Proxytrace.Application.Auth.ICurrentUserAccessor>();
-        builder.RegisterStub<Proxytrace.Application.Notifications.IEmailSettingsStore>();
+        builder.RegisterStub<Proxytrace.Domain.Notifications.IEmailSettingsStore>();
         builder.RegisterStub<Proxytrace.Application.Notifications.IEmailSender>();
         builder.RegisterStub<Proxytrace.Application.Anomaly.IAnomalyDetectionService>();
         builder.RegisterStub<IAgentNameGenerator>(stub =>
@@ -71,7 +76,7 @@ internal sealed class PerfModule : Autofac.Module
                 .ReturnsForAnyArgs(Task.FromResult("Perf Agent")));
 
         // The ingestion processor, OpenAI parser and test runner are internal to Proxytrace.Application
-        // and already registered by its real Module (loaded transitively by Storage.Module), so unlike
+        // and already registered by its real Module (registered explicitly above), so unlike
         // Application.Tests — which has InternalsVisibleTo and re-registers them — the harness just
         // relies on those registrations. ILogger<T> comes from the open-generic AddLogging above.
         builder.RegisterInstance(new TestRunnerConfiguration())

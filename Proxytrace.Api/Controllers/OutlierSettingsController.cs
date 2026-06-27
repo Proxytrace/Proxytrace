@@ -1,8 +1,7 @@
+using Proxytrace.Domain.Outliers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.OutlierSettings;
-using Proxytrace.Application.AuditLog;
-using Proxytrace.Application.Outliers;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.User;
 

@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using System.Reflection;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Authorization;
@@ -6,8 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.OutlierSettings;
-using Proxytrace.Application.AuditLog;
-using Proxytrace.Application.Outliers;
+using Proxytrace.Domain.Outliers;
 using Proxytrace.Domain.User;
 using Proxytrace.Testing;
 

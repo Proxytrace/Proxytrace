@@ -102,7 +102,7 @@ public sealed class AuditCaptureTests : BaseTest<Module>
         // Audit events log at Information; the error-log capture only takes >= Error, so there is no
         // double capture of audit entries into the ApplicationError table.
         var errorChannel = new ErrorLogChannel();
-        ILogger errorLogger = new ErrorLogChannelLogger("Proxytrace.Application.AuditLog.Audit", errorChannel);
+        ILogger errorLogger = new ErrorLogChannelLogger("Proxytrace.Domain.AuditLog.Audit", errorChannel);
 
         errorLogger.LogInformation("audit happened");
 

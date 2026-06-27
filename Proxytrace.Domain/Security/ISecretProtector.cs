@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Security;
+namespace Proxytrace.Domain.Security;
 
 /// <summary>
 /// Reversible at-rest encryption for secrets stored in the database (e.g. the SMTP password).

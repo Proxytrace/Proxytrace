@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Outliers;
+namespace Proxytrace.Domain.Outliers;
 
 /// <summary>
 /// Persistence for the single-row outlier-detection sensitivity configuration. At most one row

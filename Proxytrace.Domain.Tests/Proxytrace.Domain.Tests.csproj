@@ -21,7 +21,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!-- #270: Storage no longer references Application, and Storage.Module no longer transitively
+           registers Application.Module / the secret seams. This composition root therefore references
+           Application (for Application.Module) and Infrastructure (for SecretProtectionModule) directly
+           and registers both in its test Module, preserving the previous container composition. -->
+      <ProjectReference Include="..\Proxytrace.Application\Proxytrace.Application.csproj" />
       <ProjectReference Include="..\Proxytrace.Domain\Proxytrace.Domain.csproj" />
+      <ProjectReference Include="..\Proxytrace.Infrastructure\Proxytrace.Infrastructure.csproj" />
       <ProjectReference Include="..\Proxytrace.Storage\Proxytrace.Storage.csproj" />
       <ProjectReference Include="..\Proxytrace.Testing\Proxytrace.Testing.csproj" />
     </ItemGroup>

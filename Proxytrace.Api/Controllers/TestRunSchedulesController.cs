@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.TestRuns;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;

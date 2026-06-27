@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Notifications;
+using Proxytrace.Domain.AuditLog;
 using Autofac;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Proxytrace.Application.TestSupport;
+using Proxytrace.Domain.TestSupport;
 
 namespace Proxytrace.Storage.Internal;
 

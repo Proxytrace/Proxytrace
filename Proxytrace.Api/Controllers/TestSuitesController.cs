@@ -1,11 +1,10 @@
+using Proxytrace.Domain.Statistics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestSuites;
-using Proxytrace.Application.AuditLog;
-using Proxytrace.Application.Statistics;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;

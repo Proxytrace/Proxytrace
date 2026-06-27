@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,7 +6,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Setup;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain;

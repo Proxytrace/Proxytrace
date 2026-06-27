@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Statistics.TestRun;
+namespace Proxytrace.Domain.Statistics.TestRun;
 
 /// <summary>
 /// Collapses the per-sample <see cref="TestRunStats"/> rows of a sampled run group back down to one

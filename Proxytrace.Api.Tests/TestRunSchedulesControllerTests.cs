@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using System.Reflection;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
@@ -11,7 +12,6 @@ using NSubstitute;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;

@@ -2,7 +2,6 @@ using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Middleware;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.AuditLog;
 
 namespace Proxytrace.Api.Tests.Middleware;

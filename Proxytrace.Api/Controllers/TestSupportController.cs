@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Application.TestSupport;
+using Proxytrace.Domain.TestSupport;
 
 namespace Proxytrace.Api.Controllers;
 

@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.AuditLog;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -6,7 +8,6 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Tools;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;

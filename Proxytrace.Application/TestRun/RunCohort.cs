@@ -1,4 +1,4 @@
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Domain.TestRun;
 
 namespace Proxytrace.Application.TestRun;

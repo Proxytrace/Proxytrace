@@ -1,7 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Demo;
 using Proxytrace.Domain;
 using Proxytrace.Domain.User;
 using Proxytrace.Storage.Internal;

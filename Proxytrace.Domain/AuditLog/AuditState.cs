@@ -1,15 +1,16 @@
 using System.Collections;
-using Proxytrace.Domain.AuditLog;
 
-namespace Proxytrace.Application.AuditLog.Internal;
+namespace Proxytrace.Domain.AuditLog;
 
 /// <summary>
 /// Strongly-typed log state produced by <see cref="AuditLogExtensions.LogAudit"/> and recognized by
-/// <see cref="AuditChannelLogger"/> via a single type check. Carries the call-site-supplied fields of
-/// an audit event (the actor is enriched later from the request context). Implements the key/value
-/// list contract so the entry also renders structurally in ordinary log sinks (e.g. console).
+/// the audit capture logger (<c>AuditChannelLogger</c>, in the application layer) via a single type
+/// check. Carries the call-site-supplied fields of an audit event (the actor is enriched later from
+/// the request context). Implements the key/value list contract so the entry also renders
+/// structurally in ordinary log sinks (e.g. console). Public so the application-layer capture
+/// pipeline can pattern-match it while this seam lives in the domain layer.
 /// </summary>
-internal readonly struct AuditState : IReadOnlyList<KeyValuePair<string, object?>>
+public readonly struct AuditState : IReadOnlyList<KeyValuePair<string, object?>>
 {
     public AuditAction Action { get; }
     public string TargetType { get; }

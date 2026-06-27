@@ -17,7 +17,6 @@ using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 
 namespace Proxytrace.Api.Controllers;

@@ -1,6 +1,6 @@
 using Proxytrace.Domain.Notification;
 
-namespace Proxytrace.Application.Notifications;
+namespace Proxytrace.Domain.Notifications;
 
 /// <summary>How the SMTP connection is secured (maps to MailKit's <c>SecureSocketOptions</c>).</summary>
 public enum SmtpSecurity
@@ -14,7 +14,7 @@ public enum SmtpSecurity
 /// <summary>
 /// Operator-configured outgoing-email settings. A single instance per installation. <see cref="Password"/>
 /// is the plaintext SMTP password in memory; it is encrypted at rest by the store via
-/// <see cref="Proxytrace.Application.Security.ISecretProtector"/>.
+/// <see cref="Proxytrace.Domain.Security.ISecretProtector"/>.
 /// </summary>
 public sealed record EmailSettings(
     bool Enabled,

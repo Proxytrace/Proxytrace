@@ -5,25 +5,26 @@ Strict layered dependency flow — each layer may only depend on layers below it
 ```
 Proxytrace.Api  →  Proxytrace.Application  →  Proxytrace.Domain  →  Proxytrace.Common
             →  Proxytrace.Infrastructure  →  Proxytrace.Domain + Proxytrace.Serialization  →  Proxytrace.Common
-            →  Proxytrace.Storage  →  Proxytrace.Application + Proxytrace.Domain
+            →  Proxytrace.Storage  →  Proxytrace.Domain
 ```
 
-> **Known deviation — `Storage → Application`.** `Proxytrace.Storage` references
-> `Proxytrace.Application` because it *implements* a set of **secondary ports** (interfaces) that
-> currently live in Application rather than in Domain: `ISecretProtector`/`ISecretHasher`
-> (`Application.Security`), the statistics/outlier readers (`Application.Statistics`,
-> `Application.Outliers`), `IEmailSettingsStore` (`Application.Notifications`), the stored-license
-> store (`Application.Licensing`), `IDatabaseInitializer` (`Application.Demo`) and `ITestDataReset`
-> (`Application.TestSupport`). In a strict layer-cake these ports would sit in `Domain`; relocating
-> them is a larger refactor tracked separately ([#270](https://github.com/Proxytrace/Proxytrace/issues/270)).
-> **Consequence:** any host that references `Storage`
-> — including the standalone `Proxytrace.Proxy` — transitively loads the `Application` *assembly*.
-> The proxy nonetheless runs **none** of Application's services because it never registers
-> `Application.Module` (see the proxy entry below and the DI section).
+> **`Proxytrace.Storage` references only `Domain`** (+ `Serialization`/`Common` transitively) — it does
+> **not** reference `Application`. The secondary-port **interfaces** that `Storage` implements live in
+> `Domain` alongside the pure DTOs they expose: `ISecretProtector`/`ISecretHasher` (`Domain.Security`),
+> the statistics/test-run readers + writer (`Domain.Statistics`, with `TestRunStats` and the result
+> records), the outlier readers + `OutlierSettings` (`Domain.Outliers`), `IEmailSettingsStore` +
+> `EmailSettings` (`Domain.Notifications`), the stored-license store (`Domain.Licensing`),
+> `IDatabaseInitializer` (`Domain.Demo`), `ITestDataReset` (`Domain.TestSupport`) and the audit-emit
+> seam `Audit`/`LogAudit`/`AuditState` (`Domain.AuditLog`). The **implementations** (`Internal/*`),
+> hosted services, and the audit *capture* pipeline stay in `Application` (issue #270).
 >
-> `Proxytrace.Infrastructure`, by contrast, depends only on `Domain` + `Serialization` (it has **no**
-> reference to `Application`): the kiosk option records it needs (`KioskOptions`,
-> `KioskEndpointOptions`) live in `Proxytrace.Domain.Kiosk`.
+> `Proxytrace.Infrastructure` depends only on `Domain` + `Serialization` (it has **no** reference to
+> `Application`): the kiosk option records it needs (`KioskOptions`, `KioskEndpointOptions`) live in
+> `Proxytrace.Domain.Kiosk`, and it now also hosts the at-rest secret seam's Data Protection-backed
+> **implementation** + DI module (`Proxytrace.Infrastructure.Security.SecretProtectionModule`) — the
+> lowest layer both the API host and the lean proxy can reach without `Application`. **Consequence:** the
+> standalone `Proxytrace.Proxy` references `Storage` (+ `Infrastructure`, `Messaging`, `Domain`) and does
+> **not** load the `Application` assembly at all, directly or transitively.
 
 - **Proxytrace.Api** — ASP.NET Core controllers, DTOs, the OpenAI-compatible proxy endpoint, composition root (`Proxytrace.Api.Module`)
 - **Proxytrace.Application** — Use-case orchestration: ingestion (`OpenAiCallParser`, `AgentCallIngestor`), test running (`TestRunnerService`), optimization, SSE broadcasters (`TraceBroadcaster`, `TestResultBroadcaster`, `ProposalBroadcaster`), demo data seeding (`IDatabaseInitializer`)
@@ -32,7 +33,7 @@ Proxytrace.Api  →  Proxytrace.Application  →  Proxytrace.Domain  →  Proxyt
 - **Proxytrace.Serialization** — JSON serializers and output formats (`ISerializer`, `IOutputFormat`, `ObjectToInferredTypesConverter`).
 - **Proxytrace.Storage** — EF Core entities, configurations, mappers, migrations. Provider auto-detected (SQLite / PostgreSQL / SQL Server).
 - **Proxytrace.Common** — Shared utilities: validation helpers, async/type extensions, DI extensions, randomness.
-- **Proxytrace.Proxy** — **Standalone** deployable OpenAI-compatible proxy service (own `Program`/`Dockerfile`/`Module`). On the request hot path it resolves the API key, forwards to the upstream provider, and publishes the captured call to the ingestion stream. References Domain + Messaging + Storage (it does **not** reference Api). It deliberately constructs `Storage.Module` with `registerApplicationServices: false` and never registers `Application.Module`, so **no Application service runs in the proxy** (test runner, optimizer, ingestion worker, search indexing, demo seeder, …). It does still need a handful of seams that happen to live in Application (`SecretProtectionModule` for at-rest secret decryption) plus small local stubs for the factory delegates the storage model-building graph expects; because `Storage → Application` (see the deviation note above) the Application assembly is already on the proxy's reference closure, so these resolve without an extra project reference.
+- **Proxytrace.Proxy** — **Standalone** deployable OpenAI-compatible proxy service (own `Program`/`Dockerfile`/`Module`). On the request hot path it resolves the API key, forwards to the upstream provider, and publishes the captured call to the ingestion stream. References Domain + Infrastructure + Messaging + Storage (it does **not** reference Api **or Application** — directly or transitively). It deliberately constructs `Storage.Module` with `registerApplicationServices: false` and never registers `Application.Module`, so **no Application service runs in the proxy** (test runner, optimizer, ingestion worker, search indexing, demo seeder, …). It does still need the at-rest secret seam to decrypt the upstream provider key before replaying it, so it registers `Proxytrace.Infrastructure.Security.SecretProtectionModule` directly (the seam interfaces live in `Domain`, the Data Protection-backed implementation in `Infrastructure`), plus small local stubs for the factory delegates the storage model-building graph expects.
 - **Proxytrace.Messaging** — Ingestion transport between the proxy (producer) and the app's ingestion worker (consumer), via `IIngestionStream`. Backed by **Redis Streams** in production (`StackExchange.Redis`); backed by an in-memory channel in tests and single-process/kiosk runs.
 - **Proxytrace.Licensing** — License resolution and feature/limit gating via `ILicenseService`. Tiers, `LicenseFeature`/`LicenseLimit`, JWT public-key verification. See [`licensing.md`](licensing.md).
 - **Proxytrace.Testing** — `BaseTest<TModule>` and shared test infrastructure (MSTest + AwesomeAssertions + NSubstitute).
@@ -65,4 +66,4 @@ DI is wired with Autofac. Each project ships a `Module : Autofac.Module` (`Proxy
 
 `Proxytrace.Application.Module` registers the hosted services for ingestion + test running plus the optimization sub-module. `Proxytrace.Storage.Module` takes a `Func<IServiceProvider, StorageConfiguration>` (the configuration is auto-detected by `Proxytrace.Api.Module`) plus a `registerApplicationServices` flag (default `true`).
 
-**The `registerApplicationServices` flag.** When `true` — the API/app host and most test harnesses (`Storage.Tests`, `Domain.Tests`, `Application.Tests`, the perf harness) — `Storage.Module` also registers the DB-initializer + the secret/preview backfill hosted services **and** pulls in `Application.Module` (this transitive registration is how those test harnesses bootstrap the full Application graph from a single `Storage.Module` registration). The standalone **proxy** passes `false`: it attaches to an already-migrated database read-only, runs no schema init or backfills, and registers no Application services. The API composition root also registers `Application.Module` itself, so the flag's transitive registration is redundant there (the `IfNotRegistered`/`builder.Properties` guards make the double registration a no-op).
+**The `registerApplicationServices` flag.** When `true` — the API/app host and the test/perf harnesses (`Storage.Tests`, `Domain.Tests`, `Application.Tests`, the perf harness) — `Storage.Module` registers Storage's own startup/initialization hosted services: the DB-initializer (`IDatabaseInitializer`) plus the secret/preview backfill services. The standalone **proxy** passes `false`: it attaches to an already-migrated database read-only and runs no schema init or backfills. Since [#270](https://github.com/Proxytrace/Proxytrace/issues/270), `Storage.Module` no longer references or registers `Application.Module` (the flag's name is historical) — each composition root that needs the Application graph (the API host plus the four `Storage.Tests` / `Domain.Tests` / `Application.Tests` / perf harnesses) registers `Application.Module` **and** the at-rest secret seam (`Infrastructure.Security.SecretProtectionModule`) explicitly. The API root's registrations are idempotent (the `IfNotRegistered`/`builder.Properties` guards make any double registration a no-op).

@@ -1,5 +1,5 @@
 using Autofac;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Demo;
 
 namespace Proxytrace.PerfHarness.Bootstrap;
 

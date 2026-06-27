@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Statistics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Auth;

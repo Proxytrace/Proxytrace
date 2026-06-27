@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -364,5 +365,5 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<IModelPriceRefresher>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IRepository<IUser>>(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 }

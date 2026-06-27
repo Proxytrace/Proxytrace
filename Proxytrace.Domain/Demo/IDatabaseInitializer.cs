@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Demo;
+namespace Proxytrace.Domain.Demo;
 
 /// <summary>
 /// Service to ensure database is created and migrations are applied

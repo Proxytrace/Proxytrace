@@ -78,9 +78,9 @@ internal sealed class Module : Autofac.Module
             .As<ISigningKeyProvider>()
             .SingleInstance();
 
-        // The Data Protection key ring (for at-rest secret encryption) is registered by
-        // Application's SecretProtectionModule, which the API loads via the storage module — the same
-        // module the proxy host uses, so both share one key-ring configuration. See docs/security.md.
+        // The Data Protection key ring (for at-rest secret encryption) is registered below by
+        // Infrastructure's SecretProtectionModule — the same module the proxy host uses, so both share
+        // one key-ring configuration. See docs/security.md.
 
         var kiosk = configuration.GetSection("Kiosk").Get<KioskOptions>() ?? new KioskOptions();
         builder
@@ -182,9 +182,17 @@ internal sealed class Module : Autofac.Module
         }
 
         builder.RegisterModule(new Storage.Module(_ => storageConfig));
-        
+
         builder.RegisterModule<Domain.Module>();
         builder.RegisterModule<Application.Module>();
+
+        // At-rest secret seams (ISecretProtector / ISecretHasher) + the Data Protection key ring.
+        // The seam interfaces live in Domain and the Data Protection-backed implementation + DI module
+        // in Infrastructure (#270), so the lean proxy host can register the SAME module without
+        // referencing Application — both hosts therefore resolve an identical key ring. Storage no
+        // longer pulls this in transitively, so the composition root registers it explicitly. See
+        // docs/security.md.
+        builder.RegisterModule<Infrastructure.Security.SecretProtectionModule>();
 
         // Single registration: the global filter (Program.cs options.Filters.Add<T>()) resolves the
         // enforcement filter per request from the scope, so only the scoped registration is needed.

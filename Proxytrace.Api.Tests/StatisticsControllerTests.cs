@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Statistics;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

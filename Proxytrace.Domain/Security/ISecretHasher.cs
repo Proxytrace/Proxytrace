@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Security;
+namespace Proxytrace.Domain.Security;
 
 /// <summary>
 /// Deterministic one-way hash for verify-only secrets (inbound API keys, invite tokens). Produces a

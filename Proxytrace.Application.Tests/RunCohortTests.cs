@@ -1,6 +1,6 @@
 using AwesomeAssertions;
 using NSubstitute;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestRun;

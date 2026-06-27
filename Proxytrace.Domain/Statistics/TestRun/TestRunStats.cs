@@ -1,6 +1,6 @@
 using Proxytrace.Domain.Usage;
 
-namespace Proxytrace.Application.Statistics.TestRun;
+namespace Proxytrace.Domain.Statistics.TestRun;
 
 /// <summary>
 /// Per-run projection. One row per finalized <c>ITestRun</c>.

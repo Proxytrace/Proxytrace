@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using Microsoft.Extensions.Logging;
 
 namespace Proxytrace.Application.AuditLog.Internal;

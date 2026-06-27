@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Statistics;
 namespace Proxytrace.Application.Statistics;
 
 /// <summary>

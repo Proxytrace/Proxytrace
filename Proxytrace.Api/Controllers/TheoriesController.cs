@@ -6,7 +6,6 @@ using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
 using Proxytrace.Api.Dto.Theories;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;

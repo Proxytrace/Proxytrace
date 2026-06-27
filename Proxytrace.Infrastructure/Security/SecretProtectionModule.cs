@@ -2,8 +2,9 @@ using Autofac;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Common.DependencyInjection;
+using Proxytrace.Domain.Security;
 
-namespace Proxytrace.Application.Security;
+namespace Proxytrace.Infrastructure.Security;
 
 /// <summary>
 /// Registers the at-rest secret seams (<see cref="ISecretProtector"/> and <see cref="ISecretHasher"/>)

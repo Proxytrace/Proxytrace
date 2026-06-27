@@ -1,8 +1,8 @@
+using Proxytrace.Domain.Licensing;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using Proxytrace.Application.Licensing;
 using Proxytrace.Application.Licensing.Internal;
 using Proxytrace.Licensing;
 using Proxytrace.Testing;

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Proxytrace.Application.Outliers;
+using Proxytrace.Domain.Outliers;
 using Proxytrace.Storage.Internal.Entities.AgentCall;
 using Proxytrace.Storage.Internal.Entities.AgentVersion;
 

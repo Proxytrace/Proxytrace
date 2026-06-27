@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Notifications;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Domain;

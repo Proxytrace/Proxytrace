@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.Demo;
-using Proxytrace.Application.Outliers;
-using Proxytrace.Application.Statistics;
-using Proxytrace.Application.TestSupport;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Demo;
+using Proxytrace.Domain.Outliers;
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.TestSupport;
 using Proxytrace.Storage.Internal;
 using Proxytrace.Storage.Internal.Entities;
 using Proxytrace.Storage.Internal.Entities.Project;
@@ -58,7 +58,13 @@ public sealed class Module : Autofac.Module
                 .As<IDatabaseInitializer>()
                 .SingleInstance();
 
-            builder.RegisterModule<Application.Module>();
+            // NOTE (#270): Storage no longer references Application, so it can no longer register
+            // Application.Module here. The composition roots that need the Application graph — the API
+            // host plus the Storage.Tests / Domain.Tests / Application.Tests / perf harnesses — now
+            // register Application.Module (and Infrastructure's SecretProtectionModule for the at-rest
+            // secret seams) themselves. This flag still gates Storage's own startup/init hosted services
+            // (the DB initializer above + the backfills below); the lean proxy passes false to attach
+            // read-only with no schema init or backfills.
 
             // One-time, idempotent backfill that protects pre-retrofit plaintext secrets. Registered
             // after the DB initializer so it runs once migrations have applied. Resolvable as itself so

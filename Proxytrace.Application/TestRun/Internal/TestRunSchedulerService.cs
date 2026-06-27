@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.TestRun;

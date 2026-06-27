@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.AuditLog;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +9,6 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Evaluators;
 using Proxytrace.Application.Evaluator;
-using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Project;
@@ -240,5 +241,5 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<EvaluatorDtoMapper>(),
         services.GetRequiredService<ITransaction>(),
         services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 }

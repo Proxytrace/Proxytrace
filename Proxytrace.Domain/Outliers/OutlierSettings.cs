@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Outliers;
+namespace Proxytrace.Domain.Outliers;
 
 /// <summary>
 /// Operator-tunable sensitivity for ingestion-time outlier detection. A single instance per

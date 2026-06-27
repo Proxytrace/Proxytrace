@@ -1,3 +1,5 @@
+using Proxytrace.Domain.AuditLog;
+using Proxytrace.Domain.Notifications;
 using AwesomeAssertions;
 using Autofac;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +11,6 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Auth;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
-using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Invite;
@@ -386,7 +387,7 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),
         config ?? new ConfigurationBuilder().Build(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance,
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance,
         emailSettings ?? Substitute.For<IEmailSettingsStore>())
     {
         ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },

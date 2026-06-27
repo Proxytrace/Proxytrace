@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using System.Security.Claims;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
@@ -35,7 +36,7 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             keyManager ?? Substitute.For<ILicenseKeyManager>(),
             setup,
             quotaGuard,
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance);
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 
         var identity = authenticatedAsAdmin
             ? new ClaimsIdentity([new Claim(ClaimTypes.Role, nameof(UserRole.Admin))], "test")

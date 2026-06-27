@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Statistics;
+namespace Proxytrace.Domain.Statistics;
 
 /// <summary>
 /// Storage-side projection of evaluation results into evaluator-scoped statistics.

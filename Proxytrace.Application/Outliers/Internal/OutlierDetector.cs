@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Outliers;
 using Proxytrace.Domain.AgentCall;
 
 namespace Proxytrace.Application.Outliers.Internal;

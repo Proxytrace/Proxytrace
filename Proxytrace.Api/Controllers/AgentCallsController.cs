@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Statistics;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,6 @@ using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Json;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;

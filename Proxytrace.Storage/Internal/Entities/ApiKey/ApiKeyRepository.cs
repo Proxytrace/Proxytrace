@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Proxytrace.Application.Security;
+using Proxytrace.Domain.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Events;

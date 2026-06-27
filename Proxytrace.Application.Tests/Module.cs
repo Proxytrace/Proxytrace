@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Application.Ingestion.Internal;
 using Proxytrace.Application.Notifications;
+using Proxytrace.Domain.Notifications;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Application.TestRun.Internal;
 using Proxytrace.Domain.Agent;
@@ -22,6 +23,12 @@ public class Module : Autofac.Module
         base.Load(builder);
         builder.RegisterModule<Domain.Module>();
         builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.InMemory()));
+        // #270: Storage.Module no longer references/registers Application; this composition root now
+        // registers Application.Module and Infrastructure's secret seams explicitly (previously these
+        // were pulled in transitively via Storage.Module). The targeted overrides below still win as
+        // they are registered afterwards.
+        builder.RegisterModule<Proxytrace.Application.Module>();
+        builder.RegisterModule<Proxytrace.Infrastructure.Security.SecretProtectionModule>();
         builder.RegisterModule<Proxytrace.Serialization.Module>();
 
         builder.RegisterStub<IModelClient>();

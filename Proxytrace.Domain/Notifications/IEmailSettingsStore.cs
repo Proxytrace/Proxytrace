@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Notifications;
+namespace Proxytrace.Domain.Notifications;
 
 /// <summary>
 /// Persistence for the single-row operator email/SMTP configuration. At most one row exists; the

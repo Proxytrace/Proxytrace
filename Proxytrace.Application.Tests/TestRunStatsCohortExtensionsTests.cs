@@ -1,5 +1,5 @@
 using AwesomeAssertions;
-using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Domain.Statistics.TestRun;
 
 namespace Proxytrace.Application.Tests;
 

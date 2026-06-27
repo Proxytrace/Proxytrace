@@ -1,4 +1,4 @@
-using Proxytrace.Application.Notifications;
+using Proxytrace.Domain.Notifications;
 using Proxytrace.Domain.Notification;
 
 namespace Proxytrace.Api.Dto.EmailSettings;

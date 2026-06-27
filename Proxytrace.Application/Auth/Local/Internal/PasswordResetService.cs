@@ -1,9 +1,10 @@
+using Proxytrace.Domain.Notifications;
 using System.Net;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Notifications;
-using Proxytrace.Application.Security;
+using Proxytrace.Domain.Security;
 using Proxytrace.Domain;
 using Proxytrace.Domain.PasswordResetToken;
 using Proxytrace.Domain.User;

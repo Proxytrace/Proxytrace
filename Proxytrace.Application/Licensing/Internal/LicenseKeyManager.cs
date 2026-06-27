@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Licensing;
 using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.Licensing.Internal;

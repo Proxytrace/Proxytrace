@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AuditLog;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -338,6 +339,6 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         services.GetRequiredService<Proxytrace.Domain.TestRun.ITestRun.CreateNew>(),
         services.GetRequiredService<OptimizationProposalDtoMapper>(),
         services.GetRequiredService<IProposalBroadcaster>(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Application.AuditLog.Audit>.Instance,
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance,
         services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
 }

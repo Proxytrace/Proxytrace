@@ -11,7 +11,7 @@ Read this before touching audit emission, the capture pipeline, or the read API.
 ## Emitting an audit event (ILogger-native)
 
 Audit events are emitted through `ILogger`, not a bespoke service. Inject the marker-typed logger
-`ILogger<Audit>` (`Audit` is `Proxytrace.Application.AuditLog.Audit`) and call the `LogAudit`
+`ILogger<Audit>` (`Audit` is `Proxytrace.Domain.AuditLog.Audit`) and call the `LogAudit`
 extension after the action has succeeded:
 
 ```csharp

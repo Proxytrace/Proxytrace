@@ -1,3 +1,4 @@
+using Proxytrace.Domain.Licensing;
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;

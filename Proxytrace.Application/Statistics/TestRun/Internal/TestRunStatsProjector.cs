@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestResult;

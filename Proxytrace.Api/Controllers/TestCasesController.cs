@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestSuites;
-using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Message;
