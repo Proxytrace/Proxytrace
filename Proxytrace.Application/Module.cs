@@ -454,6 +454,14 @@ public sealed class Module : Autofac.Module
             .SingleInstance()
             .IfNotRegistered(typeof(LocalAuthOptions));
 
+        // Default auth options (e.g. EmergencyLogResetLink=false) so Application-layer consumers such as
+        // PasswordResetService resolve even when no host binds the "Authentication" section. The API
+        // registers the config-bound AuthOptions later, which wins. Mirrors LocalAuthOptions above.
+        builder.Register(_ => new AuthOptions())
+            .As<AuthOptions>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AuthOptions));
+
         builder.RegisterType<LocalTokenIssuer>()
             .As<ILocalTokenIssuer>()
             .SingleInstance();

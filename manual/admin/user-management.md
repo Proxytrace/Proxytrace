@@ -61,14 +61,25 @@ link themselves. How that link reaches them depends on whether outgoing email is
 
 - **Email configured** ([SMTP set up](/admin/email)) — Proxytrace emails the one-time reset link
   directly to the user. The link is valid for **1 hour** and can be used once.
-- **No email configured** — the link can't be emailed. Proxytrace instead writes it to the **server
-  log** (at warning level — e.g. `Password reset requested for … reset link: …`) so you, the
-  operator, can retrieve it and hand it to the user. This is the only way to recover a **sole Admin**
-  who is locked out of an instance with no SMTP configured.
+- **No email configured (or the email send fails)** — the link can't be delivered. Proxytrace writes a
+  **redacted** warning to the server log: it records *that* a reset was requested, a short
+  non-reversible token reference, and the expiry, but **not** the actual link (so anyone who can read
+  your logs can't hijack the account). Prefer the **Reset password** button below, which never touches
+  the log.
 
-You can also reset on a user's behalf without involving email at all: on the user's row click **Reset
+You can reset on a user's behalf without involving email at all: on the user's row click **Reset
 password**. Proxytrace mints a one-time link and shows it once in a dialog — copy it and share it with
 the user over a trusted channel. As with invites, the link is stored hashed and **never shown again**.
+
+::: warning Recovering a locked-out sole Admin with no email
+If you are the **only** Admin, you are locked out, **and** SMTP is not configured, the **Reset
+password** button isn't reachable (it's behind admin sign-in). For this last-resort case only, set
+`Authentication:EmergencyLogResetLink` to `true` in configuration and restart. Proxytrace will then
+write the **full** one-time reset link to the server log on the next **Forgot password?** request —
+retrieve it from the log, complete the reset, then set the flag back to `false`. While it is on,
+anyone who can read the server log within the link's 1-hour lifetime can take over the account, so
+keep it off in normal operation. See [Configuration](/admin/configuration).
+:::
 
 ::: tip Resets don't sign existing sessions out
 A new password takes effect immediately for new sign-ins, but any session the user already has open
