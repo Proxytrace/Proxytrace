@@ -68,4 +68,18 @@ public sealed class ModelEndpointCostTests : DomainTest<Module>
 
         endpoint.CalculateCost(new TokenUsage(1000, 50, 800)).Should().BeNull();
     }
+
+    [TestMethod]
+    public async Task Activation_InputCostExceedsOutputCost_IsAccepted()
+    {
+        IServiceProvider services = GetServices();
+
+        // Some batch/cached/reasoning tiers price input >= output; this must be valid (the factory
+        // delegate runs activation validation, which previously rejected input > output).
+        var endpoint = await MakeEndpoint(services, inputCost: 10m, outputCost: 2m, cachedCost: 1m);
+
+        endpoint.Should().NotBeNull();
+        // (1000*10 + 50*2) / 1_000_000 — cost still computes regardless of the input/output ordering.
+        endpoint.CalculateCost(new TokenUsage(1000, 50, 0)).Should().Be(10_100m / 1_000_000m);
+    }
 }

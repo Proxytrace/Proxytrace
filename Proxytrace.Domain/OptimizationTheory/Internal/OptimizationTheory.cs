@@ -188,5 +188,24 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
 
         if (string.IsNullOrWhiteSpace(ContentHash))
             yield return Validation.NotNullOrWhiteSpace(ContentHash);
+
+        if (BaselinePassRate is { } baselinePassRate &&
+            (!double.IsFinite(baselinePassRate) || baselinePassRate is < 0 or > 1))
+            yield return new ValidationResult(
+                $"{nameof(BaselinePassRate)} must be a finite value between 0 and 1.",
+                [nameof(BaselinePassRate)]);
+
+        if (ProjectedPassRate is { } projectedPassRate &&
+            (!double.IsFinite(projectedPassRate) || projectedPassRate is < 0 or > 1))
+            yield return new ValidationResult(
+                $"{nameof(ProjectedPassRate)} must be a finite value between 0 and 1.",
+                [nameof(ProjectedPassRate)]);
+
+        // A p-value outside [0, 1] is statistically meaningless.
+        if (PValue is { } pValue &&
+            (!double.IsFinite(pValue) || pValue is < 0 or > 1))
+            yield return new ValidationResult(
+                $"{nameof(PValue)} must be a finite value between 0 and 1.",
+                [nameof(PValue)]);
     }
 }

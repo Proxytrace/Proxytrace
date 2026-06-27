@@ -290,6 +290,42 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
             .Should().ThrowAsync<InvalidOperationException>();
     }
 
+    [TestMethod]
+    public async Task SetValidated_WithProjectedPassRateAboveOne_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => validating.SetValidated(Guid.NewGuid(), 0.5, 1.7, 0.02, Guid.NewGuid(), CancellationToken))
+            .Should().ThrowAsync<Exception>();
+    }
+
+    [TestMethod]
+    public async Task SetValidated_WithNegativePValue_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => validating.SetValidated(Guid.NewGuid(), 0.5, 0.7, -3, Guid.NewGuid(), CancellationToken))
+            .Should().ThrowAsync<Exception>();
+    }
+
+    [TestMethod]
+    public async Task SetValidated_WithNaNBaselinePassRate_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => validating.SetValidated(Guid.NewGuid(), double.NaN, 0.7, 0.02, Guid.NewGuid(), CancellationToken))
+            .Should().ThrowAsync<Exception>();
+    }
+
     private async Task<ISystemPromptTheory> CreateTheory(IServiceProvider services)
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<ISystemPromptTheory>>();

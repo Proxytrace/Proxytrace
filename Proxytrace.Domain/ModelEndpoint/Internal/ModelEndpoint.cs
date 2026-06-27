@@ -86,9 +86,9 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         if (CachedInputTokenCost.HasValue)
             yield return Validation.Positive(CachedInputTokenCost.Value, nameof(CachedInputTokenCost));
 
-        if (InputTokenCost.HasValue && OutputTokenCost.HasValue)
-            yield return Validation.LessThanOrEqual(InputTokenCost.Value, OutputTokenCost.Value, nameof(InputTokenCost));
-
+        // No InputTokenCost <= OutputTokenCost invariant: output is usually >= input but not
+        // universally (some batch/cached/reasoning tiers price input >= output), and CalculateCost
+        // does not rely on the ordering.
         if (CachedInputTokenCost.HasValue && InputTokenCost.HasValue)
             yield return Validation.LessThanOrEqual(CachedInputTokenCost.Value, InputTokenCost.Value, nameof(CachedInputTokenCost));
     }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Proxytrace.Common.Validation;
 
 namespace Proxytrace.Domain.Inference.Internal;
 
@@ -83,6 +84,31 @@ internal sealed record ModelParameters : IModelParameters
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        yield break;
+        // These parameters are also embedded on AgentCall, which is CAPTURED traffic, so bounds
+        // stay deliberately lenient: reject only clearly-invalid values (NaN/Infinity, negatives,
+        // non-positive counts) rather than tight provider-specific ranges.
+        if (Temperature is { } temperature && (!double.IsFinite(temperature) || temperature < 0))
+            yield return new ValidationResult(
+                $"{nameof(Temperature)} must be a finite, non-negative value.", [nameof(Temperature)]);
+
+        if (TopP is { } topP && (!double.IsFinite(topP) || topP is < 0 or > 1))
+            yield return new ValidationResult(
+                $"{nameof(TopP)} must be a finite value between 0 and 1.", [nameof(TopP)]);
+
+        if (FrequencyPenalty is { } frequencyPenalty &&
+            (!double.IsFinite(frequencyPenalty) || frequencyPenalty is < -2 or > 2))
+            yield return new ValidationResult(
+                $"{nameof(FrequencyPenalty)} must be a finite value between -2 and 2.", [nameof(FrequencyPenalty)]);
+
+        if (PresencePenalty is { } presencePenalty &&
+            (!double.IsFinite(presencePenalty) || presencePenalty is < -2 or > 2))
+            yield return new ValidationResult(
+                $"{nameof(PresencePenalty)} must be a finite value between -2 and 2.", [nameof(PresencePenalty)]);
+
+        if (MaxTokens is { } maxTokens)
+            yield return Validation.GreaterThan(maxTokens, 0, nameof(MaxTokens));
+
+        if (N is { } n)
+            yield return Validation.GreaterThan(n, 0, nameof(N));
     }
 }

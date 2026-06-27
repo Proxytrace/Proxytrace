@@ -318,6 +318,59 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         proposal.ExpectedPassRateDelta.Should().BeApproximately(0.51, 1e-9);
     }
 
+    [TestMethod]
+    public async Task CreateNew_SystemPrompt_WithProposedPassRateAboveOne_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var action = () => factory(agent, Priority.Low, "r", "msg", null, 1.7, [], abRun);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task CreateNew_SystemPrompt_WithNaNCurrentPassRate_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var action = () => factory(agent, Priority.Low, "r", "msg", double.NaN, null, [], abRun);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task CreateNew_ToolUpdate_WithNegativeProposedPassRate_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var action = () => factory(agent, Priority.Low, "r", [], 0.5, -0.2, [], abRun);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task CreateNew_ModelSwitch_WithProposedPassRateAboveOne_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IModelSwitchProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var abRun = await CreateTestRunAsync(services);
+
+        var action = () => factory(agent, Priority.Low, "r", endpoint, 0.6, 1.7, null, null, [], abRun);
+
+        action.Should().Throw<Exception>();
+    }
+
     private static async Task<IAgent> CreateAgentAsync(IServiceProvider services)
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
