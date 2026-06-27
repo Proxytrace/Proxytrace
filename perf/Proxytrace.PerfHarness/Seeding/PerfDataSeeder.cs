@@ -1,17 +1,24 @@
 using System.Diagnostics;
 using System.Net;
 using Autofac;
+using Proxytrace.Application.Statistics;
+using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
+using Proxytrace.Domain.TestCase;
+using Proxytrace.Domain.TestRun;
+using Proxytrace.Domain.TestRunGroup;
+using Proxytrace.Domain.TestSuite;
 using Proxytrace.Domain.Usage;
 using Proxytrace.PerfHarness.Bootstrap;
 
@@ -73,6 +80,9 @@ internal sealed class PerfDataSeeder
             inserted += batchCount;
             Console.WriteLine($"[seed] {inserted:N0}/{options.TargetCalls:N0} calls ({stopwatch.Elapsed:hh\\:mm\\:ss})");
         }
+
+        // --- 3. per-run test-run statistics rows (for the suite-scoped TestRunStats query, #253) ---
+        await SeedTestRunStatsAsync(graph, options, cancellationToken);
 
         stopwatch.Stop();
         Console.WriteLine($"[seed] done: {inserted:N0} calls in {stopwatch.Elapsed:hh\\:mm\\:ss}");
@@ -212,6 +222,129 @@ internal sealed class PerfDataSeeder
             conversationId: conversationId);
     }
 
+    /// <summary>
+    /// Seeds <see cref="SeedOptions.TestRunCount"/> per-run statistics rows spread across
+    /// <see cref="SeedOptions.TestRunSuitePoolSize"/> synthetic suites, so the suite-scoped
+    /// TestRunStats query (<c>WHERE SuiteId IN (...)</c>, issue #253) can be measured against a large,
+    /// realistically-distributed table. Each <c>TestRunStatsEntity</c> requires a matching
+    /// <c>TestRunEntity</c> (the <c>TestRunId</c> FK is 1:1), so one real anchor suite/group is built
+    /// and a test run is inserted per stats row; the stats <c>SuiteId</c> is a plain indexed column
+    /// (no FK), so the suite spread is synthetic and needs no extra suite graph.
+    /// </summary>
+    private async Task SeedTestRunStatsAsync(SeedGraph graph, SeedOptions options, CancellationToken cancellationToken)
+    {
+        if (options.TestRunCount <= 0)
+        {
+            return;
+        }
+
+        int poolSize = Math.Max(1, options.TestRunSuitePoolSize);
+        Console.WriteLine($"[seed] building {options.TestRunCount:N0} test-run stats rows across {poolSize} suites…");
+        var rng = new Random(options.RandomSeed + 1);
+        var suiteIdPool = Enumerable.Range(0, poolSize).Select(_ => Guid.NewGuid()).ToArray();
+
+        var anchor = await BuildTestRunAnchorAsync(graph, cancellationToken);
+
+        var start = DateTimeOffset.UtcNow.AddDays(-options.DaysSpread);
+        var span = TimeSpan.FromDays(options.DaysSpread);
+
+        long created = 0;
+        int sampleIndex = 0;
+        while (created < options.TestRunCount)
+        {
+            int batchCount = (int)Math.Min(options.BatchSize, options.TestRunCount - created);
+
+            await container.InScopeAsync(async scope =>
+            {
+                var createRun = scope.Resolve<ITestRun.CreateNew>();
+                var runRepository = scope.Resolve<IRepository<ITestRun>>();
+                var statsWriter = scope.Resolve<IStatsWriter<TestRunStats>>();
+
+                var runs = new List<ITestRun>(batchCount);
+                for (int i = 0; i < batchCount; i++)
+                {
+                    IModelEndpoint endpoint = graph.Endpoints[rng.Next(graph.Endpoints.Count)];
+                    runs.Add(createRun(anchor.Group, endpoint, sampleIndex++));
+                }
+
+                // Test runs first (committed) so the TestRunStats TestRunId FK resolves on upsert.
+                await runRepository.AddRangeAsync(runs, cancellationToken);
+
+                foreach (ITestRun run in runs)
+                {
+                    Guid suiteId = suiteIdPool[rng.Next(suiteIdPool.Length)];
+                    await statsWriter.UpsertAsync(BuildRunStats(run, anchor, suiteId, rng, start, span), cancellationToken);
+                }
+            });
+
+            created += batchCount;
+            Console.WriteLine($"[seed] {created:N0}/{options.TestRunCount:N0} test-run stats rows");
+        }
+    }
+
+    /// <summary>
+    /// Builds the single real suite/group the seeded test runs hang off — the minimum graph that
+    /// satisfies the <c>TestRunStatsEntity.TestRunId → TestRunEntity</c> FK (one suite with one
+    /// evaluator and one test case, plus one run group). Reuses a seeded agent/endpoint and the canned
+    /// conversation/assistant-message pools.
+    /// </summary>
+    private Task<TestRunAnchor> BuildTestRunAnchorAsync(SeedGraph graph, CancellationToken cancellationToken)
+        => container.InScopeAsync(async scope =>
+        {
+            var projectRepository = scope.Resolve<IRepository<IProject>>();
+            var evaluatorRepository = scope.Resolve<IRepository<IEvaluator>>();
+            var testCaseRepository = scope.Resolve<IRepository<ITestCase>>();
+            var suiteRepository = scope.Resolve<IRepository<ITestSuite>>();
+            var groupRepository = scope.Resolve<IRepository<ITestRunGroup>>();
+            var createEvaluator = scope.Resolve<IExactMatchEvaluator.CreateNew>();
+            var createTestCase = scope.Resolve<ITestCase.CreateNew>();
+            var createSuite = scope.Resolve<ITestSuite.CreateNew>();
+            var createGroup = scope.Resolve<ITestRunGroup.CreateNew>();
+
+            IProject project = await projectRepository.GetAsync(graph.ProjectId, cancellationToken);
+            IAgent agent = graph.Agents[0];
+
+            IEvaluator evaluator = await evaluatorRepository.AddAsync(createEvaluator(project), cancellationToken);
+            ITestCase testCase = await testCaseRepository.AddAsync(
+                createTestCase(graph.Conversations[0], graph.AssistantMessages[0]), cancellationToken);
+            ITestSuite suite = await suiteRepository.AddAsync(
+                createSuite("Perf Run-Stats Suite", agent, [evaluator], [testCase]), cancellationToken);
+            ITestRunGroup group = await groupRepository.AddAsync(
+                createGroup(suite, isSystemRun: false, null, sampleCount: 1), cancellationToken);
+
+            return new TestRunAnchor(agent.Id, group);
+        });
+
+    private static TestRunStats BuildRunStats(
+        ITestRun run,
+        TestRunAnchor anchor,
+        Guid suiteId,
+        Random rng,
+        DateTimeOffset start,
+        TimeSpan span)
+    {
+        int testCases = rng.Next(3, 25);
+        int passed = rng.Next(0, testCases + 1);
+        ulong input = (ulong)rng.Next(200, 4000);
+        ulong output = (ulong)rng.Next(50, 1500);
+        var usage = new TokenUsage(input, output, (ulong)(input * 0.2));
+        var duration = TimeSpan.FromMilliseconds(rng.Next(500, 30_000));
+        DateTimeOffset completedAt = start + span * rng.NextDouble();
+
+        return new TestRunStats(
+            TestRunId: run.Id,
+            AgentId: anchor.AgentId,
+            EndpointId: run.Endpoint.Id,
+            GroupId: anchor.Group.Id,
+            SuiteId: suiteId,
+            TestCases: testCases,
+            Passed: passed,
+            TotalDuration: duration,
+            Usage: usage,
+            Cost: (decimal)(rng.NextDouble() * 0.5),
+            RunCompletedAt: completedAt);
+    }
+
     private sealed record SeedGraph(
         Guid ProjectId,
         Guid ProviderId,
@@ -220,6 +353,8 @@ internal sealed class PerfDataSeeder
         IReadOnlyList<Conversation> Conversations,
         IReadOnlyList<AssistantMessage> AssistantMessages,
         IReadOnlyList<IModelParameters> ModelParameters);
+
+    private sealed record TestRunAnchor(Guid AgentId, ITestRunGroup Group);
 
     private sealed record SeedEntityData(Guid Id, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt) : IDomainEntityData;
 }

@@ -20,8 +20,12 @@
     "statsCostEstimate": 600,
     "statsCallTrends": 1100,
     "agentOverview": 250,
-    "agentDistributions": 250
+    "agentDistributions": 250,
+    "testRunStatsBySuite": 60,
+    "testRunStatsBySuitePage": 90
   },
+
+  "_comment_testRunStats": "testRunStatsBySuite/testRunStatsBySuitePage guard the suite-scoped TestRunStats projection query (issue #253). The test-suites controller previously materialized the whole TestRunStatsEntity table and filtered in memory on every suites list + single-suite GET; the fix pushes the suite set into SQL (WHERE SuiteId IN (...)), backed by the existing index on TestRunStatsEntity.SuiteId. The query returns only the rows for the requested suite(s), so it is an index range read independent of total table size. These two budgets are UNCALIBRATED PLACEHOLDERS (set conservatively for an index-scoped read) — they were added with the fix but the harness has not been run at scale; RECALIBRATE on a full ~1M / 25k-test-run seed (set ~20-30% above the observed p95).",
 
   "httpP95Ms": {
     "statisticsDashboard": 2500,

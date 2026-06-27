@@ -38,6 +38,15 @@ distributions, ~5% errors, and ~30% multi-turn conversation grouping, then inser
 the real `AddRangeAsync`. (Do **not** use `IDomainEntityGenerator<IAgentCall>` for the bulk loop — it
 creates a fresh agent/version/endpoint per call.)
 
+The seeder also loads `TestRunStats` projection rows (default ~25k, scaled down for small `--size`)
+spread across ~250 synthetic suites, for the suite-scoped query the test-suites controller runs (#253).
+Because `TestRunStatsEntity.TestRunId` is a 1:1 FK to `TestRunEntity`, one real anchor suite/group is
+built and a `TestRun` is inserted per stats row; the stats `SuiteId` is a plain indexed column (no FK),
+so the suite spread is synthetic and needs no per-suite graph. The `TestRunStatsQueryScenario` then
+times the scoped read (`WHERE SuiteId IN (...)`) for a single busy suite (`testRunStatsBySuite`, the
+single-suite GET) and a 50-suite page (`testRunStatsBySuitePage`, the suites list). Their budgets are
+**uncalibrated placeholders** — set conservatively for an index-scoped read — until a full run lands.
+
 ## Budgets (`perf/perf-budgets.json`)
 
 The single source of absolute budgets, shared by all three scopes (the DB-layer runner and benchmarks
