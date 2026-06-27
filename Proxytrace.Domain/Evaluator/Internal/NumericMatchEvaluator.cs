@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Proxytrace.Common.Validation;
@@ -60,7 +61,7 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
         Stopwatch sw = Stopwatch.StartNew();
         var expectedText = testResult.TestCase.ExpectedOutput.GetTextResponse();
         var expectedMatch = ExtractionPattern.Match(expectedText);
-        if (!expectedMatch.Success || !decimal.TryParse(expectedMatch.Value, out var expected))
+        if (!expectedMatch.Success || !TryParseInvariant(expectedMatch.Value, out var expected))
             return Task.FromResult<IEvaluation?>(null);
         
         var actualText = testResult.ActualResponse.GetTextResponse();
@@ -74,7 +75,7 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
             score = EvaluationScore.Terrible;
             reasoning = "Actual response did not match the extraction pattern.";
         }
-        else if (!decimal.TryParse(actualMatch.Value, out var actual))
+        else if (!TryParseInvariant(actualMatch.Value, out var actual))
         {
             score = EvaluationScore.Terrible;
             reasoning = $"Could not parse actual value '{actualMatch.Value}' as a number.";
@@ -95,6 +96,17 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
 
         return Task.FromResult<IEvaluation?>(evaluationFactory(this, score, sw.Elapsed, reasoning: reasoning));
     }
+
+    /// <summary>
+    /// Parses a numeric value with invariant culture so scoring never depends on the server
+    /// thread culture (e.g. a de-DE host must not read "3.14" as 314).
+    /// </summary>
+    private static bool TryParseInvariant(string value, out decimal result)
+        => decimal.TryParse(
+            value,
+            NumberStyles.Number | NumberStyles.AllowExponent,
+            CultureInfo.InvariantCulture,
+            out result);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
