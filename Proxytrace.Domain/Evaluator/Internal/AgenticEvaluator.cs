@@ -56,8 +56,7 @@ internal sealed record AgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEval
         Stopwatch sw = Stopwatch.StartNew();
         try
         {
-            Conversation conversation = Conversation.Create();
-            conversation.Add(BuildEvaluationMessage(testResult));
+            Conversation conversation = Conversation.Create().With(BuildEvaluationMessage(testResult));
 
             using var client = Agent.CreateClient();
             var completion = await client

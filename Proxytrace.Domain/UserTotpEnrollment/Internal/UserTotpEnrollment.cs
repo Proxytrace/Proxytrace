@@ -39,7 +39,17 @@ internal record UserTotpEnrollment : DomainEntity<IUserTotpEnrollment>, IUserTot
         => ApplyAsync(this with { ConfirmedAt = DateTimeOffset.UtcNow, LastUsedStep = usedStep }, cancellationToken);
 
     public Task<IUserTotpEnrollment> RecordUsedStep(long step, CancellationToken cancellationToken = default)
-        => ApplyAsync(this with { LastUsedStep = step }, cancellationToken);
+    {
+        // Single-use guard: a TOTP step may only ever move forward, so replaying a step at or
+        // below the last one used is rejected. The application layer already only records steps
+        // newer than LastUsedStep (TotpService.TryVerify), so this is belt-and-suspenders.
+        if (LastUsedStep is { } lastUsedStep && step <= lastUsedStep)
+        {
+            throw new InvalidOperationException(
+                $"Cannot record TOTP step {step} for enrollment {Id}: it must be newer than the last used step {lastUsedStep}.");
+        }
+        return ApplyAsync(this with { LastUsedStep = step }, cancellationToken);
+    }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

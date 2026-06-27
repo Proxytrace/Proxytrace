@@ -131,8 +131,8 @@ public sealed class OutlierBaselineQueriesTests : BaseTest<Module>
         var createCompletion = services.GetRequiredService<ICompletion.Create>();
         var repo = services.GetRequiredService<IAgentCallRepository>();
 
-        var conversation = Conversation.Create();
-        conversation.Add(new UserMessage([Content.FromText("hi")]));
+        var conversation = Conversation.Create()
+            .With(new UserMessage([Content.FromText("hi")]));
 
         bool success = (int)httpStatus is >= 200 and < 300;
         ICompletion? completion = success

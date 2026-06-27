@@ -204,8 +204,8 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         public ITestResult CreateFailingResult()
         {
-            var input = Conversation.Create();
-            input.Add(new UserMessage([Content.FromText("ping")]));
+            var input = Conversation.Create()
+                .With(new UserMessage([Content.FromText("ping")]));
             var expected = new AssistantMessage([Content.FromText("pong")], []);
             var actual = new AssistantMessage([Content.FromText("nope")], []);
 

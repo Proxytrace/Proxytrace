@@ -60,11 +60,11 @@ public class SerializationProbeTests
         var toolReq = new ToolRequest("call_1", "lookup_order", """{"order_id":"12345"}""");
         var toolResp = new ToolResponse(toolReq, [Content.FromText("""{"status":"shipped","eta":"2026-04-27"}""")]);
 
-        var conv = Conversation.Create();
-        conv.Add(new UserMessage([Content.FromText("What is the status of order #12345?")]));
-        conv.Add(new AssistantMessage([], [toolReq]));
-        conv.Add(new ToolMessage(toolResp));
-        conv.Add(new AssistantMessage([Content.FromText("Your order #12345 has shipped and arrives April 27.")], []));
+        var conv = Conversation.Create()
+            .With(new UserMessage([Content.FromText("What is the status of order #12345?")]))
+            .With(new AssistantMessage([], [toolReq]))
+            .With(new ToolMessage(toolResp))
+            .With(new AssistantMessage([Content.FromText("Your order #12345 has shipped and arrives April 27.")], []));
 
         var json = serializer.Serialize(conv);
         Console.WriteLine("=== CONVERSATION JSON ===");
