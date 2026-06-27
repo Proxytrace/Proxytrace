@@ -270,8 +270,17 @@ public class AgentCallsController : ControllerBase
 
         var reader = traceBroadcaster.Subscribe(cancellationToken);
 
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        // Route through the heartbeat reader so a quiet stream periodically writes a comment frame;
+        // a half-open socket (which never raises RequestAborted) then fails the write and the
+        // broadcaster's cancellation registration unsubscribes, instead of leaking the slot forever.
+        await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, cancellationToken))
         {
+            if (evt is null)
+            {
+                await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                continue;
+            }
+
             if (accessible is not null && !accessible.Contains(evt.ProjectId))
                 continue;
             var data = SseEventSerializer.Serialize(evt);
