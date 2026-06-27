@@ -3226,6 +3226,9 @@ msgstr "Outlier detection"
 msgid "Outlier settings saved"
 msgstr "Outlier settings saved"
 
+msgid "Outlier Settings Updated"
+msgstr "Outlier Settings Updated"
+
 msgid "Outlier: {reasons}"
 msgstr "Outlier: {reasons}"
 

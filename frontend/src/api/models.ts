@@ -1159,6 +1159,7 @@ export enum AuditAction {
   SetupCleanupPurged = 'SetupCleanupPurged',
   SecretsBackfilled = 'SecretsBackfilled',
   AccessDenied = 'AccessDenied',
+  OutlierSettingsUpdated = 'OutlierSettingsUpdated',
 }
 
 export enum AuditActorType {

@@ -3226,6 +3226,9 @@ msgstr "Ausreißererkennung"
 msgid "Outlier settings saved"
 msgstr "Ausreißer-Einstellungen gespeichert"
 
+msgid "Outlier Settings Updated"
+msgstr "Ausreißer-Einstellungen aktualisiert"
+
 msgid "Outlier: {reasons}"
 msgstr "Ausreißer: {reasons}"
 

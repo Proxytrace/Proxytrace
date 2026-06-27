@@ -3226,6 +3226,9 @@ msgstr "Detección de anomalías"
 msgid "Outlier settings saved"
 msgstr "Configuración de anomalías guardada"
 
+msgid "Outlier Settings Updated"
+msgstr "Configuración de valores atípicos actualizada"
+
 msgid "Outlier: {reasons}"
 msgstr "Anomalía: {reasons}"
 

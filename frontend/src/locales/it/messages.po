@@ -3226,6 +3226,9 @@ msgstr "Rilevamento anomalie"
 msgid "Outlier settings saved"
 msgstr "Impostazioni anomalie salvate"
 
+msgid "Outlier Settings Updated"
+msgstr "Impostazioni degli outlier aggiornate"
+
 msgid "Outlier: {reasons}"
 msgstr "Anomalia: {reasons}"
 
