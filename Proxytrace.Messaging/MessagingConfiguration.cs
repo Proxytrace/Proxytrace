@@ -22,8 +22,17 @@ public sealed record MessagingConfiguration
     /// <summary>Per-instance consumer name within the group; defaults to the machine name.</summary>
     public string ConsumerName { get; init; } = Environment.MachineName;
 
-    /// <summary>Idle time after which a pending entry from a dead consumer is reclaimed.</summary>
-    public int ReclaimIdleMs { get; init; } = 60_000;
+    /// <summary>
+    /// Idle time after which a pending entry is reclaimed via XAUTOCLAIM. This must stay far above the
+    /// worst-case time to persist a single captured call (parse → agent/version reconcile → AgentCall
+    /// write → SSE broadcast → outlier eval), which completes in well under a second normally and a
+    /// few seconds even under contention. Sizing it an order of magnitude above that worst case means
+    /// reclaim only ever fires for a genuinely dead/crashed consumer — never for a slow-but-live
+    /// persist, which a shorter window would reclaim and double-process into a duplicate trace (#261).
+    /// It is also the redelivery interval for a retryable failure left unacked, so it is not set
+    /// arbitrarily high. The ingestion worker additionally dedups overlapping reclaims in-process.
+    /// </summary>
+    public int ReclaimIdleMs { get; init; } = 300_000;
 
     /// <summary>
     /// Approximate cap on the number of entries retained in the Redis stream (XADD MAXLEN ~). Bounds
