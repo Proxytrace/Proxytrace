@@ -27,7 +27,10 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         var ingestionStream = Substitute.For<IIngestionStream>();
         var appVersion = Substitute.For<IAppVersion>();
         appVersion.Version.Returns("0.0.0-dev");
-        return new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion);
+        // Default substitute reports IsActive == false (not inside a transaction), which is the
+        // expected state for the dashboard fan-out guard.
+        var transaction = Substitute.For<ITransaction>();
+        return new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion, transaction);
     }
 
     private static TestRunStats Stat(Guid suiteId, int cases, int passed, DateTimeOffset completed) =>
@@ -161,7 +164,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         agents.GetAllAsync(Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track<IReadOnlyList<IAgent>>([])));
 
-        var svc = new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion);
+        var svc = new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion, Substitute.For<ITransaction>());
 
         var view = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
 

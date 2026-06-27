@@ -11,13 +11,19 @@ namespace Proxytrace.Infrastructure.Internal;
 /// </summary>
 internal sealed class LiteLlmCatalogResolver
 {
-    private static readonly Guid LockKey = Guid.NewGuid();
+    // Instance-scoped lock key (the resolver is a singleton). A per-instance Guid is not a constant,
+    // so it must not be a static field; it only needs to be stable for the lifetime of this resolver
+    // to serialize the one-shot catalog fetch.
+    private readonly Guid lockKey = Guid.NewGuid();
 
     private readonly HttpClient http;
     private readonly PricingOptions options;
     private readonly IFxRateProvider fxRateProvider;
     private readonly IAsyncLock gate;
-    private IReadOnlyDictionary<string, (decimal? Input, decimal? Output, decimal? CachedInput)>? cache;
+    // volatile: the double-checked fast path below reads this outside the lock; the write happens
+    // under the gate. volatile guarantees the freshly-fetched catalog is visible to those lock-free
+    // reads without tearing.
+    private volatile IReadOnlyDictionary<string, (decimal? Input, decimal? Output, decimal? CachedInput)>? cache;
 
     public LiteLlmCatalogResolver(
         HttpClient http,
@@ -74,7 +80,7 @@ internal sealed class LiteLlmCatalogResolver
         if (cache is not null)
             return cache;
 
-        using var _ = await gate.LockAsync(LockKey, cancellationToken);
+        using var _ = await gate.LockAsync(lockKey, cancellationToken);
         if (cache is not null)
             return cache;
         cache = await FetchAsync(cancellationToken);
