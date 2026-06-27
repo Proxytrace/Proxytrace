@@ -1125,6 +1125,7 @@ export enum AuditAction {
   TestSuiteCreated = 'TestSuiteCreated',
   TestSuiteUpdated = 'TestSuiteUpdated',
   TestCaseCreated = 'TestCaseCreated',
+  TestCaseUpdated = 'TestCaseUpdated',
   UserInvited = 'UserInvited',
   InviteRevoked = 'InviteRevoked',
   UserSignedUp = 'UserSignedUp',

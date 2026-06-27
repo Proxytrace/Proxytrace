@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
@@ -19,19 +22,22 @@ public class TestCasesController : ControllerBase
     private readonly ITestCase.CreateExisting createExisting;
     private readonly TestSuiteDtoMapper mapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<Audit> audit;
 
     public TestCasesController(
         IRepository<ITestCase> repository,
         ITestSuiteRepository suiteRepository,
         ITestCase.CreateExisting createExisting,
         TestSuiteDtoMapper mapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<Audit> audit)
     {
         this.repository = repository;
         this.suiteRepository = suiteRepository;
         this.createExisting = createExisting;
         this.mapper = mapper;
         this.accessGuard = accessGuard;
+        this.audit = audit;
     }
 
     // A test case has no direct project navigation — it is referenced by a suite (suite.TestCases),
@@ -73,6 +79,12 @@ public class TestCasesController : ControllerBase
         var expected = mapper.BuildAssistantMessage(request.ExpectedOutput);
         var updated = createExisting(existing.Input, expected, existing);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
+
+        // A test case has no FK to a project; resolve the owning project via the suite->agent reverse
+        // projection so the entry is attributed to the project (not a global/admin-only row). Emit only
+        // after the update persists.
+        var projectId = await suiteRepository.GetProjectIdByTestCaseAsync(id, cancellationToken);
+        audit.LogAudit(AuditAction.TestCaseUpdated, nameof(ITestCase), saved.Id, projectId: projectId);
         return ToDto(saved);
     }
 

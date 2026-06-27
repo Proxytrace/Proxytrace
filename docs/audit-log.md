@@ -155,5 +155,11 @@ in the repository's `GetPagedNewestFirstAsync(projectIds, includeGlobal, …)`.
    user-initiated actions, the service for background/system-initiated ones (e.g. the test-run
    scheduler emits `TestRunStarted` as the System actor).
 3. Resolve the owning project for `projectId` (e.g. `IAgentRepository.GetProjectIdAsync` /
-   `IEvaluatorRepository.GetProjectIdAsync` are cheap FK projections).
+   `IEvaluatorRepository.GetProjectIdAsync` are cheap FK projections). A **test case** has no FK to a
+   project of its own — suites reference test cases by a serialized JSON `Guid[]` column with no
+   queryable reverse FK — so `TestCasesController.Update` resolves the project through the
+   suite→agent reverse projection `ITestSuiteRepository.GetProjectIdByTestCaseAsync` (it reads the
+   low-volume suite rows and tests membership in memory, so it is portable across the relational and
+   in-memory providers; do not emit with `projectId: null`, which would wrongly make the edit a
+   global/admin-only row project members cannot see).
 4. Add the new action's label to the frontend audit-log filter and `manual/admin/audit-log.md`.

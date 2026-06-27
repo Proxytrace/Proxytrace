@@ -4489,6 +4489,9 @@ msgstr "Cas de test supprimé"
 msgid "Test case matrix"
 msgstr "Matrice de cas de test"
 
+msgid "Test Case Updated"
+msgstr "Cas de test mis à jour"
+
 msgid "Test cases"
 msgstr "Cas de test"
 

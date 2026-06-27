@@ -99,4 +99,9 @@ public enum AuditAction
 
     // Operator outlier-detection sensitivity configuration.
     OutlierSettingsUpdated = 64,
+
+    // Editing a test case's expected output (the project is resolved via the suite->agent reverse
+    // projection ITestSuiteRepository.GetProjectIdByTestCaseAsync, since a test case has no FK to a
+    // project of its own).
+    TestCaseUpdated = 65,
 }

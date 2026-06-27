@@ -38,7 +38,7 @@ The actions recorded today:
 | Projects | Project created, renamed, deleted; member added/removed |
 | Agents | Agent endpoint changed, agent deleted, agent version moved |
 | Traces | Trace deleted |
-| Test suites | Test suite created, updated, deleted; test case added/removed |
+| Test suites | Test suite created, updated, deleted; test case added, edited, or removed |
 | Evaluators | Evaluator created, updated, deleted |
 | Providers | Provider created/updated/deleted, model endpoint created/updated/deleted |
 | Optimization | Theory submitted, reset, or rejected; theory validated/invalidated by A/B run; proposal generated; proposal status changed (approved / rejected / adopted); proposal auto-adopted |
