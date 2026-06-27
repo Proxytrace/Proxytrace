@@ -102,6 +102,49 @@ Protects **database dumps and backups**: the encryption key ring lives outside t
 against an attacker who holds **both** the database and the data directory — acceptable for a
 self-hosted, single-deployment product.
 
+## Password-reset link logging (emergency recovery)
+
+`PasswordResetService` (`Proxytrace.Application/Auth/Local/Internal/`) issues a single-use, 1-hour,
+hash-stored reset token. The link is normally emailed; when SMTP is unconfigured **or** the send
+fails, the service falls back to the operator log so a locked-out user — including a **sole admin** —
+can still recover. That fallback is gated:
+
+- **`Authentication:EmergencyLogResetLink` (default `false`)** — the warning is **redacted**: it
+  carries only a truncated, one-way **token hint** (the first 12 hex chars of the stored `TokenHash`,
+  enough to correlate the log line with the DB row, useless for reconstructing the live token), the
+  expiry, and a one-line instruction telling the operator how to enable emergency logging. The live
+  token/URL is **never** written, so a reader of the operator log cannot take over the account within
+  the TTL.
+- **`Authentication:EmergencyLogResetLink = true`** — break-glass: the full one-time reset URL is
+  logged at Warning. Use this only while actively recovering a locked-out sole admin with no working
+  SMTP, then turn it back off — anyone with log read access within the 1-hour TTL can take over the
+  account.
+
+Operators always have two non-logged recovery paths that do **not** require this flag: configure SMTP
+([`/admin/email`](../manual/admin/email.md)), or, if another admin exists, mint a link directly from
+**Settings → Users → Reset password** (shown once in the UI, never logged). The flag exists only for
+the genuine sole-admin-plus-no-email lockout.
+
+## In-process auth/MFA/rate-limit state is single-instance by design
+
+Several auth defenses keep their state **in process memory**, not in a shared store:
+
+- **MFA challenge tickets** (`MfaChallengeService`) — the short-lived two-step-login tickets and their
+  per-ticket failed-attempt cap (see [`docs/mfa.md`](mfa.md)).
+- **SSE stream tickets** (`StreamTicketService`).
+- **Per-IP rate limiters** (`Proxytrace.Api/Program.cs` — the `auth-reset` and `auth-mfa` fixed-window
+  policies).
+
+This is correct for the **documented single-instance topology**: the API runs as exactly one replica
+(both the split and kiosk deployment shapes run a single API process — see
+[`../manual/admin/deployment.md`](../manual/admin/deployment.md)). It is **not** a bug. If you ever
+scale the API horizontally these caps/limiters/tickets would partition per replica (each instance
+enforces its own counters, and a ticket minted on one replica is unknown to another), weakening the
+brute-force and attempt-cap guarantees. Scaling out is therefore **not supported as-is**; it would
+require moving this state into the shared **Redis** the split deployment already runs (the event
+broker), and is deliberately out of scope today. Do **not** silently add a second API replica behind a
+load balancer without that work.
+
 ## Out of scope
 
 `StoredLicense` JWT is left plaintext: it is a signed license token, not a credential, so encrypting
