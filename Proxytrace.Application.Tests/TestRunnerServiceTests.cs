@@ -117,9 +117,11 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         });
     }
 
-    // A model client whose completion blocks until its cancellation token trips — lets a test cancel a
-    // run while it is genuinely in flight.
-    private static void RegisterBlockingModelClient(ContainerBuilder builder)
+    // A model client whose completion signals the moment it is entered, then blocks until its
+    // cancellation token trips. The `entered` signal gives a test a deterministic mid-run point —
+    // no polling, no timeout — at which the run is provably in flight inside the model call, so a
+    // cancellation fired then is always observed mid-flight (never after the run has completed).
+    private static void RegisterBlockingModelClient(ContainerBuilder builder, TaskCompletionSource entered)
     {
         builder.Register(_ =>
         {
@@ -127,6 +129,9 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
             handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<IReadOnlyDictionary<string, string>?>(), Arg.Any<CancellationToken>())
                 .Returns(async call =>
                 {
+                    // Announce that the run has genuinely reached the model call, then block until
+                    // cancellation. TrySetResult is idempotent, so repeated resolves are harmless.
+                    entered.TrySetResult();
                     await Task.Delay(-1, call.Arg<CancellationToken>());
                     throw new InvalidOperationException("unreachable — the delay always throws on cancellation");
                 });
@@ -137,7 +142,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
     [TestMethod]
     public async Task RunInForeground_WhenCancelledMidRun_MarksGroupCancelled()
     {
-        var services = GetServices(RegisterBlockingModelClient);
+        // RunContinuationsAsynchronously keeps the test's await off the model-call thread, so
+        // signalling `entered` never inlines the rest of the test onto the runner's worker.
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var services = GetServices(builder => RegisterBlockingModelClient(builder, entered));
         var suite = await BuildSuiteAsync(services, new AssistantMessage([Content.FromText(MatchingText)], []), CancellationToken);
         var endpoint = (await CreateEndpoints(services, 1))[0];
         var runner = services.GetRequiredService<ITestRunnerService>();
@@ -152,27 +160,19 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
             onGroupCreated: (g, _) => { created = g; return Task.CompletedTask; },
             cancellationToken: cts.Token);
 
-        // Wait until the group is actually Running (the model call is now blocked on the token).
-        ITestRunGroup? running = null;
-        for (var i = 0; i < 200 && running is null; i++)
-        {
-            var snapshot = created;
-            if (snapshot is not null)
-            {
-                var g = await groups.GetAsync(snapshot.Id, CancellationToken);
-                if (g.Status == TestRunStatus.Running)
-                    running = g;
-            }
-            await Task.Delay(20, CancellationToken);
-        }
-        if (running is null)
-            throw new InvalidOperationException("the run should reach Running before cancellation");
+        // Deterministic mid-run point: the model call has been entered and is now blocked on the
+        // cancellation token. Cancelling here is guaranteed to land while the run is genuinely in
+        // flight — no polling and no timeout, so CPU contention under the full parallel suite can
+        // no longer let the run complete before the cancellation is observed.
+        await entered.Task;
+        if (created is not { } group)
+            throw new InvalidOperationException("onGroupCreated must run before the model call is reached");
 
         await cts.CancelAsync();
         await FluentActions.Invoking(() => runTask).Should().ThrowAsync<OperationCanceledException>();
 
         // The cancelled group must not be stranded in Running — it is reconciled to a terminal state.
-        var final = await groups.GetAsync(running.Id, CancellationToken);
+        var final = await groups.GetAsync(group.Id, CancellationToken);
         final.Status.Should().Be(TestRunStatus.Cancelled);
     }
 
