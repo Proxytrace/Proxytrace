@@ -25,7 +25,10 @@ internal record User : DomainEntity<IUser>, IUser
         NotificationSeverity emailNotificationMinSeverity,
         IRepository<IUser> repository) : base(repository)
     {
-        Email = email;
+        // Normalize at the write boundary (trimmed, invariant-lowercase) so the stored value is
+        // always canonical. This lets the plain unique index on Email act case-insensitively and
+        // keeps the login lookup an exact, index-served match (see UserRepository.FindByEmailAsync).
+        Email = email.Trim().ToLowerInvariant();
         ExternalSubject = externalSubject;
         PasswordHash = passwordHash;
         Role = role;
@@ -45,7 +48,9 @@ internal record User : DomainEntity<IUser>, IUser
         IDomainEntityData existing,
         IRepository<IUser> repository) : base(existing, repository)
     {
-        Email = email;
+        // Normalize on rehydration too: any re-save of a row that predates the backfill then
+        // persists the canonical form, and in-memory comparisons stay consistent.
+        Email = email.Trim().ToLowerInvariant();
         ExternalSubject = externalSubject;
         PasswordHash = passwordHash;
         Role = role;

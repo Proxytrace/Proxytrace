@@ -26,9 +26,13 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
 
     public async Task<IUser?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var normalized = email.ToLowerInvariant();
+        // Emails are normalized (trimmed, invariant-lowercase) at the write boundary (see User ctor),
+        // so normalizing the input the same way and matching the stored value exactly lets PostgreSQL
+        // use the plain unique B-tree index on Email — a LOWER(Email) = LOWER(@x) predicate would
+        // instead force a sequential scan on every login.
+        var normalized = email.Trim().ToLowerInvariant();
         var entity = await contextFactory().Set<UserEntity>().AsNoTracking()
-            .Where(x => x.Email.ToLower() == normalized)
+            .Where(x => x.Email == normalized)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);
     }
