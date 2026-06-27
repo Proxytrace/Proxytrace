@@ -99,6 +99,30 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
         return new PagedResult<ITestSuite>(await Map(stored, cancellationToken), total, page, pageSize);
     }
 
+    public async Task<Guid?> GetProjectIdByTestCaseAsync(Guid testCaseId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+
+        // TestCases is a value-converted, serialized JSON Guid[] column (text, not jsonb), so neither
+        // provider can translate a membership predicate to SQL. Project only the id array and the
+        // owning project via the indexed suite->agent foreign-key join, then test membership in memory.
+        // Test suites are a low-volume entity and this is an interactive (non-ingestion) path, so
+        // reading the candidate rows is acceptable. See #265.
+        var candidates = await context
+            .Set<TestSuiteEntity>()
+            .AsNoTracking()
+            .Join(context.Set<AgentEntity>(),
+                s => s.Agent,
+                a => a.Id,
+                (s, a) => new { s.TestCases, a.Project })
+            .ToListAsync(cancellationToken);
+
+        return candidates
+            .Where(c => c.TestCases.Contains(testCaseId))
+            .Select(c => (Guid?)c.Project)
+            .FirstOrDefault();
+    }
+
     protected override async Task UpdateRelationsAsync(
         StorageDbContext context,
         TestSuiteEntity storedEntity,

@@ -5,12 +5,18 @@ using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
+using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
+using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Project;
+using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestSuite;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -153,6 +159,102 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
+    [TestMethod]
+    public async Task Load_WhenTestCaseBelongsToInaccessibleProject_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        // Seed a result so the test case has loadable content; without the guard Load would return it.
+        var (testCase, _) = await SeedScoredResult(services, evaluator, EvaluationScore.Good);
+        // The test case is owned by a suite in a *different* project (cross-tenant).
+        await SeedSuiteContainingTestCaseInForeignProject(services, testCase);
+        var evaluatorProjectId = await services.GetRequiredService<IEvaluatorRepository>()
+            .GetProjectIdAsync(evaluator.Id, CancellationToken);
+        evaluatorProjectId.Should().NotBeNull();
+        var controller = ResolveController(services, GuardAllowingOnly(evaluatorProjectId.Value));
+
+        var result = await controller.Load(evaluator.Id, testCase.Id, CancellationToken);
+
+        // The caller may access the evaluator's project but not the test case's project → hidden behind
+        // a 404, and the foreign test-case content is never returned.
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+        result.Value.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Run_WhenTestCaseBelongsToInaccessibleProject_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        var (testCase, _) = await SeedScoredResult(services, evaluator, EvaluationScore.Good);
+        await SeedSuiteContainingTestCaseInForeignProject(services, testCase);
+        var evaluatorProjectId = await services.GetRequiredService<IEvaluatorRepository>()
+            .GetProjectIdAsync(evaluator.Id, CancellationToken);
+        evaluatorProjectId.Should().NotBeNull();
+        var controller = ResolveController(services, GuardAllowingOnly(evaluatorProjectId.Value));
+
+        var result = await controller.Run(evaluator.Id, new(testCase.Id, null), CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+        result.Value.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Load_WhenTestCaseInAccessibleProject_ReturnsPayload()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        var (testCase, _) = await SeedScoredResult(services, evaluator, EvaluationScore.Good);
+        // A generated agent reuses the same (first) project as the evaluator, so the suite that
+        // references the test case resolves to the evaluator's own, accessible project.
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var suite = services.GetRequiredService<ITestSuite.CreateNew>()("Same-project suite", agent, [], [testCase]);
+        await services.GetRequiredService<ITestSuiteRepository>().AddAsync(suite, CancellationToken);
+        var evaluatorProjectId = await services.GetRequiredService<IEvaluatorRepository>()
+            .GetProjectIdAsync(evaluator.Id, CancellationToken);
+        evaluatorProjectId.Should().NotBeNull();
+        var controller = ResolveController(services, GuardAllowingOnly(evaluatorProjectId.Value));
+
+        var result = await controller.Load(evaluator.Id, testCase.Id, CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        result.Value.TestCaseId.Should().Be(testCase.Id);
+    }
+
+    // Creates a fresh project + agent + suite that references the given test case, so the test case
+    // resolves (via the suite -> agent -> project chain) to a project distinct from the shared one the
+    // generators reuse. Returns the foreign project id.
+    private async Task<Guid> SeedSuiteContainingTestCaseInForeignProject(IServiceProvider services, ITestCase testCase)
+    {
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var prompt = await services.GetRequiredService<IDomainObjectGenerator<IPromptTemplate>>().CreateAsync(CancellationToken);
+        var modelParameters = await services.GetRequiredService<IDomainObjectGenerator<IModelParameters>>().CreateAsync(CancellationToken);
+        var agent = await services.GetRequiredService<IAgentRepository>().CreateWithInitialVersionAsync(
+            name: "Foreign agent",
+            systemPrompt: prompt,
+            tools: [],
+            project: project,
+            endpoint: endpoint,
+            modelParameters: modelParameters,
+            isSystemAgent: false,
+            cancellationToken: CancellationToken);
+        var suite = services.GetRequiredService<ITestSuite.CreateNew>()("Foreign suite", agent, [], [testCase]);
+        await services.GetRequiredService<ITestSuiteRepository>().AddAsync(suite, CancellationToken);
+        return project.Id;
+    }
+
+    // Non-admin member of exactly one project: may access that project, denied every other.
+    private static Proxytrace.Api.Auth.IProjectAccessGuard GuardAllowingOnly(Guid projectId)
+    {
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
+        guard.CanAccessProjectAsync(projectId, Arg.Any<CancellationToken>()).Returns(true);
+        guard.GetAccessibleProjectIdsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyCollection<Guid>?>([projectId]));
+        return guard;
+    }
+
     // Non-admin member of nothing: denied every project.
     private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
     {
@@ -171,6 +273,7 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
         services.GetRequiredService<IEvaluatorRepository>(),
         services.GetRequiredService<ITestCaseRepository>(),
         services.GetRequiredService<ITestResultRepository>(),
+        services.GetRequiredService<ITestSuiteRepository>(),
         services.GetRequiredService<ICompletion.Create>(),
         services.GetRequiredService<ITestResult.CreateNew>(),
         guard);
