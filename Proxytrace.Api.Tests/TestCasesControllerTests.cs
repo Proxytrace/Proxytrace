@@ -1,8 +1,10 @@
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
@@ -103,5 +105,6 @@ public sealed class TestCasesControllerTests : BaseTest<Module>
         services.GetRequiredService<ITestSuiteRepository>(),
         services.GetRequiredService<ITestCase.CreateExisting>(),
         services.GetRequiredService<TestSuiteDtoMapper>(),
-        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>());
+        services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
+        NullLogger<Audit>.Instance);
 }
