@@ -1,3 +1,4 @@
+using Autofac.Features.OwnedInstances;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,12 @@ internal sealed class AgentCallPreviewBackfillService : IHostedService
 {
     private const int MaxAttempts = 3;
 
-    private readonly Func<StorageDbContext> contextFactory;
+    // An Owned<StorageDbContext> factory (not the ambient-aware Func<StorageDbContext>): this service is a
+    // singleton hosted service resolved from the root container, so the ambient factory's fresh-resolve
+    // branch would track every per-batch context on the root scope until process shutdown. Owned<> hands
+    // out a context from a child lifetime scope this loop disposes per batch instead (issue #256). The
+    // backfill never runs inside a logical transaction, so it never needs the shared ambient context.
+    private readonly Func<Owned<StorageDbContext>> contextFactory;
     private readonly ILogger<AgentCallPreviewBackfillService> logger;
     private readonly int batchSize;
     private readonly TimeSpan retryDelay;
@@ -33,7 +39,7 @@ internal sealed class AgentCallPreviewBackfillService : IHostedService
     // can exercise the multi-batch loop and the retry/never-throw wrapper without large data or waits.
     // Autofac supplies only contextFactory/logger and uses these defaults for the optional parameters.
     public AgentCallPreviewBackfillService(
-        Func<StorageDbContext> contextFactory,
+        Func<Owned<StorageDbContext>> contextFactory,
         ILogger<AgentCallPreviewBackfillService> logger,
         int batchSize = 500,
         TimeSpan? retryDelay = null)
@@ -82,8 +88,11 @@ internal sealed class AgentCallPreviewBackfillService : IHostedService
         var total = 0;
         while (!cancellationToken.IsCancellationRequested)
         {
-            // A fresh context per batch keeps the change tracker from growing across the whole run.
-            var db = contextFactory();
+            // A fresh context per batch keeps the change tracker from growing across the whole run; the
+            // Owned<> handle is disposed at the end of each iteration so the context (and its child scope)
+            // is released promptly rather than accumulating on the root container (issue #256).
+            await using var owned = contextFactory();
+            var db = owned.Value;
             var batch = await db.Set<AgentCallEntity>()
                 .Where(e => e.RequestPreview == null)
                 .OrderBy(e => e.CreatedAt)

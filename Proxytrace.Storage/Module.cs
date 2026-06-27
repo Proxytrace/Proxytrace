@@ -96,6 +96,13 @@ public sealed class Module : Autofac.Module
         // mapper and query resolves the single shared transactional context (read-your-writes on
         // one connection). Outside a transaction it hands out a fresh context per call. This
         // explicit Func<StorageDbContext> registration overrides Autofac's auto-generated one.
+        //
+        // Note the fresh-resolve branch tracks the context on the *resolving* scope until that scope
+        // disposes — fine on a short-lived request scope, but a singleton resolved from the root
+        // container would accumulate one per call until process shutdown. A non-transactional
+        // batch/read loop in a singleton hosted service must therefore take a disposable context via
+        // Autofac's auto-provided Func<Owned<StorageDbContext>> and dispose it per batch instead (see
+        // AgentCallPreviewBackfillService / SecretsBackfillService, issue #256).
         builder.Register<Func<StorageDbContext>>(ct =>
         {
             var scope = ct.Resolve<ILifetimeScope>();
