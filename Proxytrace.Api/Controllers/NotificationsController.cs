@@ -103,8 +103,17 @@ public class NotificationsController : ControllerBase
         var accessible = await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken);
 
         var reader = broadcaster.Subscribe(cancellationToken);
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        // Route through the heartbeat reader so a quiet stream periodically writes a comment frame;
+        // a half-open socket (which never raises RequestAborted) then fails the write and the
+        // broadcaster's cancellation registration unsubscribes, instead of leaking the slot forever.
+        await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, cancellationToken))
         {
+            if (evt is null)
+            {
+                await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                continue;
+            }
+
             if (evt.ProjectId is { } eventProject)
             {
                 // Skip projects the caller isn't a member of, then honor any client-side narrowing.

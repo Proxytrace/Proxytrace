@@ -139,10 +139,12 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             return snapshot;
         }
 
-        var stored = await contextFactory()
-            .Set<TStoredEntity>()
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
+        // Push list-level exclusions (e.g. archived rows) into the query via FilterListQuery — the
+        // same hook GetPagedAsync uses — so the database returns only the rows GetAllAsync should
+        // surface and the cached snapshot stores exactly that set, rather than materializing the
+        // whole table and filtering (and caching the unfiltered set) afterwards (#253).
+        var query = FilterListQuery(contextFactory().Set<TStoredEntity>().AsNoTracking());
+        var stored = await query.ToListAsync(cancellationToken);
         IReadOnlyList<TDomainEntity> mapped = await Map(stored, cancellationToken);
 
         if (CanUseCache)

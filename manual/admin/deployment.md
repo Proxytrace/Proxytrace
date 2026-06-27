@@ -72,6 +72,25 @@ The manual is built with file extensions kept (`cleanUrls: false`) so that reque
 catch-all route. Keep this setting if you customize the build.
 :::
 
+## Single API instance by design
+
+Both deployment shapes run **exactly one API process**. This is intentional, and a few security
+features depend on it: the two-factor **challenge tickets** and their per-attempt cap, the SSE stream
+tickets, and the per-IP **rate limiters** on the sign-in / password-reset / MFA endpoints all keep
+their state **in the API's own memory**, not in Redis.
+
+::: warning Do not run multiple API replicas
+If you put two or more API containers behind a load balancer, that in-memory state **partitions per
+replica** — each instance counts attempts and holds tickets independently, which weakens the
+brute-force protection and breaks two-step logins routed to a different replica than the one that
+issued the challenge. Horizontal scale-out of the API is **not supported as-is**; it would require
+moving this state into the shared Redis first. Scale the database and the ingestion **proxy**
+independently as needed, but keep the API to a single instance.
+:::
+
+(The Redis broker in the split deployment carries real-time trace-ingestion events only; it does
+**not** today back the auth/MFA/rate-limit state described above.)
+
 ## Health & security headers
 
 The API sets security headers (CSP, `X-Frame-Options`, `X-Content-Type-Options`,

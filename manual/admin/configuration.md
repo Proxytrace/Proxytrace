@@ -115,6 +115,32 @@ silent and never affect the application.
 The check is automatically disabled in kiosk mode and for development builds. The running
 version is also reported by `GET /api/config` (unauthenticated) and shown on the dashboard.
 
+### Emergency password-reset link logging
+
+When a user requests a password reset and email can't deliver it (no SMTP, or the send fails),
+Proxytrace logs only a **redacted** warning by default — never the live reset link. The
+`Authentication:EmergencyLogResetLink` flag is a break-glass switch for the one scenario where that
+isn't enough: a **sole Admin locked out of an instance with no SMTP** (see
+[User Management → Resetting a password](/admin/user-management#resetting-a-password)).
+
+```json
+{
+  "Authentication": {
+    "EmergencyLogResetLink": false
+  }
+}
+```
+
+- `false` (default) — the fallback log line carries only a non-reversible token reference and the
+  expiry, so a log reader cannot take over the account.
+- `true` — the **full** one-time reset link is written to the server log on the next reset request.
+
+::: danger Turn it back off
+While `EmergencyLogResetLink` is `true`, anyone who can read the server log within the link's 1-hour
+lifetime can hijack the account. Enable it only to recover a locked-out admin, then set it back to
+`false`.
+:::
+
 ## Kiosk mode
 
 Kiosk mode (`Kiosk:Enabled=true`) runs Proxytrace in-memory and auto-seeds a rich demo

@@ -12,6 +12,17 @@ no longer supported.
 Transactions use a single shared EF `IDbContextTransaction` per logical unit (`AmbientDbContext` +
 `Transaction`), so writes never promote to a 2-phase transaction.
 
+> **Gotcha — singleton hosted services must take a *disposable* context for non-transactional batch
+> loops.** The ambient-aware `Func<StorageDbContext>` (`Storage.Module`) hands out a fresh context
+> outside a transaction, and Autofac tracks that context on the *resolving* scope until it disposes.
+> On a short-lived request scope that is fine, but a **singleton** hosted service resolves from the
+> **root** container, so every per-batch `contextFactory()` call would pile up a context that lives
+> until process shutdown (issue #256). A singleton that reads/writes in a non-transactional loop must
+> instead inject Autofac's auto-provided `Func<Owned<StorageDbContext>>` and `await using` the
+> `Owned<>` per batch — it scopes the context to a child lifetime scope the loop disposes. The
+> transactional path is unaffected: `Transaction.InvokeAsync` already disposes its context. See
+> `AgentCallPreviewBackfillService` and `SecretsBackfillService`.
+
 ## Supported storage modes
 
 ### PostgreSQL (persistent — debug / release / e2e)
@@ -96,6 +107,31 @@ Set the connection string in:
 > lowered on this table (migration `TuneAgentCallAutovacuum`) so growth keeps stats fresh; and when a
 > server-side aggregate is unexpectedly slow, `EXPLAIN (ANALYZE)` it and compare the planner's **estimated
 > vs actual** row counts before assuming the query itself is wrong.
+
+## Case-insensitive unique lookups via write-normalization
+
+Columns that are logically case-insensitive identifiers — currently `UserEntity.Email` — are
+**normalized at the write boundary** (trimmed + `ToLowerInvariant()` in the domain `User`
+constructor) so the stored value is always canonical. The lookup (`UserRepository.FindByEmailAsync`)
+normalizes its input the **same way** and matches the stored value **exactly** (`x.Email ==
+normalized`). This keeps the plain unique B-tree index on `Email` usable: a `LOWER("Email") =
+LOWER(@x)` predicate is not sargable against that index and forces a **sequential scan on every
+login** (and a `citext`/expression index would be a schema change). With every value canonical, the
+ordinary case-sensitive unique index is effectively case-insensitive *and* index-served — and the
+uniqueness constraint now also blocks `Foo@x.com`/`foo@x.com` duplicate accounts.
+
+The one-time backfill that lowercases pre-existing rows is a **data-only migration** (raw
+`UPDATE … SET "Email" = lower("Email")`, no model/snapshot change); see the migration list below.
+
+## GetOrCreate cross-instance race
+
+`GetOrCreateAsync` on `ModelRepository` and `ModelEndpointRepository` (and `AgentRepository`)
+serializes its check-then-insert with an in-process `IAsyncLock`, but that lock only covers a single
+process. A second app/proxy instance can win the create race and trip the row's unique index
+(`ModelEntity.Name`, `ModelEndpointEntity (Model, Provider)`), surfacing as a `DbUpdateException` on
+the ingestion hot path. Each `GetOrCreateAsync` therefore wraps the insert and, on
+`DbUpdateException`, **re-resolves the row the winner inserted** and returns it (rethrowing only if
+the re-query still finds nothing). `AgentRepository.GetOrCreateAsync` is the reference idiom.
 
 ## Migrations
 
@@ -251,6 +287,15 @@ which lets planner statistics lag during rapid ingestion and can flip the statis
 nested-loop plan (issue #246 — see the gotcha under [High-volume tables](#high-volume-tables-agentcall)).
 It is PostgreSQL-only relational metadata, so its `Up`/`Down` are raw SQL and the in-memory provider
 ignores it.
+
+The `NormalizeUserEmail` migration is **data-only** — it lowercases pre-existing rows so they match
+the new write-normalization (`Up`: `UPDATE "UserEntity" SET "Email" = lower("Email") WHERE "Email" <>
+lower("Email");`, no `Down`). It changes **no** schema and leaves the model snapshot untouched (the
+unique index on `Email` is unchanged; normalization just makes it effectively case-insensitive — see
+[Case-insensitive unique lookups](#case-insensitive-unique-lookups-via-write-normalization)). It is
+PostgreSQL-only; the in-memory provider ignores it. **Caveat:** if two rows already differ only by
+case (`Foo@x.com` and `foo@x.com`), the `UPDATE` collides with the unique index and fails — those
+duplicate accounts must be merged/removed first (none are expected in practice).
 
 ## Quick start
 

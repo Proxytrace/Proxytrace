@@ -143,6 +143,10 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
         {
             q = q.Where(e => e.SuiteId == filter.SuiteId.Value);
         }
+        if (filter.SuiteIds is { Count: > 0 } suiteIds)
+        {
+            q = q.Where(e => suiteIds.Contains(e.SuiteId));
+        }
         if (filter.From.HasValue)
         {
             q = q.Where(e => e.RunCompletedAt >= filter.From.Value);

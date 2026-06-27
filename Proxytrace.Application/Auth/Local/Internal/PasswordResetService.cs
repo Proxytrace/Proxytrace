@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.Auth;
 using Proxytrace.Application.Notifications;
 using Proxytrace.Application.Security;
 using Proxytrace.Domain;
@@ -13,6 +14,11 @@ namespace Proxytrace.Application.Auth.Local.Internal;
 internal sealed class PasswordResetService : IPasswordResetService
 {
     private const int TokenBytes = 32;
+
+    // How many leading hex characters of the token's SHA-256 hash to surface as a non-reversible
+    // correlation hint in the redacted fallback log. Long enough to match the stored TokenHash row,
+    // far too short (and one-way) to reconstruct the live token.
+    private const int TokenHintLength = 12;
     private static readonly TimeSpan Ttl = TimeSpan.FromHours(1);
 
     private readonly IPasswordResetTokenRepository tokens;
@@ -26,6 +32,7 @@ internal sealed class PasswordResetService : IPasswordResetService
     private readonly ITransaction transaction;
     private readonly IUserTotpEnrollmentRepository enrollments;
     private readonly IMfaChallengeService challenges;
+    private readonly AuthOptions authOptions;
     private readonly ILogger<PasswordResetService> logger;
 
     public PasswordResetService(
@@ -40,6 +47,7 @@ internal sealed class PasswordResetService : IPasswordResetService
         ITransaction transaction,
         IUserTotpEnrollmentRepository enrollments,
         IMfaChallengeService challenges,
+        AuthOptions authOptions,
         ILogger<PasswordResetService> logger)
     {
         this.tokens = tokens;
@@ -53,6 +61,7 @@ internal sealed class PasswordResetService : IPasswordResetService
         this.transaction = transaction;
         this.enrollments = enrollments;
         this.challenges = challenges;
+        this.authOptions = authOptions;
         this.logger = logger;
     }
 
@@ -67,7 +76,6 @@ internal sealed class PasswordResetService : IPasswordResetService
         }
 
         var issued = await IssueAsync(user, buildResetUrl, cancellationToken);
-        var resetUrl = issued.Link;
         var minutes = (int)Ttl.TotalMinutes;
 
         var settings = await emailSettings.GetAsync(cancellationToken);
@@ -75,7 +83,7 @@ internal sealed class PasswordResetService : IPasswordResetService
         {
             try
             {
-                await SendResetEmailAsync(user, resetUrl, minutes, cancellationToken);
+                await SendResetEmailAsync(user, issued.ResetLink.Link, minutes, cancellationToken);
                 return;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -86,20 +94,40 @@ internal sealed class PasswordResetService : IPasswordResetService
             {
                 // SMTP is configured but the send failed — fall back to the operator log so the reset
                 // is still recoverable rather than surfacing a 500 to the (anonymous) caller.
-                logger.LogWarning(
-                    ex,
-                    "Failed to email password reset to {Email}; one-time reset link (valid {Minutes} min): {ResetUrl}",
-                    user.Email, minutes, resetUrl);
+                LogResetLinkFallback(user, issued, minutes, "SMTP send failed", ex);
                 return;
             }
         }
 
-        // SMTP is not configured: surface the link to whoever operates the server so a locked-out user
-        // (including a sole admin) can still recover. Logged at Warning so it is findable in the log.
+        // SMTP is not configured: fall back to the operator log so a locked-out user (including a sole
+        // admin) can still recover. Logged at Warning so it is findable.
+        LogResetLinkFallback(user, issued, minutes, "email delivery is not configured", error: null);
+    }
+
+    // Records the password-reset fallback in the operator log when the link could not be emailed.
+    // The live token/URL is logged ONLY when the operator has explicitly opted in via
+    // Authentication:EmergencyLogResetLink; otherwise the warning is redacted to a non-reversible hint
+    // so a log reader cannot take over the account within the token's TTL. See docs/security.md.
+    private void LogResetLinkFallback(IUser user, IssuedReset issued, int minutes, string reason, Exception? error)
+    {
+        if (authOptions.EmergencyLogResetLink)
+        {
+            logger.LogWarning(
+                error,
+                "Password reset for {Email} could not be emailed ({Reason}). Emergency reset-link " +
+                "logging is enabled — one-time link (valid {Minutes} min): {ResetUrl}. Hand it to the " +
+                "user over a trusted channel; anyone who can read this log within the TTL can take over " +
+                "the account.",
+                user.Email, reason, minutes, issued.ResetLink.Link);
+            return;
+        }
+
         logger.LogWarning(
-            "Password reset requested for {Email} but email delivery is not configured. " +
-            "Provide this one-time reset link (valid {Minutes} min) to the user: {ResetUrl}",
-            user.Email, minutes, resetUrl);
+            error,
+            "Password reset for {Email} could not be emailed ({Reason}). The one-time reset link " +
+            "(valid {Minutes} min, token {TokenHint}…) is NOT logged. To recover a locked-out account " +
+            "when email is down, set Authentication:EmergencyLogResetLink=true and retry to log the full link.",
+            user.Email, reason, minutes, TokenHint(issued.TokenHash));
     }
 
     public async Task<PasswordResetLink?> IssueResetLinkAsync(Guid userId, Func<string, string> buildResetUrl, CancellationToken cancellationToken = default)
@@ -110,7 +138,7 @@ internal sealed class PasswordResetService : IPasswordResetService
             return null;
         }
 
-        return await IssueAsync(user, buildResetUrl, cancellationToken);
+        return (await IssueAsync(user, buildResetUrl, cancellationToken)).ResetLink;
     }
 
     public Task<LoginOutcome?> CompleteResetAsync(string token, string newPassword, CancellationToken cancellationToken = default)
@@ -140,15 +168,20 @@ internal sealed class PasswordResetService : IPasswordResetService
         });
 
     // Persist only the hash of the token; the raw value is returned once so the caller can build the
-    // reset link, and is unrecoverable afterwards.
-    private async Task<PasswordResetLink> IssueAsync(IUser user, Func<string, string> buildResetUrl, CancellationToken cancellationToken)
+    // reset link, and is unrecoverable afterwards. The hash is also carried back so the redacted
+    // fallback log can surface a non-reversible hint without holding the live token.
+    private async Task<IssuedReset> IssueAsync(IUser user, Func<string, string> buildResetUrl, CancellationToken cancellationToken)
     {
         var rawToken = GenerateToken();
         var expiresAt = DateTimeOffset.UtcNow + Ttl;
-        var token = createToken(user, hasher.Hash(rawToken), expiresAt);
+        var tokenHash = hasher.Hash(rawToken);
+        var token = createToken(user, tokenHash, expiresAt);
         await token.AddAsync(cancellationToken);
-        return new PasswordResetLink(buildResetUrl(rawToken), expiresAt);
+        return new IssuedReset(new PasswordResetLink(buildResetUrl(rawToken), expiresAt), tokenHash);
     }
+
+    private static string TokenHint(string tokenHash)
+        => tokenHash.Length <= TokenHintLength ? tokenHash : tokenHash[..TokenHintLength];
 
     private async Task SendResetEmailAsync(IUser user, string resetUrl, int minutes, CancellationToken cancellationToken)
     {
@@ -173,4 +206,8 @@ internal sealed class PasswordResetService : IPasswordResetService
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
     }
+
+    // The issued reset link plus the token's stored hash. The hash never leaves the service except as
+    // a truncated, one-way hint in the redacted fallback log.
+    private sealed record IssuedReset(PasswordResetLink ResetLink, string TokenHash);
 }

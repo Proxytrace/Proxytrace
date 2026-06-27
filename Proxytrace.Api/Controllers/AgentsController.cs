@@ -173,8 +173,17 @@ public class AgentsController : ControllerBase
         Response.Headers.Append("X-Accel-Buffering", "no");
 
         var reader = proposalBroadcaster.Subscribe(id, cancellationToken);
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        // Route through the heartbeat reader so a quiet stream periodically writes a comment frame;
+        // a half-open socket (which never raises RequestAborted) then fails the write and the
+        // broadcaster's cancellation registration unsubscribes, instead of leaking the slot forever.
+        await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, cancellationToken))
         {
+            if (evt is null)
+            {
+                await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                continue;
+            }
+
             string eventName = evt switch
             {
                 ProposalCreatedEvent => "proposal-created",
@@ -202,8 +211,17 @@ public class AgentsController : ControllerBase
         Response.Headers.Append("X-Accel-Buffering", "no");
 
         var reader = theoryBroadcaster.Subscribe(id, cancellationToken);
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        // Route through the heartbeat reader so a quiet stream periodically writes a comment frame;
+        // a half-open socket (which never raises RequestAborted) then fails the write and the
+        // broadcaster's cancellation registration unsubscribes, instead of leaking the slot forever.
+        await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, cancellationToken))
         {
+            if (evt is null)
+            {
+                await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                continue;
+            }
+
             var data = SseEventSerializer.Serialize(evt);
             await Response.WriteAsync($"event: theory-changed\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);

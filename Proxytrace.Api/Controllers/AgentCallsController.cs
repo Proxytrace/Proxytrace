@@ -224,8 +224,8 @@ public class AgentCallsController : ControllerBase
 
         var conversation = Conversation.Create();
         if (!string.IsNullOrEmpty(request.SystemContent))
-            conversation.AddSystemMessage(new SystemMessage([Proxytrace.Domain.Message.Content.FromText(request.SystemContent)]));
-        conversation.Add(new UserMessage([Proxytrace.Domain.Message.Content.FromText(request.UserContent)]));
+            conversation = conversation.WithSystemMessage(new SystemMessage([Proxytrace.Domain.Message.Content.FromText(request.SystemContent)]));
+        conversation = conversation.With(new UserMessage([Proxytrace.Domain.Message.Content.FromText(request.UserContent)]));
 
         var assistantMessage = new AssistantMessage([Proxytrace.Domain.Message.Content.FromText(request.AssistantContent)], []);
         var usage = new TokenUsage((ulong)request.InputTokens, (ulong)request.OutputTokens);
@@ -270,8 +270,17 @@ public class AgentCallsController : ControllerBase
 
         var reader = traceBroadcaster.Subscribe(cancellationToken);
 
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        // Route through the heartbeat reader so a quiet stream periodically writes a comment frame;
+        // a half-open socket (which never raises RequestAborted) then fails the write and the
+        // broadcaster's cancellation registration unsubscribes, instead of leaking the slot forever.
+        await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, cancellationToken))
         {
+            if (evt is null)
+            {
+                await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                continue;
+            }
+
             if (accessible is not null && !accessible.Contains(evt.ProjectId))
                 continue;
             var data = SseEventSerializer.Serialize(evt);

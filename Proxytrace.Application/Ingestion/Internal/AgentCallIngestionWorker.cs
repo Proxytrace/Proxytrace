@@ -27,6 +27,28 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     private const int MaxRetryableAttempts = 5;
     private readonly ConcurrentDictionary<string, int> failedAttempts = new();
 
+    // Single-instance, in-process dedup guard (issue #261). On the Redis transport the consumer runs
+    // XAUTOCLAIM at the top of every round to reclaim entries stuck pending on a dead consumer. If a
+    // persist ever ran longer than the reclaim idle window, the next round would reclaim and hand
+    // this same worker the *still-in-flight* entry a SECOND time — producing a duplicate trace row, a
+    // duplicate `trace-created` SSE event, and a duplicate outlier evaluation. There is no idempotency
+    // key on the AgentCall row, and a content-unique index is unsafe (two legitimately identical calls
+    // must both persist), so we dedup on the transport entry id instead.
+    //
+    // Dedup guarantee (single ingestion-worker instance):
+    //   1. MessagingConfiguration.ReclaimIdleMs is sized far above the worst-case single-envelope
+    //      persist time, so XAUTOCLAIM only ever targets a genuinely dead consumer — never a
+    //      slow-but-live persist. This is the primary guard.
+    //   2. This set records each entry id BEFORE processing and removes it only after the entry has
+    //      left processing (acked, or deliberately left pending for a genuine redelivery). Any
+    //      reclaimed duplicate whose id is still in flight is skipped, leaving the original in-flight
+    //      unit to ack it exactly once. This closes the narrow window where a reclaim overlaps a
+    //      persist that is just finishing.
+    // A genuine redelivery (dead-consumer recovery, or a retryable failure left unacked) re-enters
+    // with the id already cleared, so it is reprocessed as intended — only overlapping duplicates are
+    // dropped. ConcurrentDictionary keeps step 2 correct under Parallel.ForEachAsync.
+    private readonly ConcurrentDictionary<string, byte> inFlightEntries = new();
+
     // Backoff between inline retries on a non-redelivering transport. Bounded and short — the
     // single in-process consumer is blocked on the one envelope while it retries.
     private static readonly TimeSpan InlineRetryBackoff = TimeSpan.FromMilliseconds(200);
@@ -87,14 +109,37 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         }
     }
 
-    // A retryable failure is recovered differently per transport: one that redelivers unacked
-    // entries (Redis) leaves the entry pending and tracks attempts across redeliveries; one that
-    // does not (the in-process channel) must retry here and now, because an unacked envelope is
-    // simply dropped — so deferring the retry would lose the captured call.
-    private Task HandleAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
-        => stream.RedeliversUnacknowledged
-            ? HandleWithRedeliveryAsync(envelope, cancellationToken)
-            : HandleWithInlineRetryAsync(envelope, cancellationToken);
+    private async Task HandleAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
+    {
+        // Dedup guard (#261): skip an entry this worker is already processing — i.e. a reclaimed
+        // duplicate that overlaps the still-in-flight original. The original owns the ack, so the
+        // duplicate must neither process nor ack; just drop it.
+        if (!inFlightEntries.TryAdd(envelope.MessageId, 0))
+        {
+            logger.LogDebug(
+                "Skipping ingestion envelope {MessageId}: already in flight (reclaimed duplicate)",
+                envelope.MessageId);
+            return;
+        }
+
+        try
+        {
+            // A retryable failure is recovered differently per transport: one that redelivers unacked
+            // entries (Redis) leaves the entry pending and tracks attempts across redeliveries; one
+            // that does not (the in-process channel) must retry here and now, because an unacked
+            // envelope is simply dropped — so deferring the retry would lose the captured call.
+            await (stream.RedeliversUnacknowledged
+                ? HandleWithRedeliveryAsync(envelope, cancellationToken)
+                : HandleWithInlineRetryAsync(envelope, cancellationToken));
+        }
+        finally
+        {
+            // Clear only once the entry has left processing (acked, or left pending for a genuine
+            // redelivery). A later genuine redelivery re-enters with the id cleared and is reprocessed
+            // as intended; only an overlapping reclaim is skipped above.
+            inFlightEntries.TryRemove(envelope.MessageId, out _);
+        }
+    }
 
     private async Task HandleWithRedeliveryAsync(IngestEnvelope envelope, CancellationToken cancellationToken)
     {
@@ -179,6 +224,10 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     // Test seam: ids currently tracked for cross-redelivery retry. Stays 0 on a non-redelivering
     // transport, which retries inline and keeps no per-message state — guards the leak fix.
     internal int TrackedRetryCount => failedAttempts.Count;
+
+    // Test seam: ids currently being processed (the #261 dedup set). Settles back to 0 once every
+    // in-flight envelope has been acked or left pending for redelivery.
+    internal int InFlightCount => inFlightEntries.Count;
 
     private async Task AckAndForgetAsync(string messageId, CancellationToken cancellationToken)
     {

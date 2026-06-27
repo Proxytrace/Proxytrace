@@ -15,8 +15,7 @@ public static class ModelClientExtensions
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
-        Conversation conversation = Conversation.Create();
-        conversation.Add(userMessage);
+        Conversation conversation = Conversation.Create().With(userMessage);
         return client.CompleteAsync(
             conversation, 
             modelOptions,
@@ -31,8 +30,7 @@ public static class ModelClientExtensions
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
-        Conversation conversation = Conversation.Create();
-        conversation.Add(userMessage);
+        Conversation conversation = Conversation.Create().With(userMessage);
         var completion = await client.CompleteAsync<TOutput>(
             conversation, 
             modelOptions, 

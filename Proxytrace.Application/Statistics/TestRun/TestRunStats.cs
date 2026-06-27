@@ -29,6 +29,7 @@ public record TestRunStats(
         Guid? EndpointId = null,
         Guid? GroupId = null,
         Guid? SuiteId = null,
+        IReadOnlyCollection<Guid>? SuiteIds = null,
         DateTimeOffset? From = null,
         DateTimeOffset? To = null);
 }

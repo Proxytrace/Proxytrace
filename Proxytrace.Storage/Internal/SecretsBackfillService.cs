@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Autofac.Features.OwnedInstances;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -31,13 +32,18 @@ internal sealed class SecretsBackfillService : IHostedService
     private const int InviteTokenHashLength = 64;
     private const int DisplayPrefixLength = 16;
 
-    private readonly Func<StorageDbContext> contextFactory;
+    // An Owned<StorageDbContext> factory (not the ambient-aware Func<StorageDbContext>): this service is a
+    // singleton hosted service resolved from the root container, so the ambient factory's fresh-resolve
+    // branch would track each pass's context on the root scope until process shutdown. Owned<> hands out a
+    // context from a child lifetime scope each pass disposes instead (issue #256). The backfill never runs
+    // inside a logical transaction, so it never needs the shared ambient context.
+    private readonly Func<Owned<StorageDbContext>> contextFactory;
     private readonly ISecretProtector protector;
     private readonly ILogger<SecretsBackfillService> logger;
     private readonly ILogger<Audit> audit;
 
     public SecretsBackfillService(
-        Func<StorageDbContext> contextFactory,
+        Func<Owned<StorageDbContext>> contextFactory,
         ISecretProtector protector,
         ILogger<SecretsBackfillService> logger,
         ILogger<Audit> audit)
@@ -107,7 +113,8 @@ internal sealed class SecretsBackfillService : IHostedService
 
     private async Task<int> BackfillProvidersAsync(CancellationToken cancellationToken)
     {
-        var db = contextFactory();
+        await using var owned = contextFactory();
+        var db = owned.Value;
         var rows = await db.Set<ModelProviderEntity>()
             .Where(e => e.ApiKeyLookupHash == null)
             .ToListAsync(cancellationToken);
@@ -131,7 +138,8 @@ internal sealed class SecretsBackfillService : IHostedService
 
     private async Task<int> BackfillApiKeysAsync(CancellationToken cancellationToken)
     {
-        var db = contextFactory();
+        await using var owned = contextFactory();
+        var db = owned.Value;
         var rows = await db.Set<ApiKeyEntity>()
             .Where(e => e.KeyPrefix == null)
             .ToListAsync(cancellationToken);
@@ -156,7 +164,8 @@ internal sealed class SecretsBackfillService : IHostedService
 
     private async Task<int> BackfillInvitesAsync(CancellationToken cancellationToken)
     {
-        var db = contextFactory();
+        await using var owned = contextFactory();
+        var db = owned.Value;
         var rows = await db.Set<InviteEntity>()
             .Where(e => e.TokenHash.Length != InviteTokenHashLength)
             .ToListAsync(cancellationToken);

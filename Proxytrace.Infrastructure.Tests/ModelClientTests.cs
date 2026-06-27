@@ -131,9 +131,8 @@ public sealed class ModelClientTests : BaseTest<Module>
 
     private static Conversation SimpleConversation(string userText = "Hello")
     {
-        var conv = Conversation.Create();
-        conv.Add(Message.CreateUserMessage(userText));
-        return conv;
+        return Conversation.Create()
+            .With(Message.CreateUserMessage(userText));
     }
 
     // ── client options (timeout / retry) ──────────────────────────────────────
@@ -503,8 +502,8 @@ public sealed class ModelClientTests : BaseTest<Module>
             config.RegisterInstance(chatClient).As<IChatClient>();
         });
 
-        var conversation = Conversation.Create();
-        conversation.Add(Message.CreateUserMessage("What is 2+2?"));
+        var conversation = Conversation.Create()
+            .With(Message.CreateUserMessage("What is 2+2?"));
 
         var client = services.GetRequiredService<IModelClient>();
         await client.CompleteAsync(conversation, cancellationToken: CancellationToken);

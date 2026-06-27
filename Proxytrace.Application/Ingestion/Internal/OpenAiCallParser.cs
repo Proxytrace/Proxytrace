@@ -177,14 +177,9 @@ internal class OpenAiCallParser : IOpenAiCallParser
                     return null;
                 }
 
-                if (message is SystemMessage sys)
-                {
-                    conversation.AddSystemMessage(sys);
-                }
-                else
-                {
-                    conversation.Add(message);
-                }
+                conversation = message is SystemMessage sys
+                    ? conversation.WithSystemMessage(sys)
+                    : conversation.With(message);
             }
             return conversation;
         }

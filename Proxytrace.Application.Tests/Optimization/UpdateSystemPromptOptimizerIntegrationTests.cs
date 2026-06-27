@@ -328,8 +328,8 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
 
     private static ITestResult CreateResult(TestCaseData data, bool passed)
     {
-        var input = Conversation.Create();
-        input.Add(new UserMessage([Content.FromText(data.Input)]));
+        var input = Conversation.Create()
+            .With(new UserMessage([Content.FromText(data.Input)]));
         var expected = new AssistantMessage([Content.FromText(data.Expected)], []);
         var actual = new AssistantMessage([Content.FromText(data.Actual)], []);
 

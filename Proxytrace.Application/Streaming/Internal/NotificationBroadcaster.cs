@@ -5,16 +5,36 @@ namespace Proxytrace.Application.Streaming.Internal;
 
 internal class NotificationBroadcaster : INotificationBroadcaster, IDisposable
 {
+    // Bounds total live SSE subscriptions so an authenticated client cannot exhaust memory/sockets by
+    // opening unbounded streams. New subscriptions past the cap get an immediately-completed reader,
+    // so the SSE request closes cleanly instead of accumulating. Every client subscribes to this
+    // global notification stream, so the cap matters here above all.
+    private const int MaxSubscribers = 2000;
+
     private readonly ConcurrentDictionary<Guid, ChannelWriter<NotificationEvent>> subscribers = new();
 
     public ChannelReader<NotificationEvent> Subscribe(CancellationToken cancellationToken)
     {
+        if (!cancellationToken.CanBeCanceled)
+        {
+            throw new ArgumentException(
+                "Subscription requires a cancellable token to avoid leaking subscribers.",
+                nameof(cancellationToken));
+        }
+
         var channel = Channel.CreateBounded<NotificationEvent>(new BoundedChannelOptions(100)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
             SingleReader = true,
             SingleWriter = false,
         });
+
+        if (subscribers.Count >= MaxSubscribers)
+        {
+            channel.Writer.TryComplete();
+            return channel.Reader;
+        }
+
         var id = Guid.NewGuid();
         subscribers[id] = channel.Writer;
         cancellationToken.Register(() =>
