@@ -1,6 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Proxytrace.Application.ErrorLog;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Message;
@@ -14,13 +17,38 @@ internal sealed class PlaygroundService : IPlaygroundService
 {
     private readonly IRepository<IAgent> agentRepository;
     private readonly IRepository<IModelEndpoint> endpointRepository;
+    private readonly ILogger<PlaygroundService> logger;
+    private readonly bool isDevelopment;
 
     public PlaygroundService(
         IRepository<IAgent> agentRepository,
-        IRepository<IModelEndpoint> endpointRepository)
+        IRepository<IModelEndpoint> endpointRepository,
+        ILogger<PlaygroundService> logger,
+        IHostEnvironment? environment = null)
     {
         this.agentRepository = agentRepository;
         this.endpointRepository = endpointRepository;
+        this.logger = logger;
+        this.isDevelopment = environment?.IsDevelopment() ?? false;
+    }
+
+    /// <summary>
+    /// Captures an exception under a fresh error id and returns a client-safe message for the SSE
+    /// <c>error</c> frame. Mirrors <c>ExceptionHandlingMiddleware</c>: the raw message may carry
+    /// SQL/schema/paths, so outside Development only a generic message (carrying the error id for
+    /// support correlation) is surfaced; the full detail is preserved in the captured error log.
+    /// </summary>
+    private string DescribeError(Exception exception)
+    {
+        var errorId = Guid.NewGuid();
+        using (logger.BeginScope(new Dictionary<string, object> { [ErrorLogScope.ErrorIdKey] = errorId }))
+        {
+            logger.LogError(exception, "Unhandled playground exception");
+        }
+
+        return isDevelopment
+            ? exception.Message
+            : $"An unexpected error occurred. (Error ID: {errorId})";
     }
 
     public async IAsyncEnumerable<PlaygroundEvent> CompleteStreamAsync(
@@ -37,7 +65,7 @@ internal sealed class PlaygroundService : IPlaygroundService
         }
         catch (Exception ex)
         {
-            setupError = ex.Message;
+            setupError = DescribeError(ex);
         }
 
         if (setupError != null || agent is null || endpoint is null)
@@ -68,7 +96,7 @@ internal sealed class PlaygroundService : IPlaygroundService
         }
         catch (Exception ex)
         {
-            streamError = ex.Message;
+            streamError = DescribeError(ex);
         }
 
         if (streamError != null || enumerator is null)
@@ -90,7 +118,7 @@ internal sealed class PlaygroundService : IPlaygroundService
                 }
                 catch (Exception ex)
                 {
-                    streamError = ex.Message;
+                    streamError = DescribeError(ex);
                 }
 
                 if (streamError != null) break;

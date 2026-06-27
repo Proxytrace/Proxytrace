@@ -363,6 +363,30 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task PromoteFromTraces_CallHasNoResponse_ReturnsBadRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        // Borrow a fully-formed call to reuse its valid agent/version/endpoint/request graph, then
+        // persist a sibling call that never received a response (e.g. the upstream errored).
+        var seed = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var noResponseCall = createCall(
+            seed.Agent, seed.Version, seed.Endpoint, seed.Request, null,
+            System.Net.HttpStatusCode.InternalServerError, null, "upstream error");
+        var saved = await services.GetRequiredService<IAgentCallRepository>().AddAsync(noResponseCall, CancellationToken);
+
+        var result = await controller.PromoteFromTraces(
+            new PromoteTracesRequest(Name: "No-response suite", AgentId: seed.Agent.Id, AgentCallIds: [saved.Id]),
+            CancellationToken);
+
+        // A response-less call is a client-input precondition: it must be a 400, not a generic 500
+        // from a bare InvalidOperationException that no exception mapper handles.
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
     public async Task AddTestCase_MissingSuite_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

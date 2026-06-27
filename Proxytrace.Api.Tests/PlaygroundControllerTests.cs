@@ -1,8 +1,10 @@
 using AwesomeAssertions;
 using Autofac;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Playground;
@@ -39,7 +41,7 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task Complete_UnexpectedException_WritesErrorEvent()
+    public async Task Complete_UnexpectedException_OutsideDevelopment_SuppressesRawMessage()
     {
         var service = Substitute.For<IPlaygroundService>();
         service.CompleteStreamAsync(Arg.Any<PlaygroundCompleteRequest>(), Arg.Any<CancellationToken>())
@@ -47,6 +49,30 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
 
         IServiceProvider services = GetServices(b => b.RegisterInstance(service).As<IPlaygroundService>());
         var controller = NewController(services.GetRequiredService<IPlaygroundService>());
+        var httpContext = new DefaultHttpContext();
+        var body = new MemoryStream();
+        httpContext.Response.Body = body;
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        await controller.Complete(BuildRequest(), CancellationToken);
+
+        body.Position = 0;
+        var text = new StreamReader(body).ReadToEnd();
+        text.Should().Contain("event: error");
+        // Outside Development the raw exception message (which may carry SQL/schema/paths) must not leak.
+        text.Should().NotContain("boom");
+        text.Should().Contain("An unexpected error occurred");
+    }
+
+    [TestMethod]
+    public async Task Complete_UnexpectedException_InDevelopment_KeepsRawMessage()
+    {
+        var service = Substitute.For<IPlaygroundService>();
+        service.CompleteStreamAsync(Arg.Any<PlaygroundCompleteRequest>(), Arg.Any<CancellationToken>())
+            .Returns(_ => ThrowAsync(new InvalidOperationException("boom")));
+
+        IServiceProvider services = GetServices(b => b.RegisterInstance(service).As<IPlaygroundService>());
+        var controller = NewController(services.GetRequiredService<IPlaygroundService>(), isDevelopment: true);
         var httpContext = new DefaultHttpContext();
         var body = new MemoryStream();
         httpContext.Response.Body = body;
@@ -68,7 +94,9 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
 
         var agents = Substitute.For<IAgentRepository>();
         agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
-        var controller = new PlaygroundController(services.GetRequiredService<IPlaygroundService>(), agents, DenyingGuard());
+        var controller = new PlaygroundController(
+            services.GetRequiredService<IPlaygroundService>(), agents, DenyingGuard(),
+            NullLogger<PlaygroundController>.Instance, Env(isDevelopment: false));
         var httpContext = new DefaultHttpContext();
         var body = new MemoryStream();
         httpContext.Response.Body = body;
@@ -82,13 +110,14 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
     }
 
     // Resolve a playground controller whose agent + guard permit the request, so the SSE path runs.
-    private static PlaygroundController NewController(IPlaygroundService service)
+    private static PlaygroundController NewController(IPlaygroundService service, bool isDevelopment = false)
     {
         var agents = Substitute.For<IAgentRepository>();
         agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
         var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
         guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
-        return new PlaygroundController(service, agents, guard);
+        return new PlaygroundController(
+            service, agents, guard, NullLogger<PlaygroundController>.Instance, Env(isDevelopment));
     }
 
     private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
@@ -96,6 +125,13 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
         var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
         guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
         return guard;
+    }
+
+    private static IWebHostEnvironment Env(bool isDevelopment)
+    {
+        var env = Substitute.For<IWebHostEnvironment>();
+        env.EnvironmentName.Returns(isDevelopment ? "Development" : "Production");
+        return env;
     }
 
     private static PlaygroundCompleteRequestDto BuildRequest() => new(

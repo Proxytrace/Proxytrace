@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.EmailSettings;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
+using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Notifications;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.User;
@@ -19,19 +20,25 @@ public class EmailSettingsController : ControllerBase
     private readonly ICurrentUserAccessor currentUser;
     private readonly EmailSettingsDtoMapper mapper;
     private readonly ILogger<Audit> audit;
+    private readonly ILogger<EmailSettingsController> logger;
+    private readonly IWebHostEnvironment env;
 
     public EmailSettingsController(
         IEmailSettingsStore store,
         IEmailSender sender,
         ICurrentUserAccessor currentUser,
         EmailSettingsDtoMapper mapper,
-        ILogger<Audit> audit)
+        ILogger<Audit> audit,
+        ILogger<EmailSettingsController> logger,
+        IWebHostEnvironment env)
     {
         this.store = store;
         this.sender = sender;
         this.currentUser = currentUser;
         this.mapper = mapper;
         this.audit = audit;
+        this.logger = logger;
+        this.env = env;
     }
 
     [HttpGet]
@@ -83,7 +90,19 @@ public class EmailSettingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest($"Failed to send test email: {ex.Message}");
+            // Mirror ExceptionHandlingMiddleware: capture under an error id and only echo the raw
+            // message in Development. Outside Development it may carry SMTP host/credential or other
+            // internal detail, so return a generic message carrying the error id for support.
+            var errorId = Guid.NewGuid();
+            using (logger.BeginScope(new Dictionary<string, object> { [ErrorLogScope.ErrorIdKey] = errorId }))
+            {
+                logger.LogError(ex, "Failed to send test email");
+            }
+
+            var detail = env.IsDevelopment()
+                ? ex.Message
+                : $"An unexpected error occurred. (Error ID: {errorId})";
+            return BadRequest($"Failed to send test email: {detail}");
         }
     }
 }
