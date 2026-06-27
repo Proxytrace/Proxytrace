@@ -185,6 +185,26 @@ public class PromptTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public void Constructor_WithWhitespaceName_ThrowsArgumentExceptionNotArgumentNull()
+    {
+        // The ctor guards non-null whitespace with ArgumentException (ArgumentNullException —
+        // which derives from ArgumentException — is the wrong type for a present-but-blank value).
+        var act = () => new Proxytrace.Domain.Prompt.Internal.Prompt("   ", "content");
+
+        act.Should().Throw<ArgumentException>()
+            .Which.Should().NotBeOfType<ArgumentNullException>();
+    }
+
+    [TestMethod]
+    public void Constructor_WithWhitespacePromptString_ThrowsArgumentExceptionNotArgumentNull()
+    {
+        var act = () => new Proxytrace.Domain.Prompt.Internal.Prompt("name", "   ");
+
+        act.Should().Throw<ArgumentException>()
+            .Which.Should().NotBeOfType<ArgumentNullException>();
+    }
+
+    [TestMethod]
     public void ToPromptString_ShouldReturnOriginalContent()
     {
         // Arrange

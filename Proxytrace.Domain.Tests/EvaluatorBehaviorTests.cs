@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -188,6 +189,69 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         result.Should().NotBeNull();
         result.Score.Should().Be(EvaluationScore.Terrible);
+    }
+
+    [TestMethod]
+    public async Task NumericMatch_DecimalValue_ScoresIdenticallyAcrossServerCultures()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = new NumericMatchEvaluator(
+            new Regex(@"-?\d+(?:\.\d+)?"),
+            tolerance: 0.05m,
+            await GetProject(services),
+            BuildEvaluationFactory(),
+            services.GetRequiredService<IRepository<IEvaluator>>());
+        // "3.14" vs "3.15" is within the 0.05 tolerance. Parsing with the ambient culture on a
+        // de-DE host would read the decimals as 314/315 (delta 1 → Terrible), making the score
+        // depend on server locale; invariant-culture parsing keeps it Excellent everywhere.
+        var testResult = BuildResult(expected: "3.14", actual: "3.15");
+
+        var invariant = EvaluateUnderCulture(
+            evaluator, testResult, CultureInfo.InvariantCulture, CancellationToken);
+        var german = EvaluateUnderCulture(
+            evaluator, testResult, CultureInfo.GetCultureInfo("de-DE"), CancellationToken);
+
+        invariant.Should().NotBeNull();
+        german.Should().NotBeNull();
+        german.Score.Should().Be(invariant.Score);
+        german.Score.Should().Be(EvaluationScore.Excellent);
+    }
+
+    private static IEvaluation? EvaluateUnderCulture(
+        NumericMatchEvaluator evaluator,
+        ITestResult testResult,
+        CultureInfo culture,
+        CancellationToken cancellationToken)
+    {
+        IEvaluation? evaluation = null;
+        Exception? failure = null;
+
+        // Run the (synchronous) evaluation on a dedicated thread whose culture we set, so the
+        // ambient-culture mutation never leaks into other tests regardless of parallelization.
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                CultureInfo.CurrentCulture = culture;
+                evaluation = evaluator
+                    .EvaluateAsync(testResult, cancellationToken)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+        });
+        thread.Start();
+        thread.Join();
+
+        if (failure is not null)
+        {
+            throw failure;
+        }
+
+        return evaluation;
     }
 
     private static IEvaluation.Create BuildEvaluationFactory()

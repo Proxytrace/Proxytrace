@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.Setup;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Cleanup;
+using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
@@ -22,19 +23,25 @@ public class SetupController : ControllerBase
     private readonly IDataCleanupService cleanup;
     private readonly ISetupService setup;
     private readonly ILogger<Audit> audit;
+    private readonly ILogger<SetupController> logger;
+    private readonly IWebHostEnvironment env;
 
     public SetupController(
         IRepository<IUser> userRepository,
         IRepository<IProject> projectRepository,
         IDataCleanupService cleanup,
         ISetupService setup,
-        ILogger<Audit> audit)
+        ILogger<Audit> audit,
+        ILogger<SetupController> logger,
+        IWebHostEnvironment env)
     {
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
         this.cleanup = cleanup;
         this.setup = setup;
         this.audit = audit;
+        this.logger = logger;
+        this.env = env;
     }
 
     [HttpGet("status")]
@@ -88,7 +95,19 @@ public class SetupController : ControllerBase
         }
         catch (Exception ex)
         {
-            return new TestConnectionResponse(false, ex.Message);
+            // Mirror ExceptionHandlingMiddleware: capture under an error id and only surface the raw
+            // message in Development. Outside Development it may carry provider endpoint/credential or
+            // other internal detail, so return a generic message carrying the error id for support.
+            var errorId = Guid.NewGuid();
+            using (logger.BeginScope(new Dictionary<string, object> { [ErrorLogScope.ErrorIdKey] = errorId }))
+            {
+                logger.LogError(ex, "Provider connection test failed");
+            }
+
+            var message = env.IsDevelopment()
+                ? ex.Message
+                : $"An unexpected error occurred. (Error ID: {errorId})";
+            return new TestConnectionResponse(false, message);
         }
     }
 

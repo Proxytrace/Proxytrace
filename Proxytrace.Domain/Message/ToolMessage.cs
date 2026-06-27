@@ -85,10 +85,12 @@ public sealed record ToolMessage : Message
 
     /// <inheritdoc />
     /// <remarks>
-    /// Skips the leading content slot which carries the tool-call id rather than payload text.
+    /// Skips the leading content slot (which carries the tool-call id rather than payload text)
+    /// and concatenates the remaining slots, so multi-result tool messages round-trip
+    /// consistently with <see cref="Deconstruct"/>.
     /// </remarks>
     public override string GetText()
-        => Contents.Count > 1 ? Contents[1].Text ?? "" : "";
+        => string.Concat(Contents.Skip(1).Select(content => content.Text ?? ""));
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -96,8 +98,17 @@ public sealed record ToolMessage : Message
         {
             yield return result;
         }
-        
-        yield return Validation.HasCount(Contents, 2);
+
+        // A valid tool message is the id slot plus at least one result slot. The
+        // ToolMessage(ToolResponse) factory can emit more than one result slot, so the
+        // invariant is "at least two items", not "exactly two".
+        if (Contents.Count < 2)
+        {
+            yield return new ValidationResult(
+                $"{nameof(Contents)} must have at least 2 items", [nameof(Contents)]);
+            yield break;
+        }
+
         yield return Validation.NotNullOrWhiteSpace(Contents[0].Text);
     }
     

@@ -140,6 +140,18 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         if (string.IsNullOrWhiteSpace(ProposedSystemMessage))
             yield return Validation.NotNullOrWhiteSpace(ProposedSystemMessage);
 
+        if (CurrentPassRate is { } currentPassRate &&
+            (!double.IsFinite(currentPassRate) || currentPassRate is < 0 or > 1))
+            yield return new ValidationResult(
+                $"{nameof(CurrentPassRate)} must be a finite value between 0 and 1.",
+                [nameof(CurrentPassRate)]);
+
+        if (ProposedPassRate is { } proposedPassRate &&
+            (!double.IsFinite(proposedPassRate) || proposedPassRate is < 0 or > 1))
+            yield return new ValidationResult(
+                $"{nameof(ProposedPassRate)} must be a finite value between 0 and 1.",
+                [nameof(ProposedPassRate)]);
+
         if (Status == ProposalStatus.Adopted)
         {
             yield return Validation.NotNull(AdoptedAt);

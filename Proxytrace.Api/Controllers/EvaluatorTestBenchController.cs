@@ -8,6 +8,7 @@ using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestSuite;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -19,6 +20,7 @@ public class EvaluatorTestBenchController : ControllerBase
     private readonly IEvaluatorRepository evaluators;
     private readonly ITestCaseRepository testCases;
     private readonly ITestResultRepository testResults;
+    private readonly ITestSuiteRepository testSuites;
     private readonly ICompletion.Create createCompletion;
     private readonly ITestResult.CreateNew createTestResult;
     private readonly IProjectAccessGuard accessGuard;
@@ -27,6 +29,7 @@ public class EvaluatorTestBenchController : ControllerBase
         IEvaluatorRepository evaluators,
         ITestCaseRepository testCases,
         ITestResultRepository testResults,
+        ITestSuiteRepository testSuites,
         ICompletion.Create createCompletion,
         ITestResult.CreateNew createTestResult,
         IProjectAccessGuard accessGuard)
@@ -34,6 +37,7 @@ public class EvaluatorTestBenchController : ControllerBase
         this.evaluators = evaluators;
         this.testCases = testCases;
         this.testResults = testResults;
+        this.testSuites = testSuites;
         this.createCompletion = createCompletion;
         this.createTestResult = createTestResult;
         this.accessGuard = accessGuard;
@@ -48,6 +52,18 @@ public class EvaluatorTestBenchController : ControllerBase
         return projectId is not null && await accessGuard.CanAccessProjectAsync(projectId.Value, cancellationToken);
     }
 
+    // `load`/`run` also accept a caller-supplied test-case id that is independent of the evaluator. A
+    // test case carries no project of its own, so resolve it through the suite that references it and
+    // deny it behind the same 404 when it resolves to a project the caller cannot access — otherwise a
+    // member of one project could read another project's test-case conversation, expected/actual
+    // responses, and scores (#265). A test case in no suite has no resolvable owner, so it is left
+    // accessible (e.g. a result whose suite was deleted remains loadable by its evaluator's members).
+    private async Task<bool> CanAccessTestCaseAsync(Guid testCaseId, CancellationToken cancellationToken)
+    {
+        var projectId = await testSuites.GetProjectIdByTestCaseAsync(testCaseId, cancellationToken);
+        return projectId is null || await accessGuard.CanAccessProjectAsync(projectId.Value, cancellationToken);
+    }
+
     [HttpGet("load")]
     public async Task<ActionResult<EvaluatorTestBenchPayloadDto>> Load(
         Guid evaluatorId,
@@ -56,6 +72,8 @@ public class EvaluatorTestBenchController : ControllerBase
     {
         if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
+        if (!await CanAccessTestCaseAsync(testCaseId, cancellationToken))
+            return NotFound($"Test case {testCaseId} not found.");
         var testCase = await testCases.FindAsync(testCaseId, cancellationToken);
         if (testCase is null)
             return NotFound($"Test case {testCaseId} not found.");
@@ -147,6 +165,8 @@ public class EvaluatorTestBenchController : ControllerBase
     {
         if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
+        if (!await CanAccessTestCaseAsync(request.TestCaseId, cancellationToken))
+            return NotFound($"Test case {request.TestCaseId} not found.");
         var evaluator = await evaluators.FindAsync(evaluatorId, cancellationToken);
         if (evaluator is null)
             return NotFound($"Evaluator {evaluatorId} not found.");

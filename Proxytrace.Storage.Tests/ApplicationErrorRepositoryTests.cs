@@ -173,6 +173,28 @@ public sealed class ApplicationErrorRepositoryTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task TrimToNewest_WhenManyRowsShareCreatedAt_KeepsExactlyMax()
+    {
+        var services = GetServices();
+        var generator = services.GetRequiredService<IApplicationErrorGenerator>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        // A burst of errors truncates to the same capture time. The old cutoff ordered by CreatedAt
+        // alone and deleted WHERE CreatedAt <= cutoff, which wiped EVERY tied row and left fewer than
+        // `max`. The (CreatedAt, Id) tiebreaker must keep exactly `max` of them.
+        var sharedCreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5);
+        for (var i = 0; i < 10; i++)
+        {
+            await generator.CreateAsync(sharedCreatedAt, CancellationToken);
+        }
+
+        var removed = await repository.TrimToNewestAsync(4, CancellationToken);
+
+        removed.Should().Be(6);
+        (await repository.CountAsync(CancellationToken)).Should().Be(4);
+    }
+
+    [TestMethod]
     public async Task TrimToNewest_WhenFewerThanMax_RemovesNothing()
     {
         var services = GetServices();

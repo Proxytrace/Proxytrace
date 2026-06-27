@@ -85,21 +85,34 @@ internal class ApplicationErrorRepository
         var context = contextFactory();
         var contextSet = context.Set<ApplicationErrorEntity>();
 
-        // CreatedAt of the first row that should be dropped (the (max+1)-th newest). Everything at
-        // or below this timestamp is removed, leaving the newest `max` rows.
-        var cutoff = await contextSet
+        // The (max+1)-th newest row — the first that should be dropped. Page on the stable
+        // (CreatedAt, Id) key (Id is the tiebreaker) so the boundary is deterministic even when a
+        // burst of rows shares the exact same CreatedAt (timestamps truncate to the same µs). The
+        // same total order is used by AuditLogRepository's paging for the same reason.
+        var boundary = await contextSet
             .AsNoTracking()
             .OrderByDescending(e => e.CreatedAt)
+            .ThenByDescending(e => e.Id)
             .Skip(max)
-            .Select(e => (DateTimeOffset?)e.CreatedAt)
+            .Select(e => new { e.CreatedAt, e.Id })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (cutoff is null)
+        if (boundary is null)
         {
             return 0; // fewer than `max` rows — nothing to trim
         }
 
-        var query = contextSet.Where(x => x.CreatedAt <= cutoff.Value);
+        // Delete everything at or below the boundary in that same total order: strictly older
+        // timestamps, plus the tied-timestamp rows whose Id does not sort after the boundary's.
+        // Keying off the boundary Id (not the bare timestamp) keeps exactly `max` rows instead of
+        // wiping every row that shares the cutoff timestamp. Guid has no `<=` operator, so compare
+        // via CompareTo — Npgsql translates it to the native uuid `<=` and the in-memory provider
+        // uses Guid's IComparable, so each provider matches its own ThenByDescending(Id) order.
+        var boundaryCreatedAt = boundary.CreatedAt;
+        var boundaryId = boundary.Id;
+        var query = contextSet.Where(x =>
+            x.CreatedAt < boundaryCreatedAt ||
+            (x.CreatedAt == boundaryCreatedAt && x.Id.CompareTo(boundaryId) <= 0));
 
         if (context.Database.IsRelational())
             return await query.ExecuteDeleteAsync(cancellationToken);

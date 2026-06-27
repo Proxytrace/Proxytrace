@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -89,24 +90,56 @@ public sealed class EmailSettingsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task SendTest_WhenSenderThrows_ReturnsBadRequest()
+    public async Task SendTest_WhenSenderThrows_OutsideDevelopment_SuppressesRawMessage()
     {
         var store = Substitute.For<IEmailSettingsStore>();
         store.GetAsync(Arg.Any<CancellationToken>()).Returns(Sample());
         var sender = Substitute.For<IEmailSender>();
         sender.When(s => s.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()))
-              .Do(_ => throw new InvalidOperationException("SMTP timeout"));
+              .Do(_ => throw new InvalidOperationException("SMTP timeout connecting to smtp.internal:587"));
         var accessor = Substitute.For<ICurrentUserAccessor>();
         accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(await CreateUserAsync());
         var controller = Controller(store, sender, accessor);
 
         var result = await controller.SendTest(CancellationToken);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        var message = result.Should().BeOfType<BadRequestObjectResult>().Subject.Value as string;
+        message.Should().NotBeNull();
+        // Outside Development the raw exception message (host/port/internal detail) must not leak.
+        message.Should().NotContain("smtp.internal");
+        message.Should().Contain("An unexpected error occurred");
     }
 
-    private EmailSettingsController Controller(IEmailSettingsStore store, IEmailSender sender, ICurrentUserAccessor accessor)
-        => new(store, sender, accessor, new EmailSettingsDtoMapper(), NullLogger<Audit>.Instance);
+    [TestMethod]
+    public async Task SendTest_WhenSenderThrows_InDevelopment_KeepsRawMessage()
+    {
+        var store = Substitute.For<IEmailSettingsStore>();
+        store.GetAsync(Arg.Any<CancellationToken>()).Returns(Sample());
+        var sender = Substitute.For<IEmailSender>();
+        sender.When(s => s.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()))
+              .Do(_ => throw new InvalidOperationException("SMTP timeout connecting to smtp.internal:587"));
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(await CreateUserAsync());
+        var controller = Controller(store, sender, accessor, isDevelopment: true);
+
+        var result = await controller.SendTest(CancellationToken);
+
+        var message = result.Should().BeOfType<BadRequestObjectResult>().Subject.Value as string;
+        message.Should().Contain("smtp.internal");
+    }
+
+    private EmailSettingsController Controller(
+        IEmailSettingsStore store, IEmailSender sender, ICurrentUserAccessor accessor, bool isDevelopment = false)
+        => new(
+            store, sender, accessor, new EmailSettingsDtoMapper(),
+            NullLogger<Audit>.Instance, NullLogger<EmailSettingsController>.Instance, Env(isDevelopment));
+
+    private static IWebHostEnvironment Env(bool isDevelopment)
+    {
+        var env = Substitute.For<IWebHostEnvironment>();
+        env.EnvironmentName.Returns(isDevelopment ? "Development" : "Production");
+        return env;
+    }
 
     private async Task<IUser> CreateUserAsync()
     {

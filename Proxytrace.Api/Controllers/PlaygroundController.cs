@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Playground;
 using Proxytrace.Api.Json;
+using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Playground.Internal;
 using Proxytrace.Domain.Agent;
@@ -18,15 +19,21 @@ public class PlaygroundController : ControllerBase
     private readonly IPlaygroundService service;
     private readonly IAgentRepository agents;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ILogger<PlaygroundController> logger;
+    private readonly IWebHostEnvironment env;
 
     public PlaygroundController(
         IPlaygroundService service,
         IAgentRepository agents,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ILogger<PlaygroundController> logger,
+        IWebHostEnvironment env)
     {
         this.service = service;
         this.agents = agents;
         this.accessGuard = accessGuard;
+        this.logger = logger;
+        this.env = env;
     }
 
     /// <summary>
@@ -88,7 +95,19 @@ public class PlaygroundController : ControllerBase
         }
         catch (Exception ex)
         {
-            var data = JsonSerializer.Serialize(new { message = ex.Message }, ApiJsonOptions.Sse);
+            // Mirror ExceptionHandlingMiddleware: capture under an error id and only surface the raw
+            // message in Development. Outside Development the message may carry SQL/schema/paths, so
+            // emit a generic message (carrying the error id) — the SSE error frame shape is unchanged.
+            var errorId = Guid.NewGuid();
+            using (logger.BeginScope(new Dictionary<string, object> { [ErrorLogScope.ErrorIdKey] = errorId }))
+            {
+                logger.LogError(ex, "Unhandled playground exception");
+            }
+
+            var message = env.IsDevelopment()
+                ? ex.Message
+                : $"An unexpected error occurred. (Error ID: {errorId})";
+            var data = JsonSerializer.Serialize(new { message }, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: error\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

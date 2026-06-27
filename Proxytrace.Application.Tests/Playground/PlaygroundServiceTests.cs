@@ -1,4 +1,6 @@
 using AwesomeAssertions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Application.Playground.Internal;
 using Proxytrace.Domain;
@@ -30,7 +32,8 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
         IAgent? agent,
         IModelEndpoint? endpoint,
         out IRepository<IAgent> agentRepo,
-        out IRepository<IModelEndpoint> endpointRepo)
+        out IRepository<IModelEndpoint> endpointRepo,
+        bool isDevelopment = false)
     {
         agentRepo = Substitute.For<IRepository<IAgent>>();
         endpointRepo = Substitute.For<IRepository<IModelEndpoint>>();
@@ -38,7 +41,9 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
             agentRepo.GetAsync(agent.Id, Arg.Any<CancellationToken>()).Returns(agent);
         if (endpoint is not null)
             endpointRepo.GetAsync(endpoint.Id, Arg.Any<CancellationToken>()).Returns(endpoint);
-        return new PlaygroundService(agentRepo, endpointRepo);
+        var env = Substitute.For<IHostEnvironment>();
+        env.EnvironmentName.Returns(isDevelopment ? "Development" : "Production");
+        return new PlaygroundService(agentRepo, endpointRepo, NullLogger<PlaygroundService>.Instance, env);
     }
 
     private static IModelEndpoint MakeEndpoint(string modelName = "gpt-4o", decimal? inputCost = null, decimal? outputCost = null)
@@ -117,7 +122,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task CompleteStreamAsync_StreamCreationThrows_YieldsErrorEvent()
+    public async Task CompleteStreamAsync_StreamCreationThrows_OutsideDevelopment_SuppressesRawMessage()
     {
         var client = Substitute.For<IModelClient>();
         client.StreamAsync(Arg.Any<SystemMessage>(), Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
@@ -125,6 +130,25 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
         var agent = MakeAgent(client);
         var endpoint = MakeEndpoint();
         var svc = Build(agent, endpoint, out _, out _);
+
+        var events = await svc.CompleteStreamAsync(Request(agent.Id, endpoint.Id), CancellationToken).ToListAsync();
+
+        events.Should().ContainSingle();
+        // Outside Development the raw exception message (which may carry SQL/schema/paths) must not leak.
+        var message = events[0].Should().BeOfType<ErrorEvent>().Which.Message;
+        message.Should().NotContain("boom");
+        message.Should().StartWith("An unexpected error occurred");
+    }
+
+    [TestMethod]
+    public async Task CompleteStreamAsync_StreamCreationThrows_InDevelopment_KeepsRawMessage()
+    {
+        var client = Substitute.For<IModelClient>();
+        client.StreamAsync(Arg.Any<SystemMessage>(), Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
+            .Returns(_ => throw new InvalidOperationException("boom"));
+        var agent = MakeAgent(client);
+        var endpoint = MakeEndpoint();
+        var svc = Build(agent, endpoint, out _, out _, isDevelopment: true);
 
         var events = await svc.CompleteStreamAsync(Request(agent.Id, endpoint.Id), CancellationToken).ToListAsync();
 
@@ -222,7 +246,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task CompleteStreamAsync_StreamThrowsMidIteration_YieldsErrorEvent()
+    public async Task CompleteStreamAsync_StreamThrowsMidIteration_OutsideDevelopment_SuppressesRawMessage()
     {
         var client = Substitute.For<IModelClient>();
         client.StreamAsync(Arg.Any<SystemMessage>(), Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
@@ -230,6 +254,23 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
         var agent = MakeAgent(client);
         var endpoint = MakeEndpoint();
         var svc = Build(agent, endpoint, out _, out _);
+
+        var events = await svc.CompleteStreamAsync(Request(agent.Id, endpoint.Id), CancellationToken).ToListAsync();
+
+        var message = events.Last().Should().BeOfType<ErrorEvent>().Which.Message;
+        message.Should().NotContain("stream blew up");
+        message.Should().StartWith("An unexpected error occurred");
+    }
+
+    [TestMethod]
+    public async Task CompleteStreamAsync_StreamThrowsMidIteration_InDevelopment_KeepsRawMessage()
+    {
+        var client = Substitute.For<IModelClient>();
+        client.StreamAsync(Arg.Any<SystemMessage>(), Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
+            .Returns(_ => ThrowMidStream());
+        var agent = MakeAgent(client);
+        var endpoint = MakeEndpoint();
+        var svc = Build(agent, endpoint, out _, out _, isDevelopment: true);
 
         var events = await svc.CompleteStreamAsync(Request(agent.Id, endpoint.Id), CancellationToken).ToListAsync();
 

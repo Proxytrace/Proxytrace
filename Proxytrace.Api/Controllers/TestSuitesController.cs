@@ -312,11 +312,12 @@ public class TestSuitesController : ControllerBase
             // Treat "no access" the same as "not found" so the id can't be used as an existence oracle.
             if (call is null || !await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
                 return NotFound($"Agent call {callId} not found.");
+            // A response-less call (the upstream errored or never completed) is a client-input
+            // precondition, not a server fault — return 400 like the adjacent guards above rather
+            // than letting a bare InvalidOperationException fall through to a generic 500.
             if (call.Response is null)
-            {
-                throw new InvalidOperationException($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
-            }
-            
+                return BadRequest($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
+
             var testCase = createTestCaseFromCall(call);
             var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
             testCases.Add(saved);

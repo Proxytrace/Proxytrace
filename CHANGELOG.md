@@ -144,9 +144,37 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - **Evaluator playground shows tool-call responses.** When a selected past evaluation's response was a
   tool call with no text, the **reference** showed "—" and the **candidate** was blank (the scoring
   itself was unaffected). Both now render the tool call (e.g. `[tool call] get_weather({…})`).
+- **Numeric evaluator scoring no longer depends on the server's locale.** The numeric-match evaluator
+  parsed expected and actual values using the server's regional settings, so a value like `3.14` could
+  be read as `314` on a non-US host and silently flip a pass to a fail. Numbers are now parsed the same
+  way everywhere (invariant format), and a tool message carrying more than one result no longer drops
+  the extra results from its text.
+- **Operator error log keeps its full retention under bursty errors.** When many errors shared the
+  exact same timestamp, trimming the error log to its configured size could delete the whole group at
+  the cutoff and leave fewer entries than intended. Trimming now breaks ties deterministically, so it
+  keeps exactly the configured number of most-recent errors.
+- **Provider pricing with input cost ≥ output cost can be saved again.** Activating or updating a model
+  endpoint wrongly required input token cost ≤ output token cost, rejecting legitimate provider pricing
+  (some cached, batch, and reasoning tiers price input at or above output). That rule is gone; cost
+  calculation is unaffected. Proxytrace also now rejects nonsensical stored numbers — out-of-range pass
+  rates and p-values, and invalid inference parameters such as negative max tokens or NaN/Infinity —
+  instead of persisting them.
+- **Promoting a response-less trace returns a clear 400.** Promoting a captured call that has no
+  response into a test case failed with a generic server error (500); it now returns 400 (bad request),
+  like the adjacent validation cases.
 
 ### Security
 
+- **Evaluator test bench no longer exposes another tenant's test case via a supplied id.** Loading or
+  running a test case on the bench verified access to the *evaluator* but not to the separately
+  supplied test-case id, so a signed-in user could pass a test-case id from another project and read
+  its conversation, expected and actual responses, and scores. The test case's owning project is now
+  verified too, returning **404** on mismatch (no existence oracle).
+- **Internal error detail no longer leaks on a few self-handled responses.** The playground's streamed
+  error event and the admin email / SMTP connection tests echoed raw exception text — which can carry
+  SQL, schema, or file-path detail — even in production, bypassing the global suppression. These now log
+  the fault under an error id and return a generic message outside Development, matching the rest of the
+  API.
 - **Closed cross-tenant access gaps on statistics, the playground, the evaluator test bench, trace
   promotion, and theory submission.** Several endpoints accepted a project, agent, trace, or evaluator
   id without checking that the caller is a member of the owning project, so any signed-in user could
