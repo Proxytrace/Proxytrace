@@ -1,7 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Proxytrace.Api.Kiosk;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 
 namespace Proxytrace.Api.Tests.Kiosk;
 

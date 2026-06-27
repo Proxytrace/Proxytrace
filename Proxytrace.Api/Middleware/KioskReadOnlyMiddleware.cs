@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 
 namespace Proxytrace.Api.Kiosk;
 

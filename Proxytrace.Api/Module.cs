@@ -15,7 +15,7 @@ using Proxytrace.Application.AuditLog;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Application.Search;

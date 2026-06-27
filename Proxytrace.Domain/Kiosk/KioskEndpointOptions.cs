@@ -1,6 +1,6 @@
 using Proxytrace.Domain.ModelProvider;
 
-namespace Proxytrace.Application.Demo;
+namespace Proxytrace.Domain.Kiosk;
 
 /// <summary>
 /// Optional real LLM endpoint for kiosk mode, bound from the <c>Kiosk:Endpoint</c>

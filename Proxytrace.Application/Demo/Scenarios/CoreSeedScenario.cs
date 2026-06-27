@@ -4,6 +4,7 @@ using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Inference;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;

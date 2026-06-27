@@ -1,4 +1,4 @@
-namespace Proxytrace.Application.Demo;
+namespace Proxytrace.Domain.Kiosk;
 
 public sealed record KioskOptions
 {

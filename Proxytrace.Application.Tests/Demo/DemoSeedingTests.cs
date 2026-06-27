@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Demo;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Evaluator;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;

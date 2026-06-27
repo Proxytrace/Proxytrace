@@ -8,7 +8,7 @@ using Microsoft.OpenApi;
 using Proxytrace.Api.Auth.Mcp;
 using Proxytrace.Api.Kiosk;
 using Proxytrace.Api.Middleware;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Module = Proxytrace.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
