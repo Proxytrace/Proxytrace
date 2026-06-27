@@ -162,6 +162,37 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - **Promoting a response-less trace returns a clear 400.** Promoting a captured call that has no
   response into a test case failed with a generic server error (500); it now returns 400 (bad request),
   like the adjacent validation cases.
+- **A slow trace ingest no longer produces duplicate traces.** When persisting a single captured call
+  took unusually long (heavy database contention or a very large transcript), the ingestion worker could
+  reclaim the still-in-flight item and process it a second time — creating two identical traces, two
+  notifications, and two outlier evaluations. The worker now skips an item it is already processing and
+  waits much longer before reclaiming, so a slow-but-live ingest is never double-counted.
+- **Sign-in stays fast and email is treated case-insensitively.** Email addresses are now stored in a
+  normalised (lower-case) form and looked up by exact match, so logging in uses the email index instead
+  of scanning the whole users table, and `Foo@x.com` and `foo@x.com` can no longer become two separate
+  accounts. Existing addresses are normalised once on upgrade. Creating a model or endpoint during a
+  burst of traffic also retries cleanly instead of failing if two requests create it at the same moment.
+- **Cancelled playground and Tracey calls are no longer recorded as failed traces.** Cancelling a model
+  request (or shutting the app down mid-call) recorded a phantom HTTP-500 trace that polluted statistics
+  and outlier detection. Cancellations are now ignored rather than captured.
+- **Latency percentiles honour the "exclude system agents" option on PostgreSQL.** The p50/p95/p99
+  latency and live-telemetry queries ignored the option that hides built-in system agents (Tracey, the
+  optimizer/evaluator agents), so those calls could skew the percentiles. The option is now applied on
+  PostgreSQL, matching every other statistic.
+- **Test-suite run statistics stay fast as history grows.** Opening the test-suites list or a single
+  suite read the entire run-statistics table and filtered it in memory; it now asks the database only
+  for the suites in view. Archived-entity lists are likewise filtered in the database rather than after
+  loading every row.
+- **Real-time streams clean up and stay bounded.** The long-lived trace, proposal, theory, and
+  notification streams now send a periodic keep-alive, so a connection that dies without notice (a
+  half-open socket) releases its slot instead of lingering, and the two streams every client subscribes
+  to now cap their subscriber count like the others — protecting the server from a flood of stream opens.
+- **Background backfills release database resources promptly.** The one-time preview and secret-
+  encryption backfills, which run in batches over potentially millions of rows, held onto a database
+  context per batch for the lifetime of the process; they now dispose each batch's context as they go.
+- **Audit log shows a label for email-settings changes.** Saving SMTP/email settings produced an audit
+  entry the Audit Log page rendered with a blank action label and no colour; it now shows a proper
+  "Email Settings Updated" label and badge.
 
 ### Security
 
@@ -183,6 +214,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   owning project and return **404** when the caller lacks access (no existence oracle). The dashboard
   additionally refuses the unscoped, all-tenant aggregate to non-admins: a normal user must request a
   project they belong to (the app already does this), while administrators keep the global view.
+- **Password-reset links are no longer written to the log by default.** When email is unconfigured or
+  sending fails, Proxytrace previously logged the full one-time reset link (a live credential for an
+  hour) so a sole administrator could still recover access. The log now records only a redacted hint by
+  default; the full emergency link is logged only when an operator explicitly opts in with the new
+  `Authentication:EmergencyLogResetLink` setting. The in-process auth, MFA, and rate-limit state is also
+  now documented as single-instance by design — running multiple API replicas would split those limits
+  per replica.
 
 ## [1.2.0] - 2026-06-24
 
