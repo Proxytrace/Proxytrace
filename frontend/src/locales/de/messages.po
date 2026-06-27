@@ -1765,6 +1765,9 @@ msgstr "E-Mail-Benachrichtigungen"
 msgid "Email settings saved"
 msgstr "E-Mail-Einstellungen gespeichert"
 
+msgid "Email Settings Updated"
+msgstr "E-Mail-Einstellungen aktualisiert"
+
 msgid "Enable email notifications"
 msgstr "E-Mail-Benachrichtigungen aktivieren"
 

@@ -1134,6 +1134,7 @@ export enum AuditAction {
   AdminBootstrapped = 'AdminBootstrapped',
   LegacyAccountClaimed = 'LegacyAccountClaimed',
   ProposalStatusChanged = 'ProposalStatusChanged',
+  EmailSettingsUpdated = 'EmailSettingsUpdated',
   PasswordResetRequested = 'PasswordResetRequested',
   PasswordResetCompleted = 'PasswordResetCompleted',
   PasswordResetLinkIssued = 'PasswordResetLinkIssued',
