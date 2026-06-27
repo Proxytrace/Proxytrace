@@ -4,6 +4,11 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.ModelProvider;
+using Proxytrace.Domain.Project;
+using Proxytrace.Domain.Prompt;
+using Proxytrace.Domain.Security;
 
 namespace Proxytrace.Storage;
 
@@ -37,10 +42,67 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
 
         var containerBuilder = new ContainerBuilder();
         containerBuilder.RegisterModule(new Module(_ => storageConfig));
+
+        // Since #270, Storage references only Domain and no longer registers the services the storage
+        // model-building graph expects from the Application/Infrastructure layers (the at-rest secret
+        // seam, the agent-name generator, the provider client). EF model-building still constructs every
+        // entity configuration — and the repositories some of them inject — so those seams must be
+        // *registered*, even though none is invoked while the model is built (their value converters and
+        // operations are captured lazily / never called). Register local stubs so `dotnet ef` tooling can
+        // build the context without loading Application or the Data Protection key ring. This mirrors the
+        // lean proxy host, which resolves the same storage graph with the same stubs (see
+        // Proxytrace.Proxy.Module / #270).
+        var designTimeSecrets = new DesignTimeSecretSeam();
+        containerBuilder.RegisterInstance(designTimeSecrets).As<ISecretProtector>().As<ISecretHasher>();
+        containerBuilder.RegisterType<DesignTimeAgentNameGenerator>().As<IAgentNameGenerator>().SingleInstance();
+        containerBuilder.RegisterType<DesignTimeProviderClient>().As<IProviderClient>();
+
         containerBuilder.RegisterInstance(NullLoggerFactory.Instance).As<ILoggerFactory>();
         containerBuilder.RegisterGeneric(typeof(NullLogger<>)).As(typeof(ILogger<>));
         var container = containerBuilder.Build();
 
         return container.Resolve<StorageDbContext>();
+    }
+
+    /// <summary>
+    /// Design-time-only no-op secret seam. EF model-building constructs the secret-bearing entity
+    /// configurations but never runs their value converters, so the real Data Protection-backed
+    /// implementations (Proxytrace.Infrastructure.Security) are not needed by <c>dotnet ef</c> tooling.
+    /// </summary>
+    private sealed class DesignTimeSecretSeam : ISecretProtector, ISecretHasher
+    {
+        public string Protect(string plaintext) => plaintext;
+
+        public string Unprotect(string ciphertext) => ciphertext;
+
+        public string Hash(string value) => value;
+    }
+
+    /// <summary>
+    /// Design-time stub for <see cref="IAgentNameGenerator"/> (implemented in the Application layer,
+    /// which design-time tooling does not load). The storage model-building graph injects it into
+    /// <c>AgentRepository</c>; it is never invoked while EF builds the model.
+    /// </summary>
+    private sealed class DesignTimeAgentNameGenerator : IAgentNameGenerator
+    {
+        public Task<string> GenerateNameAsync(
+            IPromptTemplate systemPrompt,
+            IProject project,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException("Agent name generation is not available at design time.");
+    }
+
+    /// <summary>
+    /// Design-time stub for <see cref="IProviderClient"/> (implemented in the Application layer).
+    /// Reconstituting a <c>ModelProvider</c> in the storage graph needs an
+    /// <see cref="IProviderClient.Factory"/>; it is never invoked while EF builds the model.
+    /// </summary>
+    private sealed class DesignTimeProviderClient : IProviderClient
+    {
+        public Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default)
+            => throw new NotSupportedException("Provider client operations are not available at design time.");
+
+        public Task<IReadOnlyList<PricedModel>> GetModelsAsync(CancellationToken cancellationToken = default)
+            => throw new NotSupportedException("Provider client operations are not available at design time.");
     }
 }
