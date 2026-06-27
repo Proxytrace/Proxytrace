@@ -95,6 +95,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Outlier-detection changes show a proper label in the audit log.** Tuning **Settings → Outlier
+  detection** records an audit entry, but the Audit Log page rendered that action with a blank,
+  uncoloured, unfilterable label. The `Outlier Settings Updated` action now shows its label and
+  colour like every other audit action.
 - **Deleting an agent from its detail page works again.** With an agent open, the detail view kept
   several live-update streams connected at once, which on the bundled (HTTP/1.1) setup could use up
   the browser's small per-site connection budget. A delete then had no connection left and silently
