@@ -73,9 +73,10 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
 - **Storage** — the entity record implements `IArchivableEntity` (adds the mapped `IsArchived`
   column; non-archivable entities get no column). The repository extends `ArchivableRepository`
   instead of `AbstractRepository`, which provides `ArchiveAsync` (flips the flag in its own
-  transaction, then `Notify(..., Removed)`), filters archived rows out of `GetAllAsync`, and exposes
-  `ArchiveRelationsAsync` for detaching forward-looking memberships (the soft-delete analogue of
-  `UpdateRelationsAsync`).
+  transaction, then `Notify(..., Removed)`), excludes archived rows from the list/paged queries
+  (`GetAllAsync`/`GetPagedAsync`) in SQL via its `FilterListQuery` override — so the cached `GetAllAsync`
+  snapshot holds only live rows rather than the whole table — and exposes `ArchiveRelationsAsync` for
+  detaching forward-looking memberships (the soft-delete analogue of `UpdateRelationsAsync`).
 - **Filtering rule (critical)** — **never use an EF global query filter.** A global filter also
   hides archived rows from by-id `GetAsync`/`GetManyAsync`, breaking the very history archiving
   protects. Filter archived **only** in true list/picker queries: call `.ExcludeArchived()` on each

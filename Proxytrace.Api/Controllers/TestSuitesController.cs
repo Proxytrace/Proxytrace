@@ -120,10 +120,12 @@ public class TestSuitesController : ControllerBase
         if (suiteIds.Count == 0)
             return new Dictionary<Guid, IReadOnlyList<TestRunStats>>();
 
-        var wanted = suiteIds.ToHashSet();
-        var allStats = await runStats.QueryAsync(new TestRunStats.Filter(), cancellationToken);
-        return allStats
-            .Where(r => wanted.Contains(r.SuiteId))
+        // Scope the projection to the wanted suites in SQL (WHERE SuiteId IN (...)) rather than
+        // materializing the whole TestRunStats table and filtering in memory — the latter is
+        // O(all-rows) on every suites list and single-suite GET as run history grows (#253).
+        var rows = await runStats.QueryAsync(
+            new TestRunStats.Filter(SuiteIds: suiteIds), cancellationToken);
+        return rows
             .GroupBy(r => r.SuiteId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<TestRunStats>)g.ToArray());
     }

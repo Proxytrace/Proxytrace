@@ -112,6 +112,9 @@ internal static class PerfCli
         var queryResults = await QueryLatencyScenario.RunAsync(container, budgets, warmup, iterations, cancellationToken);
         report.AddRange(queryResults);
 
+        var runStatsResults = await TestRunStatsQueryScenario.RunAsync(container, budgets, warmup, iterations, cancellationToken);
+        report.AddRange(runStatsResults);
+
         var ingestionResult = await IngestionThroughputScenario.RunAsync(container, budgets, ingestCount, ingestConcurrency, cancellationToken);
         report.Add(ingestionResult);
 

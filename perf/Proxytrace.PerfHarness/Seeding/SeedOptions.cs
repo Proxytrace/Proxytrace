@@ -9,9 +9,22 @@ internal sealed record SeedOptions(
     double ErrorRate = 0.05,
     double ConversationRate = 0.30,
     int BatchSize = 10_000,
-    int RandomSeed = 1234)
+    int RandomSeed = 1234,
+    // Per-run test-run statistics rows (TestRunStatsEntity), spread across TestRunSuitePoolSize
+    // synthetic suites, so the suite-scoped TestRunStats query (#253) can be measured at scale. One
+    // TestRunStatsEntity needs one TestRunEntity (the TestRunId FK is 1:1), so this many test runs
+    // are also seeded; SuiteId is a plain indexed column (no FK) so the suite spread is synthetic.
+    long TestRunCount = 25_000,
+    int TestRunSuitePoolSize = 250)
 {
-    public static SeedOptions ForSize(long targetCalls) => new() { TargetCalls = targetCalls };
+    public static SeedOptions ForSize(long targetCalls)
+        => new()
+        {
+            TargetCalls = targetCalls,
+            // Scale the TestRunStats dataset with the run size (capped) so a small smoke `--size`
+            // stays quick while the full ~1M run seeds a meaningful scoped-query-at-scale dataset.
+            TestRunCount = Math.Clamp(targetCalls / 40, 0L, 25_000L),
+        };
 }
 
 /// <summary>What the seeder produced — captured so scenarios can target real ids without re-querying.</summary>
