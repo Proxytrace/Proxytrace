@@ -15,6 +15,9 @@ internal sealed class Transaction : ITransaction
     }
 
     /// <inheritdoc />
+    public bool IsActive => ambient.IsActive;
+
+    /// <inheritdoc />
     public async Task<TResult> InvokeAsync<TResult>(Func<Task<TResult>> operation, CancellationToken cancellationToken = default)
     {
         // Nested call: already inside a logical transaction — run on the shared context so the

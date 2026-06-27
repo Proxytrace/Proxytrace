@@ -15,6 +15,7 @@ internal class DashboardStatistics : IDashboardStatistics
     private readonly IAgentCallRepository agentCalls;
     private readonly IIngestionStream ingestionStream;
     private readonly IAppVersion appVersion;
+    private readonly ITransaction transaction;
 
     public DashboardStatistics(
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
@@ -22,7 +23,8 @@ internal class DashboardStatistics : IDashboardStatistics
         IAgentRepository agents,
         IAgentCallRepository agentCalls,
         IIngestionStream ingestionStream,
-        IAppVersion appVersion)
+        IAppVersion appVersion,
+        ITransaction transaction)
     {
         this.runStats = runStats;
         this.callStats = callStats;
@@ -30,10 +32,24 @@ internal class DashboardStatistics : IDashboardStatistics
         this.agentCalls = agentCalls;
         this.ingestionStream = ingestionStream;
         this.appVersion = appVersion;
+        this.transaction = transaction;
     }
 
     public async Task<DashboardView> GetDashboardViewAsync(StatisticsFilter filter, int recentTraceCount, int agentLimit, CancellationToken cancellationToken = default)
     {
+        // The fan-out below offloads each independent query onto the thread pool via Task.Run. The
+        // ambient transactional StorageDbContext flows through AsyncLocal into those continuations, so
+        // if this method ever ran inside a transaction all the tasks would share that one context
+        // concurrently and EF would throw "A second operation was started on this context instance".
+        // This path is read-only and must never be wrapped in a transaction — fail loudly rather than
+        // risk that race.
+        if (transaction.IsActive)
+        {
+            throw new InvalidOperationException(
+                "GetDashboardViewAsync must not be called inside a transaction: its parallel query " +
+                "fan-out would share the ambient DbContext across concurrent operations.");
+        }
+
         // Every query below is independent and read-only. On a relational provider the awaits yield
         // on real database I/O, so a plain Task.WhenAll fan-out genuinely overlaps them. The kiosk
         // in-memory EF provider, however, executes queries synchronously (it never yields), which

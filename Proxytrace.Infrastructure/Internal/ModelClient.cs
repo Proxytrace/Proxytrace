@@ -223,6 +223,15 @@ internal class ModelClient : IModelClient
 
             completion = completionFactory(message, usage, latency);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Caller-initiated cancellation is not a model failure: rethrow without recording a
+            // captured call. Otherwise the cancellation would be persisted as a phantom HTTP-500
+            // trace (when !skipIngestion), polluting stats/anomaly data. A provider-side timeout
+            // (NetworkTimeout) raises an OperationCanceledException that is NOT from this token, so
+            // it correctly falls through to the generic catch and is recorded as a real error.
+            throw;
+        }
         catch (Exception ex)
         {
             error = ex;
