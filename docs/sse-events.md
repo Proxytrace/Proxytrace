@@ -87,6 +87,24 @@ The client prefers a **short-lived single-use stream ticket** from `GET /api/aut
 SSE responses set `Content-Type: text/event-stream`, `Cache-Control: no-cache`, and
 `X-Accel-Buffering: no` (disables proxy buffering so frames flush immediately).
 
+## Liveness & subscriber limits
+
+**Heartbeat (every stream).** A half-open TCP connection never raises `RequestAborted`, so a quiet
+stream would otherwise leak its subscriber slot forever. Every controller action therefore drains its
+channel through `SseWriter.ReadWithHeartbeatAsync` (`Proxytrace.Api/SseWriter.cs`): after 20s of
+inactivity it yields a `null` tick and the action writes a comment frame (`:\n\n`). On a dead socket
+that write fails, the action unwinds, `RequestAborted` fires, and the broadcaster's cancellation
+registration removes the subscription. Mirror this exactly when adding a stream — emit the heartbeat
+on the `null` tick, real events otherwise.
+
+**Subscriber cap (every broadcaster).** Each broadcaster bounds total live subscriptions at
+`MaxSubscribers = 2000` so an authenticated client can't exhaust memory/sockets by opening unbounded
+streams; past the cap `Subscribe` returns an immediately-completed reader (the SSE request closes
+cleanly). `Subscribe` also rejects a non-cancellable token (`!cancellationToken.CanBeCanceled`) so a
+subscription can never be registered without a disconnect path. This applies to the per-resource
+broadcasters and the two global ones (`TraceBroadcaster`, `NotificationBroadcaster`) every client
+subscribes to.
+
 ## Connection sharing & the HTTP/1.1 budget
 
 The SPA is served over **HTTP/1.1** (nginx `listen 80`), where browsers cap concurrency at
