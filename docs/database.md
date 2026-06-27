@@ -12,6 +12,17 @@ no longer supported.
 Transactions use a single shared EF `IDbContextTransaction` per logical unit (`AmbientDbContext` +
 `Transaction`), so writes never promote to a 2-phase transaction.
 
+> **Gotcha — singleton hosted services must take a *disposable* context for non-transactional batch
+> loops.** The ambient-aware `Func<StorageDbContext>` (`Storage.Module`) hands out a fresh context
+> outside a transaction, and Autofac tracks that context on the *resolving* scope until it disposes.
+> On a short-lived request scope that is fine, but a **singleton** hosted service resolves from the
+> **root** container, so every per-batch `contextFactory()` call would pile up a context that lives
+> until process shutdown (issue #256). A singleton that reads/writes in a non-transactional loop must
+> instead inject Autofac's auto-provided `Func<Owned<StorageDbContext>>` and `await using` the
+> `Owned<>` per batch — it scopes the context to a child lifetime scope the loop disposes. The
+> transactional path is unaffected: `Transaction.InvokeAsync` already disposes its context. See
+> `AgentCallPreviewBackfillService` and `SecretsBackfillService`.
+
 ## Supported storage modes
 
 ### PostgreSQL (persistent — debug / release / e2e)

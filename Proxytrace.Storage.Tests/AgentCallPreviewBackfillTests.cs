@@ -1,3 +1,4 @@
+using Autofac.Features.OwnedInstances;
 using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,6 +86,7 @@ public sealed class AgentCallPreviewBackfillTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
         var contextFactory = services.GetRequiredService<Func<StorageDbContext>>();
+        var ownedContextFactory = services.GetRequiredService<Func<Owned<StorageDbContext>>>();
 
         const int rowCount = 5;
         var ids = new List<Guid>();
@@ -98,7 +100,7 @@ public sealed class AgentCallPreviewBackfillTests : BaseTest<Module>
         // batchSize 2 over 5 null rows = three iterations (2, 2, 1): exercises the pagination loop and
         // the "final partial batch" termination that a single-batch (0/1-row) test never reaches.
         var backfill = new AgentCallPreviewBackfillService(
-            contextFactory, NullLogger<AgentCallPreviewBackfillService>.Instance, batchSize: 2);
+            ownedContextFactory, NullLogger<AgentCallPreviewBackfillService>.Instance, batchSize: 2);
 
         (await backfill.BackfillAsync(CancellationToken)).Should().Be(rowCount);
 
@@ -113,7 +115,7 @@ public sealed class AgentCallPreviewBackfillTests : BaseTest<Module>
     {
         // The backfill is best-effort: a persistent failure must be logged, not thrown, or it would
         // break host startup. A context factory that always throws drives every retry to failure.
-        Func<StorageDbContext> throwingFactory = () => throw new InvalidOperationException("database unavailable");
+        Func<Owned<StorageDbContext>> throwingFactory = () => throw new InvalidOperationException("database unavailable");
         var backfill = new AgentCallPreviewBackfillService(
             throwingFactory, NullLogger<AgentCallPreviewBackfillService>.Instance, retryDelay: TimeSpan.Zero);
 
