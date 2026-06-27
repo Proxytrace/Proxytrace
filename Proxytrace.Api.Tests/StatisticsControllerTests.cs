@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Proxytrace.Api.Configuration;
@@ -7,6 +8,7 @@ using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Application.Statistics;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -119,14 +121,94 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
 
     private StatisticsController ResolveController(
         IDashboardStatistics? dashboard = null,
-        IAgentStatistics? agentStatistics = null)
+        IAgentStatistics? agentStatistics = null,
+        IAgentRepository? agents = null,
+        Proxytrace.Api.Auth.IProjectAccessGuard? accessGuard = null)
     {
         var toolDtoMapper = new ToolDtoMapper();
+        var agentRepo = agents ?? Substitute.For<IAgentRepository>();
+        if (agents is null)
+        {
+            // Default: every agent resolves to some project so the access guard governs the outcome.
+            agentRepo.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                .Returns(Guid.NewGuid());
+        }
         return new StatisticsController(
             dashboard ?? Substitute.For<IDashboardStatistics>(),
             agentStatistics ?? Substitute.For<IAgentStatistics>(),
+            agentRepo,
             new AgentCallDtoMapper(toolDtoMapper),
             new AgentDtoMapper(toolDtoMapper),
-            new StatisticsOptions());
+            new StatisticsOptions(),
+            accessGuard ?? AdminGuard());
+    }
+
+    // Admin-equivalent: may access any project, and GetAccessibleProjectIdsAsync returns null
+    // (the "admin sees everything" signal), so the unscoped global dashboard is permitted.
+    private static Proxytrace.Api.Auth.IProjectAccessGuard AdminGuard()
+    {
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
+        guard.GetAccessibleProjectIdsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyCollection<Guid>?>(null));
+        return guard;
+    }
+
+    // Non-admin member of nothing: denied every project, empty (non-null) accessible set.
+    private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
+    {
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
+        guard.GetAccessibleProjectIdsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyCollection<Guid>?>([]));
+        return guard;
+    }
+
+    [TestMethod]
+    public async Task GetDashboardView_WhenProjectIdSuppliedButInaccessible_ReturnsNotFound()
+    {
+        var controller = ResolveController(accessGuard: DenyingGuard());
+
+        var result = await controller.GetDashboardView(projectId: Guid.NewGuid(), cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetDashboardView_AsNonAdminWithoutProjectId_ReturnsForbidden()
+    {
+        var controller = ResolveController(accessGuard: DenyingGuard());
+
+        var result = await controller.GetDashboardView(cancellationToken: CancellationToken);
+
+        // The unscoped global aggregate spans all tenants — refused to a non-admin.
+        result.Result.Should().BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
+
+    [TestMethod]
+    public async Task GetAgentOverview_WhenAgentInaccessible_ReturnsNotFound()
+    {
+        var agents = Substitute.For<IAgentRepository>();
+        agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
+        var controller = ResolveController(agents: agents, accessGuard: DenyingGuard());
+
+        var now = DateTimeOffset.UtcNow;
+        var result = await controller.GetAgentOverview(Guid.NewGuid(), from: now.AddDays(-1), to: now, cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetAgentDistributions_WhenAgentInaccessible_ReturnsNotFound()
+    {
+        var agents = Substitute.For<IAgentRepository>();
+        agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
+        var controller = ResolveController(agents: agents, accessGuard: DenyingGuard());
+
+        var now = DateTimeOffset.UtcNow;
+        var result = await controller.GetAgentDistributions(Guid.NewGuid(), from: now.AddDays(-1), to: now, cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
     }
 }

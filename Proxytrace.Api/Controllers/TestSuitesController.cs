@@ -307,8 +307,11 @@ public class TestSuitesController : ControllerBase
         foreach (var callId in request.AgentCallIds.Distinct())
         {
             var call = await agentCallRepository.FindAsync(callId, cancellationToken);
-            if (call is null)
-                return BadRequest($"Agent call {callId} not found.");
+            // A trace is only promotable when the caller can access its owning project — otherwise a
+            // crafted agentCallId would copy another tenant's trace content into the caller's suite.
+            // Treat "no access" the same as "not found" so the id can't be used as an existence oracle.
+            if (call is null || !await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
+                return NotFound($"Agent call {callId} not found.");
             if (call.Response is null)
             {
                 throw new InvalidOperationException($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
@@ -382,7 +385,11 @@ public class TestSuitesController : ControllerBase
     {
         if (fromAgentCallId.HasValue)
         {
-            var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
+            // Only build from a trace the caller may access; a foreign call id resolves to null here
+            // and the callers map that to a generic 400 (no cross-tenant trace content disclosed).
+            var call = await agentCallRepository.FindAsync(fromAgentCallId.Value, cancellationToken);
+            if (call is null || !await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
+                return null;
             return expectedOutput is not null
                 ? createTestCase(call.Request, mapper.BuildAssistantMessage(expectedOutput))
                 : createTestCaseFromCall(call);

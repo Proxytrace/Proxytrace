@@ -8,6 +8,7 @@ using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Playground;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Playground.Internal;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -23,7 +24,7 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
             .Returns(_ => ThrowNotImplementedAsync());
 
         IServiceProvider services = GetServices(b => b.RegisterInstance(service).As<IPlaygroundService>());
-        var controller = new PlaygroundController(services.GetRequiredService<IPlaygroundService>());
+        var controller = NewController(services.GetRequiredService<IPlaygroundService>());
         var httpContext = new DefaultHttpContext();
         var body = new MemoryStream();
         httpContext.Response.Body = body;
@@ -45,7 +46,7 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
             .Returns(_ => ThrowAsync(new InvalidOperationException("boom")));
 
         IServiceProvider services = GetServices(b => b.RegisterInstance(service).As<IPlaygroundService>());
-        var controller = new PlaygroundController(services.GetRequiredService<IPlaygroundService>());
+        var controller = NewController(services.GetRequiredService<IPlaygroundService>());
         var httpContext = new DefaultHttpContext();
         var body = new MemoryStream();
         httpContext.Response.Body = body;
@@ -57,6 +58,44 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
         var text = new StreamReader(body).ReadToEnd();
         text.Should().Contain("event: error");
         text.Should().Contain("boom");
+    }
+
+    [TestMethod]
+    public async Task Complete_WhenAgentInaccessible_Returns404AndDoesNotStream()
+    {
+        var service = Substitute.For<IPlaygroundService>();
+        IServiceProvider services = GetServices(b => b.RegisterInstance(service).As<IPlaygroundService>());
+
+        var agents = Substitute.For<IAgentRepository>();
+        agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
+        var controller = new PlaygroundController(services.GetRequiredService<IPlaygroundService>(), agents, DenyingGuard());
+        var httpContext = new DefaultHttpContext();
+        var body = new MemoryStream();
+        httpContext.Response.Body = body;
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        await controller.Complete(BuildRequest(), CancellationToken);
+
+        httpContext.Response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        body.Length.Should().Be(0); // the stream never opened — no SSE body written
+        service.DidNotReceiveWithAnyArgs().CompleteStreamAsync(default!, default);
+    }
+
+    // Resolve a playground controller whose agent + guard permit the request, so the SSE path runs.
+    private static PlaygroundController NewController(IPlaygroundService service)
+    {
+        var agents = Substitute.For<IAgentRepository>();
+        agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
+        return new PlaygroundController(service, agents, guard);
+    }
+
+    private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
+    {
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
+        return guard;
     }
 
     private static PlaygroundCompleteRequestDto BuildRequest() => new(

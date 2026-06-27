@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Domain.Completion;
@@ -20,19 +21,31 @@ public class EvaluatorTestBenchController : ControllerBase
     private readonly ITestResultRepository testResults;
     private readonly ICompletion.Create createCompletion;
     private readonly ITestResult.CreateNew createTestResult;
+    private readonly IProjectAccessGuard accessGuard;
 
     public EvaluatorTestBenchController(
         IEvaluatorRepository evaluators,
         ITestCaseRepository testCases,
         ITestResultRepository testResults,
         ICompletion.Create createCompletion,
-        ITestResult.CreateNew createTestResult)
+        ITestResult.CreateNew createTestResult,
+        IProjectAccessGuard accessGuard)
     {
         this.evaluators = evaluators;
         this.testCases = testCases;
         this.testResults = testResults;
         this.createCompletion = createCompletion;
         this.createTestResult = createTestResult;
+        this.accessGuard = accessGuard;
+    }
+
+    // The test bench reads and evaluates against an evaluator's project data — and `run` spends the
+    // project's provider credential. Resolve the evaluator's project and hide it behind a 404 when the
+    // caller is not a member, both to deny access and to avoid an existence oracle.
+    private async Task<bool> CanAccessEvaluatorAsync(Guid evaluatorId, CancellationToken cancellationToken)
+    {
+        var projectId = await evaluators.GetProjectIdAsync(evaluatorId, cancellationToken);
+        return projectId is not null && await accessGuard.CanAccessProjectAsync(projectId.Value, cancellationToken);
     }
 
     [HttpGet("load")]
@@ -41,7 +54,7 @@ public class EvaluatorTestBenchController : ControllerBase
         [FromQuery] Guid testCaseId,
         CancellationToken cancellationToken)
     {
-        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+        if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
         var testCase = await testCases.FindAsync(testCaseId, cancellationToken);
         if (testCase is null)
@@ -78,7 +91,7 @@ public class EvaluatorTestBenchController : ControllerBase
         Guid evaluatorId,
         CancellationToken cancellationToken)
     {
-        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+        if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
 
         var latest = await testResults.GetLatestByEvaluatorAsync(evaluatorId, cancellationToken);
@@ -93,7 +106,7 @@ public class EvaluatorTestBenchController : ControllerBase
         [FromQuery] int count,
         CancellationToken cancellationToken)
     {
-        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+        if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
 
         var capped = Math.Clamp(count, 1, 50);
@@ -113,7 +126,7 @@ public class EvaluatorTestBenchController : ControllerBase
         [FromQuery] int count,
         CancellationToken cancellationToken)
     {
-        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+        if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
 
         var capped = Math.Clamp(count, 1, 50);
@@ -132,6 +145,8 @@ public class EvaluatorTestBenchController : ControllerBase
         [FromBody] RunEvaluatorOnBenchRequest request,
         CancellationToken cancellationToken)
     {
+        if (!await CanAccessEvaluatorAsync(evaluatorId, cancellationToken))
+            return NotFound($"Evaluator {evaluatorId} not found.");
         var evaluator = await evaluators.FindAsync(evaluatorId, cancellationToken);
         if (evaluator is null)
             return NotFound($"Evaluator {evaluatorId} not found.");
