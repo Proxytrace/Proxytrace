@@ -1,7 +1,7 @@
 using Autofac;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;

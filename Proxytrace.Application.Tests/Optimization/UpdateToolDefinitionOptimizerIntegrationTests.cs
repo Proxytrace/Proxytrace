@@ -24,7 +24,7 @@ using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Domain.Tools;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests.Optimization;

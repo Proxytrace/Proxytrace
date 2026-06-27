@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Auth.Kiosk;

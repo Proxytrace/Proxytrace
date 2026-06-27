@@ -1,7 +1,7 @@
 using Autofac;
 using Autofac.Core;
 using Microsoft.Extensions.Configuration;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Infrastructure.Internal;

@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Common.Hosting;
 using Proxytrace.Common.Time;
 

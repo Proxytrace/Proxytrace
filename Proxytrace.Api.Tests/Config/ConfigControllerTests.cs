@@ -1,7 +1,7 @@
 using AwesomeAssertions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Common.Hosting;
 
 namespace Proxytrace.Api.Tests.Config;

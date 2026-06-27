@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Kiosk;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Tests.Auth;

@@ -1,5 +1,5 @@
 using AwesomeAssertions;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Testing;
 

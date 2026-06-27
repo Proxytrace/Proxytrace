@@ -43,6 +43,7 @@ using Proxytrace.Application.Updates.Internal;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Common.Hosting;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Licensing;
 
 namespace Proxytrace.Application;

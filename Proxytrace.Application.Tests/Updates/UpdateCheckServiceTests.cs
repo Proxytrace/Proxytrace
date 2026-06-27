@@ -4,7 +4,7 @@ using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Proxytrace.Application.Demo;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Application.Updates;
 using Proxytrace.Application.Updates.Internal;
 using Proxytrace.Common.Hosting;
