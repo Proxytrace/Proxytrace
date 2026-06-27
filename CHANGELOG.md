@@ -61,8 +61,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   Proxytrace: the whole optimization-theory loop (theory submitted/reset/rejected, plus the A/B
   pipeline's validated/invalidated decisions, the proposals it generates, and proposals it
   auto-adopts), the test-run lifecycle (cancel, optimize, delete) and recurring **schedules**
-  (create/update/delete/run-now), trace deletions, agent-version moves, the destructive **non-model
-  data purge**, and the one-time at-rest **secrets backfill**. **New OIDC coverage:** the first-time
+  (create/update/delete/run-now), trace deletions, agent-version moves, **test-case edits**, the
+  destructive **non-model data purge**, and the one-time at-rest **secrets backfill**. **New OIDC coverage:** the first-time
   provisioning of an SSO user is now recorded. **New failure visibility:** a forbidden attempt to
   change something (HTTP 403) is logged as an **Access denied** failure, so privilege-probing shows up
   alongside failed sign-ins. All new action types are filterable on the audit-log page.
