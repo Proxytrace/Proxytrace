@@ -96,7 +96,7 @@ export function useEventStream<T>(
   url: string | null,
   events: string[],
   onEvent: (event: T) => void,
-  onComplete?: () => void,
+  onComplete?: (event: T) => void,
   completeEvent?: string,
 ) {
   const onEventRef = useRef(onEvent);
@@ -127,8 +127,11 @@ export function useEventStream<T>(
           });
         }
         es.addEventListener(completeEvent, (e: MessageEvent) => {
-          onEventRef.current({ type: completeEvent, ...JSON.parse(e.data) } as T);
-          onCompleteRef.current?.();
+          const evt = { type: completeEvent, ...JSON.parse(e.data) } as T;
+          onEventRef.current(evt);
+          // Hand the terminal payload to onComplete so the run view can flip the group's own status
+          // from the event (it carries the final status) instead of waiting on the invalidate refetch.
+          onCompleteRef.current?.(evt);
           es?.close();
         });
       });
@@ -194,7 +197,7 @@ const GROUP_EVENTS = ['test-case-started', 'inference-done', 'evaluation-arrived
 export function useTestRunGroupStream(
   groupId: string | null,
   onEvent: (e: TestRunEvent) => void,
-  onDone?: () => void,
+  onDone?: (e: GroupRunCompleteEvent | TestRunEvent) => void,
 ) {
   useEventStream<GroupRunCompleteEvent | TestRunEvent>(
     groupId ? `/api/test-run-groups/${groupId}/stream` : null,

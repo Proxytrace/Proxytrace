@@ -16,7 +16,10 @@ export function GroupDetail({ groupId, onDelete }: { groupId: string; onDelete: 
   // patches this cached group in place and surfaces per-evaluator in-flight progress — no polling, no
   // refetch until the run ends.
   const { group, isLoading } = useTestRunGroupDetail(groupId);
-  const active = group?.runs.some(r => isActive(r.status)) ?? false;
+  // Stay subscribed until the *group* settles, not until its runs do. Keying off the runs tore the
+  // stream down on the last `run-complete` — which can land before the terminal `group-run-complete`,
+  // so `handleDone` never ran and the header stuck on "Running" until a manual refresh.
+  const active = group ? isActive(group.status) : false;
   const live = useRunGroupStream(groupId, active);
   const cancelGroup = useCancelTestRunGroup(groupId);
 

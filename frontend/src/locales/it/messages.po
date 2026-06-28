@@ -2446,6 +2446,9 @@ msgstr "Carica da trace"
 msgid "Load from trace or test case"
 msgstr "Carica da trace o caso di test"
 
+msgid "Load more"
+msgstr "Carica altro"
+
 msgid "Loading"
 msgstr "Caricamento"
 

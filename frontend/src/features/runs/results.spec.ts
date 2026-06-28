@@ -23,6 +23,7 @@ import {
   fixtureSummary,
   patchGroupWithResult,
   patchGroupRunStatus,
+  markRunRunning,
   scoreLabel,
 } from './results';
 import {
@@ -352,6 +353,16 @@ describe('buildLeaderboard', () => {
     expect(entries.every(e => e.delta === null)).toBe(true);
     expect(entries.find(e => e.run.id === 'a')?.passRate).toBe(90);
   });
+
+  it('rounds the cohort mean pass rate to an integer (no 96.666… leaking to the card)', () => {
+    // Three samples of one endpoint at 100 / 100 / 90 average to 96.66… — must round to 97.
+    const s = (sampleIndex: number, passed: number, failed: number) =>
+      lbRun({ id: `s${sampleIndex}`, endpointId: 'ep', endpointName: 'ep', sampleIndex, passedCases: passed, failedCases: failed });
+    const [entry] = lb([s(0, 10, 0), s(1, 10, 0), s(2, 9, 1)], true);
+    expect(entry.sampleCount).toBe(3);
+    expect(entry.passRate).toBe(97);
+    expect(Number.isInteger(entry.passRate)).toBe(true);
+  });
 });
 
 describe('comparisonGrid', () => {
@@ -466,6 +477,44 @@ describe('patchGroupWithResult', () => {
     });
     expect(next.runs[0].status).toBe(TestRunStatus.Completed);
     expect(next.runs[0].completedAt).toBe('2024-01-01T00:00:00Z');
+  });
+
+  it('carries per-case cost/tokens onto the patched result and sums them into live run totals', () => {
+    const run = patchGroupWithResult(
+      group({}),
+      event({ costUsd: 0.012, tokensIn: 100, tokensOut: 40, cachedTokensIn: 10 }),
+    ).runs[0];
+    expect(run.results[0]).toMatchObject({ costUsd: 0.012, tokensIn: 100, tokensOut: 40, cachedTokensIn: 10 });
+    // Run-level totals are summed from the per-case usage so the cards tick up live mid-run.
+    expect(run.costUsd).toBeCloseTo(0.012);
+    expect(run.tokensIn).toBe(100);
+    expect(run.tokensOut).toBe(40);
+    expect(run.cachedTokensIn).toBe(10);
+  });
+
+  it('accumulates cost/tokens across multiple cases', () => {
+    const afterFirst = patchGroupWithResult(group({}), event({ testCaseId: 'c1', costUsd: 0.01, tokensIn: 100, tokensOut: 40 }));
+    const run = patchGroupWithResult(afterFirst, event({ testCaseId: 'c2', costUsd: 0.02, tokensIn: 50, tokensOut: 30 })).runs[0];
+    expect(run.costUsd).toBeCloseTo(0.03);
+    expect(run.tokensIn).toBe(150);
+    expect(run.tokensOut).toBe(70);
+  });
+
+  it('leaves run totals null when no case reported usage (so the cards read "—", not 0)', () => {
+    const run = patchGroupWithResult(group({}), event({})).runs[0];
+    expect(run.costUsd).toBeNull();
+    expect(run.tokensIn).toBeNull();
+  });
+
+  it('flips a Pending run to Running on its first event, and no-ops once past Pending', () => {
+    const pending = group({ status: TestRunStatus.Pending });
+    const started = markRunRunning(pending, 'run1');
+    expect(started.runs[0].status).toBe(TestRunStatus.Running);
+
+    // Idempotent: a run already Running (or terminal) is returned by reference, no re-render churn.
+    expect(markRunRunning(started, 'run1')).toBe(started);
+    const completed = group({ status: TestRunStatus.Completed });
+    expect(markRunRunning(completed, 'run1')).toBe(completed);
   });
 });
 

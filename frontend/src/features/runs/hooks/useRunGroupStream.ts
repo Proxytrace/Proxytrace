@@ -3,13 +3,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { TestRunEvent, TestRunGroupDto } from '../../../api/models';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { useTestRunGroupStream } from '../../../api/event-stream';
-import { patchGroupRunStatus, patchGroupWithResult } from '../results';
+import { markRunRunning, patchGroupRunStatus, patchGroupWithResult } from '../results';
 import { emptyLiveProgress, reduceLiveProgress, type LiveProgress } from '../live';
 
 /** Folds one already-buffered event into the cached group (finalized result or per-run status). */
 function applyToCache(group: TestRunGroupDto, e: TestRunEvent): TestRunGroupDto {
   if (e.type === 'test-result-arrived') return patchGroupWithResult(group, e);
   if (e.type === 'run-complete') return patchGroupRunStatus(group, e);
+  // A case starting is the earliest signal a run is executing — flip it out of Pending so its card
+  // shows "running" + a live duration without waiting for the first case to finish.
+  if (e.type === 'test-case-started') return markRunRunning(group, e.runId);
   return group;
 }
 
@@ -49,7 +52,7 @@ export function useRunGroupStream(groupId: string, active: boolean): LiveProgres
       setLive(nextLive);
     }
 
-    if (events.some(e => e.type === 'test-result-arrived' || e.type === 'run-complete')) {
+    if (events.some(e => e.type === 'test-result-arrived' || e.type === 'run-complete' || e.type === 'test-case-started')) {
       qc.setQueryData<TestRunGroupDto>(
         QUERY_KEYS.testRunGroup(groupId),
         group => (group ? events.reduce(applyToCache, group) : group),
@@ -62,18 +65,29 @@ export function useRunGroupStream(groupId: string, active: boolean): LiveProgres
     frameRef.current ??= requestAnimationFrame(flush);
   }, [flush]);
 
-  const handleDone = useCallback(() => {
+  const handleDone = useCallback((e?: TestRunEvent) => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     frameRef.current = null;
     pendingRef.current = [];
     liveRef.current = emptyLiveProgress();
     setLive(liveRef.current);
+    // Flip the group's *own* status straight from the terminal event. The per-run `run-complete`
+    // events only patch each run's status; nothing patched `group.status`, so the header badge sat on
+    // "Running" until the invalidate refetch returned — and the stream could even tear down before
+    // `group-run-complete` arrived (the last run-complete already settled every run). Patching here
+    // flips the badge immediately; the invalidate below still reconciles to the authoritative DTO.
+    if (e?.type === 'group-run-complete') {
+      qc.setQueryData<TestRunGroupDto>(
+        QUERY_KEYS.testRunGroup(groupId),
+        group => (group ? { ...group, status: e.groupStatus, completedAt: e.groupCompletedAt } : group),
+      );
+    }
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunSchedulesRoot });
     // A finished run changes the owning suite's aggregates (pass rate, run count, last run, trend)
     // and its windowed run-stats; the root prefix covers the list, the fat suite, and run-stats.
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.testSuitesRoot });
-  }, [qc]);
+  }, [qc, groupId]);
 
   useEffect(() => () => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);

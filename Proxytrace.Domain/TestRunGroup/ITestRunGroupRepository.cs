@@ -1,10 +1,19 @@
 using Proxytrace.Domain.Paging;
+using Proxytrace.Domain.TestRun;
 
 namespace Proxytrace.Domain.TestRunGroup;
 
 public interface ITestRunGroupRepository : IRepository<ITestRunGroup>
 {
     Task<IReadOnlyList<ITestRunGroup>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns every group whose <see cref="ITestRunGroup.Status"/> is one of <paramref name="statuses"/>.
+    /// Used at startup to find groups left non-terminal by a previous shutdown. Filters in SQL.
+    /// </summary>
+    Task<IReadOnlyList<ITestRunGroup>> GetByStatusesAsync(
+        IReadOnlyCollection<TestRunStatus> statuses,
+        CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ITestRunGroup>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 

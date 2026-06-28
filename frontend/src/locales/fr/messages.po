@@ -2446,6 +2446,9 @@ msgstr "Charger depuis la Trace"
 msgid "Load from trace or test case"
 msgstr "Charger depuis la Trace ou le cas de test"
 
+msgid "Load more"
+msgstr "Charger plus"
+
 msgid "Loading"
 msgstr "Chargement"
 

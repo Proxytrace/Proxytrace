@@ -53,20 +53,27 @@ public sealed class TestRunDtoMapper
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
             TestCases: r.Group.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, tc.GetSummary())).ToArray(),
-            Results: r.TestResults.Select(res => new TestResultDto(
-                res.Id,
-                res.TestCase.Id,
-                res.TestCase.GetSummary(),
-                res.ActualResponse.GetText(),
-                res.Evaluations.Select(e => new EvaluationResultDto(
-                    e.Evaluator.Id,
-                    e.Evaluator.Kind,
-                    e.Evaluator.Name,
-                    e.Score,
-                    e.Reasoning,
-                    e.ErrorMessage)).ToArray(),
-                (long)res.Latency.TotalMilliseconds
-            )).ToArray(),
+            Results: r.TestResults.Select(res =>
+            {
+                var resultTotals = TestRunTotals.FromResult(r, res);
+                return new TestResultDto(
+                    res.Id,
+                    res.TestCase.Id,
+                    res.TestCase.GetSummary(),
+                    res.ActualResponse.GetText(),
+                    res.Evaluations.Select(e => new EvaluationResultDto(
+                        e.Evaluator.Id,
+                        e.Evaluator.Kind,
+                        e.Evaluator.Name,
+                        e.Score,
+                        e.Reasoning,
+                        e.ErrorMessage)).ToArray(),
+                    (long)res.Latency.TotalMilliseconds,
+                    resultTotals.CostUsd is { } cost ? (double)cost : null,
+                    resultTotals.TokensIn,
+                    resultTotals.TokensOut,
+                    resultTotals.CachedTokensIn);
+            }).ToArray(),
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
     }

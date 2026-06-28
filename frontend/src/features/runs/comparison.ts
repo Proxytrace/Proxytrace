@@ -104,6 +104,8 @@ const meanOf = (vals: (number | null)[]): number | null => {
   return present.length ? present.reduce((a, b) => a + b, 0) / present.length : null;
 };
 
+const roundOrNull = (n: number | null): number | null => (n === null ? null : Math.round(n));
+
 /** Averages a cohort's samples into one comparison row: mean pass rate, duration, cost and tokens. */
 function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
   const runs = cohort.runs;
@@ -113,7 +115,9 @@ function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
     passed: Math.round(meanOf(runs.map(r => r.passedCases)) ?? 0),
     failed: Math.round(meanOf(runs.map(r => r.failedCases)) ?? 0),
     pending: Math.round(meanOf(runs.map(r => Math.max(0, r.totalCases - r.results.length))) ?? 0),
-    passRate: meanOf(runs.map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases))),
+    // Round the cohort mean: averaging already-rounded per-sample percentages otherwise yields
+    // values like 96.6666… that leak straight into the pass-rate cards.
+    passRate: roundOrNull(meanOf(runs.map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases)))),
     durationMs: meanOf(runs.map(r => r.durationMs)),
     costUsd: meanOf(runs.map(r => r.costUsd)),
     tokensIn: meanOf(runs.map(r => r.tokensIn)),

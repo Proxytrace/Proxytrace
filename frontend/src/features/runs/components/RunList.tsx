@@ -5,6 +5,7 @@ import { FOCUS_RING } from '../../../lib/constants';
 import { ListRail } from '../../../components/ui/ListRail';
 import { FilterDropdown, type FilterDropdownOption } from '../../../components/ui/FilterDropdown';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { Button } from '../../../components/ui/Button';
 import { GroupListCard } from './GroupListCard';
 
 interface Props {
@@ -16,12 +17,15 @@ interface Props {
   agentFilter: { value: string; options: FilterDropdownOption[]; accent?: string; onChange: (v: string) => void };
   showSystem: boolean;
   onToggleSystem: () => void;
+  hasMore: boolean;
+  onLoadMore: () => void;
+  isLoadingMore: boolean;
 }
 
 /** Left column of the Runs master–detail, built on the shared `ListRail`. Runs are not created
  * here (no create action) and aren't searched — both header slots collapse; the filter band holds
  * the agent filter + the A/B-runs toggle. The page owns the Runs/Scheduled tabs above this. */
-export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, agentFilter, showSystem, onToggleSystem }: Props) {
+export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, agentFilter, showSystem, onToggleSystem, hasMore, onLoadMore, isLoadingMore }: Props) {
   const { t } = useLingui();
   return (
     <ListRail
@@ -72,6 +76,19 @@ export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, age
             onDelete={() => onDelete(group.id)}
           />
         ))}
+        {hasMore && (
+          <Button
+            variant="secondary"
+            size="sm"
+            fullWidth
+            loading={isLoadingMore}
+            onClick={onLoadMore}
+            data-testid="runs-load-more"
+            className="mt-1"
+          >
+            <Trans>Load more</Trans>
+          </Button>
+        )}
       </div>
     </ListRail>
   );

@@ -567,6 +567,20 @@ public sealed class Module : Autofac.Module
                     sp.GetRequiredService<DefaultEvaluatorSeederHostedService>()));
         }
 
+        builder.RegisterType<OrphanedTestRunReaperHostedService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(OrphanedTestRunReaperHostedService));
+
+        const string orphanedTestRunReaperHostedServiceKey = "Proxytrace.Application.OrphanedTestRunReaperHostedService.Registered";
+        if (!builder.Properties.ContainsKey(orphanedTestRunReaperHostedServiceKey))
+        {
+            builder.Properties[orphanedTestRunReaperHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services =>
+                services.AddSingleton<IHostedService>(sp =>
+                    sp.GetRequiredService<OrphanedTestRunReaperHostedService>()));
+        }
+
         builder.RegisterType<DemoSeederHostedService>()
             .AsSelf()
             .SingleInstance()

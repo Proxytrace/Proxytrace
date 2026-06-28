@@ -54,6 +54,11 @@ A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEval
   the user's run list.
 - Each `TestCase` produces a **`TestResult`** scored by the suite's evaluators. Live progress
   streams over SSE via `ITestResultBroadcaster`.
+- The runner's work queue and in-flight state are **in-memory only**, so a process restart mid-run
+  strands those groups in `Running`/`Pending` (they can't be resumed). `OrphanedTestRunReaperHostedService`
+  runs on startup and marks every non-terminal group and its non-terminal runs **`Cancelled`**
+  (via `ITestRunGroupRepository.GetByStatusesAsync`), mirroring how theory validation re-reconciles its
+  in-memory queue on boot. Idempotent — a clean shutdown leaves nothing to reap.
 
 Runs can be kicked off **manually** (the API/UI) or on a **schedule**. A `TestRunSchedule` (a
 domain entity binding a suite to a fixed set of endpoints — capped at 3, like manual runs — + a

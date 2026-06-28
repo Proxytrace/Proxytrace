@@ -38,11 +38,26 @@ payload so it can be filtered the same way.
 The runs list is **light** (`TestRunGroupListItemDto`, no per-case results), so `useRunGroupStream`
 patches the selected group's **detail** query (`QUERY_KEYS.testRunGroup(id)`) — the fat group fetched
 when a run is opened — via `setQueryData`, **not** the list cache. The patch no-ops until the detail
-query resolves (an SSE event can arrive before the detail GET). On the terminal event it invalidates
-the whole `test-run-groups` namespace (`testRunGroupsRoot`), healing both the detail matrix and the
-left-rail list (whose pass rates are static mid-run by design). It also invalidates
-`testRunSchedulesRoot` (a schedule's recent-runs change) and `testSuitesRoot` (the owning suite's
-aggregates and windowed run-stats change once a run finishes). See `frontend/src/features/runs/`.
+query resolves (an SSE event can arrive before the detail GET). On the terminal `group-run-complete`
+it first patches the cached group's own `status`/`completedAt` straight from the event (so the header
+badge flips immediately, not after the refetch round-trip), then invalidates the whole
+`test-run-groups` namespace (`testRunGroupsRoot`), healing both the detail matrix and the left-rail
+list (whose pass rates are static mid-run by design). It also invalidates `testRunSchedulesRoot` (a
+schedule's recent-runs change) and `testSuitesRoot` (the owning suite's aggregates and windowed
+run-stats change once a run finishes). See `frontend/src/features/runs/`.
+
+**Subscription lifetime is keyed off the *group* status, not its runs.** `GroupDetail` subscribes
+while `isActive(group.status)` and unsubscribes only once the group itself settles — *not* once every
+run is non-active. Keying off the runs tore the stream down on the last `run-complete`, which can land
+before `group-run-complete`, so `handleDone` (the terminal flip + invalidate) never ran and the header
+stuck on "Running" until a manual refresh. The per-run `run-complete` events still patch each run's
+status (the matrix/leaderboard spinners), but only the group-level terminal event flips the group.
+
+The backend marks an individual **run** `Running` only once its first case finishes and never streams
+that `Pending → Running` transition, so a freshly-opened run would otherwise read `Pending` (and show
+a "—" duration) for its whole life. To fix that, `useRunGroupStream` flips a cached run out of
+`Pending` on its first `test-case-started` event (`markRunRunning`, idempotent), so the run reads as
+running — with a live ticking duration — the moment a case starts, not when the first one finishes.
 
 **Sampling is read-side only.** Running each endpoint N times (a cohort of sample runs) adds **no new
 events and no payload changes** — events stay keyed by `runId`/`testCaseId`, one per sample run, and the
@@ -72,7 +87,7 @@ in `frontend/src/api/models.ts`.
   - `TestCaseStartedEvent` — `+ TestCaseId`
   - `InferenceDoneEvent` — `+ TestCaseId`
   - `EvaluationArrivedEvent` — `+ TestCaseId, Evaluation` (`EvaluationEventData`: evaluator id/kind/name, score, reasoning, error)
-  - `TestResultArrivedEvent` — `+ TestCaseId, OverallScore, Evaluations[], DurationMs`
+  - `TestResultArrivedEvent` — `+ TestCaseId, OverallScore, Evaluations[], DurationMs, CostUsd?, TokensIn?, TokensOut?, CachedTokensIn?` (the per-case usage rides along so the live run cards can sum a running run's cost/tokens as each case lands — `CalculateCost` is linear, so the client sum equals the run-level `TestRunTotals`; `null` when the provider reported no usage)
   - `RunCompleteEvent` — `+ Status, CompletedAt?`
   - `GroupRunCompleteEvent` — `GroupId, GroupStatus, GroupCompletedAt?`; **`RunId` is `Guid.Empty`** for this group-level event.
 

@@ -50,7 +50,11 @@ public record TestResultDto(
     string TestCaseSummary,
     string ActualResponse,
     IReadOnlyList<EvaluationResultDto> Evaluations,
-    long DurationMs);
+    long DurationMs,
+    double? CostUsd,
+    long? TokensIn,
+    long? TokensOut,
+    long? CachedTokensIn);
 
 public record TestRunMessageDto(string Role, string Content);
 

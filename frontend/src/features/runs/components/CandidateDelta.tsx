@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import type { LeaderboardEntry } from '../comparison';
 import { TestRunStatus } from '../../../api/models';
 import { fmtDuration, fmtCost } from '../../../lib/format';
+import { useLiveElapsedMs } from '../hooks/useLiveElapsed';
 import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
 import { Spinner } from '../../../components/ui/Spinner';
@@ -20,6 +21,8 @@ export function CandidateDelta({ entry, baselineIsProduction }: { entry: Leaderb
   const running = run.status === TestRunStatus.Running;
   const pending = run.status === TestRunStatus.Pending;
   const total = passed + failed || run.totalCases;
+  // Run-level durationMs is null until the run finishes; tick wall-clock elapsed while it runs.
+  const elapsedMs = useLiveElapsedMs(run.startedAt, running);
 
   const points = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '±0');
   const costText = (frac: number) => {
@@ -37,7 +40,7 @@ export function CandidateDelta({ entry, baselineIsProduction }: { entry: Leaderb
     },
     {
       label: t`Speed`,
-      value: fmtDuration(run.durationMs),
+      value: fmtDuration(running ? elapsedMs : run.durationMs),
       badge: delta?.durationMs != null ? { better: delta.durationBetter, text: speedText(delta.durationMs) } : null,
     },
     {

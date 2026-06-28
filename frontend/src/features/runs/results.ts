@@ -6,6 +6,7 @@
 // What stays here is runs-only aggregation: the (case × model) matrix pivot, SSE cache
 // patching, and the fixture/progress rollups.
 
+import { TestRunStatus } from '../../api/models';
 import type {
   RunCompleteEvent,
   TestCaseFixtureDto,
@@ -178,10 +179,21 @@ export function patchGroupWithResult(
       actualResponse: '',
       evaluations: e.evaluations,
       durationMs: e.durationMs,
+      costUsd: e.costUsd ?? null,
+      tokensIn: e.tokensIn ?? null,
+      tokensOut: e.tokensOut ?? null,
+      cachedTokensIn: e.cachedTokensIn ?? null,
     };
     const results = [...run.results.filter(r => r.testCaseId !== e.testCaseId), result];
     return withCounts(run, results);
   });
+}
+
+/** Sums one nullable per-case metric across a run's results; `null` when no case reported it (so a
+ * run with no usage reads "—", matching the backend's TestRunTotals, not a misleading 0). */
+function sumOrNull(values: (number | null | undefined)[]): number | null {
+  const present = values.filter((x): x is number => x != null);
+  return present.length > 0 ? present.reduce((a, b) => a + b, 0) : null;
 }
 
 /** Flips a single run's status/completion in the selected group on a `run-complete` event. */
@@ -193,11 +205,39 @@ export function patchGroupRunStatus(
   return mapRun(group, e.runId, run => ({ ...run, status: e.status, completedAt: e.completedAt }));
 }
 
-/** Recomputes pass/fail counts and (judged-denominator) pass rate from a run's results. */
+/**
+ * Flips a still-`Pending` run to `Running` the moment its first event arrives (a case has started).
+ * The backend only marks a *run* `Running` once its first case finishes and never streams that
+ * transition, so a freshly-opened run otherwise reads `Pending` for its whole duration — leaving the
+ * model cards stuck on "pending" with a "—" duration. No-ops (returns the same group reference) once
+ * the run is past `Pending`, so applying it on every case-started event stays cheap and render-stable.
+ */
+export function markRunRunning(group: TestRunGroupDto, runId: string): TestRunGroupDto {
+  const run = group.runs.find(r => r.id === runId);
+  if (!run || run.status !== TestRunStatus.Pending) return group;
+  return mapRun(group, runId, r => ({ ...r, status: TestRunStatus.Running }));
+}
+
+/**
+ * Recomputes pass/fail counts, (judged-denominator) pass rate, and the run-level cost/token totals
+ * from a run's results. The totals are summed from the per-case usage carried on each result so the
+ * run cards read live during a run (the backend leaves run-level totals null until the run finishes);
+ * the terminal refetch then reconciles to the authoritative backend totals.
+ */
 function withCounts(run: TestRunDto, results: TestResultDto[]): TestRunDto {
   const passedCases = results.filter(r => resultPass(r) === true).length;
   const failedCases = results.filter(r => resultPass(r) === false).length;
-  return { ...run, results, passedCases, failedCases, passRate: compositePercent(passedCases, passedCases + failedCases) ?? 0 };
+  return {
+    ...run,
+    results,
+    passedCases,
+    failedCases,
+    passRate: compositePercent(passedCases, passedCases + failedCases) ?? 0,
+    costUsd: sumOrNull(results.map(r => r.costUsd)),
+    tokensIn: sumOrNull(results.map(r => r.tokensIn)),
+    tokensOut: sumOrNull(results.map(r => r.tokensOut)),
+    cachedTokensIn: sumOrNull(results.map(r => r.cachedTokensIn)),
+  };
 }
 
 /** Applies `fn` to the one matching run inside the group; everything else is untouched. */

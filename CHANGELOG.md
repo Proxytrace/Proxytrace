@@ -69,6 +69,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Live duration, cost and tokens during a test run.** While a run is in progress its model cards now
+  count **duration, cost and tokens** up as each case lands, instead of sitting at "—"/`$0` until the
+  run finished. Running runs are also highlighted in the left-hand **Test Runs** list with an animated
+  accent ring and a pulsing **Running** tag, so an in-flight run is obvious at a glance.
+- **The Test Runs list loads incrementally.** Instead of fetching a large batch up front, the runs rail
+  now loads the most recent runs first and reveals older ones on demand via a **Load more** button —
+  faster to open and lighter on projects with a long run history.
 - **Test-run model comparison, rebuilt around your production model.** A run's results now open with
   the model you have **in production** (the agent's deployed endpoint) as the **baseline** — a
   highlighted champion card carrying the headline pass rate plus duration, cost, and token totals.
@@ -95,6 +102,27 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Deleting a test run no longer flashes a "not found" error.** Removing a run refreshed the whole
+  run namespace, which re-fetched the just-deleted run's own detail and surfaced a 404. Delete now
+  drops the run from the list immediately and skips re-fetching the gone detail, so it disappears
+  cleanly.
+- **Interrupted test runs no longer hang in "Running" forever.** A run in progress when the server
+  restarts (deploy, crash, container recycle) could be stranded in **Running**/**Pending**
+  indefinitely, since its work only lived in memory and can't be resumed. On startup the server now
+  marks any such orphaned run **Cancelled**, so the list and headers reflect reality instead of a
+  ghost run that never finishes.
+- **A running test run now shows a live duration.** Each model card's **Duration** stayed at "—" for
+  the whole run (the per-run state only flips once a case finishes and that transition wasn't streamed)
+  and only filled in at the end. A run now reads as **running** as soon as its first case starts, with
+  the duration ticking up live alongside cost and tokens.
+- **A finished test run now updates to "Completed" on its own.** The run header could stay stuck on
+  **Running** after the run had actually finished on the server, only flipping to **Completed** after a
+  manual page refresh. The live view now keeps its event stream open until the *group* finishes (not
+  just its individual runs) and flips the status the moment the completion event arrives, so the header,
+  the **Cancel** button, and the live progress bar all settle without a refresh.
+- **Test-run pass rate no longer shows a long decimal.** Averaged pass rates on the comparison cards
+  rendered as e.g. `96.66666666666667%`; they're now rounded to a whole percent like every other
+  pass-rate readout.
 - **Outlier-detection changes show a proper label in the audit log.** Tuning **Settings → Outlier
   detection** records an audit entry, but the Audit Log page rendered that action with a blank,
   uncoloured, unfilterable label. The `Outlier Settings Updated` action now shows its label and

@@ -30,11 +30,18 @@ a single run per endpoint — exactly the classic behaviour.
 
 ## Watching progress
 
-Runs stream their progress live via Server-Sent Events, without refreshing the page.
+Runs stream their progress live via Server-Sent Events, without refreshing the page. A run
+that is still in progress is highlighted in the **run list** on the left with an animated
+accent ring and a pulsing **Running** tag, and settles to its final state on its own the moment
+the run finishes — no refresh needed. The list shows the most recent runs first; use **Load
+more** at the bottom to page through older ones.
 
 The **run header** shows a progress bar with three pieces of information at a glance:
 `cases done / total · overall % · estimated time remaining`. The ETA updates continuously
 as judgements arrive, so you always know roughly when the run will settle.
+
+The per-model cards also count **duration, cost, and tokens** up live as each case lands, so you
+can watch a run's spend accrue rather than waiting for the final totals.
 
 In the **test case matrix**, each cell contains one slot per evaluator attached to the suite.
 Slots start grey (queued) and fill with color as each evaluator reports back — green for pass,

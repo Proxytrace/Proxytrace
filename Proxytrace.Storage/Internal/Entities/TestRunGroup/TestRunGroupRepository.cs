@@ -39,6 +39,23 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
         return await Map(stored, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ITestRunGroup>> GetByStatusesAsync(
+        IReadOnlyCollection<TestRunStatus> statuses,
+        CancellationToken cancellationToken = default)
+    {
+        if (statuses.Count == 0)
+            return [];
+
+        var context = contextFactory();
+        var stored = await context
+            .Set<TestRunGroupEntity>()
+            .AsNoTracking()
+            .Where(g => statuses.Contains(g.Status))
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<ITestRunGroup>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
