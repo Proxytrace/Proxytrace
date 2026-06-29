@@ -76,8 +76,18 @@ feed every downstream stage of this loop exactly like manual ones.
 | Run config (concurrency etc.) | `Proxytrace.Application/TestRun/TestRunnerConfiguration.cs` |
 | Live results SSE | `Proxytrace.Application/Streaming/Internal/TestResultBroadcaster.cs` |
 | Aggregate stats | `Proxytrace.Application/Statistics/TestRun/Internal/TestRunStatsProjector.cs` |
+| Run → DTO (incl. latency) | `Proxytrace.Api/Dto/TestRuns/TestRunDtoMapper.cs` |
 | API entry | `Proxytrace.Api/Controllers/TestRunGroupsController.cs` |
 | Domain entities | `Proxytrace.Domain/{TestSuite,TestCase,TestRunGroup,TestRun,TestResult}/` |
+
+**A run's "latency" is the model's inference latency, aggregated across cases — never a wall-clock
+run timer.** Each `TestResult.Latency` is a `Stopwatch` around the single model call
+(`ModelClient.CompleteAsync`), excluding evaluators. Everything that reports run latency derives
+from those per-case values: `TestRunStats.TotalDuration` sums them, the anomaly detector and
+`TheoryValidatorBase.Metrics` use the sum/mean, and `TestRunDtoMapper` exposes `DurationMs` as their
+**average** (what the UI's comparison cards show). A wall-clock `CompletedAt − CreatedAt` measure
+would fold in the run's queue wait, the evaluator passes, and the parallel-execution overlap between
+cases, so it is deliberately **not** used for latency.
 
 When a group completes, `TestRunnerService` calls `IOptimizerService.EnqueueAsync(group)`
 (`TestRunnerService.cs:178`). `TestRunGroupsController` can also enqueue on demand.

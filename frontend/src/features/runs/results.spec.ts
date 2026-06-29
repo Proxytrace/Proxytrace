@@ -272,10 +272,15 @@ describe('buildMatrixRows', () => {
 
 describe('buildLeaderboard', () => {
   function lbRun(over: Partial<TestRunDto>): TestRunDto {
+    // The leaderboard derives latency from the per-case result durations (the model's inference
+    // latency), not the wall-clock run-level `durationMs`. Stamp each case with the run's intended
+    // latency so a test that sets `durationMs` to control the speed comparison still works.
+    const perCaseLatencyMs = over.durationMs ?? 1000;
     return {
       id: 'r', endpointId: 'ep', endpointName: 'm', sampleIndex: 0, status: TestRunStatus.Completed,
-      totalCases: 10, passedCases: 8, failedCases: 2, results: new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}` })),
-      durationMs: 1000, costUsd: 0.5, tokensIn: 100, tokensOut: 50, ...over,
+      totalCases: 10, passedCases: 8, failedCases: 2,
+      results: new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}`, durationMs: perCaseLatencyMs })),
+      durationMs: perCaseLatencyMs, costUsd: 0.5, tokensIn: 100, tokensOut: 50, ...over,
     } as TestRunDto;
   }
 
@@ -292,6 +297,20 @@ describe('buildLeaderboard', () => {
     expect(ea.isBest).toBe(true);
     expect(eb.isFastest).toBe(true);
     expect(eb.isCheapest).toBe(true);
+  });
+
+  it('derives latency from per-case inference durations, not the wall-clock run.durationMs', () => {
+    // The wall-clock run-level durationMs says A is faster (100ms vs 9000ms), but the per-case
+    // inference latencies say the opposite (A averages 2000ms, B averages 500ms). The leaderboard
+    // must rank on the inference latency, so B wins "fastest".
+    const cases = (ms: number) => new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}`, durationMs: ms })) as TestResultDto[];
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', results: cases(2000), durationMs: 100 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', results: cases(500), durationMs: 9000 });
+    const [ea, eb] = lb([a, b], true);
+    expect(ea.durationMs).toBe(2000);
+    expect(eb.durationMs).toBe(500);
+    expect(eb.isFastest).toBe(true);
+    expect(ea.isFastest).toBe(false);
   });
 
   it('without a deployed endpoint, the best performer is the baseline and others read against it', () => {

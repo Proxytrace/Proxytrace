@@ -106,7 +106,7 @@ const meanOf = (vals: (number | null)[]): number | null => {
 
 const roundOrNull = (n: number | null): number | null => (n === null ? null : Math.round(n));
 
-/** Averages a cohort's samples into one comparison row: mean pass rate, duration, cost and tokens. */
+/** Averages a cohort's samples into one comparison row: mean pass rate, latency, cost and tokens. */
 function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
   const runs = cohort.runs;
   return {
@@ -118,7 +118,12 @@ function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
     // Round the cohort mean: averaging already-rounded per-sample percentages otherwise yields
     // values like 96.6666… that leak straight into the pass-rate cards.
     passRate: roundOrNull(meanOf(runs.map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases)))),
-    durationMs: meanOf(runs.map(r => r.durationMs)),
+    // Latency is the model's inference latency, pooled from the per-case durations across the
+    // cohort's samples — the same quantity the matrix footer shows — NOT the run-level wall-clock
+    // (`run.durationMs` was a CompletedAt − StartedAt timer that folded in queue wait, evaluator
+    // time, and parallel overlap). Pooling per-case durations also keeps the value live: the per-run
+    // total stays null until the run settles, but per-case results stream in over SSE.
+    durationMs: meanOf(runs.flatMap(r => r.results.map(res => res.durationMs))),
     costUsd: meanOf(runs.map(r => r.costUsd)),
     tokensIn: meanOf(runs.map(r => r.tokensIn)),
     tokensOut: meanOf(runs.map(r => r.tokensOut)),

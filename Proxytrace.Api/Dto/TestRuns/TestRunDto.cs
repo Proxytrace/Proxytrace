@@ -36,6 +36,8 @@ public record TestRunDto(
     IReadOnlyList<RunEvaluatorDto> Evaluators,
     DateTimeOffset StartedAt,
     DateTimeOffset? CompletedAt,
+    // Average per-case model inference latency over the run's results (aggregated inference latency,
+    // NOT a wall-clock CompletedAt - StartedAt timer). Null until the run has at least one result.
     long? DurationMs,
     IReadOnlyList<TestCaseRowDto> TestCases,
     IReadOnlyList<TestResultDto> Results,
