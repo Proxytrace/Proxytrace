@@ -480,6 +480,12 @@ msgstr "{msgCount, plural, one {# msg} other {# msgs}}"
 msgid "{n} agents"
 msgstr "{n} Agents"
 
+msgid "{n} calls"
+msgstr "{n} llamadas"
+
+msgid "{n} conversations"
+msgstr "{n} conversaciones"
+
 msgid "{n} projects"
 msgstr "{n} proyectos"
 
@@ -674,6 +680,12 @@ msgstr "0 pt"
 
 msgid "1 agent"
 msgstr "1 agent"
+
+msgid "1 call"
+msgstr "1 llamada"
+
+msgid "1 conversation"
+msgstr "1 conversación"
 
 msgid "1 project"
 msgstr "1 proyecto"
@@ -1661,9 +1673,6 @@ msgstr "Descartado — un revisor decidió no aplicar este cambio."
 
 msgid "Disproven by A/B"
 msgstr "Refutado por A/B"
-
-msgid "Distribution"
-msgstr "Distribución"
 
 msgid "Divergent"
 msgstr "Divergente"
@@ -2795,9 +2804,6 @@ msgstr "Aún no hay API keys"
 
 msgid "No audit events"
 msgstr "No hay eventos de auditoría"
-
-msgid "No calls in this range yet"
-msgstr "Aún no hay llamadas en este rango"
 
 msgid "No cases match this filter."
 msgstr "No hay casos que coincidan con este filtro."
@@ -4767,6 +4773,9 @@ msgstr "Argumentos de Tool (JSON)"
 
 msgid "tool call"
 msgstr "llamada a Tool"
+
+msgid "tool calls"
+msgstr "llamadas de Tool"
 
 msgid "Tool calls"
 msgstr "Llamadas de Tool"

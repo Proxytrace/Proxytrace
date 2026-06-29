@@ -21,14 +21,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   that lists why each recent call was flagged. Admins tune the sensitivity (enable/disable, sigma,
   minimum samples, baseline window) under **Settings → Outlier detection**. Existing traces are not
   retroactively flagged; detection applies to calls ingested from now on.
-- **Call distribution stats on the agent page.** The agent detail view now shows a **Distribution**
-  widget with the **mean ± standard deviation** of an agent's successful calls over the selected
-  range: **input** and **output tokens** and **latency** (per call), and **cost**, **cache hit rate**
-  (turns after the first, which can't be cache hits) and **tool calls** (per conversation). Each metric
-  also gets a small **interactive histogram** of the real sample shape — hover a bar to see its value
-  range and how many calls (or conversations) fall in it. It updates live as new traces arrive and
-  respects the time-range selector, so you can see not just the totals but how consistent — or skewed —
-  your agent's calls are.
+- **Call distribution stats on the agent page.** The agent detail view's **Performance** card now
+  shows one small card per stat in a single grid that reflows to the available width: the window
+  **totals** (pass rate, traces, tokens, cost, latency — each with a trend sparkline), then the
+  **mean ± standard deviation** of an agent's successful calls over the selected range — **input** and
+  **output tokens** and **latency** (per call), and **cost**, **cache hit rate** (turns after the
+  first, which can't be cache hits) and **tool calls** (per conversation). Each distribution card draws
+  a small **density curve** of the real sample shape — hover to read a slice's value range and how many
+  calls (or conversations) fall in it — and metrics with no signal in the window (an agent that never
+  caches or calls a tool) are dropped rather than shown empty. Everything shares one time-range selector
+  that **persists as you switch agents**, and updates live as new traces arrive, so a single card shows
+  not just the totals but how consistent — or skewed — your agent's calls are.
 - **Sample a test run multiple times.** When you start a run you can now pick a **sample count (1–5)** —
   Proxytrace runs each selected endpoint that many times and **averages the results per endpoint**, so
   non-deterministic models don't hide flaky cases. The results matrix shows one column per endpoint with

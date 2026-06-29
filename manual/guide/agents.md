@@ -72,10 +72,12 @@ Pick an agent from the searchable list on the left to open its detail panel:
   endpoint, **Run** the agent against its test suites, open an overflow (**⋯**) menu —
   open in the [Playground](/guide/capturing-traces), view traces, or view proposals — or
   delete the agent.
-- **Performance** — a dedicated card with all key stats as compact tiles, each with a mini
-  sparkline: **pass rate** (and its change in percentage points over the window), **traces**,
-  **tokens** (with the input/output split), **cost**, and **avg latency**. A `1h / 24h / 7d / 30d`
-  selector sets the window, and a **live** indicator marks that the figures update as traces arrive.
+- **Performance** — a dedicated card, one little card per stat, in a single grid that reflows to fit
+  the width. A `1h / 24h / 7d / 30d` selector sets the window (your choice sticks as you move between
+  agents) and a **live** indicator marks that the figures update as traces arrive. The **totals** over
+  the window come first, each with a mini sparkline: **pass rate** (and its change in percentage
+  points), **traces**, **tokens** (with the input/output split), **cost**, and **avg latency** — then
+  the per-call / per-conversation **distribution** cards for each metric (see [below](#distribution)).
 - **Definition** (main column) — the **system prompt** (with its word/line count, a copy
   button, and — when a previous version exists — a **Diff vs v*N*** comparison against the
   prior revision), followed by the **tools** list (click a tool to expand its parameters,
@@ -85,24 +87,28 @@ Pick an agent from the searchable list on the left to open its detail panel:
   version to view its system prompt and tools in the main column; use **Move…** to
   re-parent a version (see [Fixing a misclassification](#fixing-a-misclassification)).
   Below it, **suite pass rates** show how the agent scores per test suite — click a row to
-  jump to that suite — followed by the **distribution** widget (see below), **recent traces**
-  (the latest calls for the agent; click one to open it in the
-  [Traces](/guide/capturing-traces) view), and the full model-parameter set sits in a
-  collapsible panel that summarises temperature and max tokens when collapsed.
+  jump to that suite — followed by **recent traces** (the latest calls for the agent; click one
+  to open it in the [Traces](/guide/capturing-traces) view), and the full model-parameter set
+  sits in a collapsible panel that summarises temperature and max tokens when collapsed.
 
-The performance stats, suite pass rates, and distribution update live as new traces arrive.
+The performance stats and suite pass rates update live as new traces arrive.
 
 ### Distribution
 
-Where the **Performance** card shows totals and averages, the **Distribution** widget shows
-how *consistent* the agent's calls are: the **mean ± standard deviation** of each metric over
-the same time window, computed from the agent's **successful** calls only. A large spread
-(big ± value) means the metric swings widely from call to call; a small one means it is steady.
-Each metric also draws a small **histogram** of the actual samples — hover a bar to read its value
-range and the number of calls (or conversations) in it. When every sample shares one value, the
-histogram collapses to a single centred bar.
+Alongside the totals, the **Performance** card carries a **distribution** card for each metric, showing
+how *consistent* the agent's calls are. Where the totals show averages, each distribution card shows the
+**mean ± standard deviation** of one metric over the same time window, computed from the agent's
+**successful** calls only — **input**
+and **output tokens** and **latency** per call, and **cost**, **cache hit rate** and **tool calls** per
+conversation. A large spread (big ± value) means the metric swings widely from call to call; a small
+one means it is steady. Each card also draws a small **density curve** of the actual samples — a smooth
+profile of the call shape (a tall, narrow peak = consistent; a long tail = a few slow or expensive
+outliers). Hover the curve to read a slice's value range and the number of calls (or conversations) in
+it. When every sample shares one value, the curve collapses to a single centred marker. Metrics with no
+signal in the window — an agent that never caches or never calls a tool — drop out rather than show an
+empty card.
 
-![The Distribution widget on the agent detail page: input and output tokens and latency per call, and cost, cache hit rate, and tool calls per conversation — each shown as a mean ± standard deviation with a small histogram of the samples.](/screenshots/agents/distribution.png)
+![The Performance card on the agent detail page: one grid of stat cards — totals (pass rate, traces, tokens, cost, avg latency) each with a sparkline, flowing into distribution cards (input and output tokens and latency per call, cost per conversation), each a mean ± standard deviation with a small density curve of the samples.](/screenshots/agents/distribution.png)
 
 | Metric | Measured per | Notes |
 | --- | --- | --- |

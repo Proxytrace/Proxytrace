@@ -84,9 +84,9 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
         <div className="flex flex-col gap-1.5" aria-busy="true">
           {pending.map((handle) => (
             <div key={`${handle.kind}:${handle.id}`} className="flex items-center gap-2 text-body-sm text-muted">
-              <Spinner size={12} />
-              <span>{i18n._(KIND_LABEL[handle.kind])}</span>
-              <span className="truncate font-mono">{handle.id}</span>
+              <Spinner size={12} className="shrink-0" />
+              <span className="shrink-0">{i18n._(KIND_LABEL[handle.kind])}</span>
+              <span className="min-w-0 flex-1 truncate font-mono">{handle.id}</span>
             </div>
           ))}
         </div>

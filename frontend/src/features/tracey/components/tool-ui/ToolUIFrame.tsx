@@ -80,7 +80,7 @@ export function ToolUIFrame({
       {(icon || title || cornerAccessory) && (
         <div className="flex items-center gap-2">
           {icon && <span className="shrink-0 text-muted">{icon}</span>}
-          {title && <span className="truncate text-h2 font-semibold text-primary">{title}</span>}
+          {title && <span className="min-w-0 truncate text-h2 font-semibold text-primary">{title}</span>}
           {cornerAccessory && <span className="ml-auto shrink-0 pl-2">{cornerAccessory}</span>}
         </div>
       )}
