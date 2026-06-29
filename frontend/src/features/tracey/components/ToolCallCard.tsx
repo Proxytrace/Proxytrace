@@ -24,7 +24,7 @@ function formatDuration(ms: number): string {
 function StatusBadge({ status }: { status: ToolStatus }) {
   if (status === 'pending') {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] text-warn">
+      <span className="inline-flex items-center gap-1 text-caption text-warn">
         <span className="size-1.5 animate-pulse rounded-full bg-warn" />
         <Trans>Running</Trans>
       </span>
@@ -32,14 +32,14 @@ function StatusBadge({ status }: { status: ToolStatus }) {
   }
   if (status === 'failed') {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] text-danger">
+      <span className="inline-flex items-center gap-1 text-caption text-danger">
         <XIcon size={11} />
         <Trans>Failed</Trans>
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-success">
+    <span className="inline-flex items-center gap-1 text-caption text-success">
       <CheckIcon size={11} />
       <Trans>Done</Trans>
     </span>
@@ -86,7 +86,7 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
   const resultText = resultIsString ? (result as string) : JSON.stringify(result, null, 2);
 
   return (
-    <div data-testid={`tracey-tool-call-${toolName}`} className="my-1 rounded-md border border-hairline bg-card text-xs">
+    <div data-testid={`tracey-tool-call-${toolName}`} className="my-1 rounded-md border border-hairline bg-card text-body-sm">
       <RowButton
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
@@ -96,10 +96,10 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
           size={12}
           className={cn('shrink-0 text-muted transition-transform duration-[var(--motion-base)]', open && 'rotate-90')}
         />
-        <span className="truncate font-mono text-[11px] text-accent">{toolName}</span>
+        <span className="min-w-0 truncate font-mono text-body-sm text-accent">{toolName}</span>
         <span className="ml-auto flex shrink-0 items-center gap-2.5">
           {durationMs != null && (
-            <span className="tabular-nums text-[10px] text-muted">{formatDuration(durationMs)}</span>
+            <span className="tabular-nums text-caption text-muted">{formatDuration(durationMs)}</span>
           )}
           <StatusBadge status={toolStatus} />
         </span>
@@ -111,7 +111,7 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
           {hasResult && (
             <Section title={isError ? t`Error` : t`Output`} content={resultText} json={!resultIsString} />
           )}
-          {!hasResult && !isRunning && <div className="text-[11px] text-muted"><Trans>No output returned.</Trans></div>}
+          {!hasResult && !isRunning && <div className="text-body-sm text-muted"><Trans>No output returned.</Trans></div>}
         </div>
       )}
     </div>

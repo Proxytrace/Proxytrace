@@ -53,7 +53,7 @@ export function SettingsNav() {
       className="w-[196px] shrink-0 overflow-y-auto flex flex-col gap-4 pr-1"
     >
       {SECTIONS.map(section => (
-        <div key={section.items[0].testId} className="flex flex-col gap-[2px]">
+        <div key={section.items[0].testId} className="flex flex-col gap-0.5">
           <div className="px-2 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
             {i18n._(section.heading)}
           </div>
@@ -64,10 +64,10 @@ export function SettingsNav() {
               data-testid={item.testId}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center px-3 py-[7px] rounded-md text-title transition-colors cursor-pointer',
+                  'flex items-center px-3 py-1.5 rounded-md text-title transition-colors cursor-pointer',
                   isActive
                     ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_12%,_transparent)] text-primary font-semibold'
-                    : 'text-secondary hover:text-primary hover:bg-white/[.04]',
+                    : 'text-secondary hover:text-primary hover:bg-[var(--bg-wash-hover)]',
                 )
               }
             >

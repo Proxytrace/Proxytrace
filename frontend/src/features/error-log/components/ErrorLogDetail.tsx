@@ -14,8 +14,8 @@ interface ErrorLogDetailProps {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{label}</div>
-      <div className="text-[13px] text-primary font-mono break-words">{value}</div>
+      <div className="text-body-sm font-semibold uppercase tracking-[0.06em] text-muted">{label}</div>
+      <div className="text-title text-primary font-mono break-words">{value}</div>
     </div>
   );
 }
@@ -27,7 +27,7 @@ export function ErrorLogDetail({ error, onClose }: ErrorLogDetailProps) {
       <div data-testid="error-log-detail" className="flex items-center gap-2">
         <Pill label={error.level} color={LEVEL_COLOR[error.level]} size="md" />
         {error.exceptionType && (
-          <span className="text-xs text-muted font-mono">{error.exceptionType}</span>
+          <span className="text-body-sm text-muted font-mono">{error.exceptionType}</span>
         )}
       </div>
 
@@ -38,7 +38,7 @@ export function ErrorLogDetail({ error, onClose }: ErrorLogDetailProps) {
           <CodeBlock heading={t`Stacktrace`} content={error.stackTrace} maxLines={20} />
         </div>
       ) : (
-        <div className="text-[13px] text-muted"><Trans>No stacktrace captured for this entry.</Trans></div>
+        <div className="text-title text-muted"><Trans>No stacktrace captured for this entry.</Trans></div>
       )}
     </Drawer>
   );

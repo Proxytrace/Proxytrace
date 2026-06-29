@@ -28,7 +28,7 @@ export function GroupDetail({ groupId, onDelete }: { groupId: string; onDelete: 
       <Card>
         {isLoading
           ? <SkeletonList rows={4} height={72} gap={12} />
-          : <div className="py-[60px] text-center text-muted text-body"><Trans>Run not found.</Trans></div>}
+          : <div className="py-15 text-center text-muted text-body"><Trans>Run not found.</Trans></div>}
       </Card>
     );
   }

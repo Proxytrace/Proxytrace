@@ -25,13 +25,13 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
   return (
     <div
       data-testid="trace-table"
-      className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col shadow-[var(--shadow-card)] [animation-delay:120ms] @container"
+      className="fade-up bg-card rounded-lg overflow-hidden flex-1 min-h-0 flex flex-col shadow-[var(--shadow-card)] [animation-delay:120ms] @container"
       style={{ '--trace-grid': GRID_TEMPLATE, '--trace-grid-narrow': GRID_TEMPLATE_NARROW } as React.CSSProperties}
     >
       <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         {/* Sticky column header */}
         <div
-          className={cn('grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
+          className={cn('grid px-4 py-2 border-b border-hairline sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
         >
           {COL_HEADERS.map((label, i) => (
             <span

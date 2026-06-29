@@ -15,7 +15,7 @@ export function TelemetryStrip({ telemetry, latencyStats }: TelemetryStripProps)
   const { t } = useLingui();
   return (
     // overflow-x-auto: on narrow screens the strip pans horizontally instead of clipping cells.
-    <div className="fade-up relative flex items-center overflow-x-auto overflow-y-hidden rounded-md bg-card px-3.5 py-[7px] shadow-[var(--shadow-card)] [animation-delay:40ms]">
+    <div className="fade-up relative flex items-center overflow-x-auto overflow-y-hidden rounded-md bg-card px-3.5 py-1.5 shadow-[var(--shadow-card)] [animation-delay:40ms]">
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[linear-gradient(180deg,var(--accent-primary),transparent_80%)]" />
       <TeleCell label={t`traces / min`} value={teleFmt(telemetry?.tracesPerMinute, n => n.toFixed(1))} accent />
       <TeleCell label={t`tokens / sec`} value={teleFmt(telemetry?.tokensPerSecond, n => String(Math.round(n)))} />

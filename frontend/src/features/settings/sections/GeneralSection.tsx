@@ -52,7 +52,7 @@ export function GeneralSection() {
       {isLoading || !project ? (
         <SkeletonList rows={3} height={56} gap={10} />
       ) : (
-        <div className="bg-card border border-hairline rounded-[14px] p-5 flex flex-col gap-5 max-w-[760px]">
+        <div className="bg-card-2 border border-hairline rounded-lg p-4 flex flex-col gap-3 max-w-[760px]">
           {/* Name */}
           <FormField label={t`Project name`}>
             {editName ? (

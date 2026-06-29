@@ -2,7 +2,7 @@ import { rules } from "../../auth/password";
 
 export function PasswordRequirements({ password }: { password: string }) {
   return (
-    <ul className="mt-2 space-y-1 text-xs text-muted">
+    <ul className="mt-2 space-y-1 text-body-sm text-muted">
       {rules.map((r) => {
         const ok = r.test(password);
         return (

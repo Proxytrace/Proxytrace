@@ -77,7 +77,7 @@ export function KpiCard({
         </div>
         {trendText && (
           <div
-            className={`flex items-center gap-0.5 text-body-sm font-semibold px-1.5 py-[2px] rounded-sm ${
+            className={`flex items-center gap-0.5 text-body-sm font-semibold px-1.5 py-0.5 rounded-sm ${
               trendDirection === 'up'
                 ? 'text-success bg-success-subtle'
                 : 'text-danger bg-danger-subtle'

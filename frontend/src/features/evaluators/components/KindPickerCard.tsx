@@ -31,11 +31,11 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
         <CategoryIcon category={cat} size={16} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-semibold mb-[3px] flex items-center gap-1.5">
+        <div className="text-title font-semibold mb-0.5 flex items-center gap-1.5">
           {i18n._(meta.label)}
           {locked && <LockIcon size={12} className="text-muted" />}
         </div>
-        <div className="text-[11.5px] text-muted leading-[1.45]">
+        <div className="text-body-sm text-muted leading-[1.45]">
           {locked ? <Trans>Requires the Enterprise tier. Upgrade to enable LLM-judge evaluators.</Trans> : i18n._(meta.desc)}
         </div>
       </div>

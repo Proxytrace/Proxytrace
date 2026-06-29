@@ -135,17 +135,17 @@ export default function Playground() {
 
   if (!currentProject) {
     return (
-      <div className="flex-1 flex items-center justify-center text-muted text-[13px]">
+      <div className="flex-1 flex items-center justify-center text-muted text-title">
         <Trans>Pick a project first.</Trans>
       </div>
     );
   }
 
   return (
-    <div data-testid="playground" className="flex-1 flex gap-[12px] overflow-hidden p-[2px]">
+    <div data-testid="playground" className="flex-1 flex gap-3 overflow-hidden p-0.5">
       {/* Center conversation */}
       <section className="relative flex-1 rounded-lg flex flex-col overflow-hidden min-w-0 bg-card border border-border shadow-[var(--shadow-card)]">
-        <header className="flex items-center gap-[8px] px-[12px] py-[10px] flex-wrap border-b border-border">
+        <header className="flex items-center gap-2 px-3 py-2.5 flex-wrap border-b border-border">
           <AgentPicker
             projectId={currentProject.id}
             selectedAgentId={state.agentId}
@@ -210,7 +210,7 @@ export default function Playground() {
         </header>
 
         {state.error && (
-          <div className="px-[14px] py-[6px] text-[11.5px] mono bg-danger-subtle border-b border-[color-mix(in_srgb,var(--danger)_32%,transparent)] text-danger">
+          <div className="px-3.5 py-1.5 text-body-sm mono bg-danger-subtle border-b border-[color-mix(in_srgb,var(--danger)_32%,transparent)] text-danger">
             {state.error}
           </div>
         )}
@@ -230,7 +230,7 @@ export default function Playground() {
         />
 
         {state.pendingToolRequest ? (
-          <div className="p-[12px] border-t border-border">
+          <div className="p-3 border-t border-border">
             <ToolRequestPrompt
               request={state.pendingToolRequest}
               onSubmit={onToolResult}

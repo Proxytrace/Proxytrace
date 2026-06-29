@@ -45,8 +45,8 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
           </div>
         )}
         <div className="flex-1 min-w-0">
-          {title && <div className="text-sm font-bold text-primary truncate">{title}</div>}
-          {subtitle && <div className="text-xs text-muted mt-[2px]">{subtitle}</div>}
+          {title && <div className="text-h2 font-semibold text-primary truncate">{title}</div>}
+          {subtitle && <div className="text-body-sm text-muted mt-0.5">{subtitle}</div>}
         </div>
         <IconButton onClick={onClose} aria-label={t`Close`} className="shrink-0"><XIcon size={14} /></IconButton>
       </div>

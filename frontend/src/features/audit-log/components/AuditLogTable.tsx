@@ -3,6 +3,7 @@ import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { fmtDateTime } from '../../../lib/format';
+import { cn } from '../../../lib/cn';
 import type { AuditLogEntryDto } from '../../../api/models';
 import { AUDIT_ACTION_LABEL, AUDIT_ACTOR_TYPE_LABEL, ACTION_COLOR } from '../auditLogMeta';
 
@@ -27,9 +28,9 @@ export function AuditLogTable({ entries, selectedId, onSelect, isFetching }: Aud
   return (
     <div
       data-testid="audit-log-table"
-      className={`flex flex-col ${isFetching ? 'opacity-60 transition-opacity' : ''}`}
+      className={cn('flex flex-col', isFetching && 'opacity-60 transition-opacity')}
     >
-      <div className="grid grid-cols-[180px_1fr_160px_190px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
+      <div className="grid grid-cols-[180px_1fr_160px_190px] gap-3 px-3 py-2 text-body-sm font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
         <span><Trans>Action</Trans></span>
         <span><Trans>Actor</Trans></span>
         <span><Trans>Target</Trans></span>
@@ -40,9 +41,10 @@ export function AuditLogTable({ entries, selectedId, onSelect, isFetching }: Aud
           key={entry.id}
           data-testid={`audit-log-row-${entry.id}`}
           onClick={() => onSelect(entry)}
-          className={`grid grid-cols-[180px_1fr_160px_190px] gap-3 px-3 py-2.5 items-center border-b border-hairline transition-colors ${
-            entry.id === selectedId ? 'bg-accent-subtle' : 'hover:bg-card-2'
-          }`}
+          className={cn(
+            'grid grid-cols-[180px_1fr_160px_190px] gap-3 px-3 py-2.5 items-center border-b border-hairline transition-colors',
+            entry.id === selectedId ? 'bg-accent-subtle' : 'hover:bg-card-2',
+          )}
         >
           <span>
             <Pill
@@ -51,13 +53,13 @@ export function AuditLogTable({ entries, selectedId, onSelect, isFetching }: Aud
               size="sm"
             />
           </span>
-          <span className="min-w-0 truncate text-[13px] text-primary font-medium">
+          <span className="min-w-0 truncate text-title text-primary font-medium">
             {entry.actorEmail ?? i18n._(AUDIT_ACTOR_TYPE_LABEL[entry.actorType])}
           </span>
-          <span className="min-w-0 truncate text-xs text-muted" title={entry.targetLabel ?? entry.targetType}>
+          <span className="min-w-0 truncate text-body-sm text-muted" title={entry.targetLabel ?? entry.targetType}>
             {entry.targetType}{entry.targetLabel ? ` · ${entry.targetLabel}` : ''}
           </span>
-          <span className="text-right text-xs text-muted font-mono whitespace-nowrap tabular-nums">
+          <span className="text-right text-body-sm text-muted font-mono whitespace-nowrap tabular-nums">
             {fmtDateTime(entry.createdAt)}
           </span>
         </RowButton>

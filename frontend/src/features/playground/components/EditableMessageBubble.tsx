@@ -40,14 +40,14 @@ export function EditableMessageBubble(props: Props) {
   const saveEdit = () => { onEdit(draft); setEditing(false); };
 
   const actions = !isStreaming && (
-    <span className="flex items-center gap-[2px] shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-[var(--motion-fast)]">
+    <span className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-[var(--motion-fast)]">
       {draggable && (
-        <span aria-hidden title={t`Drag to reorder`} className="inline-flex text-muted cursor-grab px-[2px]">
+        <span aria-hidden title={t`Drag to reorder`} className="inline-flex text-muted cursor-grab px-0.5">
           <GripVerticalIcon size={12} />
         </span>
       )}
       {message.errored && (
-        <span className="text-[10px] text-danger mono uppercase tracking-[0.05em] mr-[4px]"><Trans>error</Trans></span>
+        <span className="text-caption text-danger mono uppercase tracking-[0.05em] mr-1"><Trans>error</Trans></span>
       )}
       <IconButton size="sm" title={t`Edit`} onClick={beginEdit} aria-label={t`Edit`} data-testid="editable-message-edit">
         <EditIcon size={12} strokeWidth={2.2} />
@@ -78,7 +78,7 @@ export function EditableMessageBubble(props: Props) {
       onDragEnd={() => onDragEnd?.()}
       onDragOver={e => onDragOverBubble?.(e)}
       onDrop={e => onDrop?.(e)}
-      className={cn('flex flex-col gap-[6px] transition-opacity duration-150', isDragging && 'opacity-40')}
+      className={cn('flex flex-col gap-1.5 transition-opacity duration-150', isDragging && 'opacity-40')}
     >
       {editing ? (
         <TurnEditor draft={draft} setDraft={setDraft} onCancel={() => setEditing(false)} onSave={saveEdit} />
@@ -99,7 +99,7 @@ export function EditableMessageBubble(props: Props) {
             <ToolCallBlock key={tr.id} name={tr.name} id={tr.id} arguments={tr.arguments} />
           ))}
           {message.toolError && (
-            <div className="text-[12px] mono px-[10px] py-[8px] rounded-[8px] bg-danger-subtle border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] text-danger">
+            <div className="text-body mono px-2.5 py-2 rounded-md bg-danger-subtle border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] text-danger">
               {message.toolError}
             </div>
           )}
@@ -112,9 +112,9 @@ export function EditableMessageBubble(props: Props) {
 /** The shared bubble hides itself when content is empty — keep an editable placeholder visible. */
 function EmptyTurn({ role, actions }: { role: string; actions: React.ReactNode }) {
   return (
-    <div className="group relative rounded-[12px] bg-card-2 border border-border border-dashed flex items-center gap-2 px-3 py-[10px]">
-      <span className="font-mono text-[10.5px] font-bold tracking-[0.08em] text-muted uppercase">{role}</span>
-      <span className="text-[12px] text-muted italic"><Trans>(empty — click edit to add content)</Trans></span>
+    <div className="group relative rounded-lg bg-card-2 border border-border border-dashed flex items-center gap-2 px-3 py-2.5">
+      <span className="font-mono text-caption font-bold tracking-[0.08em] text-muted uppercase">{role}</span>
+      <span className="text-body text-muted italic"><Trans>(empty — click edit to add content)</Trans></span>
       <span className="ml-auto" />
       {actions}
     </div>

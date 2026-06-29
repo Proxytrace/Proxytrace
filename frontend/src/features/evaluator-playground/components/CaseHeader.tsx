@@ -15,17 +15,17 @@ export function CaseHeader({ payload, evaluator }: {
   return (
     <div className="flex flex-col gap-1.5 shrink-0">
       <div className="flex items-center gap-2.5 flex-wrap">
-        <h2 data-testid="bench-case-title" className="text-h1 font-bold tracking-[-0.01em] m-0">
+        <h2 data-testid="bench-case-title" className="text-h1 font-semibold leading-tight tracking-[-0.01em] m-0">
           {payload.testCaseSummary || t`Test case`}
         </h2>
         <span
-          className="px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold"
+          className="px-2.5 py-0.5 rounded-full text-caption font-semibold whitespace-nowrap"
           style={{ background: tint(color, 16), color }}
         >
           {evaluator.name} · {i18n._(KIND_LABEL[evaluator.kind])}
         </span>
       </div>
-      <p className="text-[11.5px] text-muted m-0 inline-flex items-center gap-1.5">
+      <p className="text-body-sm text-muted m-0 inline-flex items-center gap-1.5">
         <BeakerIcon size={12} />
         <Trans>Replaying a logged test result</Trans>
       </p>

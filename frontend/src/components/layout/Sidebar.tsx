@@ -41,7 +41,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
       {/* Mobile nav backdrop */}
       {mobileNavOpen && (
         <div
-          className="fixed inset-0 z-[59] bg-[rgba(0,0,0,0.5)] md:hidden"
+          className="fixed inset-0 z-[59] bg-black/[0.5] md:hidden"
           onClick={onMobileNavClose}
         />
       )}
@@ -50,25 +50,25 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
       <aside
         className={cn(
           'bg-sidebar flex flex-col shrink-0 overflow-hidden shadow-[var(--shadow-sidebar)]',
-          'md:relative md:z-[2] md:m-[10px_0_10px_10px] md:rounded-[18px] md:transition-[width] md:duration-200 md:h-[calc(100vh-20px)]',
+          'md:relative md:z-[2] md:m-[10px_0_10px_10px] md:rounded-xl md:transition-[width] md:duration-200 md:h-[calc(100vh-20px)]',
           collapsed ? 'md:w-16' : 'md:w-[232px]',
-          'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[60] max-md:w-[264px] max-md:rounded-r-[18px] max-md:transition-transform max-md:duration-200',
+          'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[60] max-md:w-[264px] max-md:rounded-r-xl max-md:transition-transform max-md:duration-200',
           mobileNavOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
         )}
       >
         {/* Brand */}
         <div
-          className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${navCollapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
+          className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${navCollapsed ? 'justify-center' : 'justify-start px-4.5'}`}
         >
           <BrandMark size={30} />
           {!navCollapsed && (
-            <div className="ml-[10px]">
-              <div className="font-bold text-sm tracking-[-0.02em] leading-none">
+            <div className="ml-2.5">
+              <div className="font-bold text-body tracking-[-0.02em] leading-none">
                 {/* eslint-disable-next-line lingui/no-unlocalized-strings -- brand name, not translated */}
                 <span className="text-primary">proxy</span><span className="text-accent">trace</span>
               </div>
               {/* eslint-disable-next-line lingui/no-unlocalized-strings -- version identifier, not UI copy */}
-              <div className="font-mono text-[10.5px] text-muted mt-0.5">{`v${__APP_VERSION__}`}</div>
+              <div className="font-mono text-caption text-muted mt-0.5">{`v${__APP_VERSION__}`}</div>
             </div>
           )}
         </div>
@@ -79,12 +79,12 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
           className={`flex-1 flex flex-col overflow-y-auto ${navCollapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
         >
           {navGroups.map((group, gIdx) => (
-            <div key={gIdx} className="flex flex-col gap-[2px]">
+            <div key={gIdx} className="flex flex-col gap-0.5">
               {gIdx > 0 && (
                 <div className={`my-1.5 border-t border-hairline ${navCollapsed ? 'mx-1' : 'mx-2'}`} />
               )}
               {!navCollapsed && group.label && (
-                <div className="px-[6px] pt-1 pb-[4px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
+                <div className="px-1.5 pt-1 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
                   {i18n._(group.label)}
                 </div>
               )}

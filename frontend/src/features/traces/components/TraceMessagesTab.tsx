@@ -15,7 +15,7 @@ export function TraceMessagesTab({ trace, onJumpToDefinition }: Props) {
       messages={fromAgentCall(trace)}
       onJumpToDefinition={trace.agentId ? onJumpToDefinition : undefined}
       footer={trace.finishReason && (
-        <div className="mt-1 px-3 py-2 bg-card-2 rounded-[8px] text-body-sm text-muted font-mono flex items-center gap-2">
+        <div className="mt-1 px-3 py-2 bg-card-2 rounded-md text-body-sm text-muted font-mono flex items-center gap-2">
           {/* eslint-disable-next-line lingui/no-unlocalized-strings -- decorative status glyph, not UI copy */}
           <span className="text-success">●</span>
           finish_reason: <span className="text-secondary">{trace.finishReason}</span>

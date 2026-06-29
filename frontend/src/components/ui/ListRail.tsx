@@ -45,7 +45,7 @@ interface RailHeaderProps {
 export function RailHeader({ title, count, subtitle, leading, create, search }: RailHeaderProps) {
   const { t } = useLingui();
   return (
-    <div className="flex flex-col gap-[9px] px-3.5 pt-3.5 pb-2.5 border-b border-hairline shrink-0">
+    <div className="flex flex-col gap-2.25 px-3.5 pt-3.5 pb-2.5 border-b border-hairline shrink-0">
       <div className="flex items-center gap-2.5">
         {leading}
         <div className="min-w-0 flex-1">

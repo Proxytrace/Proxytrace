@@ -34,19 +34,19 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
       trigger={
         <RowButton
           data-testid="project-switcher"
-          className={`flex items-center gap-[10px] rounded-lg p-1 hover:bg-white/[.04] transition-colors ${collapsed ? 'justify-center' : 'justify-start'}`}
+          className={`flex items-center gap-2.5 rounded-lg p-1 hover:bg-white/[.04] transition-colors ${collapsed ? 'justify-center' : 'justify-start'}`}
         >
           <Avatar
             // eslint-disable-next-line lingui/no-unlocalized-strings -- avatar initials placeholder, not UI copy
             initials={currentProject ? projectInitials(name) : 'DP'}
             color={color}
-            className="w-7 h-7 rounded-md text-xs font-semibold"
+            className="w-7 h-7 rounded-md text-body-sm font-semibold"
           />
           {!collapsed && (
             <>
               <div className="flex-1 min-w-0 text-left">
-                <div className="text-xs font-semibold truncate">{name}</div>
-                <div className="text-[11px] text-muted">
+                <div className="text-body-sm font-semibold truncate">{name}</div>
+                <div className="text-body-sm text-muted">
                   <Plural value={memberCount} one="# member" other="# members" />
                 </div>
               </div>
@@ -56,10 +56,10 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
         </RowButton>
       }
     >
-      <div className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
+      <div className="px-3 pt-2 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
         <Trans>Switch project</Trans>
       </div>
-      {projects.length === 0 && <div className="px-3 py-2 text-[12px] text-muted"><Trans>No projects</Trans></div>}
+      {projects.length === 0 && <div className="px-3 py-2 text-body text-muted"><Trans>No projects</Trans></div>}
       {projects.map((p) => {
         const active = p.id === currentProject?.id;
         return (
@@ -71,7 +71,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
               <Avatar
                 initials={projectInitials(p.name)}
                 color={projectColor(p.id)}
-                className="w-6 h-6 rounded-md text-[10px] font-semibold"
+                className="w-6 h-6 rounded-md text-caption font-semibold"
               />
             }
           >

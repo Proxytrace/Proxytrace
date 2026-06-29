@@ -63,7 +63,7 @@ export function PastEvaluationSearch({ evaluatorId, evaluatorName, recent, onPic
       <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-2 min-h-0 flex-1">
         <div data-testid="search-results" className="min-h-0 overflow-y-auto border-r border-hairline pr-1.5 flex flex-col gap-1">
           {list.length === 0 ? (
-            <div className="px-2.5 py-6 text-center text-[11.5px] text-muted leading-relaxed">
+            <div className="px-2.5 py-6 text-center text-body-sm text-muted leading-relaxed">
               {tooShort
                 ? <Trans>Type at least {MIN_QUERY} characters.</Trans>
                 : active
@@ -85,7 +85,7 @@ export function PastEvaluationSearch({ evaluatorId, evaluatorName, recent, onPic
                   )}
                 >
                   <ScoreSquare score={it.score} size={22} />
-                  <span className={cn('flex-1 min-w-0 block text-[12px] font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
+                  <span className={cn('flex-1 min-w-0 block text-body font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
                     {it.label}
                   </span>
                 </RowButton>

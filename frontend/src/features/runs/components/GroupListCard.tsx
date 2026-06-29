@@ -37,7 +37,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         aria-pressed={isSelected}
         data-testid={`group-list-card-btn-${group.id}`}
         className={cn(
-          'relative rounded-lg overflow-hidden pl-[17px] pr-3.5 py-3 transition-[box-shadow,background-color] duration-[var(--motion-base)]',
+          'relative rounded-lg overflow-hidden pl-4 pr-3.5 py-3 transition-[box-shadow,background-color] duration-[var(--motion-base)]',
           FOCUS_RING,
           isSelected ? '' : SELECTION_ROW_INACTIVE,
           running && 'streaming-border',
@@ -47,7 +47,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
 
         <div className="flex items-center gap-1.5 mb-2 pr-6 min-w-0">
-          <span className="truncate text-title font-semibold">{group.suiteName}</span>
+          <span className="truncate text-title font-semibold leading-none">{group.suiteName}</span>
           {running && (
             <span
               data-testid={`group-list-card-running-${group.id}`}
@@ -62,13 +62,13 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         <div className="flex items-center gap-1.5 mb-2.5 min-w-0">
           <Pill label={group.agentName} color={c} />
           {group.isSystemRun && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-accent-subtle text-accent shrink-0"><Trans>A/B</Trans></span>
+            <span className="mono px-1.5 py-px rounded-sm text-caption font-semibold bg-accent-subtle text-accent shrink-0"><Trans>A/B</Trans></span>
           )}
           {endpointCount > 1 && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0"><Trans>{endpointCount} models</Trans></span>
+            <span className="mono px-1.5 py-px rounded-sm text-caption font-semibold bg-white/[0.06] text-muted shrink-0"><Trans>{endpointCount} models</Trans></span>
           )}
           {group.sampleCount > 1 && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">×{group.sampleCount}</span>
+            <span className="mono px-1.5 py-px rounded-sm text-caption font-semibold bg-white/[0.06] text-muted shrink-0">×{group.sampleCount}</span>
           )}
           <span className="text-caption text-muted ml-auto shrink-0">{fmtRelative(group.createdAt)}</span>
         </div>

@@ -49,7 +49,7 @@ export function ModeShell() {
   if (isLoading) return <PageLoader />;
   if (error || !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-danger">
+      <div className="flex min-h-screen items-center justify-center text-body text-danger">
         <Trans>Could not detect auth mode.</Trans>
       </div>
     );

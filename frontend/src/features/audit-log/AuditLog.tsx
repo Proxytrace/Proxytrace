@@ -78,11 +78,11 @@ export default function AuditLog({ projectScoped }: AuditLogProps) {
   ];
 
   return (
-    <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-[14px]">
+    <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-3.5">
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-base font-bold text-primary"><Trans>Audit Log</Trans></h1>
-          <p className="text-[13px] text-muted mt-0.5">
+          <h1 className="text-h1 font-semibold text-primary"><Trans>Audit Log</Trans></h1>
+          <p className="text-title text-muted mt-0.5">
             {projectScoped
               ? <Trans>Security and lifecycle events for this project.</Trans>
               : <Trans>All security and lifecycle events across the workspace.</Trans>
@@ -133,7 +133,7 @@ export default function AuditLog({ projectScoped }: AuditLogProps) {
           width={110}
         />
         <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
-        <span className="text-xs text-muted whitespace-nowrap">
+        <span className="text-body-sm text-muted whitespace-nowrap">
           {total.toLocaleString()} <Plural value={total} one="event" other="events" />
         </span>
       </footer>

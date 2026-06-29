@@ -12,7 +12,7 @@ export function MarkdownText() {
     <MarkdownTextPrimitive
       smooth
       remarkPlugins={[remarkGfm]}
-      className="text-[13px] leading-relaxed text-primary"
+      className="text-title leading-relaxed text-primary"
       components={markdownComponents}
     />
   );

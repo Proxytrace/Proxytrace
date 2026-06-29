@@ -89,13 +89,13 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
     >
       <div className="flex flex-col gap-2.5">
         {groups.map(g => (
-          <div key={g.type} className="flex flex-col gap-[3px]">
+          <div key={g.type} className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2 px-1 mb-0.5">
               <span className={cn('w-[5px] h-[5px] rounded-[1px]', categoryBg[g.type])} />
-              <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">
+              <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold">
                 {i18n._(TYPE_META[g.type].short)}
               </span>
-              <span className="text-[9.5px] text-muted font-mono ml-auto">{g.items.length}</span>
+              <span className="text-caption text-muted font-mono ml-auto">{g.items.length}</span>
             </div>
             <div className="flex flex-col gap-0.5">
               {g.items.map(e => (

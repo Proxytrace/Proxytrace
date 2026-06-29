@@ -4,6 +4,7 @@ import type { AgentDto } from '../../../api/models';
 import { usePlaygroundAgents } from '../hooks/usePlaygroundAgents';
 import { ChevronDownIcon, CheckIcon } from '../../../components/icons';
 import { RowButton } from '../../../components/ui/RowButton';
+import { cn } from '../../../lib/cn';
 import { AgentAvatar } from './AgentAvatar';
 
 interface Props {
@@ -50,8 +51,8 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         data-testid="agent-picker"
         className={
           compact
-            ? 'inline-flex items-center gap-[8px] cursor-pointer transition-colors rounded-[10px] pl-[6px] pr-[10px] py-[5px]'
-            : 'w-full text-left rounded-[12px] p-[12px] flex items-center gap-[10px] cursor-pointer transition-colors group'
+            ? 'inline-flex items-center gap-2 cursor-pointer transition-colors rounded-md pl-1.5 pr-2.5 py-1.5'
+            : 'w-full text-left rounded-lg p-3 flex items-center gap-2.5 cursor-pointer transition-colors group'
         }
         style={{
           background: compact ? 'rgba(255,255,255,0.03)' : 'var(--bg-card)',
@@ -64,13 +65,13 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         {/* eslint-disable-next-line lingui/no-unlocalized-strings -- avatar hash seed token, not UI copy */}
         <AgentAvatar seed={current?.id ?? 'none'} label={current?.name ?? '?'} size={compact ? 26 : 36} />
         {compact ? (
-          <span className="text-[12.5px] font-semibold text-primary truncate max-w-[200px]">
+          <span className="text-body font-semibold text-primary truncate max-w-[200px]">
             {current?.name ?? t`Pick an agent`}
           </span>
         ) : (
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{subtitle}</div>
-            <div className="text-[13px] font-semibold text-primary truncate">
+            <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted">{subtitle}</div>
+            <div className="text-title font-semibold text-primary truncate">
               {current?.name ?? t`Pick an agent`}
             </div>
           </div>
@@ -85,7 +86,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
       {open && (
         <div
           role="listbox"
-          className={`absolute left-0 top-full mt-[6px] z-20 rounded-[12px] py-[6px] max-h-[320px] overflow-y-auto fade-up ${compact ? 'w-[280px]' : 'right-0'}`}
+          className={cn('absolute left-0 top-full mt-1.5 z-20 rounded-lg py-1.5 max-h-[320px] overflow-y-auto fade-up', compact ? 'w-[280px]' : 'right-0')}
           style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-color)',
@@ -93,7 +94,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
           }}
         >
           {agents.length === 0 ? (
-            <div className="px-[12px] py-[10px] text-[12px] text-muted"><Trans>No agents in this project.</Trans></div>
+            <div className="px-3 py-2.5 text-body text-muted"><Trans>No agents in this project.</Trans></div>
           ) : agents.map(a => {
             const active = a.id === selectedAgentId;
             return (
@@ -103,13 +104,13 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
                 aria-selected={active}
                 onClick={() => { onPick(a.id); setOpen(false); }}
                 data-testid={`agent-picker-option-${a.id}`}
-                className="flex items-center gap-[10px] px-[10px] py-[7px] transition-colors hover:bg-card"
+                className="flex items-center gap-2.5 px-2.5 py-1.5 transition-colors hover:bg-card"
                 style={active ? { background: 'var(--accent-subtle)' } : undefined}
               >
                 <AgentAvatar seed={a.id} label={a.name} size={26} />
                 <div className="flex-1 min-w-0">
-                  <div className={`text-[12.5px] truncate ${active ? 'text-primary font-semibold' : 'text-secondary'}`}>{a.name}</div>
-                  <div className="text-[10.5px] text-muted truncate mono">{a.endpointName}</div>
+                  <div className={cn('text-body truncate', active ? 'text-primary font-semibold' : 'text-secondary')}>{a.name}</div>
+                  <div className="text-caption text-muted truncate mono">{a.endpointName}</div>
                 </div>
                 {active && <CheckIcon size={13} strokeWidth={2.5} />}
               </RowButton>

@@ -82,7 +82,7 @@ function StageBody({
       return (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-2 text-caption">
-            <span className={cn('inline-flex items-center rounded-sm px-2 py-[2px] font-semibold', TONE_SUBTLE_BG['accent'], TONE_TEXT['accent'])}>
+            <span className={cn('inline-flex items-center rounded-sm px-2 py-0.5 font-semibold', TONE_SUBTLE_BG['accent'], TONE_TEXT['accent'])}>
               {i18n._(KIND_META[theory.kind].label)}
             </span>
             <span className="text-muted"><Trans>via {sourceLabel}</Trans></span>
@@ -151,7 +151,7 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
             <span className="text-muted">→</span>
             <span className={cn('mono text-h2 font-semibold', transition.deltaPt > 0 ? 'text-success' : 'text-secondary')}>{transition.toPct}%</span>
             {transition.deltaPt !== 0 && (
-              <span className={cn('mono rounded-full px-2 py-[1px] text-body-sm font-semibold', transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
+              <span className={cn('mono rounded-full px-2 py-px text-body-sm font-semibold', transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
                 {transition.deltaPt > 0 ? '+' : '−'}{Math.abs(transition.deltaPt)}<Trans>pt</Trans>
               </span>
             )}

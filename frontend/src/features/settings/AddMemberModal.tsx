@@ -49,7 +49,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
         placeholder={t`Search users by name…`}
         className="mb-3"
       />
-      <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-[10px]" data-testid="add-member-modal">
+      <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-md" data-testid="add-member-modal">
         {isLoading ? (
           <div className="p-2"><SkeletonList rows={6} height={44} gap={4} /></div>
         ) : candidates.length === 0 ? (
@@ -64,14 +64,14 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
               data-testid={`add-member-candidate-${u.id}`}
               onClick={() => onPick(u.id)}
               disabled={loading}
-              className="flex items-center gap-3 px-3 py-[10px] text-[13px] border-b border-hairline last:border-b-0 hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 px-3 py-2.5 text-title border-b border-hairline last:border-b-0 hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Avatar
                 initials={initials(u.email)}
                 color={colorFor(u.id)}
-                className="w-7 h-7 rounded-md text-[10px]"
+                className="w-7 h-7 rounded-md text-caption"
               />
-              <span className="text-primary font-semibold">{u.email}</span>
+              <span className="flex-1 min-w-0 truncate text-primary font-semibold">{u.email}</span>
             </RowButton>
           ))
         )}

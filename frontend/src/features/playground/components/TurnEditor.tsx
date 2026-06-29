@@ -12,9 +12,9 @@ interface Props {
 /** In-place editor a playground turn swaps to while its content is being edited. */
 export function TurnEditor({ draft, setDraft, onCancel, onSave }: Props) {
   return (
-    <div className="rounded-[12px] bg-card-2 border border-border p-[10px] flex flex-col gap-[8px]">
+    <div className="rounded-lg bg-card-2 border border-border p-2.5 flex flex-col gap-2">
       <Textarea
-        className="mono text-[12.5px]"
+        className="mono text-body"
         rows={Math.min(20, Math.max(3, draft.split('\n').length + 1))}
         value={draft}
         onChange={e => setDraft(e.target.value)}

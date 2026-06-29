@@ -29,7 +29,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
             <span className="size-[7px] rounded-full bg-accent-hover pulse-dot shadow-[0_0_10px_var(--accent-hover)]" />
             <Trans>Live trace stream</Trans>
           </h3>
-          <p className="text-body-sm text-muted mt-[3px] font-mono">
+          <p className="text-body-sm text-muted mt-0.5 font-mono">
             <Trans>auto-refresh · {traces.length} most recent</Trans>
           </p>
         </div>
@@ -38,7 +38,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         </Button>
       </header>
 
-      <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-[9.5px] font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
+      <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-caption font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
         <span /><span><Trans>Message</Trans></span><span className="text-center"><Trans>Turns</Trans></span><span className="text-center"><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span>
       </div>
 

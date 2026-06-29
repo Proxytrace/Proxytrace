@@ -142,7 +142,7 @@ export default function Runs() {
           )}
           {selectedGroup
             ? <GroupDetail key={selectedGroup.id} groupId={selectedGroup.id} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
-            : <Card><div className="py-[60px] text-center text-muted text-body"><Trans>Select a run to see details.</Trans></div></Card>
+            : <Card><div className="py-15 text-center text-muted text-body"><Trans>Select a run to see details.</Trans></div></Card>
           }
         </div>
         )}

@@ -28,7 +28,7 @@ export function BenchPane({ session, evaluator }: { session: PlaygroundSession; 
       ) : payloadLoading ? (
         <BenchSkeleton />
       ) : payloadError ? (
-        <div className="p-3 rounded-md border border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-[var(--danger-subtle)] text-[12px] text-danger">
+        <div className="p-3 rounded-md border border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-[var(--danger-subtle)] text-body text-danger">
           {payloadErrorMessage}
         </div>
       ) : payload ? (

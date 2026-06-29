@@ -157,12 +157,6 @@ msgstr "{0, plural, one {Waiting for # action} other {Waiting for # actions}}"
 msgid "{0} — the change is live in the agent."
 msgstr "{0} — the change is live in the agent."
 
-#. placeholder {0}: s.n
-#. placeholder {1}: i18n._(s.name)
-#. placeholder {2}: i18n._(s.meaning)
-msgid "{0} · {1} — {2}"
-msgstr "{0} · {1} — {2}"
-
 #. placeholder {0}: suite.agentName
 #. placeholder {1}: suite.testCaseCount
 msgid "{0} · {1} case"

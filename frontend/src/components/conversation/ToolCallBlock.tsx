@@ -16,13 +16,13 @@ interface Props {
  */
 export function ToolCallBlock({ name, id, arguments: args }: Props) {
   return (
-    <div className="rounded-md p-[10px] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle">
-      <div className="flex items-center gap-[8px] text-body-sm mono mb-[6px]">
-        <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success">
+    <div className="rounded-md p-2.5 border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle">
+      <div className="flex items-center gap-2 text-body-sm mono mb-1.5">
+        <span className="inline-flex items-center px-1.5 py-0.25 rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success">
           <Trans>tool call</Trans>
         </span>
         <span className="font-bold text-success">{name}</span>
-        {id && <span className="text-muted text-[10px]">{id.slice(0, 12)}</span>}
+        {id && <span className="text-muted text-caption">{id.slice(0, 12)}</span>}
       </div>
       <JsonBlock value={args} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
     </div>

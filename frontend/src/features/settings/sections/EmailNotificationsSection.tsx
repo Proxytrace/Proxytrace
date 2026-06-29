@@ -51,7 +51,7 @@ export function EmailNotificationsSection() {
         subtitle={t`Send notification alerts to your users by email.`}
       />
       <div className="max-w-[760px] flex flex-col gap-5">
-        <div className="bg-card-2 border border-hairline rounded-[12px] p-4 flex flex-col gap-3">
+        <div className="bg-card-2 border border-hairline rounded-lg p-4 flex flex-col gap-3">
           <ToggleRow
             label={t`Enable email notifications`}
             description={t`When on, notifications are emailed to users who opt in.`}

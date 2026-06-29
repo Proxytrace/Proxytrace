@@ -37,8 +37,8 @@ export function FlowStep({ title, statusLabel, state, isLast, children }: Props)
 
       <div className="flex-1 min-w-0 pb-5">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-h2 font-semibold text-primary m-0">{title}</h3>
-          <span className={cn('inline-flex items-center rounded-full px-2 py-[2px] text-caption font-semibold', TONE_SUBTLE_BG[tone], TONE_TEXT[tone])}>
+          <h3 className="text-h2 font-semibold leading-tight text-primary m-0">{title}</h3>
+          <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold', TONE_SUBTLE_BG[tone], TONE_TEXT[tone])}>
             {i18n._(statusLabel)}
           </span>
         </div>

@@ -94,7 +94,7 @@ export function SetupWizard() {
             <BrandMark size={36} />
             <div>
               {/* eslint-disable-next-line lingui/no-unlocalized-strings -- brand name */}
-            <div className="font-bold text-[15px] tracking-[-0.01em] text-primary leading-tight">Proxytrace</div>
+            <div className="font-bold text-h2 tracking-[-0.01em] text-primary leading-tight">Proxytrace</div>
               <div className="text-body-sm text-muted"><Trans>Agent observability platform</Trans></div>
             </div>
           </div>
@@ -107,10 +107,11 @@ export function SetupWizard() {
               <div className="text-body-sm font-semibold uppercase tracking-[0.08em] text-accent mb-2">
                 <Trans>Step {wiz.currentStep + 1}</Trans>
               </div>
+              {/* display-tier: intentional, outside type scale */}
               <h1 className="text-[20px] font-bold text-primary leading-snug tracking-[-0.01em]">
                 {i18n._(heading.title)}
               </h1>
-              <p className="text-[13px] text-secondary mt-1.5 leading-relaxed">
+              <p className="text-title text-secondary mt-1.5 leading-relaxed">
                 {i18n._(heading.subtitle)}
               </p>
             </div>
@@ -129,7 +130,7 @@ export function SetupWizard() {
         </div>
 
         <div className="text-center text-body-sm text-muted mt-6">
-          <Trans>Press <kbd className="px-1.5 py-0.5 rounded bg-card-2 border border-border text-caption font-mono text-secondary">Enter</kbd> to continue</Trans>
+          <Trans>Press <kbd className="px-1.5 py-0.5 rounded-sm bg-card-2 border border-border text-caption font-mono text-secondary">Enter</kbd> to continue</Trans>
         </div>
       </div>
     </div>

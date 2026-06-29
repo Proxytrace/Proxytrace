@@ -93,7 +93,7 @@ export function FilterDropdown({
                 data-testid={testId ? `${testId}-option-${opt.key}` : undefined}
                 onSelect={() => onChange(opt.key)}
                 className={cn(
-                  'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',
+                  'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-white/[0.05]',
                   isSel ? 'text-primary' : 'text-secondary',
                 )}
               >

@@ -23,13 +23,13 @@ export function DataTable<T>({
   columns, rows, rowKey, onRowClick, isSelected, emptyMessage, emptySlot, className = '',
 }: DataTableProps<T>) {
   const gridCols = columns.map(c => c.width).join(' ');
-  const sharedRowClass = cn(`grid w-full text-left px-4 py-[11px] items-center text-[12px] border-b border-hairline`);
+  const sharedRowClass = cn(`grid w-full text-left px-4 py-2.75 items-center text-body border-b border-hairline`);
 
   return (
     <div className={className}>
       {/* Header */}
       <div
-        className="grid px-4 py-[10px] text-[10.5px] font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline"
+        className="grid px-4 py-2.5 text-caption font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline"
         style={{ gridTemplateColumns: gridCols }}
       >
         {columns.map(c => <span key={c.key} className={`min-w-0 ${c.className ?? ''}`}>{c.label}</span>)}
@@ -38,7 +38,7 @@ export function DataTable<T>({
       {/* Empty state */}
       {rows.length === 0 && emptySlot}
       {rows.length === 0 && !emptySlot && emptyMessage && (
-        <div className="text-center px-5 py-[56px] text-muted text-[13px]">{emptyMessage}</div>
+        <div className="text-center px-5 py-14 text-muted text-title">{emptyMessage}</div>
       )}
 
       {/* Rows */}

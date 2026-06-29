@@ -27,17 +27,17 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[rgba(0,0,0,0.7)] backdrop-blur-[8px]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/[0.7] backdrop-blur-[8px]"
     >
       <div
         onClick={ev => ev.stopPropagation()}
         data-testid="evaluator-new-modal"
         className="w-[min(720px,100%)] max-h-[88vh] overflow-auto bg-card rounded-xl shadow-[var(--shadow-float)]"
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-hairline">
+        <div className="flex items-center justify-between px-5 py-5 border-b border-hairline">
           <div>
-            <div className="text-[16px] font-bold tracking-[-0.01em]"><Trans>New evaluator</Trans></div>
-            <div className="text-[12px] text-muted mt-[3px]">
+            <div className="text-h2 font-semibold tracking-[-0.01em]"><Trans>New evaluator</Trans></div>
+            <div className="text-body text-muted mt-0.5">
               {pickedKind ? <Trans>Configure your evaluator.</Trans> : <Trans>Choose how this evaluator scores agent responses.</Trans>}
             </div>
           </div>
@@ -60,7 +60,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
             <div className="flex flex-col gap-3.5">
               <div className="flex items-center gap-2">
                 <span className={cn(
-                  'inline-flex items-center gap-[5px] px-2.5 py-[3px] rounded-md text-[12px] font-semibold',
+                  'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-body font-semibold',
                   categoryTint18[KIND_CATEGORY[pickedKind]],
                   categoryText[KIND_CATEGORY[pickedKind]],
                 )}>
@@ -74,7 +74,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
         </div>
 
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-hairline">
-          <span className="text-[11.5px] text-muted"><Trans>You can change the configuration later from the evaluator's settings.</Trans></span>
+          <span className="text-body-sm text-muted"><Trans>You can change the configuration later from the evaluator's settings.</Trans></span>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={onClose}><Trans>Cancel</Trans></Button>
             <Button

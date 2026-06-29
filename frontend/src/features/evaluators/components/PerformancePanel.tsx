@@ -31,8 +31,8 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Performance</Trans></span>
-        <span className="text-[11px] text-muted font-mono">
+        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Performance</Trans></span>
+        <span className="text-body-sm text-muted font-mono">
           <Trans>{(summary?.totalEvaluations ?? 0).toLocaleString()} runs · {range}</Trans>
         </span>
         <SegmentedControl
@@ -58,8 +58,8 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
         <StatCell label={t`Avg latency`} value={summary?.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} sub={t`per evaluation`} valueClass={cn('text-teal')} last />
       </div>
 
-      <div className="px-[18px] py-3.5">
-        <div className="text-[10px] text-muted uppercase tracking-[0.08em] font-semibold mb-2"><Trans>Pass rate trend</Trans></div>
+      <div className="px-4.5 py-3.5">
+        <div className="text-caption text-muted uppercase tracking-[0.08em] font-semibold mb-2"><Trans>Pass rate trend</Trans></div>
         {hasTrend ? (
           <AreaChart
             data={passSeries}
@@ -74,7 +74,7 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
             tooltipLabelFn={i => new Date((overview?.passRateTrend ?? [])[i]?.bucketStart ?? '').toLocaleDateString()}
           />
         ) : (
-          <div className="h-[130px] flex items-center justify-center text-muted text-[11.5px]"><Trans>Not enough data</Trans></div>
+          <div className="h-[130px] flex items-center justify-center text-muted text-body-sm"><Trans>Not enough data</Trans></div>
         )}
       </div>
     </section>

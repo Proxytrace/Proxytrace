@@ -31,7 +31,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: ep.color }} />
               <span className="text-body font-semibold truncate">{ep.label}</span>
               {ep.region && (
-                <span className="text-caption text-muted px-[5px] py-px bg-card-2 rounded-sm shrink-0">{ep.region}</span>
+                <span className="text-caption text-muted px-1.5 py-px bg-card-2 rounded-sm shrink-0">{ep.region}</span>
               )}
             </div>
             <span className="mono text-body-sm text-muted text-right whitespace-nowrap">

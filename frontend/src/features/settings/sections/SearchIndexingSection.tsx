@@ -85,7 +85,7 @@ export function SearchIndexingSection() {
 
       <div className="max-w-[760px] flex flex-col gap-5">
         {/* Status card */}
-        <div className="bg-card-2 border border-hairline rounded-[12px] p-4 flex flex-col gap-3">
+        <div className="bg-card-2 border border-hairline rounded-lg p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h3 className="text-h2 font-semibold m-0 text-primary"><Trans>Index status</Trans></h3>
             <Button
@@ -161,11 +161,12 @@ export function SearchIndexingSection() {
                         type="button"
                         aria-pressed={checked}
                         onClick={() => toggleKind(opt.value)}
-                        className={`px-3 py-[6px] rounded-full text-[12px] font-semibold cursor-pointer border transition-colors ${
+                        className={cn(
+                          'px-3 py-1.5 rounded-full text-body font-semibold cursor-pointer border transition-colors',
                           checked
                             ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_15%,_transparent)] border-[color-mix(in_srgb,_var(--accent-primary)_45%,_transparent)] text-primary'
-                            : 'bg-card-2 border-hairline text-muted hover:text-primary'
-                        }`}
+                            : 'bg-card-2 border-hairline text-muted hover:text-primary',
+                        )}
                       >
                         {i18n._(opt.label)}
                       </button>

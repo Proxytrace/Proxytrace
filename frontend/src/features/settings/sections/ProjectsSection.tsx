@@ -56,22 +56,22 @@ export function ProjectsSection() {
         ) : projects.length === 0 ? (
           <EmptyState title={t`No projects yet`} description={t`Create your first project to get started.`} />
         ) : (
-          <div className="border border-hairline rounded-[12px] overflow-hidden" data-testid="project-list">
+          <div className="border border-hairline rounded-lg overflow-hidden" data-testid="project-list">
             {projects.map(p => {
               const active = p.id === currentProjectId;
               return (
                 <div
                   key={p.id}
                   data-testid={`project-row-${p.id}`}
-                  className="flex items-center gap-3 px-3 py-[10px] border-b border-hairline last:border-b-0"
+                  className="flex items-center gap-3 px-3 py-2.5 border-b border-hairline last:border-b-0"
                 >
                   <RowButton
                     data-write
                     data-testid={`project-switch-btn-${p.id}`}
                     onClick={() => setCurrentProjectId(p.id)}
-                    className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-md hover:bg-white/[.03] -mx-1 px-1 py-1"
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-md hover:bg-[var(--bg-wash-hover)] -mx-1 px-1 py-1"
                   >
-                    <Avatar initials={initials(p.name)} color={colorFor(p.id)} className="w-7 h-7 rounded-md text-[10px]" />
+                    <Avatar initials={initials(p.name)} color={colorFor(p.id)} className="w-7 h-7 rounded-md text-caption" />
                     <span className="flex flex-col min-w-0">
                       <span className="text-title font-semibold text-primary truncate">{p.name}</span>
                       <span className="text-body-sm text-muted">

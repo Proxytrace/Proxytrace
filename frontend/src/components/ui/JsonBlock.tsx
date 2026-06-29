@@ -51,14 +51,14 @@ export function JsonBlock({ value, className, maxHeight, hideCopy, transparent }
     }).catch(() => { /* ignore */ });
   }
 
-  const containerClass = cn('relative rounded-[10px] overflow-auto px-4 py-[14px]', transparent ? '' : 'bg-[rgba(0,0,0,0.28)]', className);
+  const containerClass = cn('relative rounded-md overflow-auto px-4 py-3.5', transparent ? '' : 'bg-black/[0.28]', className);
   const containerStyle = maxHeight != null ? { maxHeight } : undefined;
 
   return (
     <div role="region" aria-label={t`JSON`} className={containerClass} style={containerStyle}>
       <Highlight code={text} language="json" theme={proxytraceJsonTheme}>
         {({ tokens, getLineProps, getTokenProps }) => (
-          <pre className="m-0 font-mono text-[11.5px] leading-[1.55] whitespace-pre-wrap break-words">
+          <pre className="m-0 font-mono text-body-sm leading-[1.55] whitespace-pre-wrap break-words">
             {tokens.map((line, i) => {
               const lineProps = getLineProps({ line });
               return (
@@ -80,7 +80,7 @@ export function JsonBlock({ value, className, maxHeight, hideCopy, transparent }
           onClick={copy}
           aria-label={t`Copy JSON`}
           title={t`Copy JSON`}
-          className={`absolute top-2 right-2 inline-flex items-center gap-[4px] text-[10.5px] font-medium px-[7px] py-[3px] rounded-[6px] cursor-pointer transition-colors duration-150 bg-card-2 hover:bg-[rgba(255,255,255,0.06)] ${copied ? 'text-success' : 'text-muted'}`}
+          className={`absolute top-2 right-2 inline-flex items-center gap-1 text-caption font-medium px-1.75 py-0.75 rounded-sm cursor-pointer transition-colors duration-150 bg-card-2 hover:bg-white/[0.06] ${copied ? 'text-success' : 'text-muted'}`}
         >
           {copied ? <CheckIcon size={11} strokeWidth={2.5} /> : <CopyIcon size={11} strokeWidth={2} />}
           <span aria-live="polite">{copied ? <Trans>Copied</Trans> : <Trans>Copy</Trans>}</span>

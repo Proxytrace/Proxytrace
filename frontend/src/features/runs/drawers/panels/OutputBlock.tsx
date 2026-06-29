@@ -16,7 +16,7 @@ export function OutputBlock({ label, color, value }: { label: string; color: str
         <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: color }} />
         <span className="text-body-sm font-semibold text-secondary">{label}</span>
         {value.kind === 'tool_call' && (
-          <span className="mono px-[5px] py-px rounded-sm text-caption bg-accent-subtle text-accent">tool_call</span>
+          <span className="mono px-1.5 py-px rounded-sm text-caption bg-accent-subtle text-accent">tool_call</span>
         )}
       </div>
       <div

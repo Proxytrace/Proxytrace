@@ -23,7 +23,7 @@ export function TheoryFooter({ theory, onPromote, isPromoting, onReject, isRejec
   const aColor = agentColor(theory.agentId);
   const agentPill = (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-[1px] text-caption font-medium mono"
+      className="inline-flex items-center gap-1 rounded-full px-2 py-px text-caption font-medium mono"
       style={{ background: `color-mix(in srgb, ${aColor} 12%, transparent)`, color: aColor }}
     >
       <span className="size-1.5 rounded-full" style={{ background: aColor }} />
@@ -90,7 +90,7 @@ export function TheoryFooter({ theory, onPromote, isPromoting, onReject, isRejec
           {transition.deltaPt !== 0 && (
             <span
               className={cn(
-                'rounded-full px-1.5 py-[1px] font-semibold',
+                'rounded-full px-1.5 py-px font-semibold',
                 transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
               )}
             >

@@ -212,7 +212,7 @@ export default function Suites() {
                   onDelete={() => setDeleteSuite(selectedSuite)}
                 />
               : !isLoading
-                ? <Card><div className="py-[60px] text-center text-muted text-body"><Trans>Select a suite to see details.</Trans></div></Card>
+                ? <Card><div className="py-15 text-center text-muted text-body"><Trans>Select a suite to see details.</Trans></div></Card>
                 : null}
           </main>
         )}

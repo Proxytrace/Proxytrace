@@ -34,7 +34,7 @@ export default function AccountSecurity() {
       <Card padding="lg">
         <Card.Header>
           <div className="flex items-center gap-2">
-            <h2 className="text-h2 font-semibold"><Trans>Two-factor authentication</Trans></h2>
+            <h2 className="text-h2 font-semibold leading-tight"><Trans>Two-factor authentication</Trans></h2>
             {!isLoading && (
               <Pill
                 label={enabled ? t`Enabled` : t`Disabled`}

@@ -61,7 +61,7 @@ export function TheoryCard({ theory, suiteName, onOpen, onPromote, isPromoting, 
       <div className="pl-4 pr-3.5 py-3">
         {/* Kind + handle */}
         <div className="flex items-center gap-1.5 mb-2">
-          <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-[2px] text-caption font-semibold border ${KIND_PILL[theory.kind]}`}>
+          <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-caption font-semibold border ${KIND_PILL[theory.kind]}`}>
             {KIND_ICON[theory.kind]} {i18n._(kind.label)}
           </span>
           <span className="mono ml-auto text-caption text-muted" data-testid={`theory-handle-${theory.id}`}>

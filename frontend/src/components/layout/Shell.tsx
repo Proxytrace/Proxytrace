@@ -56,7 +56,7 @@ export function Shell() {
               route Suspense would. */}
           <Suspense
             fallback={
-              <div className="flex items-center justify-center flex-1 text-muted text-[13px]">
+              <div className="flex items-center justify-center flex-1 text-muted text-title">
                 <Trans>Loading…</Trans>
               </div>
             }

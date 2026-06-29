@@ -23,9 +23,9 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
   const fillPct = Math.max(0, Math.min(100, ((effective - min) / (max - min)) * 100));
 
   return (
-    <div className="flex flex-col gap-[6px]">
+    <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="flex items-center gap-[6px] text-[10.5px] text-secondary uppercase tracking-[0.06em] font-semibold">
+        <label htmlFor={id} className="flex items-center gap-1.5 text-caption text-secondary uppercase tracking-[0.06em] font-semibold">
           {label}
           {isModified && (
             <span
@@ -35,11 +35,11 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
             />
           )}
         </label>
-        <div className="flex items-center gap-[6px]">
+        <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              'mono text-[11px] tabular-nums px-[6px] py-[1px] rounded-[6px] border border-border',
-              'bg-[rgba(0,0,0,0.18)] min-w-[42px] text-right',
+              'mono text-body-sm tabular-nums px-1.5 py-px rounded-sm border border-border',
+              'bg-black/[0.18] min-w-[42px] text-right',
               value == null ? 'text-muted' : 'text-primary',
             )}
           >
@@ -49,13 +49,13 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
       </div>
       <div className="relative h-[20px] flex items-center">
         <div
-          className="absolute left-0 right-0 h-[4px] rounded-full bg-[rgba(255,255,255,0.06)]"
+          className="absolute left-0 right-0 h-[4px] rounded-full bg-card-2"
         />
         <div
           className={cn(
             'absolute left-0 h-[4px] rounded-full pointer-events-none',
             value == null
-              ? 'bg-[rgba(255,255,255,0.10)]'
+              ? 'bg-white/[0.10]'
               : 'bg-[linear-gradient(90deg,var(--accent-primary),var(--accent-hover))]',
           )}
           style={{ width: `${fillPct}%` }}
@@ -73,7 +73,7 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
           className="param-slider relative w-full appearance-none bg-transparent cursor-pointer"
         />
       </div>
-      {hint && <span className="text-[10.5px] text-muted">{hint}</span>}
+      {hint && <span className="text-caption text-muted">{hint}</span>}
     </div>
   );
 }

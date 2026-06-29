@@ -65,13 +65,13 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
   return (
     <header
-      className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[3] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
+      className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[3] m-[10px_10px_0_10px] rounded-lg bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
     >
       <IconButton onClick={onToggleSidebar} aria-label={t`Toggle sidebar`}>
         <LayoutSidebarIcon size={16} />
       </IconButton>
 
-      <div className="flex items-center gap-2 text-[13px] min-w-0 shrink whitespace-nowrap">
+      <div className="flex items-center gap-2 text-title min-w-0 shrink whitespace-nowrap">
         <span className="text-muted truncate max-w-[180px] hidden md:inline">{currentProject?.name ?? '—'}</span>
         <span className="text-muted hidden md:inline">/</span>
         <span className="font-semibold truncate">{pageLabel}</span>
@@ -90,7 +90,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       <div
         title={i18n._(HEALTH_LABEL[healthStatus])}
         className={cn(
-          'flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
+          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-body-sm font-semibold whitespace-nowrap shrink-0',
           HEALTH_PILL[healthStatus],
         )}
       >
@@ -116,7 +116,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             title={userName}
             aria-label={t`User menu (${userName})`}
           >
-            <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
+            <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-body-sm font-semibold" />
           </IconButton>
         }
       >

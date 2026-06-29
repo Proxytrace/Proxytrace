@@ -84,8 +84,8 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-h2 font-semibold text-primary m-0"><Trans>Proposed change</Trans></h3>
-          <span className={cn('inline-flex items-center rounded-sm px-2 py-[2px] text-caption font-semibold', TONE_SUBTLE_BG['accent'], TONE_TEXT['accent'])}>
+          <h3 className="text-h2 font-semibold leading-tight text-primary m-0"><Trans>Proposed change</Trans></h3>
+          <span className={cn('inline-flex items-center rounded-sm px-2 py-0.5 text-caption font-semibold', TONE_SUBTLE_BG['accent'], TONE_TEXT['accent'])}>
             {i18n._(KIND_META[theory.kind].label)}
           </span>
         </div>

@@ -62,7 +62,7 @@ export function TestCasesPanel({
   return (
     <div className="flex flex-col gap-3 min-h-0 h-full">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+        <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
           <Plural value={cases.length} one="# case" other="# cases" />
           {pendingAddTraces.length > 0 && <span className="text-accent"> <Trans>· +{pendingAddTraces.length} pending</Trans></span>}
         </span>
@@ -79,13 +79,13 @@ export function TestCasesPanel({
 
       <Input
         leftAddon={<SearchIcon size={13} />}
-        rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}><Trans>clear</Trans></Button> : undefined}
+        rightAddon={search ? <Button variant="link" className="text-body-sm" onClick={() => setSearch('')}><Trans>clear</Trans></Button> : undefined}
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder={t`Search cases…`}
       />
 
-      <div className="flex-1 min-h-0 overflow-y-auto rounded-[12px] border border-border bg-card">
+      <div className="flex-1 min-h-0 overflow-y-auto rounded-lg border border-border bg-card">
         {totalEmpty && (
           <EmptyState
             title={t`No test cases`}
@@ -144,11 +144,11 @@ function CaseRow({
     >
       <div className="flex items-center gap-2">
         <ColoredBadge color="var(--teal)" label={t`${testCase.input.length} msg`} size="sm" />
-        <span className={cn('text-[12.5px] truncate min-w-0 flex-1', removing ? 'line-through text-muted' : 'text-primary')}>
+        <span className={cn('text-body truncate min-w-0 flex-1', removing ? 'line-through text-muted' : 'text-primary')}>
           {snippet || <span className="text-muted italic"><Trans>No user message</Trans></span>}
         </span>
         {removing ? (
-          <Button variant="link" className="text-[11px] shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(); }} title={t`Undo remove`}>
+          <Button variant="link" className="text-body-sm shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(); }} title={t`Undo remove`}>
             <Trans>Undo</Trans>
           </Button>
         ) : (
@@ -158,7 +158,7 @@ function CaseRow({
         )}
       </div>
       {removing && (
-        <div className="mt-[3px] text-[10.5px] text-warn font-semibold uppercase tracking-[0.08em]"><Trans>Pending removal</Trans></div>
+        <div className="mt-0.5 text-caption text-warn font-semibold uppercase tracking-[0.08em]"><Trans>Pending removal</Trans></div>
       )}
     </li>
   );
@@ -184,15 +184,15 @@ function AddedTraceRow({
     >
       <div className="flex items-center gap-2">
         <ColoredBadge color={modelColor(trace.model)} label={trace.model} dot size="sm" />
-        <span className="text-[11px] font-mono text-muted shrink-0">{fmtRelative(trace.createdAt)}</span>
-        <span className="text-[11px] font-mono text-secondary shrink-0">{fmtTokens(trace.inputTokens)}→{fmtTokens(trace.outputTokens)}</span>
-        <Button variant="link" className="text-[11px] shrink-0 ml-auto" onClick={e => { e.stopPropagation(); onUndo(); }} title={t`Remove from staged`}>
+        <span className="text-body-sm font-mono text-muted shrink-0">{fmtRelative(trace.createdAt)}</span>
+        <span className="text-body-sm font-mono text-secondary shrink-0">{fmtTokens(trace.inputTokens)}→{fmtTokens(trace.outputTokens)}</span>
+        <Button variant="link" className="text-body-sm shrink-0 ml-auto" onClick={e => { e.stopPropagation(); onUndo(); }} title={t`Remove from staged`}>
           <Trans>Undo</Trans>
         </Button>
       </div>
-      <div className="mt-[5px] flex items-center gap-2 min-w-0">
-        <span className="text-[10px] font-semibold text-accent uppercase tracking-[0.08em] shrink-0"><Trans>+ Pending add</Trans></span>
-        <span className="text-[12px] text-secondary truncate min-w-0">
+      <div className="mt-1.5 flex items-center gap-2 min-w-0">
+        <span className="text-caption font-semibold text-accent uppercase tracking-[0.08em] shrink-0"><Trans>+ Pending add</Trans></span>
+        <span className="text-body text-secondary truncate min-w-0">
           {snippet || <span className="text-muted italic"><Trans>No user message</Trans></span>}
         </span>
       </div>

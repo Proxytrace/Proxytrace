@@ -25,7 +25,7 @@ interface Props {
 }
 
 export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
-  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-[7px] px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]', isLast ? '' : 'border-b border-border-subtle');
+  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-1.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]', isLast ? '' : 'border-b border-border-subtle');
 
   if (row.type === 'flat') {
     const t = row.trace;
@@ -35,7 +35,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
       <RowButton
         data-testid={`live-trace-row-${t.id}`}
         onClick={() => onSelect(t.id)}
-        className={`${rowCls} ${isFresh ? 'slide-in' : ''}`}
+        className={cn(rowCls, isFresh && 'slide-in')}
       >
         <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
         <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
@@ -43,7 +43,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
         </span>
         <span className="text-muted text-center">—</span>
         <span className="justify-self-center"><Pill label={t.model} color={modelColor(t.model)} size="sm" /></span>
-        <span className="text-[10.5px] font-semibold text-center" style={{ color: sc }}>{t.httpStatus}</span>
+        <span className="text-caption font-semibold text-center" style={{ color: sc }}>{t.httpStatus}</span>
         <span className="text-secondary text-right min-w-[54px]">{fmtTokens(t.inputTokens + t.outputTokens)}</span>
         <span className="text-muted text-right min-w-[58px]">{fmtLatency(t.durationMs)}</span>
       </RowButton>
@@ -61,17 +61,17 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
     <RowButton
       data-testid={`live-trace-group-${conversationId}`}
       onClick={() => onSelect(head.id)}
-      className={`${rowCls} ${isFresh ? 'slide-in' : ''}`}
+      className={cn(rowCls, isFresh && 'slide-in')}
     >
       <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
       <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
         {tracePreview(head) ?? <span className="text-muted">—</span>}
       </span>
-      <span className="justify-self-center inline-flex items-center text-caption font-semibold px-[5px] py-[1px] rounded-full text-accent bg-accent-subtle">
+      <span className="justify-self-center inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full text-accent bg-accent-subtle">
         <Plural value={turns.length} one="# turn" other="# turns" />
       </span>
       <span className="justify-self-center"><Pill label={head.model} color={modelColor(head.model)} size="sm" /></span>
-      <span className="text-[10.5px] font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : <Trans>mixed</Trans>}</span>
+      <span className="text-caption font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : <Trans>mixed</Trans>}</span>
       <span className="text-secondary text-right min-w-[54px]">{fmtTokens(totalTokens)}</span>
       <span className="text-muted text-right min-w-[58px]">{fmtLatency(totalMs)}</span>
     </RowButton>

@@ -80,14 +80,15 @@ export default function Dashboard() {
       {/* Title + clock */}
       <div className="fade-up flex items-center justify-between gap-3 px-0.5">
         <div className="flex items-center gap-3.5">
-          <span className="text-[9.5px] text-accent-hover font-mono tracking-[0.18em] flex items-center gap-[7px] font-semibold">
+          <span className="text-caption text-accent-hover font-mono tracking-[0.18em] flex items-center gap-1.5 font-semibold">
             <span className="size-1.5 rounded-full bg-success pulse-dot shadow-[0_0_10px_var(--success)]" />
             <Trans>LIVE</Trans>
           </span>
+          {/* display-tier: intentional, outside type scale */}
           <h1 className="text-[20px] font-extrabold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
           <p className="text-body-sm text-muted">{currentProject?.name ?? t`All projects`}</p>
         </div>
-        <div className="flex items-center gap-2.5 font-mono text-[10.5px] text-muted">
+        <div className="flex items-center gap-2.5 font-mono text-caption text-muted">
           <span className="text-primary font-semibold tracking-[0.04em] tabular-nums">{clock}</span>
           <span className="tracking-[0.14em] uppercase"><Trans>UTC · proxy</Trans></span>
         </div>

@@ -29,8 +29,8 @@ export const TONE_SUBTLE_BG: Record<DisplayTone, string> = {
   accent: 'bg-[var(--accent-subtle)]',
   success: 'bg-[var(--success-subtle)]',
   danger: 'bg-[var(--danger-subtle)]',
-  muted: 'bg-[rgba(255,255,255,0.04)]',
-  secondary: 'bg-[rgba(255,255,255,0.04)]',
+  muted: 'bg-white/[0.04]',
+  secondary: 'bg-white/[0.04]',
   teal: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)]',
 };
 

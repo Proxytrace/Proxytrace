@@ -11,10 +11,10 @@ export function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: (
         <FlaskIcon size={24} />
       </div>
       <div>
-        <div className="text-[14px] font-semibold text-secondary">
+        <div className="text-h2 font-semibold text-secondary">
           {hasAny ? <Trans>Select an evaluator</Trans> : <Trans>No evaluators yet</Trans>}
         </div>
-        <div className="text-[12px] mt-1 max-w-[320px]">
+        <div className="text-body mt-1 max-w-[320px]">
           {hasAny
             ? <Trans>Pick one from the list to view its definition, attached suites, and performance.</Trans>
             : <Trans>Create your first evaluator to start scoring agent responses.</Trans>}

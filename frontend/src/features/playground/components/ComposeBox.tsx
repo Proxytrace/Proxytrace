@@ -56,10 +56,10 @@ export function ComposeBox({
     : (endpointId ? '…' : t`Pick endpoint`);
 
   return (
-    <div className="border-t border-border p-[12px] flex flex-col gap-[8px] bg-[rgba(0,0,0,0.12)]">
+    <div className="border-t border-border p-3 flex flex-col gap-2 bg-black/[0.12]">
       <div
         className={cn(
-          'rounded-[12px] flex flex-col bg-card border transition-[border-color,box-shadow] duration-150 ease-[ease]',
+          'rounded-lg flex flex-col bg-card border transition-[border-color,box-shadow] duration-150 ease-[ease]',
           canSend
             ? 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-primary)_12%,transparent)]'
             : 'border-border shadow-[var(--shadow-pill)]',
@@ -69,7 +69,7 @@ export function ComposeBox({
         <textarea
           ref={taRef}
           data-testid="compose-box"
-          className="w-full bg-transparent border-0 outline-none resize-none px-[12px] pt-[10px] pb-[6px] text-[13.5px] leading-[1.55] text-primary placeholder:text-muted"
+          className="w-full bg-transparent border-0 outline-none resize-none px-3 pt-2.5 pb-1.5 text-title leading-[1.55] text-primary placeholder:text-muted"
           placeholder={disabled && disabledReason ? disabledReason : t`Send a user message…`}
           value={text}
           disabled={disabled}
@@ -80,24 +80,24 @@ export function ComposeBox({
           rows={2}
           aria-label={t`Message`}
         />
-        <div className="flex items-center gap-[8px] px-[10px] pb-[8px] pt-[2px]">
+        <div className="flex items-center gap-2 px-2.5 pb-2 pt-0.5">
           {onEndpointChange && (
             <Popover
               open={pickerOpen}
               onOpenChange={setPickerOpen}
               side="top"
               align="start"
-              className="w-[280px] py-[6px] max-h-[320px] overflow-y-auto"
+              className="w-[280px] py-1.5 max-h-[320px] overflow-y-auto"
               trigger={
                 // eslint-disable-next-line no-restricted-syntax -- bespoke endpoint pill trigger (ZapIcon + modified dot); Popover asChild target
                 <button
                   type="button"
                   data-testid="endpoint-picker"
                   className={cn(
-                    'inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary border',
+                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-caption mono cursor-pointer transition-colors hover:text-primary border',
                     pickerOpen
                       ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
-                      : 'bg-[rgba(255,255,255,0.04)] border-border text-secondary',
+                      : 'bg-[var(--bg-wash-hover)] border-border text-secondary',
                   )}
                   title={t`Switch endpoint`}
                 >
@@ -107,19 +107,19 @@ export function ComposeBox({
                     <span
                       aria-label={t`modified`}
                       title={t`Modified from agent default`}
-                      className="ml-[2px] size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-card)]"
+                      className="ml-0.5 size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-card)]"
                     />
                   )}
                 </button>
               }
             >
               <div role="listbox">
-                <div className="px-[10px] pt-[2px] pb-[6px] flex items-center justify-between">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
+                <div className="px-2.5 pt-0.5 pb-1.5 flex items-center justify-between">
+                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
                   {defaultEndpointId && endpointId !== defaultEndpointId && (
                     <Button
                       variant="link"
-                      className="text-[10px] uppercase tracking-[0.08em]"
+                      className="text-caption uppercase tracking-[0.08em]"
                       onClick={() => { onEndpointChange(defaultEndpointId); setPickerOpen(false); }}
                     >
                       <Trans>Reset</Trans>
@@ -127,7 +127,7 @@ export function ComposeBox({
                   )}
                 </div>
                 {endpoints.length === 0 ? (
-                  <div className="px-[10px] py-[8px] text-[11.5px] text-muted"><Trans>No endpoints configured.</Trans></div>
+                  <div className="px-2.5 py-2 text-body-sm text-muted"><Trans>No endpoints configured.</Trans></div>
                 ) : endpoints.map(ep => {
                   const active = ep.id === endpointId;
                   return (
@@ -138,15 +138,15 @@ export function ComposeBox({
                       onClick={() => { onEndpointChange(ep.id); setPickerOpen(false); }}
                       data-testid={`endpoint-picker-option-${ep.id}`}
                       className={cn(
-                        'flex items-center gap-[8px] px-[10px] py-[6px] hover:bg-card transition-colors',
+                        'flex items-center gap-2 px-2.5 py-1.5 hover:bg-card transition-colors',
                         active && 'bg-accent-subtle',
                       )}
                     >
                       <div className="flex flex-col min-w-0 flex-1">
-                        <span className={`text-[12px] truncate ${active ? 'text-primary font-semibold' : 'text-secondary'}`}>
+                        <span className={cn('text-body truncate', active ? 'text-primary font-semibold' : 'text-secondary')}>
                           {ep.modelName}
                         </span>
-                        <span className="text-[10.5px] text-muted truncate mono">{ep.providerName}</span>
+                        <span className="text-caption text-muted truncate mono">{ep.providerName}</span>
                       </div>
                       {active && <CheckIcon size={12} strokeWidth={2.5} />}
                     </RowButton>
@@ -155,13 +155,13 @@ export function ComposeBox({
               </div>
             </Popover>
           )}
-          <div className="ml-auto flex items-center gap-[10px] text-[10.5px] mono text-muted tabular-nums">
+          <div className="ml-auto flex items-center gap-2.5 text-caption mono text-muted tabular-nums">
             <span title={t`Approximate tokens (chars / 4)`}><Trans>~{tokens} tok</Trans></span>
             <span><Trans>{text.length} chars</Trans></span>
           </div>
           <Button
             variant="primary"
-            className="gap-[8px] py-[6px] px-[12px] text-[12.5px]"
+            className="gap-2 py-1.5 px-3 text-body"
             onClick={send}
             disabled={!canSend}
             data-testid="compose-send"
@@ -173,7 +173,7 @@ export function ComposeBox({
         </div>
       </div>
       {disabled && disabledReason && (
-        <div className="text-[11px] text-muted px-[2px]">{disabledReason}</div>
+        <div className="text-body-sm text-muted px-0.5">{disabledReason}</div>
       )}
     </div>
   );

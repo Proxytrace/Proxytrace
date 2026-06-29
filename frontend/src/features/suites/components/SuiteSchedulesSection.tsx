@@ -57,7 +57,7 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
   return (
     <div className="flex flex-col gap-2" data-testid="suite-schedules-section">
       <div className="flex items-center justify-between">
-        <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+        <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
           <Trans>{activeCount} active · {suiteSchedules.length} total</Trans>
         </span>
         <Button

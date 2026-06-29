@@ -34,7 +34,7 @@ export function KeyCapabilities({ scopes }: { scopes: ApiKeyScope[] }) {
             data-on={on}
             title={names[scope]}
             className={cn(
-              'inline-grid place-items-center w-[18px] h-[18px] rounded-[5px] border font-mono text-[10px] font-bold leading-none select-none',
+              'inline-grid place-items-center w-[18px] h-[18px] rounded-sm border font-mono text-caption font-bold leading-none select-none',
               on ? GRANTED[scope] : GHOST,
             )}
           >

@@ -15,7 +15,7 @@ export function FilterChip({ label, value, active, onClick, accent }: FilterChip
     <button
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-[7px] h-9 px-[11px] rounded-[8px] text-body font-medium',
+        'inline-flex items-center gap-1.75 h-9 px-2.75 rounded-md text-body font-medium',
         'whitespace-nowrap cursor-pointer border',
         'transition-[background,border-color,color] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
         FOCUS_RING,
@@ -30,7 +30,7 @@ export function FilterChip({ label, value, active, onClick, accent }: FilterChip
       <ChevronDownIcon
         size={12}
         strokeWidth={2.5}
-        className={cn('ml-[2px]', active ? 'text-accent-text' : 'text-muted')}
+        className={cn('ml-0.5', active ? 'text-accent-text' : 'text-muted')}
       />
     </button>
   );

@@ -120,7 +120,7 @@ export default function Evaluators() {
           avgScoreById={avgScoreById}
         />
 
-        <main className="min-w-0 overflow-y-auto flex flex-col pr-[10px]">
+        <main className="min-w-0 overflow-y-auto flex flex-col pr-2.5">
           {selected ? (
             <EvaluatorDetail
               evaluator={selected}
@@ -182,7 +182,7 @@ export default function Evaluators() {
             />
           }
         >
-          <p className="text-[13px] text-secondary m-0">
+          <p className="text-title text-secondary m-0">
             <Trans>This will permanently remove <strong>{deleteTarget.name}</strong> and detach it from all test suites.</Trans>
           </p>
         </Modal>

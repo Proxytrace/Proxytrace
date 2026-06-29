@@ -55,7 +55,7 @@ export function NotificationsMenu() {
             <span
               data-testid="notifications-unread-badge"
               aria-hidden
-              className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 inline-flex items-center justify-center rounded-full bg-accent text-accent-ink text-[9px] font-bold leading-none tabular-nums shadow-[var(--shadow-pill)]"
+              className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 inline-flex items-center justify-center rounded-full bg-accent text-accent-ink text-caption font-bold leading-none tabular-nums shadow-[var(--shadow-pill)]"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>

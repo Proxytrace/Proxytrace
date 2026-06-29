@@ -46,7 +46,7 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap mb-1.5">
-            <h2 data-testid="agent-name" className="text-h1 font-semibold tracking-[-0.02em] m-0 truncate">{agent.name}</h2>
+            <h2 data-testid="agent-name" className="text-h1 font-semibold leading-none tracking-[-0.02em] m-0 truncate">{agent.name}</h2>
             {latestVersion > 0 && (
               <span
                 className="px-2 py-px rounded-sm text-body-sm font-semibold font-mono shrink-0"

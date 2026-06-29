@@ -59,7 +59,7 @@ export function RecentOutliersWidget({ agentId, className }: Props) {
                 data-testid={`agent-recent-outlier-${o.id}`}
                 onClick={() => navigate(`/traces?focus=${o.id}`)}
                 title={preview ?? tOpenTrace}
-                className="flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-1 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
+                className="flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-2 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
               >
                 <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-warn" aria-hidden />
                 <span className="text-body-sm text-secondary truncate">

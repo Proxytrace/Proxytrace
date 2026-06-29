@@ -59,7 +59,7 @@ function RailIconButton({ active, modified, title, onClick, children }: RailIcon
       aria-label={title}
       aria-pressed={active}
       className={cn(
-        'relative size-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer transition-colors border',
+        'relative size-[40px] inline-flex items-center justify-center rounded-md cursor-pointer transition-colors border',
         active
           ? 'bg-accent-subtle text-[var(--accent-hover)] border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'
           : 'bg-transparent text-secondary border-transparent',
@@ -112,7 +112,7 @@ export function RightRail({
       )}
 
       {/* Icon rail */}
-      <div className="w-[56px] rounded-lg flex flex-col items-center py-[10px] gap-[6px] bg-card border border-border shadow-[var(--shadow-card)]">
+      <div className="w-[56px] rounded-lg flex flex-col items-center py-2.5 gap-1.5 bg-card border border-border shadow-[var(--shadow-card)]">
         <RailIconButton
           active={active === 'system'}
           modified={systemPromptModified}
@@ -138,7 +138,7 @@ export function RightRail({
           <CpuIcon size={16} strokeWidth={1.8} />
         </RailIconButton>
 
-        <div className="my-[4px] h-[1px] w-[24px] bg-[var(--hairline)]" />
+        <div className="my-1 h-[1px] w-[24px] bg-[var(--hairline)]" />
 
         {/* eslint-disable-next-line no-restricted-syntax -- bespoke 40px rail reset button (matches RailIconButton styling) */}
         <button
@@ -148,7 +148,7 @@ export function RightRail({
           title={anyModified ? t`Reset all settings to agent defaults` : t`Settings match agent defaults`}
           aria-label={t`Reset all to agent defaults`}
           className={cn(
-            'size-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer transition-colors border',
+            'size-[40px] inline-flex items-center justify-center rounded-md cursor-pointer transition-colors border',
             anyModified
               ? 'bg-accent-subtle text-[var(--accent-hover)] border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'
               : 'bg-transparent text-muted border-transparent',

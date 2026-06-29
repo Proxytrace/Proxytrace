@@ -11,7 +11,7 @@ import { tierBadge, type TierTone } from './licenseUtils';
 // Free) and carries no status dot. Geometry matches the health pill so the two
 // align, but fill + icon set them apart.
 const CHIP_BASE = cn(
-  'inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
+  'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-body-sm font-semibold whitespace-nowrap shrink-0',
 );
 
 const TONE_CLS: Record<TierTone, string> = {

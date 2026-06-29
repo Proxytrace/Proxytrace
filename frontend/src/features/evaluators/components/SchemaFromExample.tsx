@@ -26,13 +26,13 @@ export function SchemaFromExample({ onGenerate }: Props) {
 
   return (
     <details className="group">
-      <summary className="cursor-pointer text-[12px] font-medium text-accent select-none py-1">
+      <summary className="cursor-pointer text-body font-medium text-accent select-none py-1">
         <Trans>Generate from an example JSON object</Trans>
       </summary>
       <div className="mt-2 flex flex-col gap-2">
         <Textarea
           data-testid="schema-from-example-input"
-          className="mono text-[12px]"
+          className="mono text-body"
           value={example}
           onChange={e => { setExample(e.target.value); setError(null); }}
           // eslint-disable-next-line lingui/no-unlocalized-strings -- sample JSON data placeholder, not UI copy
@@ -40,9 +40,9 @@ export function SchemaFromExample({ onGenerate }: Props) {
           rows={5}
           invalid={!!error}
         />
-        {error && <div className="text-[11px] text-danger">{error}</div>}
+        {error && <div className="text-body-sm text-danger">{error}</div>}
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[11px] text-muted">
+          <div className="text-body-sm text-muted">
             <Trans>Replaces the schema above — every example key becomes required; loosen by hand if needed.</Trans>
           </div>
           <Button

@@ -111,11 +111,11 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
-              <span className="mono text-body-title font-semibold">{trace.id.slice(0, 18)}…</span>
+              <span className="mono text-title font-semibold">{trace.id.slice(0, 18)}…</span>
               <CopyButton text={trace.id} label={t`Copy trace ID`} className="shrink-0" />
               <span
                 className={cn(
-                  'inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-caption font-semibold font-mono',
+                  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-caption font-semibold font-mono',
                   statusOk ? 'bg-success-subtle' : statusErr ? 'bg-danger-subtle' : 'bg-[color-mix(in_srgb,var(--warn)_15%,transparent)]',
                 )}
                 style={{ color: statusColor }}
@@ -124,7 +124,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
                 {trace.httpStatus} {statusLabel}
               </span>
             </div>
-            <div className="mt-[6px] flex items-center gap-2 flex-wrap">
+            <div className="mt-1.5 flex items-center gap-2 flex-wrap">
               {trace.agentName && trace.agentId && (
                 <Button
                   variant="ghost"
@@ -179,7 +179,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         </div>
 
         {/* Stat band */}
-        <div className="mx-5 mt-[14px] px-4 py-[14px] bg-card-2 rounded-xl grid grid-cols-5 gap-[14px] shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
+        <div className="mx-5 mt-3.5 px-4 py-3.5 bg-card-2 rounded-xl grid grid-cols-5 gap-3.5 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
           <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'} valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
           <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} color="var(--teal)" />
           <DrawerStat label={t`Output`} value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} color="var(--success)" />
@@ -204,7 +204,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
 
         {/* Tabs */}
         <Tabs
-          className="px-5 pt-[14px] shrink-0"
+          className="px-5 pt-3.5 shrink-0"
           value={tab}
           onChange={t => setTab(t as Tab)}
           items={TABS.map(([t, count]) => ({
@@ -224,14 +224,14 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         {/* Tab body */}
         <div
           data-testid={`trace-${tab.toLowerCase().replace(/\s+/g, '-')}-tab`}
-          className="flex-1 min-h-0 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px] [&>*]:shrink-0"
+          className="flex-1 min-h-0 overflow-y-auto px-5 pt-3.5 pb-7 flex flex-col gap-2.5 [&>*]:shrink-0"
         >
           {tab === 'Messages' && (
             <TraceMessagesTab trace={trace} onJumpToDefinition={jumpToDefinition} />
           )}
           {tab === 'Tools' && (
             invocations.length === 0
-              ? <div className="px-5 py-[40px] text-center text-muted text-body"><Trans>No tools were invoked in this trace.</Trans></div>
+              ? <div className="px-5 py-10 text-center text-muted text-body"><Trans>No tools were invoked in this trace.</Trans></div>
               : invocations.map(({ req, result }, i) => (
                 <ToolMessageBubble
                   key={`${req.id}-${i}`}

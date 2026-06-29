@@ -30,8 +30,8 @@ export function ResetLinkModal({ email, link, expiresAt, onClose }: ResetLinkMod
         <p className="text-body-sm text-muted">
           {t`Expires ${new Date(expiresAt).toLocaleString()}`}
         </p>
-        <div className="flex items-center gap-2 rounded border border-border bg-surface p-3 text-sm">
-          <code data-testid="reset-link-value" className="flex-1 truncate">{link}</code>
+        <div className="flex items-center gap-2 rounded-sm border border-border bg-surface p-3 text-body">
+          <code data-testid="reset-link-value" className="flex-1 min-w-0 truncate">{link}</code>
           <Button variant="secondary" size="sm" data-testid="reset-link-copy-btn" onClick={copy}>
             {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </Button>

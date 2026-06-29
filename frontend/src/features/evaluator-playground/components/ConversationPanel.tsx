@@ -9,11 +9,11 @@ export function ConversationPanel({ messages }: { messages: MessageDto[] }) {
     <details className="group rounded-lg border border-hairline bg-card-2 shrink-0">
       <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer select-none list-none">
         <TestBenchChevronIcon />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-secondary"><Trans>Input conversation</Trans></span>
-        <span className="text-[10.5px] text-muted font-mono">
+        <span className="text-body-sm font-semibold uppercase tracking-[0.06em] text-secondary"><Trans>Input conversation</Trans></span>
+        <span className="text-caption text-muted font-mono">
           <Plural value={messages.length} one="# message" other="# messages" />
         </span>
-        <span className="ml-auto text-[11px] text-muted">
+        <span className="ml-auto text-body-sm text-muted">
           <span className="group-open:hidden"><Trans>Show</Trans></span>
           <span className="hidden group-open:inline"><Trans>Hide</Trans></span>
         </span>

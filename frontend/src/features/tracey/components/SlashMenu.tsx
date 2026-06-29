@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { cn } from '../../../lib/cn';
 import type { QuickAction } from '../tracey-quick-actions';
 
 export type SlashItem =
@@ -56,20 +57,22 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
                 e.preventDefault();
                 onSelect(item);
               }}
-              className={`flex w-full items-baseline gap-2 border-l-2 px-3 py-1.5 text-left transition-colors cursor-pointer ${
+              className={cn(
+                'flex w-full items-baseline gap-2 border-l-2 px-3 py-1.5 text-left transition-colors cursor-pointer',
                 active
                   ? 'border-accent bg-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)]'
-                  : 'border-transparent bg-transparent hover:bg-[var(--bg-wash-hover)]'
-              }`}
+                  : 'border-transparent bg-transparent hover:bg-[var(--bg-wash-hover)]',
+              )}
             >
               <span
-                className={`shrink-0 text-[13px] ${
-                  item.kind === 'tool' ? 'font-mono text-accent' : 'font-medium text-primary'
-                }`}
+                className={cn(
+                  'shrink-0 text-title',
+                  item.kind === 'tool' ? 'font-mono text-accent' : 'font-medium text-primary',
+                )}
               >
                 {label}
               </span>
-              <span className="truncate text-[11px] text-muted">{hint}</span>
+              <span className="min-w-0 truncate text-body-sm text-muted">{hint}</span>
             </button>
           </div>
         );
@@ -80,7 +83,7 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+    <div className="px-3 pb-1 pt-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-muted">
       {children}
     </div>
   );

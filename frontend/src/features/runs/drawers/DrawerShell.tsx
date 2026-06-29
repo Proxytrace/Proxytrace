@@ -69,7 +69,7 @@ export function DrawerShell({ widthClass, caseInfo, nav, leading, trailing, chil
             <span className="text-body-sm text-muted shrink-0">{caseInfo.idx + 1}/{caseInfo.total}</span>
           )}
 
-          <div className="flex gap-[3px] shrink-0">
+          <div className="flex gap-0.5 shrink-0">
             <IconButton size="sm" onClick={onPrev} disabled={!onPrev} aria-label={t`Previous case`} className="disabled:opacity-30">
               <ChevronRightIcon size={14} className="rotate-180" />
             </IconButton>

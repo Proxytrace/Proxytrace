@@ -46,24 +46,24 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
 
   return (
     <div
-      className="rounded-[10px] overflow-hidden bg-[rgba(0,0,0,0.18)] border border-border"
+      className="rounded-md overflow-hidden bg-black/[0.18] border border-border"
     >
-      <div className="flex items-center gap-[6px] px-[10px] py-[8px]">
+      <div className="flex items-center gap-1.5 px-2.5 py-2">
         <RowButton
           onClick={() => setOpen(o => !o)}
-          className="inline-flex items-center gap-[6px] flex-1"
+          className="inline-flex items-center gap-1.5 flex-1 min-w-0"
           aria-expanded={open}
         >
           <ChevronDownIcon
             size={11}
             strokeWidth={2.4}
-            className={`text-muted transition-transform ${open ? '' : '-rotate-90'}`}
+            className={`shrink-0 text-muted transition-transform ${open ? '' : '-rotate-90'}`}
           />
-          <span className="mono text-[12px] font-semibold text-success">
+          <span className="mono text-body font-semibold text-success min-w-0 truncate">
             {tool.name || t`(unnamed)`}
           </span>
           <span
-            className="text-[10px] mono px-[6px] py-[1px] rounded-full bg-[rgba(255,255,255,0.04)] text-muted"
+            className="text-caption mono px-1.5 py-px rounded-full bg-[var(--bg-wash-hover)] text-muted shrink-0"
           >
             <Plural value={argCount} one="# arg" other="# args" />
           </span>
@@ -73,10 +73,10 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
         </IconButton>
       </div>
       {!open && tool.description && (
-        <div className="px-[10px] pb-[8px] text-[11px] text-muted leading-[1.45] line-clamp-2">{tool.description}</div>
+        <div className="px-2.5 pb-2 text-body-sm text-muted leading-[1.45] line-clamp-2">{tool.description}</div>
       )}
       {open && (
-        <div className="px-[10px] pb-[10px] flex flex-col gap-[8px]">
+        <div className="px-2.5 pb-2.5 flex flex-col gap-2">
           <Input
             value={tool.name}
             placeholder={t`Name`}
@@ -89,25 +89,25 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
             onChange={e => onUpdate({ description: e.target.value })}
           />
           {argCount > 0 && (
-            <div className="flex flex-col gap-[6px]">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted"><Trans>Arguments</Trans></div>
+            <div className="flex flex-col gap-1.5">
+              <div className="text-caption font-semibold uppercase tracking-[0.06em] text-muted"><Trans>Arguments</Trans></div>
               {tool.arguments.map((arg, ai) => {
                 return (
                   <div
                     key={ai}
-                    className="rounded-[8px] p-[8px] flex flex-col gap-[6px] bg-[rgba(255,255,255,0.02)] border border-border"
+                    className="rounded-md p-2 flex flex-col gap-1.5 bg-white/[0.02] border border-border"
                   >
-                    <div className="flex items-center gap-[6px] flex-wrap">
-                      <span className="mono text-[12px] font-semibold text-primary">{arg.name}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="mono text-body font-semibold text-primary">{arg.name}</span>
                       {arg.isRequired && (
-                        <span className="text-danger text-[12px]" title={t`Required`} aria-label={t`required`}>*</span>
+                        <span className="text-danger text-body" title={t`Required`} aria-label={t`required`}>*</span>
                       )}
-                      <span className={`mono text-[10px] px-[6px] py-[1px] rounded-full border ${typeClass(arg.type)}`}>
+                      <span className={cn('mono text-caption px-1.5 py-px rounded-full border', typeClass(arg.type))}>
                         {arg.type}
                       </span>
                     </div>
                     <Textarea
-                      className="text-[12px]"
+                      className="text-body"
                       rows={2}
                       value={arg.description}
                       placeholder={t`Parameter description`}
@@ -140,7 +140,7 @@ export function ToolEditor({ tools, onChange }: Props) {
   if (tools.length === 0) {
     return (
       <div
-        className="rounded-[10px] border border-dashed border-border text-[11.5px] text-muted px-[10px] py-[12px] text-center"
+        className="rounded-md border border-dashed border-border text-body-sm text-muted px-2.5 py-3 text-center"
       >
         <Trans>Agent has no tools.</Trans>
       </div>
@@ -148,7 +148,7 @@ export function ToolEditor({ tools, onChange }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-[8px]">
+    <div className="flex flex-col gap-2">
       {tools.map((tool, i) => (
         <ToolCard
           key={tool.localId}

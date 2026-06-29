@@ -63,11 +63,11 @@ export function RightRailDrawer({
   };
 
   return (
-    <div className="w-[340px] rounded-lg flex flex-col overflow-hidden mr-[8px] fade-up bg-card border border-border shadow-[var(--shadow-card)]">
-      <header className="flex items-center gap-[8px] px-[14px] py-[10px] border-b border-border">
+    <div className="w-[340px] rounded-lg flex flex-col overflow-hidden mr-2 fade-up bg-card border border-border shadow-[var(--shadow-card)]">
+      <header className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border">
         <div className="flex flex-col min-w-0">
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Settings</Trans></span>
-          <span className="text-[13px] font-semibold text-primary truncate">{i18n._(SECTION_TITLES[active])}</span>
+          <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Settings</Trans></span>
+          <span className="text-title font-semibold text-primary truncate">{i18n._(SECTION_TITLES[active])}</span>
         </div>
         <IconButton
           className="ml-auto"
@@ -79,8 +79,8 @@ export function RightRailDrawer({
         </IconButton>
       </header>
 
-      <div className="px-[14px] py-[12px] overflow-y-auto flex-1 flex flex-col gap-[10px]">
-        <p className="text-[11px] text-muted leading-[1.5]">{i18n._(SECTION_HINTS[active])}</p>
+      <div className="px-3.5 py-3 overflow-y-auto flex-1 flex flex-col gap-2.5">
+        <p className="text-body-sm text-muted leading-[1.5]">{i18n._(SECTION_HINTS[active])}</p>
         {active === 'system' && (
           <SystemSection
             overrides={overrides}
@@ -121,16 +121,16 @@ interface SystemSectionProps {
 function SystemSection({ overrides, defaultSystemPrompt, systemPromptModified, onChange }: SystemSectionProps) {
   const { t } = useLingui();
   return (
-    <div className="flex flex-col gap-[6px]">
+    <div className="flex flex-col gap-1.5">
       <Textarea
-        className="mono text-[12px]"
+        className="mono text-body"
         rows={10}
         value={overrides.systemPrompt}
         onChange={e => onChange({ ...overrides, systemPrompt: e.target.value })}
         placeholder={t`System instructions sent to the agent`}
         aria-label={t`System prompt`}
       />
-      <div className="flex justify-between text-[10.5px] text-muted mono">
+      <div className="flex justify-between text-caption text-muted mono">
         <span><Trans>{overrides.systemPrompt.length} chars</Trans></span>
         {systemPromptModified && defaultSystemPrompt != null && (
           <Button variant="link" onClick={() => onChange({ ...overrides, systemPrompt: defaultSystemPrompt })}>
@@ -159,7 +159,7 @@ function ParametersSection({
 }: ParametersSectionProps) {
   const { t } = useLingui();
   return (
-    <div className="flex flex-col gap-[14px]">
+    <div className="flex flex-col gap-3.5">
       <ParameterSlider
         label={t`Temperature`}
         value={overrides.parameters.temperature}
@@ -190,9 +190,9 @@ function ParametersSection({
         onChange={v => setParam('presencePenalty', v)}
       />
 
-      <div className="grid grid-cols-3 gap-[6px]">
-        <label className="flex flex-col gap-[3px]">
-          <span className="text-[10.5px] text-muted"><Trans>Max tokens</Trans></span>
+      <div className="grid grid-cols-3 gap-1.5">
+        <label className="flex flex-col gap-0.5">
+          <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Max tokens</Trans></span>
           <Input
             type="number" min={1} step={1}
             value={overrides.parameters.maxTokens ?? ''}
@@ -200,8 +200,8 @@ function ParametersSection({
             onChange={e => setParamRaw('maxTokens', e.target.value)}
           />
         </label>
-        <label className="flex flex-col gap-[3px]">
-          <span className="text-[10.5px] text-muted"><Trans>Seed</Trans></span>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Seed</Trans></span>
           <Input
             type="number" step={1}
             value={overrides.parameters.seed ?? ''}
@@ -209,8 +209,8 @@ function ParametersSection({
             onChange={e => setParamRaw('seed', e.target.value)}
           />
         </label>
-        <label className="flex flex-col gap-[3px]">
-          <span className="text-[10.5px] text-muted"><Trans>N</Trans></span>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>N</Trans></span>
           <Input
             type="number" min={1} step={1}
             value={overrides.parameters.n ?? ''}
@@ -233,8 +233,8 @@ interface ReasoningEffortControlProps {
 function ReasoningEffortControl({ overrides, onChange }: ReasoningEffortControlProps) {
   const { i18n } = useLingui();
   return (
-    <div className="flex flex-col gap-[5px]">
-      <span className="text-[10.5px] text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Reasoning effort</Trans></span>
+    <div className="flex flex-col gap-1.5">
+      <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Reasoning effort</Trans></span>
       <SegmentedControl
         // eslint-disable-next-line lingui/no-unlocalized-strings -- "off" sentinel maps null reasoning effort, not UI copy
         value={overrides.parameters.reasoningEffort ?? 'off'}

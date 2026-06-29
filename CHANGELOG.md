@@ -69,6 +69,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Consistent typography, spacing and corners across the app.** Swept every screen onto the design
+  system's type scale, spacing steps, corner radii and surface colours, replacing dozens of off-scale
+  one-offs that left labels, paddings and rounded corners subtly mismatched between otherwise-identical
+  panels. Purely visual — no behaviour changes.
+
 - **Live duration, cost and tokens during a test run.** While a run is in progress its model cards now
   count **duration, cost and tokens** up as each case lands, instead of sitting at "—"/`$0` until the
   run finished. Running runs are also highlighted in the left-hand **Test Runs** list with an animated
@@ -101,6 +106,26 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   (e.g. "include the Tracey agent" or "list system agents") and she'll add them back in.
 
 ### Fixed
+
+- **Polished several rough UI details.** The test-run "Evaluation started" confirmation now uses a
+  proper check icon instead of a typed character; the evaluator score legend no longer crams a full
+  sentence into each coloured pill (short pills now sit beside their plain-text meaning); the **Error
+  Log** and **Audit Log** page titles match the size of every other page header; a trace's ID in the
+  detail panel renders at its intended size again; and the "move version" agent picker no longer shows
+  a transparent, off-theme list. A further pixel-level pass squared up details across the app: **long
+  names, IDs, links and titles now shorten with an ellipsis** instead of overflowing their card or
+  shoving neighbouring controls off-screen (agent/suite/evaluator/run headers, notifications, global
+  search results, password-reset and invite links, the member picker, Tracey tool cards and the
+  playground tool list); **section, dialog and entity-detail titles now share a single weight**; the
+  scheduled-runs **"recent runs" strip lays out as a horizontal row** again instead of a vertical
+  stack; and assorted **side-by-side inconsistencies** were aligned — matching selected-row styling
+  and panel framing in the evaluator bench, label casing in the playground parameters, row indentation
+  and divider alignment between suite tabs, and date-column contrast and form-field labels on the
+  admin and sign-up screens. Finally, **status and agent chips now sit vertically centred against
+  their heading** across every detail header (test runs, suites, agents, evaluators, the evaluator
+  bench and the proposals board) — previously the chips drooped a few pixels below the title — and
+  the two chips in a run header now render at a **single matching size** instead of one larger than
+  the other.
 
 - **Deleting a test run no longer flashes a "not found" error.** Removing a run refreshed the whole
   run namespace, which re-fetched the just-deleted run's own detail and surfaced a 404. Delete now
