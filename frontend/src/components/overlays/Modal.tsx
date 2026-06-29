@@ -39,7 +39,7 @@ export function Modal({ title, onClose, children, footer, headerActions, maxWidt
         {title && (
           <div className="flex items-center justify-between gap-2 mb-5">
             <div className="flex items-center gap-2 min-w-0">
-              <h2 className="m-0 text-base font-bold text-primary truncate">{title}</h2>
+              <h2 className="m-0 text-h2 font-semibold text-primary truncate min-w-0">{title}</h2>
               {headerActions}
             </div>
             <IconButton onClick={onClose} aria-label={t`Close`}><XIcon size={14} /></IconButton>

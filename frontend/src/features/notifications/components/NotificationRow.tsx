@@ -32,13 +32,13 @@ export function NotificationRow({ notification, onMarkRead, onDismiss, isBusy }:
     >
       <span
         aria-hidden
-        className={cn('mt-[5px] size-1.5 rounded-full shrink-0', isUnread ? 'bg-accent' : 'bg-transparent')}
+        className={cn('mt-1 size-1.5 rounded-full shrink-0', isUnread ? 'bg-accent' : 'bg-transparent')}
       />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <Badge label={i18n._(severityLabel(severity))} variant={severityBadgeVariant(severity)} size="sm" />
-          <span data-testid={`notification-title-${id}`} className="text-body-sm font-semibold text-primary truncate">
+          <span data-testid={`notification-title-${id}`} className="min-w-0 text-body-sm font-semibold text-primary truncate">
             {title}
           </span>
           <span className="text-caption text-muted shrink-0 ml-auto tabular-nums">{fmtRelative(createdAt)}</span>

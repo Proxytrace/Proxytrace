@@ -49,7 +49,7 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
       {kind === EvaluatorKind.Agentic && (
         <FormField label={t`Grading rubric`}>
           <Textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder={t`You are a grader. Score how clearly the response answers the user's question. Use the 1–5 scale below; explain briefly in reasoning…`} rows={8} />
-          <div className="text-[11px] text-muted mt-1"><Trans>Schema is appended automatically — only describe what to grade and what each score means.</Trans></div>
+          <div className="text-body-sm text-muted mt-1"><Trans>Schema is appended automatically — only describe what to grade and what each score means.</Trans></div>
         </FormField>
       )}
       {kind === EvaluatorKind.Agentic && <OutputContractPanel />}
@@ -85,19 +85,22 @@ const SCORE_SCALE: { n: number; name: MessageDescriptor; meaning: MessageDescrip
 ];
 
 function OutputContractPanel() {
-  const { t, i18n } = useLingui();
+  const { i18n } = useLingui();
   return (
-    <div className="bg-card-2 border border-border rounded-[9px] p-3 flex flex-col gap-2">
+    <div className="bg-card-2 border border-border rounded-md p-3 flex flex-col gap-2">
       <div>
-        <div className="text-[12px] font-semibold text-primary"><Trans>Output contract</Trans></div>
-        <div className="text-[11px] text-muted"><Trans>Your rubric must produce one of these 5 scores; reasoning is optional.</Trans></div>
+        <div className="text-body font-semibold text-primary"><Trans>Output contract</Trans></div>
+        <div className="text-body-sm text-muted"><Trans>Your rubric must produce one of these 5 scores; reasoning is optional.</Trans></div>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-col gap-1">
         {SCORE_SCALE.map(s => (
-          <Pill key={s.n} label={t`${s.n} · ${i18n._(s.name)} — ${i18n._(s.meaning)}`} color={s.color} size="sm" />
+          <div key={s.n} className="flex items-center gap-2">
+            <Pill label={`${s.n} · ${i18n._(s.name)}`} color={s.color} size="sm" />
+            <span className="text-body-sm text-muted">{i18n._(s.meaning)}</span>
+          </div>
         ))}
       </div>
-      <div className="text-[11px] text-muted"><Trans>Reasoning — optional short explanation the judge attaches to the score.</Trans></div>
+      <div className="text-body-sm text-muted"><Trans>Reasoning — optional short explanation the judge attaches to the score.</Trans></div>
     </div>
   );
 }
@@ -119,7 +122,7 @@ function FinalPromptPreview({ rubric }: { rubric: string }) {
   const body = `${rubric.trim() || t`<your rubric goes here>`}\n\n${APPENDED_SCHEMA_INSTRUCTION}`;
   return (
     <details className="group">
-      <summary className="cursor-pointer text-[12px] font-medium text-accent select-none py-1">
+      <summary className="cursor-pointer text-body font-medium text-accent select-none py-1">
         <Trans>Preview final prompt sent to judge</Trans>
       </summary>
       <div className="mt-2">

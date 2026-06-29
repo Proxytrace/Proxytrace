@@ -12,9 +12,9 @@ interface DrawerStatProps {
 export function DrawerStat({ label, value, sub, icon, color, valueColor, children, valueTestId }: DrawerStatProps) {
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-[10px]">
+      <div className="flex items-center gap-2.5">
         <div
-          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+          className="w-9 h-9 rounded-md flex items-center justify-center shrink-0"
           style={{
             background: `color-mix(in srgb, ${color} 14%, transparent)`,
             color,
@@ -26,14 +26,14 @@ export function DrawerStat({ label, value, sub, icon, color, valueColor, childre
         <div className="min-w-0 leading-tight">
           <div className="text-caption text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
           {value !== undefined && (
-            <div data-testid={valueTestId} className="text-[15px] font-bold mt-[2px] font-mono" style={{ color: valueColor ?? 'var(--text-primary)' }}>
+            <div data-testid={valueTestId} className="text-h1 font-bold mt-0.5 font-mono" style={{ color: valueColor ?? 'var(--text-primary)' }}>
               {value}
             </div>
           )}
           {children}
         </div>
       </div>
-      {sub && <div className="text-caption text-muted mt-[4px] ml-[46px]">{sub}</div>}
+      {sub && <div className="text-caption text-muted mt-1 ml-[46px]">{sub}</div>}
     </div>
   );
 }

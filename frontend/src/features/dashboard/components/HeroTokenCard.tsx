@@ -42,10 +42,11 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       {/* Header: value + range picker */}
       <div className="relative flex items-start justify-between">
         <div>
-          <div className="text-[9px] text-muted tracking-[0.16em] uppercase font-bold font-mono mb-1">
+          <div className="text-caption text-muted tracking-[0.16em] uppercase font-bold font-mono mb-1">
             <Trans>Token Volume · {rangeWindowLabel(range)}</Trans>
           </div>
           <div className="flex items-baseline gap-2.5 flex-wrap">
+            {/* display-tier: intentional, outside type scale */}
             <span
               data-testid="hero-token-total"
               data-token-total={totalTokens}
@@ -54,7 +55,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
               {tokenNum}<span className="text-accent">{tokenSuffix}</span>
             </span>
           </div>
-          <div className="mt-1.5 flex gap-2.5 text-[10.5px] font-mono text-muted items-center flex-wrap">
+          <div className="mt-1.5 flex gap-2.5 text-caption font-mono text-muted items-center flex-wrap">
             <span>
               <Trans><span className="text-secondary font-semibold">{(summary?.totalInputTokens ?? 0).toLocaleString()}</span> in</Trans>
               <CachedTokensHint cachedInput={summary?.totalCachedInputTokens ?? 0} input={summary?.totalInputTokens ?? 0} />
@@ -94,10 +95,10 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       </div>
 
       {/* Model split */}
-      <div className="relative flex flex-col gap-[5px] pt-2 border-t border-border-subtle">
+      <div className="relative flex flex-col gap-1.5 pt-2 border-t border-border-subtle">
         <div className="flex items-center justify-between">
           <div className="text-caption text-muted tracking-[0.14em] uppercase font-mono font-bold"><Trans>Split by model</Trans></div>
-          <div className="text-[10.5px] text-muted font-mono"><Trans>{modelSplit.models.length} active</Trans></div>
+          <div className="text-caption text-muted font-mono"><Trans>{modelSplit.models.length} active</Trans></div>
         </div>
         {modelSplit.models.length > 0 ? (
           <>
@@ -110,7 +111,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
                 />
               ))}
             </div>
-            <div className="flex gap-[18px] text-body-sm font-mono flex-wrap">
+            <div className="flex gap-4 text-body-sm font-mono flex-wrap">
               {modelSplit.models.map(m => (
                 <span key={m.name} className="inline-flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-sm" style={{ background: modelColor(m.name) }} />

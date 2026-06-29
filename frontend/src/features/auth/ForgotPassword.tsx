@@ -17,7 +17,7 @@ export default function ForgotPassword() {
     return (
       <AuthCard>
         <div data-testid="forgot-password-confirmation" className="space-y-3 text-center">
-          <h1 className="text-lg font-semibold"><Trans>Check your inbox</Trans></h1>
+          <h1 className="text-h1 font-semibold"><Trans>Check your inbox</Trans></h1>
           <p className="text-body-sm text-muted">
             <Trans>
               If an account exists for that email, password reset instructions are on the way. If
@@ -57,7 +57,7 @@ export default function ForgotPassword() {
           }
         }}
       >
-        <h1 className="text-lg font-semibold"><Trans>Reset your password</Trans></h1>
+        <h1 className="text-h1 font-semibold"><Trans>Reset your password</Trans></h1>
         <p className="text-body-sm text-muted">
           <Trans>Enter your email and we'll send a link to reset your password.</Trans>
         </p>
@@ -70,7 +70,7 @@ export default function ForgotPassword() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        {err && <p data-testid="forgot-password-error" className="text-sm text-danger">{err}</p>}
+        {err && <p data-testid="forgot-password-error" className="text-body text-danger">{err}</p>}
         <Button data-testid="forgot-password-submit" type="submit" fullWidth loading={submitting}>
           <Trans>Send reset link</Trans>
         </Button>

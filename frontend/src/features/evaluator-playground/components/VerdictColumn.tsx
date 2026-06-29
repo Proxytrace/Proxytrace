@@ -17,23 +17,23 @@ export function VerdictColumn({ session, evaluator }: { session: PlaygroundSessi
   return (
     <aside
       data-testid="test-bench-result"
-      className="flex flex-col rounded-lg bg-card border border-border-subtle overflow-hidden min-h-0"
+      className="flex flex-col rounded-lg bg-card shadow-[var(--shadow-card)] overflow-hidden min-h-0"
     >
       <div className="px-5 py-4 border-b border-hairline flex items-center gap-2 shrink-0">
-        <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-secondary"><Trans>Verdict</Trans></span>
+        <span className="text-caption font-bold uppercase tracking-[0.09em] text-secondary"><Trans>Verdict</Trans></span>
         {scored && currentRun && (
           currentRun.kind === 'logged' ? (
-            <span className="text-[9.5px] px-2 py-0.5 rounded-full font-semibold bg-card-2 text-muted"><Trans>logged baseline</Trans></span>
+            <span className="text-caption px-2 py-0.5 rounded-full font-semibold bg-card-2 text-muted"><Trans>logged baseline</Trans></span>
           ) : (
             <span
-              className="text-[9.5px] px-2 py-0.5 rounded-full font-bold"
+              className="text-caption px-2 py-0.5 rounded-full font-bold"
               style={{ color: scoreColor(currentRun.result.score), background: tint(scoreColor(currentRun.result.score), 16) }}
             >
               <Trans>live re-score</Trans>
             </span>
           )
         )}
-        {runPending && <span className="ml-auto text-[10.5px] text-muted"><Trans>scoring…</Trans></span>}
+        {runPending && <span className="ml-auto text-caption text-muted"><Trans>scoring…</Trans></span>}
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5 min-h-0">
@@ -51,8 +51,8 @@ export function VerdictColumn({ session, evaluator }: { session: PlaygroundSessi
             {runs.length > 0 && (
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted"><Trans>Run history</Trans></span>
-                  <span className="text-[10.5px] text-muted font-mono">{runs.length}</span>
+                  <span className="text-caption font-bold uppercase tracking-[0.09em] text-muted"><Trans>Run history</Trans></span>
+                  <span className="text-caption text-muted font-mono">{runs.length}</span>
                 </div>
                 <RunHistoryTimeline runs={runs} currentId={currentRun.id} onSelect={session.selectRun} />
               </div>

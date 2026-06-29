@@ -55,25 +55,25 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
                   key={a.id}
                   data-testid={`dashboard-agent-${a.id}`}
                   onClick={() => navigate(`/agents?id=${a.id}`)}
-                  className="relative overflow-hidden px-3 pt-[9px] pb-2 bg-card-2 rounded-md flex flex-col gap-1.5 shadow-[var(--shadow-pill)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]"
+                  className="relative overflow-hidden px-3 pt-2 pb-2 bg-card-2 rounded-md flex flex-col gap-1.5 shadow-[var(--shadow-pill)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]"
                 >
                   <div className="absolute top-0 left-0 right-0 h-0.5 opacity-70" style={{ background: c }} />
                   <div className="flex items-start justify-between gap-1.5">
                     <span className="text-title font-semibold leading-tight truncate">{a.name}</span>
                     {a.toolCount > 0 && (
-                      <span className="text-[9.5px] px-1.5 py-px bg-card rounded-sm text-muted font-mono shrink-0"><Trans>{a.toolCount}t</Trans></span>
+                      <span className="text-caption px-1.5 py-px bg-card rounded-sm text-muted font-mono shrink-0"><Trans>{a.toolCount}t</Trans></span>
                     )}
                   </div>
                   <div><Pill label={a.endpointName} color={c} size="sm" /></div>
                   <div className="flex items-end justify-between mt-auto">
                     <div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-[22px] font-extrabold tabular-nums tracking-[-0.025em] leading-none" style={{ color: c }}>
+                        <span className="text-h1 font-extrabold tabular-nums tracking-[-0.025em] leading-none" style={{ color: c }}>
                           {traces}
                         </span>
-                        <span className="text-[10.5px] text-muted font-semibold"><Trans>traces</Trans></span>
+                        <span className="text-caption text-muted font-semibold"><Trans>traces</Trans></span>
                       </div>
-                      <div className="text-[9.5px] text-muted mt-0.5 font-mono">
+                      <div className="text-caption text-muted mt-0.5 font-mono">
                         <Plural value={a.toolCount} one="# tool" other="# tools" />
                       </div>
                     </div>

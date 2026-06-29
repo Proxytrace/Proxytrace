@@ -40,15 +40,15 @@ export function RunHistoryTimeline({ runs, currentId, onSelect }: {
             <div className="flex-1 pb-3 min-w-0">
               <div className="flex items-center gap-2">
                 <ScoreChip score={r.result.score} />
-                <span className={cn('text-[11.5px] font-semibold', on ? 'text-primary' : 'text-secondary')}>
+                <span className={cn('text-body-sm font-semibold', on ? 'text-primary' : 'text-secondary')}>
                   {r.kind === 'logged' ? <Trans>Logged evaluation</Trans> : r.edited ? <Trans>Re-scored · edited</Trans> : <Trans>Re-scored</Trans>}
                 </span>
-                <span className="ml-auto text-[10px] text-muted font-mono">
+                <span className="ml-auto text-caption text-muted font-mono">
                   {r.at != null ? runTime(r.at) : t`baseline`}
                 </span>
               </div>
               {r.result.reasoning && (
-                <div className="text-[11px] text-muted leading-relaxed mt-1 line-clamp-2">{r.result.reasoning}</div>
+                <div className="text-body-sm text-muted leading-relaxed mt-1 line-clamp-2">{r.result.reasoning}</div>
               )}
             </div>
           </RowButton>

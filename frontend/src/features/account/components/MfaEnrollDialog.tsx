@@ -74,7 +74,7 @@ export function MfaEnrollDialog({ onClose }: MfaEnrollDialogProps) {
         </p>
 
         {setup.isPending && <p className="text-body-sm text-muted"><Trans>Preparing…</Trans></p>}
-        {setup.isError && <p className="text-sm text-danger"><Trans>Could not start setup. Please try again.</Trans></p>}
+        {setup.isError && <p className="text-body text-danger"><Trans>Could not start setup. Please try again.</Trans></p>}
 
         {setup.data && (
           <>
@@ -96,7 +96,7 @@ export function MfaEnrollDialog({ onClose }: MfaEnrollDialogProps) {
                 onChange={(e) => setCode(e.target.value)}
               />
             </FormField>
-            {err && <p className="text-sm text-danger" data-testid="mfa-activate-error">{err}</p>}
+            {err && <p className="text-body text-danger" data-testid="mfa-activate-error">{err}</p>}
           </>
         )}
       </div>

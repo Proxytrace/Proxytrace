@@ -27,11 +27,11 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
   return (
     <div className="flex flex-col gap-1.5">
       {heading && (
-        <div className="flex items-center justify-between text-[11px] font-semibold tracking-[0.06em] uppercase text-muted">
+        <div className="flex items-center justify-between text-body-sm font-semibold tracking-[0.06em] uppercase text-muted">
           <span>{heading}</span>
           <button
             onClick={copy}
-            className={`text-[11px] font-medium px-2 py-[2px] rounded-md border border-border transition-colors ${copied ? 'text-success' : 'text-muted'}`}
+            className={`text-body-sm font-medium px-2 py-0.5 rounded-md border border-border transition-colors ${copied ? 'text-success' : 'text-muted'}`}
           >
             {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </button>
@@ -39,10 +39,10 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
       )}
       <div className="relative">
         <pre
-          className={`m-0 px-3.5 py-3 bg-surface border border-border rounded-lg text-xs leading-relaxed whitespace-pre-wrap break-words overflow-x-auto text-primary ${mono ? 'font-mono' : 'font-[inherit]'}`}
+          className={`m-0 px-3.5 py-3 bg-surface border border-border rounded-lg text-body-sm leading-relaxed whitespace-pre-wrap break-words overflow-x-auto text-primary ${mono ? 'font-mono' : 'font-[inherit]'}`}
         >
           {language && (
-            <span className="absolute top-2 right-[10px] text-[10px] text-muted font-[inherit]">
+            <span className={`absolute top-2 ${heading ? 'right-[10px]' : 'right-[60px]'} text-caption text-muted font-[inherit]`}>
               {language}
             </span>
           )}
@@ -51,7 +51,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
         {!heading && (
           <button
             onClick={copy}
-            className={`absolute top-2 right-2 text-[11px] font-medium px-[7px] py-[2px] rounded-[5px] border border-border bg-card transition-colors ${copied ? 'text-success' : 'text-muted'}`}
+            className={`absolute top-2 right-2 text-body-sm font-medium px-1.75 py-0.5 rounded-sm border border-border bg-card transition-colors ${copied ? 'text-success' : 'text-muted'}`}
           >
             {copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}
           </button>
@@ -60,7 +60,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
       {isTruncated && (
         <button
           onClick={() => setExpanded(e => !e)}
-          className="self-start text-xs font-medium text-accent py-[2px]"
+          className="self-start text-body-sm font-medium text-accent py-0.5"
         >
           {expanded
             ? <Trans>Show less</Trans>

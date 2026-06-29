@@ -66,7 +66,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                   }}
                   data-testid={`agent-version-select-${v.versionNumber}`}
                   className={cn(
-                    'px-2.5 py-2 rounded-md cursor-pointer transition-colors duration-100',
+                    'px-2.5 py-2 rounded-md cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
                     !isSelected && 'hover:bg-[var(--bg-wash-hover)]',
                   )}
                   style={

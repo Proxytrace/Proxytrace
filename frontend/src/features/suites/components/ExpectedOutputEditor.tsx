@@ -68,7 +68,7 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
       ) : (
         <div className={cn('flex flex-col gap-2', fill && 'flex-1 min-h-0 overflow-y-auto')}>
           {rows.length === 0 && (
-            <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
+            <div className="px-3 py-4 bg-card-2 rounded-md text-body text-muted text-center">
               <Trans>No tool requests yet.</Trans>
             </div>
           )}
@@ -80,7 +80,7 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
                 key={i}
                 data-testid={`expected-tool-row-${i}`}
                 className={cn(
-                  'bg-card-2 rounded-[10px] p-3 flex flex-col gap-2 shadow-[inset_0_0_0_1px_var(--border-color)]',
+                  'bg-card-2 rounded-md p-3 flex flex-col gap-2 shadow-[inset_0_0_0_1px_var(--border-color)]',
                   fill && 'flex-1 min-h-[140px]',
                 )}
               >
@@ -96,7 +96,7 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
                   </IconButton>
                 </div>
                 <Textarea
-                  className={cn('mono text-[12px]', fill && 'flex-1 min-h-0 resize-none')}
+                  className={cn('mono text-body', fill && 'flex-1 min-h-0 resize-none')}
                   aria-label={t`Tool arguments (JSON)`}
                   rows={3}
                   invalid={invalidArgs}
@@ -104,7 +104,7 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
                   onChange={e => setRow(i, { arguments: e.target.value })}
                 />
                 {invalidArgs && (
-                  <span className="text-[11px] text-danger shrink-0"><Trans>Arguments must be valid JSON.</Trans></span>
+                  <span className="text-body-sm text-danger shrink-0"><Trans>Arguments must be valid JSON.</Trans></span>
                 )}
               </div>
             );

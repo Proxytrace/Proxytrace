@@ -79,8 +79,8 @@ export function ConversationView({
   if (messages.length === 0) {
     const trimmed = systemPrompt?.trim();
     return (
-      <div data-testid="conversation-view" className="flex-1 overflow-y-auto px-[16px] py-[24px] flex items-center justify-center">
-        <div className="max-w-[560px] w-full flex flex-col gap-[16px] text-center">
+      <div data-testid="conversation-view" className="flex-1 overflow-y-auto px-4 py-6 flex items-center justify-center">
+        <div className="max-w-[560px] w-full flex flex-col gap-4 text-center">
           <div className="flex justify-center">
             <span
               className="inline-flex items-center justify-center size-[44px] rounded-full bg-accent-subtle text-accent-hover"
@@ -89,39 +89,39 @@ export function ConversationView({
             </span>
           </div>
           <div>
-            <div className="text-[15px] font-semibold text-primary">
+            <div className="text-h2 font-semibold text-primary">
               {agentName ? <Trans>Talk to {agentName}</Trans> : <Trans>Start a conversation</Trans>}
             </div>
-            <div className="text-[12.5px] text-muted mt-[2px]">
+            <div className="text-body text-muted mt-0.5">
               <Trans>Type below to send a message, or use Add message to insert turns manually.</Trans>
             </div>
           </div>
           {trimmed && (
             <div
-              className="rounded-[10px] text-left p-[12px] text-[12px] leading-[1.55] text-secondary bg-[rgba(255,255,255,0.02)] border border-border"
+              className="rounded-md text-left p-3 text-body leading-[1.55] text-secondary bg-white/[0.02] border border-border"
             >
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mb-[4px]"><Trans>System prompt</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted mb-1"><Trans>System prompt</Trans></div>
               <div className="whitespace-pre-wrap">{trimmed.length > 380 ? trimmed.slice(0, 377) + '…' : trimmed}</div>
             </div>
           )}
           {tools && tools.length > 0 && (
-            <div className="flex flex-col gap-[6px]">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted text-left"><Trans>Tools available</Trans></div>
-              <div className="flex flex-wrap gap-[6px] justify-start">
+            <div className="flex flex-col gap-1.5">
+              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted text-left"><Trans>Tools available</Trans></div>
+              <div className="flex flex-wrap gap-1.5 justify-start">
                 {tools.map(t => (
                   <span
                     key={t.name}
-                    className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[11px] mono bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)] text-success"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-body-sm mono bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)] text-success"
                     title={t.description}
                   >
                     {t.name}
-                    <span className="text-muted text-[10px]">{t.arguments.length}</span>
+                    <span className="text-muted text-caption">{t.arguments.length}</span>
                   </span>
                 ))}
               </div>
             </div>
           )}
-          <div className="mt-[6px]">
+          <div className="mt-1.5">
             <AddMessageBar onAdd={role => onInsert(0, role)} onLoadFromTrace={onLoadFromTrace} />
           </div>
         </div>
@@ -132,7 +132,7 @@ export function ConversationView({
   const dropIndicator = (
     <div
       aria-hidden
-      className="h-[2px] rounded-full mx-[2px] bg-[linear-gradient(90deg,transparent,var(--accent-primary),transparent)] shadow-[0_0_12px_var(--accent-glow)]"
+      className="h-[2px] rounded-full mx-0.5 bg-[linear-gradient(90deg,transparent,var(--accent-primary),transparent)] shadow-[0_0_12px_var(--accent-glow)]"
     />
   );
 
@@ -140,7 +140,7 @@ export function ConversationView({
     <div
       ref={scrollerRef}
       data-testid="conversation-view"
-      className="flex-1 overflow-y-auto px-[14px] py-[14px] flex flex-col gap-[10px]"
+      className="flex-1 overflow-y-auto px-3.5 py-3.5 flex flex-col gap-2.5"
       onDragOver={e => {
         // Allow drop in the empty area at the bottom of the list.
         if (!draggingId) return;

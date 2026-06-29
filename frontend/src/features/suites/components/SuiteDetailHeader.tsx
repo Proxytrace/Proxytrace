@@ -16,9 +16,9 @@ export function SuiteDetailHeader({ suite, onRun, onDelete }: { suite: TestSuite
     <div className="relative shrink-0 border-b border-hairline px-5 py-4 flex items-center gap-3 flex-wrap">
       <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: c }} />
 
-      <div className="flex flex-col gap-[3px] min-w-0 flex-1">
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 data-testid="suite-detail-name" className="text-h1 font-bold tracking-[-0.01em] m-0 truncate">{suite.name}</h2>
+          <h2 data-testid="suite-detail-name" className="text-h1 font-semibold leading-none tracking-[-0.01em] m-0 truncate">{suite.name}</h2>
           <Pill label={suite.agentName} color={c} />
         </div>
         <div className="flex items-center gap-2 text-body-sm text-muted flex-wrap">

@@ -26,8 +26,8 @@ export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
   return (
     <div data-testid="wizard-step-evaluators" className="max-w-[640px] mx-auto flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-[12.5px] text-muted m-0"><Trans>Attach evaluators (optional). They'll score every test run.</Trans></p>
-        <span className="text-[11.5px] text-muted">
+        <p className="text-body text-muted m-0"><Trans>Attach evaluators (optional). They'll score every test run.</Trans></p>
+        <span className="text-body-sm text-muted">
           <Trans>{selectedIds.size} of {evaluators.length} attached</Trans>
         </span>
       </div>
@@ -39,7 +39,7 @@ export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
             <div
               key={e.id}
               onClick={() => onToggle(e.id)}
-              className="flex items-center gap-3 rounded-[9px] cursor-pointer transition-colors duration-150"
+              className="flex items-center gap-3 rounded-md cursor-pointer transition-colors duration-150"
               style={{
                 padding: '10px 12px',
                 background: selected ? 'var(--accent-subtle)' : 'var(--bg-card)',
@@ -48,7 +48,7 @@ export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
               }}
             >
               <ColoredBadge color={c} label={e.kind} />
-              <span className="text-[13px] font-medium flex-1 min-w-0 truncate">{e.name}</span>
+              <span className="text-title font-medium flex-1 min-w-0 truncate">{e.name}</span>
             </div>
           );
         })}

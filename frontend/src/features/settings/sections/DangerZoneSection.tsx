@@ -45,22 +45,22 @@ export function DangerZoneSection() {
       <SectionHeader title={t`Danger zone`} subtitle={t`Irreversible, workspace-wide maintenance actions.`} />
 
       <div className="max-w-[760px]">
-        <div className="bg-card border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-[14px] p-5 flex flex-col gap-4">
+        <div className="bg-card border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-lg p-5 flex flex-col gap-4">
           <div>
-            <h2 className="text-h2 font-bold text-danger m-0 mb-1"><Trans>Delete all non-model data</Trans></h2>
+            <h2 className="text-h2 font-semibold text-danger m-0 mb-1"><Trans>Delete all non-model data</Trans></h2>
             <p className="text-body text-secondary m-0">
               <Trans>Wipes runtime/trace data while preserving configuration. This action cannot be undone.</Trans>
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-card-2 border border-hairline rounded-[10px] p-3">
+            <div className="bg-card-2 border border-hairline rounded-md p-3">
               <div className="text-body font-semibold text-danger mb-2 uppercase tracking-wide"><Trans>Will be deleted</Trans></div>
               <ul className="m-0 pl-4 flex flex-col gap-1">
                 {DELETED.map(x => <li key={x.id} className="text-body text-primary">{i18n._(x)}</li>)}
               </ul>
             </div>
-            <div className="bg-card-2 border border-hairline rounded-[10px] p-3">
+            <div className="bg-card-2 border border-hairline rounded-md p-3">
               <div className="text-body font-semibold text-success mb-2 uppercase tracking-wide"><Trans>Will be kept</Trans></div>
               <ul className="m-0 pl-4 flex flex-col gap-1">
                 {KEPT.map(x => <li key={x.id} className="text-body text-primary">{i18n._(x)}</li>)}

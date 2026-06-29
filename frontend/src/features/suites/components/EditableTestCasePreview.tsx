@@ -48,12 +48,12 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
 
   return (
     <div className="h-full min-h-0 px-4 py-4 flex flex-col gap-3">
-      <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em] shrink-0">
+      <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em] shrink-0">
         <Trans>Edit expected output</Trans>
       </div>
       <ExpectedOutputEditor value={draft} tools={tools} onChange={setDraft} fill />
       {save.isError && (
-        <span className="text-[12px] text-danger shrink-0">
+        <span className="text-body text-danger shrink-0">
           {(save.error as Error).message || t`Failed to save`}
         </span>
       )}

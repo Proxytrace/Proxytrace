@@ -38,10 +38,10 @@ export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
             )}
             <RailMonogram name={ev.name} kind={ev.kind} size={28} />
             <span className="flex-1 min-w-0">
-              <span className={cn('block text-[12.5px] font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
+              <span className={cn('block text-body font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
                 {ev.name}
               </span>
-              <span className="block text-[10px] text-muted mt-0.5">{i18n._(KIND_LABEL[ev.kind])}</span>
+              <span className="block text-caption text-muted mt-0.5">{i18n._(KIND_LABEL[ev.kind])}</span>
             </span>
             <span
               className="w-[7px] h-[7px] rounded-full shrink-0"

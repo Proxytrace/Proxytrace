@@ -14,7 +14,7 @@ export function ProgressBar({ value, max = 100, color = 'var(--success)', height
         <div style={{ width: `${pct}%`, borderRadius: height, background: color }} className="h-full transition-[width] duration-300" />
       </div>
       {showLabel && (
-        <span className="text-[11px] font-semibold text-muted shrink-0 min-w-[32px]">
+        <span className="text-body-sm font-semibold text-muted shrink-0 min-w-[32px]">
           {pct}%
         </span>
       )}

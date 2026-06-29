@@ -43,7 +43,7 @@ export function OutlierSettingsSection() {
         subtitle={t`Flag agent calls that deviate from their agent's recent behaviour.`}
       />
       <div className="max-w-[760px] flex flex-col gap-5">
-        <div className="bg-card-2 border border-hairline rounded-[12px] p-4 flex flex-col gap-3">
+        <div className="bg-card-2 border border-hairline rounded-lg p-4 flex flex-col gap-3">
           <ToggleRow
             label={t`Enable outlier detection`}
             description={t`When on, each ingested call is flagged if it deviates from the agent's recent baseline.`}

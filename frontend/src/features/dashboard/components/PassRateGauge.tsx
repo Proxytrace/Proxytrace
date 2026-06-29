@@ -32,7 +32,7 @@ export function PassRateGauge({ summary }: PassRateGaugeProps) {
       <div className="absolute top-5 -right-8 w-[220px] h-[220px] pointer-events-none bg-[radial-gradient(circle,color-mix(in_srgb,var(--success)_6%,transparent),transparent_65%)]" />
       <header>
         <h3 className="text-h2 font-semibold"><Trans>Evaluation pass rate</Trans></h3>
-        <p className="text-body-sm text-muted mt-[3px] font-mono"><Trans>latest suite run · project-wide</Trans></p>
+        <p className="text-body-sm text-muted mt-0.5 font-mono"><Trans>latest suite run · project-wide</Trans></p>
       </header>
       <div className="flex justify-center">
         <SegmentedGauge value={passPct} size={180} label={i18n._(msg`PASS RATE`)} />
@@ -40,8 +40,8 @@ export function PassRateGauge({ summary }: PassRateGaugeProps) {
       <div className="grid grid-cols-3 gap-2 mt-auto relative">
         {GAUGE_STATS.map((s, idx) => (
           <div key={idx} className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
-            <div className="text-[9px] text-muted tracking-[0.12em] uppercase font-bold font-mono">{i18n._(s.l)}</div>
-            <div className={cn('text-[16px] font-bold mt-[3px] tabular-nums', s.c)}>
+            <div className="text-caption text-muted tracking-[0.12em] uppercase font-bold font-mono">{i18n._(s.l)}</div>
+            <div className={cn('text-h1 font-bold mt-0.5 tabular-nums', s.c)}>
               {statValues[idx]}
             </div>
           </div>

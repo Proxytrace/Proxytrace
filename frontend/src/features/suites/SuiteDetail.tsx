@@ -30,7 +30,7 @@ type Tab = 'cases' | 'evaluators' | 'history' | 'schedules';
  * narrow and compress via `minmax(0,1fr)`), so the pane never stacks inside the fixed-height,
  * clipped workspace — only the internal-scroll height is gated to `md:` (below it the page scrolls). */
 const SPLIT = cn('grid gap-3 p-5 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:h-full md:min-h-0');
-const PREVIEW = cn('rounded-[12px] border border-border bg-card overflow-hidden min-h-0');
+const PREVIEW = cn('rounded-lg border border-border bg-card overflow-hidden min-h-0');
 
 interface Props { suiteId: string; projectId?: string; onRun: () => void; onDelete: () => void; }
 

@@ -18,7 +18,7 @@ export function GainHero({ gain, pValue, review }: Props) {
     <Card elevation="raised" padding="none" className="overflow-hidden" data-testid="gain-hero">
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
         <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]"><Trans>Effective gain</Trans></span>
-        <span className={cn('ml-auto inline-flex items-center rounded-full px-2 py-[2px] text-caption font-semibold', TONE_SUBTLE_BG[review.tone], TONE_TEXT[review.tone])}>
+        <span className={cn('ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold', TONE_SUBTLE_BG[review.tone], TONE_TEXT[review.tone])}>
           {i18n._(review.label)}
         </span>
       </div>

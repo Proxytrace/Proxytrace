@@ -10,7 +10,7 @@ export function RailSection({ title, children }: { title: string; children: Reac
   return (
     <section className="flex-1 min-h-0 flex flex-col gap-2">
       <div className="flex items-center gap-2 px-1 shrink-0">
-        <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-secondary">{title}</span>
+        <span className="text-caption font-bold uppercase tracking-[0.09em] text-secondary">{title}</span>
       </div>
       {children}
     </section>

@@ -43,7 +43,7 @@ export function MfaChallengeForm({ challengeToken, onVerified }: MfaChallengeFor
         }
       }}
     >
-      <h1 className="text-lg font-semibold"><Trans>Two-factor authentication</Trans></h1>
+      <h1 className="text-h1 font-semibold"><Trans>Two-factor authentication</Trans></h1>
       <p className="text-body-sm text-muted">
         <Trans>Enter the 6-digit code from your authenticator app, or one of your backup codes.</Trans>
       </p>
@@ -56,7 +56,7 @@ export function MfaChallengeForm({ challengeToken, onVerified }: MfaChallengeFor
         onChange={(e) => setCode(e.target.value)}
         required
       />
-      {err && <p data-testid="mfa-error" className="text-sm text-danger">{err}</p>}
+      {err && <p data-testid="mfa-error" className="text-body text-danger">{err}</p>}
       <Button data-testid="mfa-verify-submit" type="submit" fullWidth loading={submitting}>
         <Trans>Verify</Trans>
       </Button>

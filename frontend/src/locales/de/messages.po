@@ -157,12 +157,6 @@ msgstr "{0, plural, one {Warte auf # Aktion} other {Warte auf # Aktionen}}"
 msgid "{0} — the change is live in the agent."
 msgstr "{0} — die Änderung ist im Agent live."
 
-#. placeholder {0}: s.n
-#. placeholder {1}: i18n._(s.name)
-#. placeholder {2}: i18n._(s.meaning)
-msgid "{0} · {1} — {2}"
-msgstr "{0} · {1} — {2}"
-
 #. placeholder {0}: suite.agentName
 #. placeholder {1}: suite.testCaseCount
 msgid "{0} · {1} case"
@@ -486,6 +480,12 @@ msgstr "{msgCount, plural, one {# msg} other {# msgs}}"
 msgid "{n} agents"
 msgstr "{n} Agents"
 
+msgid "{n} calls"
+msgstr "{n} Aufrufe"
+
+msgid "{n} conversations"
+msgstr "{n} Gespräche"
+
 msgid "{n} projects"
 msgstr "{n} Projekte"
 
@@ -680,6 +680,12 @@ msgstr "0pt"
 
 msgid "1 agent"
 msgstr "1 Agent"
+
+msgid "1 call"
+msgstr "1 Aufruf"
+
+msgid "1 conversation"
+msgstr "1 Gespräch"
 
 msgid "1 project"
 msgstr "1 Projekt"
@@ -1668,9 +1674,6 @@ msgstr "Verworfen — ein Reviewer hat sich entschieden, diese Änderung nicht a
 msgid "Disproven by A/B"
 msgstr "Durch A/B widerlegt"
 
-msgid "Distribution"
-msgstr "Verteilung"
-
 msgid "Divergent"
 msgstr "Abweichend"
 
@@ -2446,6 +2449,9 @@ msgstr "Aus Trace laden"
 msgid "Load from trace or test case"
 msgstr "Aus Trace oder Testfall laden"
 
+msgid "Load more"
+msgstr "Mehr laden"
+
 msgid "Loading"
 msgstr "Wird geladen"
 
@@ -2798,9 +2804,6 @@ msgstr "Noch keine API keys"
 
 msgid "No audit events"
 msgstr "Keine Audit-Ereignisse"
-
-msgid "No calls in this range yet"
-msgstr "In diesem Bereich noch keine Aufrufe"
 
 msgid "No cases match this filter."
 msgstr "Keine Fälle entsprechen diesem Filter."
@@ -4770,6 +4773,9 @@ msgstr "Tool-Argumente (JSON)"
 
 msgid "tool call"
 msgstr "tool call"
+
+msgid "tool calls"
+msgstr "Tool-Aufrufe"
 
 msgid "Tool calls"
 msgstr "Tool-Aufrufe"

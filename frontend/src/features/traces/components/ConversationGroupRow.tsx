@@ -41,14 +41,14 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
         data-testid={`conversation-group-row-${conversationId}`}
         onClick={onToggle}
         className={cn(
-          'grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] bg-[rgba(255,255,255,0.015)]',
+          'grid items-center px-4 py-2.5 min-h-[44px] cursor-pointer transition-colors duration-[100ms] border-b border-border-subtle hover:bg-white/[0.025] bg-white/[0.015]',
           TRACE_GRID_CLS,
         )}
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
           <span
-            className="inline-flex items-center text-caption font-semibold px-[6px] py-[1px] rounded-full shrink-0"
+            className="inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0"
             style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
           >
             <Plural value={turns.length} one="# turn" other="# turns" />
@@ -66,7 +66,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           <Pill label={model} color={modelColor(model)} size="sm" />
         </span>
 
-        <span className="inline-flex items-center gap-[5px]">
+        <span className="inline-flex items-center gap-1.5">
           {uniformStatus != null
             ? <StatusDot httpStatus={uniformStatus} />
             : allOk
@@ -78,7 +78,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
 
         <span className="mono text-body-sm @max-2xl:hidden">
           <span className="text-primary">{fmtTokens(totalTokens)}</span>
-          <span className="text-muted ml-[5px] text-caption"><Trans>total</Trans></span>
+          <span className="text-muted ml-1.5 text-caption"><Trans>total</Trans></span>
         </span>
 
         <span className="@max-2xl:hidden"><CachedCell cachedInput={totalCachedInput} input={totalInput} /></span>
@@ -97,9 +97,9 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           data-testid={`conversation-turn-${turn.id}`}
           onClick={() => onSelectTrace(turn)}
           className={cn(
-            'grid items-center pl-8 pr-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
-            'border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)]',
-            turn.id === selectedId && 'bg-[rgba(255,255,255,0.04)]',
+            'grid items-center pl-8 pr-4 py-2.5 min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
+            'border-b border-border-subtle hover:bg-white/[0.025]',
+            turn.id === selectedId && 'bg-white/[0.04]',
             TRACE_GRID_CLS,
           )}
           style={{ borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}

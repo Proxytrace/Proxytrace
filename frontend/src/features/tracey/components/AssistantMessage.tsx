@@ -11,7 +11,7 @@ const assistantParts = { Text: MarkdownText, tools: { by_name: TRACEY_TOOL_UI, F
 export function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="flex justify-start">
-      <div className="flex min-w-0 flex-1 flex-col gap-3 text-[13px] text-primary">
+      <div className="flex min-w-0 flex-1 flex-col gap-3 text-title text-primary">
         <MessagePrimitive.Parts components={assistantParts} />
         {/* Once the turn finishes, usage/duration/correlation-id land on the message metadata and
             the status row renders; while streaming the metadata is absent, so it stays hidden. */}

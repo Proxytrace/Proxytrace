@@ -14,7 +14,7 @@ export function ScoreChip({ score, size = 'sm' }: { score: EvaluationScore | nul
     <span
       className={cn(
         'inline-flex items-baseline gap-0.5 rounded-sm font-mono font-bold leading-none',
-        big ? 'px-2.5 py-1 text-[15px]' : 'px-2 py-0.5 text-[12px]',
+        big ? 'px-2.5 py-1 text-h2' : 'px-2 py-0.5 text-body',
       )}
       style={{ background: tint(color, 16), color }}
     >

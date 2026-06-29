@@ -21,14 +21,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   that lists why each recent call was flagged. Admins tune the sensitivity (enable/disable, sigma,
   minimum samples, baseline window) under **Settings → Outlier detection**. Existing traces are not
   retroactively flagged; detection applies to calls ingested from now on.
-- **Call distribution stats on the agent page.** The agent detail view now shows a **Distribution**
-  widget with the **mean ± standard deviation** of an agent's successful calls over the selected
-  range: **input** and **output tokens** and **latency** (per call), and **cost**, **cache hit rate**
-  (turns after the first, which can't be cache hits) and **tool calls** (per conversation). Each metric
-  also gets a small **interactive histogram** of the real sample shape — hover a bar to see its value
-  range and how many calls (or conversations) fall in it. It updates live as new traces arrive and
-  respects the time-range selector, so you can see not just the totals but how consistent — or skewed —
-  your agent's calls are.
+- **Call distribution stats on the agent page.** The agent detail view's **Performance** card now
+  shows one small card per stat in a single grid that reflows to the available width: the window
+  **totals** (pass rate, traces, tokens, cost, latency — each with a trend sparkline), then the
+  **mean ± standard deviation** of an agent's successful calls over the selected range — **input** and
+  **output tokens** and **latency** (per call), and **cost**, **cache hit rate** (turns after the
+  first, which can't be cache hits) and **tool calls** (per conversation). Each distribution card draws
+  a small **density curve** of the real sample shape — hover to read a slice's value range and how many
+  calls (or conversations) fall in it — and metrics with no signal in the window (an agent that never
+  caches or calls a tool) are dropped rather than shown empty. Everything shares one time-range selector
+  that **persists as you switch agents**, and updates live as new traces arrive, so a single card shows
+  not just the totals but how consistent — or skewed — your agent's calls are.
 - **Sample a test run multiple times.** When you start a run you can now pick a **sample count (1–5)** —
   Proxytrace runs each selected endpoint that many times and **averages the results per endpoint**, so
   non-deterministic models don't hide flaky cases. The results matrix shows one column per endpoint with
@@ -69,6 +72,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Consistent typography, spacing and corners across the app.** Swept every screen onto the design
+  system's type scale, spacing steps, corner radii and surface colours, replacing dozens of off-scale
+  one-offs that left labels, paddings and rounded corners subtly mismatched between otherwise-identical
+  panels. Purely visual — no behaviour changes.
+
+- **Live duration, cost and tokens during a test run.** While a run is in progress its model cards now
+  count **duration, cost and tokens** up as each case lands, instead of sitting at "—"/`$0` until the
+  run finished. Running runs are also highlighted in the left-hand **Test Runs** list with an animated
+  accent ring and a pulsing **Running** tag, so an in-flight run is obvious at a glance.
+- **The Test Runs list loads incrementally.** Instead of fetching a large batch up front, the runs rail
+  now loads the most recent runs first and reveals older ones on demand via a **Load more** button —
+  faster to open and lighter on projects with a long run history.
 - **Test-run model comparison, rebuilt around your production model.** A run's results now open with
   the model you have **in production** (the agent's deployed endpoint) as the **baseline** — a
   highlighted champion card carrying the headline pass rate plus duration, cost, and token totals.
@@ -95,6 +110,47 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Polished several rough UI details.** The test-run "Evaluation started" confirmation now uses a
+  proper check icon instead of a typed character; the evaluator score legend no longer crams a full
+  sentence into each coloured pill (short pills now sit beside their plain-text meaning); the **Error
+  Log** and **Audit Log** page titles match the size of every other page header; a trace's ID in the
+  detail panel renders at its intended size again; and the "move version" agent picker no longer shows
+  a transparent, off-theme list. A further pixel-level pass squared up details across the app: **long
+  names, IDs, links and titles now shorten with an ellipsis** instead of overflowing their card or
+  shoving neighbouring controls off-screen (agent/suite/evaluator/run headers, notifications, global
+  search results, password-reset and invite links, the member picker, Tracey tool cards and the
+  playground tool list); **section, dialog and entity-detail titles now share a single weight**; the
+  scheduled-runs **"recent runs" strip lays out as a horizontal row** again instead of a vertical
+  stack; and assorted **side-by-side inconsistencies** were aligned — matching selected-row styling
+  and panel framing in the evaluator bench, label casing in the playground parameters, row indentation
+  and divider alignment between suite tabs, and date-column contrast and form-field labels on the
+  admin and sign-up screens. Finally, **status and agent chips now sit vertically centred against
+  their heading** across every detail header (test runs, suites, agents, evaluators, the evaluator
+  bench and the proposals board) — previously the chips drooped a few pixels below the title — and
+  the two chips in a run header now render at a **single matching size** instead of one larger than
+  the other.
+
+- **Deleting a test run no longer flashes a "not found" error.** Removing a run refreshed the whole
+  run namespace, which re-fetched the just-deleted run's own detail and surfaced a 404. Delete now
+  drops the run from the list immediately and skips re-fetching the gone detail, so it disappears
+  cleanly.
+- **Interrupted test runs no longer hang in "Running" forever.** A run in progress when the server
+  restarts (deploy, crash, container recycle) could be stranded in **Running**/**Pending**
+  indefinitely, since its work only lived in memory and can't be resumed. On startup the server now
+  marks any such orphaned run **Cancelled**, so the list and headers reflect reality instead of a
+  ghost run that never finishes.
+- **A running test run now shows a live duration.** Each model card's **Duration** stayed at "—" for
+  the whole run (the per-run state only flips once a case finishes and that transition wasn't streamed)
+  and only filled in at the end. A run now reads as **running** as soon as its first case starts, with
+  the duration ticking up live alongside cost and tokens.
+- **A finished test run now updates to "Completed" on its own.** The run header could stay stuck on
+  **Running** after the run had actually finished on the server, only flipping to **Completed** after a
+  manual page refresh. The live view now keeps its event stream open until the *group* finishes (not
+  just its individual runs) and flips the status the moment the completion event arrives, so the header,
+  the **Cancel** button, and the live progress bar all settle without a refresh.
+- **Test-run pass rate no longer shows a long decimal.** Averaged pass rates on the comparison cards
+  rendered as e.g. `96.66666666666667%`; they're now rounded to a whole percent like every other
+  pass-rate readout.
 - **Outlier-detection changes show a proper label in the audit log.** Tuning **Settings → Outlier
   detection** records an audit entry, but the Audit Log page rendered that action with a blank,
   uncoloured, unfilterable label. The `Outlier Settings Updated` action now shows its label and

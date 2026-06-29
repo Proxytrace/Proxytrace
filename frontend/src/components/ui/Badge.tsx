@@ -27,8 +27,8 @@ const VARIANT_TOKEN: Record<Exclude<BadgeVariant, 'tinted'>, { bg: string; fg: s
 };
 
 const SIZE_CLS: Record<BadgeSize, string> = {
-  sm: cn('px-2 py-[2px] text-caption gap-1'),
-  md: cn('px-2.5 py-[3px] text-body-sm gap-1.5'),
+  sm: cn('px-2 py-0.5 text-caption gap-1'),
+  md: cn('px-2.5 py-0.75 text-body-sm gap-1.5'),
 };
 
 export function Badge({

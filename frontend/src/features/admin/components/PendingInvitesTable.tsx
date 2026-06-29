@@ -17,7 +17,7 @@ export function PendingInvitesTable() {
   const pending = (data ?? []).filter((i) => inviteStatus(i) === 'Pending');
 
   return (
-    <table className="w-full text-sm" data-testid="invite-list">
+    <table className="w-full text-body" data-testid="invite-list">
       <thead className="text-muted">
         <tr className="border-b border-border">
           <th className="py-2 text-left"><Trans>Email</Trans></th>
@@ -33,7 +33,7 @@ export function PendingInvitesTable() {
             <td className="py-2">{i.email}</td>
             <td className="py-2">{i.role}</td>
             <td className="py-2" data-testid={`invite-status-${i.id}`}><Trans>Pending</Trans></td>
-            <td className="py-2">{new Date(i.expiresAt).toLocaleString()}</td>
+            <td className="py-2 text-muted">{new Date(i.expiresAt).toLocaleString()}</td>
             <td className="py-2">
               <div className="flex items-center justify-end gap-2">
                 <Button

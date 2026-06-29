@@ -34,7 +34,7 @@ export default function Runs() {
   // A/B (system) runs are hidden by default; deep-linking to one (?run=) reveals them.
   const [showSystem, setShowSystem] = useState(() => runParam != null);
 
-  const { groups, isLoading } = useTestRunGroups(agentFilter, showSystem);
+  const { groups, isLoading, hasMore, loadMore, isLoadingMore } = useTestRunGroups(agentFilter, showSystem);
   const { agents } = useProjectAgents();
   const delGroup = useDeleteTestRunGroup();
 
@@ -118,6 +118,9 @@ export default function Runs() {
             }}
             showSystem={showSystem}
             onToggleSystem={() => setShowSystem(v => !v)}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            isLoadingMore={isLoadingMore}
           />
         )}
 
@@ -139,7 +142,7 @@ export default function Runs() {
           )}
           {selectedGroup
             ? <GroupDetail key={selectedGroup.id} groupId={selectedGroup.id} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
-            : <Card><div className="py-[60px] text-center text-muted text-body"><Trans>Select a run to see details.</Trans></div></Card>
+            : <Card><div className="py-15 text-center text-muted text-body"><Trans>Select a run to see details.</Trans></div></Card>
           }
         </div>
         )}

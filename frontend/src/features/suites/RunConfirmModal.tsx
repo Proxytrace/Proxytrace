@@ -6,6 +6,7 @@ import { agentColor } from '../../lib/colors';
 import useModelEndpoints from '../../hooks/useModelEndpoints';
 import { Modal } from '../../components/overlays/Modal';
 import { Button } from '../../components/ui/Button';
+import { CheckIcon } from '../../components/icons';
 import { RunForm } from './components/RunForm';
 
 interface Props {
@@ -74,13 +75,11 @@ function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsDat
     modelsData.find(ep => selectedEndpoints.includes(ep.id))?.modelName ?? t`selected model`;
 
   return (
-    <div className="py-[10px] text-center">
-      <div
-        className="w-[52px] h-[52px] rounded-[15px] bg-success-subtle flex items-center justify-center mx-auto mb-4 text-success text-[24px] border border-[color-mix(in_srgb,var(--success)_30%,transparent)]"
-      >
-        ✓
+    <div className="py-2.5 text-center">
+      <div className="w-[52px] h-[52px] rounded-lg bg-success-subtle flex items-center justify-center mx-auto mb-4 text-success border border-[color-mix(in_srgb,var(--success)_30%,transparent)]">
+        <CheckIcon size={24} />
       </div>
-      <h3 className="text-[17px] font-bold mb-2">
+      <h3 className="text-h1 font-semibold mb-2">
         {isMulti ? <Trans>Parallel evaluation started</Trans> : <Trans>Evaluation started</Trans>}
       </h3>
       <p className="text-body text-muted leading-[1.6] mb-6">

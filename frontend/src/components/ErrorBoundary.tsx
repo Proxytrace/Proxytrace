@@ -20,10 +20,10 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className="flex flex-col items-center justify-center flex-1 gap-4 p-[60px] text-center">
-          <div className="text-[28px] text-muted">⚠</div>
-          <div className="text-[15px] font-semibold text-primary"><Trans>Something went wrong</Trans></div>
-          <div className="text-[13px] text-muted max-w-[400px] leading-relaxed">{this.state.error.message}</div>
+        <div className="flex flex-col items-center justify-center flex-1 gap-4 p-15 text-center">
+          <div className="text-display text-muted">⚠</div>
+          <div className="text-h1 font-semibold text-primary"><Trans>Something went wrong</Trans></div>
+          <div className="text-title text-muted max-w-[400px] leading-relaxed">{this.state.error.message}</div>
           <Button variant="secondary" size="sm" onClick={() => this.setState({ error: null })}>
             <Trans>Try again</Trans>
           </Button>

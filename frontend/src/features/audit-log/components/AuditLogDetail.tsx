@@ -15,8 +15,8 @@ interface AuditLogDetailProps {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{label}</div>
-      <div className="text-[13px] text-primary font-mono break-words">{value}</div>
+      <div className="text-body-sm font-semibold uppercase tracking-[0.06em] text-muted">{label}</div>
+      <div className="text-title text-primary font-mono break-words">{value}</div>
     </div>
   );
 }
@@ -48,7 +48,7 @@ export function AuditLogDetail({ entry, onClose }: AuditLogDetailProps) {
       {entry.details ? (
         <CodeBlock heading={t`Details`} content={entry.details} maxLines={20} />
       ) : (
-        <div className="text-[13px] text-muted"><Trans>No additional details for this event.</Trans></div>
+        <div className="text-title text-muted"><Trans>No additional details for this event.</Trans></div>
       )}
     </Drawer>
   );

@@ -3,6 +3,7 @@ import type { TestSuiteListItemDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
 import { agentColor } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../../lib/selectionRow';
 import { TrashIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
@@ -35,9 +36,7 @@ export function SuiteListCard({ suite, selected, highlight = false, onSelect, on
         aria-pressed={selected}
         aria-label={t`Select suite ${suite.name}`}
         data-testid={`suite-select-${suite.id}`}
-        className={`rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] ${FOCUS_RING} ${
-          active ? '' : SELECTION_ROW_INACTIVE
-        }`}
+        className={cn('rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-3.5', FOCUS_RING, active ? '' : SELECTION_ROW_INACTIVE)}
         style={active ? selectionRowStyle(c) : undefined}
       >
         {active && <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={selectionBarStyle(c)} />}
@@ -58,7 +57,7 @@ export function SuiteListCard({ suite, selected, highlight = false, onSelect, on
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-[40px]">
+        <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-10">
           <span>
             <span data-testid={`suite-case-count-${suite.id}`}>{suite.testCaseCount}</span>{' '}
             <Plural value={suite.testCaseCount} one="case" other="cases" />

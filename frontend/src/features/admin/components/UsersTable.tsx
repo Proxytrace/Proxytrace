@@ -17,7 +17,7 @@ interface UsersTableProps {
 
 export function UsersTable({ users, currentUserEmail, onChangeRole, onDelete, onManageProjects, onResetPassword, onResetMfa }: UsersTableProps) {
   return (
-    <table className="w-full text-sm" data-testid="user-list">
+    <table className="w-full text-body" data-testid="user-list">
       <thead className="text-muted">
         <tr className="border-b border-border">
           <th className="py-2 text-left"><Trans>Email</Trans></th>

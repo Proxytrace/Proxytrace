@@ -97,11 +97,11 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
         <div
           ref={menuRef}
           role="listbox"
-          className="fixed z-[120] bg-card-2 rounded-[10px] py-1 max-h-[240px] overflow-y-auto shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
+          className="fixed z-[120] bg-card-2 rounded-md py-1 max-h-[240px] overflow-y-auto shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
           style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
         >
           {matches.length === 0 ? (
-            <div className="px-[10px] py-2 text-[12px] text-muted"><Trans>No matching tools — keep typing for a custom name.</Trans></div>
+            <div className="px-2.5 py-2 text-body text-muted"><Trans>No matching tools — keep typing for a custom name.</Trans></div>
           ) : (
             matches.map(tool => (
               <RowButton
@@ -109,10 +109,10 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
                 role="option"
                 aria-selected={tool.name === value}
                 onClick={() => { onPickTool(tool); close(); }}
-                className="flex flex-col items-start gap-[1px] px-[10px] py-[7px] transition-colors duration-100 hover:bg-[rgba(255,255,255,0.05)]"
+                className="flex flex-col items-start gap-px px-2.5 py-1.5 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
               >
-                <span className="mono text-[12.5px] text-primary truncate max-w-full">{tool.name}</span>
-                <span className="text-[10.5px] text-muted truncate max-w-full">
+                <span className="mono text-body text-primary truncate max-w-full">{tool.name}</span>
+                <span className="text-caption text-muted truncate max-w-full">
                   <Plural value={tool.arguments.length} one="# param" other="# params" />
                   {tool.description ? ` · ${tool.description}` : ''}
                 </span>

@@ -47,14 +47,17 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
           onClick={onToggleSystem}
           title={showSystem ? t`Hide system agents` : t`Show system agents`}
           className={cn(
-            'inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
+            'inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-body font-medium cursor-pointer transition-colors duration-200 border-none',
             showSystem
               ? 'text-accent bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent-primary)]'
               : 'text-secondary bg-card-2',
           )}
         >
           <span
-            className={`w-7 h-4 rounded-full relative transition-colors duration-200 ${showSystem ? 'bg-accent' : 'bg-[rgba(255,255,255,0.12)]'}`}
+            className={cn(
+              'w-7 h-4 rounded-full relative transition-colors duration-200',
+              showSystem ? 'bg-accent' : 'bg-white/[0.12]',
+            )}
             aria-hidden="true"
           >
             <span
@@ -93,9 +96,10 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentListItemDto; selec
     <RowButton
       onClick={onClick}
       data-testid={`agent-card-${agent.id}`}
-      className={`rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] ${
-        selected ? '' : SELECTION_ROW_INACTIVE
-      }`}
+      className={cn(
+        'rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-3.5',
+        !selected && SELECTION_ROW_INACTIVE,
+      )}
       style={selected ? selectionRowStyle(c) : undefined}
     >
       {selected && (
@@ -116,9 +120,9 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentListItemDto; selec
           <div className="text-caption text-muted truncate font-mono">{agent.endpointName}</div>
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-[40px]">
+      <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-10">
         <span className="truncate">{agent.projectName}</span>
-        <span className="text-border">·</span>
+        <span aria-hidden>·</span>
         <span className="shrink-0"><Plural value={agent.toolCount} one="# tool" other="# tools" /></span>
         <span className="ml-auto shrink-0 font-mono">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : <Trans>never</Trans>}</span>
       </div>

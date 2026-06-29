@@ -24,7 +24,7 @@ export function FilterTogglePill({ checked, onChange, title, label, testId }: Pr
       onClick={() => onChange(!checked)}
       title={title}
       className={cn(
-        'inline-flex items-center gap-2 h-9 px-3 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
+        'inline-flex items-center gap-2 h-9 px-3 rounded-md text-body font-medium cursor-pointer transition-colors duration-200 border-none',
         checked ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card',
       )}
       style={{
@@ -34,7 +34,7 @@ export function FilterTogglePill({ checked, onChange, title, label, testId }: Pr
       }}
     >
       <span
-        className={cn('w-7 h-4 rounded-full relative transition-colors duration-200', checked ? 'bg-accent' : 'bg-[rgba(255,255,255,0.12)]')}
+        className={cn('w-7 h-4 rounded-full relative transition-colors duration-200', checked ? 'bg-accent' : 'bg-white/[0.12]')}
         aria-hidden="true"
       >
         <span

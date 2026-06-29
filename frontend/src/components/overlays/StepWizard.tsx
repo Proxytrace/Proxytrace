@@ -35,7 +35,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
             <div key={i} className={`flex items-center ${i < steps.length - 1 ? 'flex-1' : ''}`}>
               <div className="flex items-center gap-2 shrink-0">
                 <div
-                  className={`relative w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all duration-200 ${
+                  className={`relative w-7 h-7 rounded-full flex items-center justify-center text-body-sm font-bold shrink-0 transition-all duration-200 ${
                     isActive
                       ? 'bg-accent text-white shadow-[0_0_0_4px_var(--accent-subtle)]'
                       : isDone
@@ -50,7 +50,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
                   )}
                 </div>
                 <span
-                  className={`text-xs whitespace-nowrap transition-colors ${
+                  className={`text-body-sm whitespace-nowrap transition-colors ${
                     isActive ? 'text-primary font-semibold' : isDone ? 'text-secondary font-medium max-sm:hidden' : 'text-muted font-normal max-sm:hidden'
                   }`}
                 >
@@ -81,7 +81,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
           <Trans>← Back</Trans>
         </Button>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-muted hidden sm:inline">
+          <span className="text-body-sm text-muted hidden sm:inline">
             <Trans>Step {currentStep + 1} of {steps.length}</Trans>
           </span>
           {isLast ? (

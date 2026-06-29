@@ -44,13 +44,13 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
         />
       }
     >
-      <p className="text-xs text-muted mb-3">
+      <p className="text-body-sm text-muted mb-3">
         <Trans>
           Choose the agent that should own this version. Calls referencing this version follow it.
           The source agent ({sourceAgent.name}) is deleted if it has no versions left.
         </Trans>
       </p>
-      <label className="block text-sm mb-2">
+      <label className="block text-body mb-2">
         <Trans>Search</Trans>
         <Input
           autoFocus
@@ -60,11 +60,11 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
           className="mt-1"
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-body">
         <Trans>Target agent</Trans>
         {/* eslint-disable-next-line no-restricted-syntax -- multi-row listbox (size=N), not a dropdown Select */}
         <select
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-card-2 p-2 text-body"
           value={targetAgentId}
           onChange={(e) => setTargetAgentId(e.target.value)}
           size={Math.min(8, Math.max(2, filtered.length))}
@@ -78,7 +78,7 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
         </select>
       </label>
       {truncated && (
-        <p className="text-[11px] text-muted mt-2">
+        <p className="text-body-sm text-muted mt-2">
           <Trans>Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more.</Trans>
         </p>
       )}

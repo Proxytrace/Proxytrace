@@ -49,10 +49,10 @@ export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) 
         ) : (
           <div className="w-full flex items-center gap-9">
             <Donut segments={segments} size={172} thickness={24}>
-              <span className="text-[26px] font-extrabold tracking-[-0.03em] leading-none text-primary tabular-nums">
+              <span className="text-h1 font-extrabold tracking-[-0.03em] leading-none text-primary tabular-nums">
                 {fmtTokens(share.total)}
               </span>
-              <span className="text-[10px] text-muted tracking-[0.16em] uppercase font-mono mt-1"><Trans>tokens</Trans></span>
+              <span className="text-caption text-muted tracking-[0.16em] uppercase font-mono mt-1"><Trans>tokens</Trans></span>
             </Donut>
 
             <ul className="flex-1 min-w-0 flex flex-col gap-2.5">

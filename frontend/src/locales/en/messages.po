@@ -157,12 +157,6 @@ msgstr "{0, plural, one {Waiting for # action} other {Waiting for # actions}}"
 msgid "{0} — the change is live in the agent."
 msgstr "{0} — the change is live in the agent."
 
-#. placeholder {0}: s.n
-#. placeholder {1}: i18n._(s.name)
-#. placeholder {2}: i18n._(s.meaning)
-msgid "{0} · {1} — {2}"
-msgstr "{0} · {1} — {2}"
-
 #. placeholder {0}: suite.agentName
 #. placeholder {1}: suite.testCaseCount
 msgid "{0} · {1} case"
@@ -486,6 +480,12 @@ msgstr "{msgCount, plural, one {# msg} other {# msgs}}"
 msgid "{n} agents"
 msgstr "{n} agents"
 
+msgid "{n} calls"
+msgstr "{n} calls"
+
+msgid "{n} conversations"
+msgstr "{n} conversations"
+
 msgid "{n} projects"
 msgstr "{n} projects"
 
@@ -680,6 +680,12 @@ msgstr "0pt"
 
 msgid "1 agent"
 msgstr "1 agent"
+
+msgid "1 call"
+msgstr "1 call"
+
+msgid "1 conversation"
+msgstr "1 conversation"
 
 msgid "1 project"
 msgstr "1 project"
@@ -1668,9 +1674,6 @@ msgstr "Dismissed — a reviewer chose not to apply this change."
 msgid "Disproven by A/B"
 msgstr "Disproven by A/B"
 
-msgid "Distribution"
-msgstr "Distribution"
-
 msgid "Divergent"
 msgstr "Divergent"
 
@@ -2446,6 +2449,9 @@ msgstr "Load from trace"
 msgid "Load from trace or test case"
 msgstr "Load from trace or test case"
 
+msgid "Load more"
+msgstr "Load more"
+
 msgid "Loading"
 msgstr "Loading"
 
@@ -2798,9 +2804,6 @@ msgstr "No API keys yet"
 
 msgid "No audit events"
 msgstr "No audit events"
-
-msgid "No calls in this range yet"
-msgstr "No calls in this range yet"
 
 msgid "No cases match this filter."
 msgstr "No cases match this filter."
@@ -4770,6 +4773,9 @@ msgstr "Tool arguments (JSON)"
 
 msgid "tool call"
 msgstr "tool call"
+
+msgid "tool calls"
+msgstr "tool calls"
 
 msgid "Tool calls"
 msgstr "Tool calls"

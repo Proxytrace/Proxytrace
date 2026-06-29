@@ -39,10 +39,19 @@ public record TestResultArrivedEvent(
     Guid TestCaseId,
     EvaluationScore? OverallScore,
     IReadOnlyList<EvaluationEventData> Evaluations,
-    long DurationMs) : TestRunEvent(RunId, GroupId)
+    long DurationMs,
+    double? CostUsd,
+    long? TokensIn,
+    long? TokensOut,
+    long? CachedTokensIn) : TestRunEvent(RunId, GroupId)
 {
     public static TestResultArrivedEvent Create(ITestRun run, ITestResult result)
-        => new(
+    {
+        // Per-case cost/tokens ride along so the live run view can sum a running run's totals as each
+        // case lands, instead of showing zeros until the terminal refetch. CalculateCost is linear, so
+        // the client sum matches the backend's run-level TestRunTotals.
+        var totals = TestRunTotals.FromResult(run, result);
+        return new(
             run.Id,
             run.Group.Id,
             result.TestCase.Id,
@@ -54,7 +63,12 @@ public record TestResultArrivedEvent(
                 e.Score,
                 e.Reasoning,
                 e.ErrorMessage)).ToArray(),
-            (long)result.Latency.TotalMilliseconds);
+            (long)result.Latency.TotalMilliseconds,
+            totals.CostUsd is { } cost ? (double)cost : null,
+            totals.TokensIn,
+            totals.TokensOut,
+            totals.CachedTokensIn);
+    }
 }
 
 public record RunCompleteEvent(

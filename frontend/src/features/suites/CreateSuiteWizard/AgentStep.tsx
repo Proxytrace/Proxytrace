@@ -29,9 +29,9 @@ export function AgentStep({ agents, value, onChange }: Props) {
   return (
     <div data-testid="wizard-step-agent" className="max-w-[640px] mx-auto flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[12.5px] text-muted m-0"><Trans>Which agent should this suite test?</Trans></p>
+        <p className="text-body text-muted m-0"><Trans>Which agent should this suite test?</Trans></p>
         {hasSystem && (
-          <label className="flex items-center gap-2 text-[12px] text-secondary cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-body text-secondary cursor-pointer select-none">
             <Trans>System agents</Trans>
             <Switch
               checked={showSystem}
@@ -58,7 +58,7 @@ export function AgentStep({ agents, value, onChange }: Props) {
                 key={a.id}
                 data-testid={`wizard-agent-option-${a.id}`}
                 onClick={() => onChange(a.id)}
-                className="rounded-[10px] transition-colors duration-150"
+                className="rounded-md transition-colors duration-150"
                 style={{
                   padding: '12px 14px',
                   border: `1px solid ${selected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
@@ -67,9 +67,9 @@ export function AgentStep({ agents, value, onChange }: Props) {
               >
                 <div className="flex items-center gap-2">
                   <span className="size-[7px] rounded-full shrink-0" style={{ background: c }} />
-                  <span className="text-[13px] font-semibold">{a.name}</span>
+                  <span className="text-title font-semibold">{a.name}</span>
                 </div>
-                <div className="text-[11px] text-muted mt-1">{a.projectName}</div>
+                <div className="text-body-sm text-muted mt-1">{a.projectName}</div>
               </RowButton>
             );
           })}

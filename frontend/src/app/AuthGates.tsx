@@ -26,7 +26,7 @@ export function OidcAuthGate({ children }: { children: React.ReactNode }) {
   if (auth.isLoading || auth.activeNavigator) return <PageLoader />;
   if (auth.error) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-danger">
+      <div className="flex min-h-screen items-center justify-center text-body text-danger">
         <Trans>Auth error: {auth.error.message}</Trans>
       </div>
     );

@@ -33,8 +33,8 @@ export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loa
 
   return (
     <>
-      <h3 className="text-[16px] font-bold mb-1"><Trans>Start new test run</Trans></h3>
-      <p className="text-[12.5px] text-muted mb-5 leading-[1.55]">
+      <h3 className="text-h2 font-semibold mb-1"><Trans>Start new test run</Trans></h3>
+      <p className="text-body text-muted mb-5 leading-[1.55]">
         <Trans>
           Run <strong className="text-primary"><Plural value={suite.testCaseCount} one="# test case" other="# test cases" /></strong> from{' '}
           <strong className="text-primary">{suite.name}</strong> and compare results.
@@ -46,7 +46,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loa
           <Trans>Model endpoints to evaluate</Trans>
           {isMulti && (
             <span
-              className="px-2 py-[2px] bg-accent-subtle text-[color:var(--accent-hover)] rounded-full text-[10px] font-semibold normal-case tracking-normal border border-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]"
+              className="px-2 py-0.5 bg-accent-subtle text-[color:var(--accent-hover)] rounded-full text-caption font-semibold normal-case tracking-normal border border-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]"
             >
               <Trans>Parallel · {count} selected</Trans>
             </span>
@@ -88,7 +88,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loa
             </span>
           )}
         </div>
-        <p className="text-[11.5px] text-muted mt-2 leading-[1.5]">
+        <p className="text-body-sm text-muted mt-2 leading-[1.5]">
           <Trans>Run each endpoint multiple times to surface flaky cases; results are averaged per endpoint.</Trans>
         </p>
       </div>

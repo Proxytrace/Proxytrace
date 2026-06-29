@@ -115,7 +115,7 @@ export function Select({
                 onSelect={() => onValueChange(opt.value)}
                 className={cn(
                   'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none',
-                  'transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',
+                  'transition-colors duration-100 data-[highlighted]:bg-white/[0.05]',
                   'data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed',
                   isSel ? 'text-primary' : 'text-secondary',
                 )}

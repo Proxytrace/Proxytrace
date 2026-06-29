@@ -4,7 +4,8 @@ import { cn } from '../../../lib/cn';
 import { RowButton } from '../../../components/ui/RowButton';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import { Popover } from '../../../components/ui/Popover';
-import { CheckIcon, SearchIcon } from '../../../components/icons';
+import { SearchIcon } from '../../../components/icons';
+import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../../lib/selectionRow';
 import type { PastEvaluation } from '../hooks/useRecentEvaluations';
 import { ScoreSquare } from './ScoreSquare';
 import { PastEvaluationSearch } from './PastEvaluationSearch';
@@ -37,7 +38,7 @@ export function PastEvaluationList({ evaluatorId, evaluatorName, items, selected
           <RowButton
             data-testid="test-result-picker"
             aria-expanded={searchOpen}
-            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card-2 text-[12px] text-muted hover:bg-card transition-colors"
+            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card-2 text-body text-muted hover:bg-card transition-colors"
           >
             <SearchIcon size={13} className="shrink-0" />
             <span className="flex-1 text-left truncate"><Trans>Search all past evaluations…</Trans></span>
@@ -52,13 +53,13 @@ export function PastEvaluationList({ evaluatorId, evaluatorName, items, selected
         />
       </Popover>
 
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted px-1 pt-1 shrink-0"><Trans>Recent</Trans></span>
+      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted px-1 pt-1 shrink-0"><Trans>Recent</Trans></span>
 
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {isLoading ? (
           <SkeletonList rows={4} height={44} />
         ) : items.length === 0 ? (
-          <div className="px-2.5 py-5 text-center text-[11.5px] text-muted leading-relaxed">
+          <div className="px-2.5 py-5 text-center text-body-sm text-muted leading-relaxed">
             <Trans>No past evaluations yet — search above to load any test case.</Trans>
           </div>
         ) : (
@@ -72,15 +73,18 @@ export function PastEvaluationList({ evaluatorId, evaluatorName, items, selected
                   aria-pressed={on}
                   onClick={() => onSelect(it.testCaseId)}
                   className={cn(
-                    'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left border transition-colors',
-                    on ? 'bg-card border-border' : 'border-transparent hover:bg-card',
+                    'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left overflow-hidden transition-[box-shadow,background-color]',
+                    !on && SELECTION_ROW_INACTIVE,
                   )}
+                  style={on ? selectionRowStyle('var(--accent-primary)') : undefined}
                 >
+                  {on && (
+                    <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-full" style={selectionBarStyle('var(--accent-primary)')} />
+                  )}
                   <ScoreSquare score={it.score} />
-                  <span className={cn('flex-1 min-w-0 block text-[12px] font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
+                  <span className={cn('flex-1 min-w-0 block text-body font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
                     {it.label}
                   </span>
-                  {on && <CheckIcon size={14} className="text-accent shrink-0" />}
                 </RowButton>
               );
             })}

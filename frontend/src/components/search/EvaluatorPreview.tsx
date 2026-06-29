@@ -27,21 +27,21 @@ export function EvaluatorPreview({ id, hit }: Props) {
       <MetaGrid entries={entries} />
       {e.systemMessage && (
         <PreviewSection title={t`System prompt`}>
-          <pre className="text-[11.5px] text-white/75 leading-relaxed whitespace-pre-wrap break-words m-0 font-sans">
+          <pre className="text-body-sm text-white/75 leading-relaxed whitespace-pre-wrap break-words m-0 font-sans">
             {truncate(e.systemMessage, 500)}
           </pre>
         </PreviewSection>
       )}
       {e.jsonSchema && (
         <PreviewSection title={t`JSON schema`}>
-          <pre className="text-[10.5px] text-white/70 font-mono leading-snug whitespace-pre-wrap break-words m-0">
+          <pre className="text-caption text-white/70 font-mono leading-snug whitespace-pre-wrap break-words m-0">
             {truncate(e.jsonSchema, 400)}
           </pre>
         </PreviewSection>
       )}
       {e.extractionPattern && (
         <PreviewSection title={t`Extraction pattern`}>
-          <code className="text-[11px] text-white/75 font-mono break-words">{e.extractionPattern}</code>
+          <code className="text-body-sm text-white/75 font-mono break-words">{e.extractionPattern}</code>
         </PreviewSection>
       )}
     </>

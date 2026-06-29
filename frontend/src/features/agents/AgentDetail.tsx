@@ -9,7 +9,6 @@ import { SystemPromptWidget } from './widgets/SystemPromptWidget';
 import { ToolsWidget } from './widgets/ToolsWidget';
 import { ModelParametersWidget } from './widgets/ModelParametersWidget';
 import { SuitePassRatesWidget } from './widgets/SuitePassRatesWidget';
-import { DistributionWidget } from './widgets/DistributionWidget';
 import { RecentOutliersWidget } from './widgets/RecentOutliersWidget';
 import { RecentTracesWidget } from './widgets/RecentTracesWidget';
 import { VersionsWidget } from './VersionsWidget';
@@ -37,7 +36,7 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
     <div className="fade-up flex flex-col gap-3.5 min-w-0 [animation-delay:40ms] @container">
       <AgentHeader agent={agent} overview={overview} onDelete={onDelete} />
 
-      <PerformanceCard overview={overview} isLoading={isLoading} range={range} onRangeChange={setRange} />
+      <PerformanceCard agentId={agent.id} overview={overview} isLoading={isLoading} range={range} onRangeChange={setRange} />
 
       {/* Definition (left) + version history & metadata rail (right). Split is driven by the
           detail pane's own width (container query), not the viewport — the pane sits beside the
@@ -67,8 +66,6 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
               <SuitePassRatesWidget suitePassRates={overview.suitePassRates} agentId={agent.id} />
             )
           )}
-
-          <DistributionWidget agentId={agent.id} range={range} />
 
           <RecentOutliersWidget agentId={agent.id} />
 

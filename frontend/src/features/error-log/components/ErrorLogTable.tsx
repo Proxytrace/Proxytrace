@@ -3,6 +3,7 @@ import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { fmtDateTime } from '../../../lib/format';
+import { cn } from '../../../lib/cn';
 import type { ApplicationErrorDto } from '../../../api/models';
 import { LEVEL_COLOR } from '../errorLogMeta';
 
@@ -27,9 +28,9 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
   return (
     <div
       data-testid="error-log-table"
-      className={`flex flex-col ${isFetching ? 'opacity-60 transition-opacity' : ''}`}
+      className={cn('flex flex-col', isFetching && 'opacity-60 transition-opacity')}
     >
-      <div className="grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
+      <div className="grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2 text-body-sm font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
         <span><Trans>Level</Trans></span>
         <span><Trans>Message</Trans></span>
         <span><Trans>Source</Trans></span>
@@ -40,18 +41,19 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
           key={error.id}
           data-testid={`error-log-row-${error.id}`}
           onClick={() => onSelect(error)}
-          className={`grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2.5 items-center border-b border-hairline transition-colors ${
-            error.id === selectedId ? 'bg-accent-subtle' : 'hover:bg-card-2'
-          }`}
+          className={cn(
+            'grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2.5 items-center border-b border-hairline transition-colors',
+            error.id === selectedId ? 'bg-accent-subtle' : 'hover:bg-card-2',
+          )}
         >
           <span>
             <Pill label={error.level} color={LEVEL_COLOR[error.level]} size="sm" />
           </span>
-          <span className="min-w-0 truncate text-[13px] text-primary font-medium">{error.message}</span>
-          <span className="min-w-0 truncate text-xs text-muted font-mono" title={error.category}>
+          <span className="min-w-0 truncate text-title text-primary font-medium">{error.message}</span>
+          <span className="min-w-0 truncate text-body-sm text-muted font-mono" title={error.category}>
             {error.exceptionType ?? error.category}
           </span>
-          <span className="text-right text-xs text-muted font-mono whitespace-nowrap tabular-nums">{fmtDateTime(error.createdAt)}</span>
+          <span className="text-right text-body-sm text-muted font-mono whitespace-nowrap tabular-nums">{fmtDateTime(error.createdAt)}</span>
         </RowButton>
       ))}
     </div>

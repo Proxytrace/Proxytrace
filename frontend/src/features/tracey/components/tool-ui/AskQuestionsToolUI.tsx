@@ -64,7 +64,7 @@ function OptionRow({ badge, label, muted, selected, multiple, last, onSelect, te
       </span>
       <span
         className={cn(
-          'flex-1 truncate text-title',
+          'min-w-0 flex-1 truncate text-title',
           selected ? 'text-primary' : muted ? 'text-muted' : 'text-secondary',
         )}
       >

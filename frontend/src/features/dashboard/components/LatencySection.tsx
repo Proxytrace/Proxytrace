@@ -48,8 +48,8 @@ export function LatencySection({ latencyHist, latencyStats }: LatencySectionProp
         <div className="grid grid-cols-4 gap-2 mt-2.5 pt-2.5 border-t border-border-subtle">
           {PERCENTILE_ROWS.map(({ label, color }, idx) => (
             <div key={label}>
-              <div className="text-[9px] text-muted font-bold tracking-[0.12em] uppercase font-mono">{label}</div>
-              <div className="text-[15px] font-bold tabular-nums mt-[3px]" style={{ color }}>{pValues[idx]}</div>
+              <div className="text-caption text-muted font-bold tracking-[0.12em] uppercase font-mono">{label}</div>
+              <div className="text-h1 font-bold tabular-nums mt-0.5" style={{ color }}>{pValues[idx]}</div>
             </div>
           ))}
         </div>

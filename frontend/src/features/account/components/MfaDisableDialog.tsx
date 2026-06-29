@@ -59,7 +59,7 @@ export function MfaDisableDialog({ onClose }: MfaDisableDialogProps) {
             onChange={(e) => setPassword(e.target.value)}
           />
         </FormField>
-        {err && <p className="text-sm text-danger" data-testid="mfa-disable-error">{err}</p>}
+        {err && <p className="text-body text-danger" data-testid="mfa-disable-error">{err}</p>}
       </div>
     </Modal>
   )

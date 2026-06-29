@@ -68,8 +68,8 @@ export default function Proposals() {
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2.5 mb-1.5">
-            <h1 className="text-h1 font-bold tracking-[-0.02em] m-0"><Trans>Optimization Theories</Trans></h1>
-            <span className="inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-body-sm font-semibold text-accent-hover bg-[image:linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_20%,transparent),color-mix(in_srgb,var(--teal)_12%,transparent))]">
+            <h1 className="text-h1 font-semibold leading-none tracking-[-0.02em] m-0"><Trans>Optimization Theories</Trans></h1>
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-body-sm font-semibold text-accent-hover bg-[image:linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_20%,transparent),color-mix(in_srgb,var(--teal)_12%,transparent))]">
               <SparklesIcon size={11} /> <Trans>Auto-generated</Trans>
             </span>
           </div>

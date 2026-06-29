@@ -17,6 +17,7 @@ using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Domain.Usage;
 using Proxytrace.Licensing;
 using Proxytrace.Testing;
 
@@ -372,6 +373,46 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var resultArrived = published.OfType<TestResultArrivedEvent>().Should().ContainSingle().Subject;
         resultArrived.Evaluations.Should().ContainSingle()
             .Which.Score.Should().Be(EvaluationScore.Acceptable);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_PublishesTestResultArrivedEvent_CarryingUsageAndCost()
+    {
+        // The live run cards read duration/cost/tokens off this event so a running run's totals tick
+        // up as each case lands; previously the event carried only latency + evaluations, so cost and
+        // tokens stayed at zero until the terminal refetch. Assert the case's usage rides along.
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var usage = new TokenUsage(inputTokenCount: 120, outputTokenCount: 80, cachedInputTokenCount: 20);
+        var broadcaster = Substitute.For<ITestResultBroadcaster>();
+        var published = new List<TestRunEvent>();
+        broadcaster.When(b => b.Publish(Arg.Any<TestRunEvent>()))
+            .Do(ci => published.Add(ci.Arg<TestRunEvent>()));
+
+        var services = GetServices(config =>
+        {
+            config.Register(ct =>
+            {
+                IModelClient handler = Substitute.For<IModelClient>();
+                var completionFactory = ct.Resolve<ICompletion.Create>();
+                handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<IReadOnlyDictionary<string, string>?>(), Arg.Any<CancellationToken>())
+                    .Returns(Task.FromResult(completionFactory(expectedOutput, usage, TimeSpan.FromMilliseconds(1000))));
+                return handler;
+            });
+            config.RegisterInstance(broadcaster).As<ITestResultBroadcaster>();
+        });
+
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
+
+        await runner.RunInForegroundAsync(suite, [endpoint], cancellationToken: CancellationToken);
+
+        var resultArrived = published.OfType<TestResultArrivedEvent>().Should().ContainSingle().Subject;
+        resultArrived.TokensIn.Should().Be(120);
+        resultArrived.TokensOut.Should().Be(80);
+        resultArrived.CachedTokensIn.Should().Be(20);
+        var expectedCost = endpoint.CalculateCost(usage);
+        resultArrived.CostUsd.Should().Be(expectedCost is { } c ? (double)c : (double?)null);
     }
 
     [TestMethod]

@@ -84,11 +84,11 @@ export default function ErrorLog() {
   }
 
   return (
-    <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-[14px]">
+    <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-3.5">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-bold text-primary"><Trans>Error Log</Trans></h1>
-          <p className="text-[13px] text-muted mt-0.5">
+          <h1 className="text-h1 font-semibold text-primary"><Trans>Error Log</Trans></h1>
+          <p className="text-title text-muted mt-0.5">
             <Trans>Latest application errors and critical failures captured across the backend.</Trans>
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function ErrorLog() {
           width={110}
         />
         <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
-        <span className="text-xs text-muted whitespace-nowrap">{total.toLocaleString()} <Plural value={total} one="error" other="errors" /></span>
+        <span className="text-body-sm text-muted whitespace-nowrap">{total.toLocaleString()} <Plural value={total} one="error" other="errors" /></span>
       </footer>
 
       {activeError && <ErrorLogDetail error={activeError} onClose={closeDetail} />}

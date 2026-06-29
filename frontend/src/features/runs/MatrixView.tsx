@@ -66,7 +66,7 @@ export function MatrixView({ group, live }: {
     <Card padding="none" data-testid="matrix-view" className="flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-baseline gap-2.5 min-w-0">
           <span className="text-h2 font-semibold"><Trans>Test case matrix</Trans></span>
           <span className="text-body-sm text-muted">
             {multi
@@ -97,7 +97,7 @@ export function MatrixView({ group, live }: {
 
       {/* Matrix */}
       {rows.length === 0 ? (
-        <div className="py-[60px] text-center text-muted text-body"><Trans>No cases match this filter.</Trans></div>
+        <div className="py-15 text-center text-muted text-body"><Trans>No cases match this filter.</Trans></div>
       ) : (
         <MatrixGrid
           cohorts={cohorts}

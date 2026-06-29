@@ -66,7 +66,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
         <span
-          className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold', TONE_SUBTLE_BG[meta.tone], TONE_TEXT[meta.tone])}
+          className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-body-sm font-semibold', TONE_SUBTLE_BG[meta.tone], TONE_TEXT[meta.tone])}
         >
           <span
             className={cn('inline-block size-1.5 rounded-full', TONE_BG[meta.tone], meta.pulse && 'pulse-dot')}

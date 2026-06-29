@@ -29,8 +29,8 @@ export default function Signup() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface p-6 text-center text-primary">
         <div>
-          <h1 className="text-lg font-semibold"><Trans>Invite expired or already used</Trans></h1>
-          <p className="mt-2 text-sm text-muted"><Trans>Ask an admin for a new invite link.</Trans></p>
+          <h1 className="text-h1 font-semibold"><Trans>Invite expired or already used</Trans></h1>
+          <p className="mt-2 text-body text-muted"><Trans>Ask an admin for a new invite link.</Trans></p>
         </div>
       </div>
     );
@@ -58,8 +58,8 @@ export default function Signup() {
           }
         }}
       >
-        <h1 className="text-lg font-semibold"><Trans>Create your account</Trans></h1>
-        <p className="text-xs text-muted">
+        <h1 className="text-h1 font-semibold"><Trans>Create your account</Trans></h1>
+        <p className="text-body-sm text-muted">
           <Trans>Role: <span className="text-primary">{preview.role}</span></Trans>
         </p>
         {/* Email is fixed by the invite — the backend ignores any client value and uses the
@@ -73,17 +73,18 @@ export default function Signup() {
             rightAddon={<LockIcon size={14} />}
           />
         </FormField>
-        <Input
-          data-testid="signup-password"
-          type="password"
-          placeholder={t`Password`}
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <FormField label={t`Password`}>
+          <Input
+            data-testid="signup-password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </FormField>
         <PasswordRequirements password={password} />
-        {err && <p data-testid="signup-error" className="text-sm text-danger">{err}</p>}
+        {err && <p data-testid="signup-error" className="text-body text-danger">{err}</p>}
         <Button data-testid="signup-submit" type="submit" fullWidth loading={submitting} disabled={!passwordIsValid(password)}>
           <Trans>Create account</Trans>
         </Button>

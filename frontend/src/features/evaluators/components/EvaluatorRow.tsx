@@ -22,16 +22,16 @@ export function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, av
       onClick={() => onSelect(e.id)}
       data-testid={`evaluator-rail-item-${e.id}`}
       className={cn(
-        'flex items-center gap-2.5 px-2.5 py-[9px] rounded-[9px] transition-colors',
+        'flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors',
         isSelected ? categorySelectedRow[cat] : 'bg-transparent hover:bg-card-2',
       )}
     >
       <span className={cn('w-[3px] self-stretch rounded-full shrink-0', isSelected ? categoryBg[cat] : 'bg-transparent')} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-[12.5px] font-semibold text-primary overflow-hidden text-ellipsis whitespace-nowrap">{e.name}</span>
+          <span className="text-body font-semibold text-primary overflow-hidden text-ellipsis whitespace-nowrap">{e.name}</span>
         </div>
-        <div className="flex items-center gap-1.5 mt-[3px] text-[10.5px] text-muted font-mono">
+        <div className="flex items-center gap-1.5 mt-0.5 text-caption text-muted font-mono">
           <span className={avgScore == null ? 'text-muted' : 'text-secondary'}>
             {fmtScoreShort(avgScore ?? null, e.kind, fmtPct)}
           </span>

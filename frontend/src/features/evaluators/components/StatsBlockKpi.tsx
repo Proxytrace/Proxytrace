@@ -5,7 +5,8 @@ export function StatsBlockKpi({ label, value, color }: { label: string; value: s
       className="bg-card-2 rounded-md px-3.5 py-3 border-l-2"
       style={{ borderLeftColor: `color-mix(in srgb, ${color} 38%, transparent)` }}
     >
-      <div className="text-[10.5px] text-muted uppercase tracking-[0.06em] font-semibold mb-1.5">{label}</div>
+      <div className="text-caption text-muted uppercase tracking-[0.06em] font-semibold mb-1.5">{label}</div>
+      {/* display-tier: intentional, outside type scale */}
       <div className="text-[22px] font-bold font-mono tracking-[-0.02em] text-primary">{value}</div>
     </div>
   );
@@ -14,6 +15,6 @@ export function StatsBlockKpi({ label, value, color }: { label: string; value: s
 /** Centered placeholder used when a chart has insufficient data. */
 export function EmptyChart({ label }: { label: string }) {
   return (
-    <div className="h-[140px] flex items-center justify-center text-muted text-[11.5px]">{label}</div>
+    <div className="h-[140px] flex items-center justify-center text-muted text-body-sm">{label}</div>
   );
 }

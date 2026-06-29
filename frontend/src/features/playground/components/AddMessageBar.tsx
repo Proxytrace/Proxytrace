@@ -66,14 +66,14 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
   }, [open, close, updatePosition]);
 
   return (
-    <div className="mt-[2px]">
+    <div className="mt-0.5">
       <Button
         ref={buttonRef}
         variant="ghost"
         fullWidth
         data-testid="add-message-bar"
         className={cn(
-          'group py-[10px] rounded-[10px] border border-dashed',
+          'group py-2.5 rounded-md border border-dashed',
           open
             ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
             : 'border-border text-muted',
@@ -84,16 +84,16 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
-        <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em]"><Trans>Add message</Trans></span>
+        <span className="text-body-sm font-semibold uppercase tracking-[0.08em]"><Trans>Add message</Trans></span>
       </Button>
       {open && pos && createPortal(
         <div
           ref={menuRef}
           role="menu"
-          className="fixed z-[60] -translate-x-1/2 rounded-[12px] py-[6px] fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
+          className="fixed z-[60] -translate-x-1/2 rounded-lg py-1.5 fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
           style={{ bottom: pos.bottom, left: pos.left, width: MENU_WIDTH }}
         >
-          <div className="px-[10px] pt-[2px] pb-[6px] text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+          <div className="px-2.5 pt-0.5 pb-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-muted">
             <Trans>New message role</Trans>
           </div>
           {ROLE_OPTIONS.map(opt => {
@@ -104,11 +104,11 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               role="menuitem"
               onClick={() => { onAdd(opt.value); close(); }}
               data-testid={`add-message-role-${opt.value}`}
-              className="flex items-center gap-[10px] px-[10px] py-[7px] hover:bg-card transition-colors"
+              className="flex items-center gap-2.5 px-2.5 py-1.5 hover:bg-card transition-colors"
             >
               <span
                 aria-hidden
-                className="inline-flex items-center justify-center size-[24px] rounded-full text-[11px] font-bold shrink-0 bg-[rgba(255,255,255,0.04)]"
+                className="inline-flex items-center justify-center size-[24px] rounded-full text-body-sm font-bold shrink-0 bg-[var(--bg-wash-hover)]"
                 style={{
                   color: opt.accent,
                   border: `1px solid color-mix(in srgb, ${opt.accent} 22%, transparent)`,
@@ -117,29 +117,29 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
                 {label[0]}
               </span>
               <span className="flex flex-col min-w-0">
-                <span className="text-[12.5px] text-primary font-semibold">{label}</span>
-                <span className="text-[10.5px] text-muted">{i18n._(opt.description)}</span>
+                <span className="text-body text-primary font-semibold">{label}</span>
+                <span className="text-caption text-muted">{i18n._(opt.description)}</span>
               </span>
             </RowButton>
             );
           })}
           {onLoadFromTrace && (
             <>
-              <div className="my-[4px] mx-[10px] border-t border-border" />
+              <div className="my-1 mx-2.5 border-t border-border" />
               <RowButton
                 role="menuitem"
                 onClick={() => { onLoadFromTrace(); close(); }}
-                className="flex items-center gap-[10px] px-[10px] py-[7px] hover:bg-card transition-colors"
+                className="flex items-center gap-2.5 px-2.5 py-1.5 hover:bg-card transition-colors"
               >
                 <span
                   aria-hidden
-                  className="inline-flex items-center justify-center size-[24px] rounded-full shrink-0 bg-[rgba(255,255,255,0.04)] text-secondary border border-border"
+                  className="inline-flex items-center justify-center size-[24px] rounded-full shrink-0 bg-[var(--bg-wash-hover)] text-secondary border border-border"
                 >
                   <SearchIcon size={12} strokeWidth={2.2} />
                 </span>
                 <span className="flex flex-col min-w-0">
-                  <span className="text-[12.5px] text-primary font-semibold"><Trans>Load from trace</Trans></span>
-                  <span className="text-[10.5px] text-muted"><Trans>Seed conversation from past trace or test case</Trans></span>
+                  <span className="text-body text-primary font-semibold"><Trans>Load from trace</Trans></span>
+                  <span className="text-caption text-muted"><Trans>Seed conversation from past trace or test case</Trans></span>
                 </span>
               </RowButton>
             </>

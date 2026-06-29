@@ -37,7 +37,7 @@ export function CopyButton({ text, label, className, 'data-testid': testId }: Pr
       title={labelText}
       data-testid={testId}
       className={cn(
-        'inline-flex items-center justify-center w-6 h-6 rounded-[6px] cursor-pointer',
+        'inline-flex items-center justify-center w-6 h-6 rounded-sm cursor-pointer',
         'bg-card border border-border transition-colors duration-150 hover:bg-card-2',
         copied ? 'text-success' : 'text-muted',
         className,

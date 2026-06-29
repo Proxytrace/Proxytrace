@@ -48,7 +48,7 @@ export function ConfirmDialog({
     >
       {requireMatch ? (
         <>
-          <p className="text-[13px] text-secondary m-0 mb-4">
+          <p className="text-title text-secondary m-0 mb-4">
             <Trans>This action cannot be undone. Type <strong className="text-primary font-mono">{entityName}</strong> to confirm.</Trans>
           </p>
           <Input
@@ -60,7 +60,7 @@ export function ConfirmDialog({
           />
         </>
       ) : (
-        <p className="text-[13px] text-secondary m-0">
+        <p className="text-title text-secondary m-0">
           {message ?? t`This action cannot be undone.`}
         </p>
       )}

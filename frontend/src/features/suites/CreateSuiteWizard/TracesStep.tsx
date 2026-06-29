@@ -102,7 +102,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
         <div className="flex-1 min-w-[200px]">
           <Input
             leftAddon={<SearchIcon size={13} />}
-            rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}><Trans>clear</Trans></Button> : undefined}
+            rightAddon={search ? <Button variant="link" className="text-body-sm" onClick={() => setSearch('')}><Trans>clear</Trans></Button> : undefined}
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t`Search prompts and responses…`}
@@ -115,7 +115,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
           onChange={setRange}
           active={range !== 'all'}
         />
-        <span className="text-[11.5px] text-muted ml-1"><Trans>{traces.length} of {allTraces.length} shown</Trans></span>
+        <span className="text-body-sm text-muted ml-1"><Trans>{traces.length} of {allTraces.length} shown</Trans></span>
         <div className="flex-1" />
         <Button
           variant="secondary"
@@ -128,7 +128,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
         </Button>
         <span
           className={cn(
-            'px-3 py-[5px] rounded-full text-[12px] font-semibold border',
+            'px-3 py-1.5 rounded-full text-body font-semibold border',
             selected.size > 0
               ? 'bg-accent-subtle text-accent-hover border-accent'
               : 'bg-card text-muted border-border',
@@ -138,17 +138,17 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
         </span>
       </div>
 
-      <p className="text-[11.5px] text-muted m-0"><Trans>Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking.</Trans></p>
+      <p className="text-body-sm text-muted m-0"><Trans>Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking.</Trans></p>
 
       {/* Two-column body */}
       <div className="grid gap-3 min-h-0 grid-cols-[minmax(0,1fr)_420px] h-[520px]">
         {/* List */}
-        <div className="flex flex-col min-h-0 rounded-[12px] border border-border bg-card overflow-hidden">
+        <div className="flex flex-col min-h-0 rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex-1 min-h-0 overflow-y-auto">
             {isLoading && (
               <div className="flex flex-col gap-2 p-3">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-[58px] rounded-[9px] bg-card-2 animate-pulse" />
+                  <div key={i} className="h-[58px] rounded-md bg-card-2 animate-pulse" />
                 ))}
               </div>
             )}
@@ -178,26 +178,26 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
                           ? 'border-l-accent bg-accent-subtle'
                           : 'border-l-transparent bg-transparent',
                         focusedId === t.id && !sel
-                          ? 'outline outline-1 outline-[rgba(255,255,255,0.08)]'
+                          ? 'outline outline-1 outline-[var(--border-color)]'
                           : 'outline-none',
                       )}
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="text-[11px] font-mono text-muted shrink-0 w-[44px]">{fmtClock(t.createdAt)}</span>
+                        <span className="text-body-sm font-mono text-muted shrink-0 w-[44px]">{fmtClock(t.createdAt)}</span>
                         <ColoredBadge color={modelColor(t.model)} label={t.model} dot size="sm" />
                         <StatusDot httpStatus={t.httpStatus} showLabel={false} />
-                        <span className="text-[11px] font-mono text-secondary shrink-0">
+                        <span className="text-body-sm font-mono text-secondary shrink-0">
                           {fmtTokens(t.inputTokens)}→{fmtTokens(t.outputTokens)}
                         </span>
-                        <span className="text-[11px] font-mono text-muted shrink-0">{fmtLatency(t.durationMs)}</span>
+                        <span className="text-body-sm font-mono text-muted shrink-0">{fmtLatency(t.durationMs)}</span>
                         {tools && (
                           <span title={usedToolsLabel} className="inline-flex items-center text-accent">
                             <WrenchIcon size={11} />
                           </span>
                         )}
-                        <span className="text-[11px] font-mono text-muted ml-auto shrink-0">{fmtRelative(t.createdAt)}</span>
+                        <span className="text-body-sm font-mono text-muted ml-auto shrink-0">{fmtRelative(t.createdAt)}</span>
                       </div>
-                      <div className="mt-[5px] text-[12px] text-secondary truncate min-w-0">
+                      <div className="mt-1.5 text-body text-secondary truncate min-w-0">
                         {snippet ? <span className="text-secondary">{snippet}</span> : <span className="text-muted italic"><Trans>No user message</Trans></span>}
                       </div>
                     </li>
@@ -208,14 +208,14 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
           </div>
 
           {truncated && (
-            <div className="px-3 py-2 text-[11px] text-muted border-t border-hairline bg-card-2 shrink-0">
+            <div className="px-3 py-2 text-body-sm text-muted border-t border-hairline bg-card-2 shrink-0">
               <Trans>Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to see older calls.</Trans>
             </div>
           )}
         </div>
 
         {/* Preview */}
-        <div className="rounded-[12px] border border-border bg-card overflow-hidden min-h-0">
+        <div className="rounded-lg border border-border bg-card overflow-hidden min-h-0">
           <TracePreviewPanel trace={focused} />
         </div>
       </div>

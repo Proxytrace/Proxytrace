@@ -53,26 +53,26 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-5 fade-up bg-[rgba(0,0,0,0.65)] backdrop-blur-[8px]"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-5 fade-up bg-black/[0.65] backdrop-blur-[4px]"
     >
       <div
         onClick={e => e.stopPropagation()}
         data-testid="promote-modal"
-        className="w-full max-w-[980px] h-[min(720px,90vh)] bg-card rounded-[20px] flex flex-col overflow-hidden shadow-[var(--shadow-float)]"
+        className="w-full max-w-[980px] h-[min(720px,90vh)] bg-card rounded-xl flex flex-col overflow-hidden shadow-[var(--shadow-float)]"
       >
         {/* Header */}
-        <div className="px-6 py-[18px] flex items-center gap-[14px] border-b border-hairline shrink-0">
+        <div className="px-6 py-4 flex items-center gap-3.5 border-b border-hairline shrink-0">
           <div
             className="w-9 h-9 rounded-md flex items-center justify-center text-white shrink-0 bg-[image:var(--grad-accent)]"
           >
             <PlusIcon strokeWidth={2.5} size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-[16px] font-bold"><Trans>Promote to Test Case</Trans></h2>
-            <p className="text-[12px] text-muted mt-[2px]"><Trans>Adds this trace as a single test case to the selected suite.</Trans></p>
+            <h2 className="text-h2 font-semibold"><Trans>Promote to Test Case</Trans></h2>
+            <p className="text-body text-muted mt-0.5"><Trans>Adds this trace as a single test case to the selected suite.</Trans></p>
           </div>
           <ColoredBadge color={aColor} label={agentLabel} dot size="md" />
-          <span className="mono text-[11px] text-muted">{trace.id.slice(0, 10)}…</span>
+          <span className="mono text-body-sm text-muted">{trace.id.slice(0, 10)}…</span>
           <IconButton onClick={onClose} aria-label={t`Close dialog`}>
             <XIcon size={14} />
           </IconButton>
@@ -81,22 +81,22 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
         {/* Body — two columns */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Left: preview */}
-          <div className="flex-1 min-w-0 border-r border-hairline overflow-y-auto px-6 py-5 flex flex-col gap-[16px]">
+          <div className="flex-1 min-w-0 border-r border-hairline overflow-y-auto px-6 py-5 flex flex-col gap-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+                <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
                   <Trans>Input · <Plural value={inputMessages.length} one="# message" other="# messages" /></Trans>
                 </span>
                 {hasSystem && (
-                  <span className="text-[10.5px] text-muted italic"><Trans>System messages excluded</Trans></span>
+                  <span className="text-caption text-muted italic"><Trans>System messages excluded</Trans></span>
                 )}
               </div>
               {inputMessages.length === 0 ? (
-                <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
+                <div className="px-3 py-4 bg-card-2 rounded-md text-body text-muted text-center">
                   <Trans>No input messages.</Trans>
                 </div>
               ) : (
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   {inputMessages.map((msg, i) => (
                     <MessageBubble key={i} msg={msg} defaultOpen />
                   ))}
@@ -106,10 +106,10 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+                <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
                   <Trans>Expected output</Trans>
                 </span>
-                <span className="text-[10.5px] text-muted italic"><Trans>Editable</Trans></span>
+                <span className="text-caption text-muted italic"><Trans>Editable</Trans></span>
               </div>
               <ExpectedOutputEditor value={expected} tools={trace.tools} onChange={setExpected} />
             </div>
@@ -118,15 +118,15 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
           {/* Right: suite picker + stats */}
           <div className="w-[360px] shrink-0 flex flex-col min-h-0">
             <div className="px-5 pt-5 pb-3 shrink-0">
-              <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+              <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
                 <Trans>Destination suite</Trans>
               </div>
-              <div className="text-[11px] text-muted mt-[3px]">
+              <div className="text-body-sm text-muted mt-0.5">
                 <Plural value={suites.length} one="# suite for this agent" other="# suites for this agent" />
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-3 flex flex-col gap-[6px]">
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-3 flex flex-col gap-1.5">
               {suites.map(s => {
                 const isSel = s.id === suiteId;
                 return (
@@ -143,7 +143,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                   >
                     <span
                       className={cn(
-                        'w-[14px] h-[14px] rounded-full mt-[2px] shrink-0 flex items-center justify-center transition-all duration-150',
+                        'w-[14px] h-[14px] rounded-full mt-0.5 shrink-0 flex items-center justify-center transition-all duration-150',
                         isSel
                           ? 'bg-accent border-[1.5px] border-accent shadow-[0_0_8px_var(--accent-glow)]'
                           : 'bg-transparent border-[1.5px] border-border shadow-none',
@@ -152,10 +152,10 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                       {isSel && <span className="text-white inline-flex"><CheckIcon size={9} strokeWidth={3} /></span>}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className={cn('block text-[12.5px] font-semibold truncate', isSel ? 'text-primary' : 'text-secondary')}>
+                      <span className={cn('block text-body font-semibold truncate', isSel ? 'text-primary' : 'text-secondary')}>
                         {s.name}
                       </span>
-                      <span className="block text-[10.5px] text-muted mt-[2px]">
+                      <span className="block text-caption text-muted mt-0.5">
                         <Plural value={s.testCaseCount} one="# case" other="# cases" /> · <Plural value={s.evaluators.length} one="# evaluator" other="# evaluators" />
                       </span>
                     </span>
@@ -165,20 +165,20 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             </div>
 
             {/* Stats panel */}
-            <div className="px-5 py-4 border-t border-hairline shrink-0 bg-[rgba(0,0,0,0.18)]">
+            <div className="px-5 py-4 border-t border-hairline shrink-0 bg-black/[0.18]">
               {selectedSuite ? (
                 <SuiteStats suite={selectedSuite} />
               ) : (
-                <div className="text-[12px] text-muted text-center py-2"><Trans>Select a suite</Trans></div>
+                <div className="text-body text-muted text-center py-2"><Trans>Select a suite</Trans></div>
               )}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-[14px] border-t border-hairline flex items-center justify-between gap-3 shrink-0 bg-[rgba(0,0,0,0.15)]">
-          <div className="text-[11.5px] min-w-0 flex-1">
-            {errorMsg && <span className="text-[var(--danger)]">{errorMsg}</span>}
+        <div className="px-6 py-3.5 border-t border-hairline flex items-center justify-between gap-3 shrink-0 bg-black/[0.15]">
+          <div className="text-body-sm min-w-0 flex-1">
+            {errorMsg && <span className="text-danger">{errorMsg}</span>}
           </div>
           <div className="flex gap-2 shrink-0">
             <Button variant="secondary" onClick={onClose}><Trans>Cancel</Trans></Button>
@@ -205,27 +205,27 @@ function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
   const lastRunLabel = suite.lastRunAt ? fmtRelative(suite.lastRunAt) : t`never`;
 
   return (
-    <div className="flex flex-col gap-[12px]">
+    <div className="flex flex-col gap-3">
       <div className="grid grid-cols-3 gap-2">
         <Stat label={t`Cases`} value={String(suite.testCaseCount)} accent="var(--accent-primary)" />
         <Stat label={t`Pass rate`} value={passRateLabel} accent="var(--success)" />
         <Stat label={t`Total runs`} value={String(suite.totalRuns)} accent="var(--teal)" />
       </div>
       <div>
-        <div className="text-[10px] font-semibold text-muted uppercase tracking-[0.08em] mb-[6px]">
+        <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em] mb-1.5">
           <Trans>Evaluators</Trans>
         </div>
         {suite.evaluators.length === 0 ? (
-          <div className="text-[11px] text-muted italic"><Trans>None configured</Trans></div>
+          <div className="text-body-sm text-muted italic"><Trans>None configured</Trans></div>
         ) : (
-          <div className="flex flex-wrap gap-[5px]">
+          <div className="flex flex-wrap gap-1.5">
             {suite.evaluators.map(e => (
               <ColoredBadge key={e.id} color={EVALUATOR_KIND_COLOR[e.kind]} label={e.kind} size="sm" />
             ))}
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between text-[10.5px] text-muted">
+      <div className="flex items-center justify-between text-caption text-muted">
         <span><Trans>Last run</Trans></span>
         <span className="text-secondary">{lastRunLabel}</span>
       </div>
@@ -235,9 +235,9 @@ function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="bg-card rounded-[8px] px-2 py-[8px] text-center shadow-[inset_0_0_0_1px_var(--border-color)]">
-      <div className="text-[15px] font-bold font-mono" style={{ color: accent }}>{value}</div>
-      <div className="text-[9px] text-muted uppercase tracking-[0.06em] mt-[1px]">{label}</div>
+    <div className="bg-card rounded-md px-2 py-2 text-center shadow-[inset_0_0_0_1px_var(--border-color)]">
+      <div className="text-h1 font-bold font-mono" style={{ color: accent }}>{value}</div>
+      <div className="text-caption text-muted uppercase tracking-[0.06em] mt-0.5">{label}</div>
     </div>
   );
 }

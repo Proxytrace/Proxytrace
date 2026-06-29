@@ -74,7 +74,7 @@ export default function ResetPassword() {
           }
         }}
       >
-        <h1 className="text-lg font-semibold"><Trans>Choose a new password</Trans></h1>
+        <h1 className="text-h1 font-semibold"><Trans>Choose a new password</Trans></h1>
         <Input
           data-testid="reset-password-input"
           placeholder={t`New password`}
@@ -85,7 +85,7 @@ export default function ResetPassword() {
           required
         />
         <PasswordRequirements password={password} />
-        {err && <p data-testid="reset-password-error" className="text-sm text-danger">{err}</p>}
+        {err && <p data-testid="reset-password-error" className="text-body text-danger">{err}</p>}
         <Button data-testid="reset-password-submit" type="submit" fullWidth loading={submitting} disabled={!valid}>
           <Trans>Set new password</Trans>
         </Button>
@@ -100,7 +100,7 @@ export default function ResetPassword() {
 function InvalidLink() {
   return (
     <div data-testid="reset-password-invalid" className="space-y-3 text-center">
-      <h1 className="text-lg font-semibold"><Trans>Invalid reset link</Trans></h1>
+      <h1 className="text-h1 font-semibold"><Trans>Invalid reset link</Trans></h1>
       <p className="text-body-sm text-muted">
         <Trans>This password reset link is missing or malformed. Request a new one.</Trans>
       </p>

@@ -2,6 +2,7 @@
 // Each is a tiny presentational component (< 20 lines) with no state.
 
 import { useLingui } from '@lingui/react/macro';
+import { cn } from '../../../lib/cn';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens, cachedPct } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
@@ -15,7 +16,7 @@ export function LatencyBar({ ms }: { ms: number }) {
   const pct = latencyBarPct(ms);
   const barColor = ms > 3000 ? 'var(--warn)' : 'var(--accent-primary)';
   return (
-    <span className="flex-1 max-w-[60px] h-[3px] rounded-full overflow-hidden inline-block align-middle bg-[rgba(255,255,255,0.05)]">
+    <span className="flex-1 max-w-[60px] h-[3px] rounded-full overflow-hidden inline-block align-middle bg-white/[0.05]">
       <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
     </span>
   );
@@ -57,7 +58,7 @@ export function TokenCell({ trace }: { trace: AgentCallListItemDto }) {
   return (
     <span className="mono text-body-sm">
       <span className="text-primary">{fmtTokens(trace.inputTokens + trace.outputTokens)}</span>
-      <span className="text-muted ml-[5px] text-caption">{fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}</span>
+      <span className="text-muted ml-1.5 text-caption">{fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}</span>
     </span>
   );
 }
@@ -78,8 +79,8 @@ export function ToolsCell({ count }: { count: number }) {
 
 export function LatencyCell({ ms }: { ms: number }) {
   return (
-    <span className="flex items-center gap-[7px]">
-      <span className={`mono text-body-sm min-w-[40px] shrink-0 ${ms > 3000 ? 'text-warn' : 'text-secondary'}`}>
+    <span className="flex items-center gap-1.5">
+      <span className={cn('mono text-body-sm min-w-[40px] shrink-0', ms > 3000 ? 'text-warn' : 'text-secondary')}>
         {fmtLatency(ms)}
       </span>
       <LatencyBar ms={ms} />

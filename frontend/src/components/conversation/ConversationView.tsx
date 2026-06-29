@@ -48,7 +48,7 @@ export function ConversationView({
   // shrink-0 (self + children) keeps bubbles from vertically compressing inside a
   // flex-col scroll container — the canonical behaviour of every caller.
   return (
-    <div className={cn('flex flex-col gap-[10px] shrink-0 [&>*]:shrink-0', className)}>
+    <div className={cn('flex flex-col gap-2.5 shrink-0 [&>*]:shrink-0', className)}>
       {messages.flatMap((msg, i) => {
         if (msg.role === 'tool') {
           if (msg.toolCallId && absorbedCallIds.has(msg.toolCallId)) return [];

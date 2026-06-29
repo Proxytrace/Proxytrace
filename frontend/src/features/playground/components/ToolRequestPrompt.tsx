@@ -4,6 +4,7 @@ import { JsonBlock } from '../../../components/ui/JsonBlock';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Textarea } from '../../../components/ui/Textarea';
 import { XIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
 import type { PlaygroundToolRequest } from '../state/types';
 
 interface Props {
@@ -40,35 +41,35 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
 
   return (
     <div
-      className="rounded-[12px] p-[12px] flex flex-col gap-[10px]"
+      className="rounded-lg p-3 flex flex-col gap-2.5"
       style={{
         background: 'var(--success-subtle)',
         border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)',
       }}
     >
-      <div className="flex items-center gap-2 text-[12px] font-mono">
+      <div className="flex items-center gap-2 text-body font-mono">
         <span className="font-bold text-success"><Trans>Tool requested:</Trans></span>
         <span>{request.name}</span>
-        <span className="text-muted text-[10px]">{request.id}</span>
+        <span className="text-muted text-caption">{request.id}</span>
         <IconButton className="ml-auto" onClick={onCancel} title={t`Cancel turn`} aria-label={t`Cancel turn`}><XIcon size={13} /></IconButton>
       </div>
 
       <div>
-        <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.05em] mb-[4px]"><Trans>Arguments</Trans></div>
+        <div className="text-caption font-semibold text-muted uppercase tracking-[0.05em] mb-1"><Trans>Arguments</Trans></div>
         <JsonBlock value={parsedArgs} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
       </div>
 
       <div className="flex items-center gap-1 border-b border-border">
         {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
-          className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted'}`}
+          className={cn('px-3 py-1.5 text-body-sm font-semibold border-b-2', tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted')}
           onClick={() => { setTab('result'); setValidationError(null); }}
         >
           <Trans>Provide result</Trans>
         </button>
         {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
-          className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'error' ? 'border-danger text-primary' : 'border-transparent text-muted'}`}
+          className={cn('px-3 py-1.5 text-body-sm font-semibold border-b-2', tab === 'error' ? 'border-danger text-primary' : 'border-transparent text-muted')}
           onClick={() => { setTab('error'); setValidationError(null); }}
         >
           <Trans>Reject (error)</Trans>
@@ -77,7 +78,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
 
       {tab === 'result' ? (
         <Textarea
-          className="font-mono text-[12px]"
+          className="font-mono text-body"
           rows={6}
           value={resultText}
           onChange={e => { setResultText(e.target.value); setValidationError(null); }}
@@ -94,7 +95,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       )}
 
       {validationError && (
-        <div className="text-[11px] text-danger">{validationError}</div>
+        <div className="text-body-sm text-danger">{validationError}</div>
       )}
 
       <div className="flex items-center justify-end gap-2">

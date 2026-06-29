@@ -87,14 +87,14 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
 
   return (
     <div
-      className={cn('relative group rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border, streaming && 'streaming-border')}
+      className={cn('relative group rounded-lg overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border, streaming && 'streaming-border')}
     >
-      <div className="flex items-center gap-2 px-3 py-[10px]">
+      <div className="flex items-center gap-2 px-3 py-2.5">
         <button
           type="button"
           aria-expanded={isOpen}
           onClick={() => setOpen(o => !o)}
-          className={cn('flex flex-1 min-w-0 items-center gap-2 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]', role.hover)}
+          className={cn('flex flex-1 min-w-0 items-center gap-2 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]', role.hover)}
         >
           <span
             aria-hidden
@@ -103,11 +103,11 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
             <ChevronRightIcon size={11} strokeWidth={2.5} />
           </span>
           <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
-          <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
+          <span className={cn('font-mono text-caption font-bold tracking-[0.08em] shrink-0', role.accentText)}>
             {label ?? i18n._(role.label)}
           </span>
           {!isOpen && (
-            <span className="text-[12px] truncate min-w-0 text-secondary">
+            <span className="text-body truncate min-w-0 text-secondary">
               {preview}
             </span>
           )}
@@ -118,7 +118,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
           className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-[var(--motion-fast)]"
         />
         {actions}
-        <span className="font-mono text-[9.5px] leading-none tracking-[0.06em] shrink-0 text-muted">
+        <span className="font-mono text-caption leading-none tracking-[0.06em] shrink-0 text-muted">
           <Trans>{charCount.toLocaleString()} chars</Trans>
         </span>
         {isOpen && !streaming && <MessageViewSelect value={view} onChange={setView} />}
@@ -126,14 +126,14 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
 
       {isOpen && (
         <div className="border-t border-t-[rgba(255,255,255,0.05)]">
-          <div className={cn('px-[14px] py-[12px]', role.bodyBg)}>
+          <div className={cn('px-3.5 py-3', role.bodyBg)}>
             {streaming ? (
-              <div className="text-[13px] leading-[1.65] whitespace-pre-wrap text-primary">
+              <div className="text-title leading-[1.65] whitespace-pre-wrap text-primary">
                 {msg.content}
                 <span
                   aria-hidden
                   className={cn(
-                    'inline-block w-[8px] h-[15px] align-text-bottom ml-[1px] rounded-[1px]',
+                    'inline-block w-[8px] h-[15px] align-text-bottom ml-0.25 rounded-[1px]',
                     'animate-[pulse-dot_0.9s_ease-in-out_infinite] motion-reduce:animate-none',
                     role.accentBg,
                   )}

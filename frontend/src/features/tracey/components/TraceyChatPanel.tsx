@@ -37,7 +37,7 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
         {pendingConfirmation && (
           <div className="mx-auto mt-2 w-full max-w-3xl px-4">
             <div className="rounded-lg border border-[color-mix(in_srgb,var(--warn)_35%,transparent)] bg-warn-subtle px-3 py-2.5">
-              <div className="text-[13px] text-primary">{pendingConfirmation.summary}</div>
+              <div className="text-title text-primary">{pendingConfirmation.summary}</div>
               <div className="mt-2 flex gap-2">
                 <Button variant="primary" size="sm" onClick={() => resolveConfirmation(true)}>
                   <Trans>Confirm</Trans>

@@ -28,16 +28,16 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
 
   return (
     <div
-      className="relative overflow-hidden rounded-lg bg-card shadow-[var(--shadow-card)] px-[18px] py-3 flex items-center gap-3 flex-wrap"
+      className="relative overflow-hidden rounded-lg bg-card shadow-[var(--shadow-card)] px-4.5 py-3 flex items-center gap-3 flex-wrap"
     >
       <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
 
-      <div className="flex flex-col gap-[3px] min-w-0 flex-1">
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 data-testid="run-group-header-title" className="text-h1 font-bold tracking-[-0.01em] m-0 truncate">{group.suiteName}</h2>
+          <h2 data-testid="run-group-header-title" className="text-h1 font-semibold leading-none tracking-[-0.01em] m-0 truncate min-w-0">{group.suiteName}</h2>
           <Pill label={group.agentName} color={c} />
-          <span data-testid={`group-status-${group.id}`}>
-            <ColoredBadge color={sc} label={group.status} dot />
+          <span data-testid={`group-status-${group.id}`} className="inline-flex">
+            <ColoredBadge color={sc} label={group.status} dot size="md" />
           </span>
           {active && (
             <span className="inline-flex items-center gap-1.5 text-caption text-muted shrink-0">

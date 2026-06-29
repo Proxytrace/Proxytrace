@@ -56,7 +56,7 @@ export function ListCard({
     <Card elevation="flat" padding="none" className="my-1" data-testid={testId}>
       <div className="flex items-center gap-2 border-b border-hairline px-3 py-2.5">
         <span className="shrink-0 text-muted">{icon}</span>
-        <span className="text-h2 font-semibold text-primary">{title}</span>
+        <span className="text-h2 font-semibold leading-tight text-primary">{title}</span>
         <Badge label={String(count)} variant="neutral" size="sm" />
         {count > 0 && (
           <Link

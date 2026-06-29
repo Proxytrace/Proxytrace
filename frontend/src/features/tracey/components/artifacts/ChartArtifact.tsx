@@ -73,7 +73,7 @@ export function ChartArtifact({ artifact }: { artifact: ChartArtifactData }) {
                 x={PAD_LEFT - 8}
                 y={t.y + 3}
                 textAnchor="end"
-                className="fill-[var(--text-muted)] font-mono text-[9px]"
+                className="fill-[var(--text-muted)] font-mono text-caption"
               >
                 {formatNum(t.value)}
               </text>
@@ -90,7 +90,7 @@ export function ChartArtifact({ artifact }: { artifact: ChartArtifactData }) {
                 x={scale.xCenter(i)}
                 y={CHART_H - 10}
                 textAnchor="middle"
-                className="fill-[var(--text-muted)] font-mono text-[9px]"
+                className="fill-[var(--text-muted)] font-mono text-caption"
               >
                 {truncate(p.label)}
               </text>

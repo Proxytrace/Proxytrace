@@ -10,7 +10,7 @@ export function StatusDot({ httpStatus, showLabel = true }: StatusDotProps) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span style={{ background: color }} className="size-[7px] rounded-full shrink-0" />
-      {showLabel && <span style={{ color }} className="text-xs font-semibold">{httpStatus}</span>}
+      {showLabel && <span style={{ color }} className="text-body-sm font-semibold">{httpStatus}</span>}
     </span>
   );
 }

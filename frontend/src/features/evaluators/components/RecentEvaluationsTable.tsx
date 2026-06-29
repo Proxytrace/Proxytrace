@@ -25,15 +25,15 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)] overflow-hidden">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
         <ActivityIcon size={13} />
-        <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Recent evaluations</Trans></span>
-        {!scoreFilter && <span className="text-[11px] text-muted"><Trans>last 8</Trans></span>}
+        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Recent evaluations</Trans></span>
+        {!scoreFilter && <span className="text-body-sm text-muted"><Trans>last 8</Trans></span>}
         {scoreFilter && (
           // eslint-disable-next-line no-restricted-syntax -- bespoke removable filter pill
           <button
             type="button"
             onClick={onClearFilter}
             data-testid="evaluator-recent-filter-clear"
-            className="ml-auto inline-flex items-center gap-1 px-2 py-[3px] rounded-full bg-accent-subtle text-accent-text text-[10px] font-semibold cursor-pointer transition-colors hover:bg-card-2"
+            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent-subtle text-accent-text text-caption font-semibold cursor-pointer transition-colors hover:bg-card-2"
           >
             {i18n._(SCORE_LABEL[scoreFilter])}
             <XIcon size={10} />
@@ -41,9 +41,9 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
         )}
       </header>
       {isLoading ? (
-        <div className="px-4 py-8 text-center text-muted text-[12px]"><Trans>Loading…</Trans></div>
+        <div className="px-4 py-8 text-center text-muted text-body"><Trans>Loading…</Trans></div>
       ) : rows.length === 0 ? (
-        <div className="px-4 py-10 text-center text-muted text-[12px]">
+        <div className="px-4 py-10 text-center text-muted text-body">
           {scoreFilter ? (
             <>
               <Trans>No recent <strong>{i18n._(SCORE_LABEL[scoreFilter])}</strong> evaluations.</Trans>{' '}
@@ -55,7 +55,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
         </div>
       ) : (
         <div>
-          <div className={cn(GRID, 'px-4 py-2 gap-3 items-center text-[9.5px] text-muted uppercase tracking-[0.08em] border-b border-hairline font-semibold')}>
+          <div className={cn(GRID, 'px-4 py-2 gap-3 items-center text-caption text-muted uppercase tracking-[0.08em] border-b border-hairline font-semibold')}>
             <span><Trans>Time</Trans></span>
             <span><Trans>Case · reason</Trans></span>
             <span className="text-right"><Trans>Latency</Trans></span>
@@ -73,7 +73,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
                 title={clickable ? t`Open this result in the run matrix` : undefined}
                 className={cn(
                   GRID,
-                  'group px-4 py-[11px] items-center gap-3 text-[11.5px] transition-colors',
+                  'group px-4 py-2.5 items-center gap-3 text-body-sm transition-colors',
                   i < rows.length - 1 && 'border-b border-hairline',
                   clickable ? 'hover:bg-card-2' : 'cursor-default',
                 )}
@@ -85,14 +85,14 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
                     {clickable && <ExternalLinkIcon size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
                   </div>
                   {s.reasoning && (
-                    <div className="text-[10.5px] text-muted overflow-hidden text-ellipsis whitespace-nowrap">{s.reasoning}</div>
+                    <div className="text-caption text-muted overflow-hidden text-ellipsis whitespace-nowrap">{s.reasoning}</div>
                   )}
                 </div>
-                <span className="text-right font-mono text-muted text-[11px]">{s.latencyMs ? fmtLatency(s.latencyMs) : '—'}</span>
+                <span className="text-right font-mono text-muted text-body-sm">{s.latencyMs ? fmtLatency(s.latencyMs) : '—'}</span>
                 <span className="text-right font-mono font-semibold text-primary">{s.score ?? '—'}</span>
                 <span className="text-right">
                   <span className={cn(
-                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-[0.04em]',
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-bold tracking-[0.04em]',
                     s.passed ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
                   )}>{s.passed ? t`PASS` : t`FAIL`}</span>
                 </span>

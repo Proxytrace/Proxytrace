@@ -34,7 +34,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
         <Avatar initials={provider.name[0]} color={providerColor(provider.name)} className="w-11 h-11 rounded-md text-h1" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h2 data-testid="provider-detail-name" className="text-h1 font-semibold m-0 text-primary truncate">{provider.name}</h2>
+            <h2 data-testid="provider-detail-name" className="text-h1 font-semibold leading-none m-0 text-primary truncate">{provider.name}</h2>
             {!editingKind ? (
               <Button
                 variant="ghost"

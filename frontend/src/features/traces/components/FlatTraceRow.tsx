@@ -21,9 +21,9 @@ export function FlatTraceRow({ trace, selected, onClick }: Props) {
       data-testid={`trace-row-${trace.id}`}
       onClick={onClick}
       className={cn(
-        'grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
-        'border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)]',
-        selected && 'bg-[rgba(255,255,255,0.04)]',
+        'grid items-center px-4 py-2.5 min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
+        'border-b border-border-subtle hover:bg-white/[0.025]',
+        selected && 'bg-white/[0.04]',
         TRACE_GRID_CLS,
       )}
     >

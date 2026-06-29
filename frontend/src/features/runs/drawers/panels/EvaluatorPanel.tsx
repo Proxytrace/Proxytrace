@@ -19,8 +19,8 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
         onClick={() => setOpen(o => !o)}
         className={`px-3.5 py-2.5 flex items-center gap-2 ${FOCUS_RING}`}
       >
-        <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: tint(color, 18), color }}>{ev.evaluatorKind}</span>
-        <span className="text-title font-semibold flex-1 min-w-0 truncate">{ev.evaluatorName}</span>
+        <span className="px-1.5 py-0.5 rounded-full text-caption font-semibold shrink-0" style={{ background: tint(color, 18), color }}>{ev.evaluatorKind}</span>
+        <span className="text-title font-semibold leading-none flex-1 min-w-0 truncate">{ev.evaluatorName}</span>
         {typeof ev.score === 'number' && (
           <span className="mono text-body-sm text-secondary shrink-0">{scoreLabel(ev.score)}</span>
         )}

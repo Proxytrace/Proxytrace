@@ -46,7 +46,7 @@ export function MatrixGrid({ cohorts, rows, allRows, active, selectedCaseId, onS
           <div key={cohort.endpointId} data-testid={`matrix-col-${cohort.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center gap-1.5">
             <ModelTag name={cohort.endpointName} size="xs" />
             {cohort.sampleCount > 1 && (
-              <span className="mono px-1 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">×{cohort.sampleCount}</span>
+              <span className="mono px-1 py-px rounded-sm text-caption font-semibold bg-white/[0.06] text-muted shrink-0">×{cohort.sampleCount}</span>
             )}
           </div>
         ))}

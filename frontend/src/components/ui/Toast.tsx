@@ -64,7 +64,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <div
                 key={toast.id}
                 className={cn(
-                  'fade-up bg-card rounded-md px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)] border',
+                  'fade-up bg-card rounded-md px-4 py-2.5 text-title font-medium max-w-[320px] shadow-[var(--shadow-float)] border',
                   TOAST_BORDER[toast.type],
                   TOAST_TEXT[toast.type],
                 )}
@@ -98,7 +98,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     data-testid="error-toast-view-btn"
                     aria-label={t`View this error in the Error Log`}
                     className={cn(
-                      'flex-1 min-w-0 text-left inline-flex items-start gap-1.5 text-[14px] font-semibold leading-snug cursor-pointer',
+                      'flex-1 min-w-0 text-left inline-flex items-start gap-1.5 text-h2 font-semibold leading-snug cursor-pointer',
                       'rounded-sm hover:underline underline-offset-2 transition-colors',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
                       TOAST_TEXT[toast.type],
@@ -108,7 +108,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     <ArrowUpRightIcon size={13} strokeWidth={1.75} className="shrink-0 mt-0.5" />
                   </button>
                 ) : (
-                  <span className={cn('flex-1 text-[14px] font-semibold min-w-0 leading-snug', TOAST_TEXT[toast.type])}>
+                  <span className={cn('flex-1 text-h2 font-semibold min-w-0 leading-snug', TOAST_TEXT[toast.type])}>
                     {toast.message}
                   </span>
                 )}

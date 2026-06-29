@@ -43,7 +43,7 @@ export function ToolInspector({ tool, defaultOpen = false, last = false }: Props
       </RowButton>
 
       {open && (
-        <div className="px-4 pb-3.5 pl-[38px] flex flex-col gap-3">
+        <div className="px-4 pb-3.5 pl-9.5 flex flex-col gap-3">
           {tool.description && (
             <div className="text-body text-secondary leading-relaxed px-3 py-2 rounded-md bg-success-subtle border-l-2 border-success/40">
               {tool.description}

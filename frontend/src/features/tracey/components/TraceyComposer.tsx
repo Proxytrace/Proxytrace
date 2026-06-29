@@ -131,7 +131,7 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
               <SparklesIcon size={22} />
             </div>
             <div className="text-h1 font-semibold text-primary"><Trans>How can I help?</Trans></div>
-            <div className="max-w-md text-[13px] text-secondary">
+            <div className="max-w-md text-title text-secondary">
               <Trans>
                 Ask about your agents, suites, runs, or proposals — or have me run a suite, review a
                 proposal, or plot your data.

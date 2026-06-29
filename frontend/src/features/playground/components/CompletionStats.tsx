@@ -51,7 +51,7 @@ export function CompletionStats({ stats, streaming }: Props) {
   // Render placeholder cells if no stats yet
   if (!stats && !streaming) {
     return (
-      <div data-testid="completion-stats" className="flex items-center gap-[6px] text-[11px] text-muted italic">
+      <div data-testid="completion-stats" className="flex items-center gap-1.5 text-body-sm text-muted italic">
         <Trans>Send a message to see completion metrics.</Trans>
       </div>
     );
@@ -64,7 +64,7 @@ export function CompletionStats({ stats, streaming }: Props) {
   const cachedShare = cachedPct(stats?.cachedInputTokens ?? 0, inT);
 
   return (
-    <div data-testid="completion-stats" className="flex items-center gap-[6px] flex-wrap">
+    <div data-testid="completion-stats" className="flex items-center gap-1.5 flex-wrap">
       <KpiCell
         icon={<ArrowDownToLineIcon size={13} strokeWidth={2.2} />}
         label={t`Input`}

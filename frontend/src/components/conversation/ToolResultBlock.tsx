@@ -21,8 +21,8 @@ export function ToolResultBlock({ content, toolCallId }: Props) {
     <div className="relative group rounded-md overflow-hidden bg-[color-mix(in_srgb,var(--teal)_8%,transparent)] border border-[color-mix(in_srgb,var(--teal)_28%,transparent)]">
       <CopyButton text={content} label={t`Copy result`} className={hoverRevealOverlayCls} />
       <Collapsible
-        headerClassName={cn('pl-3 pr-9 py-[9px] text-body-sm font-mono')}
-        contentClassName={cn('px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-body-sm leading-[1.55]')}
+        headerClassName={cn('pl-3 pr-9 py-2.25 text-body-sm font-mono')}
+        contentClassName={cn('px-3.5 pt-2.5 pb-3 pl-8.5 font-mono text-body-sm leading-[1.55]')}
         title={
           <span className="flex items-center gap-2 flex-1 text-secondary">
             <span className="font-bold tracking-[0.04em] text-teal"><Trans>RESULT</Trans></span>
@@ -32,7 +32,7 @@ export function ToolResultBlock({ content, toolCallId }: Props) {
         }
       >
         <div className="border-t border-dashed border-t-[color-mix(in_srgb,var(--teal)_22%,transparent)]">
-          <div className="mt-[10px]">
+          <div className="mt-2.5">
             <JsonBlock value={parsed} hideCopy transparent className="!px-0 !py-0" />
           </div>
         </div>

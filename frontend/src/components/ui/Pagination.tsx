@@ -25,7 +25,7 @@ export function Pagination({ page, total, pageSize, onChange }: PaginationProps)
       key={String(label)}
       onClick={() => p != null && onChange(p)}
       disabled={disabled || p == null}
-      className={`min-w-[30px] h-[30px] px-[6px] rounded-md text-xs font-medium transition-colors border ${
+      className={`min-w-[30px] h-[30px] px-1.5 rounded-md text-body-sm font-medium transition-colors border ${
         p === page
           ? 'bg-accent-subtle text-accent border-[color-mix(in_srgb,_var(--accent-primary)_30%,_transparent)]'
           : 'bg-card text-secondary border-border'
@@ -40,7 +40,7 @@ export function Pagination({ page, total, pageSize, onChange }: PaginationProps)
       {btn('←', page > 1 ? page - 1 : null, page === 1)}
       {pages.map((p, i) =>
         p === '…'
-          ? <span key={`ellipsis-${i}`} className="text-xs text-muted px-[2px]">…</span>
+          ? <span key={`ellipsis-${i}`} className="text-body-sm text-muted px-0.5">…</span>
           : btn(p, p as number)
       )}
       {btn('→', page < totalPages ? page + 1 : null, page === totalPages)}

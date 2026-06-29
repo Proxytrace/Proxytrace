@@ -35,7 +35,7 @@ export function RecentRunStrip({ runs, onSelect }: {
             key={group.id}
             onClick={() => onSelect(group.id)}
             data-testid={`schedule-recent-run-${group.id}`}
-            className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-card-2 ${FOCUS_RING}`}
+            className={`inline-flex w-auto! items-center gap-1.5 px-2 py-1 rounded-sm bg-card-2 transition-colors hover:bg-white/[0.06] ${FOCUS_RING}`}
           >
             <span aria-hidden className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: prc }} />
             <span className="mono text-caption font-bold" style={{ color: prc }}>

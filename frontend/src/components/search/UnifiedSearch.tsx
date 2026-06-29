@@ -115,7 +115,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
   return (
     <div ref={wrapperRef} className={cn('relative', wrapperWidthCls, className)}>
       <div className={cn(
-        'flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] transition-shadow',
+        'flex items-center gap-2 px-3 py-1.75 rounded-md text-title transition-shadow',
         inputBgCls,
         'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)]',
         'focus-within:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_40%,transparent),0_1px_2px_rgba(0,0,0,0.2)]',
@@ -130,22 +130,22 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={placeholder ?? t`Search traces, agents, suites…`}
-          className="flex-1 bg-transparent outline-none text-[13px] placeholder-white/40 text-white"
+          className="flex-1 bg-transparent outline-none text-title placeholder-white/40 text-white"
         />
         {raw ? (
           <button
             type="button"
             onMouseDown={e => { e.preventDefault(); setRaw(''); inputRef.current?.focus(); }}
-            className="text-white/40 hover:text-white/80 text-[11px] cursor-pointer"
+            className="text-white/40 hover:text-white/80 text-body-sm cursor-pointer"
             aria-label={t`Clear search`}
           >
             ✕
           </button>
         ) : showShortcut ? (
-          <span className="flex gap-[3px]">
-            <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">⌘</kbd>
+          <span className="flex gap-0.75">
+            <kbd className="px-1.5 py-0.25 bg-card-2 rounded text-caption font-mono">⌘</kbd>
             {/* eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard key label, not UI copy */}
-            <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">K</kbd>
+            <kbd className="px-1.5 py-0.25 bg-card-2 rounded text-caption font-mono">K</kbd>
           </span>
         ) : null}
       </div>
@@ -154,30 +154,30 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
         <div className={cn(
           'absolute top-[calc(100%+8px)]',
           dropdownWidthCls,
-          'rounded-[14px] bg-[rgba(24,24,28,0.96)] backdrop-blur-[20px] backdrop-saturate-[140%]',
+          'rounded-lg bg-[rgba(24,24,28,0.96)] backdrop-blur-[20px] backdrop-saturate-[140%]',
           'shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6),inset_0_0_0_1px_rgba(255,255,255,0.06)]',
           'z-[100] overflow-hidden',
         )}>
           {!isRecentMode && !searchEnabled && (
-            <div className="px-4 py-6 text-xs text-white/40"><Trans>Type at least 2 characters.</Trans></div>
+            <div className="px-4 py-6 text-body-sm text-white/40"><Trans>Type at least 2 characters.</Trans></div>
           )}
           {!isRecentMode && searchEnabled && fetching && hits.length === 0 && (
-            <div className="px-4 py-6 text-xs text-white/40 flex items-center gap-2">
+            <div className="px-4 py-6 text-body-sm text-white/40 flex items-center gap-2">
               <span className="size-[6px] rounded-full bg-accent pulse-dot" />
               <Trans>Searching…</Trans>
             </div>
           )}
           {!isRecentMode && searchEnabled && !fetching && hits.length === 0 && (
-            <div className="px-4 py-6 text-xs text-white/40"><Trans>No matches for &ldquo;{debounced}&rdquo;.</Trans></div>
+            <div className="px-4 py-6 text-body-sm text-white/40"><Trans>No matches for &ldquo;{debounced}&rdquo;.</Trans></div>
           )}
           {isRecentMode && fetching && hits.length === 0 && !recentErrored && (
-            <div className="px-4 py-6 text-xs text-white/40"><Trans>Loading recent…</Trans></div>
+            <div className="px-4 py-6 text-body-sm text-white/40"><Trans>Loading recent…</Trans></div>
           )}
           {isRecentMode && !fetching && !recentErrored && hits.length === 0 && (
-            <div className="px-4 py-6 text-xs text-white/40"><Trans>No recent items.</Trans></div>
+            <div className="px-4 py-6 text-body-sm text-white/40"><Trans>No recent items.</Trans></div>
           )}
           {isRecentMode && recentErrored && (
-            <div className="px-4 py-6 text-xs text-white/40">
+            <div className="px-4 py-6 text-body-sm text-white/40">
               <Trans>Type at least 2 characters to search.</Trans>
             </div>
           )}
@@ -202,17 +202,17 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
                 {activeHit ? (
                   <SearchPreview key={`${activeHit.kind}-${activeHit.entityId}`} hit={activeHit} />
                 ) : (
-                  <div className="text-xs text-white/40"><Trans>Hover or arrow to preview.</Trans></div>
+                  <div className="text-body-sm text-white/40"><Trans>Hover or arrow to preview.</Trans></div>
                 )}
               </div>
             </div>
           )}
 
-          <div className="border-t border-white/[.06] px-4 py-2 flex items-center gap-4 text-[11px] text-white/40 bg-black/20">
-            <span className="flex items-center gap-1.5"><kbd className="px-[5px] py-[1px] bg-white/10 rounded font-mono text-[10px]">↑↓</kbd> <Trans>navigate</Trans></span>
-            <span className="flex items-center gap-1.5"><kbd className="px-[5px] py-[1px] bg-white/10 rounded font-mono text-[10px]">↵</kbd> {onSelect ? <Trans>pick</Trans> : <Trans>open</Trans>}</span>
+          <div className="border-t border-white/[.06] px-4 py-2 flex items-center gap-4 text-body-sm text-white/40 bg-black/20">
+            <span className="flex items-center gap-1.5"><kbd className="px-1.25 py-0.25 bg-white/10 rounded font-mono text-caption">↑↓</kbd> <Trans>navigate</Trans></span>
+            <span className="flex items-center gap-1.5"><kbd className="px-1.25 py-0.25 bg-white/10 rounded font-mono text-caption">↵</kbd> {onSelect ? <Trans>pick</Trans> : <Trans>open</Trans>}</span>
             {/* eslint-disable-next-line lingui/no-unlocalized-strings -- keyboard key label, not UI copy */}
-            <span className="flex items-center gap-1.5"><kbd className="px-[5px] py-[1px] bg-white/10 rounded font-mono text-[10px]">esc</kbd> <Trans>close</Trans></span>
+            <span className="flex items-center gap-1.5"><kbd className="px-1.25 py-0.25 bg-white/10 rounded font-mono text-caption">esc</kbd> <Trans>close</Trans></span>
             <span className="ml-auto">{hits.length > 0 ? (isRecentMode ? <Trans>{hits.length} recent</Trans> : <Plural value={hits.length} one="# result" other="# results" />) : ''}</span>
           </div>
         </div>

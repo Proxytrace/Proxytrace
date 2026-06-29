@@ -32,9 +32,9 @@ function OidcLogin() {
           <span className="text-primary">proxy</span><span className="text-accent">trace</span>
         </span>
       </div>
-      <p className="text-muted text-sm"><Trans>Sign in to continue.</Trans></p>
+      <p className="text-muted text-body"><Trans>Sign in to continue.</Trans></p>
       {auth.error && (
-        <div className="rounded border border-danger px-3 py-2 text-sm text-danger">
+        <div className="rounded-sm border border-danger px-3 py-2 text-body text-danger">
           {auth.error.message}
         </div>
       )}
@@ -88,7 +88,7 @@ function LocalLogin() {
               }
             }}
           >
-            <h1 className="text-lg font-semibold"><Trans>Sign in</Trans></h1>
+            <h1 className="text-h1 font-semibold"><Trans>Sign in</Trans></h1>
             <Input
               data-testid="login-email"
               placeholder={t`Email`}
@@ -107,7 +107,7 @@ function LocalLogin() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {err && <p data-testid="login-error" className="text-sm text-danger">{err}</p>}
+            {err && <p data-testid="login-error" className="text-body text-danger">{err}</p>}
             <Button data-testid="login-submit" type="submit" fullWidth loading={submitting}>
               <Trans>Sign in</Trans>
             </Button>
@@ -155,8 +155,8 @@ function LegacyClaim() {
           }
         }}
       >
-        <h1 className="text-lg font-semibold"><Trans>Set a password for your account</Trans></h1>
-        <p className="text-xs text-muted">
+        <h1 className="text-h1 font-semibold"><Trans>Set a password for your account</Trans></h1>
+        <p className="text-body-sm text-muted">
           <Trans>Local authentication was enabled on this install. Confirm your email and choose a password to finish migrating your existing user.</Trans>
         </p>
         <Input
@@ -176,7 +176,7 @@ function LegacyClaim() {
           required
         />
         <PasswordRequirements password={password} />
-        {err && <p className="text-sm text-danger">{err}</p>}
+        {err && <p className="text-body text-danger">{err}</p>}
         <Button type="submit" fullWidth loading={submitting} disabled={!valid}>
           <Trans>Set password &amp; sign in</Trans>
         </Button>
