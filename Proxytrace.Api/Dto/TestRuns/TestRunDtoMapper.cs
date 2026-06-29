@@ -24,15 +24,8 @@ public sealed class TestRunDtoMapper
         var total = r.Group.Suite.TestCases.Count;
         var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
 
-        // Run "latency" is the model's inference latency aggregated across the run's cases — the
-        // average of the per-case inference latencies (the same quantity the matrix, TestRunStats,
-        // and the anomaly/model-switch latency checks use), NOT a wall-clock timer over the whole
-        // run. A wall-clock (CompletedAt - CreatedAt) measure folds in the run's queue wait, the
-        // evaluator passes, and the parallel-execution overlap between cases — none of which is the
-        // model's latency — and would make a run that merely waited longer in the queue look slower.
-        long? durationMs = r.TestResults.Count > 0
-            ? (long)Math.Round(r.TestResults.Average(res => res.Latency.TotalMilliseconds))
-            : null;
+        // Aggregated per-case inference latency, not a wall-clock run timer — see RunLatency.
+        long? durationMs = RunLatency.AverageInferenceMs(r);
 
         var totals = TestRunTotals.From(r);
 

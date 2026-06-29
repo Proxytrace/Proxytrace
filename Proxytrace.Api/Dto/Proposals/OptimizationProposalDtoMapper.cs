@@ -70,9 +70,8 @@ public sealed class OptimizationProposalDtoMapper
         var completed = r.TestResults.Count;
         var total = r.Group.Suite.TestCases.Count;
         var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
-        long? durationMs = r.CompletedAt.HasValue
-            ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
-            : null;
+        // Aggregated per-case inference latency, not a wall-clock run timer — see RunLatency.
+        long? durationMs = TestRuns.RunLatency.AverageInferenceMs(r);
 
         return new AbTestRunSummaryDto(
             Id: r.Id,

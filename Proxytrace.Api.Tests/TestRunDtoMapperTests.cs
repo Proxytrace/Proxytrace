@@ -52,6 +52,24 @@ public sealed class TestRunDtoMapperTests : BaseTest<Module>
         dto.DurationMs.Should().BeNull();
     }
 
+    [TestMethod]
+    public async Task RunLatency_AverageInferenceMs_AggregatesPerCaseLatency()
+    {
+        IServiceProvider services = GetServices();
+
+        // Both TestRunDtoMapper and the A/B-test proposal mapper surface a run's latency through this
+        // one helper, so guarding it here covers every run-level latency surface in the API. The value
+        // is the average per-case inference latency (2000ms), not a wall-clock run timer.
+        ITestRun run = await BuildCompletedRunAsync(
+            services,
+            [TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(3000)],
+            CancellationToken);
+
+        RunLatency.AverageInferenceMs(run).Should().Be(2000);
+        RunLatency.AverageInferenceMs(await BuildCompletedRunAsync(services, latencies: [], CancellationToken))
+            .Should().BeNull();
+    }
+
     /// Builds a run whose i-th case produced a result with <paramref name="latencies"/>[i]; the
     /// number of latencies sets the suite's case count, so passing none yields a result-less run.
     private static async Task<ITestRun> BuildCompletedRunAsync(
