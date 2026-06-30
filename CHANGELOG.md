@@ -110,6 +110,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Test-run latency now measures the model, not the wall clock.** The latency shown on a run's
+  per-model comparison cards (the champion card, the candidate "Speed" deltas, and the "Fastest"
+  medal) and on an optimization proposal's A/B-test card was computed as a wall-clock timer over the
+  whole run (`completed − started`), so it also counted the time the run waited in the queue and the
+  time spent running evaluators, and was compressed by cases running in parallel — none of which is
+  the model's latency. It now reports the **average per-case inference latency** (the same figure the
+  test-case matrix shows), so model speed comparisons reflect the model itself and a run that merely
+  waited longer in the queue no longer looks slower.
 - **Polished several rough UI details.** The test-run "Evaluation started" confirmation now uses a
   proper check icon instead of a typed character; the evaluator score legend no longer crams a full
   sentence into each coloured pill (short pills now sit beside their plain-text meaning); the **Error

@@ -23,9 +23,9 @@ public sealed class TestRunDtoMapper
         var completed = r.TestResults.Count;
         var total = r.Group.Suite.TestCases.Count;
         var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
-        long? durationMs = r.CompletedAt.HasValue
-            ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
-            : null;
+
+        // Aggregated per-case inference latency, not a wall-clock run timer — see RunLatency.
+        long? durationMs = RunLatency.AverageInferenceMs(r);
 
         var totals = TestRunTotals.From(r);
 

@@ -3,7 +3,6 @@ import type { LeaderboardEntry } from '../comparison';
 import { passRateColor } from '../results';
 import { TestRunStatus } from '../../../api/models';
 import { fmtDuration, fmtCost, fmtTokens, cachedPct } from '../../../lib/format';
-import { useLiveElapsedMs } from '../hooks/useLiveElapsed';
 import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
 import { Spinner } from '../../../components/ui/Spinner';
@@ -12,16 +11,13 @@ import { ComparisonTag } from './ComparisonTag';
 
 /**
  * The baseline card — the in-production model (or, when the group has no deployed model, the best
- * performer). It carries the hero pass rate and the run's headline duration / cost / token totals;
+ * performer). It carries the hero pass rate and the run's headline latency / cost / token totals;
  * candidate cards read against it. The success ring marks it as the bar to beat.
  */
 export function ChampionPanel({ entry }: { entry: LeaderboardEntry }) {
   const { t } = useLingui();
   const { run, passRate, passed, failed } = entry;
   const running = run.status === TestRunStatus.Running;
-  const pending = run.status === TestRunStatus.Pending;
-  // While running, the run-level durationMs is still null — tick the wall-clock elapsed instead.
-  const elapsedMs = useLiveElapsedMs(run.startedAt, running);
 
   const tokens = entry.tokensIn != null
     ? (() => {
@@ -69,7 +65,7 @@ export function ChampionPanel({ entry }: { entry: LeaderboardEntry }) {
       </div>
 
       <div className="grid grid-cols-3 gap-3 mt-4 pt-3.5 border-t border-hairline">
-        <Stat label={t`Duration`} value={pending ? '—' : fmtDuration(running ? elapsedMs : run.durationMs)} />
+        <Stat label={t`Latency`} value={fmtDuration(entry.durationMs)} />
         <Stat label={t`Cost`} value={fmtCost(entry.costUsd)} />
         <Stat label={t`Tokens`} value={tokens} />
       </div>

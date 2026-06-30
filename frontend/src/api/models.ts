@@ -495,6 +495,8 @@ export interface TestRunDto {
   evaluators: RunEvaluatorDto[];
   startedAt: string;
   completedAt: string | null;
+  /** Average per-case model inference latency over the run's results (aggregated inference latency,
+   * not a wall-clock run timer). Null until the run has at least one result. */
   durationMs: number | null;
   testCases: TestCaseRowDto[];
   results: TestResultDto[];
@@ -874,6 +876,8 @@ export interface AbTestRunSummaryDto {
   passRate: number;
   startedAt: string;
   completedAt: string | null;
+  /** Average per-case model inference latency over the run's results (aggregated inference latency,
+   * not a wall-clock run timer). Null until the run has at least one result. */
   durationMs: number | null;
 }
 

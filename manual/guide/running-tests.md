@@ -40,8 +40,10 @@ The **run header** shows a progress bar with three pieces of information at a gl
 `cases done / total · overall % · estimated time remaining`. The ETA updates continuously
 as judgements arrive, so you always know roughly when the run will settle.
 
-The per-model cards also count **duration, cost, and tokens** up live as each case lands, so you
-can watch a run's spend accrue rather than waiting for the final totals.
+The per-model cards also track **latency, cost, and tokens** live as each case lands, so you
+can watch a run's spend accrue rather than waiting for the final totals. The latency shown is the
+model's average per-case inference time — the actual time spent waiting on the model — not a
+wall-clock timer over the whole run (which would also count queue wait and evaluator time).
 
 In the **test case matrix**, each cell contains one slot per evaluator attached to the suite.
 Slots start grey (queued) and fill with color as each evaluator reports back — green for pass,
@@ -141,7 +143,7 @@ representative run**, so a sampled run won't raise duplicate alerts or skew a pr
 
 Every run — single-model and multi-model alike — opens with a **model comparison** at the top
 of the results. The model you currently have **in production** (the agent's deployed endpoint)
-is the **baseline**: a highlighted champion card showing its headline pass rate plus duration,
+is the **baseline**: a highlighted champion card showing its headline pass rate plus latency,
 cost, and token totals.
 
 Every other model in the run is a **candidate**, shown as a set of deltas measured *against
