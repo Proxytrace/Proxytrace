@@ -33,8 +33,12 @@ an agent built up its baseline — are not retroactively flagged.
 
 ## In the Traces list
 
-Flagged calls show a small **amber dot** at the start of their row; hover it to see which
-characteristics tripped (for example, *High latency, Many tool calls*).
+The Traces list has a dedicated **Anomalies** column (marked with a warning triangle in the
+header, just before the timestamp). A flagged call shows a small **amber warning chip** in that
+column — normal calls leave it empty, so flagged calls stand out as you scan the list. Hover the
+chip to see which characteristics tripped (for example, *High latency, Many tool calls*). For a
+grouped conversation, the chip on the collapsed row covers any turn that was flagged; expand it to
+see which turns.
 
 To focus on just the flagged calls, switch on the **Outliers only** toggle in the Traces
 toolbar. It combines with every other filter — agent, time range, search — so you can ask

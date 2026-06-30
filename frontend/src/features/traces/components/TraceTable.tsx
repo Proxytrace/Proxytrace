@@ -8,6 +8,8 @@ import { ConversationGroupRow } from './ConversationGroupRow';
 import { TracesEmptyState } from './TracesEmptyState';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { COL_HEADER_LABELS } from '../tracesMeta';
+import { Tooltip } from '../../../components/ui/Tooltip';
+import { AlertTriangleIcon } from '../../../components/icons';
 
 interface Props {
   rows: TraceRow[];
@@ -33,18 +35,31 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
         <div
           className={cn('grid px-4 py-2 border-b border-hairline sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
         >
-          {COL_HEADERS.map((label, i) => (
-            <span
-              key={label}
-              className={cn(
-                'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]',
-                i === COL_HEADERS.length - 1 && 'text-right',
-                COL_VIS_CLS[i],
-              )}
-            >
-              {i18n._(COL_HEADER_LABELS[i])}
-            </span>
-          ))}
+          {COL_HEADERS.map((header, i) => {
+            const headerLabel = i18n._(COL_HEADER_LABELS[i]);
+            const isAnomaly = header === '';
+            return (
+              <span
+                key={i}
+                className={cn(
+                  'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]',
+                  isAnomaly && 'flex items-center justify-center',
+                  i === COL_HEADERS.length - 1 && 'text-right',
+                  COL_VIS_CLS[i],
+                )}
+              >
+                {isAnomaly ? (
+                  <Tooltip content={headerLabel}>
+                    <span aria-label={headerLabel} className="inline-flex text-muted">
+                      <AlertTriangleIcon size={13} />
+                    </span>
+                  </Tooltip>
+                ) : (
+                  headerLabel
+                )}
+              </span>
+            );
+          })}
         </div>
 
         {(() => {

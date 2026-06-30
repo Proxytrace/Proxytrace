@@ -79,14 +79,18 @@ export function traceListView(rowCount: number, isFetching: boolean, filtered: b
 
 // Minimums are sized so the row still fits a ~900px list (1024px viewport with collapsed
 // sidebar); fixed-ish columns get a minmax upper bound so wide screens keep today's layout.
-export const COL_WIDTHS = ['minmax(170px,2fr)', 'minmax(96px,1fr)', 'minmax(104px,140px)', '64px', '56px', 'minmax(96px,130px)', 'minmax(64px,84px)', 'minmax(88px,120px)', '72px'] as const;
+// The anomaly indicator is a super-narrow, fixed 36px track for the outlier chip (empty on normal
+// rows). It sits just before the timestamp, between Latency and Time.
+export const COL_WIDTHS = ['minmax(170px,2fr)', 'minmax(96px,1fr)', 'minmax(104px,140px)', '64px', '56px', 'minmax(96px,130px)', 'minmax(64px,84px)', 'minmax(88px,120px)', '36px', '72px'] as const;
 export const GRID_TEMPLATE = COL_WIDTHS.join(' ');
 
-export const COL_HEADERS = ['Message', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Cached', 'Latency', 'Time'] as const;
+// The '' entry is the anomaly column — its header is an icon, not text (see TraceTable), so the
+// string is blank; the accessible name comes from COL_HEADER_LABELS instead.
+export const COL_HEADERS = ['Message', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Cached', 'Latency', '', 'Time'] as const;
 
 /** Translatable header labels, index-aligned with {@link COL_HEADERS}; resolve at render with i18n._(). */
 export const COL_HEADER_LABELS: readonly MessageDescriptor[] = [
-  msg`Message`, msg`Agent`, msg`Model`, msg`Status`, msg`Tools`, msg`Tokens`, msg`Cached`, msg`Latency`, msg`Time`,
+  msg`Message`, msg`Agent`, msg`Model`, msg`Status`, msg`Tools`, msg`Tokens`, msg`Cached`, msg`Latency`, msg`Anomalies`, msg`Time`,
 ];
 
 // ── Narrow-list (mobile) column collapse ───────────────────────────────────────
@@ -94,7 +98,7 @@ export const COL_HEADER_LABELS: readonly MessageDescriptor[] = [
 // Status / Time survive — the rest are drill-in detail. The list container
 // (TraceTable) declares `@container` and exposes both templates as CSS vars; every
 // row applies TRACE_GRID_CLS so header and rows stay column-aligned in both modes.
-export const COL_MOBILE_VISIBLE = [true, false, false, true, false, false, false, false, true] as const;
+export const COL_MOBILE_VISIBLE = [true, false, false, true, false, false, false, false, true, true] as const;
 export const GRID_TEMPLATE_NARROW = COL_WIDTHS.filter((_, i) => COL_MOBILE_VISIBLE[i]).join(' ');
 
 /** Grid-template classes shared by the header row and every trace/turn row. */

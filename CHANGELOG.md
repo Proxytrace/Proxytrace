@@ -16,8 +16,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   signal), **high latency**, **low turn-2+ cache hit**, and **many tool calls**. Detection is
   per-agent and adaptive: a call is flagged when a metric exceeds the agent's recent **mean ± N
   standard deviations**, so a cheap fast agent and an expensive reasoner each get their own "normal".
-  Flagged calls show an amber marker in the **Traces** list, where a new **Outliers only** toggle
-  filters the list to just the outliers, and the agent detail page gains a **Recent outliers** widget
+  The **Traces** list carries a dedicated **Anomalies** column (just before the timestamp) that shows
+  an amber warning chip on each flagged call — hover it for the reasons — plus a new **Outliers only**
+  toggle that filters the list to just the outliers, and the agent detail page gains a **Recent outliers** widget
   that lists why each recent call was flagged. Admins tune the sensitivity (enable/disable, sigma,
   minimum samples, baseline window) under **Settings → Outlier detection**. Existing traces are not
   retroactively flagged; detection applies to calls ingested from now on.
