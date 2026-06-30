@@ -951,6 +951,9 @@ msgstr "An unexpected error occurred."
 msgid "Analyzing run…"
 msgstr "Analyzing run…"
 
+msgid "Anomalies"
+msgstr "Anomalies"
+
 msgid "Anomalies and alerts from your test runs will appear here."
 msgstr "Anomalies and alerts from your test runs will appear here."
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useSelectedId } from '../../hooks/useSelectedId';
+import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { EvaluatorKind, type EvaluatorDetailDto } from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { type RangeKey } from '../../lib/time-range';
@@ -32,8 +33,9 @@ export default function Evaluators() {
   const [selectedId, setSelectedId] = useSelectedId();
   const { currentProjectId } = useCurrentProject();
 
-  // eslint-disable-next-line lingui/no-unlocalized-strings -- RangeKey enum token, not UI copy
-  const [range, setRange] = useState<RangeKey>('7d');
+  // Persisted so the chosen window survives switching evaluators and reloads (mirrors useAgentStats).
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- localStorage key + RangeKey enum token, not UI copy
+  const [range, setRange] = useLocalStorageState<RangeKey>('evaluator-stats-range', '7d');
   const [showNew, setShowNew] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);
   const [createForm, setCreateForm] = useState<EvaluatorFormState>(initForm());

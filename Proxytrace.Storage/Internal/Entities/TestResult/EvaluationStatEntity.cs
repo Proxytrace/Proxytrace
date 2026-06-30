@@ -12,8 +12,8 @@ namespace Proxytrace.Storage.Internal.Entities.TestResult;
 /// <para>
 /// Populated at write time from <c>TestResultConfig.Map</c>. Like the AgentCall
 /// <c>RequestPreview</c> denormalization, test results written before this table existed carry no
-/// projection row and therefore do not appear in evaluator statistics until they age out via
-/// retention.
+/// projection row; <c>EvaluationStatBackfillService</c> rebuilds those rows at startup (from the
+/// authoritative JSON evaluations) so historical results appear in evaluator statistics too.
 /// </para>
 /// </summary>
 internal record EvaluationStatEntity

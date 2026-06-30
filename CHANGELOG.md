@@ -16,8 +16,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   signal), **high latency**, **low turn-2+ cache hit**, and **many tool calls**. Detection is
   per-agent and adaptive: a call is flagged when a metric exceeds the agent's recent **mean ± N
   standard deviations**, so a cheap fast agent and an expensive reasoner each get their own "normal".
-  Flagged calls show an amber marker in the **Traces** list, where a new **Outliers only** toggle
-  filters the list to just the outliers, and the agent detail page gains a **Recent outliers** widget
+  The **Traces** list carries a dedicated **Anomalies** column (just before the timestamp) that shows
+  an amber warning chip on each flagged call — hover it for the reasons — plus a new **Outliers only**
+  toggle that filters the list to just the outliers, and the agent detail page gains a **Recent outliers** widget
   that lists why each recent call was flagged. Admins tune the sensitivity (enable/disable, sigma,
   minimum samples, baseline window) under **Settings → Outlier detection**. Existing traces are not
   retroactively flagged; detection applies to calls ingested from now on.
@@ -72,6 +73,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **The Evaluators page remembers your selected time range.** The range selector (1h / 24h / 7d /
+  30d) on the evaluator detail now persists, so it survives switching between evaluators and reloading
+  the page instead of snapping back to 7d each time (matching the agent detail page).
 - **Consistent typography, spacing and corners across the app.** Swept every screen onto the design
   system's type scale, spacing steps, corner radii and surface colours, replacing dozens of off-scale
   one-offs that left labels, paddings and rounded corners subtly mismatched between otherwise-identical
@@ -110,6 +114,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Evaluator statistics now include historical evaluations.** The Evaluators page (average score,
+  evaluation count, pass rate, average latency, score distribution and the per-evaluator sparkline)
+  reads a query-optimized projection that was only written for evaluations recorded after the feature
+  shipped — so existing results showed a dash or zero even when an evaluator had plenty of past
+  evaluations. A one-time, idempotent backfill now rebuilds that projection for older results on
+  startup, so historical evaluations count toward the statistics.
 - **Test-run latency now measures the model, not the wall clock.** The latency shown on a run's
   per-model comparison cards (the champion card, the candidate "Speed" deltas, and the "Fastest"
   medal) and on an optimization proposal's A/B-test card was computed as a wall-clock timer over the

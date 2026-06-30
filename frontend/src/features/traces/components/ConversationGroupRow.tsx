@@ -7,7 +7,7 @@ import { tracePreview } from '../../../lib/trace';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { TRACE_GRID_CLS, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
-import { TokenCell, CachedCell, ToolsCell, LatencyCell } from './TraceTableCells';
+import { OutlierCell, TokenCell, CachedCell, ToolsCell, LatencyCell } from './TraceTableCells';
 import { Trans, Plural } from '@lingui/react/macro';
 
 interface Props {
@@ -32,6 +32,9 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
   // When every turn shares the same status, show that exact code (e.g. "200") rather than the
   // coarse "2xx" bucket; only fall back to a bucket label when the turns disagree.
   const uniformStatus = turns.every(t => t.httpStatus === turns[0].httpStatus) ? turns[0].httpStatus : null;
+  // Collapsed group is flagged when any turn is — OR the turns' bitmasks so the chip's tooltip
+  // lists every characteristic that tripped across the conversation.
+  const groupFlags = turns.reduce((acc, t) => acc | t.outlierFlags, 0);
 
   return (
     <>
@@ -85,6 +88,8 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
 
         <span className="@max-2xl:hidden"><LatencyCell ms={totalMs} /></span>
 
+        <span className="flex items-center justify-center"><OutlierCell flags={groupFlags} /></span>
+
         <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turns[0].createdAt)}</span>
       </div>
 
@@ -121,6 +126,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           <span className="@max-2xl:hidden"><TokenCell trace={turn} /></span>
           <span className="@max-2xl:hidden"><CachedCell cachedInput={turn.cachedInputTokens} input={turn.inputTokens} /></span>
           <span className="@max-2xl:hidden"><LatencyCell ms={turn.durationMs} /></span>
+          <span className="flex items-center justify-center"><OutlierCell flags={turn.outlierFlags} /></span>
           <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turn.createdAt)}</span>
         </div>
       ))}

@@ -8,6 +8,8 @@ import { fmtLatency, fmtTokens, cachedPct } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
 import { OUTLIER_FLAG_LABEL, isOutlier, outlierFlagKeys } from '../../../lib/outliers';
 import type { AgentCallListItemDto } from '../../../api/models';
+import { Tooltip } from '../../../components/ui/Tooltip';
+import { AlertTriangleIcon } from '../../../components/icons';
 import { latencyBarPct } from '../tracesMeta';
 
 // ── Latency bar ───────────────────────────────────────────────────────────────
@@ -29,7 +31,6 @@ export function MessagePreviewCell({ trace }: { trace: AgentCallListItemDto }) {
   const preview = tracePreview(trace);
   return (
     <span className="flex items-center gap-2 min-w-0">
-      <OutlierMarker flags={trace.outlierFlags} />
       <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
       <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
         {preview ?? <span className="text-muted">—</span>}
@@ -38,19 +39,26 @@ export function MessagePreviewCell({ trace }: { trace: AgentCallListItemDto }) {
   );
 }
 
-/** Amber dot shown on a flagged trace; its title lists which characteristics tripped. */
-export function OutlierMarker({ flags }: { flags: number }) {
+/**
+ * Anomaly-column chip: an amber warning triangle on a flagged trace, nothing on a normal one.
+ * Hovering it lists which characteristics tripped (e.g. *High latency, Many tool calls*). Lives in
+ * the dedicated first column so flagged calls are scannable down the left edge of the list.
+ */
+export function OutlierCell({ flags }: { flags: number }) {
   const { t, i18n } = useLingui();
   if (!isOutlier(flags)) return null;
   const reasons = outlierFlagKeys(flags).map(key => i18n._(OUTLIER_FLAG_LABEL[key])).join(', ');
-  const title = t`Outlier: ${reasons}`;
+  const label = t`Outlier: ${reasons}`;
   return (
-    <span
-      data-testid={`trace-outlier-marker-${flags}`}
-      title={title}
-      aria-label={title}
-      className="shrink-0 w-1.5 h-1.5 rounded-full bg-warn"
-    />
+    <Tooltip content={label}>
+      <span
+        data-testid={`trace-outlier-marker-${flags}`}
+        aria-label={label}
+        className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-warn-subtle text-warn"
+      >
+        <AlertTriangleIcon size={11} />
+      </span>
+    </Tooltip>
   );
 }
 
