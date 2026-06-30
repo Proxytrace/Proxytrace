@@ -83,6 +83,15 @@ public sealed class Module : Autofac.Module
                 .SingleInstance();
             builder.RegisterServiceCollection(services =>
                 services.AddHostedService(sp => sp.GetRequiredService<AgentCallPreviewBackfillService>()));
+
+            // One-time, idempotent backfill of the evaluator-statistics projection for test results
+            // recorded before that table existed. Registered after the DB initializer so it runs once
+            // migrations have applied. Resolvable as itself so tests can drive it directly.
+            builder.RegisterType<EvaluationStatBackfillService>()
+                .AsSelf()
+                .SingleInstance();
+            builder.RegisterServiceCollection(services =>
+                services.AddHostedService(sp => sp.GetRequiredService<EvaluationStatBackfillService>()));
         }
 
         builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();

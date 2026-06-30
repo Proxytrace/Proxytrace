@@ -72,6 +72,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **The Evaluators page remembers your selected time range.** The range selector (1h / 24h / 7d /
+  30d) on the evaluator detail now persists, so it survives switching between evaluators and reloading
+  the page instead of snapping back to 7d each time (matching the agent detail page).
 - **Consistent typography, spacing and corners across the app.** Swept every screen onto the design
   system's type scale, spacing steps, corner radii and surface colours, replacing dozens of off-scale
   one-offs that left labels, paddings and rounded corners subtly mismatched between otherwise-identical
@@ -110,6 +113,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Evaluator statistics now include historical evaluations.** The Evaluators page (average score,
+  evaluation count, pass rate, average latency, score distribution and the per-evaluator sparkline)
+  reads a query-optimized projection that was only written for evaluations recorded after the feature
+  shipped — so existing results showed a dash or zero even when an evaluator had plenty of past
+  evaluations. A one-time, idempotent backfill now rebuilds that projection for older results on
+  startup, so historical evaluations count toward the statistics.
 - **Test-run latency now measures the model, not the wall clock.** The latency shown on a run's
   per-model comparison cards (the champion card, the candidate "Speed" deltas, and the "Fastest"
   medal) and on an optimization proposal's A/B-test card was computed as a wall-clock timer over the
