@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-30
+
 ### Added
 
 - **Outlier detection for traces.** Each ingested call is now flagged when it deviates from its
