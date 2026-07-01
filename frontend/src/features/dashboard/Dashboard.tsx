@@ -109,6 +109,7 @@ export default function Dashboard() {
           modelSplit={modelSplit}
           range={range}
           onRangeChange={setRange}
+          isLoading={dashboardLoading}
         />
         <StatTileGrid
           summary={summary}
@@ -130,8 +131,8 @@ export default function Dashboard() {
       <div
         className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:160ms]"
       >
-        <TokenByAgentSection share={tokenAgentShare} range={range} />
-        <LatencySection latencyHist={latencyHist} latencyStats={latencyStats} />
+        <TokenByAgentSection share={tokenAgentShare} range={range} isLoading={dashboardLoading} />
+        <LatencySection latencyHist={latencyHist} latencyStats={latencyStats} isLoading={dashboardLoading} />
       </div>
 
       {/* Agents */}

@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import type {
   AgentCallDto,
   MessageDto,
@@ -43,7 +44,7 @@ export function fromTestCase(tc: TestCaseDto): ConversationMessage[] {
     {
       role: toRole(tc.expectedOutput.role),
       content: tc.expectedOutput.content,
-      label: 'Expected',
+      label: msg`Expected`,
       toolCalls: tc.expectedOutput.toolRequests?.length
         ? tc.expectedOutput.toolRequests.map((t, i) => ({ id: t.id ?? String(i), name: t.name, arguments: t.arguments }))
         : undefined,

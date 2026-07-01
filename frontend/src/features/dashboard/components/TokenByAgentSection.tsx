@@ -4,6 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate } from 'react-router-dom';
 import { Donut, type DonutSegment } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { RowButton } from '../../../components/ui/RowButton';
 import { agentColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
@@ -18,11 +19,12 @@ const ROW_CLS = cn(
 interface TokenByAgentSectionProps {
   share: TokenAgentShare;
   range: RangeKey;
+  isLoading: boolean;
 }
 
 const MAX_LEGEND = 7;
 
-export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) {
+export function TokenByAgentSection({ share, range, isLoading }: TokenByAgentSectionProps) {
   const { t } = useLingui();
   const navigate = useNavigate();
   const visible = share.agents.slice(0, MAX_LEGEND);
@@ -42,7 +44,14 @@ export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) 
       </header>
 
       <div className="flex-1 px-4 pb-4 pt-1 flex items-center">
-        {share.total === 0 ? (
+        {isLoading ? (
+          <div className="w-full flex items-center gap-9">
+            <Skeleton variant="circle" width={172} height={172} className="shrink-0" />
+            <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+              {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} height={16} className="w-full" />)}
+            </div>
+          </div>
+        ) : share.total === 0 ? (
           <div className="w-full h-[160px] flex items-center justify-center">
             <EmptyState title={t`No agent token data`} description={t`Per-agent token usage appears once your agents handle traffic.`} />
           </div>

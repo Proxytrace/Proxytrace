@@ -62,8 +62,11 @@ function roleKey(role: string): RoleKey {
 interface Props {
   msg: { role: string; content: string };
   defaultOpen?: boolean;
-  /** Overrides the role-derived header label (e.g. "Expected"). */
-  label?: string;
+  /**
+   * Overrides the role-derived header label. A plain string is shown verbatim; a
+   * `MessageDescriptor` is localized at render (e.g. "Expected").
+   */
+  label?: string | MessageDescriptor;
   /** Extra header controls (revealed on hover, like the copy button). */
   actions?: ReactNode;
   /** Mid-stream: forces the bubble open, renders raw text with a cursor, animates the border. */
@@ -104,7 +107,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
           </span>
           <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
           <span className={cn('font-mono text-caption font-bold tracking-[0.08em] shrink-0', role.accentText)}>
-            {label ?? i18n._(role.label)}
+            {label === undefined ? i18n._(role.label) : typeof label === 'string' ? label : i18n._(label)}
           </span>
           {!isOpen && (
             <span className="text-body truncate min-w-0 text-secondary">
@@ -125,7 +128,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
       </div>
 
       {isOpen && (
-        <div className="border-t border-t-[rgba(255,255,255,0.05)]">
+        <div className="border-t border-t-border-subtle">
           <div className={cn('px-3.5 py-3', role.bodyBg)}>
             {streaming ? (
               <div className="text-title leading-[1.65] whitespace-pre-wrap text-primary">

@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronRightIcon, ExternalLinkIcon } from '../icons';
 import { JsonBlock } from './JsonBlock';
 import { CopyButton } from './CopyButton';
+import { Button } from './Button';
 import { hoverRevealOverlayCls } from './classes';
 
 function safeParse(s: string | null | undefined): unknown {
@@ -54,59 +55,55 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
       className="relative group rounded-lg overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
     >
       <CopyButton text={copyText} label={t`Copy tool call`} className={hoverRevealOverlayCls} />
-      {/* Header */}
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2 pl-3 pr-9 py-2.5 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 hover:bg-success-subtle"
-      >
-        <span
-          aria-hidden
-          className={`inline-flex shrink-0 transition-transform duration-150 text-success ${open ? 'rotate-90' : ''}`}
+      {/* Header. The toggle and the Definition action are siblings so we never nest one
+          interactive control inside another (invalid HTML + broken a11y). */}
+      <div className="flex items-center pr-9">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen(o => !o)}
+          className="flex-1 min-w-0 flex items-center gap-2 pl-3 py-2.5 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 hover:bg-success-subtle"
         >
-          <ChevronRightIcon size={11} strokeWidth={2.5} />
-        </span>
-        <span className="font-mono text-caption font-bold tracking-[0.06em] text-success"><Trans>TOOL</Trans></span>
-        <span className="font-mono text-body font-semibold text-success">{request.name}</span>
-        {argsPreview(args) && (
-          <span className="font-mono text-body-sm truncate min-w-0 text-muted">
-            <span>(</span>
-            <span className="text-secondary">{argsPreview(args)}</span>
-            <span>)</span>
-          </span>
-        )}
-        <span
-          title={statusTitle}
-          className="ml-auto inline-flex items-center gap-1.25 px-1.75 py-0.5 rounded-full text-caption font-semibold font-mono shrink-0"
-          style={{ background: statusBg, color: statusFg }}
-        >
-          <span aria-hidden className="w-[5px] h-[5px] rounded-full" style={{ background: statusFg }} />
-          {statusLabel}
-        </span>
-        <span className="font-mono text-caption uppercase tracking-[0.08em] shrink-0 text-muted">
-          {request.id.slice(0, 16)}
-        </span>
-        {onJumpToDefinition && (
           <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onJumpToDefinition(); }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onJumpToDefinition();
-              }
-            }}
-            title={t`View tool definition on Agents page`}
-            className="ml-1 inline-flex items-center gap-0.75 px-1.75 py-0.75 rounded-sm text-caption font-semibold cursor-pointer transition-colors duration-150 shrink-0 text-success hover:bg-success-subtle"
+            aria-hidden
+            className={`inline-flex shrink-0 transition-transform duration-150 text-success ${open ? 'rotate-90' : ''}`}
           >
-            <ExternalLinkIcon size={10} strokeWidth={2.5} />
-            <Trans>Definition</Trans>
+            <ChevronRightIcon size={11} strokeWidth={2.5} />
           </span>
+          <span className="font-mono text-caption font-bold tracking-[0.06em] text-success"><Trans>TOOL</Trans></span>
+          <span className="font-mono text-body font-semibold text-success">{request.name}</span>
+          {argsPreview(args) && (
+            <span className="font-mono text-body-sm truncate min-w-0 text-muted">
+              <span>(</span>
+              <span className="text-secondary">{argsPreview(args)}</span>
+              <span>)</span>
+            </span>
+          )}
+          <span
+            title={statusTitle}
+            className="ml-auto inline-flex items-center gap-1.25 px-1.75 py-0.5 rounded-full text-caption font-semibold font-mono shrink-0"
+            style={{ background: statusBg, color: statusFg }}
+          >
+            <span aria-hidden className="w-[5px] h-[5px] rounded-full" style={{ background: statusFg }} />
+            {statusLabel}
+          </span>
+          <span className="font-mono text-caption uppercase tracking-[0.08em] shrink-0 text-muted">
+            {request.id.slice(0, 16)}
+          </span>
+        </button>
+        {onJumpToDefinition && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onJumpToDefinition()}
+            leftIcon={<ExternalLinkIcon size={10} strokeWidth={2.5} />}
+            title={t`View tool definition on Agents page`}
+            className="ml-1 shrink-0 !px-2 !py-1 !text-caption !text-success hover:!text-success hover:!bg-success-subtle"
+          >
+            <Trans>Definition</Trans>
+          </Button>
         )}
-      </button>
+      </div>
 
       {/* Body */}
       {open && (

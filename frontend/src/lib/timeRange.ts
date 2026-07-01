@@ -10,6 +10,8 @@
  *  - `absolute` — explicit `from`/`to` ISO instants, either end optional (open-ended).
  */
 
+import { msg } from '@lingui/core/macro';
+import type { I18n, MessageDescriptor } from '@lingui/core';
 import { fmtDateTimeShort } from './format';
 
 export type TimeRangePreset = '15m' | '1h' | '6h' | '24h' | '7d' | '30d';
@@ -36,19 +38,22 @@ const PRESET_MS: Record<TimeRangePreset, number> = {
   '30d': 30 * 24 * 60 * 60_000,
 };
 
-/** Preset options in display order (drives the popover's relative list). */
-export const TIME_PRESETS: readonly { preset: TimeRangePreset; label: string }[] = [
-  { preset: '15m', label: 'Last 15 minutes' },
-  { preset: '1h', label: 'Last hour' },
-  { preset: '6h', label: 'Last 6 hours' },
-  { preset: '24h', label: 'Last 24 hours' },
-  { preset: '7d', label: 'Last 7 days' },
-  { preset: '30d', label: 'Last 30 days' },
+/**
+ * Preset options in display order (drives the popover's relative list). Labels are
+ * {@link MessageDescriptor}s — resolve at render with `i18n._()` (see TimeRangePicker).
+ */
+export const TIME_PRESETS: readonly { preset: TimeRangePreset; label: MessageDescriptor }[] = [
+  { preset: '15m', label: msg`Last 15 minutes` },
+  { preset: '1h', label: msg`Last hour` },
+  { preset: '6h', label: msg`Last 6 hours` },
+  { preset: '24h', label: msg`Last 24 hours` },
+  { preset: '7d', label: msg`Last 7 days` },
+  { preset: '30d', label: msg`Last 30 days` },
 ];
 
-const PRESET_LABEL: Record<TimeRangePreset, string> = Object.fromEntries(
+const PRESET_LABEL: Record<TimeRangePreset, MessageDescriptor> = Object.fromEntries(
   TIME_PRESETS.map(p => [p.preset, p.label]),
-) as Record<TimeRangePreset, string>;
+) as Record<TimeRangePreset, MessageDescriptor>;
 
 /** True when the range narrows results (i.e. anything other than the default "all time"). */
 export function isRangeActive(range: TimeRange): boolean {
@@ -85,16 +90,23 @@ export function resolveRange(range: TimeRange, now: number = Date.now()): { from
   }
 }
 
-/** Human label for the picker's trigger button. Uses the app-wide compact datetime format. */
-export function formatRangeLabel(range: TimeRange): string {
+/**
+ * Human label for the picker's trigger button. Uses the app-wide compact datetime format.
+ *
+ * Pass the active `i18n` (from `useLingui`) so the label resolves in the viewer's language at
+ * render. When omitted, the English source text is used — this keeps the pure model formattable
+ * in unit tests and any non-React caller without needing a live catalog.
+ */
+export function formatRangeLabel(range: TimeRange, i18n?: I18n): string {
+  const tr = (d: MessageDescriptor): string => (i18n ? i18n._(d) : d.message ?? d.id);
   switch (range.kind) {
     case 'all':
-      return 'All time';
+      return tr(msg`All time`);
     case 'preset':
-      return PRESET_LABEL[range.preset];
+      return tr(PRESET_LABEL[range.preset]);
     case 'absolute': {
-      const from = range.from ? fmtDateTimeShort(range.from) : 'Any';
-      const to = range.to ? fmtDateTimeShort(range.to) : 'now';
+      const from = range.from ? fmtDateTimeShort(range.from) : tr(msg`Any`);
+      const to = range.to ? fmtDateTimeShort(range.to) : tr(msg`now`);
       return `${from} → ${to}`;
     }
   }

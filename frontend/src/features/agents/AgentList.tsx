@@ -8,6 +8,7 @@ import { fmtRelative } from '../../lib/format';
 import { ListRail } from '../../components/ui/ListRail';
 import { RowButton } from '../../components/ui/RowButton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { SwitchPill } from '../../components/ui/SwitchPill';
 
 interface Props {
   agents: AgentListItemDto[];
@@ -39,36 +40,12 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
       count={agents.length}
       search={{ value: search, onChange: setSearch, placeholder: t`Search agents…` }}
       filter={onToggleSystem ? (
-        // eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control)
-        <button
-          type="button"
-          role="switch"
-          aria-checked={showSystem}
-          onClick={onToggleSystem}
+        <SwitchPill
+          checked={showSystem}
+          onChange={onToggleSystem}
           title={showSystem ? t`Hide system agents` : t`Show system agents`}
-          className={cn(
-            'inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-body font-medium cursor-pointer transition-colors duration-200 border-none',
-            showSystem
-              ? 'text-accent bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent-primary)]'
-              : 'text-secondary bg-card-2',
-          )}
-        >
-          <span
-            className={cn(
-              'w-7 h-4 rounded-full relative transition-colors duration-200',
-              showSystem ? 'bg-accent' : 'bg-white/[0.12]',
-            )}
-            aria-hidden="true"
-          >
-            <span
-              className={cn(
-                'absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-200',
-                showSystem ? 'left-[14px]' : 'left-[2px]',
-              )}
-            />
-          </span>
-          <Trans>System Agents</Trans>
-        </button>
+          label={<Trans>System Agents</Trans>}
+        />
       ) : undefined}
       loading={isLoading}
       isEmpty={filtered.length === 0}

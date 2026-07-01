@@ -1,4 +1,5 @@
 import { useComposerRuntime } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { Badge } from '../../../components/ui/Badge';
 import { cn } from '../../../lib/cn';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
@@ -10,6 +11,7 @@ const RING = cn(
 /** Chips above the composer that surface available quick-actions; clicking prefills the composer. */
 export function ToolChips() {
   const composer = useComposerRuntime();
+  const { i18n } = useLingui();
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -18,11 +20,11 @@ export function ToolChips() {
         <button
           key={action.id}
           type="button"
-          title={action.hint}
+          title={i18n._(action.hint)}
           onClick={() => composer.setText(action.prompt)}
           className={RING}
         >
-          <Badge label={action.label} variant="accent" shape="pill" size="sm" />
+          <Badge label={i18n._(action.label)} variant="accent" shape="pill" size="sm" />
         </button>
       ))}
     </div>

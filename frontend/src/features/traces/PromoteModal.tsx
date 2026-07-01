@@ -4,7 +4,7 @@ import { usePromoteTrace } from './hooks/usePromoteTrace';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtPct100 } from '../../lib/format';
 import { cn } from '../../lib/cn';
-import { PlusIcon, XIcon, CheckIcon } from '../../components/icons';
+import { PlusIcon, CheckIcon } from '../../components/icons';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { MessageBubble } from '../../components/ui/MessageBubble';
 import { ExpectedOutputEditor } from '../suites/components/ExpectedOutputEditor';
@@ -14,8 +14,9 @@ import {
   validateExpected,
 } from '../suites/components/expectedOutput';
 import useToast from '../../hooks/useToast';
-import { Button, IconButton } from '../../components/ui/Button';
+import { Button } from '../../components/ui/Button';
 import { RowButton } from '../../components/ui/RowButton';
+import { Modal } from '../../components/overlays/Modal';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
 
 interface Props {
@@ -51,35 +52,42 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   const submitDisabled = !suiteId || !expectedValid || addCase.isPending;
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-5 fade-up bg-black/[0.65] backdrop-blur-[4px]"
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        data-testid="promote-modal"
-        className="w-full max-w-[980px] h-[min(720px,90vh)] bg-card rounded-xl flex flex-col overflow-hidden shadow-[var(--shadow-float)]"
-      >
-        {/* Header */}
-        <div className="px-6 py-4 flex items-center gap-3.5 border-b border-hairline shrink-0">
-          <div
-            className="w-9 h-9 rounded-md flex items-center justify-center text-white shrink-0 bg-[image:var(--grad-accent)]"
-          >
-            <PlusIcon strokeWidth={2.5} size={18} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-h2 font-semibold"><Trans>Promote to Test Case</Trans></h2>
-            <p className="text-body text-muted mt-0.5"><Trans>Adds this trace as a single test case to the selected suite.</Trans></p>
-          </div>
+    <Modal
+      title={t`Promote to Test Case`}
+      onClose={onClose}
+      maxWidth={980}
+      headerActions={
+        <>
           <ColoredBadge color={aColor} label={agentLabel} dot size="md" />
           <span className="mono text-body-sm text-muted">{trace.id.slice(0, 10)}…</span>
-          <IconButton onClick={onClose} aria-label={t`Close dialog`}>
-            <XIcon size={14} />
-          </IconButton>
-        </div>
+        </>
+      }
+      footer={
+        <>
+          {errorMsg && (
+            <span className="mr-auto self-center min-w-0 truncate text-body-sm text-danger">{errorMsg}</span>
+          )}
+          <Button variant="secondary" onClick={onClose}><Trans>Cancel</Trans></Button>
+          <Button
+            variant="primary"
+            data-testid="promote-submit-btn"
+            onClick={() => addCase.mutate({ suiteId, traceId: trace.id, expected: toMessage(expected) })}
+            disabled={submitDisabled}
+            loading={addCase.isPending}
+            leftIcon={!addCase.isPending && <PlusIcon strokeWidth={2.5} size={13} />}
+          >
+            {addCase.isPending ? <Trans>Adding…</Trans> : <Trans>Add to suite</Trans>}
+          </Button>
+        </>
+      }
+    >
+      <div data-testid="promote-modal" className="flex flex-col min-h-0">
+        <p className="text-body text-muted mb-4">
+          <Trans>Adds this trace as a single test case to the selected suite.</Trans>
+        </p>
 
         {/* Body — two columns */}
-        <div className="flex-1 flex min-h-0 overflow-hidden">
+        <div className="flex min-h-0 h-[min(600px,64vh)] rounded-lg overflow-hidden bg-card shadow-[inset_0_0_0_1px_var(--border-color)]">
           {/* Left: preview */}
           <div className="flex-1 min-w-0 border-r border-hairline overflow-y-auto px-6 py-5 flex flex-col gap-4">
             <div>
@@ -145,8 +153,8 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                       className={cn(
                         'w-[14px] h-[14px] rounded-full mt-0.5 shrink-0 flex items-center justify-center transition-all duration-150',
                         isSel
-                          ? 'bg-accent border-[1.5px] border-accent shadow-[0_0_8px_var(--accent-glow)]'
-                          : 'bg-transparent border-[1.5px] border-border shadow-none',
+                          ? 'bg-accent border border-accent shadow-[0_0_8px_var(--accent-glow)]'
+                          : 'bg-transparent border border-border shadow-none',
                       )}
                     >
                       {isSel && <span className="text-white inline-flex"><CheckIcon size={9} strokeWidth={3} /></span>}
@@ -174,28 +182,8 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-hairline flex items-center justify-between gap-3 shrink-0 bg-black/[0.15]">
-          <div className="text-body-sm min-w-0 flex-1">
-            {errorMsg && <span className="text-danger">{errorMsg}</span>}
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <Button variant="secondary" onClick={onClose}><Trans>Cancel</Trans></Button>
-            <Button
-              variant="primary"
-              data-testid="promote-submit-btn"
-              onClick={() => addCase.mutate({ suiteId, traceId: trace.id, expected: toMessage(expected) })}
-              disabled={submitDisabled}
-              loading={addCase.isPending}
-              leftIcon={!addCase.isPending && <PlusIcon strokeWidth={2.5} size={13} />}
-            >
-              {addCase.isPending ? <Trans>Adding…</Trans> : <Trans>Add to suite</Trans>}
-            </Button>
-          </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

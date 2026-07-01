@@ -47,7 +47,7 @@ function seedDraft(value: TimeRange): Draft {
  * absolute custom range, in a single popover. Pure range logic lives in `../timeRange.ts`.
  */
 export function TimeRangePicker({ value, onChange, testId = 'time-range' }: TimeRangePickerProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => seedDraft(value));
 
@@ -93,7 +93,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
       className={cn('h-9 font-medium', active && 'text-primary border-accent/60')}
       data-testid={`${testId}-trigger`}
     >
-      {formatRangeLabel(value)}
+      {formatRangeLabel(value, i18n)}
     </Button>
   );
 
@@ -117,7 +117,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
                     isActive ? 'text-primary bg-[var(--bg-wash-active)]' : 'text-secondary hover:text-primary hover:bg-[var(--bg-wash-hover)]',
                   )}
                 >
-                  <span>{p.label}</span>
+                  <span>{i18n._(p.label)}</span>
                   {isActive && <CheckIcon size={12} strokeWidth={2.5} className="text-accent shrink-0" />}
                 </RowButton>
               );

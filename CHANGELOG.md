@@ -9,6 +9,29 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Fixed
+
+- **Keyboard access across selectable lists.** Evaluator, test-case and trace rows in the suite
+  builder and suite detail — plus the evaluator attach/detach row and the collapsible agent widgets —
+  are now real, focusable controls you can reach and activate with the keyboard, each with a visible
+  focus ring.
+- **Dialogs trap focus and close on Esc.** The Promote-to-test-case and New-evaluator dialogs now use
+  the standard modal shell, so keyboard focus stays inside them, Esc closes them, and they announce
+  themselves as dialogs to screen readers.
+- **Loading no longer looks like empty.** The Error log, Audit log, agent detail, version history,
+  recent-evaluations table and dashboard cards now show shaped skeletons while loading instead of
+  flashing an empty state or a bare "Loading…" line and then jumping when the data arrives.
+- **More of the interface is translated.** Time-range presets ("Last 15 minutes", "All time", …), the
+  optimization decision-flow stage labels, proposal tool messages, the "Expected" conversation label
+  and the Tracey quick-action chips now go through translation (German, Spanish, French, Italian).
+
+### Changed
+
+- **UI consistency pass.** The Providers list now uses the same framed master/detail rail as Agents,
+  Evaluators, Suites and Runs; a shared switch-pill control backs the toggles on the Agents, Traces and
+  Tracey screens; hand-rolled dropdowns/menus were replaced with the standard components; and a sweep
+  aligned spacing, colour, shadow and status treatments to the design tokens. Behaviour is unchanged.
+
 ## [1.3.0] - 2026-06-30
 
 ### Added

@@ -38,6 +38,7 @@ export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset
       {stages.map((stage, i) => (
         <FlowStep
           key={stage.key}
+          stepId={stage.key}
           title={stage.title}
           statusLabel={stage.statusLabel}
           state={stage.state}

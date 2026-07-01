@@ -49,16 +49,12 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         onClick={() => setOpen(o => !o)}
         disabled={isLoading || agents.length === 0}
         data-testid="agent-picker"
-        className={
+        className={cn(
+          'border border-border',
           compact
-            ? 'inline-flex items-center gap-2 cursor-pointer transition-colors rounded-md pl-1.5 pr-2.5 py-1.5'
-            : 'w-full text-left rounded-lg p-3 flex items-center gap-2.5 cursor-pointer transition-colors group'
-        }
-        style={{
-          background: compact ? 'rgba(255,255,255,0.03)' : 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          boxShadow: compact ? undefined : 'var(--shadow-pill)',
-        }}
+            ? 'inline-flex items-center gap-2 cursor-pointer transition-colors rounded-md pl-1.5 pr-2.5 py-1.5 bg-white/[0.03]'
+            : 'w-full text-left rounded-lg p-3 flex items-center gap-2.5 cursor-pointer transition-colors group bg-card shadow-[var(--shadow-pill)]',
+        )}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
@@ -86,12 +82,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
       {open && (
         <div
           role="listbox"
-          className={cn('absolute left-0 top-full mt-1.5 z-20 rounded-lg py-1.5 max-h-[320px] overflow-y-auto fade-up', compact ? 'w-[280px]' : 'right-0')}
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-float)',
-          }}
+          className={cn('absolute left-0 top-full mt-1.5 z-20 rounded-lg py-1.5 max-h-[320px] overflow-y-auto fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]', compact ? 'w-[280px]' : 'right-0')}
         >
           {agents.length === 0 ? (
             <div className="px-3 py-2.5 text-body text-muted"><Trans>No agents in this project.</Trans></div>

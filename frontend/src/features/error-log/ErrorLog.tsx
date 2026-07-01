@@ -88,7 +88,7 @@ export default function ErrorLog() {
       <header className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-h1 font-semibold text-primary"><Trans>Error Log</Trans></h1>
-          <p className="text-title text-muted mt-0.5">
+          <p className="text-body-sm text-muted mt-1">
             <Trans>Latest application errors and critical failures captured across the backend.</Trans>
           </p>
         </div>

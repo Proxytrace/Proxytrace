@@ -1,10 +1,12 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { ComposerPrimitive, ThreadPrimitive, useComposer, useComposerRuntime } from '@assistant-ui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { type I18n } from '@lingui/core';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 import { TRACEY_TOOLS_META } from '../tracey-tools';
 import { ArrowUpIcon, MessagePlusIcon, SparklesIcon, StopIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
+import { SwitchPill } from '../../../components/ui/SwitchPill';
 import { cn } from '../../../lib/cn';
 import { SlashMenu, type SlashItem } from './SlashMenu';
 import { ToolChips } from './ToolChips';
@@ -33,11 +35,11 @@ const SEND_BTN_CLS = cn(
 );
 const STOP_BTN_CLS = cn('border border-border bg-card-2 text-primary hover:bg-card');
 
-function matches(item: SlashItem, query: string): boolean {
+function matches(item: SlashItem, query: string, i18n: I18n): boolean {
   if (!query) return true;
   const haystack =
     item.kind === 'action'
-      ? `${item.action.label} ${item.action.hint}`
+      ? `${i18n._(item.action.label)} ${i18n._(item.action.hint)}`
       : `${item.name} ${item.description}`;
   return haystack.toLowerCase().includes(query);
 }
@@ -45,34 +47,17 @@ function matches(item: SlashItem, query: string): boolean {
 /** Pill-style toggle that gates write tools behind a confirmation prompt when off. */
 function AutoApproveToggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
   return (
-    // eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label)
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="group flex cursor-pointer select-none items-center gap-2 rounded-full px-1 py-0.5 text-body-sm text-secondary transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
-    >
-      <span
-        className={cn(
-          'relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)]',
-          checked ? 'bg-accent' : 'border border-border bg-card-2',
-        )}
-      >
-        <span
-          className={cn(
-            'inline-block h-3 w-3 rounded-full bg-white transition-transform duration-[var(--motion-base)] ease-[var(--ease-standard)]',
-            checked ? 'translate-x-3.5' : 'translate-x-0.5',
-          )}
-        />
-      </span>
-      <Trans>Auto-approve actions</Trans>
-    </button>
+    <SwitchPill
+      size="sm"
+      checked={checked}
+      onChange={onChange}
+      label={<Trans>Auto-approve actions</Trans>}
+    />
   );
 }
 
 export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStarters }: TraceyComposerProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const composer = useComposerRuntime();
   const text = useComposer(c => c.text);
   // The selection is tagged with the list ("key") it belongs to. When the menu (re)opens or the
@@ -84,7 +69,7 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
 
   const open = text.startsWith('/') && text !== dismissedAt;
   const query = open ? text.slice(1).toLowerCase() : '';
-  const items = useMemo(() => (open ? ALL_ITEMS.filter(i => matches(i, query)) : []), [open, query]);
+  const items = useMemo(() => (open ? ALL_ITEMS.filter(i => matches(i, query, i18n)) : []), [open, query, i18n]);
   const selKey = open ? query : '';
   const activeIndex = items.length
     ? (sel.key === selKey ? Math.min(Math.max(sel.index, 0), items.length - 1) : 0)

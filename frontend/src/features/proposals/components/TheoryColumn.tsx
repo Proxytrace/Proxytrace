@@ -26,6 +26,7 @@ const TONE_TOP_BORDER: Record<DisplayTone, string> = {
   danger: cn('border-t-[var(--danger)]'),
   teal: cn('border-t-[var(--teal)]'),
   muted: cn('border-t-[var(--text-muted)]'),
+  neutral: cn('border-t-[color-mix(in_srgb,var(--text-muted)_60%,transparent)]'),
   secondary: cn('border-t-[var(--text-secondary)]'),
 };
 

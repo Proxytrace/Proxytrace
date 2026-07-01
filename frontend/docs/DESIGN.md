@@ -133,7 +133,7 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 `frontend/src/components/ui/` already covers the system. Default to importing, not rebuilding. Inventory:
 
-**Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`/`RadioGroup`, `Switch`, `Label`, `FormField`, `SegmentedControl`, `RowButton` (clickable list/grid rows), `Combobox`, `MultiCombobox` (searchable multi-select with optional `maxSelected` cap), `Tabs`, `Menu`, `Tooltip`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
+**Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`/`RadioGroup`, `Switch`, `SwitchPill` (labeled switch fused into a tinted pill), `Label`, `FormField`, `SegmentedControl`, `RowButton` (clickable list/grid rows), `Combobox`, `MultiCombobox` (searchable multi-select with optional `maxSelected` cap), `Tabs`, `Menu`, `Tooltip`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
 
 `Select`, `Tabs`, `Tooltip`, `Menu`, `FilterDropdown`, `Combobox`, and `Popover` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab/popover with manual `createPortal` + `getBoundingClientRect` again, and never fall back to a native `<select>` (its option list is OS-rendered and off-theme); reach for these. `Select` keeps the `<option>`-children API but emits the chosen value via `onValueChange(value)`, not a DOM `onChange` event.
 

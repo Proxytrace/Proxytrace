@@ -8,8 +8,10 @@ import { Input } from '../../../components/ui/Input';
 import { Switch } from '../../../components/ui/Switch';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { RowButton } from '../../../components/ui/RowButton';
 import { SearchIcon, LockIcon } from '../../../components/icons';
 import { useLicense } from '../../../api/license';
+import { FOCUS_RING } from '../../../lib/constants';
 
 interface Props {
   evaluators: EvaluatorDetailDto[];
@@ -77,16 +79,14 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
               return (
                 <li
                   key={e.id}
-                  onClick={() => onSelect(e.id)}
-                  className={cn('cursor-pointer transition-colors duration-100', locked && 'opacity-60')}
-                  style={{
-                    padding: '10px 12px',
-                    borderLeft: `3px solid ${staged ? 'var(--accent-primary)' : 'transparent'}`,
-                    background: focused ? 'rgba(255,255,255,0.025)' : 'transparent',
-                    borderBottom: '1px solid var(--hairline)',
-                  }}
+                  className={cn(
+                    'transition-colors duration-100 border-b border-hairline border-l-[3px]',
+                    staged ? 'border-l-accent' : 'border-l-transparent',
+                    focused ? 'bg-white/[0.025]' : 'bg-transparent',
+                    locked && 'opacity-60',
+                  )}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 px-3 py-2.5">
                     <Switch
                       checked={staged}
                       disabled={locked}
@@ -94,23 +94,29 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                       aria-label={staged ? t`Detach ${e.name}` : t`Attach ${e.name}`}
                       data-testid={`edit-suite-evaluator-toggle-${e.id}`}
                     />
-                    <span className="text-title font-medium flex-1 min-w-0 truncate">{e.name}</span>
-                    {locked && (
-                      <span
-                        data-testid={`edit-suite-evaluator-lock-${e.id}`}
-                        className="shrink-0 inline-flex items-center text-muted"
-                        title={t`Agentic evaluators require a paid plan`}
-                      >
-                        <LockIcon size={12} />
-                      </span>
-                    )}
-                    {dirtyState === 'added' && (
-                      <span className="text-caption font-semibold text-accent uppercase tracking-[0.08em] shrink-0"><Trans>+ Added</Trans></span>
-                    )}
-                    {dirtyState === 'removed' && (
-                      <span className="text-caption font-semibold text-warn uppercase tracking-[0.08em] shrink-0"><Trans>− Removed</Trans></span>
-                    )}
-                    <ColoredBadge color={c} label={e.kind} />
+                    <RowButton
+                      onClick={() => onSelect(e.id)}
+                      aria-pressed={focused}
+                      className={cn('flex items-center gap-2 flex-1 min-w-0 rounded-sm', FOCUS_RING)}
+                    >
+                      <span className="text-title font-medium flex-1 min-w-0 truncate">{e.name}</span>
+                      {locked && (
+                        <span
+                          data-testid={`edit-suite-evaluator-lock-${e.id}`}
+                          className="shrink-0 inline-flex items-center text-muted"
+                          title={t`Agentic evaluators require a paid plan`}
+                        >
+                          <LockIcon size={12} />
+                        </span>
+                      )}
+                      {dirtyState === 'added' && (
+                        <span className="text-caption font-semibold text-accent uppercase tracking-[0.08em] shrink-0"><Trans>+ Added</Trans></span>
+                      )}
+                      {dirtyState === 'removed' && (
+                        <span className="text-caption font-semibold text-warn uppercase tracking-[0.08em] shrink-0"><Trans>− Removed</Trans></span>
+                      )}
+                      <ColoredBadge color={c} label={e.kind} />
+                    </RowButton>
                   </div>
                 </li>
               );

@@ -19,7 +19,7 @@ export function ScoreChip({ score, size = 'sm' }: { score: EvaluationScore | nul
       style={{ background: tint(color, 16), color }}
     >
       {n ?? '—'}
-      <span className="opacity-70 font-semibold" style={{ fontSize: big ? 10 : 8.5 }}>/5</span>
+      <span className={cn('opacity-70 font-semibold', big ? 'text-caption' : 'text-[8.5px]')}>/5</span>
     </span>
   );
 }

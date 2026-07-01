@@ -3,12 +3,14 @@
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import { Histogram } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { fmtLatency } from '../../../lib/format';
 import type { LatencyStats } from '../dashboardMeta';
 
 interface LatencySectionProps {
   latencyHist: number[];
   latencyStats: LatencyStats | null;
+  isLoading: boolean;
 }
 
 const PERCENTILE_ROWS = [
@@ -18,7 +20,7 @@ const PERCENTILE_ROWS = [
   { label: 'p99', color: 'var(--warn)' },
 ] as const;
 
-export function LatencySection({ latencyHist, latencyStats }: LatencySectionProps) {
+export function LatencySection({ latencyHist, latencyStats, isLoading }: LatencySectionProps) {
   const { t } = useLingui();
   const pValues = latencyStats
     ? [fmtLatency(latencyStats.p50), fmtLatency(latencyStats.p90), fmtLatency(latencyStats.p95), fmtLatency(latencyStats.p99)]
@@ -33,7 +35,9 @@ export function LatencySection({ latencyHist, latencyStats }: LatencySectionProp
         </p>
       </header>
       <div className="px-3 pb-3">
-        {latencyHist.length > 0 ? (
+        {isLoading ? (
+          <Skeleton height={130} className="w-full" />
+        ) : latencyHist.length > 0 ? (
           <Histogram
             data={latencyHist}
             height={130}

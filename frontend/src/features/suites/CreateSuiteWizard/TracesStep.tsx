@@ -14,7 +14,9 @@ import { FilterDropdown } from '../../../components/ui/FilterDropdown';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { RowButton } from '../../../components/ui/RowButton';
 import { SearchIcon } from '../../../components/icons';
+import { FOCUS_RING } from '../../../lib/constants';
 import { TracePreviewPanel } from './TracePreviewPanel';
 
 const RANGE_OPTIONS: { key: string; label: MessageDescriptor; hours: number | null }[] = [
@@ -167,21 +169,23 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
                   const tools = hasTools(t);
                   const snippet = firstUserContent(t).replace(/\s+/g, ' ').trim().slice(0, 120);
                   return (
-                    <li
-                      key={t.id}
-                      data-testid={`wizard-trace-option-${t.id}`}
-                      onClick={() => { setFocusedId(t.id); onToggle(t); }}
-                      className={cn(
-                        'cursor-pointer transition-colors duration-100',
-                        'p-[10px_12px] border-l-[3px] border-b border-b-hairline -outline-offset-1',
-                        sel
-                          ? 'border-l-accent bg-accent-subtle'
-                          : 'border-l-transparent bg-transparent',
-                        focusedId === t.id && !sel
-                          ? 'outline outline-1 outline-[var(--border-color)]'
-                          : 'outline-none',
-                      )}
-                    >
+                    <li key={t.id}>
+                      <RowButton
+                        data-testid={`wizard-trace-option-${t.id}`}
+                        aria-pressed={sel}
+                        onClick={() => { setFocusedId(t.id); onToggle(t); }}
+                        className={cn(
+                          'transition-colors duration-100',
+                          'p-[10px_12px] border-l-[3px] border-b border-b-hairline -outline-offset-1',
+                          FOCUS_RING,
+                          sel
+                            ? 'border-l-accent bg-accent-subtle'
+                            : 'border-l-transparent bg-transparent',
+                          focusedId === t.id && !sel
+                            ? 'outline outline-1 outline-[var(--border-color)]'
+                            : 'outline-none',
+                        )}
+                      >
                       <div className="flex items-center gap-2.5">
                         <span className="text-body-sm font-mono text-muted shrink-0 w-[44px]">{fmtClock(t.createdAt)}</span>
                         <ColoredBadge color={modelColor(t.model)} label={t.model} dot size="sm" />
@@ -200,6 +204,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
                       <div className="mt-1.5 text-body text-secondary truncate min-w-0">
                         {snippet ? <span className="text-secondary">{snippet}</span> : <span className="text-muted italic"><Trans>No user message</Trans></span>}
                       </div>
+                      </RowButton>
                     </li>
                   );
                 })}

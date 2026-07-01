@@ -39,6 +39,24 @@ function toolsModified(current: PlaygroundOverrides['tools'], defaultLength: num
   return current.length !== defaultLength;
 }
 
+// ─── Shared rail-button class recipe ────────────────────────────────────────
+
+/* eslint-disable lingui/no-unlocalized-strings -- Tailwind class recipes, not user-facing copy */
+const RAIL_BUTTON_BASE =
+  'size-[40px] inline-flex items-center justify-center rounded-md cursor-pointer transition-colors border';
+
+const RAIL_BUTTON_ACTIVE =
+  'bg-accent-subtle text-[var(--accent-hover)] border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]';
+/* eslint-enable lingui/no-unlocalized-strings */
+
+/** The 40px rail-button recipe shared by the section toggles and the reset button. */
+function railButtonClass(active: boolean, inactiveText: string): string {
+  return cn(
+    RAIL_BUTTON_BASE,
+    active ? RAIL_BUTTON_ACTIVE : cn('bg-transparent border-transparent', inactiveText),
+  );
+}
+
 // ─── RailIconButton ─────────────────────────────────────────────────────────
 
 interface RailIconButtonProps {
@@ -58,12 +76,7 @@ function RailIconButton({ active, modified, title, onClick, children }: RailIcon
       title={title}
       aria-label={title}
       aria-pressed={active}
-      className={cn(
-        'relative size-[40px] inline-flex items-center justify-center rounded-md cursor-pointer transition-colors border',
-        active
-          ? 'bg-accent-subtle text-[var(--accent-hover)] border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'
-          : 'bg-transparent text-secondary border-transparent',
-      )}
+      className={cn(railButtonClass(active, 'text-secondary'), 'relative')}
     >
       {children}
       {modified && (
@@ -140,7 +153,7 @@ export function RightRail({
 
         <div className="my-1 h-[1px] w-[24px] bg-[var(--hairline)]" />
 
-        {/* eslint-disable-next-line no-restricted-syntax -- bespoke 40px rail reset button (matches RailIconButton styling) */}
+        {/* eslint-disable-next-line no-restricted-syntax -- bespoke 40px rail reset button (shares railButtonClass recipe) */}
         <button
           type="button"
           onClick={onResetAll}
@@ -148,10 +161,7 @@ export function RightRail({
           title={anyModified ? t`Reset all settings to agent defaults` : t`Settings match agent defaults`}
           aria-label={t`Reset all to agent defaults`}
           className={cn(
-            'size-[40px] inline-flex items-center justify-center rounded-md cursor-pointer transition-colors border',
-            anyModified
-              ? 'bg-accent-subtle text-[var(--accent-hover)] border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'
-              : 'bg-transparent text-muted border-transparent',
+            railButtonClass(anyModified, 'text-muted'),
             !hasAgentDefaults && 'opacity-40',
           )}
         >

@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import type { MessageDescriptor } from '@lingui/core';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { type TheoryDto } from '../../../../api/models';
 import { useArtifactResult } from '../../useArtifact';
@@ -10,7 +11,7 @@ function isTheory(value: unknown): value is TheoryDto {
     && 'id' in value && 'rationale' in value && 'agentId' in value && 'suiteId' in value;
 }
 
-function isOutcome(value: unknown): value is { outcome: string; message: string } {
+function isOutcome(value: unknown): value is { outcome: string; message: string | MessageDescriptor } {
   return typeof value === 'object' && value !== null && 'outcome' in value;
 }
 
@@ -25,7 +26,7 @@ function isCancelled(value: unknown): value is { cancelled: true } {
  * duplicate/quota outcome renders a quiet one-line note instead.
  */
 export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   // eslint-disable-next-line lingui/no-unlocalized-strings -- artifact kind token, not UI copy
   const { state, data } = useArtifactResult('theory', result, status, isError);
 
@@ -38,9 +39,10 @@ export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isE
   }
 
   if (isOutcome(result)) {
+    const message = typeof result.message === 'string' ? result.message : i18n._(result.message);
     return (
       <ToolUIFrame state="ready" testId="tracey-theory-card">
-        <span className="text-body-sm text-secondary">{result.message}</span>
+        <span className="text-body-sm text-secondary">{message}</span>
       </ToolUIFrame>
     );
   }

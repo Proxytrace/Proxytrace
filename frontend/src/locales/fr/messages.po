@@ -742,6 +742,9 @@ msgstr "A/B test en cours d’exécution"
 msgid "A/B testing"
 msgstr "Test A/B"
 
+msgid "A/B validation"
+msgstr "Validation A/B"
+
 msgid "Acceptable"
 msgstr "Acceptable"
 
@@ -945,6 +948,9 @@ msgstr "Tous les utilisateurs"
 msgid "All users are already members."
 msgstr "Tous les utilisateurs sont déjà membres."
 
+msgid "An identical theory or proposal already exists for this agent."
+msgstr "Une théorie ou proposition identique existe déjà pour cet Agent."
+
 msgid "An unexpected error occurred."
 msgstr "Une erreur inattendue s’est produite."
 
@@ -962,6 +968,9 @@ msgstr "Anthropic"
 
 msgid "Anthropic’s OpenAI-compatible endpoint — use your regular Anthropic API key."
 msgstr "Le endpoint OpenAI-compatible d’Anthropic — utilisez votre clé API Anthropic habituelle."
+
+msgid "Any"
+msgstr "N’importe lequel"
 
 msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
 msgstr "Tout serveur OpenAI-compatible : vLLM, Ollama, LiteLLM, OpenRouter, une passerelle, …"
@@ -1195,6 +1204,9 @@ msgstr "Cas"
 msgid "Change provider kind"
 msgstr "Changer le type de Provider"
 
+msgid "Chart token usage per agent"
+msgstr "Afficher l’usage des Tokens par Agent"
+
 msgid "Cheapest"
 msgstr "Le moins cher"
 
@@ -1264,9 +1276,6 @@ msgstr "fermer"
 
 msgid "Close"
 msgstr "Fermer"
-
-msgid "Close dialog"
-msgstr "Fermer la boîte de dialogue"
 
 msgid "Close settings"
 msgstr "Fermer les paramètres"
@@ -1408,6 +1417,9 @@ msgstr "Impossible de lister les models du Provider : {modelsError}. Saisissez l
 
 msgid "Could not load the request for this case."
 msgstr "Impossible de charger la requête pour ce cas."
+
+msgid "Could not open the trace for this response."
+msgstr "Impossible d’ouvrir le Trace pour cette réponse."
 
 msgid "Could not reset your password. Please try again."
 msgstr "Impossible de réinitialiser votre mot de passe. Veuillez réessayer."
@@ -2008,6 +2020,9 @@ msgstr "Le plus rapide"
 msgid "Filter agents by name…"
 msgstr "Filtrer les agents par nom…"
 
+msgid "Find failing test runs and suggest improvements"
+msgstr "Trouver les tests échoués et suggérer des améliorations"
+
 msgid "Finish"
 msgstr "Terminer"
 
@@ -2176,6 +2191,9 @@ msgstr "Inactif"
 msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
 msgstr "Si un compte existe pour cette adresse email, les instructions de réinitialisation du mot de passe sont en cours d'envoi. Si l'envoi d'email n'est pas configuré sur ce serveur, contactez votre administrateur pour obtenir un lien de réinitialisation."
 
+msgid "Improve failing runs"
+msgstr "Améliorer les runs en échec"
+
 msgid "Improved"
 msgstr "Amélioré"
 
@@ -2332,11 +2350,20 @@ msgstr "Langue"
 msgid "Last"
 msgstr "Dernier"
 
+msgid "Last 15 minutes"
+msgstr "15 dernières minutes"
+
+msgid "Last 24 hours"
+msgstr "24 dernières heures"
+
 msgid "Last 24h"
 msgstr "Dernières 24 h"
 
 msgid "Last 30 days"
 msgstr "Derniers 30 jours"
+
+msgid "Last 6 hours"
+msgstr "6 dernières heures"
 
 msgid "Last 7 days"
 msgstr "7 derniers jours"
@@ -2415,6 +2442,9 @@ msgstr "Licence définie"
 #. placeholder {0}: license.customerEmail
 msgid "Licensed to <0>{0}</0>"
 msgstr "Licencié à <0>{0}</0>"
+
+msgid "List agents"
+msgstr "Lister les Agents"
 
 msgid "live"
 msgstr "en direct"
@@ -3097,6 +3127,9 @@ msgstr "Pas encore noté"
 msgid "Not used by any agent yet."
 msgstr "Non utilisé par un Agent pour le moment."
 
+msgid "Not valid JSON — {detail}"
+msgstr "JSON non valide — {detail}"
+
 msgid "Not valid JSON — showing raw text"
 msgstr "JSON non valide — affichage du texte brut"
 
@@ -3114,6 +3147,9 @@ msgstr "Notifications"
 
 msgid "Notifications ({unreadCount} unread)"
 msgstr "Notifications ({unreadCount} non lues)"
+
+msgid "now"
+msgstr "maintenant"
 
 msgid "Num"
 msgstr "Num"
@@ -3208,6 +3244,9 @@ msgstr "Théories d'optimisation"
 msgid "Optimization Theories"
 msgstr "Optimization Theories"
 
+msgid "Optimize an agent"
+msgstr "Optimiser un Agent"
+
 msgid "Optimize with evidence"
 msgstr "Optimiser avec des preuves"
 
@@ -3225,6 +3264,9 @@ msgstr "Autre"
 
 msgid "out"
 msgstr "sortie"
+
+msgid "Outcome"
+msgstr "Résultat"
 
 msgid "Outlier detection"
 msgstr "Détection des outliers"
@@ -3346,6 +3388,9 @@ msgstr "depuis {range}"
 msgid "Past evaluation"
 msgstr "Évaluation passée"
 
+msgid "Paste an example JSON value first."
+msgstr "Collez d’abord un exemple de valeur JSON."
+
 msgid "Paste the key from your purchase email. It is validated offline, stored in the database, and applied immediately — no restart needed. Without a key, Proxytrace runs on the Free tier."
 msgstr "Collez la clé depuis votre e-mail d'achat. Elle est validée hors ligne, stockée dans la base de données et appliquée immédiatement — aucun redémarrage nécessaire. Sans clé, Proxytrace s'exécute sur le niveau Free."
 
@@ -3426,6 +3471,9 @@ msgstr "Choisissez pour commencer"
 
 msgid "Pick your default model"
 msgstr "Choisissez votre modèle par défaut"
+
+msgid "Plot token usage"
+msgstr "Tracer l’usage des Tokens"
 
 msgid "Point your agent at the proxy — one base-URL change — and every request, response, tool call, token and cost is recorded."
 msgstr "Pointez votre Agent vers le proxy — un simple changement d'URL de base — et chaque requête, réponse, appel de Tool, Token et coût est enregistré."
@@ -3799,6 +3847,9 @@ msgstr "Relancer la découverte"
 msgid "Reveal"
 msgstr "Révéler"
 
+msgid "Review proposals"
+msgstr "Examiner les propositions"
+
 msgid "Revoke"
 msgstr "Révoquer"
 
@@ -3828,6 +3879,9 @@ msgstr "Lancer"
 #. placeholder {1}: suite.name
 msgid "Run <0>{0, plural, one {# test case} other {# test cases}}</0> from <1>{1}</1> and compare results."
 msgstr "Lancer <0>{0, plural, one {# test case} other {# test cases}}</0> depuis <1>{1}</1> et comparer les résultats."
+
+msgid "Run a suite"
+msgstr "Lancer un Suite"
 
 msgid "Run a suite to get started."
 msgstr "Lancez un Suite pour commencer."
@@ -4243,6 +4297,9 @@ msgstr "Afficher uniquement les Traces d’outlier"
 msgid "Show system agents"
 msgstr "Afficher les Agents système"
 
+msgid "Show the agents in this project"
+msgstr "Afficher les Agents de ce projet"
+
 msgid "Show traces from system agents"
 msgstr "Afficher les Traces des Agents système"
 
@@ -4325,6 +4382,9 @@ msgstr "Stacktrace"
 
 msgid "Start a conversation"
 msgstr "Commencer une conversation"
+
+msgid "Start a test run"
+msgstr "Démarrer un test run"
 
 msgid "Start new test run"
 msgstr "Lancer un nouveau test run"
@@ -4611,6 +4671,9 @@ msgstr "Theories"
 msgid "Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate."
 msgstr "Les Theories apparaissent ici lorsqu’un optimizer, vous ou Tracey AI proposez une modification à valider."
 
+msgid "Theorize and A/B-test an improvement"
+msgstr "Élaborer une Theory et faire un A/B test d’une amélioration"
+
 msgid "Theory"
 msgstr "Theory"
 
@@ -4768,6 +4831,9 @@ msgstr "Tolérance"
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr "Trop de tentatives. Veuillez patienter quelques minutes puis réessayer."
 
+msgid "Too many theories are awaiting validation. Try again later."
+msgstr "Trop de theories sont en attente de validation. Réessayez plus tard."
+
 msgid "TOOL"
 msgstr "OUTIL"
 
@@ -4830,6 +4896,9 @@ msgstr "Total de runs"
 
 msgid "Trace Deleted"
 msgstr "Trace supprimée"
+
+msgid "Trace is still being captured — try again in a moment."
+msgstr "Le Trace est toujours en cours de capture — réessayez dans un instant."
 
 #. placeholder {0}: trace.model
 msgid "Trace preview · {0}"
@@ -5116,6 +5185,9 @@ msgstr "En attente de … actions"
 
 msgid "Waiting for the model to finish streaming…"
 msgstr "En attente de la fin du streaming par le modèle…"
+
+msgid "Walk through open optimization proposals"
+msgstr "Parcourir les propositions d’optimisation ouvertes"
 
 msgid "Warning"
 msgstr "Avertissement"

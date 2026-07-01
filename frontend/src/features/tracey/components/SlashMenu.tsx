@@ -16,7 +16,7 @@ interface SlashMenuProps {
 
 /** The "/" picker: quick-actions ("skills") on top, raw tools below. Anchored above the composer. */
 export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,8 +39,8 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
     >
       {items.map((item, index) => {
         const active = index === activeIndex;
-        const label = item.kind === 'action' ? item.action.label : item.name;
-        const hint = item.kind === 'action' ? item.action.hint : item.description;
+        const label = item.kind === 'action' ? i18n._(item.action.label) : item.name;
+        const hint = item.kind === 'action' ? i18n._(item.action.hint) : item.description;
         return (
           <div key={item.kind === 'action' ? item.action.id : item.name}>
             {index === 0 && item.kind === 'action' && <SectionLabel><Trans>Quick actions</Trans></SectionLabel>}

@@ -4,6 +4,7 @@ import type { ProviderDto } from '../../api/models';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
 import { PlusIcon } from '../../components/icons';
 import { useProvidersOverview } from './hooks/useProviderQueries';
 import { ProviderList } from './components/ProviderList';
@@ -45,7 +46,7 @@ export default function Providers() {
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-[280px_1fr] gap-3">
+      <div className={`flex-1 min-h-0 grid ${LIST_RAIL_COLS} gap-4`}>
         <ProviderList
           providers={providers}
           loading={providersLoading}

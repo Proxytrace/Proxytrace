@@ -11,7 +11,7 @@ interface Props {
 }
 
 const TONE: Record<Tone, { color: string; bg: string; border: string }> = {
-  neutral: { color: 'var(--text-primary)', bg: 'rgba(255,255,255,0.03)', border: 'var(--border-color)' },
+  neutral: { color: 'var(--text-primary)', bg: 'color-mix(in srgb, var(--text-primary) 3%, transparent)', border: 'var(--border-color)' },
   good: { color: 'var(--success)', bg: 'var(--success-subtle)', border: 'color-mix(in srgb, var(--success) 28%, transparent)' },
   warn: { color: 'var(--warn)', bg: 'var(--warn-subtle)', border: 'color-mix(in srgb, var(--warn) 28%, transparent)' },
   danger: { color: 'var(--danger)', bg: 'var(--danger-subtle)', border: 'color-mix(in srgb, var(--danger) 28%, transparent)' },

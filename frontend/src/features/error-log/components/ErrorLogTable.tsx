@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { SkeletonList } from '../../../components/ui/Skeleton';
 import { fmtDateTime } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import type { ApplicationErrorDto } from '../../../api/models';
@@ -16,6 +17,13 @@ interface ErrorLogTableProps {
 
 export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: ErrorLogTableProps) {
   const { t } = useLingui();
+  if (errors.length === 0 && isFetching) {
+    return (
+      <div className="p-3">
+        <SkeletonList rows={8} height={44} gap={4} />
+      </div>
+    );
+  }
   if (errors.length === 0) {
     return (
       <EmptyState
