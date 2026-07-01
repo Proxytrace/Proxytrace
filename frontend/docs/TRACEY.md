@@ -60,9 +60,9 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 
 | File | Role |
 |------|------|
-| `TraceyAI.tsx` | Page root. Consumes the shared chat via `useTraceyChatContext`, calls `activate()` on mount, renders status gates (no-project / loading / error / ready), wraps content in `AssistantRuntimeProvider` + `TraceyActionsProvider`, lays out the single full-width chat panel. The one lazy-loaded route component. |
+| `TraceyAI.tsx` | Page root. Consumes the shared chat via `useTraceyChatContext`, calls `activate()` on mount, renders status gates (no-project / loading / error / ready), lays out the chat panel with the conversation-history rail on the **right**. The rail is **collapsible and starts collapsed** (toggle in the chat panel header); the preference persists via `tracey-storage.ts` because this page unmounts on navigation. The one lazy-loaded route component. |
 | `TraceyHost.tsx` | The single mount point for the chat: calls `useTraceyChat()` and wraps the routed page content in `TraceyChatProvider` + `TraceyActionsProvider` + `AssistantRuntimeProvider`. Rendered **once** by `Shell` around the router `Outlet`, and **lazy-loaded** so the whole Tracey stack (assistant-ui, ai SDK, tools, docs index) stays out of the main chunk. |
-| `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, thread persistence, artifact lifecycle, the lazy session query, and builds the runtime. Called **once** from `TraceyHost` (above the router `Outlet`), not from the page — see "Conversation persistence". |
+| `useTraceyChat.ts` | **The only stateful hook.** Owns the write-tool `confirm` seam (always-approve today), thread persistence, artifact lifecycle, the lazy session query, and builds the runtime. Called **once** from `TraceyHost` (above the router `Outlet`), not from the page — see "Conversation persistence". |
 | `tracey-chat-context.ts` | Shares the single `TraceyChat` (runtime + state) app-wide. `TraceyChatProvider` mounts in `TraceyHost` around the `Outlet`; `useTraceyChatContext()` reads it from the page. |
 | `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT + turn-correlation header per request, windows the history sent to the model (`windowMessages`, UI thread untouched), runs `streamText` with `prepareStep` (progressive tool disclosure) + `stopWhen: stepCountIs(MAX_TURN_STEPS)` (64 — a high infinite-loop **safety backstop**, not a user-facing turn limit), adapts our tools into the SDK `ToolSet` (threading the abort signal), and writes per-turn metadata on finish. |
 | `tracey-tools.ts` | **Composition root** for tools: `createTraceyTools(ctx)` wires every `tools/*` domain factory against a shared artifact store. `TRACEY_TOOLS_META` is the static name+description list for the slash menu (must list every tool). |
@@ -74,9 +74,10 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `tracey-artifact-store.ts` | The browser **artifact store** (IndexedDB → localStorage fallback). Holds large tool payloads so only a compact reference + digest enters the model context; cards resolve the reference to render the full data. |
 | `tracey-artifact-kinds.ts` | The **typed artifact contract**: `ArtifactPayloads` maps every artifact `kind` to its payload type. `StoreFn` only accepts the matching shape and `useArtifactResult(kind, …)` returns it (verifying the kind at runtime), so a tool and its card can't silently disagree (e.g. list-item DTO vs full DTO). |
 | `tracey-artifacts.ts` | Frontend-only render shapes the `show_chart`/`show_table`/`show_text` tools return. |
-| `tracey-storage.ts` | `localStorage` thread persistence keyed by `user + project`. |
+| `tracey-storage.ts` | `localStorage` conversation-history persistence keyed by `user + project`: the conversation **index** (up to 20 metadata records + the active pointer), one **snapshot** blob per conversation, the rail-collapsed preference, `deriveConversationTitle`, and `migrateLegacyThread` (folds the pre-history single-thread blob into the model). |
+| `components/TraceyConversationRail.tsx` | The conversation-history **right-hand rail** (collapsed by default). Lists stored conversations newest-first, highlights the active one, and offers new / open (view == continue) / delete (with a `ConfirmDialog`). Presentational — all state lives in `useTraceyChat`. |
 | `tracey-actions.tsx` | React context (`navigate`) for assistant-ui message-part components that can't take props. |
-| `tracey-quick-actions.ts` | Curated prompt presets shown as composer chips + top of the slash menu. |
+| `tracey-quick-actions.ts` | Curated prompt presets: the empty-thread starter chips (clicking one **sends** its prompt immediately) + the top of the slash menu (which prefills for editing). |
 | `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens (input / cached-input / output / total) + duration + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
@@ -162,7 +163,7 @@ some skill bundle).
 
 ## Tool catalog
 
-`confirm: true` tools mutate state and route through the confirmation gate (below). The **Skill**
+`confirm: true` tools mutate state and route through the `confirm` write gate (below). The **Skill**
 column is which bundle activates the tool (`core` = always available).
 
 | Tool | Kind | Confirm | Skill | Inline UI |
@@ -295,19 +296,13 @@ else the slim `ToolCallCard` (see "Card density"). The runtime's tool adapter om
 SDK treats them as frontend tools, and passes the SDK abort signal into `execute` so long-running
 tools stop when the user stops the turn.
 
-## Confirmation gate & auto-approve
+## The write gate: `confirm` (always auto-approve)
 
-All write tools funnel through `useTraceyChat`'s `confirm(summary)`:
-
-- **Auto-approve ON (default):** `confirm` resolves `true` immediately — no prompt. The toggle is
-  in the chat panel; the preference is persisted in `localStorage` (`tracey-storage.ts`,
-  `loadAutoApprove`/`saveAutoApprove`) and `autoApproveRef` keeps the latest value visible to the
-  async tool closure.
-- **Auto-approve OFF:** `confirm` returns a promise and sets `pendingConfirmation`. The
-  page renders an inline Confirm/Cancel card; `resolveConfirmation(true|false)` settles the promise.
-  The tool proceeds only on `true`, else returns `CANCELLED`.
-
-Confirmation is gated in the **tool layer** (not the model), so the model can't bypass it.
+All write tools funnel through `useTraceyChat`'s `confirm(summary)`. Writes are **always
+auto-approved**: `confirm` resolves `true` immediately and there is no user-facing toggle or
+confirmation card. The seam is deliberately kept — every write still calls `ctx.confirm(...)`
+before mutating and returns `CANCELLED` on `false` — so if a confirmation prompt is ever needed
+again it goes back into the **tool layer** (not the model), where the model can't bypass it.
 
 ## The artifact store (keeping the model context lean)
 
@@ -322,10 +317,15 @@ digest:
 - Storage is **IndexedDB with a localStorage fallback**; if both are unavailable, `makeStore`
   swallows the error and returns the full payload inline — the card still renders, only that
   last-resort path costs model context.
-- Artifacts are scoped by `artifactScope = "${userKey}:${projectKey}"` so a thread reset
-  (`clearArtifacts`) wipes exactly this user+project's blobs. On mount, `useTraceyChat` prunes
-  artifacts the restored thread no longer references (`collectArtifactRefs` → `pruneArtifacts`),
-  but only at mount — pruning mid-stream could race a just-written blob.
+- Artifacts are scoped by `artifactScope = "${userKey}:${projectKey}"`, **shared across that
+  project's conversations** (artifact refs are globally unique, so there is no cross-conversation
+  collision). Keeping the scope stable means the tool context / transport are not rebuilt when the
+  user switches conversation. On mount, `useTraceyChat` prunes artifacts against the **union of
+  every conversation's refs** (`collectArtifactRefs` over all snapshots → `pruneArtifacts`), **not**
+  just the active thread's — an active-only prune would delete the other conversations' charts.
+  Delete/eviction re-prunes against the remaining union. Pruning is mount/delete-only (never
+  mid-stream, which could race a just-written blob). `clearArtifacts` is now used only for the
+  (rare) full-scope wipe, **not** on the new-conversation path.
 
 `await_actions` and `navigate` deliberately return inline (their results are already compact and
 have no resolving card).
@@ -401,10 +401,12 @@ traces. We read tokens straight from the SDK at the client: instant, no polling.
   turn's conversation group in Traces), or toasts if nothing is ingested yet. `CopyMessageButton`
   copies the assistant text (joined from the message's text parts).
 
-## Conversation persistence
+## Conversation history & persistence
 
-The conversation must survive both in-app navigation and a full page reload. Two layers, because
-the AI SDK runtime is in-memory only:
+Tracey keeps a **history of up to 20 conversations per user+project** (the right-hand rail,
+`TraceyConversationRail`). The user can start a new conversation, open a past one (view ==
+continue — opening loads it as the active thread and they keep typing), and delete ones they no
+longer want. It must all survive both in-app navigation and a full page reload. Three concerns:
 
 1. **Across navigation (in-memory).** `useTraceyChat` builds the runtime, so whatever component
    calls it owns the runtime's lifetime. It is called **once in `TraceyHost`** — rendered by
@@ -419,10 +421,39 @@ so per-turn token cost stops growing with conversation age. The UI thread and th
 snapshot stay complete. The loaded-skill set is derived from the same window, so a playbook that
 slid out of context counts as unloaded and a reload returns the full instructions again.
 
-2. **Across reload (localStorage).** `useTraceyChat` mirrors the thread to `localStorage`
-   (`tracey-storage.ts`, keyed by `user + project`) on every change and re-imports it on mount, so
-   a hard reload restores the conversation. Artifacts the restored thread still references are kept;
-   orphans are pruned (see the artifact store).
+2. **Storage layout (localStorage, `tracey-storage.ts`).** Two key families per user+project:
+   - `proxytrace.tracey.conversations:{user}:{project}` → the **index**:
+     `{ version, activeId, items: ConversationMeta[] }` (`items` capped at `MAX_CONVERSATIONS` = 20).
+   - `proxytrace.tracey.conversation:{user}:{project}:{id}` → one `ExportedMessageRepository`
+     **snapshot** per conversation.
+
+   Snapshots stay in localStorage (large tool payloads already live in the IndexedDB artifact
+   store, so a snapshot is just message text + compact digests). `saveConversationSnapshot` returns
+   `false` on a quota throw so `persist` can evict the oldest conversation and retry once.
+
+3. **The runtime layer (`useTraceyChat`).** One assistant-ui thread is live at a time; the hook
+   owns which conversation it holds. Key rules — get these wrong and you corrupt history:
+   - The **id is minted lazily** on the first persisted message (an untouched "new conversation"
+     never creates a ghost entry). The **title** is derived from the first user message
+     (`deriveConversationTitle`, empty fallback localized by the rail); `persist` bumps `updatedAt`
+     each change but only `setState`s the rail on a structural change (new/evict), not per token.
+   - `persist` keys off `activeIdRef.current`, guarded by `restoringRef` so the transient
+     empty-thread / import notifications during a thread swap can't clobber a stored snapshot with
+     an empty export.
+   - **Switching conversations:** `await runtime.threads.switchToNewThread()` **before**
+     `thread.import(snapshot)` — right after a switch the binding can transiently resolve to the
+     empty core, whose `import` throws.
+   - **"New conversation" archives, it does not destroy.** The current conversation is already
+     persisted under its id, so `startNewConversation` just detaches the active pointer and switches
+     to a fresh thread. It must **not** call `clearArtifacts` (that would wipe every conversation's
+     artifacts under the shared scope).
+   - Display state (`conversations` / `activeConversationId`) is read from localStorage with the
+     **render-time re-read pattern** (keyed on `{user}:{project}`, like `useTraceFilters`), because
+     pages don't remount on a project switch.
+   - A pre-history single-thread blob is folded in once by `migrateLegacyThread` (idempotent).
+   - Restore is pure localStorage + `import` — it must **not** depend on the session/JWT (which is
+     in-memory-only and gone after a reload); a continued conversation renders instantly and its
+     first *new* turn waits for the session exactly as a fresh chat does.
 
 Because the runtime mounts app-wide, the **session** is provisioned lazily: the session query has
 backend side effects (Tracey agent provisioning), so it only fires once the page calls `activate()`

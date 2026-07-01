@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentListItemDto } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { agentColor } from '../../../lib/colors';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -58,12 +59,10 @@ export function AgentStep({ agents, value, onChange }: Props) {
                 key={a.id}
                 data-testid={`wizard-agent-option-${a.id}`}
                 onClick={() => onChange(a.id)}
-                className="rounded-md transition-colors duration-150"
-                style={{
-                  padding: '12px 14px',
-                  border: `1px solid ${selected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  background: selected ? 'var(--accent-subtle)' : 'var(--bg-card)',
-                }}
+                className={cn(
+                  'rounded-md transition-colors duration-150 px-3.5 py-3 border',
+                  selected ? 'bg-accent-subtle border-accent' : 'bg-card border-border',
+                )}
               >
                 <div className="flex items-center gap-2">
                   <span className="size-[7px] rounded-full shrink-0" style={{ background: c }} />

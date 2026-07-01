@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { msg } from '@lingui/core/macro';
 import { agentsApi } from '../../../api/agents';
 import { proposalsApi } from '../../../api/proposals';
 import { theoriesApi } from '../../../api/theories';
@@ -150,8 +151,8 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
           });
         } catch (error) {
           const status = (error as { status?: number }).status;
-          if (status === 409) return { outcome: 'duplicate', message: 'An identical theory or proposal already exists for this agent.' };
-          if (status === 429) return { outcome: 'quota', message: 'Too many theories are awaiting validation. Try again later.' };
+          if (status === 409) return { outcome: 'duplicate', message: msg`An identical theory or proposal already exists for this agent.` };
+          if (status === 429) return { outcome: 'quota', message: msg`Too many theories are awaiting validation. Try again later.` };
           return { outcome: 'error', message: error instanceof Error ? error.message : 'Failed to submit the theory.' };
         }
       },

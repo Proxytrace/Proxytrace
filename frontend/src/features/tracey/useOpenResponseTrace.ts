@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { agentCallsApi } from '../../api/agent-calls';
 import type { AgentCallFilter } from '../../api/models';
@@ -15,6 +16,7 @@ import { useTraceyActions } from './tracey-actions';
  */
 export function useOpenResponseTrace() {
   const queryClient = useQueryClient();
+  const { t } = useLingui();
   const { navigate } = useTraceyActions();
   const [isOpening, setIsOpening] = useState(false);
 
@@ -35,15 +37,15 @@ export function useOpenResponseTrace() {
         if (trace) {
           navigate(`/traces?focus=${trace.id}`);
         } else {
-          showToast('Trace is still being captured — try again in a moment.', 'info');
+          showToast(t`Trace is still being captured — try again in a moment.`, 'info');
         }
       } catch {
-        showToast('Could not open the trace for this response.', 'error');
+        showToast(t`Could not open the trace for this response.`, 'error');
       } finally {
         setIsOpening(false);
       }
     },
-    [queryClient, navigate],
+    [queryClient, navigate, t],
   );
 
   return { openTrace, isOpening };

@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import type { MessageDescriptor } from '@lingui/core';
 import { fromAgentCall, fromTestCase, fromFixtureInput, fromSimple } from './adapters';
 import type { AgentCallDto, MessageDto, TestCaseDto } from '../../api/models';
+import { i18n } from '../../i18n';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 function msg(partial: Partial<MessageDto>): MessageDto {
   return { role: 'user', content: '', toolRequests: [], toolCallId: null, ...partial };
@@ -51,7 +56,8 @@ describe('fromTestCase', () => {
     const out = fromTestCase(tc);
 
     expect(out).toHaveLength(2);
-    expect(out[1]).toMatchObject({ role: 'assistant', content: 'a', label: 'Expected' });
+    expect(out[1]).toMatchObject({ role: 'assistant', content: 'a' });
+    expect(i18n._(out[1].label as MessageDescriptor)).toBe('Expected');
   });
 
   it('pairs assistant tool calls with their tool results in the input', () => {

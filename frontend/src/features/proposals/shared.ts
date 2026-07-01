@@ -2,7 +2,7 @@ import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 import { ProposalKind } from '../../api/models';
 
-export type DisplayTone = 'accent' | 'success' | 'danger' | 'muted' | 'secondary' | 'teal';
+export type DisplayTone = 'accent' | 'success' | 'danger' | 'muted' | 'neutral' | 'secondary' | 'teal';
 
 /** Tone → text-color Tailwind class (arbitrary value over the tone's CSS var). */
 export const TONE_TEXT: Record<DisplayTone, string> = {
@@ -10,6 +10,7 @@ export const TONE_TEXT: Record<DisplayTone, string> = {
   success: 'text-[var(--success)]',
   danger: 'text-[var(--danger)]',
   muted: 'text-[var(--text-muted)]',
+  neutral: 'text-[color-mix(in_srgb,var(--text-muted)_60%,transparent)]',
   secondary: 'text-[var(--text-secondary)]',
   teal: 'text-[var(--teal)]',
 };
@@ -20,6 +21,7 @@ export const TONE_BG: Record<DisplayTone, string> = {
   success: 'bg-[var(--success)]',
   danger: 'bg-[var(--danger)]',
   muted: 'bg-[var(--text-muted)]',
+  neutral: 'bg-[color-mix(in_srgb,var(--text-muted)_60%,transparent)]',
   secondary: 'bg-[var(--text-secondary)]',
   teal: 'bg-[var(--teal)]',
 };
@@ -30,6 +32,7 @@ export const TONE_SUBTLE_BG: Record<DisplayTone, string> = {
   success: 'bg-[var(--success-subtle)]',
   danger: 'bg-[var(--danger-subtle)]',
   muted: 'bg-white/[0.04]',
+  neutral: 'bg-white/[0.04]',
   secondary: 'bg-white/[0.04]',
   teal: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)]',
 };

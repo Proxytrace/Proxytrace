@@ -3,6 +3,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { AreaChart } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import type { SummaryDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
@@ -21,9 +22,10 @@ interface HeroTokenCardProps {
   modelSplit: ModelSplit;
   range: RangeKey;
   onRangeChange: (r: RangeKey) => void;
+  isLoading: boolean;
 }
 
-export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, modelSplit, range, onRangeChange }: HeroTokenCardProps) {
+export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, modelSplit, range, onRangeChange, isLoading }: HeroTokenCardProps) {
   const { t } = useLingui();
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
   const { num: tokenNum, suffix: tokenSuffix } = splitTokenStr(totalTokens);
@@ -75,7 +77,11 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
 
       {/* Area chart */}
       <div className="relative -mx-2">
-        {tokenVolume.length >= 2 ? (
+        {isLoading ? (
+          <div className="px-2">
+            <Skeleton height={140} className="w-full" />
+          </div>
+        ) : tokenVolume.length >= 2 ? (
           <AreaChart
             data={tokenVolume}
             height={140}

@@ -4,6 +4,7 @@ import { fmtRelative, fmtLatency } from '../../../lib/format';
 import { ActivityIcon, XIcon, ExternalLinkIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
+import { SkeletonList } from '../../../components/ui/Skeleton';
 import type { RecentEvaluationItemDto } from '../../../api/evaluators';
 import type { EvaluationScore } from '../../../api/models';
 import { SCORE_LABEL } from '../evaluatorMeta';
@@ -41,7 +42,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
         )}
       </header>
       {isLoading ? (
-        <div className="px-4 py-8 text-center text-muted text-body"><Trans>Loading…</Trans></div>
+        <SkeletonList rows={5} height={52} className="px-4 py-3" />
       ) : rows.length === 0 ? (
         <div className="px-4 py-10 text-center text-muted text-body">
           {scoreFilter ? (

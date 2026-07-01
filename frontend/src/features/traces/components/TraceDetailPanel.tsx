@@ -179,15 +179,16 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         </div>
 
         {/* Stat band */}
-        <div className="mx-5 mt-3.5 px-4 py-3.5 bg-card-2 rounded-xl grid grid-cols-5 gap-3.5 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
-          <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'} valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
-          <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} color="var(--teal)" />
-          <DrawerStat label={t`Output`} value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} color="var(--success)" />
+        <div className="mx-5 mt-3.5 px-4 py-3.5 bg-card-2 rounded-xl grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))] gap-3.5 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- DrawerStat tone enum values, not UI copy */}
+          <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} tone={trace.durationMs > 3000 ? 'warn' : 'teal'} valueTone={trace.durationMs > 3000 ? 'warn' : undefined} />
+          <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} tone="teal" />
+          <DrawerStat label={t`Output`} value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} tone="success" />
           <DrawerStat
             label={t`Cached`}
             value={cachePct !== null ? `${cachePct}%` : '—'}
             icon={<ServerIcon size={15} strokeWidth={2.2} />}
-            color="var(--accent-primary)"
+            tone="accent"
           />
           <DrawerStat
             label={t`Cost`}
@@ -195,7 +196,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             valueTestId={`trace-cost-${trace.id}`}
             value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}
-            color="var(--warn)"
+            tone="warn"
             sub={trace.costEur == null
               ? <Button variant="link" className="text-caption" onClick={() => { onClose(); navigate('/settings/providers'); }} title={t`Configure pricing for this model endpoint`}><Trans>Set price →</Trans></Button>
               : undefined}

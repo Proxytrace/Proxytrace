@@ -110,8 +110,8 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 items-center">
           <Stat label={t`Sample`}   value={`${ab.completedCases}/${ab.totalCases}`}/>
           <Stat label={t`Duration`} value={fmtDuration(ab.durationMs)}/>
-          <Stat label={t`Passed`}   value={ab.passedCases} color="var(--success)"/>
-          <Stat label={t`Failed`}   value={ab.failedCases} color="var(--danger)"/>
+          <Stat label={t`Passed`}   value={ab.passedCases} tone="success"/>
+          <Stat label={t`Failed`}   value={ab.failedCases} tone="danger"/>
         </div>
       </div>
 
@@ -124,11 +124,11 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         </div>
         {hasResults && (
           <div className="flex items-center gap-3 mt-1.5 text-caption text-muted">
-            <LegendDot color="var(--success)" label={t`${ab.passedCases} passed`}/>
-            <LegendDot color="var(--danger)"  label={t`${ab.failedCases} failed`}/>
+            <LegendDot tone="success" label={t`${ab.passedCases} passed`}/>
+            <LegendDot tone="danger"  label={t`${ab.failedCases} failed`}/>
             {ab.totalCases - ab.completedCases > 0 && (
               <LegendDot
-                color="color-mix(in srgb, var(--text-muted) 60%, transparent)"
+                tone="neutral"
                 label={t`${ab.totalCases - ab.completedCases} pending`}
               />
             )}
@@ -139,21 +139,21 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
   );
 }
 
-function Stat({ label, value, color }: { label: string; value: string | number; color?: string }) {
+function Stat({ label, value, tone }: { label: string; value: string | number; tone?: DisplayTone }) {
   return (
     <>
       <span className="text-caption text-muted font-medium uppercase tracking-[0.07em]">{label}</span>
-      <span className="mono text-body font-semibold" style={{ color: color ?? 'var(--text-primary)' }}>
+      <span className={cn('mono text-body font-semibold', tone ? TONE_TEXT[tone] : 'text-primary')}>
         {value}
       </span>
     </>
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({ tone, label }: { tone: DisplayTone; label: string }) {
   return (
     <span className="inline-flex items-center gap-1 mono">
-      <span className="inline-block size-1.5 rounded-full" style={{ background: color }}/>
+      <span className={cn('inline-block size-1.5 rounded-full', TONE_BG[tone])}/>
       {label}
     </span>
   );

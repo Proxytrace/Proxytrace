@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { XIcon } from '../../../components/icons';
+import { Modal } from '../../../components/overlays/Modal';
 import { useFeature } from '../../../api/license';
 import { EvaluatorKind, type AgenticEvaluatorPresetDto } from '../../../api/models';
 import { EvaluatorForm } from '../EvaluatorForm';
@@ -25,16 +26,9 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
   const { t, i18n } = useLingui();
   const agenticEnabled = useFeature('AgenticEvaluators');
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/[0.7] backdrop-blur-[8px]"
-    >
-      <div
-        onClick={ev => ev.stopPropagation()}
-        data-testid="evaluator-new-modal"
-        className="w-[min(720px,100%)] max-h-[88vh] overflow-auto bg-card rounded-xl shadow-[var(--shadow-float)]"
-      >
-        <div className="flex items-center justify-between px-5 py-5 border-b border-hairline">
+    <Modal onClose={onClose} size="md">
+      <div data-testid="evaluator-new-modal">
+        <div className="flex items-start justify-between gap-2 mb-5">
           <div>
             <div className="text-h2 font-semibold tracking-[-0.01em]"><Trans>New evaluator</Trans></div>
             <div className="text-body text-muted mt-0.5">
@@ -44,36 +38,34 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
           <IconButton onClick={onClose} aria-label={t`Close`}><XIcon size={16} /></IconButton>
         </div>
 
-        <div className="p-5">
-          {!pickedKind ? (
-            <div className="grid grid-cols-2 gap-2.5">
-              {KIND_ORDER.map(k => (
-                <KindPickerCard
-                  key={k}
-                  kind={k}
-                  onPick={setPickedKind}
-                  locked={k === EvaluatorKind.Agentic && !agenticEnabled}
-                />
-              ))}
+        {!pickedKind ? (
+          <div className="grid grid-cols-2 gap-2.5">
+            {KIND_ORDER.map(k => (
+              <KindPickerCard
+                key={k}
+                kind={k}
+                onPick={setPickedKind}
+                locked={k === EvaluatorKind.Agentic && !agenticEnabled}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3.5">
+            <div className="flex items-center gap-2">
+              <span className={cn(
+                'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-body font-semibold',
+                categoryTint18[KIND_CATEGORY[pickedKind]],
+                categoryText[KIND_CATEGORY[pickedKind]],
+              )}>
+                {i18n._(META[pickedKind].label)}
+              </span>
+              <Button variant="secondary" size="sm" onClick={() => setPickedKind(null)}><Trans>← Change</Trans></Button>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3.5">
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-body font-semibold',
-                  categoryTint18[KIND_CATEGORY[pickedKind]],
-                  categoryText[KIND_CATEGORY[pickedKind]],
-                )}>
-                  {i18n._(META[pickedKind].label)}
-                </span>
-                <Button variant="secondary" size="sm" onClick={() => setPickedKind(null)}><Trans>← Change</Trans></Button>
-              </div>
-              <EvaluatorForm form={form} setForm={setForm} kind={pickedKind} presets={presets} />
-            </div>
-          )}
-        </div>
+            <EvaluatorForm form={form} setForm={setForm} kind={pickedKind} presets={presets} />
+          </div>
+        )}
 
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-hairline">
+        <div className="mt-5 flex items-center justify-between gap-2">
           <span className="text-body-sm text-muted"><Trans>You can change the configuration later from the evaluator's settings.</Trans></span>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={onClose}><Trans>Cancel</Trans></Button>
@@ -90,6 +82,6 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

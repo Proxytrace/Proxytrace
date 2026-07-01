@@ -47,7 +47,7 @@ export function Widget({
       {showHeader && (
         <div
           className={`flex items-center gap-2 px-4 py-3 ${collapsed ? '' : 'border-b border-hairline'}${
-            collapsible ? ' cursor-pointer hover:bg-[var(--bg-wash-hover)] transition-colors duration-100' : ''
+            collapsible ? ' cursor-pointer hover:bg-[var(--bg-wash-hover)] transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]' : ''
           }`}
           onClick={collapsible ? () => setCollapsed(c => !c) : undefined}
           role={collapsible ? 'button' : undefined}

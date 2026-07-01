@@ -4,8 +4,9 @@ import type { ArtifactKind, ArtifactPayloads } from '../tracey-artifact-kinds';
 
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
- * services; `navigate` performs a client-side route change; `confirm` gates write tools
- * (auto-approve resolves it to `true` without prompting).
+ * services; `navigate` performs a client-side route change; `confirm` is the write-tool gate —
+ * today it always resolves `true` (writes are auto-approved), but every write still calls it
+ * before mutating so a confirmation prompt could be reintroduced in the tool layer.
  */
 export interface TraceyToolContext {
   projectId?: string;
@@ -35,7 +36,7 @@ export interface TraceyToolContext {
 export interface TraceyTool<TArgs = Record<string, unknown>> {
   description: string;
   parameters: z.ZodType<TArgs>;
-  /** Whether this tool mutates state and must be confirmed when auto-approve is off. */
+  /** Whether this tool mutates state and must pass the `confirm` gate before doing so. */
   confirm: boolean;
   /**
    * Runs the tool client-side. Omitted for human-in-the-loop tools (e.g. `ask_questions`)

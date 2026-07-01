@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
+import { i18n } from "../../i18n";
 import { inferJsonSchema, generateSchemaFromExample } from "./jsonSchemaInference";
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: "en", messages: {} }));
 
 describe("inferJsonSchema", () => {
   it("maps primitives to their schema types", () => {
@@ -79,15 +83,14 @@ describe("generateSchemaFromExample", () => {
   });
 
   it("rejects empty input", () => {
-    expect(generateSchemaFromExample("  ")).toEqual({
-      ok: false,
-      error: "Paste an example JSON value first.",
-    });
+    const res = generateSchemaFromExample("  ");
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(i18n._(res.error)).toBe("Paste an example JSON value first.");
   });
 
   it("reports invalid JSON with the parser detail", () => {
     const res = generateSchemaFromExample("{nope");
     expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toMatch(/^Not valid JSON — /);
+    if (!res.ok) expect(i18n._(res.error)).toMatch(/^Not valid JSON — /);
   });
 });

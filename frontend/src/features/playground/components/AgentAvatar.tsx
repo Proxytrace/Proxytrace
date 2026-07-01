@@ -31,14 +31,12 @@ export function AgentAvatar({ seed, label, size = 32 }: Props) {
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center rounded-full font-semibold text-white shrink-0 select-none"
+      className="inline-flex items-center justify-center rounded-full font-semibold text-white shrink-0 select-none tracking-[0.02em] shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_2px_6px_rgba(0,0,0,0.35)]"
       style={{
         width: size,
         height: size,
         background: gradientFor(seed),
         fontSize: Math.max(10, Math.round(size * 0.38)),
-        boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 2px 6px rgba(0,0,0,0.35)',
-        letterSpacing: '0.02em',
       }}
     >
       {initials}

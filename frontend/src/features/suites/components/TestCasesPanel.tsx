@@ -135,9 +135,18 @@ function CaseRow({
   const snippet = lastUserSnippet(testCase.input).slice(0, 120);
   return (
     <li
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
       onClick={onSelect}
+      onKeyDown={e => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        'cursor-pointer transition-colors duration-100 px-3 py-2.5 border-l-[3px] border-b border-b-hairline',
+        'cursor-pointer transition-colors duration-100 px-3 py-2.5 border-l-[3px] border-b border-b-hairline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
         selected ? 'border-l-accent bg-accent-subtle' : 'border-l-transparent',
         removing && 'opacity-55',
       )}
@@ -176,9 +185,18 @@ function AddedTraceRow({
   const snippet = traceUserSnippet(trace).slice(0, 120);
   return (
     <li
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
       onClick={onSelect}
+      onKeyDown={e => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        'cursor-pointer transition-colors duration-100 px-3 py-2.5 border-l-[3px] border-b border-b-hairline border-l-accent',
+        'cursor-pointer transition-colors duration-100 px-3 py-2.5 border-l-[3px] border-b border-b-hairline border-l-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
         selected ? 'bg-accent-subtle' : 'bg-accent-subtle/40',
       )}
     >

@@ -1,7 +1,7 @@
 import { useThread } from '@assistant-ui/react';
-import { Trans } from '@lingui/react/macro';
-import { SparklesIcon } from '../../../components/icons';
-import { Button } from '../../../components/ui/Button';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { LayoutSidebarIcon, SparklesIcon } from '../../../components/icons';
+import { IconButton } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
 import type { TraceyChat } from '../useTraceyChat';
 import { TraceyConversation } from '../TraceyConversation';
@@ -9,11 +9,15 @@ import { TraceyComposer } from './TraceyComposer';
 
 interface TraceyChatPanelProps {
   chat: TraceyChat;
+  /** Whether the conversation-history rail is collapsed (drives the toggle's label). */
+  railCollapsed: boolean;
+  onToggleRail: () => void;
 }
 
-/** The chat column: header controls, pending-confirmation card, message list, composer. */
-export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
-  const { autoApprove, setAutoApprove, clear, pendingConfirmation, resolveConfirmation } = chat;
+/** The chat column: header controls, message list, composer. */
+export function TraceyChatPanel({ chat, railCollapsed, onToggleRail }: TraceyChatPanelProps) {
+  const { t } = useLingui();
+  const { startNewConversation } = chat;
   // Empty thread → "initial view": composer floats toward the middle with starter chips. The
   // bottom spacer animates to 0 on the first message (and back when the conversation is cleared),
   // which slides the composer down to / up from the bottom.
@@ -31,30 +35,21 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
             <div className="text-body-sm text-muted"><Trans>Your in-app assistant</Trans></div>
           </div>
         </div>
+        <IconButton
+          onClick={onToggleRail}
+          aria-label={railCollapsed ? t`Show conversations` : t`Hide conversations`}
+          title={railCollapsed ? t`Show conversations` : t`Hide conversations`}
+          data-testid="tracey-rail-toggle"
+        >
+          {/* Mirrored: the divided pane of the glyph matches the rail's right-hand position. */}
+          <LayoutSidebarIcon size={16} className="-scale-x-100" />
+        </IconButton>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col pb-3 pt-1">
-        {pendingConfirmation && (
-          <div className="mx-auto mt-2 w-full max-w-3xl px-4">
-            <div className="rounded-lg border border-[color-mix(in_srgb,var(--warn)_35%,transparent)] bg-warn-subtle px-3 py-2.5">
-              <div className="text-title text-primary">{pendingConfirmation.summary}</div>
-              <div className="mt-2 flex gap-2">
-                <Button variant="primary" size="sm" onClick={() => resolveConfirmation(true)}>
-                  <Trans>Confirm</Trans>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => resolveConfirmation(false)}>
-                  <Trans>Cancel</Trans>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <TraceyConversation />
         <TraceyComposer
-          autoApprove={autoApprove}
-          setAutoApprove={setAutoApprove}
-          onClear={clear}
+          onNewConversation={startNewConversation}
           showStarters={isEmpty}
         />
         <div

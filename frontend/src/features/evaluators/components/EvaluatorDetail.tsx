@@ -52,14 +52,14 @@ export function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeCh
   }
 
   return (
-    <div data-testid="evaluator-detail" className="fade-up flex flex-col gap-3.5">
+    <div data-testid="evaluator-detail" className="fade-up flex flex-col gap-3.5 @container">
       <WorkspaceHeader evaluator={e} onEdit={onEdit} onDelete={onDelete} onTestBench={() => onTestBench(e.id)} />
 
       <PerformancePanel evaluator={e} overview={overview} range={range} onRangeChange={onRangeChange} />
 
       <DefinitionPanel evaluator={e} />
 
-      <div className={cn('grid gap-3.5', showCost ? 'grid-cols-[1.4fr_1fr]' : 'grid-cols-1')}>
+      <div className={cn('grid gap-3.5', showCost ? 'grid-cols-1 @3xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]' : 'grid-cols-1')}>
         <ScoreDistributionPanel
           buckets={overview?.scoreDistribution ?? []}
           category={cat}

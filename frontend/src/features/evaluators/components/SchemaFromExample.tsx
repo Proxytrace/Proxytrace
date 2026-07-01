@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { Button } from '../../../components/ui/Button';
 import { Textarea } from '../../../components/ui/Textarea';
 import { generateSchemaFromExample } from '../jsonSchemaInference';
@@ -11,8 +12,9 @@ interface Props {
 
 /** Collapsed helper under the JSON Schema field: paste an example response, get a draft schema. */
 export function SchemaFromExample({ onGenerate }: Props) {
+  const { i18n } = useLingui();
   const [example, setExample] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MessageDescriptor | null>(null);
 
   const generate = () => {
     const result = generateSchemaFromExample(example);
@@ -40,7 +42,7 @@ export function SchemaFromExample({ onGenerate }: Props) {
           rows={5}
           invalid={!!error}
         />
-        {error && <div className="text-body-sm text-danger">{error}</div>}
+        {error && <div className="text-body-sm text-danger">{i18n._(error)}</div>}
         <div className="flex items-center justify-between gap-3">
           <div className="text-body-sm text-muted">
             <Trans>Replaces the schema above — every example key becomes required; loosen by hand if needed.</Trans>

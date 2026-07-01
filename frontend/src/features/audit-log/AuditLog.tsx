@@ -82,7 +82,7 @@ export default function AuditLog({ projectScoped }: AuditLogProps) {
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-h1 font-semibold text-primary"><Trans>Audit Log</Trans></h1>
-          <p className="text-title text-muted mt-0.5">
+          <p className="text-body-sm text-muted mt-1">
             {projectScoped
               ? <Trans>Security and lifecycle events for this project.</Trans>
               : <Trans>All security and lifecycle events across the workspace.</Trans>

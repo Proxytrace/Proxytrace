@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { SkeletonList } from '../../../components/ui/Skeleton';
 import { fmtDateTime } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import type { AuditLogEntryDto } from '../../../api/models';
@@ -16,6 +17,13 @@ interface AuditLogTableProps {
 
 export function AuditLogTable({ entries, selectedId, onSelect, isFetching }: AuditLogTableProps) {
   const { t, i18n } = useLingui();
+  if (entries.length === 0 && isFetching) {
+    return (
+      <div className="p-3">
+        <SkeletonList rows={8} height={44} gap={4} />
+      </div>
+    );
+  }
   if (entries.length === 0) {
     return (
       <EmptyState

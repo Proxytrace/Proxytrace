@@ -4,6 +4,9 @@
  * object key becomes required; users loosen it by hand where needed.
  */
 
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
+
 export interface InferredJsonSchema {
   type: string;
   properties?: Record<string, InferredJsonSchema>;
@@ -46,18 +49,18 @@ function inferArraySchema(value: unknown[]): InferredJsonSchema {
 
 export type SchemaGenerationResult =
   | { ok: true; schema: string }
-  | { ok: false; error: string };
+  | { ok: false; error: MessageDescriptor };
 
 /** Parses the pasted example and returns a pretty-printed schema, or a user-facing error. */
 export function generateSchemaFromExample(exampleJson: string): SchemaGenerationResult {
   const trimmed = exampleJson.trim();
-  if (!trimmed) return { ok: false, error: 'Paste an example JSON value first.' };
+  if (!trimmed) return { ok: false, error: msg`Paste an example JSON value first.` };
   let parsed: unknown;
   try {
     parsed = JSON.parse(trimmed);
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: `Not valid JSON — ${detail}` };
+    return { ok: false, error: msg`Not valid JSON — ${detail}` };
   }
   return { ok: true, schema: JSON.stringify(inferJsonSchema(parsed), null, 2) };
 }

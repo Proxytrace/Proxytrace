@@ -117,7 +117,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
       <div className={cn(
         'flex items-center gap-2 px-3 py-1.75 rounded-md text-title transition-shadow',
         inputBgCls,
-        'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)]',
+        'shadow-[inset_0_0_0_1px_var(--border-subtle),var(--shadow-pill)]',
         'focus-within:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_40%,transparent),0_1px_2px_rgba(0,0,0,0.2)]',
       )}>
         <SearchIcon size={14} />
@@ -154,8 +154,8 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
         <div className={cn(
           'absolute top-[calc(100%+8px)]',
           dropdownWidthCls,
-          'rounded-lg bg-[rgba(24,24,28,0.96)] backdrop-blur-[20px] backdrop-saturate-[140%]',
-          'shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6),inset_0_0_0_1px_rgba(255,255,255,0.06)]',
+          'rounded-lg bg-[color-mix(in_srgb,var(--bg-secondary)_96%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%]',
+          'shadow-[var(--shadow-float)]',
           'z-[100] overflow-hidden',
         )}>
           {!isRecentMode && !searchEnabled && (

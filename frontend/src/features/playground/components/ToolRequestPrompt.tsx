@@ -41,11 +41,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
 
   return (
     <div
-      className="rounded-lg p-3 flex flex-col gap-2.5"
-      style={{
-        background: 'var(--success-subtle)',
-        border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)',
-      }}
+      className="rounded-lg p-3 flex flex-col gap-2.5 bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)]"
     >
       <div className="flex items-center gap-2 text-body font-mono">
         <span className="font-bold text-success"><Trans>Tool requested:</Trans></span>

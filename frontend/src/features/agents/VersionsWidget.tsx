@@ -5,6 +5,7 @@ import { agentColor } from '../../lib/colors';
 import { fmtDate } from '../../lib/format';
 import { cn } from '../../lib/cn';
 import { Button } from '../../components/ui/Button';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { Widget } from './widgets/Widget';
 import { MoveVersionDialog } from './widgets/MoveVersionDialog';
 import { useAgentVersions } from './hooks/useAgentVersions';
@@ -31,7 +32,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
       className={className}
       bodyClassName={cn('p-4')}
     >
-      {isLoading && <p className="text-body-sm text-muted"><Trans>Loading…</Trans></p>}
+      {isLoading && <SkeletonList rows={4} height={56} gap={2} className="pr-1.5" />}
       {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted"><Trans>No versions yet.</Trans></p>}
       {!isLoading && ordered.length > 0 && (
         <ul
@@ -50,7 +51,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
               >
                 {!isLast && <span className="absolute left-[5px] top-[21px] -bottom-0.5 border-l border-hairline" />}
                 <span
-                  className="absolute left-0 top-[10px] w-[11px] h-[11px] rounded-full border-2 bg-card"
+                  className="absolute left-0 top-[10px] w-[11px] h-[11px] rounded-full border bg-card"
                   style={isCurrent ? { background: c, borderColor: c } : { borderColor: 'var(--border)' }}
                 />
                 <div

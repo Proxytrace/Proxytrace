@@ -15,7 +15,9 @@ export type FlowState = 'complete' | 'current' | 'pending' | 'rejected';
 
 export interface FlowStage {
   key: FlowStageKey;
-  title: string;
+  // Glossary terms (Proposal, Theory) stay as plain English strings; localizable stage names are
+  // MessageDescriptors resolved with i18n._() at the render site.
+  title: string | MessageDescriptor;
   statusLabel: MessageDescriptor;
   state: FlowState;
 }
@@ -39,7 +41,7 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
 
   const abTest: FlowStage = {
     key: 'abTest',
-    title: 'A/B validation',
+    title: msg`A/B validation`,
     ...(validated
       ? { state: 'complete' as const, statusLabel: msg`Improvement confirmed` }
       : invalidated
@@ -61,12 +63,12 @@ export function buildDecisionFlow(theory: TheoryDto, proposal: OptimizationPropo
         : { state: 'pending' as const, statusLabel: msg`Pending validation` }),
   };
 
-  const outcome: FlowStage = { key: 'outcome', title: 'Outcome', ...outcomeState(theory, proposal) };
+  const outcome: FlowStage = { key: 'outcome', title: msg`Outcome`, ...outcomeState(theory, proposal) };
 
   return [
     {
       key: 'evidence',
-      title: 'Evidence',
+      title: msg`Evidence`,
       state: 'complete',
       statusLabel: hasEvidence
         ? msg`${plural(theory.evidenceTestRunIds.length, { one: '# failing run', other: '# failing runs' })}`

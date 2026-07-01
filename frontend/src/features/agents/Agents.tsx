@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useSearchParams } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
 import { ChevronRightIcon } from '../../components/icons';
@@ -103,7 +104,28 @@ export default function Agents() {
                 highlightTool={highlightTool}
               />
             ) : selected ? (
-              <div className="text-center py-12 text-body text-muted"><Trans>Loading agent…</Trans></div>
+              // Reserve the tall detail layout (header + performance card + widget grid) so the
+              // panel doesn't collapse to a single line and jump once the full agent resolves.
+              <div
+                role="status"
+                aria-busy="true"
+                className="flex flex-col gap-3.5 min-w-0 @container"
+              >
+                <span className="sr-only"><Trans>Loading agent…</Trans></span>
+                <Skeleton height={96} className="rounded-lg" />
+                <Skeleton height={180} className="rounded-lg" />
+                <div className="grid gap-3.5 items-start grid-cols-1 @3xl:grid-cols-[minmax(0,1fr)_340px]">
+                  <div className="flex flex-col gap-3.5 min-w-0">
+                    <Skeleton height={220} className="rounded-lg" />
+                    <Skeleton height={160} className="rounded-lg" />
+                  </div>
+                  <div className="flex flex-col gap-3.5 min-w-0">
+                    <Skeleton height={140} className="rounded-lg" />
+                    <Skeleton height={120} className="rounded-lg" />
+                    <Skeleton height={120} className="rounded-lg" />
+                  </div>
+                </div>
+              </div>
             ) : !isLoading ? (
               <div className="text-center py-12 text-body text-muted"><Trans>Select an agent to view details.</Trans></div>
             ) : null}

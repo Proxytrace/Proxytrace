@@ -6,7 +6,9 @@ import { type FlowState, FLOW_STATE_TONE } from '../decisionFlow';
 import { TONE_SUBTLE_BG, TONE_TEXT } from '../shared';
 
 interface Props {
-  title: string;
+  /** Stable slug for the data-testid — decoupled from the (possibly translated) title. */
+  stepId: string;
+  title: string | MessageDescriptor;
   statusLabel: MessageDescriptor;
   state: FlowState;
   isLast: boolean;
@@ -21,13 +23,14 @@ const STATE_ICON: Record<FlowState, React.ReactNode> = {
 };
 
 /** One node of the decision-flow timeline: a status dot + connector rail, a header, and a body. */
-export function FlowStep({ title, statusLabel, state, isLast, children }: Props) {
+export function FlowStep({ stepId, title, statusLabel, state, isLast, children }: Props) {
   const { i18n } = useLingui();
   const tone = FLOW_STATE_TONE[state];
   const dimmed = state === 'pending';
+  const resolvedTitle = typeof title === 'string' ? title : i18n._(title);
 
   return (
-    <li className={cn('flex gap-3', dimmed && 'opacity-55')} data-testid={`flow-step-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+    <li className={cn('flex gap-3', dimmed && 'opacity-55')} data-testid={`flow-step-${stepId}`}>
       <div className="flex flex-col items-center">
         <span className={cn('inline-flex size-6 shrink-0 items-center justify-center rounded-full', TONE_SUBTLE_BG[tone], TONE_TEXT[tone], state === 'current' && 'pulse-dot')}>
           {STATE_ICON[state]}
@@ -37,7 +40,7 @@ export function FlowStep({ title, statusLabel, state, isLast, children }: Props)
 
       <div className="flex-1 min-w-0 pb-5">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-h2 font-semibold leading-tight text-primary m-0">{title}</h3>
+          <h3 className="text-h2 font-semibold leading-tight text-primary m-0">{resolvedTitle}</h3>
           <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold', TONE_SUBTLE_BG[tone], TONE_TEXT[tone])}>
             {i18n._(statusLabel)}
           </span>

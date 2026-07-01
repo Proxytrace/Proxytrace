@@ -29,7 +29,6 @@ export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, age
   const { t } = useLingui();
   return (
     <ListRail
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy
       listTestId="run-list"
       title={t`Runs`}
       count={groups.length}
