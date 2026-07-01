@@ -54,7 +54,6 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
 
   return (
     <ListRail
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- data-testid value, not UI copy
       railTestId="evaluator-rail"
       title={t`Evaluators`}
       count={evaluators.length}

@@ -31,6 +31,10 @@ msgstr ". Paste a valid key below, or continue on the Free tier."
 msgid "· +{0} pending"
 msgstr "· +{0} pending"
 
+#. placeholder {0}: pendingDelete.title
+msgid "\"{0}\" will be permanently removed from this device."
+msgstr "\"{0}\" will be permanently removed from this device."
+
 msgid "\"From\" must be before \"To\"."
 msgstr "\"From\" must be before \"To\"."
 
@@ -1058,9 +1062,6 @@ msgstr "Authentication code"
 msgid "Auto"
 msgstr "Auto"
 
-msgid "Auto-approve actions"
-msgstr "Auto-approve actions"
-
 msgid "Auto-generated"
 msgstr "Auto-generated"
 
@@ -1312,9 +1313,6 @@ msgstr "Configure upstream model providers and manage Proxytrace API keys."
 msgid "Configure your evaluator."
 msgstr "Configure your evaluator."
 
-msgid "Confirm"
-msgstr "Confirm"
-
 msgid "Confirmed — ready to ship"
 msgstr "Confirmed — ready to ship"
 
@@ -1333,6 +1331,9 @@ msgstr "Connection successful."
 #. placeholder {0}: testCase.input.length
 msgid "Conversation · {0} input · 1 expected"
 msgstr "Conversation · {0} input · 1 expected"
+
+msgid "Conversations"
+msgstr "Conversations"
 
 msgid "Copied"
 msgstr "Copied"
@@ -1607,6 +1608,9 @@ msgstr "Delete agent"
 msgid "Delete all non-model data"
 msgstr "Delete all non-model data"
 
+msgid "Delete conversation"
+msgstr "Delete conversation"
+
 msgid "Delete key"
 msgstr "Delete key"
 
@@ -1635,6 +1639,9 @@ msgstr "Delete schedule \"{0}\"?"
 
 msgid "Delete suite"
 msgstr "Delete suite"
+
+msgid "Delete this conversation?"
+msgstr "Delete this conversation?"
 
 msgid "Deleting…"
 msgstr "Deleting…"
@@ -2127,6 +2134,9 @@ msgstr "Have a license key?"
 
 msgid "Hide"
 msgstr "Hide"
+
+msgid "Hide conversations"
+msgstr "Hide conversations"
 
 msgid "Hide system agents"
 msgstr "Hide system agents"
@@ -2843,6 +2853,9 @@ msgstr "No cases match this filter."
 
 msgid "No changes"
 msgstr "No changes"
+
+msgid "No conversations yet"
+msgstr "No conversations yet"
 
 msgid "No data"
 msgstr "No data"
@@ -4285,6 +4298,9 @@ msgstr "Show all traces"
 msgid "Show available tools"
 msgstr "Show available tools"
 
+msgid "Show conversations"
+msgstr "Show conversations"
+
 msgid "Show ephemeral A/B validation runs"
 msgstr "Show ephemeral A/B validation runs"
 
@@ -4385,6 +4401,9 @@ msgstr "Start a conversation"
 
 msgid "Start a test run"
 msgstr "Start a test run"
+
+msgid "Start chatting to build your history."
+msgstr "Start chatting to build your history."
 
 msgid "Start new test run"
 msgstr "Start new test run"

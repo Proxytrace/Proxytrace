@@ -31,6 +31,10 @@ msgstr ". Incolla qui sotto una chiave valida, oppure continua con il piano Free
 msgid "· +{0} pending"
 msgstr "· +{0} in sospeso"
 
+#. placeholder {0}: pendingDelete.title
+msgid "\"{0}\" will be permanently removed from this device."
+msgstr "\"{0}\" verrà rimosso definitivamente da questo dispositivo."
+
 msgid "\"From\" must be before \"To\"."
 msgstr "\"From\" deve precedere \"To\"."
 
@@ -1058,9 +1062,6 @@ msgstr "Codice di autenticazione"
 msgid "Auto"
 msgstr "Automatico"
 
-msgid "Auto-approve actions"
-msgstr "Auto-approva azioni"
-
 msgid "Auto-generated"
 msgstr "Generato automaticamente"
 
@@ -1312,9 +1313,6 @@ msgstr "Configura i provider di model upstream e gestisci le API key di Proxytra
 msgid "Configure your evaluator."
 msgstr "Configura il tuo Evaluator."
 
-msgid "Confirm"
-msgstr "Conferma"
-
 msgid "Confirmed — ready to ship"
 msgstr "Confermato — pronto per la distribuzione"
 
@@ -1333,6 +1331,9 @@ msgstr "Connessione riuscita."
 #. placeholder {0}: testCase.input.length
 msgid "Conversation · {0} input · 1 expected"
 msgstr "Conversazione · input di {0} · 1 atteso"
+
+msgid "Conversations"
+msgstr "Conversazioni"
 
 msgid "Copied"
 msgstr "Copiato"
@@ -1607,6 +1608,9 @@ msgstr "Elimina agent"
 msgid "Delete all non-model data"
 msgstr "Elimina tutti i dati non-model"
 
+msgid "Delete conversation"
+msgstr "Elimina conversazione"
+
 msgid "Delete key"
 msgstr "Elimina chiave"
 
@@ -1635,6 +1639,9 @@ msgstr "Eliminare pianificazione \"{0}\"?"
 
 msgid "Delete suite"
 msgstr "Elimina suite"
+
+msgid "Delete this conversation?"
+msgstr "Eliminare questa conversazione?"
 
 msgid "Deleting…"
 msgstr "Eliminazione…"
@@ -2127,6 +2134,9 @@ msgstr "Hai una chiave di licenza?"
 
 msgid "Hide"
 msgstr "Nascondi"
+
+msgid "Hide conversations"
+msgstr "Nascondi conversazioni"
 
 msgid "Hide system agents"
 msgstr "Nascondi gli agenti di sistema"
@@ -2843,6 +2853,9 @@ msgstr "Nessun caso corrisponde a questo filtro."
 
 msgid "No changes"
 msgstr "Nessuna modifica"
+
+msgid "No conversations yet"
+msgstr "Nessuna conversazione ancora"
 
 msgid "No data"
 msgstr "Nessun dato"
@@ -4285,6 +4298,9 @@ msgstr "Mostra tutti i Trace"
 msgid "Show available tools"
 msgstr "Mostra i Tool disponibili"
 
+msgid "Show conversations"
+msgstr "Mostra conversazioni"
+
 msgid "Show ephemeral A/B validation runs"
 msgstr "Mostra i Run di validazione A/B effimeri"
 
@@ -4385,6 +4401,9 @@ msgstr "Avvia una conversazione"
 
 msgid "Start a test run"
 msgstr "Avvia un test run"
+
+msgid "Start chatting to build your history."
+msgstr "Inizia a chattare per creare la tua cronologia."
 
 msgid "Start new test run"
 msgstr "Avvia un nuovo test run"

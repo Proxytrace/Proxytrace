@@ -2,8 +2,9 @@ import { msg } from '@lingui/core/macro';
 import { type MessageDescriptor } from '@lingui/core';
 
 /**
- * Curated prompt presets ("skills") shown as composer chips and at the top of the slash menu.
- * Selecting one prefills the composer with `prompt`; the user can edit before sending.
+ * Curated prompt presets ("skills") shown as composer starter chips and at the top of the slash
+ * menu. A starter chip sends its `prompt` immediately; picking one from the slash menu prefills
+ * the composer so the user can edit before sending.
  *
  * `label`/`hint` are shown in the UI, so they are MessageDescriptors resolved with `i18n._()`
  * at the render site. `prompt` is fed to the LLM and stays untranslated.

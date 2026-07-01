@@ -23,7 +23,6 @@ export function ProviderList({ providers, loading, selectedId, onSelect }: Provi
     <ListRail
       title={t`Providers`}
       count={providers.length}
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- data-testid value, not UI copy
       listTestId="provider-list"
       loading={loading}
       skeletonRows={5}

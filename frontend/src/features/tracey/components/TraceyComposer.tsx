@@ -6,15 +6,12 @@ import { QUICK_ACTIONS } from '../tracey-quick-actions';
 import { TRACEY_TOOLS_META } from '../tracey-tools';
 import { ArrowUpIcon, MessagePlusIcon, SparklesIcon, StopIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
-import { SwitchPill } from '../../../components/ui/SwitchPill';
 import { cn } from '../../../lib/cn';
 import { SlashMenu, type SlashItem } from './SlashMenu';
 import { ToolChips } from './ToolChips';
 
 interface TraceyComposerProps {
-  autoApprove: boolean;
-  setAutoApprove: (value: boolean) => void;
-  onClear: () => void;
+  onNewConversation: () => void;
   /** Initial-view starter chips: shown only while the conversation is empty. */
   showStarters: boolean;
 }
@@ -44,19 +41,7 @@ function matches(item: SlashItem, query: string, i18n: I18n): boolean {
   return haystack.toLowerCase().includes(query);
 }
 
-/** Pill-style toggle that gates write tools behind a confirmation prompt when off. */
-function AutoApproveToggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
-  return (
-    <SwitchPill
-      size="sm"
-      checked={checked}
-      onChange={onChange}
-      label={<Trans>Auto-approve actions</Trans>}
-    />
-  );
-}
-
-export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStarters }: TraceyComposerProps) {
+export function TraceyComposer({ onNewConversation, showStarters }: TraceyComposerProps) {
   const { t, i18n } = useLingui();
   const composer = useComposerRuntime();
   const text = useComposer(c => c.text);
@@ -149,13 +134,13 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
             placeholder={t`Ask Tracey…  (/ for tools)`}
             className="max-h-48 min-h-16 w-full resize-none bg-transparent px-1 pt-1 text-body text-primary outline-none placeholder:text-muted"
           />
-          <div className="flex items-center justify-between gap-2">
-            <AutoApproveToggle checked={autoApprove} onChange={setAutoApprove} />
+          <div className="flex items-center justify-end gap-2">
             <div className="flex items-center gap-1">
               <IconButton
-                onClick={onClear}
+                onClick={onNewConversation}
                 aria-label={t`New conversation`}
                 title={t`New conversation`}
+                data-testid="tracey-new-conversation-composer"
               >
                 <MessagePlusIcon size={16} />
               </IconButton>

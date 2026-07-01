@@ -16,10 +16,11 @@ captured as a trace — she is the platform's first dogfood agent.
 
 ## Opening Tracey AI
 
-Open **Tracey AI** from the sidebar (under *Overview*). The page is a single chat column;
-plots, tables, entity cards, and question widgets render **inline in the conversation** as
-Tracey produces them. Your conversation is remembered per project on this device until you
-clear it.
+Open **Tracey AI** from the sidebar (under *Overview*). The page is the chat itself; plots,
+tables, entity cards, and question widgets render **inline in the conversation** as Tracey
+produces them. A **conversation-history panel** can be opened on the right via the sidebar icon
+in the chat header. Your conversations are remembered per project on this device — see
+[Conversation history](#conversation-history) below.
 
 ## Asking questions
 
@@ -67,8 +68,9 @@ glides back up. This is purely presentational — your history still persists pe
 ![The Tracey "/" menu: curated Quick Actions (List agents, Plot token usage, Run a suite, Review proposals, Optimize an agent) above the Tools list.](/screenshots/tracey/menu.png)
 
 In the opening view, **chips** surface common quick actions (e.g. *List agents*, *Plot token
-usage*, *Improve failing runs*). Click one to prefill the message box; edit it if you like,
-then send. The chips show only while the conversation is empty.
+usage*, *Improve failing runs*). Click one and its request is **sent straight away** — no extra
+confirmation or send click needed. The chips show only while the conversation is empty; to tweak
+a prompt before sending, pick the quick action from the **`/`** menu instead.
 
 Type **`/`** at the start of a message to open a picker: curated quick actions on top and the
 full list of tools below. Use **↑/↓** to move, **Enter** to choose, **Esc** to dismiss.
@@ -121,7 +123,7 @@ each with a copy button. (Navigation and other plumbing tools always show as thi
 
 ## Running actions
 
-These actions change state and are therefore **confirmation-gated**:
+Beyond reading your data, Tracey can change state on your behalf:
 
 | Action | What it does |
 |--------|--------------|
@@ -133,9 +135,8 @@ These actions change state and are therefore **confirmation-gated**:
 | **Approve / reject a proposal** | Sets an optimization proposal's status. |
 | **Submit an optimization theory** | Theorizes a change to an agent and kicks off an A/B test (see *Optimizing an agent*). |
 
-With **Auto-approve** off (see below), Tracey shows a **Confirm / Cancel** card summarizing the
-action before anything happens, and nothing is executed until you confirm. With Auto-approve on
-(the default), the action runs immediately.
+Actions run **immediately** — Tracey states what she's doing in the conversation rather than
+pausing for a confirmation click, so watch the chat if you want to follow along.
 
 Once a **test run** starts, the chat shows a **live run-progress card**: a progress bar that
 fills as cases complete, a running case count, and a pass-rate badge — all streaming in real time
@@ -163,14 +164,8 @@ at the traces you care about and she'll do the curation:
   answer, so she can **set a case's expected output** — what the case is scored against — or
   **remove** a case that isn't useful.
 
-Each of these is a confirmation-gated write, and the resulting suite renders as a card you can open.
-A natural flow: find notable traces → build or extend a suite → refine the key cases → start a run.
-
-### Auto-approve
-
-Below the message box sits an **Auto-approve** toggle (default **on**). While it is on, Tracey
-performs write actions immediately without showing the confirmation card. Turn it off to get a
-**Confirm / Cancel** card before every write action. Your choice is remembered in the browser.
+The resulting suite renders as a card you can open. A natural flow: find notable traces → build
+or extend a suite → refine the key cases → start a run.
 
 ## Skills
 
@@ -233,12 +228,28 @@ optimization pipeline, tagged **via Tracey AI**. Identical theories are de-dupli
 project has a cap on how many can be validating at once, so if a submission is a duplicate or the
 queue is full, Tracey tells you instead of running it again.
 
-## Clearing the conversation
+## Conversation history
 
-The controls below the message box include a **New conversation** icon (next to the **send**
-button) — use it to start fresh. This wipes the locally stored thread for the current project —
-along with any cached result data Tracey kept in your browser for that project — and returns
-Tracey to her opening view.
+Tracey keeps a history of your recent conversations, per project, in a **side panel** on the right
+of the Tracey AI page. Everything is stored **locally in your browser** — conversations are private
+to this device and are never uploaded.
+
+The panel is **hidden by default**: the sidebar icon at the top right of the chat opens it, and
+closes it again to give the conversation the full width. Your choice is remembered on this device.
+
+- **Start a new conversation** with **New conversation** at the top of the rail (or the icon next to
+  the **send** button). Your current conversation isn't lost — it stays in the history list; the new
+  one begins on a clean slate. A conversation is titled automatically from your first message.
+- **Open a past conversation** by clicking it in the rail. It loads back into the chat and you can
+  **keep going** right where you left off — viewing and continuing are the same action. The active
+  conversation is highlighted.
+- **Delete a conversation** with the trash icon on its row (it appears on hover), then confirm.
+  Deleting is permanent and removes that conversation's cached result data from your browser too.
+- Tracey keeps your **20 most recent** conversations per project; once you pass that, the oldest one
+  drops off automatically.
+
+Because it's all stored locally, your history is **per browser and per device** — it won't follow
+you to another computer, and clearing your browser's site data removes it.
 
 ## Where Tracey's traces appear
 

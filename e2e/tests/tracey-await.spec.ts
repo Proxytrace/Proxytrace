@@ -6,7 +6,7 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 // once the run is done (i.e. she waited via await_actions and analysed in the same turn) rather
 // than firing the run and stopping. Real LLM + a real test run, so it is @llm-gated and given a
 // generous timeout. The assistant's tool choice is non-deterministic; the prompt is deliberately
-// explicit and auto-approve is enabled so start_test_run isn't blocked on a confirmation click.
+// explicit. Write actions are always auto-approved, so start_test_run needs no confirmation click.
 test.describe('@llm Tracey await_actions', () => {
   test.skip(!process.env.OPENAI_API_KEY, 'requires OPENAI_API_KEY env var');
 
@@ -40,11 +40,6 @@ test.describe('@llm Tracey await_actions', () => {
     test.setTimeout(180_000);
 
     await page.goto('/tracey-ai', { waitUntil: 'load' });
-
-    // Auto-approve defaults to on (persisted preference) so the confirm-gated start_test_run
-    // resolves without a confirmation card — assert it rather than toggling.
-    const autoApprove = page.getByRole('switch', { name: 'Auto-approve actions' });
-    await expect(autoApprove).toHaveAttribute('aria-checked', 'true');
 
     // Ask her to run the seeded suite and wait for the result. Referencing the suite + agent by
     // their unique names keeps her tool calls unambiguous.

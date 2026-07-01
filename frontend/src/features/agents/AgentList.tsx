@@ -34,7 +34,6 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
 
   return (
     <ListRail
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- test id, not UI copy
       listTestId="agent-list"
       title={t`Agents`}
       count={agents.length}

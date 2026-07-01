@@ -9,6 +9,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Conversation history for Tracey.** The Tracey AI page now keeps a conversation history: keep
+  and revisit up to 20 past conversations per project, open any one to view and continue it, and
+  delete the ones you no longer need. Conversations are titled automatically from your first message
+  and stored locally in your browser. The history lives in a side panel on the right, hidden by
+  default — the sidebar icon in the chat header opens and closes it, and the choice is remembered
+  on the device.
+
 ### Fixed
 
 - **Keyboard access across selectable lists.** Evaluator, test-case and trace rows in the suite
@@ -27,10 +36,22 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Tracey starter chips send immediately.** Clicking a conversation-starter chip on the empty
+  Tracey view now sends that request right away instead of only prefilling the message box. To edit
+  a quick-action prompt before sending, pick it from the `/` menu.
+- **Tracey always auto-approves actions.** The "Auto-approve actions" toggle is gone; Tracey's
+  write actions (starting runs, curating suites, deciding proposals, submitting theories) now
+  always run without a confirmation card, as they did with the toggle in its default position.
 - **UI consistency pass.** The Providers list now uses the same framed master/detail rail as Agents,
   Evaluators, Suites and Runs; a shared switch-pill control backs the toggles on the Agents, Traces and
   Tracey screens; hand-rolled dropdowns/menus were replaced with the standard components; and a sweep
   aligned spacing, colour, shadow and status treatments to the design tokens. Behaviour is unchanged.
+
+### Security
+
+- **Patched OpenAPI dependency.** `Microsoft.OpenApi` is pinned to 2.7.5, replacing the transitively
+  referenced 2.4.1 that carries a known high-severity advisory (GHSA-v5pm-xwqc-g5wc, OpenAPI parsing
+  can hang on circular schema references).
 
 ## [1.3.0] - 2026-06-30
 
