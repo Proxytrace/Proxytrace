@@ -1,6 +1,6 @@
 import { Select } from '../../../components/ui/Select';
 import type { UserRole } from '../../../api/models';
-import { USER_ROLES } from '../users';
+import { USER_ROLES } from '../usersMeta';
 
 interface UserRoleSelectProps {
   value: UserRole;

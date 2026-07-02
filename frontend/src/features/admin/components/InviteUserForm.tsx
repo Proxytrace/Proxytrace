@@ -5,7 +5,7 @@ import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import type { UserRole } from '../../../api/models';
 import { useCreateInvite } from '../hooks/useInvites';
-import { USER_ROLES } from '../users';
+import { USER_ROLES } from '../usersMeta';
 
 /** Admin form to invite a new local user by email; surfaces the share link on success. */
 export function InviteUserForm() {

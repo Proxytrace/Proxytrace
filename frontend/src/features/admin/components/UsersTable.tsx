@@ -2,7 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import type { UserDto, UserRole } from '../../../api/models';
-import { authSourceLabel, isLastAdmin } from '../users';
+import { authSourceLabel, isLastAdmin } from '../usersMeta';
 import { UserRoleSelect } from './UserRoleSelect';
 
 interface UsersTableProps {
