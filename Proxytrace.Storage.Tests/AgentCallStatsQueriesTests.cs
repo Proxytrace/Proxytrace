@@ -527,6 +527,80 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
         dist.CostPerConversationEur.Mean.Should().BeApproximately(expectedMean, 1e-9);
     }
 
+    [TestMethod]
+    public async Task GetSummary_NullLatencyCalls_DoNotBiasAverageLatency()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(100, 50, 0), latencyMs: 100, toolCount: 0, HttpStatusCode.OK);
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(100, 50, 0), latencyMs: 200, toolCount: 0, HttpStatusCode.OK);
+        await SeedNoLatencyCallAsync(services, agent, endpoint);
+
+        var summary = await reader.GetSummaryAsync(new StatisticsFilter(), CancellationToken);
+
+        // The latency-less (failed) call must not be averaged in as 0ms: (100+200)/2, not (100+200+0)/3.
+        summary.TotalCalls.Should().Be(3);
+        summary.AvgLatencyMs.Should().Be(150d);
+    }
+
+    [TestMethod]
+    public async Task GetSummary_OnlyNullLatencyCalls_AverageLatencyIsZero()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+
+        await SeedNoLatencyCallAsync(services, agent, endpoint);
+
+        var summary = await reader.GetSummaryAsync(new StatisticsFilter(), CancellationToken);
+
+        summary.TotalCalls.Should().Be(1);
+        summary.AvgLatencyMs.Should().Be(0d);
+    }
+
+    [TestMethod]
+    public async Task GetModelBreakdown_NullLatencyCalls_DoNotBiasAverageDuration()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        AssistantMessage sample = (await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken)).Response;
+
+        await SeedCallAsync(services, agent, endpoint, sample, conversationId: null,
+            new TokenUsage(100, 50, 0), latencyMs: 300, toolCount: 0, HttpStatusCode.OK);
+        await SeedNoLatencyCallAsync(services, agent, endpoint);
+
+        var rows = await reader.GetModelBreakdownAsync(new StatisticsFilter(), CancellationToken);
+
+        var stat = rows.Single(r => r.EndpointId == endpoint.Id);
+        stat.CallCount.Should().Be(2);
+        stat.AvgDurationMs.Should().Be(300d);
+    }
+
+    /// <summary>
+    /// Seeds a failed call with no response — its stored <c>LatencyMs</c> is <c>null</c>, the shape
+    /// the null-aware latency averages must ignore.
+    /// </summary>
+    private async Task SeedNoLatencyCallAsync(IServiceProvider services, IAgent agent, IModelEndpoint endpoint)
+    {
+        var conversationGen = services.GetRequiredService<IDomainObjectGenerator<Conversation>>();
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var callRepo = services.GetRequiredService<IRepository<IAgentCall>>();
+
+        var request = await conversationGen.CreateAsync(CancellationToken);
+        var call = createCall(agent, agent.CurrentVersion, endpoint, request, response: null,
+            httpStatus: HttpStatusCode.BadGateway, errorMessage: "upstream timeout");
+        await callRepo.AddAsync(call, CancellationToken);
+    }
+
     private async Task<IModelEndpoint> CreatePricedEndpointAsync(
         IServiceProvider services, decimal inputCost, decimal outputCost, decimal cachedCost)
     {

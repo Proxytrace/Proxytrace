@@ -282,7 +282,7 @@ Search request validation bounds live under `Search:Requests`:
 ```
 
 Dashboard statistics page sizes (used when a request omits `recentTraceCount`/`agentLimit`, and
-as upper clamps) live under `Statistics`:
+as upper clamps) live under `Statistics`, along with the dashboard cache TTL:
 
 ```json
 {
@@ -290,10 +290,18 @@ as upper clamps) live under `Statistics`:
     "DefaultRecentTraceCount": 6,
     "MaxRecentTraceCount": 50,
     "DefaultAgentLimit": 10,
-    "MaxAgentLimit": 100
+    "MaxAgentLimit": 100,
+    "DashboardCacheTtlSeconds": 10
   }
 }
 ```
+
+`DashboardCacheTtlSeconds` controls the server-side cache in front of the dashboard's statistics
+queries: while an entry is fresh, every viewer of the same dashboard (same project and time range)
+is served one shared result instead of each re-running the full set of aggregate queries. It bounds
+how stale the dashboard can be — with the default of `10`, numbers may lag reality by up to ten
+seconds. Set it to `0` to disable the cache entirely; values must stay below `30` (the dashboard's
+poll interval), so data never appears frozen across two consecutive refreshes.
 
 ## Next step
 

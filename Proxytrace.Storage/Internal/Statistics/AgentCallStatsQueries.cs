@@ -30,6 +30,9 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
+        // Latency averages over the non-null samples only (Sum / Count(!= null), the same pattern as
+        // GetCallTrendsAsync) — Average(c => c.LatencyMs ?? 0d) would count latency-less calls as 0ms
+        // and bias the mean low. Both aggregates translate server-side.
         var agg = await q
             .GroupBy(_ => 1)
             .Select(g => new
@@ -38,7 +41,8 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
                 Cached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
-                AvgLatency = g.Average(c => c.LatencyMs ?? 0d),
+                LatencySum = g.Sum(c => c.LatencyMs ?? 0d),
+                LatencyCount = g.Count(c => c.LatencyMs != null),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -47,7 +51,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             TotalInputTokens: agg?.Input ?? 0L,
             TotalOutputTokens: agg?.Output ?? 0L,
             TotalCachedInputTokens: agg?.Cached ?? 0L,
-            AvgLatencyMs: agg?.AvgLatency ?? 0d,
+            AvgLatencyMs: agg is { LatencyCount: > 0 } ? agg.LatencySum / agg.LatencyCount : 0d,
             OverallPassRate: null);
     }
 
@@ -266,6 +270,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
+        // Same null-aware latency average as GetSummaryAsync: only calls with a latency contribute.
         var rows = await q
             .GroupBy(c => c.EndpointId)
             .Select(g => new
@@ -275,7 +280,8 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 TotalInput = g.Sum(c => (long?)c.InputTokens ?? 0L),
                 TotalOutput = g.Sum(c => (long?)c.OutputTokens ?? 0L),
                 TotalCached = g.Sum(c => (long?)c.CachedInputTokens ?? 0L),
-                AvgLatency = g.Average(c => c.LatencyMs ?? 0d),
+                LatencySum = g.Sum(c => c.LatencyMs ?? 0d),
+                LatencyCount = g.Count(c => c.LatencyMs != null),
             })
             .ToListAsync(cancellationToken);
 
@@ -290,7 +296,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 TotalInputTokens: r.TotalInput,
                 TotalOutputTokens: r.TotalOutput,
                 TotalCachedInputTokens: r.TotalCached,
-                AvgDurationMs: r.AvgLatency))
+                AvgDurationMs: r.LatencyCount > 0 ? r.LatencySum / r.LatencyCount : 0d))
             .OrderBy(s => s.ModelName)
             .ToArray();
     }

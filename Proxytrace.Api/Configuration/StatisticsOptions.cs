@@ -1,17 +1,37 @@
 namespace Proxytrace.Api.Configuration;
 
 /// <summary>
-/// Default and maximum page sizes for the dashboard statistics endpoint.
+/// Default and maximum page sizes for the dashboard statistics endpoint, plus the dashboard
+/// composite cache TTL.
 /// </summary>
 public sealed record StatisticsOptions
 {
+    /// <summary>
+    /// The client polls the dashboard on this interval; the cache TTL below must stay under it so
+    /// two consecutive polls never see the same frozen payload.
+    /// </summary>
+    public const double DashboardPollIntervalSeconds = 30d;
+
     public int DefaultRecentTraceCount { get; init; } = 6;
     public int MaxRecentTraceCount { get; init; } = 50;
     public int DefaultAgentLimit { get; init; } = 10;
     public int MaxAgentLimit { get; init; } = 100;
 
+    /// <summary>
+    /// TTL of the in-process dashboard composite cache in seconds (<c>0</c> disables it). Bounds
+    /// how stale a served dashboard can be; see <c>DashboardCacheOptions</c> in the Application
+    /// layer, which this value feeds.
+    /// </summary>
+    public double DashboardCacheTtlSeconds { get; init; } = 10d;
+
     public void Validate()
     {
+        if (DashboardCacheTtlSeconds is < 0d or >= DashboardPollIntervalSeconds)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(StatisticsOptions)}: {nameof(DashboardCacheTtlSeconds)} must be >= 0 and < {DashboardPollIntervalSeconds} (the dashboard poll interval).");
+        }
+
         if (DefaultRecentTraceCount < 1 || DefaultRecentTraceCount > MaxRecentTraceCount)
         {
             throw new InvalidOperationException(

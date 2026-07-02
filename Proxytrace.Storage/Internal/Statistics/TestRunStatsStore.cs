@@ -9,7 +9,7 @@ using Proxytrace.Storage.Internal.Entities.Statistics;
 namespace Proxytrace.Storage.Internal.Statistics;
 
 [UsedImplicitly]
-internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filter>, IStatsWriter<TestRunStats>
+internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filter>, ITestRunStatsReader, IStatsWriter<TestRunStats>
 {
     private readonly Func<StorageDbContext> contextFactory;
     private readonly ITransaction transaction;
@@ -119,7 +119,65 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
 
     public async Task<IReadOnlyList<TestRunStats>> QueryAsync(TestRunStats.Filter filter, CancellationToken cancellationToken = default)
     {
-        IQueryable<TestRunStatsEntity> q = contextFactory()
+        IQueryable<TestRunStatsEntity> q = Query(contextFactory(), filter);
+
+        List<TestRunStatsEntity> rows = await q.ToListAsync(cancellationToken);
+        return rows.Select(ToDto).ToArray();
+    }
+
+    public async Task<TestRunPassTotals> GetPassTotalsAsync(TestRunStats.Filter filter, CancellationToken cancellationToken = default)
+    {
+        // A single scalar aggregate row crosses the wire — never the O(all-history) row set the
+        // generic QueryAsync would materialize just to sum two columns.
+        var agg = await Query(contextFactory(), filter)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Cases = g.Sum(e => e.TestCases),
+                Passed = g.Sum(e => e.Passed),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new TestRunPassTotals(TotalCases: agg?.Cases ?? 0, TotalPassed: agg?.Passed ?? 0);
+    }
+
+    public async Task<IReadOnlyList<TestRunCohort>> GetRecentCohortsAsync(TestRunStats.Filter filter, int limit, CancellationToken cancellationToken = default)
+    {
+        limit = Math.Max(limit, 1);
+
+        // Collapse the sample dimension server-side — one row per (GroupId, EndpointId) cohort —
+        // and keep only the `limit` most recently completed cohorts, so the result is bounded no
+        // matter how much run history has accumulated. Rounded-mean Passed mirrors
+        // TestRunStatsCohortExtensions.AggregateSamples (see the regression test comparing the two).
+        var rows = await Query(contextFactory(), filter)
+            .GroupBy(e => new { e.GroupId, e.EndpointId })
+            .Select(g => new
+            {
+                g.Key.GroupId,
+                g.Key.EndpointId,
+                TestCases = g.Max(e => e.TestCases),
+                PassedSum = g.Sum(e => e.Passed),
+                SampleCount = g.Count(),
+                LastRunCompletedAt = g.Max(e => e.RunCompletedAt),
+            })
+            .OrderByDescending(x => x.LastRunCompletedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .OrderBy(x => x.LastRunCompletedAt)
+            .Select(x => new TestRunCohort(
+                GroupId: x.GroupId,
+                EndpointId: x.EndpointId,
+                TestCases: x.TestCases,
+                Passed: (int)Math.Round(x.PassedSum / (double)x.SampleCount),
+                LastRunCompletedAt: x.LastRunCompletedAt))
+            .ToArray();
+    }
+
+    private static IQueryable<TestRunStatsEntity> Query(StorageDbContext context, TestRunStats.Filter filter)
+    {
+        IQueryable<TestRunStatsEntity> q = context
             .Set<TestRunStatsEntity>()
             .AsNoTracking();
 
@@ -156,8 +214,7 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
             q = q.Where(e => e.RunCompletedAt <= filter.To.Value);
         }
 
-        List<TestRunStatsEntity> rows = await q.ToListAsync(cancellationToken);
-        return rows.Select(ToDto).ToArray();
+        return q;
     }
 
     private static TestRunStatsEntity ToEntity(TestRunStats stats, Guid id, DateTimeOffset createdAt, DateTimeOffset updatedAt)

@@ -7,12 +7,17 @@ using Proxytrace.PerfHarness.Reporting;
 namespace Proxytrace.PerfHarness.Scenarios;
 
 /// <summary>
-/// Times the suite-scoped <c>TestRunStats</c> projection query (issue #253) against the seeded table.
-/// The test-suites controller loads finalized run statistics for the suites on the current page (and
-/// for a single suite GET); before #253 it materialized the whole <c>TestRunStatsEntity</c> table and
-/// filtered in memory, an O(all-rows) read on every suites list. The fix pushes the suite set into SQL
+/// Times the suite-scoped <c>TestRunStats</c> projection query (issue #253) against the seeded table,
+/// plus the dashboard's server-side aggregates over it (issue #288). The test-suites controller loads
+/// finalized run statistics for the suites on the current page (and for a single suite GET); before
+/// #253 it materialized the whole <c>TestRunStatsEntity</c> table and filtered in memory, an
+/// O(all-rows) read on every suites list. The fix pushes the suite set into SQL
 /// (<c>WHERE SuiteId IN (...)</c>), so this scenario measures that scoped read — both a single suite
 /// (the single-suite GET) and a page of ~50 suites (the suites list) — against a large seeded table.
+/// The dashboard's pass-rate summary and sparkline previously materialized the whole table the same
+/// way (#288); they now run as a server-side totals aggregate (<c>GetPassTotalsAsync</c>) and a
+/// cohort <c>GROUP BY</c> capped to the most recent 50 cohorts (<c>GetRecentCohortsAsync</c>),
+/// measured here against the same seeded table.
 /// </summary>
 internal static class TestRunStatsQueryScenario
 {
@@ -25,6 +30,7 @@ internal static class TestRunStatsQueryScenario
     {
         using var scope = container.BeginScope();
         var reader = scope.Resolve<IStatsReader<TestRunStats, TestRunStats.Filter>>();
+        var aggregateReader = scope.Resolve<ITestRunStatsReader>();
 
         // Discover the seeded suites once, outside the timed loop. An empty filter materializes the
         // whole table — exactly the O(all-rows) read #253 removed from the request path — so it is
@@ -57,6 +63,13 @@ internal static class TestRunStatsQueryScenario
             () => reader.QueryAsync(new TestRunStats.Filter(SuiteIds: [singleSuite]), cancellationToken));
         await Measure("testRunStatsBySuitePage",
             () => reader.QueryAsync(new TestRunStats.Filter(SuiteIds: suitePage), cancellationToken));
+
+        // The dashboard aggregates run unfiltered (the worst case: every row is in scope) — their
+        // cost must stay bounded by the GROUP BY, not by the row count materialized.
+        await Measure("testRunStatsPassTotals",
+            () => aggregateReader.GetPassTotalsAsync(new TestRunStats.Filter(), cancellationToken));
+        await Measure("testRunStatsRecentCohorts",
+            () => aggregateReader.GetRecentCohortsAsync(new TestRunStats.Filter(), limit: 50, cancellationToken));
 
         return results;
     }

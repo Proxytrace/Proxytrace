@@ -44,8 +44,13 @@ Because `TestRunStatsEntity.TestRunId` is a 1:1 FK to `TestRunEntity`, one real 
 built and a `TestRun` is inserted per stats row; the stats `SuiteId` is a plain indexed column (no FK),
 so the suite spread is synthetic and needs no per-suite graph. The `TestRunStatsQueryScenario` then
 times the scoped read (`WHERE SuiteId IN (...)`) for a single busy suite (`testRunStatsBySuite`, the
-single-suite GET) and a 50-suite page (`testRunStatsBySuitePage`, the suites list). Their budgets are
-**uncalibrated placeholders** — set conservatively for an index-scoped read — until a full run lands.
+single-suite GET) and a 50-suite page (`testRunStatsBySuitePage`, the suites list), plus the
+dashboard's server-side aggregates over the same table (#288): the pass-rate totals
+(`testRunStatsPassTotals`, a single scalar `GROUP BY` row) and the sparkline cohorts
+(`testRunStatsRecentCohorts`, a `(GroupId, EndpointId)` `GROUP BY` ordered by `max(RunCompletedAt)`,
+capped at 50). All four budgets are **uncalibrated placeholders** — set conservatively — until a
+full run lands. (`StatsQueryTranslationTests` in the unit suite additionally locks these aggregate
+shapes to server-side Npgsql translation via `ToQueryString`, without a live database.)
 
 ## Budgets (`perf/perf-budgets.json`)
 

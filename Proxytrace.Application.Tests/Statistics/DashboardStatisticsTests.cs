@@ -1,9 +1,11 @@
 using Proxytrace.Domain.Statistics;
 using AwesomeAssertions;
 using NSubstitute;
+using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Domain.Statistics.TestRun;
 using Proxytrace.Common.Hosting;
+using Proxytrace.Common.Time;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -16,11 +18,13 @@ namespace Proxytrace.Application.Tests.Statistics;
 public sealed class DashboardStatisticsTests : BaseTest<Module>
 {
     private static DashboardStatistics Build(
-        out IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
+        out ITestRunStatsReader runStats,
         out IAgentCallStatsReader callStats,
-        out IAgentRepository agents)
+        out IAgentRepository agents,
+        DashboardCacheOptions? cacheOptions = null,
+        IClock? clock = null)
     {
-        runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
+        runStats = Substitute.For<ITestRunStatsReader>();
         callStats = Substitute.For<IAgentCallStatsReader>();
         agents = Substitute.For<IAgentRepository>();
         var agentCalls = Substitute.For<IAgentCallRepository>();
@@ -30,21 +34,47 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         // Default substitute reports IsActive == false (not inside a transaction), which is the
         // expected state for the dashboard fan-out guard.
         var transaction = Substitute.For<ITransaction>();
-        return new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion, transaction);
+        if (clock is null)
+        {
+            clock = Substitute.For<IClock>();
+            clock.UtcNow.Returns(_ => DateTimeOffset.UtcNow);
+        }
+        // Caching is opt-in per test (Ttl 0 disables it) so the behavioral tests below observe every
+        // underlying call; the cache-specific tests pass an explicit TTL.
+        return new DashboardStatistics(
+            runStats, callStats, agents, agentCalls, ingestionStream, appVersion, transaction,
+            clock, cacheOptions ?? new DashboardCacheOptions { TtlSeconds = 0d });
     }
 
-    private static TestRunStats Stat(Guid suiteId, int cases, int passed, DateTimeOffset completed) =>
-        new(TestRunId: Guid.NewGuid(),
-            AgentId: Guid.NewGuid(),
-            EndpointId: Guid.NewGuid(),
-            GroupId: Guid.NewGuid(),
-            SuiteId: suiteId,
-            TestCases: cases,
-            Passed: passed,
-            TotalDuration: null,
-            Usage: null,
-            Cost: null,
-            RunCompletedAt: completed);
+    /// <summary>
+    /// Stubs every reader the dashboard fan-out touches with empty results so
+    /// <c>GetDashboardViewAsync</c> completes; individual tests override what they assert on.
+    /// </summary>
+    private static void StubEmptyView(ITestRunStatsReader runStats, IAgentCallStatsReader callStats)
+    {
+        runStats.GetPassTotalsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
+            .Returns(new TestRunPassTotals(0, 0));
+        runStats.GetRecentCohortsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(new StatisticsSummary(0, 0, 0, 0, 0, null));
+        callStats.GetLiveTelemetryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(new LiveTelemetry(0, 0, 0, 0, 0, string.Empty));
+        callStats.GetCallTrendsAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(new CallTrends([], [], []));
+        callStats.GetAgentBreakdownAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        callStats.GetLatencyAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        callStats.GetModelBreakdownAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        callStats.GetEarliestCallAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns((DateTimeOffset?)null);
+        callStats.GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        callStats.GetTokenUsageByAgentAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+    }
 
     [TestMethod]
     public async Task GetSummaryAsync_NoRuns_PassRateIsNull()
@@ -52,8 +82,8 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         var svc = Build(out var runStats, out var callStats, out _);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
             .Returns(new StatisticsSummary(TotalCalls: 5, TotalInputTokens: 10, TotalOutputTokens: 20, TotalCachedInputTokens: 4, AvgLatencyMs: 100, OverallPassRate: 0.5));
-        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
-            .Returns([]);
+        runStats.GetPassTotalsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
+            .Returns(new TestRunPassTotals(0, 0));
 
         var result = await svc.GetSummaryAsync(new StatisticsFilter(), CancellationToken);
 
@@ -62,17 +92,13 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task GetSummaryAsync_AggregatesPassRate_FromRunStats()
+    public async Task GetSummaryAsync_AggregatesPassRate_FromServerSideTotals()
     {
         var svc = Build(out var runStats, out var callStats, out _);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
             .Returns(new StatisticsSummary(0, 0, 0, 0, 0, 0));
-        var now = DateTimeOffset.UtcNow;
-        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
-            .Returns([
-                Stat(Guid.NewGuid(), cases: 4, passed: 3, now),
-                Stat(Guid.NewGuid(), cases: 6, passed: 3, now),
-            ]);
+        runStats.GetPassTotalsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
+            .Returns(new TestRunPassTotals(TotalCases: 10, TotalPassed: 6));
 
         var result = await svc.GetSummaryAsync(new StatisticsFilter(), CancellationToken);
 
@@ -86,8 +112,8 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         var svc = Build(out var runStats, out var callStats, out var agents);
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
             .Returns(new StatisticsSummary(0, 0, 0, 0, 0, 0));
-        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
-            .Returns([]);
+        runStats.GetPassTotalsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
+            .Returns(new TestRunPassTotals(0, 0));
 
         var projectId = Guid.NewGuid();
         var matchingAgent = Substitute.For<IAgent>();
@@ -99,10 +125,33 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
 
         await svc.GetSummaryAsync(new StatisticsFilter(ProjectId: projectId), CancellationToken);
 
-        await runStats.Received(1).QueryAsync(
+        await runStats.Received(1).GetPassTotalsAsync(
             Arg.Is<TestRunStats.Filter>(f =>
                 f.AgentIds != null && f.AgentIds.Count == 1 && f.AgentIds.Single() == matchingAgent.Id),
             Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task GetDashboardTrendsAsync_CapsSparklineToRecentCohorts()
+    {
+        var svc = Build(out var runStats, out var callStats, out _);
+        callStats.GetCallTrendsAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(new CallTrends([], [], []));
+        var now = DateTimeOffset.UtcNow;
+        runStats.GetRecentCohortsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([
+                new TestRunCohort(Guid.NewGuid(), Guid.NewGuid(), TestCases: 4, Passed: 2, now.AddHours(-2)),
+                new TestRunCohort(Guid.NewGuid(), Guid.NewGuid(), TestCases: 0, Passed: 0, now.AddHours(-1)),
+                new TestRunCohort(Guid.NewGuid(), Guid.NewGuid(), TestCases: 4, Passed: 4, now),
+            ]);
+
+        var trends = await svc.GetDashboardTrendsAsync(new StatisticsFilter(), CancellationToken);
+
+        // Case-less cohorts are dropped; the rest map to percentages in chronological order, and the
+        // reader is asked for a bounded number of cohorts (never the whole history).
+        trends.PassRate.Should().Equal(50d, 100d);
+        await runStats.Received(1).GetRecentCohortsAsync(
+            Arg.Any<TestRunStats.Filter>(), Arg.Is<int>(limit => limit > 0), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
@@ -130,15 +179,12 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
             return value;
         }
 
-        var runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
-        var callStats = Substitute.For<IAgentCallStatsReader>();
-        var agents = Substitute.For<IAgentRepository>();
-        var agentCalls = Substitute.For<IAgentCallRepository>();
-        var ingestionStream = Substitute.For<IIngestionStream>();
-        var appVersion = Substitute.For<IAppVersion>();
-        appVersion.Version.Returns("0.0.0-dev");
+        var svc = Build(out var runStats, out var callStats, out var agents);
 
-        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>()).Returns([]);
+        runStats.GetPassTotalsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track(new TestRunPassTotals(0, 0))));
+        runStats.GetRecentCohortsAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<TestRunCohort>>([])));
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track(new StatisticsSummary(0, 0, 0, 0, 0, null))));
         callStats.GetLiveTelemetryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
@@ -157,14 +203,8 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
             .Returns(_ => Task.FromResult(Track<IReadOnlyList<TokenUsageStat>>([])));
         callStats.GetTokenUsageByAgentAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track<IReadOnlyList<AgentTokenUsageStat>>([])));
-        agentCalls.GetFilteredAsync(Arg.Any<AgentCallFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromResult(Track<(IReadOnlyList<IAgentCall>, int)>(([], 0))));
-        agentCalls.GetLastCallTimesAsync(Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromResult(Track<IReadOnlyDictionary<Guid, DateTimeOffset>>(new Dictionary<Guid, DateTimeOffset>())));
         agents.GetAllAsync(Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track<IReadOnlyList<IAgent>>([])));
-
-        var svc = new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion, Substitute.For<ITransaction>());
 
         var view = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
 
@@ -184,5 +224,116 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
 
         result.Should().ContainSingle();
         await callStats.Received(1).GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>());
+    }
+
+    // ── Dashboard composite cache ────────────────────────────────────────────────
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_WithinTtl_ServesCachedViewWithoutRequerying()
+    {
+        var svc = Build(out var runStats, out var callStats, out _,
+            new DashboardCacheOptions { TtlSeconds = 10d });
+        StubEmptyView(runStats, callStats);
+
+        var first = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+        var second = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+
+        second.Should().BeSameAs(first);
+        await callStats.Received(1).GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_DifferentFilters_DoNotShareCacheEntries()
+    {
+        var svc = Build(out var runStats, out var callStats, out var agents,
+            new DashboardCacheOptions { TtlSeconds = 10d });
+        StubEmptyView(runStats, callStats);
+        agents.GetByProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        // Tenant isolation hinges on this: the ProjectId is part of the cache key, so a
+        // project-scoped view and the admin-only global (ProjectId == null) view never share an
+        // entry — the controller's access check decides who may request which key.
+        var global = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+        var scoped = await svc.GetDashboardViewAsync(new StatisticsFilter(ProjectId: Guid.NewGuid()), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+
+        scoped.Should().NotBeSameAs(global);
+        await callStats.Received(2).GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_ConcurrentCallersSameKey_TriggerOneComputation()
+    {
+        var svc = Build(out var runStats, out var callStats, out _,
+            new DashboardCacheOptions { TtlSeconds = 10d });
+        StubEmptyView(runStats, callStats);
+
+        // Hold the underlying computation open until every caller has piled onto the same key.
+        var release = new TaskCompletionSource<StatisticsSummary>(TaskCreationOptions.RunContinuationsAsynchronously);
+        callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => release.Task);
+
+        Task<DashboardView>[] callers = Enumerable.Range(0, 5)
+            .Select(_ => svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken))
+            .ToArray();
+        release.SetResult(new StatisticsSummary(0, 0, 0, 0, 0, null));
+        DashboardView[] views = await Task.WhenAll(callers);
+
+        views.Should().OnlyContain(v => ReferenceEquals(v, views[0]));
+        await callStats.Received(1).GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_FaultedComputation_IsNotCached()
+    {
+        var svc = Build(out var runStats, out var callStats, out _,
+            new DashboardCacheOptions { TtlSeconds = 10d });
+        StubEmptyView(runStats, callStats);
+
+        int attempts = 0;
+        callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Interlocked.Increment(ref attempts) == 1
+                ? Task.FromException<StatisticsSummary>(new InvalidOperationException("db down"))
+                : Task.FromResult(new StatisticsSummary(0, 0, 0, 0, 0, null)));
+
+        await FluentActions
+            .Invoking(() => svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+        var view = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+
+        // The failure was evicted, so the second request recomputed instead of replaying the error.
+        view.Should().NotBeNull();
+        attempts.Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_ExpiredTtl_Recomputes()
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var clock = Substitute.For<IClock>();
+        clock.UtcNow.Returns(_ => now);
+        var svc = Build(out var runStats, out var callStats, out _,
+            new DashboardCacheOptions { TtlSeconds = 10d }, clock);
+        StubEmptyView(runStats, callStats);
+
+        var first = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+        now = now.AddSeconds(11);
+        var second = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+
+        second.Should().NotBeSameAs(first);
+        await callStats.Received(2).GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_CacheDisabled_RecomputesEveryCall()
+    {
+        var svc = Build(out var runStats, out var callStats, out _,
+            new DashboardCacheOptions { TtlSeconds = 0d });
+        StubEmptyView(runStats, callStats);
+
+        await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+        await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+
+        await callStats.Received(2).GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>());
     }
 }
