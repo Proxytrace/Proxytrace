@@ -530,6 +530,32 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         return new CallTrends(traces, latencyMs, throughput);
     }
 
+    public async Task<IReadOnlyList<int>> GetPulseAsync(StatisticsFilter filter, DateTimeOffset from, DateTimeOffset to, int buckets, CancellationToken cancellationToken = default)
+    {
+        buckets = Math.Max(buckets, 1);
+        StorageDbContext context = contextFactory();
+        IQueryable<AgentCallEntity> q = Query(context, filter)
+            .Where(c => c.CreatedAt >= from && c.CreatedAt <= to);
+
+        double bucketMs = Math.Max((to - from).TotalMilliseconds, 1d) / buckets;
+
+        // Same integer-slot GROUP BY as GetCallTrendsAsync: at most one row per non-empty bucket
+        // returns instead of every matching call. Keep the shape in sync with
+        // StatsQueryTranslationTests.PulseAggregate_PerMinuteCountBuckets_TranslatesToServerSideGroupBy.
+        var grouped = await q
+            .GroupBy(c => (int)Math.Floor((c.CreatedAt - from).TotalMilliseconds / bucketMs))
+            .Select(g => new { Index = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var counts = new int[buckets];
+        foreach (var g in grouped)
+        {
+            counts[Math.Clamp(g.Index, 0, buckets - 1)] += g.Count;
+        }
+
+        return counts;
+    }
+
     public async Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(
         Guid agentId,
         DateTimeOffset from,

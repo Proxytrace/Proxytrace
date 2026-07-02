@@ -283,6 +283,53 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetPulse_SeededCalls_ReturnsDenseBucketArrayPreservingTotal()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+
+        // Calls are persisted "now" — a window reaching 1 minute past now guarantees they land inside.
+        var to = DateTimeOffset.UtcNow.AddMinutes(1);
+        var from = to.AddMinutes(-60);
+        IReadOnlyList<int> pulse = await reader.GetPulseAsync(new StatisticsFilter(), from, to, 60, CancellationToken);
+
+        pulse.Should().HaveCount(60);
+        pulse.Sum().Should().Be(3);
+    }
+
+    [TestMethod]
+    public async Task GetPulse_EmptyWindow_ReturnsAllZeroBuckets()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+
+        var to = DateTimeOffset.UtcNow;
+        IReadOnlyList<int> pulse = await reader.GetPulseAsync(new StatisticsFilter(), to.AddMinutes(-60), to, 60, CancellationToken);
+
+        pulse.Should().HaveCount(60);
+        pulse.Sum().Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task GetPulse_ForeignProjectFilter_CountsNothing()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        await gen.CreateAsync(CancellationToken);
+
+        var to = DateTimeOffset.UtcNow.AddMinutes(1);
+        IReadOnlyList<int> pulse = await reader.GetPulseAsync(
+            new StatisticsFilter(ProjectId: Guid.NewGuid()), to.AddMinutes(-60), to, 60, CancellationToken);
+
+        pulse.Sum().Should().Be(0);
+    }
+
+    [TestMethod]
     public async Task GetAgentWindow_AggregatesOnlyThatAgentsCalls()
     {
         IServiceProvider services = GetServices();
