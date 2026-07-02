@@ -20,7 +20,14 @@ internal sealed class ContentJsonConverter : JsonConverter<Content>
 
         if (root.TryGetProperty("Data", out var dataProp) && dataProp.ValueKind == JsonValueKind.String)
         {
-            return Content.FromImage(BinaryData.FromBytes(Convert.FromBase64String(dataProp.GetString() ?? string.Empty)));
+            // Restore the media type written alongside the bytes — without it the round-tripped
+            // content fails Content.Validate (image content requires a media type).
+            string? mediaType = root.TryGetProperty("MediaType", out var mediaTypeProp)
+                                && mediaTypeProp.ValueKind == JsonValueKind.String
+                ? mediaTypeProp.GetString()
+                : null;
+            var bytes = Convert.FromBase64String(dataProp.GetString() ?? string.Empty);
+            return Content.FromImage(BinaryData.FromBytes(bytes, mediaType));
         }
 
         throw new JsonException("Cannot deserialize Content: missing Text or Data property");
@@ -36,6 +43,10 @@ internal sealed class ContentJsonConverter : JsonConverter<Content>
         if (value.Data != null)
         {
             writer.WriteString("Data", Convert.ToBase64String(value.Data.ToArray()));
+            if (value.Data.MediaType != null)
+            {
+                writer.WriteString("MediaType", value.Data.MediaType);
+            }
         }
         writer.WriteEndObject();
     }

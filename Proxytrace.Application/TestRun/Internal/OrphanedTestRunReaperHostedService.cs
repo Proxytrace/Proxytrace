@@ -71,11 +71,11 @@ internal sealed class OrphanedTestRunReaperHostedService : IHostedService
             try
             {
                 var groupRuns = await runs.GetByGroupAsync(group.Id, cancellationToken);
-                foreach (var run in groupRuns.Where(r => !IsTerminal(r.Status)))
+                foreach (var run in groupRuns.Where(r => !r.Status.IsTerminal()))
                     await run.SetCancelled(cancellationToken);
 
                 var reloaded = await groups.GetAsync(group.Id, cancellationToken);
-                if (!IsTerminal(reloaded.Status))
+                if (!reloaded.Status.IsTerminal())
                     await reloaded.SetCancelled(cancellationToken);
             }
             catch (Exception ex)
@@ -84,7 +84,4 @@ internal sealed class OrphanedTestRunReaperHostedService : IHostedService
             }
         }
     }
-
-    private static bool IsTerminal(TestRunStatus status)
-        => status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled;
 }

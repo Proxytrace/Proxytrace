@@ -77,14 +77,17 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         foreach (var result in Provider.Validate(validationContext))
             yield return result;
 
+        // Zero is a valid, known price (free/local models — e.g. a self-hosted endpoint or a
+        // provider's free tier); null means "unknown", which makes CalculateCost return null
+        // instead of 0. Only negative prices are invalid.
         if (InputTokenCost.HasValue)
-            yield return Validation.Positive(InputTokenCost.Value, nameof(InputTokenCost));
+            yield return Validation.NotNegative(InputTokenCost.Value, nameof(InputTokenCost));
 
         if (OutputTokenCost.HasValue)
-            yield return Validation.Positive(OutputTokenCost.Value, nameof(OutputTokenCost));
+            yield return Validation.NotNegative(OutputTokenCost.Value, nameof(OutputTokenCost));
 
         if (CachedInputTokenCost.HasValue)
-            yield return Validation.Positive(CachedInputTokenCost.Value, nameof(CachedInputTokenCost));
+            yield return Validation.NotNegative(CachedInputTokenCost.Value, nameof(CachedInputTokenCost));
 
         // No InputTokenCost <= OutputTokenCost invariant: output is usually >= input but not
         // universally (some batch/cached/reasoning tiers price input >= output), and CalculateCost

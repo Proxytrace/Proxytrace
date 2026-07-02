@@ -86,16 +86,13 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
 
     private Task<ITestRunGroup> SetState(TestRunStatus state, CancellationToken cancellationToken)
     {
-        if (IsTerminal(Status))
+        if (Status.IsTerminal())
         {
             throw new InvalidOperationException(
                 $"Cannot change test run group {Id} status from {Status} to {state} because it is already in a terminal state.");
         }
 
-        DateTimeOffset? completedAt = IsTerminal(state) ? DateTimeOffset.UtcNow : null;
+        DateTimeOffset? completedAt = state.IsTerminal() ? DateTimeOffset.UtcNow : null;
         return ApplyAsync(this with { Status = state, CompletedAt = completedAt }, cancellationToken);
     }
-
-    private static bool IsTerminal(TestRunStatus status)
-        => status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled;
 }

@@ -20,6 +20,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Free models are no longer hidden from discovery.** A provider model with a price of 0 (free
+  tiers, self-hosted/local models) was silently skipped during model discovery and never got an
+  endpoint. Zero is now accepted as a valid, known price — free models appear with a €0 cost —
+  while "price unknown" (no cost shown) is still represented by an unpriced endpoint. Models whose
+  catalog price puts input above output (some batch/reasoning tiers) are no longer skipped either.
+- **Saving an unchanged system prompt no longer creates a new agent version.** The "has the prompt
+  actually changed?" check compared prompt templates by internal reference, so re-applying an
+  identical system prompt always minted a redundant agent version.
+- **Image content survives storage.** Captured image content lost its media type when persisted and
+  failed to load back; the media type is now stored and restored with the image bytes.
 - **Keyboard access across selectable lists.** Evaluator, test-case and trace rows in the suite
   builder and suite detail — plus the evaluator attach/detach row and the collapsible agent widgets —
   are now real, focusable controls you can reach and activate with the keyboard, each with a visible

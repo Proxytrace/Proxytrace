@@ -73,7 +73,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         // A case can still finish in-flight after the run reached a terminal state (e.g. during
         // cooperative cancellation). Never resurrect a terminal run or overwrite its CompletedAt:
         // drop the late result and return the run unchanged rather than transitioning it back.
-        if (IsTerminalState(Status))
+        if (Status.IsTerminal())
         {
             return Task.FromResult<ITestRun>(this);
         }
@@ -111,9 +111,9 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         }
 
         DateTimeOffset? completedAt = null;
-        if (IsTerminalState(state))
+        if (state.IsTerminal())
         {
-            if (IsTerminalState(Status))
+            if (Status.IsTerminal())
             {
                 throw new InvalidOperationException(
                     $"Cannot change test run {Id} status from {Status} to {state} because it is already in a terminal state.");
@@ -130,7 +130,4 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
 
         return ApplyAsync(this with { Status = state, CompletedAt = completedAt }, cancellationToken);
     }
-
-    private static bool IsTerminalState(TestRunStatus status)
-        => status is TestRunStatus.Completed or TestRunStatus.Cancelled or TestRunStatus.Failed;
 }

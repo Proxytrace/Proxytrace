@@ -154,11 +154,11 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
 
         // Reload runs and mark any that didn't reach a terminal state as Cancelled.
         var reloaded = await testRunRepository.GetByGroupAsync(group.Id, cancellationToken);
-        foreach (var run in reloaded.Where(r => !IsTerminal(r.Status)))
+        foreach (var run in reloaded.Where(r => !r.Status.IsTerminal()))
             await run.SetCancelled(cancellationToken);
 
         group = await testRunGroupRepository.GetAsync(group.Id, cancellationToken);
-        if (!IsTerminal(group.Status))
+        if (!group.Status.IsTerminal())
         {
             group = await group.SetCancelled(cancellationToken);
             broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
@@ -218,11 +218,11 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             try
             {
                 var runs = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken.None);
-                foreach (var run in runs.Where(r => !IsTerminal(r.Status)))
+                foreach (var run in runs.Where(r => !r.Status.IsTerminal()))
                     await run.SetCancelled(CancellationToken.None);
 
                 group = await group.ReloadAsync(CancellationToken.None);
-                if (!IsTerminal(group.Status))
+                if (!group.Status.IsTerminal())
                 {
                     group = await group.SetCancelled(CancellationToken.None);
                     broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
@@ -241,7 +241,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             try
             {
                 group = await group.ReloadAsync(CancellationToken.None);
-                if (!IsTerminal(group.Status))
+                if (!group.Status.IsTerminal())
                 {
                     group = await group.SetFailed(CancellationToken.None);
                 }
@@ -405,9 +405,6 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 evaluation.Reasoning,
                 evaluation.ErrorMessage)));
     }
-
-    private static bool IsTerminal(TestRunStatus status)
-        => status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled;
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {

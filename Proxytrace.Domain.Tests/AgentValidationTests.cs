@@ -137,6 +137,21 @@ public sealed class AgentValidationTests : DomainTest<Module>
         agent1.Id.Should().NotBe(agent2.Id);
     }
 
+    [TestMethod]
+    public async Task ChangeSystemMessage_WithEqualButSeparatelyConstructedPrompt_DoesNotCreateNewVersion()
+    {
+        // Regression: PromptTemplate's synthesized equality compared the Variables set by
+        // reference, so this dedup never matched and every save minted a redundant agent version.
+        IServiceProvider services = GetServices();
+        var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+        var agent = await GetOrCreate<IAgent>(services);
+        var samePrompt = promptTemplateFactory(agent.SystemPrompt.Name, agent.SystemPrompt.Template);
+
+        var updated = await agent.ChangeSystemMessage(samePrompt, CancellationToken);
+
+        updated.CurrentVersion.Id.Should().Be(agent.CurrentVersion.Id);
+    }
+
     private async Task<IProject> CreateTestProjectAsync(IServiceProvider services)
     {
         var projectFactory = services.GetRequiredService<IProject.CreateNew>();

@@ -83,11 +83,16 @@ internal abstract record DomainEntity<TSelf> :
     public Task RemoveAsync(CancellationToken cancellationToken = default)
         => repository.RemoveAsync(Id, cancellationToken);
 
-    // Identity is the Id alone. Two instances of the same entity — the pre- and post-save copies of
-    // an UpdatedAt-bumping persist, or a reloaded row — must compare equal and hash identically.
-    // CreatedAt/UpdatedAt are deliberately excluded: folding the storage-stamped UpdatedAt into
-    // equality would make a reloaded/re-saved entity unequal to its in-memory original and give it a
-    // different hash bucket, silently breaking set/dictionary membership.
+    // Base identity is EqualityContract + Id; CreatedAt/UpdatedAt are deliberately excluded so the
+    // pre- and post-save copies of an UpdatedAt-bumping persist (`with`-copies sharing all other
+    // members) compare equal and hash identically.
+    //
+    // CAUTION: this does NOT make entity equality Id-only. Each derived record still synthesizes
+    // its own Equals/GetHashCode over its declared fields — including injected dependencies and
+    // collection-typed properties, which compare by REFERENCE. Two separately materialized
+    // instances of the same row (e.g. an original and a reload) therefore generally compare
+    // unequal. Do not key sets/dictionaries by entity instances across materializations — compare
+    // by Id instead.
     public virtual bool Equals(DomainEntity<TSelf>? other)
         => other is not null
            && EqualityContract == other.EqualityContract
