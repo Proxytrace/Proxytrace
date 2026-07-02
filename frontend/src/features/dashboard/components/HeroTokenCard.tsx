@@ -56,9 +56,9 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             <span
               data-testid="hero-token-total"
               data-token-total={totalTokens}
-              className="text-[44px] font-extrabold tracking-[-0.04em] leading-[0.92] text-primary tabular-nums"
+              className="text-[68px] font-extrabold tracking-[-0.045em] leading-[0.92] tabular-nums bg-[linear-gradient(180deg,var(--text-primary)_55%,var(--accent-hover))] bg-clip-text text-transparent"
             >
-              {tokenNum}<span className="text-accent">{tokenSuffix}</span>
+              {tokenNum}<span>{tokenSuffix}</span>
             </span>
           </div>
           <div className="mt-1.5 flex gap-2.5 text-caption font-mono text-muted items-center flex-wrap">
@@ -93,6 +93,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
             gradientId="heroVolGrad"
             showAxis
+            drawIn
             xLabelFn={xLabelFn}
             tooltipLabelFn={tooltipLabelFn}
             formatValue={v => t`${fmtTokens(v)} tokens`}
