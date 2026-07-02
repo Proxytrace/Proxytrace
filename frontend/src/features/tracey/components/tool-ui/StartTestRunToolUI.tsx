@@ -26,7 +26,16 @@ export const StartTestRunToolUI: ToolCallMessagePartComponent = ({ result, statu
   }
 
   if (state !== 'ready' || !group) {
-    return <ToolUIFrame state={state} pendingLabel={t`Starting test run…`} testId="tracey-run-progress-card" />;
+    // The error placeholder gets its own testid: a failed start_test_run call the model retries
+    // leaves this card in the thread next to the retry's live card, and sharing
+    // `tracey-run-progress-card` made the two indistinguishable (Playwright strict mode, #273).
+    return (
+      <ToolUIFrame
+        state={state}
+        pendingLabel={t`Starting test run…`}
+        testId={state === 'error' ? 'tracey-run-progress-error' : 'tracey-run-progress-card'}
+      />
+    );
   }
   return <LiveRunCard initial={group} />;
 };

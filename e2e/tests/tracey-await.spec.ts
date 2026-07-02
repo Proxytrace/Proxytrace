@@ -50,14 +50,16 @@ test.describe('@llm Tracey await_actions', () => {
     );
     await page.getByRole('button', { name: 'Send' }).click();
 
-    // #2 — the live run-progress card renders once she calls start_test_run.
-    const card = page.getByTestId('tracey-run-progress-card');
+    // #2 — the live run-progress card renders once she calls start_test_run. The model may retry
+    // a transiently failed call, leaving more than one card in the thread — scope to the latest
+    // so an earlier card can't trip strict mode (#273).
+    const card = page.getByTestId('tracey-run-progress-card').last();
     await expect(card).toBeVisible({ timeout: 90_000 });
 
     // #2 — the card streams to a terminal state. The running footer reads "Running… N/M cases";
     // a terminal one reads "X/Y passed", "Run failed.", or "Run cancelled." — so matching
     // passed|failed|cancelled only fires once the run is done.
-    await expect(page.getByTestId('tracey-run-progress-status')).toContainText(
+    await expect(page.getByTestId('tracey-run-progress-status').last()).toContainText(
       /passed|failed|cancelled/i,
       { timeout: 150_000 },
     );
