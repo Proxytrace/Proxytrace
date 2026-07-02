@@ -4,8 +4,8 @@
 import { Trans, Plural } from '@lingui/react/macro';
 import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
-import { modelColor, statusColor } from '../../../lib/colors';
-import { fmtLatency, fmtTokens } from '../../../lib/format';
+import { agentColor, modelColor, statusColor } from '../../../lib/colors';
+import { fmtLatency, fmtRelative, fmtTokens } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
 import type { TraceRow } from '../../../lib/trace';
 import { cn } from '../../../lib/cn';
@@ -13,19 +13,20 @@ import { cn } from '../../../lib/cn';
 // Shared grid template — header row and every data row align to this. Columns are
 // fixed-width (not auto) so the header grid and each row's grid compute identical
 // tracks; auto tracks would size to each grid's own content and drift out of line.
-// Columns: dot · message · turns · model · status · tokens · latency.
+// Columns: dot · message+agent · turns · model · status · tokens · latency · age.
 // eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind grid-template class, not UI copy
-export const LIVE_STREAM_GRID = 'grid grid-cols-[14px_minmax(0,1fr)_64px_104px_56px_60px_64px] gap-5';
+export const LIVE_STREAM_GRID = 'grid grid-cols-[14px_minmax(0,1fr)_64px_104px_56px_60px_64px_52px] gap-5';
 
 interface Props {
   row: TraceRow;
   freshIds: Set<string>;
   isLast: boolean;
+  now: number;
   onSelect: (id: string) => void;
 }
 
-export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
-  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-1.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]', isLast ? '' : 'border-b border-border-subtle');
+export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
+  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]', isLast ? '' : 'border-b border-border-subtle');
 
   if (row.type === 'flat') {
     const t = row.trace;
@@ -35,17 +36,23 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
       <RowButton
         data-testid={`live-trace-row-${t.id}`}
         onClick={() => onSelect(t.id)}
-        className={cn(rowCls, isFresh && 'slide-in')}
+        className={cn(rowCls, isFresh && 'slide-in arrival-flash')}
       >
         <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
-        <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
-          {tracePreview(t) ?? <span className="text-muted">—</span>}
+        <span className="min-w-0 flex flex-col gap-0.5 pr-2 overflow-hidden">
+          <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+            {tracePreview(t) ?? <span className="text-muted">—</span>}
+          </span>
+          <span className="text-caption font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: agentColor(t.agentId ?? '') }}>
+            {t.agentName ?? <Trans>unknown agent</Trans>}
+          </span>
         </span>
         <span className="text-muted text-center">—</span>
         <span className="justify-self-center"><Pill label={t.model} color={modelColor(t.model)} size="sm" /></span>
         <span className="text-caption font-semibold text-center" style={{ color: sc }}>{t.httpStatus}</span>
         <span className="text-secondary text-right min-w-[54px]">{fmtTokens(t.inputTokens + t.outputTokens)}</span>
         <span className="text-muted text-right min-w-[58px]">{fmtLatency(t.durationMs)}</span>
+        <span className="text-muted text-right text-caption tabular-nums">{fmtRelative(t.createdAt, now)}</span>
       </RowButton>
     );
   }
@@ -61,11 +68,16 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
     <RowButton
       data-testid={`live-trace-group-${conversationId}`}
       onClick={() => onSelect(head.id)}
-      className={cn(rowCls, isFresh && 'slide-in')}
+      className={cn(rowCls, isFresh && 'slide-in arrival-flash')}
     >
       <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
-      <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
-        {tracePreview(head) ?? <span className="text-muted">—</span>}
+      <span className="min-w-0 flex flex-col gap-0.5 pr-2 overflow-hidden">
+        <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+          {tracePreview(head) ?? <span className="text-muted">—</span>}
+        </span>
+        <span className="text-caption font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: agentColor(head.agentId ?? '') }}>
+          {head.agentName ?? <Trans>unknown agent</Trans>}
+        </span>
       </span>
       <span className="justify-self-center inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full text-accent bg-accent-subtle">
         <Plural value={turns.length} one="# turn" other="# turns" />
@@ -74,6 +86,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
       <span className="text-caption font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : <Trans>mixed</Trans>}</span>
       <span className="text-secondary text-right min-w-[54px]">{fmtTokens(totalTokens)}</span>
       <span className="text-muted text-right min-w-[58px]">{fmtLatency(totalMs)}</span>
+      <span className="text-muted text-right text-caption tabular-nums">{fmtRelative(head.createdAt, now)}</span>
     </RowButton>
   );
 }

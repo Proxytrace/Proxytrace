@@ -63,9 +63,14 @@ export function fmtDateTime(iso: string): string {
   return `${fmtDateTimeShort(iso)}:${pad2(d.getSeconds())}`;
 }
 
-export function fmtRelative(iso: string): string {
-  const now = Date.now();
-  const diff = now - new Date(iso).getTime();
+/**
+ * Formats how long ago `iso` was, relative to `nowMs` (defaults to `Date.now()`).
+ * Pass an explicit `nowMs` from a re-rendering tick (e.g. {@link useNowTick}) so the
+ * label recomputes on a timer instead of only when the component re-renders for
+ * another reason.
+ */
+export function fmtRelative(iso: string, nowMs: number = Date.now()): string {
+  const diff = nowMs - new Date(iso).getTime();
   const s = Math.floor(diff / 1000);
   if (s < 60) return `${s}s ago`;
   const m = Math.floor(s / 60);
