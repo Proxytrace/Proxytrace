@@ -37,7 +37,7 @@ export const LIVE_STREAM_GRID_NARROW = '14px minmax(0,1fr) 56px 60px 64px 52px';
 
 /** Shared visibility class for the turns + model cells, which drop below the `2xl` container breakpoint. */
 // eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind class, not UI copy
-const NARROW_HIDDEN = '@max-2xl:hidden';
+export const NARROW_HIDDEN = '@max-2xl:hidden';
 
 interface Props {
   row: TraceRow;

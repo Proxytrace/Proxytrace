@@ -22,6 +22,8 @@ export function usePulse(serverPulse: number[] | undefined, projectId: string | 
   // and already includes any calls the SSE bumps counted in the meantime. Compared
   // during render rather than in an effect (BEST_PRACTICES §4.1's "reset state on a
   // prop change" pattern — see SearchIndexingSection.tsx for the same shape).
+  // Benign race: a concurrent refetch can return a series that doesn't yet include a trace an
+  // SSE bump just counted, transiently overwriting it here — self-corrects on the next poll.
   const serverKey = serverPulse?.join(',');
   const [syncedKey, setSyncedKey] = useState(serverKey);
   if (serverKey !== syncedKey) {

@@ -257,14 +257,14 @@ export function normalizePulse(pulse: number[] | undefined): number[] {
   return [...Array<number>(PULSE_MINUTES - src.length).fill(0), ...src];
 }
 
-/** A trace arrived: bump the current-minute (newest) bucket. */
+/** A trace arrived: bump the current-minute (newest) bucket. Expects `pulse` to be a normalized `PULSE_MINUTES`-entry array (callers go through {@link normalizePulse} first). */
 export function bumpPulse(pulse: number[]): number[] {
   const next = pulse.slice();
   next[next.length - 1] += 1;
   return next;
 }
 
-/** Minute rolled over: slide the window left and open an empty current bucket. */
+/** Minute rolled over: slide the window left and open an empty current bucket. Expects `pulse` to be a normalized `PULSE_MINUTES`-entry array (callers go through {@link normalizePulse} first). */
 export function shiftPulse(pulse: number[]): number[] {
   return [...pulse.slice(1), 0];
 }

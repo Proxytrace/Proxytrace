@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro';
 import { ActivityIcon, ClockIcon, ZapIcon, TargetIcon, ServerIcon, SigmaIcon } from '../../../components/icons';
 import type { SummaryDto, LiveTelemetryDto, DashboardTrendsDto } from '../../../api/models';
 import { fmtLatency } from '../../../lib/format';
-import type { LatencyStats } from '../dashboardMeta';
+import { teleFmt, type LatencyStats } from '../dashboardMeta';
 import { StatTile } from './StatTile';
 
 interface StatTileGridProps {
@@ -91,8 +91,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         testId="stat-tile-p95"
         icon={<SigmaIcon size={11} />}
         label={t`p95 Latency`}
-        value={latencyStats ? String(Math.round(latencyStats.p95)) : '—'}
-        countTo={latencyStats ? latencyStats.p95 : undefined}
+        value={latencyStats ? String(Math.round(latencyStats.p95)) : teleFmt(telemetry?.p95Ms, v => String(Math.round(v)))}
+        countTo={latencyStats ? latencyStats.p95 : telemetry?.p95Ms}
         formatCount={v => String(Math.round(v))}
         unit={t`ms`}
         sub={latencyStats ? t`p99 ${fmtLatency(latencyStats.p99)}` : t`awaiting samples`}

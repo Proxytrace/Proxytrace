@@ -9,7 +9,8 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { buildRows } from '../../../lib/trace';
 import { useNowTick } from '../hooks/useNowTick';
-import { LiveStreamRow, LIVE_STREAM_GRID, LIVE_STREAM_GRID_WIDE, LIVE_STREAM_GRID_NARROW } from './LiveStreamRow';
+import { LiveStreamRow, LIVE_STREAM_GRID, LIVE_STREAM_GRID_WIDE, LIVE_STREAM_GRID_NARROW, NARROW_HIDDEN } from './LiveStreamRow';
+import { cn } from '../../../lib/cn';
 
 interface LiveTraceStreamProps {
   traces: AgentCallListItemDto[];
@@ -45,7 +46,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
       </header>
 
       <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-caption font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
-        <span /><span><Trans>Message</Trans></span><span className="text-center @max-2xl:hidden"><Trans>Turns</Trans></span><span className="text-center @max-2xl:hidden"><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
+        <span /><span><Trans>Message</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Turns</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
       </div>
 
       {isLoading ? (

@@ -28,7 +28,7 @@ export function PulseBand({ pulse, lastBeat, telemetry }: PulseBandProps) {
     ? // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG path commands
       `M 0 ${BAND_HEIGHT - 4} L ${width} ${BAND_HEIGHT - 4}`
     : sparklinePath(pulse, width, BAND_HEIGHT);
-  const errorPct = Math.round((telemetry?.errorRate ?? 0) * 100);
+  const errorPctDisplay = telemetry ? `${(telemetry.errorRate * 100).toFixed(1)}%` : '—';
 
   return (
     <div
@@ -66,7 +66,7 @@ export function PulseBand({ pulse, lastBeat, telemetry }: PulseBandProps) {
       <div className="relative flex items-center gap-6 pl-5 border-l border-hairline shrink-0">
         <PulseCounter label={t`traces/min`} value={teleFmt(telemetry?.tracesPerMinute)} accent />
         <PulseCounter label={t`tokens/s`} value={teleFmt(telemetry?.tokensPerSecond, v => String(Math.round(v)))} />
-        <PulseCounter label={t`errors`} value={telemetry ? `${errorPct}%` : '—'} danger={errorPct > 0} />
+        <PulseCounter label={t`errors`} value={errorPctDisplay} danger={(telemetry?.errorRate ?? 0) > 0} />
       </div>
     </div>
   );
