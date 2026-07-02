@@ -1,7 +1,7 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { useLingui } from '@lingui/react/macro';
 import { ActivityIcon } from '../../../../components/icons';
-import { fmtCost, fmtLatency, fmtTokens } from '../../../../lib/format';
+import { fmtCostEur, fmtLatency, fmtTokens } from '../../../../lib/format';
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
@@ -34,14 +34,18 @@ export const AgentStatsToolUI: ToolCallMessagePartComponent = ({ args, result, s
     >
       <StatGrid
         items={[
-          { label: t`Traces`, value: fmtTokens(summary.totalTraces) },
+          { label: t`Traces`, value: fmtTokens(summary.totalTraces), sub: t`last 30 days` },
           { label: t`Tokens in`, value: fmtTokens(summary.totalInputTokens) },
           { label: t`Tokens out`, value: fmtTokens(summary.totalOutputTokens) },
-          { label: t`Cost`, value: fmtCost(summary.totalCostEur) },
+          { label: t`Cost`, value: fmtCostEur(summary.totalCostEur) },
           { label: t`Avg latency`, value: fmtLatency(summary.avgLatencyMs) },
           { label: t`Suites`, value: String(counts.suiteCount) },
           { label: t`Test cases`, value: String(counts.testCaseCount) },
-          { label: t`Open proposals`, value: String(counts.openProposalCount) },
+          {
+            label: t`Open proposals`,
+            value: String(counts.openProposalCount),
+            tone: counts.openProposalCount > 0 ? 'accent' : undefined,
+          },
         ]}
       />
     </ToolUIFrame>

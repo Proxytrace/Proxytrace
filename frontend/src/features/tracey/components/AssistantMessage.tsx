@@ -9,6 +9,9 @@ import { TRACEY_TOOL_UI } from './tool-ui/registry';
 const assistantParts = { Text: MarkdownText, tools: { by_name: TRACEY_TOOL_UI, Fallback: ToolCallCard } };
 
 export function AssistantMessage() {
+  // No entrance animation on the message root: the cards inside own their fade-up, and stacking
+  // a second translate on the parent would compound the motion (text streams in progressively
+  // anyway, so a root-level entrance buys nothing).
   return (
     <MessagePrimitive.Root className="flex justify-start">
       <div className="flex min-w-0 flex-1 flex-col gap-3 text-title text-primary">

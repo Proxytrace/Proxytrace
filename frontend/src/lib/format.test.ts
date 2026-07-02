@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fmtLatency, fmtTokens, fmtDuration, fmtPct, fmtPct100, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort, cachedPct } from './format'
+import { fmtLatency, fmtTokens, fmtDuration, fmtElapsed, fmtPct, fmtPct100, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort, cachedPct } from './format'
 
 describe('fmtLatency', () => {
   it('formats sub-second as ms', () => expect(fmtLatency(250)).toBe('250ms'))
@@ -19,6 +19,19 @@ describe('cachedPct', () => {
   it('rounds to nearest percent', () => expect(cachedPct(666, 1000)).toBe(67))
   it('clamps cached over input to 100%', () => expect(cachedPct(1500, 1000)).toBe(100))
   it('returns null when share rounds to zero', () => expect(cachedPct(1, 100000)).toBeNull())
+})
+
+describe('fmtElapsed', () => {
+  it('formats m:ss', () => {
+    expect(fmtElapsed(0)).toBe('0:00')
+    expect(fmtElapsed(7)).toBe('0:07')
+    expect(fmtElapsed(83)).toBe('1:23')
+    expect(fmtElapsed(605)).toBe('10:05')
+  })
+  it('clamps negatives and fractions', () => {
+    expect(fmtElapsed(-3)).toBe('0:00')
+    expect(fmtElapsed(61.9)).toBe('1:01')
+  })
 })
 
 describe('fmtDuration', () => {

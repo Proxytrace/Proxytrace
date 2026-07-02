@@ -377,10 +377,19 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
 - The wait honors the turn's **abort signal**: hitting Stop cancels the polling immediately
   instead of letting it run to the cap in the background (see "Stopping a turn"). The card then
   shows a neutral "Wait stopped" state — the backend run/theory keeps going regardless.
-- `confirm: false`. Its inline card (`AwaitActionsToolUI`) lists the awaited handles with a
-  spinner while waiting and one status row per action when done (timed-out → warn, failed handle →
-  danger); the per-item **live** cards (`StartTestRunToolUI`, `TheoryToolUI`) still stream the
-  detailed progress.
+- `confirm: false`. Its inline card (`AwaitActionsToolUI`) shows one **live row per handle while
+  waiting** — suite → agent + case progress for a run, the A/B phase for a theory — plus an
+  elapsed stopwatch (`ElapsedStopwatch`, a leaf so the 1 s tick re-renders only the readout) and
+  the `streaming-border` ring. The rows (`AwaitPendingRunRow` / `AwaitPendingTheoryRow`) are
+  **passive mirrors of the query cache** (`useAwaitLiveStatus`, `enabled: false` +
+  `throwOnError: false`): the producing live card in the same thread owns the fetch and patches
+  the canonical key via SSE, so the rows never poll — polling here would double the tool's own
+  3 s GETs, race stale responses against newer SSE patches, and (with the app-wide
+  `throwOnError: true` default) let a bad handle crash the page. When done the card settles into
+  one outcome row per action (`AwaitResultRow` — per-case counts, timed-out → warn;
+  `AwaitErrorRow` — failed handle → danger) under a card-level verdict badge (`awaitOutcome` in
+  `await-card-logic.ts`, unit-tested; a cancelled run is warn, never "all done"); the per-item
+  **live** cards (`StartTestRunToolUI`, `TheoryToolUI`) still stream the detailed progress.
 
 ## Live cards (streaming write results)
 

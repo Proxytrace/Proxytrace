@@ -217,11 +217,16 @@ msgstr "{0} Zeichen"
 msgid "{0} err"
 msgstr "{0} Fehler"
 
+#. placeholder {0}: fmtPct(live.errorRate)
+msgid "{0} errors"
+msgstr "{0} Fehler"
+
 #. placeholder {0}: suite.evaluators.length
 msgid "{0} evaluators"
 msgstr "{0} Evaluators"
 
 #. placeholder {0}: ab.failedCases
+#. placeholder {0}: cases.failed
 msgid "{0} failed"
 msgstr "{0} fehlgeschlagen"
 
@@ -294,12 +299,17 @@ msgstr "{0} von {1} Fällen fehlgeschlagen · <0>{2}</0> Erfolgsquote"
 msgid "{0} of {1} shown"
 msgstr "{0} von {1} angezeigt"
 
+#. placeholder {0}: fmtLatency(live.p95Ms)
+msgid "{0} p95"
+msgstr "{0} p95"
+
 #. placeholder {0}: fmtPct100(run.passRate)
 #. placeholder {0}: fmtPct100(suite.passRate)
 msgid "{0} pass"
 msgstr "{0} bestanden"
 
 #. placeholder {0}: ab.passedCases
+#. placeholder {0}: cases.passed
 msgid "{0} passed"
 msgstr "{0} bestanden"
 
@@ -413,10 +423,8 @@ msgid "{0}/{1} passed · {2} · {3} tok"
 msgstr "{0}/{1} bestanden · {2} · {3} Tok"
 
 #. placeholder {0}: live.tracesPerMinute.toFixed(1)
-#. placeholder {1}: fmtLatency(live.p95Ms)
-#. placeholder {2}: fmtPct(live.errorRate)
-msgid "{0}/min · {1} p95 · {2} errors"
-msgstr "{0}/Min. · {1} p95 · {2} Fehler"
+msgid "{0}/min"
+msgstr "{0}/min"
 
 #. placeholder {0}: gain.fromPct
 #. placeholder {1}: gain.toPct
@@ -706,6 +714,9 @@ msgstr "2 Proposals"
 msgid "6-digit code"
 msgstr "6-stelliger Code"
 
+msgid "95th percentile latency"
+msgstr "Latenz im 95. Perzentil"
+
 msgid "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
 msgstr "Ein Call wird markiert, wenn ein Metric so viele Standardabweichungen vom jüngsten Mittelwert des Agent abweicht. Niedriger ist empfindlicher."
 
@@ -933,6 +944,9 @@ msgstr "Alle Alerts per E-Mail"
 
 msgid "All cases passed."
 msgstr "Alle Cases bestanden."
+
+msgid "All done"
+msgstr "Alles erledigt"
 
 msgid "All projects"
 msgstr "Alle Projekte"
@@ -1213,6 +1227,9 @@ msgstr "Token-Nutzung pro Agent als Diagramm anzeigen"
 
 msgid "Cheapest"
 msgstr "Am günstigsten"
+
+msgid "Check results"
+msgstr "Ergebnisse prüfen"
 
 msgid "Check your inbox"
 msgstr "Prüfen Sie Ihren Posteingang"
@@ -1686,6 +1703,9 @@ msgstr "Verwerfen"
 
 msgid "Discovering models from your provider…"
 msgstr "Modelle werden von Ihrem Provider ermittelt…"
+
+msgid "dismiss"
+msgstr "schließen"
 
 msgid "Dismiss"
 msgstr "Schließen"
@@ -2378,6 +2398,9 @@ msgstr "Letzte 24 Stunden"
 msgid "Last 24h"
 msgstr "Letzte 24h"
 
+msgid "last 30 days"
+msgstr "letzte 30 Tage"
+
 msgid "Last 30 days"
 msgstr "Letzte 30 Tage"
 
@@ -2467,6 +2490,9 @@ msgstr "Agents auflisten"
 
 msgid "live"
 msgstr "live"
+
+msgid "Live"
+msgstr "Live"
 
 msgid "LIVE"
 msgstr "LIVE"
@@ -2768,6 +2794,9 @@ msgstr "Name, System-Endpunkt und Lebenszyklus für das aktive Projekt."
 
 msgid "navigate"
 msgstr "navigieren"
+
+msgid "Needs attention"
+msgstr "Braucht Aufmerksamkeit"
 
 msgid "never"
 msgstr "nie"
@@ -4192,6 +4221,9 @@ msgstr "Seed"
 msgid "Seed conversation from past trace or test case"
 msgstr "Konversation aus vergangenem Trace oder Testfall starten"
 
+msgid "select"
+msgstr "auswählen"
+
 msgid "Select a case or trace"
 msgstr "Wähle einen Case oder Trace"
 
@@ -4717,6 +4749,11 @@ msgstr "Eine Verbesserung theoretisieren und A/B-testen"
 msgid "Theory"
 msgstr "Theorie"
 
+#. placeholder {0}: item.agentName
+#. placeholder {0}: theory.agentName
+msgid "Theory · {0}"
+msgstr "Theory · {0}"
+
 msgid "Theory & A/B test details"
 msgstr "Theorie- und A/B-test-Details"
 
@@ -4833,6 +4870,9 @@ msgstr "Stufe"
 
 msgid "Time"
 msgstr "Zeit"
+
+msgid "Time waited"
+msgstr "Wartezeit"
 
 msgid "To"
 msgstr "An"
@@ -4956,6 +4996,9 @@ msgstr "traces / Min."
 msgid "Traces guarding against past bugs and previously-fixed issues."
 msgstr "Traces zum Schutz vor vergangenen Bugs und zuvor behobenen Problemen."
 
+msgid "Traces per minute"
+msgstr "Traces pro Minute"
+
 msgid "Tracey AI"
 msgstr "Tracey AI"
 
@@ -4964,6 +5007,9 @@ msgstr "Tracey AI assistant"
 
 msgid "Tracey couldn’t load this."
 msgstr "Tracey konnte dies nicht laden."
+
+msgid "Tracey picks up the moment everything finishes."
+msgstr "Tracey macht weiter, sobald alles fertig ist."
 
 msgid "Tracey produced an empty chart."
 msgstr "Tracey hat ein leeres Diagramm erzeugt."
@@ -5225,6 +5271,9 @@ msgstr "Warten auf … Aktionen"
 
 msgid "Waiting for the model to finish streaming…"
 msgstr "Warten, bis das Modell mit dem Streaming fertig ist…"
+
+msgid "Waiting…"
+msgstr "Wartet…"
 
 msgid "Walk through open optimization proposals"
 msgstr "Offene Optimierungsproposals durchgehen"

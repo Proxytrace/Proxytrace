@@ -1,44 +1,42 @@
 import { type ToolCallMessagePartComponent, useThread } from '@assistant-ui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg, plural } from '@lingui/core/macro';
-import { type I18n, type MessageDescriptor } from '@lingui/core';
+import { type MessageDescriptor } from '@lingui/core';
 import { ClockIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
-import { Spinner } from '../../../../components/ui/Spinner';
-import type { TestRunStatus, TheoryStatus } from '../../../../api/models';
-import type { AwaitError, AwaitKind, AwaitResult } from '../../tools/await';
+import type { AnyAwaitResult, AwaitError, AwaitKind } from '../../tools/await';
 import { ToolUIFrame } from './ToolUIFrame';
-import { RUN_STATUS_VARIANT, THEORY_STATUS_VARIANT } from './badge-variants';
+import { AwaitPendingRunRow } from './AwaitPendingRunRow';
+import { AwaitPendingTheoryRow } from './AwaitPendingTheoryRow';
+import { AwaitResultRow } from './AwaitResultRow';
+import { AwaitErrorRow } from './AwaitErrorRow';
+import { ElapsedStopwatch } from './ElapsedStopwatch';
+import { awaitOutcome, type AwaitOutcomeTone } from './await-card-logic';
 
 interface AwaitActionsArgs {
   handles?: { kind?: AwaitKind; id?: string }[];
 }
 
 interface AwaitActionsResult {
-  results: (AwaitResult & { suiteName?: string; agentName?: string })[];
+  results: AnyAwaitResult[];
   errors?: AwaitError[];
   anyTimedOut: boolean;
 }
 
-const KIND_LABEL: Record<AwaitKind, MessageDescriptor> = { 'test-run': msg`Test run`, theory: msg`Theory` };
-
-function rowLabel(i18n: I18n, item: { kind: AwaitKind; id: string; suiteName?: string; agentName?: string }): string {
-  const kindLabel = i18n._(KIND_LABEL[item.kind]);
-  const detail = [item.suiteName, item.agentName].filter(Boolean).join(' · ');
-  return detail ? `${kindLabel} · ${detail}` : kindLabel;
-}
-
-function statusVariant(item: AwaitResult) {
-  return item.kind === 'test-run'
-    ? RUN_STATUS_VARIANT[item.status as TestRunStatus]
-    : THEORY_STATUS_VARIANT[item.status as TheoryStatus];
-}
+/** Verdict badge copy — exhaustive over the tone, so a new tone can't silently mislabel. */
+const OUTCOME_LABEL: Record<AwaitOutcomeTone, MessageDescriptor> = {
+  success: msg`All done`,
+  warn: msg`Check results`,
+  danger: msg`Needs attention`,
+};
 
 /**
- * Inline renderer for the `await_actions` tool. While the wait runs it lists the awaited handles
- * with a spinner; once resolved it shows one row per action with its terminal status (plus
- * timed-out / failed-handle markers). The per-action live cards above stream the detailed
- * progress — this card only summarizes what the wait returned.
+ * Inline renderer for the `await_actions` tool. While the wait runs it shows one live row per
+ * handle — mirroring the SSE-patched cache the live cards maintain (case progress for runs, the
+ * A/B phase for theories) — plus an elapsed stopwatch and the streaming ring. Once resolved it
+ * settles into one outcome row per action (with per-case counts and timed-out / failed-handle
+ * markers) under a card-level verdict badge. The per-action live cards above stream the fully
+ * detailed progress.
  */
 export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
   const { t, i18n } = useLingui();
@@ -50,10 +48,12 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
   // `execute` the aborted tool call leaves no terminal delta, so the part is orphaned with no
   // result (status stays `running`/`complete`). Once the thread is idle a result-less wait can
   // never resolve, so treat any non-error part with no result on an idle thread as stopped —
-  // otherwise it spins on "Waiting for N actions" forever.
+  // otherwise it would spin on "Waiting for N actions" forever.
   const stopped =
     (status.type === 'incomplete' && status.reason === 'cancelled') ||
     (status.type !== 'incomplete' && !resolved && !threadRunning);
+  const errored = !stopped && (isError || status.type === 'incomplete');
+
   if (stopped) {
     return (
       <ToolUIFrame state="ready" icon={<ClockIcon size={14} />} title={t`Wait stopped`} testId="tracey-await-card">
@@ -63,13 +63,13 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
       </ToolUIFrame>
     );
   }
-  if (isError || status.type === 'incomplete') {
+  if (errored) {
     return <ToolUIFrame state="error" testId="tracey-await-card" />;
   }
 
-  const { handles } = args as AwaitActionsArgs;
-
+  // Stopped and errored have returned, so a missing result here means the wait is still running.
   if (!resolved) {
+    const { handles } = args as AwaitActionsArgs;
     const pending = (handles ?? []).filter((h): h is { kind: AwaitKind; id: string } => !!h.kind && !!h.id);
     const waitingTitle = pending.length
       ? plural(pending.length, { one: 'Waiting for # action', other: 'Waiting for # actions' })
@@ -79,46 +79,45 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
         state="ready"
         icon={<ClockIcon size={14} />}
         title={waitingTitle}
+        live
+        cornerAccessory={<ElapsedStopwatch />}
         testId="tracey-await-card"
       >
-        <div className="flex flex-col gap-1.5" aria-busy="true">
-          {pending.map((handle) => (
-            <div key={`${handle.kind}:${handle.id}`} className="flex items-center gap-2 text-body-sm text-muted">
-              <Spinner size={12} className="shrink-0" />
-              <span className="shrink-0">{i18n._(KIND_LABEL[handle.kind])}</span>
-              <span className="min-w-0 flex-1 truncate font-mono">{handle.id}</span>
-            </div>
-          ))}
+        <div className="flex flex-col gap-2" aria-busy="true">
+          {pending.map((handle) =>
+            handle.kind === 'test-run' ? (
+              <AwaitPendingRunRow key={`${handle.kind}:${handle.id}`} id={handle.id} />
+            ) : (
+              <AwaitPendingTheoryRow key={`${handle.kind}:${handle.id}`} id={handle.id} />
+            ),
+          )}
+          <span className="border-t border-hairline pt-2 text-caption text-muted">
+            <Trans>Tracey picks up the moment everything finishes.</Trans>
+          </span>
         </div>
       </ToolUIFrame>
     );
   }
 
+  const outcome = awaitOutcome(resolved.results, resolved.errors, resolved.anyTimedOut);
   return (
     <ToolUIFrame
       state="ready"
       icon={<ClockIcon size={14} />}
       title={t`Awaited actions`}
+      cornerAccessory={<Badge label={i18n._(OUTCOME_LABEL[outcome])} variant={outcome} size="sm" />}
       testId="tracey-await-card"
     >
-      <div className="flex flex-col gap-1.5">
-        {resolved.results.map((item) => (
-          <div key={`${item.kind}:${item.id}`} className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-body-sm text-secondary">{rowLabel(i18n, item)}</span>
-            {item.timedOut ? (
-              <Badge label={t`Still running`} variant="warn" size="sm" />
-            ) : (
-              <Badge label={item.status} variant={statusVariant(item)} size="sm" />
-            )}
-          </div>
+      <div className="flex flex-col gap-2">
+        {resolved.results.map((item, index) => (
+          <AwaitResultRow key={`${item.kind}:${item.id}`} item={item} delayIndex={index} />
         ))}
-        {(resolved.errors ?? []).map((item) => (
-          <div key={`${item.kind}:${item.id}`} className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-body-sm text-secondary">
-              {i18n._(KIND_LABEL[item.kind])} <span className="font-mono text-muted">{item.id}</span>
-            </span>
-            <Badge label={t`Failed to check`} variant="danger" size="sm" title={item.error} />
-          </div>
+        {(resolved.errors ?? []).map((item, index) => (
+          <AwaitErrorRow
+            key={`${item.kind}:${item.id}`}
+            item={item}
+            delayIndex={resolved.results.length + index}
+          />
         ))}
       </div>
     </ToolUIFrame>

@@ -53,7 +53,7 @@ export function ListCard({
   }
   const hidden = count - shown;
   return (
-    <Card elevation="flat" padding="none" className="my-1" data-testid={testId}>
+    <Card elevation="flat" padding="none" className="fade-up my-1" data-testid={testId}>
       <div className="flex items-center gap-2 border-b border-hairline px-3 py-2.5">
         <span className="shrink-0 text-muted">{icon}</span>
         <span className="text-h2 font-semibold leading-tight text-primary">{title}</span>
@@ -101,7 +101,7 @@ function ListCardSkeleton({
     <Card
       elevation="flat"
       padding="none"
-      className="my-1"
+      className="streaming-border my-1"
       data-testid={testId}
       aria-busy={true}
       aria-label={pendingLabel}
