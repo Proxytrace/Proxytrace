@@ -8,6 +8,7 @@ using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Optimization.Internal.Validation;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Project;
@@ -264,6 +265,29 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
         result.Outcome.Should().Be(TheoryRejectOutcome.NotFound);
     }
 
+    [TestMethod]
+    public async Task Recovery_KioskEnabled_DoesNotRequeueActiveTheories()
+    {
+        Fixture f = Build(new KioskOptions { Enabled = true });
+
+        await f.Service.RecoverInFlightTheoriesAsync(CancellationToken);
+
+        await f.Theories.DidNotReceive().GetActiveAsync(Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Recovery_KioskDisabled_RequeuesActiveTheories()
+    {
+        Fixture f = Build();
+        var active = StubTheory(TheoryStatus.Proposed);
+        f.Theories.GetActiveAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<IOptimizationTheory>>([active]));
+
+        await f.Service.RecoverInFlightTheoriesAsync(CancellationToken);
+
+        await f.Theories.Received(1).GetActiveAsync(Arg.Any<CancellationToken>());
+    }
+
     private void SetPriorProposal(Fixture f, ProposalStatus status, DateTimeOffset updatedAt)
     {
         var proposal = Substitute.For<IOptimizationProposal>();
@@ -286,7 +310,7 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
         return theory;
     }
 
-    private static Fixture Build()
+    private static Fixture Build(KioskOptions? kiosk = null)
     {
         var projectId = Guid.NewGuid();
         var agentId = Guid.NewGuid();
@@ -331,6 +355,7 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
             Substitute.For<ITheoryBroadcaster>(),
             transaction,
             new NoOpAsyncLock(),
+            kiosk ?? new KioskOptions(),
             NullLogger<TheoryValidationService>.Instance,
             NullLogger<Audit>.Instance);
 

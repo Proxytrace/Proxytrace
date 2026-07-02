@@ -4525,6 +4525,9 @@ msgstr "Invio della theory…"
 msgid "Success"
 msgstr "Operazione riuscita"
 
+msgid "Suggested follow-ups"
+msgstr "Suggerimenti successivi"
+
 msgid "Suite"
 msgstr "Suite"
 

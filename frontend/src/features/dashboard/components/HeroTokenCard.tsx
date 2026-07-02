@@ -8,6 +8,7 @@ import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import type { SummaryDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
+import { useCountUp } from '../../../hooks/useCountUp';
 import { CachedTokensHint } from '../../../components/ui/CachedTokensHint';
 import { bucketAxisLabel, rangeWindowLabel, type RangeKey, type StatisticsBucket } from '../../../lib/time-range';
 import { RANGES, splitTokenStr, type ModelSplit } from '../dashboardMeta';
@@ -28,7 +29,10 @@ interface HeroTokenCardProps {
 export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, modelSplit, range, onRangeChange, isLoading }: HeroTokenCardProps) {
   const { t } = useLingui();
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
-  const { num: tokenNum, suffix: tokenSuffix } = splitTokenStr(totalTokens);
+  // Roll the headline up from 0 on load — the dashboard's one orchestrated reveal moment.
+  // `data-token-total` below keeps the true (un-animated) value for tests to read.
+  const animatedTokens = useCountUp(totalTokens);
+  const { num: tokenNum, suffix: tokenSuffix } = splitTokenStr(Math.round(animatedTokens));
 
   // Time axis: ~5 evenly spaced labels formatted from the bucket timestamps.
   const labelStep = Math.max(1, Math.ceil((tokenBuckets.length - 1) / 4));

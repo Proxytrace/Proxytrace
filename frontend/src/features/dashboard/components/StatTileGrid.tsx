@@ -26,6 +26,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         icon={<ActivityIcon size={11} />}
         label={t`Traces`}
         value={(summary?.totalCalls ?? 0).toLocaleString()}
+        countTo={summary?.totalCalls ?? 0}
+        formatCount={v => Math.round(v).toLocaleString()}
         sub={t`LLM calls captured`}
         delta="+24%"
         trace={trends?.traces}
@@ -37,6 +39,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         icon={<ClockIcon size={11} />}
         label={t`Avg Latency`}
         value={String(Math.round(summary?.avgLatencyMs ?? 0))}
+        countTo={summary?.avgLatencyMs ?? 0}
+        formatCount={v => String(Math.round(v))}
         unit={t`ms`}
         sub={latencyStats ? t`p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'}
         delta="-8%"
@@ -50,6 +54,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         icon={<ZapIcon size={11} />}
         label={t`Throughput`}
         value={telemetry ? String(Math.round(telemetry.tokensPerSecond)) : '—'}
+        countTo={telemetry ? telemetry.tokensPerSecond : undefined}
+        formatCount={v => String(Math.round(v))}
         unit={t`t/s`}
         sub={telemetry ? t`p95 ${fmtLatency(telemetry.p95Ms)}` : t`awaiting telemetry`}
         delta="+18%"
@@ -62,6 +68,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         icon={<TargetIcon size={11} />}
         label={t`Pass Rate`}
         value={String(passPct)}
+        countTo={passPct}
+        formatCount={v => String(Math.round(v))}
         unit="%"
         sub={t`latest suite run`}
         delta={t`+7pt`}

@@ -5,6 +5,7 @@ import { msg } from '@lingui/core/macro';
 import { type MessageDescriptor } from '@lingui/core';
 import { SegmentedGauge } from '../../../components/charts';
 import type { SummaryDto } from '../../../api/models';
+import { useCountUp } from '../../../hooks/useCountUp';
 import { cn } from '../../../lib/cn';
 
 interface PassRateGaugeProps {
@@ -20,6 +21,8 @@ const GAUGE_STATS: { l: MessageDescriptor; c: string }[] = [
 export function PassRateGauge({ summary }: PassRateGaugeProps) {
   const { i18n, t } = useLingui();
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
+  // Sweep the gauge up on load — the arc fills as the number climbs to the real rate.
+  const animatedPct = Math.round(useCountUp(passPct));
 
   const statValues = [
     t`+7pt`,
@@ -35,7 +38,7 @@ export function PassRateGauge({ summary }: PassRateGaugeProps) {
         <p className="text-body-sm text-muted mt-0.5 font-mono"><Trans>latest suite run · project-wide</Trans></p>
       </header>
       <div className="flex justify-center">
-        <SegmentedGauge value={passPct} size={180} label={i18n._(msg`PASS RATE`)} />
+        <SegmentedGauge value={animatedPct} size={180} label={i18n._(msg`PASS RATE`)} />
       </div>
       <div className="grid grid-cols-3 gap-2 mt-auto relative">
         {GAUGE_STATS.map((s, idx) => (

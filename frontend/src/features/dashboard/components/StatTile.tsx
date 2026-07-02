@@ -2,11 +2,17 @@
 
 import { MiniArea } from '../../../components/charts';
 import { cn } from '../../../lib/cn';
+import { useCountUp } from '../../../hooks/useCountUp';
 
 interface StatTileProps {
   icon: React.ReactNode;
-  label: string;
+  /** Pre-formatted display value. Ignored when `countTo`/`formatCount` drive an animated value. */
   value: string;
+  /** Numeric target for the load-reveal count-up; pair with `formatCount`. */
+  countTo?: number;
+  /** Formats the animated number for display (e.g. `n => Math.round(n).toLocaleString()`). */
+  formatCount?: (n: number) => string;
+  label: string;
   unit?: string;
   sub: string;
   delta?: string;
@@ -22,6 +28,8 @@ export function StatTile({
   icon,
   label,
   value,
+  countTo,
+  formatCount,
   unit,
   sub,
   delta,
@@ -32,6 +40,8 @@ export function StatTile({
   accent = false,
   testId,
 }: StatTileProps) {
+  const animated = useCountUp(countTo ?? 0);
+  const displayValue = countTo !== undefined && formatCount ? formatCount(animated) : value;
   return (
     <div
       data-testid={testId}
@@ -58,7 +68,7 @@ export function StatTile({
       </div>
       <div className="relative">
         <div className="flex items-baseline gap-1">
-          <span data-testid={testId ? `${testId}-value` : undefined} className="text-h1 font-extrabold tracking-[-0.03em] leading-[0.92] tabular-nums text-primary">{value}</span>
+          <span data-testid={testId ? `${testId}-value` : undefined} className="text-h1 font-extrabold tracking-[-0.03em] leading-[0.92] tabular-nums text-primary">{displayValue}</span>
           {unit && <span className="text-body-sm font-semibold text-muted">{unit}</span>}
         </div>
         <div className="text-caption text-muted mt-0.5 font-mono">{sub}</div>

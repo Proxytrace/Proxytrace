@@ -147,7 +147,12 @@ API callers) submit the same way through `Proxytrace.Api/Controllers/TheoriesCon
 concurrent-validation quota (`TheorySubmissionOutcome`: `Accepted` / `Duplicate` /
 `QuotaExceeded`), then routes the theory to the matching `ITheoryValidator`. The queue itself
 is in-memory; on startup the service re-queues every theory still `Proposed`/`Validating`
-(`IOptimizationTheoryRepository.GetActiveAsync`) so a restart cannot strand the backlog:
+(`IOptimizationTheoryRepository.GetActiveAsync`) so a restart cannot strand the backlog.
+Recovery is skipped in kiosk mode: kiosk storage is in-memory and freshly demo-seeded on
+every boot, so the only backlog it could find is the seeded `Proposed`/`Validating` demo
+theories — re-queuing those would trigger real A/B runs (LLM spend) on every kiosk start
+when a live `Kiosk:Endpoint` is configured. Theories submitted during a kiosk session still
+validate normally via `SubmitAsync`:
 
 | Validator | File |
 |---|---|

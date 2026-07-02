@@ -17,6 +17,7 @@ import { useKiosk } from '../../contexts/KioskContext';
 import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
+import { useFollowUpSuggestions, type FollowUpState } from './useFollowUpSuggestions';
 import {
   loadConversationIndex,
   loadConversationSnapshot,
@@ -100,6 +101,8 @@ export interface TraceyChat {
   startNewConversation: () => void;
   /** Client-side route change (used by entity-card tool UIs). */
   navigate: (path: string) => void;
+  /** Auto-generated follow-up suggestions for the last finished turn (`null` when none). */
+  followUps: FollowUpState | null;
   /**
    * Provision the Tracey session (model + agent). The runtime is built app-wide so the
    * conversation survives navigation, but the session — which has backend side effects
@@ -183,13 +186,25 @@ export function useTraceyChat(): TraceyChat {
   );
 
   // Swap in the real same-origin transport whenever the session (or tool context) changes.
+  // `innerRef` mirrors it for the follow-up generation callback (which must not rebuild the hook
+  // chain when the session refreshes).
+  const innerRef = useRef<TraceyTransport | null>(null);
   useEffect(() => {
-    transport.setInner(
-      session && projectId
-        ? new TraceyTransport(projectId, session.model, toolContext, TRACEY_SYSTEM_PROMPT)
-        : null,
-    );
+    const inner = session && projectId
+      ? new TraceyTransport(projectId, session.model, toolContext, TRACEY_SYSTEM_PROMPT)
+      : null;
+    innerRef.current = inner;
+    transport.setInner(inner);
   }, [transport, session, projectId, toolContext]);
+
+  // Follow-up suggestions: after each finished turn, one small extra LLM call proposes what the
+  // user might send next (chips under the last message; see useFollowUpSuggestions).
+  const generateFollowUps = useCallback(
+    (userText: string, assistantText: string, signal: AbortSignal) =>
+      innerRef.current ? innerRef.current.generateFollowUps(userText, assistantText, signal) : null,
+    [],
+  );
+  const followUps = useFollowUpSuggestions(runtime, generateFollowUps);
 
   // Conversation restore + persistence. Re-runs on user/project change (pages don't remount on a
   // project switch), so switching projects restores that project's active thread. The subscription
@@ -351,6 +366,7 @@ export function useTraceyChat(): TraceyChat {
     deleteConversation,
     startNewConversation,
     navigate,
+    followUps,
     activate,
   };
 }

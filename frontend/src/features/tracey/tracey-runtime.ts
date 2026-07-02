@@ -1,5 +1,6 @@
 import {
   streamText,
+  generateText,
   convertToModelMessages,
   stepCountIs,
   tool,
@@ -14,6 +15,11 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { getAccessToken } from '../../auth/token';
 import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
 import { activeToolNamesFor } from './tool-access';
+import {
+  FOLLOW_UP_SYSTEM_PROMPT,
+  buildFollowUpPrompt,
+  parseFollowUps,
+} from './follow-up-suggestions';
 
 /**
  * A client-side {@link ChatTransport} that talks to Tracey's same-origin API endpoint
@@ -158,6 +164,30 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
 
   reconnectToStream(): Promise<ReadableStream<UIMessageChunk> | null> {
     return Promise.resolve(null);
+  }
+
+  /**
+   * One small extra LLM call after a finished turn that proposes follow-up messages the user
+   * might send next (see `follow-up-suggestions.ts`). It rides the same custom fetch as the turn
+   * itself, so it authenticates the same way and — because `currentTurnId` is still set — is
+   * ingested under the turn's ConversationId, grouping with the turn's traces. No tools, hard
+   * output cap: this must stay cheap and can never loop.
+   */
+  async generateFollowUps(
+    userText: string,
+    assistantText: string,
+    signal?: AbortSignal,
+  ): Promise<string[]> {
+    const result = await generateText({
+      model: this.model,
+      system: FOLLOW_UP_SYSTEM_PROMPT,
+      prompt: buildFollowUpPrompt(userText, assistantText),
+      // Generous for the ~40-token answer so a reasoning model's thinking budget doesn't starve
+      // the visible output, still a hard cheapness cap.
+      maxOutputTokens: 500,
+      abortSignal: signal,
+    });
+    return parseFollowUps(result.text);
   }
 }
 

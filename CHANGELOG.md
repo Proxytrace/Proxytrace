@@ -9,7 +9,20 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Tracey suggests follow-ups.** After each reply, Tracey proposes two likely next messages as
+  animated, clickable chips beneath her answer. Click one to send it immediately, or keep typing
+  your own. The suggestions clear the moment you send anything and are not persisted (reopening a
+  past conversation shows no chips).
+
 ### Fixed
+
+- **Kiosk no longer spends on LLM calls at startup.** When an interactive `Kiosk:Endpoint` was
+  configured, every kiosk boot re-queued the freshly demo-seeded `Proposed`/`Validating`
+  optimization theories into the validation pipeline, firing real A/B test runs (and model
+  cost) on each start. The restart-recovery pass is now skipped in kiosk mode; theories a user
+  submits during a kiosk session still validate normally.
 
 - **Tracey conversation history restores again.** Opening a past conversation from the history
   rail (and restoring the active conversation after a page reload) rendered an empty thread —

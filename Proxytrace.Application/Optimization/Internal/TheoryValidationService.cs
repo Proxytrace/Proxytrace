@@ -8,6 +8,7 @@ using Proxytrace.Application.Streaming;
 using Proxytrace.Common.Async;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
+using Proxytrace.Domain.Kiosk;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestRunGroup;
@@ -42,6 +43,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
     private readonly ITheoryBroadcaster theoryBroadcaster;
     private readonly ITransaction transaction;
     private readonly IAsyncLock asyncLock;
+    private readonly KioskOptions kiosk;
     private readonly ILogger<TheoryValidationService> logger;
     private readonly ILogger<Audit> audit;
 
@@ -69,6 +71,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         ITheoryBroadcaster theoryBroadcaster,
         ITransaction transaction,
         IAsyncLock asyncLock,
+        KioskOptions kiosk,
         ILogger<TheoryValidationService> logger,
         ILogger<Audit> audit)
     {
@@ -80,6 +83,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         this.theoryBroadcaster = theoryBroadcaster;
         this.transaction = transaction;
         this.asyncLock = asyncLock;
+        this.kiosk = kiosk;
         this.logger = logger;
         this.audit = audit;
     }
@@ -229,9 +233,17 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
     /// Re-queues theories that were Proposed or Validating when the process last stopped.
     /// The validation queue is in-memory, so without this the backlog would be stranded —
     /// never validated, yet permanently counted against the per-project submission quota.
+    /// Skipped in kiosk mode: kiosk storage is in-memory and freshly demo-seeded on every
+    /// start, so the only "backlog" recovery could find is the seeded Proposed/Validating
+    /// theories — re-queuing those would fire real A/B runs (and LLM spend) on every kiosk
+    /// boot when a live Kiosk:Endpoint is configured. User-submitted theories still enqueue
+    /// normally via <see cref="SubmitAsync"/>.
     /// </summary>
-    private async Task RecoverInFlightTheoriesAsync(CancellationToken cancellationToken)
+    internal async Task RecoverInFlightTheoriesAsync(CancellationToken cancellationToken)
     {
+        if (kiosk.Enabled)
+            return;
+
         try
         {
             var active = await theories.GetActiveAsync(cancellationToken);

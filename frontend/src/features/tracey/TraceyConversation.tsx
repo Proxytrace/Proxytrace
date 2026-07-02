@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowDownIcon } from '../../components/icons';
 import { AssistantMessage } from './components/AssistantMessage';
 import { UserMessage } from './components/UserMessage';
+import { FollowUpSuggestions } from './components/FollowUpSuggestions';
 
 /** The scrolling message list (composer lives in {@link TraceyComposer}). */
 export function TraceyConversation() {
@@ -18,6 +19,9 @@ export function TraceyConversation() {
       >
         <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-5">
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
+          {/* Auto-generated follow-up chips for the last finished turn; the component hides
+              itself while a turn runs or once the thread moved past its message. */}
+          <FollowUpSuggestions />
           {/* Busy signal at the end of the flow while Tracey is mid-turn (streaming or running
               tools); replaces the per-message typing dots so it shows through tool steps too. */}
           <ThreadPrimitive.If running>

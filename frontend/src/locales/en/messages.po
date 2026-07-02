@@ -4525,6 +4525,9 @@ msgstr "Submitting theory…"
 msgid "Success"
 msgstr "Success"
 
+msgid "Suggested follow-ups"
+msgstr "Suggested follow-ups"
+
 msgid "Suite"
 msgstr "Suite"
 

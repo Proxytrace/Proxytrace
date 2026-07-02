@@ -80,7 +80,10 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `tracey-quick-actions.ts` | Curated prompt presets: the empty-thread starter chips (clicking one **sends** its prompt immediately) + the top of the slash menu (which prefills for editing). |
 | `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens (input / cached-input / output / total) + duration + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
-| `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
+| `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, the `FollowUpSuggestions` chips after the last finished turn, empty state. |
+| `follow-up-suggestions.ts` | Pure half of **follow-up suggestions**: the suggestion system/user prompts, `parseFollowUps` (tolerant JSON-array parse), and `latestExchange` (the trailing user→assistant text pair). Unit-tested (`*.spec.ts`); no React. |
+| `useFollowUpSuggestions.ts` | Lifecycle hook: subscribes to the thread and, on each running→idle transition that ends in a *completed* assistant message with text, calls `TraceyTransport.generateFollowUps` and holds the result (tagged with the turn's message id). Aborts + clears the moment any new turn starts. |
+| `components/FollowUpSuggestions.tsx` | The clickable follow-up chips (same anatomy as the starter `ToolChips`); reads `followUps` from the chat context, hides itself while running or once the thread moved past the tagged message, and **sends** a chip's text as a user message on click. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu; its **send button toggles to a Stop button** via `ThreadPrimitive.If running` + `ComposerPrimitive.Cancel` while a turn runs — see "Stopping a turn"), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
 | `api/tracey.ts` | `getSession()` → `{ model, agentId }` for `GET /api/tracey/session`. |
 
@@ -104,6 +107,28 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
 6. On the stream's **finish** part, `toUIMessageStream({ messageMetadata })` writes
    `metadata.custom = { traceConversationId, usage, durationMs }`, which drives `MessageStatusBar`.
+
+## Follow-up suggestions (proactive next-message chips)
+
+After every finished turn Tracey proposes two things the user might send next, rendered as animated
+clickable chips under the last assistant message. Clicking one sends it as a user message.
+
+- **When.** `useFollowUpSuggestions` subscribes to the thread and reacts to a **running→idle**
+  transition whose last message is a `status.type === 'complete'` assistant message with text. A
+  stopped/errored turn, the `ask_questions` pause (`requires-action`), and a tool-only answer (no
+  text) all produce no suggestions. Because it keys off the live transition (not the message list),
+  a **restored/reloaded conversation shows no chips** — they are in-memory only and never persisted.
+- **How.** The producing call is `TraceyTransport.generateFollowUps` — one small `generateText`
+  call (no tools, `maxOutputTokens` capped) over the same custom fetch as a turn, so it
+  authenticates identically and, because `currentTurnId` is still set, is **ingested under the
+  turn's ConversationId** (it groups with the turn's traces, and `OpenTraceButton` still resolves).
+  The prompt/parse live in the pure `follow-up-suggestions.ts` (`parseFollowUps` tolerates code
+  fences and drops non-strings / dupes / overlong entries, capped at `FOLLOW_UP_COUNT` = 2).
+- **Removal is guaranteed two ways.** Starting any new turn (a user message, a chip click, a
+  resubmit) aborts an in-flight generation and clears the state immediately; the render side
+  additionally gates on the message id (`followUps.messageId === last message id`) and on
+  `!isRunning`, so chips can never appear under anything but the exact turn they answer. A failed
+  generation is swallowed — suggestions are a bonus, never an error.
 
 ## Stopping a turn (the cancel chain)
 

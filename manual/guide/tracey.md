@@ -80,6 +80,14 @@ slash command — send it as-is to invoke that tool directly.
 Tracey **streams** her replies as they are generated and renders them as Markdown (headings,
 lists, tables, and code blocks).
 
+## Follow-up suggestions
+
+After Tracey answers, two **follow-up suggestions** appear as clickable chips beneath her reply —
+likely next messages drawn from what you just discussed (e.g. *Compare with the last run*, *Show
+the failing cases*). Click one to send it straight away, or just keep typing your own message. The
+suggestions clear as soon as you send anything, and they are not saved — reopening a past
+conversation shows the messages but no suggestions.
+
 While Tracey is thinking or replying, the **send** button turns into a **Stop** button — press it
 to cancel the response. Stopping halts her generation immediately (the in-flight model call is
 cancelled, not left running in the background) and ends the turn. If she was waiting on a
