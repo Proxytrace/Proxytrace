@@ -9,62 +9,6 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
-### Added
-
-- **Tracey suggests follow-ups.** After each reply, Tracey proposes two likely next messages as
-  animated, clickable chips beneath her answer. Click one to send it immediately, or keep typing
-  your own. The suggestions clear the moment you send anything and are not persisted (reopening a
-  past conversation shows no chips).
-
-### Fixed
-
-- **Kiosk no longer spends on LLM calls at startup.** When an interactive `Kiosk:Endpoint` was
-  configured, every kiosk boot re-queued the freshly demo-seeded `Proposed`/`Validating`
-  optimization theories into the validation pipeline, firing real A/B test runs (and model
-  cost) on each start. The restart-recovery pass is now skipped in kiosk mode; theories a user
-  submits during a kiosk session still validate normally.
-
-- **Tracey conversation history restores again.** Opening a past conversation from the history
-  rail (and restoring the active conversation after a page reload) rendered an empty thread —
-  clicking a conversation appeared to do nothing. Snapshots are now persisted in the AI SDK's
-  native message format, which survives the localStorage round-trip. Conversations saved before
-  this fix keep their history entry but can no longer be reopened (their messages were stored in
-  a format that never restored correctly); opening one starts a fresh thread.
-- **Costs display in € everywhere.** Test-run views (cost panel, champion/medals/comparison stats,
-  suite totals, Tracey run cards) and agent trend statistics rendered costs with a `$` prefix even
-  though all Proxytrace costs are computed and stored in EUR. Every cost readout now uses the euro
-  sign, and amounts from €1 up show cents (with thousands grouping) instead of four decimals.
-- **Kiosk demo traces now show real costs.** Seeded demo endpoints priced tokens in per-token
-  units instead of EUR per 1M tokens, so every trace and agent statistic displayed a cost of
-  €0.0000. Prices are now seeded in the correct unit, the interactive kiosk endpoint falls back
-  to a small-model rate when `Kiosk:Endpoint` omits token costs, and the configuration manual's
-  example uses per-1M values.
-- **Kiosk demo: re-running the Email Triage test suite no longer fails every case.** The triage
-  agent's prompt tells it to use its `search_kb` tool, but the seeded test cases were single-turn —
-  against a live model (`Kiosk:Endpoint`) the agent's first move was a tool call, which the
-  single-completion test runner scored as the answer, failing all cases. Each seeded triage case
-  now embeds the `search_kb` round-trip in its input conversation, so a live re-run produces the
-  final triage answer and the suite's pass/fail pattern reflects the agent's real defects.
-- **Kiosk demo: "Promote" on a validated theory no longer 409s.** Two seeded validated
-  optimization theories for the same agent could point at the same draft proposal, so promoting one
-  left the other offering a "Promote" the server rejected (`409 Conflict`). Seeding now hands each
-  validated theory its own proposal.
-
-### Changed
-
-- **Kiosk demo seeds a premium flagship model.** The showcase's OpenAI demo models are now
-  `gpt-5.4` (priced as a premium flagship, €15/€60 per 1M tokens) and `gpt-5.4-mini` instead of
-  `gpt-4o`/`gpt-4o-mini`, so the seeded cost cards and model-switch proposals show meaningful
-  amounts at the demo's call volumes.
-- **More believable kiosk demo traces, with tool calls front and center.** The seeded showcase data
-  now holds together when inspected: the Data Analytics agent gained `run_sql`/`get_schema` tools
-  and every one of its numeric answers is grounded in a query round-trip, the Email Triage agent
-  gained a `search_kb` tool for how-to/bug replies (while still lacking the plan lookup its
-  fabrication storyline needs), and support answers about a specific order go through
-  `lookup_order`/`start_return` — across the curated traces and a large share of the two-week
-  history. Traces flagged as "high token count" now actually contain the pasted wall of text — an
-  email thread, a full diff, a schema dump — that justifies the flag.
-
 ## [1.4.0] - 2026-07-02
 
 ### Changed
@@ -118,6 +62,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   and stored locally in your browser. The history lives in a side panel on the right, hidden by
   default — the sidebar icon in the chat header opens and closes it, and the choice is remembered
   on the device.
+- **Tracey suggests follow-ups.** After each reply, Tracey proposes two likely next messages as
+  animated, clickable chips beneath her answer. Click one to send it immediately, or keep typing
+  your own. The suggestions clear the moment you send anything and are not persisted (reopening a
+  past conversation shows no chips).
 
 ### Fixed
 
@@ -161,6 +109,36 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - **More of the interface is translated.** Time-range presets ("Last 15 minutes", "All time", …), the
   optimization decision-flow stage labels, proposal tool messages, the "Expected" conversation label
   and the Tracey quick-action chips now go through translation (German, Spanish, French, Italian).
+- **Kiosk no longer spends on LLM calls at startup.** When an interactive `Kiosk:Endpoint` was
+  configured, every kiosk boot re-queued the freshly demo-seeded `Proposed`/`Validating`
+  optimization theories into the validation pipeline, firing real A/B test runs (and model
+  cost) on each start. The restart-recovery pass is now skipped in kiosk mode; theories a user
+  submits during a kiosk session still validate normally.
+- **Tracey conversation history restores again.** Opening a past conversation from the history
+  rail (and restoring the active conversation after a page reload) rendered an empty thread —
+  clicking a conversation appeared to do nothing. Snapshots are now persisted in the AI SDK's
+  native message format, which survives the localStorage round-trip. Conversations saved before
+  this fix keep their history entry but can no longer be reopened (their messages were stored in
+  a format that never restored correctly); opening one starts a fresh thread.
+- **Costs display in € everywhere.** Test-run views (cost panel, champion/medals/comparison stats,
+  suite totals, Tracey run cards) and agent trend statistics rendered costs with a `$` prefix even
+  though all Proxytrace costs are computed and stored in EUR. Every cost readout now uses the euro
+  sign, and amounts from €1 up show cents (with thousands grouping) instead of four decimals.
+- **Kiosk demo traces now show real costs.** Seeded demo endpoints priced tokens in per-token
+  units instead of EUR per 1M tokens, so every trace and agent statistic displayed a cost of
+  €0.0000. Prices are now seeded in the correct unit, the interactive kiosk endpoint falls back
+  to a small-model rate when `Kiosk:Endpoint` omits token costs, and the configuration manual's
+  example uses per-1M values.
+- **Kiosk demo: re-running the Email Triage test suite no longer fails every case.** The triage
+  agent's prompt tells it to use its `search_kb` tool, but the seeded test cases were single-turn —
+  against a live model (`Kiosk:Endpoint`) the agent's first move was a tool call, which the
+  single-completion test runner scored as the answer, failing all cases. Each seeded triage case
+  now embeds the `search_kb` round-trip in its input conversation, so a live re-run produces the
+  final triage answer and the suite's pass/fail pattern reflects the agent's real defects.
+- **Kiosk demo: "Promote" on a validated theory no longer 409s.** Two seeded validated
+  optimization theories for the same agent could point at the same draft proposal, so promoting one
+  left the other offering a "Promote" the server rejected (`409 Conflict`). Seeding now hands each
+  validated theory its own proposal.
 
 ### Changed
 
@@ -174,6 +152,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   Evaluators, Suites and Runs; a shared switch-pill control backs the toggles on the Agents, Traces and
   Tracey screens; hand-rolled dropdowns/menus were replaced with the standard components; and a sweep
   aligned spacing, colour, shadow and status treatments to the design tokens. Behaviour is unchanged.
+- **Kiosk demo seeds a premium flagship model.** The showcase's OpenAI demo models are now
+  `gpt-5.4` (priced as a premium flagship, €15/€60 per 1M tokens) and `gpt-5.4-mini` instead of
+  `gpt-4o`/`gpt-4o-mini`, so the seeded cost cards and model-switch proposals show meaningful
+  amounts at the demo's call volumes.
+- **More believable kiosk demo traces, with tool calls front and center.** The seeded showcase data
+  now holds together when inspected: the Data Analytics agent gained `run_sql`/`get_schema` tools
+  and every one of its numeric answers is grounded in a query round-trip, the Email Triage agent
+  gained a `search_kb` tool for how-to/bug replies (while still lacking the plan lookup its
+  fabrication storyline needs), and support answers about a specific order go through
+  `lookup_order`/`start_return` — across the curated traces and a large share of the two-week
+  history. Traces flagged as "high token count" now actually contain the pasted wall of text — an
+  email thread, a full diff, a schema dump — that justifies the flag.
 
 ### Security
 
