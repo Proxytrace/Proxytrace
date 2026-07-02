@@ -355,10 +355,25 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
 - `await.ts` polls each handle to a terminal state via `poll-until-terminal.ts` — runs:
   `Completed`/`Failed`/`Cancelled`; theories: `Validated`/`Invalidated` — at a 3 s interval with a
   **10-minute per-handle cap**. A capped handle returns `timedOut: true` rather than hanging.
+- The poll **tolerates transient failures**: a wait makes up to ~200 GETs, so a single network
+  blip / backend restart / 5xx must not void it. `pollUntilTerminal` retries and only gives up on
+  a handle after `maxConsecutiveFailures` (3) *consecutive* failed polls — so a persistently bad
+  id (404 every poll) still fails within ~10 s, while a finished run survives a mid-wait hiccup.
+  An abort is never retried.
 - It returns one compact aggregate (`{ results, errors?, anyTimedOut }`) with per-run pass/fail
   counts and per-theory resulting proposal id, so Tracey can summarize and act in the same turn.
-  Failures are captured **per handle** (a bad id or network error lands in `errors`), so one bad
-  handle can't lose the other results.
+  Failures are captured **per handle** (a bad id or persistent network error lands in `errors`),
+  so one bad handle can't lose the other results. The tool description tells the model an
+  `errors` entry means the state is *unknown* (the action may still be running), not that the
+  action failed.
+- The enforcement counts a handle as awaited only when the `await_actions` call **resolved**
+  (`pendingAwaitables` reads the turn's `toolResults`, not `toolCalls`): a wait that errored
+  (invalid input, unexpected throw) re-forces `await_actions` on the next step instead of letting
+  the turn end without the outcome.
+- A page reload mid-wait orphans the `await_actions` part (no result — the card shows "Wait
+  stopped"). `convertToModelMessages(…, { ignoreIncompleteToolCalls: true })` in the transport
+  drops such orphans from what the model sees; without it the orphaned tool-call has no matching
+  tool result and the OpenAI-shape endpoint 400s **every** subsequent turn of that conversation.
 - The wait honors the turn's **abort signal**: hitting Stop cancels the polling immediately
   instead of letting it run to the cap in the background (see "Stopping a turn"). The card then
   shows a neutral "Wait stopped" state — the backend run/theory keeps going regardless.

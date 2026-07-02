@@ -9,6 +9,13 @@ import { abortError, pollUntilTerminal, type PollOptions } from './poll-until-te
 const POLL_INTERVAL_MS = 3_000;
 /** Hard cap on a single wait. Generous for real suites; a slow action returns `timedOut: true`. */
 const AWAIT_ACTIONS_TIMEOUT_MS = 10 * 60 * 1_000;
+/**
+ * Consecutive failed polls tolerated before a handle lands in `errors`. A full wait makes up to
+ * ~200 polls, so a single transient blip (network hiccup, backend restart, gateway 5xx) must not
+ * void the whole wait — that was the main way Tracey "lost" a finished run. A persistently bad
+ * handle (404 on every poll) still fails within ~10 s instead of spinning to the 10-minute cap.
+ */
+const MAX_CONSECUTIVE_POLL_FAILURES = 3;
 
 const TERMINAL_RUN: ReadonlySet<TestRunStatus> = new Set([
   TestRunStatus.Completed,
@@ -124,7 +131,10 @@ export const createAwaitTools: ToolFactory = () => ({
       'Wait for long-running actions to finish, then return their results so you can react in the ' +
       'same turn. Pass the exact `awaitable` handle(s) ({ kind, id }) from start_test_run or ' +
       'submit_optimization_theory — never a suite/agent id. Call once with EVERY pending handle ' +
-      'batched; never per action, and never poll get_run / get_proposal yourself.',
+      'batched; never per action, and never poll get_run / get_proposal yourself. A result with ' +
+      '`timedOut: true` means the action is still running — say so. An entry in `errors` means its ' +
+      'state could not be read (the action itself may still be running or have succeeded) — report ' +
+      'that honestly instead of claiming the action failed.',
     parameters: z.object({
       handles: z.array(handleSchema).min(1).describe('The actions to wait for.'),
     }),
@@ -133,6 +143,7 @@ export const createAwaitTools: ToolFactory = () => ({
       const opts: PollOptions = {
         intervalMs: POLL_INTERVAL_MS,
         timeoutMs: AWAIT_ACTIONS_TIMEOUT_MS,
+        maxConsecutiveFailures: MAX_CONSECUTIVE_POLL_FAILURES,
         // Abort-aware sleep: when the user stops the turn, the wait ends now, not at the next
         // poll tick — otherwise a stopped turn would keep polling for up to 10 minutes.
         sleep: (ms) =>

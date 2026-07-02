@@ -8,6 +8,13 @@ export interface PollOptions {
   intervalMs: number;
   /** Overall cap, in ms. After this elapses the loop gives up with `timedOut: true`. */
   timeoutMs: number;
+  /**
+   * How many *consecutive* poll failures to tolerate before giving up and rethrowing
+   * (default 0 — first failure rejects). A long wait makes hundreds of polls, so a single
+   * transient blip (network hiccup, backend restart, 5xx) must not void the whole wait;
+   * only a persistent failure — e.g. a genuinely bad id 404ing on every poll — should.
+   */
+  maxConsecutiveFailures?: number;
   /** Sleeps for `ms` (injected so tests can advance a fake clock instantly). */
   sleep: (ms: number) => Promise<void>;
   /** Current time in ms (injected for the same reason). */
@@ -27,13 +34,29 @@ export async function pollUntilTerminal<S>(
   opts: PollOptions,
 ): Promise<{ snapshot: S; timedOut: boolean }> {
   const start = opts.now();
-  if (opts.signal?.aborted) throw abortError();
-  let snapshot = await poll();
-  while (!isTerminal(snapshot)) {
-    if (opts.now() - start >= opts.timeoutMs) return { snapshot, timedOut: true };
-    await opts.sleep(opts.intervalMs);
+  const maxFailures = opts.maxConsecutiveFailures ?? 0;
+  let consecutiveFailures = 0;
+  let last: { snapshot: S } | undefined;
+  let lastError: unknown;
+  for (;;) {
     if (opts.signal?.aborted) throw abortError();
-    snapshot = await poll();
+    try {
+      const snapshot = await poll();
+      last = { snapshot };
+      consecutiveFailures = 0;
+      if (isTerminal(snapshot)) return { snapshot, timedOut: false };
+    } catch (e) {
+      // An abort is a cancellation of the whole wait, never a retryable poll failure.
+      if (e instanceof Error && e.name === 'AbortError') throw e;
+      consecutiveFailures++;
+      lastError = e;
+      if (consecutiveFailures > maxFailures) throw e;
+    }
+    if (opts.now() - start >= opts.timeoutMs) {
+      // Timed out while every poll so far failed: there is no snapshot to hand back.
+      if (!last) throw lastError;
+      return { snapshot: last.snapshot, timedOut: true };
+    }
+    await opts.sleep(opts.intervalMs);
   }
-  return { snapshot, timedOut: false };
 }

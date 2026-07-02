@@ -60,27 +60,64 @@ describe('await_actions', () => {
     expect(theoriesApi.get).toHaveBeenCalledWith('t1', { silentStatuses: [404] });
   });
 
-  it('captures a failed handle without losing the other results', async () => {
-    testRunGroupsApi.get.mockRejectedValue(new Error('not found'));
-    theoriesApi.get.mockResolvedValue({
-      id: 't1', agentName: 'A', status: TheoryStatus.Validated, resultingProposalId: 'pr1',
-    });
+  it('captures a persistently failing handle without losing the other results', async () => {
+    vi.useFakeTimers();
+    try {
+      // Rejects on every poll — the retry tolerance must run out and land it in `errors`.
+      testRunGroupsApi.get.mockRejectedValue(new Error('not found'));
+      theoriesApi.get.mockResolvedValue({
+        id: 't1', agentName: 'A', status: TheoryStatus.Validated, resultingProposalId: 'pr1',
+      });
 
-    const tool = createAwaitTools(ctx, store).await_actions;
-    if (!tool.execute) throw new Error('tool has no execute');
-    const result = await tool.execute(
-      { handles: [{ kind: 'test-run', id: 'bad' }, { kind: 'theory', id: 't1' }] },
-      ctx,
-    ) as {
-      anyTimedOut: boolean;
-      results: { kind: string; id: string }[];
-      errors?: { kind: string; id: string; error: string }[];
-    };
+      const tool = createAwaitTools(ctx, store).await_actions;
+      if (!tool.execute) throw new Error('tool has no execute');
+      const pending = tool.execute(
+        { handles: [{ kind: 'test-run', id: 'bad' }, { kind: 'theory', id: 't1' }] },
+        ctx,
+      ) as Promise<{
+        anyTimedOut: boolean;
+        results: { kind: string; id: string }[];
+        errors?: { kind: string; id: string; error: string }[];
+      }>;
+      await vi.advanceTimersByTimeAsync(60_000);
+      const result = await pending;
 
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0]).toMatchObject({ kind: 'theory', id: 't1' });
-    expect(result.errors).toEqual([{ kind: 'test-run', id: 'bad', error: 'not found' }]);
-    expect(result.anyTimedOut).toBe(false);
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]).toMatchObject({ kind: 'theory', id: 't1' });
+      expect(result.errors).toEqual([{ kind: 'test-run', id: 'bad', error: 'not found' }]);
+      expect(result.anyTimedOut).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('survives a transient poll failure and still delivers the result', async () => {
+    vi.useFakeTimers();
+    try {
+      // One network blip mid-wait, then the run completes — the wait must NOT give up on the
+      // handle (this was the main way Tracey "lost" a finished run and never followed up).
+      testRunGroupsApi.get
+        .mockRejectedValueOnce(new Error('network blip'))
+        .mockResolvedValue({
+          id: 'g1', suiteName: 'Suite', agentName: 'A', status: TestRunStatus.Completed,
+          runs: [{ agentName: 'A', status: TestRunStatus.Completed, passedCases: 1, failedCases: 0, totalCases: 1, passRate: 100 }],
+        });
+
+      const tool = createAwaitTools(ctx, store).await_actions;
+      if (!tool.execute) throw new Error('tool has no execute');
+      const pending = tool.execute(
+        { handles: [{ kind: 'test-run', id: 'g1' }] },
+        ctx,
+      ) as Promise<{ results: { status: string }[]; errors?: unknown[] }>;
+      await vi.advanceTimersByTimeAsync(10_000);
+      const result = await pending;
+
+      expect(result.errors).toBeUndefined();
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]).toMatchObject({ kind: 'test-run', id: 'g1', status: TestRunStatus.Completed });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('forwards the turn abort signal into the polled API call', async () => {
