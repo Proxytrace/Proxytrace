@@ -81,6 +81,8 @@ internal static class QueryLatencyScenario
             () => statsReader.GetCostEstimateAsync(filter, cancellationToken));
         await Measure("statsCallTrends",
             () => statsReader.GetCallTrendsAsync(filter, 20, from, now, cancellationToken));
+        await Measure("statsPulse",
+            () => statsReader.GetPulseAsync(filter, now.AddMinutes(-60), now, 60, cancellationToken));
 
         // Per-agent overview page.
         await Measure("agentOverview",
