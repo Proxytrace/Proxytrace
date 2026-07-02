@@ -222,7 +222,14 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         agents.GetAllAsync(Arg.Any<CancellationToken>()).Returns([]);
         int[] pulse = new int[60];
         pulse[59] = 7;
-        callStats.GetPulseAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        DateTimeOffset capturedFrom = default;
+        DateTimeOffset capturedTo = default;
+        callStats.GetPulseAsync(
+                Arg.Any<StatisticsFilter>(),
+                Arg.Do<DateTimeOffset>(from => capturedFrom = from),
+                Arg.Do<DateTimeOffset>(to => capturedTo = to),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
             .Returns(pulse);
 
         DashboardView view = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 6, agentLimit: 8, CancellationToken);
@@ -236,6 +243,8 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
             Arg.Any<DateTimeOffset>(),
             60,
             Arg.Any<CancellationToken>());
+        (capturedTo - capturedFrom).Should().Be(TimeSpan.FromMinutes(60));
+        capturedTo.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(1));
     }
 
     [TestMethod]
