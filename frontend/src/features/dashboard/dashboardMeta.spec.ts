@@ -10,6 +10,9 @@ import {
   buildAgentNameMap,
   agentCallCount,
   splitTokenStr,
+  normalizePulse,
+  bumpPulse,
+  shiftPulse,
 } from './dashboardMeta';
 import type { LatencyStatDto, ModelBreakdownDto, AgentTokenUsageDto, AgentBreakdownDto, AgentListItemDto } from '../../api/models';
 
@@ -239,5 +242,44 @@ describe('splitTokenStr', () => {
   it('handles zero', () => {
     const result = splitTokenStr(0);
     expect(result.num).toBeTruthy();
+  });
+});
+
+// ── normalizePulse / bumpPulse / shiftPulse ──
+
+describe('normalizePulse', () => {
+  it('pads a short series with leading zeros to 60 entries', () => {
+    const out = normalizePulse([1, 2, 3]);
+    expect(out).toHaveLength(60);
+    expect(out.slice(57)).toEqual([1, 2, 3]);
+    expect(out[0]).toBe(0);
+  });
+  it('keeps the newest 60 entries of a long series', () => {
+    const out = normalizePulse(Array.from({ length: 70 }, (_, i) => i));
+    expect(out).toHaveLength(60);
+    expect(out[59]).toBe(69);
+    expect(out[0]).toBe(10);
+  });
+  it('returns all zeros for undefined', () => {
+    expect(normalizePulse(undefined)).toEqual(Array(60).fill(0));
+  });
+});
+
+describe('bumpPulse', () => {
+  it('increments the newest bucket without mutating the input', () => {
+    const input = Array(60).fill(0);
+    const out = bumpPulse(input);
+    expect(out[59]).toBe(1);
+    expect(input[59]).toBe(0);
+  });
+});
+
+describe('shiftPulse', () => {
+  it('drops the oldest bucket and opens an empty one', () => {
+    const input = [...Array(59).fill(2), 5];
+    const out = shiftPulse(input);
+    expect(out).toHaveLength(60);
+    expect(out[58]).toBe(5);
+    expect(out[59]).toBe(0);
   });
 });
