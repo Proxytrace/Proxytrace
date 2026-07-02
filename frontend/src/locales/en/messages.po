@@ -1228,6 +1228,9 @@ msgstr "Chart token usage per agent"
 msgid "Cheapest"
 msgstr "Cheapest"
 
+msgid "Check results"
+msgstr "Check results"
+
 msgid "Check your inbox"
 msgstr "Check your inbox"
 
@@ -2792,8 +2795,8 @@ msgstr "Name, system endpoint, and lifecycle for the active project."
 msgid "navigate"
 msgstr "navigate"
 
-msgid "Needs a look"
-msgstr "Needs a look"
+msgid "Needs attention"
+msgstr "Needs attention"
 
 msgid "never"
 msgstr "never"
@@ -4464,9 +4467,6 @@ msgstr "Start run"
 msgid "Starting test run…"
 msgstr "Starting test run…"
 
-msgid "Starting…"
-msgstr "Starting…"
-
 msgid "State"
 msgstr "State"
 
@@ -5271,6 +5271,9 @@ msgstr "Waiting for … actions"
 
 msgid "Waiting for the model to finish streaming…"
 msgstr "Waiting for the model to finish streaming…"
+
+msgid "Waiting…"
+msgstr "Waiting…"
 
 msgid "Walk through open optimization proposals"
 msgstr "Walk through open optimization proposals"

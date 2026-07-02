@@ -1,13 +1,17 @@
 import { type ToolCallMessagePartComponent, useThread } from '@assistant-ui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { plural } from '@lingui/core/macro';
+import { msg, plural } from '@lingui/core/macro';
+import { type MessageDescriptor } from '@lingui/core';
 import { ClockIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import type { AnyAwaitResult, AwaitError, AwaitKind } from '../../tools/await';
 import { ToolUIFrame } from './ToolUIFrame';
-import { AwaitPendingRow, AwaitResultRow } from './AwaitActionRows';
-import { awaitOutcome, fmtElapsed } from './await-card-logic';
-import { useElapsedSeconds } from './useElapsedSeconds';
+import { AwaitPendingRunRow } from './AwaitPendingRunRow';
+import { AwaitPendingTheoryRow } from './AwaitPendingTheoryRow';
+import { AwaitResultRow } from './AwaitResultRow';
+import { AwaitErrorRow } from './AwaitErrorRow';
+import { ElapsedStopwatch } from './ElapsedStopwatch';
+import { awaitOutcome, type AwaitOutcomeTone } from './await-card-logic';
 
 interface AwaitActionsArgs {
   handles?: { kind?: AwaitKind; id?: string }[];
@@ -19,15 +23,23 @@ interface AwaitActionsResult {
   anyTimedOut: boolean;
 }
 
+/** Verdict badge copy — exhaustive over the tone, so a new tone can't silently mislabel. */
+const OUTCOME_LABEL: Record<AwaitOutcomeTone, MessageDescriptor> = {
+  success: msg`All done`,
+  warn: msg`Check results`,
+  danger: msg`Needs attention`,
+};
+
 /**
  * Inline renderer for the `await_actions` tool. While the wait runs it shows one live row per
- * handle — real backend status, case progress for runs, the A/B phase for theories — plus an
- * elapsed stopwatch and the streaming ring. Once resolved it settles into one outcome row per
- * action (with per-case counts and timed-out / failed-handle markers) under a summary verdict.
- * The per-action live cards above stream the fully detailed progress.
+ * handle — mirroring the SSE-patched cache the live cards maintain (case progress for runs, the
+ * A/B phase for theories) — plus an elapsed stopwatch and the streaming ring. Once resolved it
+ * settles into one outcome row per action (with per-case counts and timed-out / failed-handle
+ * markers) under a card-level verdict badge. The per-action live cards above stream the fully
+ * detailed progress.
  */
 export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const threadRunning = useThread((thread) => thread.isRunning);
   const resolved = result as AwaitActionsResult | undefined;
   // User hit Stop while the wait was polling: the poll aborts, but the test run / theory keeps
@@ -40,8 +52,7 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
   const stopped =
     (status.type === 'incomplete' && status.reason === 'cancelled') ||
     (status.type !== 'incomplete' && !resolved && !threadRunning);
-  const waiting = !stopped && !isError && status.type !== 'incomplete' && !resolved;
-  const elapsed = useElapsedSeconds(waiting);
+  const errored = !stopped && (isError || status.type === 'incomplete');
 
   if (stopped) {
     return (
@@ -52,13 +63,13 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
       </ToolUIFrame>
     );
   }
-  if (isError || status.type === 'incomplete') {
+  if (errored) {
     return <ToolUIFrame state="error" testId="tracey-await-card" />;
   }
 
-  const { handles } = args as AwaitActionsArgs;
-
+  // Stopped and errored have returned, so a missing result here means the wait is still running.
   if (!resolved) {
+    const { handles } = args as AwaitActionsArgs;
     const pending = (handles ?? []).filter((h): h is { kind: AwaitKind; id: string } => !!h.kind && !!h.id);
     const waitingTitle = pending.length
       ? plural(pending.length, { one: 'Waiting for # action', other: 'Waiting for # actions' })
@@ -69,17 +80,17 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
         icon={<ClockIcon size={14} />}
         title={waitingTitle}
         live
-        cornerAccessory={
-          <span className="font-mono text-caption tabular-nums text-muted" title={t`Time waited`}>
-            {fmtElapsed(elapsed)}
-          </span>
-        }
+        cornerAccessory={<ElapsedStopwatch />}
         testId="tracey-await-card"
       >
         <div className="flex flex-col gap-2" aria-busy="true">
-          {pending.map((handle) => (
-            <AwaitPendingRow key={`${handle.kind}:${handle.id}`} kind={handle.kind} id={handle.id} />
-          ))}
+          {pending.map((handle) =>
+            handle.kind === 'test-run' ? (
+              <AwaitPendingRunRow key={`${handle.kind}:${handle.id}`} id={handle.id} />
+            ) : (
+              <AwaitPendingTheoryRow key={`${handle.kind}:${handle.id}`} id={handle.id} />
+            ),
+          )}
           <span className="border-t border-hairline pt-2 text-caption text-muted">
             <Trans>Tracey picks up the moment everything finishes.</Trans>
           </span>
@@ -89,32 +100,24 @@ export const AwaitActionsToolUI: ToolCallMessagePartComponent = ({ args, result,
   }
 
   const outcome = awaitOutcome(resolved.results, resolved.errors, resolved.anyTimedOut);
-  const outcomeLabel =
-    outcome === 'success' ? t`All done` : outcome === 'warn' ? t`Still running` : t`Needs a look`;
   return (
     <ToolUIFrame
       state="ready"
       icon={<ClockIcon size={14} />}
       title={t`Awaited actions`}
-      cornerAccessory={<Badge label={outcomeLabel} variant={outcome} size="sm" />}
+      cornerAccessory={<Badge label={i18n._(OUTCOME_LABEL[outcome])} variant={outcome} size="sm" />}
       testId="tracey-await-card"
     >
       <div className="flex flex-col gap-2">
         {resolved.results.map((item, index) => (
-          <AwaitResultRow key={`${item.kind}:${item.id}`} item={item} index={index} />
+          <AwaitResultRow key={`${item.kind}:${item.id}`} item={item} delayIndex={index} />
         ))}
         {(resolved.errors ?? []).map((item, index) => (
-          <div
+          <AwaitErrorRow
             key={`${item.kind}:${item.id}`}
-            className="fade-up flex items-center gap-2"
-            style={{ animationDelay: `${(resolved.results.length + index) * 60}ms` }}
-          >
-            <span className="min-w-0 flex-1 truncate text-body-sm text-secondary">
-              {item.kind === 'test-run' ? <Trans>Test run</Trans> : <Trans>Theory</Trans>}{' '}
-              <span className="font-mono text-muted">{item.id}</span>
-            </span>
-            <Badge label={t`Failed to check`} variant="danger" size="sm" title={item.error} />
-          </div>
+            item={item}
+            delayIndex={resolved.results.length + index}
+          />
         ))}
       </div>
     </ToolUIFrame>

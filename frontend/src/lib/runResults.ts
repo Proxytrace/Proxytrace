@@ -101,6 +101,15 @@ export function passRateColor(rate: number | null): string {
   return rate >= PASS_RATE_WARN ? SUCCESS : rate >= PASS_RATE_DANGER ? WARN : DANGER;
 }
 
+/**
+ * Semantic tone for a pass rate on the 0..100 scale — the class-based sibling of
+ * {@link passRateColor}, for leaves that color via a semantic variant instead of a runtime hex.
+ */
+export function passRateTone(rate: number | null): 'success' | 'warn' | 'danger' | undefined {
+  if (rate === null) return undefined;
+  return rate >= PASS_RATE_WARN ? 'success' : rate >= PASS_RATE_DANGER ? 'warn' : 'danger';
+}
+
 /** Color for a score on the 0..1 scale (SCORE_WARN / SCORE_DANGER). */
 export function scoreColor(score: number | null): string {
   if (score === null) return MUTED;

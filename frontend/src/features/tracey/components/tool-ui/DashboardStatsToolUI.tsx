@@ -2,7 +2,7 @@ import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { GridIcon } from '../../../../components/icons';
 import { fmtLatency, fmtPct, fmtTokens } from '../../../../lib/format';
-import { passRateColor } from '../../../../lib/runResults';
+import { passRateTone } from '../../../../lib/runResults';
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
@@ -41,7 +41,7 @@ export const DashboardStatsToolUI: ToolCallMessagePartComponent = ({ result, sta
           {
             label: t`Pass rate`,
             value: summary.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—',
-            color: summary.overallPassRate != null ? passRateColor(summary.overallPassRate * 100) : undefined,
+            tone: passRateTone(summary.overallPassRate != null ? summary.overallPassRate * 100 : null),
           },
         ]}
       />

@@ -1228,6 +1228,9 @@ msgstr "Token-Nutzung pro Agent als Diagramm anzeigen"
 msgid "Cheapest"
 msgstr "Am günstigsten"
 
+msgid "Check results"
+msgstr "Ergebnisse prüfen"
+
 msgid "Check your inbox"
 msgstr "Prüfen Sie Ihren Posteingang"
 
@@ -2792,8 +2795,8 @@ msgstr "Name, System-Endpunkt und Lebenszyklus für das aktive Projekt."
 msgid "navigate"
 msgstr "navigieren"
 
-msgid "Needs a look"
-msgstr "Bitte prüfen"
+msgid "Needs attention"
+msgstr "Braucht Aufmerksamkeit"
 
 msgid "never"
 msgstr "nie"
@@ -4464,9 +4467,6 @@ msgstr "Run starten"
 msgid "Starting test run…"
 msgstr "Testlauf wird gestartet…"
 
-msgid "Starting…"
-msgstr "Startet…"
-
 msgid "State"
 msgstr "Status"
 
@@ -5271,6 +5271,9 @@ msgstr "Warten auf … Aktionen"
 
 msgid "Waiting for the model to finish streaming…"
 msgstr "Warten, bis das Modell mit dem Streaming fertig ist…"
+
+msgid "Waiting…"
+msgstr "Wartet…"
 
 msgid "Walk through open optimization proposals"
 msgstr "Offene Optimierungsproposals durchgehen"

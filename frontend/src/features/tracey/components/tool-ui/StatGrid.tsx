@@ -9,10 +9,8 @@ export interface StatItem {
   value: string;
   /** Optional caption under the value (a unit, a period, a qualifier). */
   sub?: string;
-  /** Semantic color for the value; omit for the neutral primary treatment. */
+  /** Semantic color for the value (e.g. via `passRateTone`); omit for the neutral treatment. */
   tone?: StatTone;
-  /** Runtime hex for data-derived coloring (e.g. `passRateColor`); wins over {@link tone}. */
-  color?: string;
 }
 
 const TONE_CLS: Record<StatTone, string> = {
@@ -40,9 +38,8 @@ export function StatGrid({ items }: { items: StatItem[] }) {
           <span
             className={cn(
               'font-mono text-h1 font-semibold tabular-nums',
-              item.color ? undefined : item.tone ? TONE_CLS[item.tone] : 'text-primary',
+              item.tone ? TONE_CLS[item.tone] : 'text-primary',
             )}
-            style={item.color ? { color: item.color } : undefined}
           >
             {item.value}
           </span>

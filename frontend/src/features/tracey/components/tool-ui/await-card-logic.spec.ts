@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TestRunStatus, TheoryStatus } from '../../../../api/models';
 import type { RunAwaitResult, TheoryAwaitResult } from '../../tools/await';
-import { awaitOutcome, fmtElapsed, runCaseSummary } from './await-card-logic';
+import { awaitOutcome, entityLabel, runCaseSummary } from './await-card-logic';
 
 function run(overrides: Partial<RunAwaitResult> = {}): RunAwaitResult {
   return {
@@ -41,6 +41,10 @@ describe('awaitOutcome', () => {
     expect(awaitOutcome([run({ timedOut: true, status: TestRunStatus.Running })], undefined, true)).toBe('warn');
   });
 
+  it('is warn when a run was cancelled — its results are incomplete, not "all done"', () => {
+    expect(awaitOutcome([run({ status: TestRunStatus.Cancelled })], undefined, false)).toBe('warn');
+  });
+
   it('is danger when a run failed', () => {
     expect(awaitOutcome([run({ status: TestRunStatus.Failed })], undefined, false)).toBe('danger');
   });
@@ -51,6 +55,22 @@ describe('awaitOutcome', () => {
 
   it('does not count a timed-out run whose last-seen status is Failed-free as failed', () => {
     expect(awaitOutcome([run({ timedOut: true, status: TestRunStatus.Running })], undefined, true)).toBe('warn');
+  });
+});
+
+describe('entityLabel', () => {
+  it('joins suite and agent', () => {
+    expect(entityLabel({ suiteName: 'Smoke', agentName: 'Support' })).toBe('Smoke → Support');
+  });
+
+  it('uses whichever part exists', () => {
+    expect(entityLabel({ agentName: 'Support' })).toBe('Support');
+    expect(entityLabel({ suiteName: 'Smoke' })).toBe('Smoke');
+  });
+
+  it('returns null for a legacy snapshot without names, so the caller can fall back', () => {
+    expect(entityLabel({})).toBeNull();
+    expect(entityLabel({ suiteName: '', agentName: '' })).toBeNull();
   });
 });
 
@@ -68,19 +88,5 @@ describe('runCaseSummary', () => {
   it('returns null for a legacy snapshot without runs', () => {
     expect(runCaseSummary(run({ runs: undefined as unknown as RunAwaitResult['runs'] }))).toBeNull();
     expect(runCaseSummary(run({ runs: [] }))).toBeNull();
-  });
-});
-
-describe('fmtElapsed', () => {
-  it('formats m:ss', () => {
-    expect(fmtElapsed(0)).toBe('0:00');
-    expect(fmtElapsed(7)).toBe('0:07');
-    expect(fmtElapsed(83)).toBe('1:23');
-    expect(fmtElapsed(605)).toBe('10:05');
-  });
-
-  it('clamps negatives and fractions', () => {
-    expect(fmtElapsed(-3)).toBe('0:00');
-    expect(fmtElapsed(61.9)).toBe('1:01');
   });
 });

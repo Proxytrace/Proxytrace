@@ -8,7 +8,7 @@ import { Spinner } from '../../../../components/ui/Spinner';
 import { agentColor } from '../../../../lib/colors';
 import { ProposalKind, TheoryStatus, type TheoryDto } from '../../../../api/models';
 import { ToolUIFrame } from './ToolUIFrame';
-import { PRIORITY_VARIANT, THEORY_STATUS_VARIANT } from './badge-variants';
+import { PRIORITY_VARIANT, THEORY_STATUS_LABEL, THEORY_STATUS_VARIANT } from './badge-variants';
 import { TheoryChangePreview } from './TheoryChangePreview';
 import { useLiveTheory } from './useLiveTheory';
 
@@ -16,13 +16,6 @@ const KIND_LABEL: Record<ProposalKind, MessageDescriptor> = {
   [ProposalKind.SystemPrompt]: msg`System prompt`,
   [ProposalKind.Tool]: msg`Tool update`,
   [ProposalKind.ModelSwitch]: msg`Model switch`,
-};
-
-const STATUS_LABEL: Record<TheoryStatus, MessageDescriptor> = {
-  [TheoryStatus.Proposed]: msg`Queued`,
-  [TheoryStatus.Validating]: msg`A/B testing`,
-  [TheoryStatus.Validated]: msg`Improved`,
-  [TheoryStatus.Invalidated]: msg`Rejected`,
 };
 
 /**
@@ -48,7 +41,7 @@ export function LiveTheoryCard({ initial }: { initial: TheoryDto }) {
     >
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge label={i18n._(STATUS_LABEL[theory.status])} variant={THEORY_STATUS_VARIANT[theory.status]} size="sm" />
+          <Badge label={i18n._(THEORY_STATUS_LABEL[theory.status])} variant={THEORY_STATUS_VARIANT[theory.status]} size="sm" />
           <Badge label={theory.priority} variant={PRIORITY_VARIANT[theory.priority]} size="sm" />
           <span className="text-body-sm text-muted"><Trans>via Tracey AI</Trans></span>
         </div>

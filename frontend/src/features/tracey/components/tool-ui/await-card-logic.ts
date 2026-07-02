@@ -5,10 +5,10 @@ import type { AnyAwaitResult, AwaitError, RunAwaitResult } from '../../tools/awa
 export type AwaitOutcomeTone = 'success' | 'warn' | 'danger';
 
 /**
- * Collapses a resolved `await_actions` aggregate into one card-level verdict: any failed run or
- * unreadable handle is a problem (danger), anything still running past the cap is a heads-up
- * (warn), otherwise everything landed (success). A rejected theory is a normal outcome, not a
- * failure — the A/B test did its job.
+ * Collapses a resolved `await_actions` aggregate into one card-level verdict: a failed run or an
+ * unreadable handle is a problem (danger); anything still running past the cap or cancelled
+ * before finishing is a heads-up (warn) — its results are missing or incomplete, so "all done"
+ * would mislead. A rejected theory is a normal outcome, not a failure — the A/B test did its job.
  */
 export function awaitOutcome(
   results: AnyAwaitResult[],
@@ -17,8 +17,22 @@ export function awaitOutcome(
 ): AwaitOutcomeTone {
   const anyFailed = results.some((r) => r.kind === 'test-run' && !r.timedOut && r.status === TestRunStatus.Failed);
   if (anyFailed || (errors?.length ?? 0) > 0) return 'danger';
-  if (anyTimedOut) return 'warn';
+  const anyCancelled = results.some(
+    (r) => r.kind === 'test-run' && !r.timedOut && r.status === TestRunStatus.Cancelled,
+  );
+  if (anyTimedOut || anyCancelled) return 'warn';
   return 'success';
+}
+
+/**
+ * "Suite → Agent" (or whatever name parts exist) for an awaited entity, or `null` when none are
+ * present so the caller can fall back to a localized kind label. Older conversation snapshots in
+ * localStorage predate the enriched result shape, so the names must be treated as optional even
+ * though the current tool always sets them.
+ */
+export function entityLabel(item: { suiteName?: string; agentName?: string }): string | null {
+  const parts = [item.suiteName, item.agentName].filter(Boolean);
+  return parts.length > 0 ? parts.join(' → ') : null;
 }
 
 /** Aggregated case counts across a run result's runs (absent on legacy snapshots). */
@@ -32,12 +46,4 @@ export function runCaseSummary(result: RunAwaitResult): { passed: number; failed
     }),
     { passed: 0, failed: 0, total: 0 },
   );
-}
-
-/** Formats elapsed whole seconds as a compact m:ss stopwatch readout. */
-export function fmtElapsed(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(s / 60);
-  const rest = s % 60;
-  return `${minutes}:${String(rest).padStart(2, '0')}`;
 }

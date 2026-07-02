@@ -8,7 +8,7 @@ import { agentColor } from '../../../../lib/colors';
 import { TestRunStatus, type TestRunGroupDto } from '../../../../api/models';
 import { isActive, passRateColor } from '../../../../lib/runResults';
 import { ToolUIFrame } from './ToolUIFrame';
-import { RUN_STATUS_VARIANT } from './badge-variants';
+import { RUN_STATUS_LABEL, RUN_STATUS_VARIANT } from './badge-variants';
 import { useLiveTestRunGroup } from './useLiveTestRunGroup';
 import { groupProgress } from './live-run-progress';
 
@@ -19,7 +19,7 @@ const ACCENT = 'var(--accent-primary)';
  * cases finish (queued → running → completed/failed/cancelled) and, once done, links to the run.
  */
 export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const group = useLiveTestRunGroup(initial);
   const { total, completed, passed, failed, passPercent } = groupProgress(group);
   const running = isActive(group.status);
@@ -37,7 +37,7 @@ export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
     >
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge label={group.status} variant={RUN_STATUS_VARIANT[group.status]} size="sm" />
+          <Badge label={i18n._(RUN_STATUS_LABEL[group.status])} variant={RUN_STATUS_VARIANT[group.status]} size="sm" />
           <Badge label={t`${completed}/${total} cases`} variant="neutral" size="sm" />
           {passPercent !== null && (
             <Badge label={t`${passPercent}% pass`} variant="neutral" size="sm" />

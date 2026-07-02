@@ -107,6 +107,14 @@ export function fmtDuration(ms: number | null | undefined): string {
   return `${m}m ${rem}s`;
 }
 
+/** Formats elapsed whole seconds as a compact m:ss stopwatch readout (`0:07`, `1:23`). */
+export function fmtElapsed(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(s / 60);
+  const rest = s % 60;
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
 export function fmtPct(v: number): string {
   return `${Math.round(v * 100)}%`;
 }

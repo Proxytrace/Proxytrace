@@ -25,14 +25,9 @@ export function TraceyConversation() {
               className="fade-up flex items-center gap-2 text-body-sm text-secondary"
               data-testid="tracey-busy-indicator"
             >
-              <span className="flex items-center gap-1" aria-hidden>
+              <span className="typing-dots flex items-center gap-1" aria-hidden>
                 {[0, 1, 2].map(i => (
-                  <span
-                    key={i}
-                    className="pulse-dot size-1.5 rounded-full bg-accent"
-                    // Negative delay phase-shifts each dot immediately, so the wave reads from the first frame.
-                    style={{ animationDelay: `${i * -220}ms` }}
-                  />
+                  <span key={i} className="pulse-dot size-1.5 rounded-full bg-accent" />
                 ))}
               </span>
               <Trans>Thinking…</Trans>

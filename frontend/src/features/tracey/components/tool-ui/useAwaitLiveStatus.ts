@@ -3,37 +3,42 @@ import { QUERY_KEYS } from '../../../../api/query-keys';
 import { testRunGroupsApi } from '../../../../api/test-run-groups';
 import { theoriesApi } from '../../../../api/theories';
 import type { TestRunGroupDto, TheoryDto } from '../../../../api/models';
-import type { AwaitKind } from '../../tools/await';
-
-/** Matches the wait tool's own poll cadence (`POLL_INTERVAL_MS` in `tools/await.ts`). */
-const AWAIT_STATUS_POLL_MS = 3_000;
 
 /**
- * Live status for one awaited handle while `await_actions` is still polling: the card mirrors the
- * backend state (suite/agent names, case progress, theory phase) instead of showing a bare id. It
- * shares the entity's canonical query key, so the live run/theory cards and any SSE patches feed
- * the same cache; polling stops when the row unmounts (the wait resolved) or `enabled` drops.
- * A 404 is silent — a bad handle just keeps its compact id row, mirroring the tool's own polling.
+ * Live status for one awaited handle while `await_actions` is still polling — as a **passive
+ * mirror of the shared query cache**, never a fetcher of its own (`enabled: false`):
+ *
+ * - In the standard turn the producing live card (`LiveRunCard` / `LiveTheoryCard`) is mounted in
+ *   the same thread, owns the fetch, and patches this exact canonical key via SSE — the await row
+ *   re-renders on those patches for free.
+ * - Fetching here too would double every request the tool's own 3 s poll already makes, race
+ *   stale poll responses against newer SSE patches (progress jumping backwards), keep hammering a
+ *   handle the tool has already given up on, and fire GETs for partially-streamed ids while the
+ *   model is still emitting the tool args.
+ * - The app-wide query default is `throwOnError: true`; these rows must never take down the page
+ *   over a bad handle, hence the explicit opt-out.
+ *
+ * When no live card ever populated the key (an await without a producing card in view) the row
+ * simply keeps its compact id fallback — the tool's result still lands when the wait resolves.
+ * The `queryFn`s match the live cards' exactly so sharing the key never changes fetch behavior.
  */
-export function useAwaitLiveStatus(
-  kind: AwaitKind,
-  id: string,
-  enabled: boolean,
-): { group?: TestRunGroupDto; theory?: TheoryDto } {
-  const groupQuery = useQuery({
+export function useAwaitRunSnapshot(id: string): TestRunGroupDto | undefined {
+  const query = useQuery({
     queryKey: QUERY_KEYS.testRunGroup(id),
-    queryFn: () => testRunGroupsApi.get(id, { silentStatuses: [404] }),
-    enabled: enabled && kind === 'test-run',
-    refetchInterval: AWAIT_STATUS_POLL_MS,
+    queryFn: () => testRunGroupsApi.get(id),
+    enabled: false,
+    throwOnError: false,
   });
-  const theoryQuery = useQuery({
+  return query.data;
+}
+
+/** Theory counterpart of {@link useAwaitRunSnapshot} — same passive-mirror contract. */
+export function useAwaitTheorySnapshot(id: string): TheoryDto | undefined {
+  const query = useQuery({
     queryKey: QUERY_KEYS.theory(id),
-    queryFn: () => theoriesApi.get(id, { silentStatuses: [404] }),
-    enabled: enabled && kind === 'theory',
-    refetchInterval: AWAIT_STATUS_POLL_MS,
+    queryFn: () => theoriesApi.get(id),
+    enabled: false,
+    throwOnError: false,
   });
-  return {
-    group: kind === 'test-run' ? groupQuery.data : undefined,
-    theory: kind === 'theory' ? theoryQuery.data : undefined,
-  };
+  return query.data;
 }
