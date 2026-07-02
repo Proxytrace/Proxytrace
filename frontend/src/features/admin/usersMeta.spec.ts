@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { i18n } from '../../i18n';
 import type { UserDto } from '../../api/models';
-import { adminCount, authSourceLabel, isLastAdmin } from './users';
+import { adminCount, authSourceLabel, isLastAdmin } from './usersMeta';
 
 // Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
 beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
