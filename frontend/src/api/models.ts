@@ -193,6 +193,8 @@ export interface DashboardViewDto {
   tokenBucket: StatisticsBucket;
   recentTraces: AgentCallListItemDto[];
   agents: AgentListItemDto[];
+  /** Per-minute call counts over the trailing hour (60 entries, oldest → newest). */
+  pulse: number[];
 }
 export interface SummaryDto {
   totalCalls: number;

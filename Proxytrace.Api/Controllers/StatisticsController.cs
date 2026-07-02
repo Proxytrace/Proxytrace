@@ -91,7 +91,8 @@ public class StatisticsController : ControllerBase
                 _ => "daily",
             },
             RecentTraces: view.RecentTraces.Select(agentCallDtoMapper.ToListItemDto).ToArray(),
-            Agents: view.Agents.Select(a => agentDtoMapper.ToListItemDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
+            Agents: view.Agents.Select(a => agentDtoMapper.ToListItemDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray(),
+            Pulse: view.Pulse);
     }
 
     [HttpGet("agents/{agentId:guid}/overview")]
