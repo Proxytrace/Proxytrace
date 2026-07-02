@@ -19,6 +19,7 @@ using Proxytrace.Domain.Kiosk;
 using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Application.Search;
+using Proxytrace.Application.Statistics;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Evaluators;
@@ -280,6 +281,10 @@ internal sealed class Module : Autofac.Module
             ?? new StatisticsOptions();
         statisticsOptions.Validate();
         builder.RegisterInstance(statisticsOptions);
+
+        // Feed the operator-configured dashboard cache TTL into the Application-layer options; this
+        // config-bound registration wins over the module default (IfNotRegistered) there.
+        builder.RegisterInstance(new DashboardCacheOptions { TtlSeconds = statisticsOptions.DashboardCacheTtlSeconds });
     }
 
     private void ConfigureAuth(ContainerBuilder builder, IConfiguration configuration, KioskOptions kiosk)

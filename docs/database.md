@@ -73,7 +73,36 @@ Set the connection string in:
 - **Statistics aggregate in the database.** `AgentCallStatsQueries` buckets time-series with an
   integer-slot `GROUP BY` (`floor((CreatedAt - epoch) / width)`) so only one row per non-empty
   bucket crosses the wire — never `O(rows)`. Latency percentiles use `percentile_cont` on relational
-  providers (raw SQL), with a materialise-and-sort fallback for the in-memory provider.
+  providers (raw SQL), with a materialise-and-sort fallback for the in-memory provider. Latency
+  *averages* (summary, model breakdown) aggregate over the non-null samples only
+  (`Sum(LatencyMs ?? 0) / Count(LatencyMs != null)`, mirroring `GetCallTrendsAsync`) — averaging
+  latency-less failed calls as 0 ms would bias the mean low. `StatsQueryTranslationTests` locks the
+  aggregate shapes to server-side translation on the Npgsql provider (via `ToQueryString`, no live
+  database needed), and `StatisticsFilterParityTests` locks the `StatisticsFilter` member list so
+  the LINQ chokepoint (`Query()`) and the raw-SQL percentile `WHERE` builder (`BuildLatencyWhere`)
+  cannot silently diverge when the filter gains a member.
+- **The dashboard composite is served from a short-TTL, single-flight, in-process cache**
+  (`DashboardStatistics`). The dashboard fans out ~12 statistics queries per request and every open
+  viewer polls it every 30 s, three of those queries being full-window scans — without sharing, N
+  viewers ⇒ 12·N queries every 30 s. The cache is keyed by the full request identity
+  (`StatisticsFilter` — which includes `ProjectId`, keeping tenants isolated — plus
+  `recentTraceCount`/`agentLimit`), caches the in-flight `Task` so concurrent requests for the same
+  key await one computation instead of stampeding on expiry (a `Lazy<Task<…>>` per entry), and
+  evicts a faulted computation so errors are never cached. The TTL defaults to 10 s and is
+  operator-configurable via `Statistics:DashboardCacheTtlSeconds` (`0` disables; must stay below
+  the 30 s client poll so data never appears frozen across two polls) — see
+  `manual/admin/configuration.md`. Live telemetry is part of the cached composite, so it can lag by
+  up to the TTL.
+- **`TestRunStats` reads used by the dashboard aggregate server-side.** The `TestRunStatsEntity`
+  projection has no retention, so the generic `QueryAsync` (materialize every matching row) must not
+  back unbounded dashboard paths. `ITestRunStatsReader` provides `GetPassTotalsAsync` (a single
+  scalar `GROUP BY` row for the overall pass rate) and `GetRecentCohortsAsync` (a
+  `(GroupId, EndpointId)` cohort `GROUP BY` ordered by `max(RunCompletedAt)` and capped — the
+  pass-rate sparkline reads at most the 50 most recent cohorts). Cohort collapsing keeps
+  `TestRunStatsCohortExtensions.AggregateSamples` semantics (rounded-mean `Passed`; a regression
+  test compares the two on identical rows). Suite-scoped reads keep using `QueryAsync` — they are
+  index-bounded by `SuiteId` (issue #253). Both aggregates are measured by the perf harness
+  (`testRunStatsPassTotals` / `testRunStatsRecentCohorts` in `perf/perf-budgets.json`).
 - **The traces list reads a lightweight projection.** `GetFilteredListAsync` selects scalar columns
   only and returns `AgentCallListItem`, so a page never reads or deserialises the `Request`,
   `Response` or `ModelParameters` payload columns. Two denormalised columns populated at write time

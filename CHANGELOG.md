@@ -11,6 +11,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **The dashboard scales to many concurrent viewers.** The dashboard payload is now served from a
+  short-lived server-side cache (10 seconds by default, configurable via
+  `Statistics:DashboardCacheTtlSeconds`, `0` disables): everyone watching the same dashboard shares
+  one set of statistics queries per refresh instead of each viewer re-running them all, and
+  simultaneous requests no longer stampede the database. Dashboard numbers may lag reality by up to
+  the configured TTL. In addition, the overall pass rate and the pass-rate sparkline now aggregate
+  in the database — the sparkline shows the 50 most recent run cohorts — so dashboard load time no
+  longer grows with the total amount of accumulated test-run history.
+
 - **A more polished Tracey AI experience.** The chat got a visual and interaction pass: the composer
   now carries the animated streaming ring while Tracey works, the send button follows the gold
   primary-action treatment, the slash menu animates in and shows its keyboard shortcuts, starter
@@ -53,6 +62,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   on the device.
 
 ### Fixed
+
+- **Average latency no longer under-reports when some calls have no latency.** The dashboard
+  summary and the per-model breakdown averaged failed calls without a recorded latency as 0 ms,
+  dragging the reported mean below the real one. The average is now computed over the calls that
+  actually have a latency.
 
 - **Tracey reliably follows up after waiting on long-running actions.** Three gaps could leave a
   finished test run or theory validation without Tracey's promised same-turn analysis: a single

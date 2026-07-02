@@ -1,0 +1,114 @@
+using Autofac;
+using AwesomeAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.ModelProvider;
+using Proxytrace.Domain.Security;
+using Proxytrace.Storage.Internal.Entities.AgentCall;
+using Proxytrace.Storage.Internal.Entities.Statistics;
+using Proxytrace.Testing;
+
+namespace Proxytrace.Storage.Tests;
+
+/// <summary>
+/// Guards that the statistics aggregate shapes translate to server-side SQL on the PostgreSQL
+/// provider. The behavioral tests all run on the in-memory provider, which happily client-evaluates
+/// anything, so an aggregate silently falling back to client evaluation (an O(rows) materialization
+/// at 1M+ rows — see docs/performance-testing.md) would never fail there. <c>ToQueryString()</c>
+/// compiles the query against the real Npgsql provider without needing a live database and throws
+/// when EF cannot translate, so these tests fail fast on a non-translatable shape.
+/// <para>
+/// The queries below intentionally mirror the aggregate <c>Select</c> shapes in
+/// <c>AgentCallStatsQueries</c> / <c>TestRunStatsStore</c> — keep them in sync when those change.
+/// </para>
+/// </summary>
+[TestClass]
+public sealed class StatsQueryTranslationTests
+{
+    private static IContainer BuildPostgresContainer()
+    {
+        // Mirrors StorageDbContextFactory: a PostgreSQL-configured storage graph with the seams the
+        // model-building path injects but never invokes stubbed out. The connection string is a
+        // placeholder — ToQueryString compiles SQL without opening a connection.
+        var builder = new ContainerBuilder();
+        builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.Postgres(
+            "Host=localhost;Database=translation-check;Username=none;Password=none")));
+        builder.RegisterStub<ISecretProtector>();
+        builder.RegisterStub<ISecretHasher>();
+        builder.RegisterStub<IAgentNameGenerator>();
+        builder.RegisterStub<IProviderClient>();
+        builder.RegisterInstance(NullLoggerFactory.Instance).As<ILoggerFactory>();
+        builder.RegisterGeneric(typeof(NullLogger<>)).As(typeof(ILogger<>));
+        return builder.Build();
+    }
+
+    [TestMethod]
+    public void SummaryAggregate_WithNullAwareLatencyAverage_TranslatesToServerSideGroupBy()
+    {
+        using IContainer container = BuildPostgresContainer();
+        var context = container.Resolve<StorageDbContext>();
+
+        // The GetSummaryAsync / GetModelBreakdownAsync aggregate shape (issue #288 finding 1): the
+        // latency mean sums/counts only non-null samples instead of averaging nulls as 0.
+        string sql = context.Set<AgentCallEntity>()
+            .GroupBy(c => c.EndpointId)
+            .Select(g => new
+            {
+                EndpointId = g.Key,
+                Count = (long)g.Count(),
+                Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                LatencySum = g.Sum(c => c.LatencyMs ?? 0d),
+                LatencyCount = g.Count(c => c.LatencyMs != null),
+            })
+            .ToQueryString();
+
+        sql.Should().Contain("GROUP BY");
+    }
+
+    [TestMethod]
+    public void TestRunStatsPassTotals_TranslatesToServerSideGroupBy()
+    {
+        using IContainer container = BuildPostgresContainer();
+        var context = container.Resolve<StorageDbContext>();
+
+        // The GetPassTotalsAsync shape: one scalar row instead of materializing all run history.
+        string sql = context.Set<TestRunStatsEntity>()
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Cases = g.Sum(e => e.TestCases),
+                Passed = g.Sum(e => e.Passed),
+            })
+            .ToQueryString();
+
+        sql.Should().Contain("GROUP BY");
+    }
+
+    [TestMethod]
+    public void TestRunStatsRecentCohorts_TranslatesToServerSideGroupByWithLimit()
+    {
+        using IContainer container = BuildPostgresContainer();
+        var context = container.Resolve<StorageDbContext>();
+
+        // The GetRecentCohortsAsync shape: cohort GROUP BY, ordered by latest completion, capped.
+        string sql = context.Set<TestRunStatsEntity>()
+            .GroupBy(e => new { e.GroupId, e.EndpointId })
+            .Select(g => new
+            {
+                g.Key.GroupId,
+                g.Key.EndpointId,
+                TestCases = g.Max(e => e.TestCases),
+                PassedSum = g.Sum(e => e.Passed),
+                SampleCount = g.Count(),
+                LastRunCompletedAt = g.Max(e => e.RunCompletedAt),
+            })
+            .OrderByDescending(x => x.LastRunCompletedAt)
+            .Take(50)
+            .ToQueryString();
+
+        sql.Should().Contain("GROUP BY");
+        sql.Should().Contain("LIMIT");
+    }
+}

@@ -17,6 +17,14 @@ internal class Module : Autofac.Module
             .As<IStatsProjector>()
             .SingleInstance();
 
+        // Default dashboard cache tuning so Application-layer consumers resolve even when no host
+        // binds the "Statistics" section. The API registers the config-bound options later, which
+        // wins. Mirrors the AuthOptions default in the parent module.
+        builder.Register(_ => new DashboardCacheOptions())
+            .As<DashboardCacheOptions>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(DashboardCacheOptions));
+
         builder.RegisterType<DashboardStatistics>()
             .As<IDashboardStatistics>()
             .SingleInstance();

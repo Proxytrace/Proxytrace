@@ -172,6 +172,111 @@ public sealed class TestRunStatsStoreTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetPassTotalsAsync_EmptyTable_ReturnsZeros()
+    {
+        var services = GetServices();
+        var reader = services.GetRequiredService<ITestRunStatsReader>();
+
+        var totals = await reader.GetPassTotalsAsync(new TestRunStats.Filter(), CancellationToken);
+
+        totals.TotalCases.Should().Be(0);
+        totals.TotalPassed.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task GetPassTotalsAsync_SumsAcrossMatchingRuns_AndHonorsFilter()
+    {
+        var services = GetServices();
+        var writer = services.GetRequiredService<IStatsWriter<TestRunStats>>();
+        var reader = services.GetRequiredService<ITestRunStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+        var runA = await gen.CreateAsync(CancellationToken);
+        var runB = await gen.CreateAsync(CancellationToken);
+
+        // The run generator reuses the same agent, so give run B a synthetic AgentId (a plain
+        // indexed column, no FK) to make the agent-scoped read distinguishable.
+        await writer.UpsertAsync(StatsFor(runA, cases: 4, passed: 3), CancellationToken);
+        await writer.UpsertAsync(StatsFor(runB, cases: 6, passed: 3) with { AgentId = Guid.NewGuid() }, CancellationToken);
+
+        var all = await reader.GetPassTotalsAsync(new TestRunStats.Filter(), CancellationToken);
+        var scoped = await reader.GetPassTotalsAsync(
+            new TestRunStats.Filter(AgentId: runA.Group.Suite.Agent.Id), CancellationToken);
+
+        all.TotalCases.Should().Be(10);
+        all.TotalPassed.Should().Be(6);
+        scoped.TotalCases.Should().Be(4);
+        scoped.TotalPassed.Should().Be(3);
+    }
+
+    [TestMethod]
+    public async Task GetRecentCohortsAsync_CollapsesSamples_MatchingAggregateSamples()
+    {
+        var services = GetServices();
+        var writer = services.GetRequiredService<IStatsWriter<TestRunStats>>();
+        var reader = services.GetRequiredService<ITestRunStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+
+        // Two cohorts: cohort X has three samples (passed 1, 2, 2), cohort Y is single-sample. The
+        // GroupId/EndpointId columns are plain indexed columns (no FK), so the cohort spread is
+        // synthetic; only TestRunId needs a real run per row.
+        var now = DateTimeOffset.UtcNow;
+        Guid groupX = Guid.NewGuid(), endpointX = Guid.NewGuid();
+        Guid groupY = Guid.NewGuid(), endpointY = Guid.NewGuid();
+        var rows = new List<TestRunStats>();
+        foreach (var (group, endpoint, passed, completedAt) in new[]
+        {
+            (groupX, endpointX, 1, now.AddMinutes(-30)),
+            (groupX, endpointX, 2, now.AddMinutes(-20)),
+            (groupX, endpointX, 2, now.AddMinutes(-10)),
+            (groupY, endpointY, 4, now.AddMinutes(-5)),
+        })
+        {
+            var run = await gen.CreateAsync(CancellationToken);
+            var stats = StatsFor(run, cases: 4, passed: passed, completed: completedAt)
+                with { GroupId = group, EndpointId = endpoint };
+            await writer.UpsertAsync(stats, CancellationToken);
+            rows.Add(stats);
+        }
+
+        var cohorts = await reader.GetRecentCohortsAsync(new TestRunStats.Filter(), limit: 50, CancellationToken);
+
+        // Regression guard: the SQL cohort aggregation must keep AggregateSamples' semantics —
+        // rounded-mean Passed, shared TestCases, latest RunCompletedAt — on the same rows.
+        var expected = rows.AggregateSamples()
+            .OrderBy(r => r.RunCompletedAt)
+            .Select(r => (r.GroupId, r.EndpointId, r.TestCases, r.Passed, r.RunCompletedAt))
+            .ToArray();
+        cohorts
+            .Select(c => (c.GroupId, c.EndpointId, c.TestCases, c.Passed, c.LastRunCompletedAt))
+            .Should().Equal(expected);
+    }
+
+    [TestMethod]
+    public async Task GetRecentCohortsAsync_CapsToMostRecentCohorts_InChronologicalOrder()
+    {
+        var services = GetServices();
+        var writer = services.GetRequiredService<IStatsWriter<TestRunStats>>();
+        var reader = services.GetRequiredService<ITestRunStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+
+        var now = DateTimeOffset.UtcNow;
+        var cohortTimes = new[] { now.AddHours(-3), now.AddHours(-2), now.AddHours(-1) };
+        foreach (var completedAt in cohortTimes)
+        {
+            var run = await gen.CreateAsync(CancellationToken);
+            await writer.UpsertAsync(
+                StatsFor(run, completed: completedAt) with { GroupId = Guid.NewGuid() },
+                CancellationToken);
+        }
+
+        var cohorts = await reader.GetRecentCohortsAsync(new TestRunStats.Filter(), limit: 2, CancellationToken);
+
+        // The oldest cohort falls off; the two survivors come back oldest-first for the sparkline.
+        cohorts.Should().HaveCount(2);
+        cohorts.Select(c => c.LastRunCompletedAt).Should().Equal(cohortTimes[1], cohortTimes[2]);
+    }
+
+    [TestMethod]
     public async Task QueryAsync_FilterBySuiteAndEndpoint_ScopesResults()
     {
         var services = GetServices();
