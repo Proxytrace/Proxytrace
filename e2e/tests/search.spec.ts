@@ -116,6 +116,45 @@ test.describe('Search', () => {
     await expect(page.getByTestId(`search-result-${agentId}`)).toBeVisible();
   });
 
+  test('clicking a trace hit opens the Traces page with its detail drawer', async ({ page }) => {
+    // Seed a captured call whose message carries the distinctive token, then reindex and poll
+    // until it surfaces as a hit (the reindex is asynchronous).
+    const call = await api.seedAgentCall({
+      agentId,
+      userContent: `How do I configure the ${token} widget?`,
+      assistantContent: 'Open the settings page.',
+    });
+    await waitForIndex(api, projectId);
+    await expect
+      .poll(async () => {
+        const { hits } = await api.search(projectId, token);
+        return hits.some((h) => h.entityId === call.id);
+      }, {
+        timeout: 30_000,
+        intervals: [500, 1_000, 2_000],
+        message: 'seeded trace never became a search hit',
+      })
+      .toBe(true);
+
+    await page.goto('/dashboard', { waitUntil: 'load' });
+    const input = page.getByTestId('search-input');
+    await expect(input).toBeVisible();
+    await input.click();
+    await input.fill(token);
+
+    const hit = page.getByTestId(`search-result-${call.id}`);
+    await expect(hit).toBeVisible();
+    await hit.click();
+
+    // The deep-link lands on Traces and immediately opens the drawer for exactly this trace
+    // (regression: consuming ?focus= used to race the selection write and wipe ?trace=,
+    // leaving the drawer closed).
+    await expect(page).toHaveURL(new RegExp(`/traces\\?.*trace=${call.id}`));
+    await expect(page).not.toHaveURL(/focus=/);
+    await expect(page.getByTestId('trace-detail')).toBeVisible();
+    await expect(page.getByTestId('trace-detail-agent-name')).toHaveText(agentName);
+  });
+
   test('recent feed returns recently-indexed hits', async () => {
     const { hits } = await api.searchRecent(projectId, [], 6);
     expect(hits.length, 'recent feed should return seeded hits').toBeGreaterThan(0);

@@ -106,7 +106,10 @@ export default function Traces() {
   }, []);
 
   const handleFocusTrace = useCallback((trace: AgentCallDto) => {
-    selectTrace(trace.id);
+    // Select and consume the ?focus= deep-link in ONE URL update: a separate delete would read
+    // the pre-selection params and clobber ?trace=, leaving the drawer closed (see useSelectedId).
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- query-string param key
+    selectTrace(trace.id, ['focus']);
     setPendingScrollId(trace.id);
     setTimeRange(ALL_TIME);
     setZoomStack([]);
