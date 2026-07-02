@@ -20,6 +20,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Opening a trace from the title-bar search opens its details.** Clicking a trace result in the
+  global search now lands on the Traces page with that trace's detail drawer open. Previously the
+  page navigated and reset the filters but the drawer stayed closed, because clearing the deep-link
+  parameter raced the selection and wiped it from the URL.
 - **Keyboard access across selectable lists.** Evaluator, test-case and trace rows in the suite
   builder and suite detail — plus the evaluator attach/detach row and the collapsible agent widgets —
   are now real, focusable controls you can reach and activate with the keyboard, each with a visible
