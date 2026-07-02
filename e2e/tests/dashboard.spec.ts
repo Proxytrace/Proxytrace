@@ -138,6 +138,15 @@ test.describe('Dashboard', () => {
     await expect(section).toContainText(/\d+ samples/);
   });
 
+  test('pulse band renders with live counters', async ({ page }) => {
+    await page.goto('/dashboard', { waitUntil: 'load' });
+
+    const band = page.getByTestId('pulse-band');
+    await expect(band).toBeVisible();
+    // The three counters render even at zero traffic ("—" or a number).
+    await expect(band).toContainText(/traces\/min/i);
+  });
+
   test('live trace stream contains a newly seeded trace after reload', async ({ page }) => {
     await page.goto('/dashboard', { waitUntil: 'load' });
 
