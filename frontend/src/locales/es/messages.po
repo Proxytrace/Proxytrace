@@ -899,6 +899,9 @@ msgstr "Agent:"
 msgid "Agentic evaluators"
 msgstr "Evaluadores agentic"
 
+msgid "Agentic evaluators require a licensed installation. Use a non-agentic kind or the suite's default exact-match evaluator instead."
+msgstr "Los evaluadores Agent requieren una instalación con licencia. Usa un tipo no Agent o, en su lugar, el evaluador de coincidencia exacta predeterminado de la Suite."
+
 msgid "Agentic evaluators require a paid plan"
 msgstr "Los evaluadores agentic requieren un plan de pago"
 
@@ -1659,6 +1662,9 @@ msgstr "Desvincular {0}"
 msgid "Details"
 msgstr "Detalles"
 
+msgid "Diagnose an agent"
+msgstr "Diagnosticar un Agent"
+
 #. placeholder {0}: previous.versionNumber
 msgid "Diff vs v{0}"
 msgstr "Diferencia vs v{0}"
@@ -2302,6 +2308,9 @@ msgstr "Enlace de restablecimiento no válido"
 msgid "Invalidated"
 msgstr "Invalidado"
 
+msgid "Investigate flagged anomalies and validate a fix"
+msgstr "Investigar anomalías marcadas y validar una corrección"
+
 msgid "Invite a user"
 msgstr "Invitar a un User"
 
@@ -2507,8 +2516,14 @@ msgstr "Cargando Agent…"
 msgid "Loading agents…"
 msgstr "Cargando Agents…"
 
+msgid "Loading anomalies…"
+msgstr "Cargando anomalías…"
+
 msgid "Loading dashboard…"
 msgstr "Cargando Dashboard…"
+
+msgid "Loading evaluators…"
+msgstr "Cargando evaluadores…"
 
 msgid "Loading preview…"
 msgstr "Cargando Preview…"
@@ -2842,6 +2857,9 @@ msgstr "No hay Agents para mostrar"
 msgid "No agents yet"
 msgstr "Aún no hay Agents"
 
+msgid "No anomalies flagged recently."
+msgstr "No se han marcado anomalías recientemente."
+
 msgid "No API keys yet"
 msgstr "Aún no hay API keys"
 
@@ -2892,6 +2910,9 @@ msgstr "Aún no hay evaluaciones. Adjunta este Evaluator a un suite y ejecútalo
 
 msgid "No evaluators"
 msgstr "No hay evaluadores"
+
+msgid "No evaluators in this project yet."
+msgstr "Aún no hay evaluadores en este proyecto."
 
 msgid "No evaluators yet"
 msgstr "Aún no hay evaluadores"

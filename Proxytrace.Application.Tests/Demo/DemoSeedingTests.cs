@@ -3,9 +3,12 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Demo;
 using Proxytrace.Domain;
+using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Kiosk;
+using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Testing;
@@ -57,12 +60,12 @@ public class DemoSeedingTests : BaseTest<Module>
         var ctx = services.GetRequiredService<DemoSeedContext>();
         ctx.Helpfulness.Should().NotBeNull();
         ctx.Politeness.Should().NotBeNull();
-        ctx.SuitesByKey.Should().HaveCount(5);
+        ctx.SuitesByKey.Should().HaveCount(6);
         ctx.AllRuns.Should().HaveCountGreaterThan(10);
 
         var suites = await services.GetRequiredService<IRepository<ITestSuite>>()
             .GetAllAsync(CancellationToken);
-        suites.Should().HaveCount(5);
+        suites.Should().HaveCount(6);
 
         var evaluators = await services.GetRequiredService<IRepository<IEvaluator>>()
             .GetAllAsync(CancellationToken);
@@ -71,11 +74,75 @@ public class DemoSeedingTests : BaseTest<Module>
 
         var proposals = await services.GetRequiredService<IRepository<IOptimizationProposal>>()
             .GetAllAsync(CancellationToken);
-        proposals.Should().HaveCount(8);
+        proposals.Should().HaveCount(9);
         proposals.Select(p => p.Status).Should().Contain(
-            [ProposalStatus.Draft, ProposalStatus.Accepted, ProposalStatus.Rejected]);
+            [ProposalStatus.Draft, ProposalStatus.Accepted, ProposalStatus.Rejected, ProposalStatus.Adopted]);
         proposals.Select(p => p.Kind).Should().Contain(
             [ProposalKind.ModelSwitch, ProposalKind.SystemPrompt, ProposalKind.Tool]);
+    }
+
+    [TestMethod]
+    public async Task Seed_Flags_Outlier_Calls_With_Every_Flag_Kind()
+    {
+        var calls = await services.GetRequiredService<IRepository<IAgentCall>>()
+            .GetAllAsync(CancellationToken);
+
+        var flagged = calls.Where(c => c.OutlierFlags != OutlierFlags.None).ToList();
+        flagged.Should().NotBeEmpty("the kiosk must showcase outlier traces");
+
+        // The curated outlier scenario is deterministic, so every flag kind must be present.
+        var seen = flagged.Aggregate(OutlierFlags.None, (acc, c) => acc | c.OutlierFlags);
+        seen.Should().HaveFlag(OutlierFlags.HighTokens);
+        seen.Should().HaveFlag(OutlierFlags.HighLatency);
+        seen.Should().HaveFlag(OutlierFlags.LowCacheHit);
+        seen.Should().HaveFlag(OutlierFlags.ManyToolCalls);
+    }
+
+    [TestMethod]
+    public async Task Seed_Raises_Real_Anomaly_Notifications_For_Incident_Groups()
+    {
+        var ctx = services.GetRequiredService<DemoSeedContext>();
+        var notifications = await services.GetRequiredService<IRepository<INotification>>()
+            .GetAllAsync(CancellationToken);
+
+        var anomalies = notifications.Where(n => n.Kind == NotificationKind.Anomaly).ToList();
+
+        // The regressed triage group must have produced a critical regression alert (pass-rate
+        // drop ≥ the critical threshold), targeting the group itself.
+        anomalies.Should().Contain(n =>
+            n.Severity == NotificationSeverity.Critical
+            && n.TargetKind == NotificationTargetKind.TestRunGroup
+            && n.TargetId == ctx.RequireRegressedTriageGroup().Id
+            && n.Title.StartsWith("Performance regression"));
+
+        // The endpoint-down tone group must have produced the hard failure alert.
+        anomalies.Should().Contain(n =>
+            n.Severity == NotificationSeverity.Critical
+            && n.TargetKind == NotificationTargetKind.TestRunGroup
+            && n.TargetId == ctx.RequireFailedToneGroup().Id
+            && n.Title.StartsWith("Test run failed"));
+    }
+
+    [TestMethod]
+    public async Task Terminal_Theories_Reference_The_Seeded_AB_Candidate_Run()
+    {
+        var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
+        var theories = await services.GetRequiredService<IRepository<IOptimizationTheory>>()
+            .GetAllAsync(CancellationToken);
+
+        var terminal = theories
+            .Where(t => t.Status is TheoryStatus.Validated or TheoryStatus.Invalidated)
+            .ToList();
+        terminal.Should().NotBeEmpty();
+
+        foreach (var theory in terminal)
+        {
+            theory.ABTestRunId.Should().NotBeNull(
+                $"terminal theory '{theory.Rationale[..Math.Min(40, theory.Rationale.Length)]}…' should link its A/B run");
+
+            var contained = await runRepo.ContainsAsync(theory.ABTestRunId.Value, CancellationToken);
+            contained.Should().BeTrue("the linked A/B candidate run must exist");
+        }
     }
 
     [TestMethod]

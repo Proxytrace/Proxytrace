@@ -48,6 +48,7 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
         var support = ctx.RequireCustomerSupportAgent();
         var codeReview = ctx.RequireCodeReviewAgent();
         var analytics = ctx.RequireDataAnalyticsAgent();
+        var triage = ctx.RequireEmailTriageAgent();
 
         // ── Proposed: hypotheses awaiting a test ──────────────────────────────────────────
         await SeedAsync(createModelSwitch(
@@ -69,7 +70,29 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
             + "Study the worked examples below before answering.",
             EvidenceFor(analytics)), TheoryStatus.Proposed, cancellationToken);
 
+        // The triage agent is the deliberately defective one: its regression is what the anomaly
+        // alerts point at, and these hypotheses are the loop's first answers to it.
+        await SeedAsync(createToolUpdate(
+            triage, SuiteFor(triage), TheorySource.TraceyAi, Priority.High,
+            "The agent fabricates plan and billing details it cannot know. A typed lookup_customer_plan "
+            + "tool grounds those answers in the account record instead.",
+            [new ToolSpecification(
+                name: "lookup_customer_plan",
+                description: "Fetch the customer's current plan, seat count and billing status by account id.",
+                arguments: ToolArguments.None)],
+            EvidenceFor(triage)), TheoryStatus.Proposed, cancellationToken);
+
         // ── Validating: A/B test in flight ────────────────────────────────────────────────
+        await SeedAsync(createSystemPrompt(
+            triage, SuiteFor(triage), TheorySource.Optimizer, Priority.Critical,
+            "The prompt defines no category taxonomy and no priority rules, so the model invents both. "
+            + "Pinning an explicit taxonomy and P1–P4 definitions should recover the failing cases.",
+            "You are an email triage assistant for a SaaS company. Classify every email into exactly one "
+            + "of: Outage, Bug, Billing, Compliance, Account Access, Feature Request, How-To. Assign "
+            + "priority P1 (outage, data loss, legal deadline) to P4 (nice-to-have). Escalate P1 immediately. "
+            + "Never state plan or billing details you have not looked up.",
+            EvidenceFor(triage)), TheoryStatus.Validating, cancellationToken);
+
         await SeedAsync(createToolUpdate(
             support, SuiteFor(support), TheorySource.TraceyAi, Priority.High,
             "Giving the agent a typed lookup_shipping_carrier tool will eliminate fabricated carrier tracking instructions.",
@@ -147,10 +170,16 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
 
                 if (saved.Status == TheoryStatus.Validating)
                 {
+                    // Point terminal theories at the seeded hidden system A/B candidate run, so the
+                    // board's A/B card resolves to a real run entity.
+                    Guid? abTestRunId = ctx.AbCandidateRunsByAgent.TryGetValue(theory.Agent.Id, out var abRun)
+                        ? abRun.Id
+                        : null;
+
                     if (target == TheoryStatus.Validated && proposalId is { } id)
-                        await saved.SetValidated(id, baseline, projected, pValue, abTestRunId: null, cancellationToken);
+                        await saved.SetValidated(id, baseline, projected, pValue, abTestRunId, cancellationToken);
                     else if (target == TheoryStatus.Invalidated)
-                        await saved.SetInvalidated(baseline, projected, pValue, abTestRunId: null, cancellationToken);
+                        await saved.SetInvalidated(baseline, projected, pValue, abTestRunId, cancellationToken);
                 }
                 return;
             }

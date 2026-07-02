@@ -53,4 +53,10 @@ export const QUICK_ACTIONS: QuickAction[] = [
     hint: msg`Theorize and A/B-test an improvement`,
     prompt: 'Optimize one of my agents: theorize a concrete improvement and A/B-test it.',
   },
+  {
+    id: 'diagnose-agent',
+    label: msg`Diagnose an agent`,
+    hint: msg`Investigate flagged anomalies and validate a fix`,
+    prompt: 'Diagnose one of my agents: check its recent anomalies, find the failure pattern, and validate a fix.',
+  },
 ];

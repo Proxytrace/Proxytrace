@@ -5,9 +5,10 @@ using Proxytrace.Domain.OptimizationProposal;
 namespace Proxytrace.Application.Demo.Scenarios;
 
 /// <summary>
-/// Seeds a realistic spread of dashboard notifications (anomaly alerts + a ready proposal) so the
-/// top-bar notifications inbox has content to demo and screenshot in kiosk mode. Runs after the
-/// proposal scenario so a real proposal exists to deep-link to.
+/// Seeds the static dashboard notifications (an already-read historical alert + a ready proposal)
+/// so the top-bar notifications inbox has content to demo and screenshot in kiosk mode. Runs after
+/// the proposal scenario so a real proposal exists to deep-link to. The live anomaly alerts are
+/// produced by <see cref="AnomalySeedScenario"/> via the real detector, not written here.
 /// </summary>
 internal sealed class NotificationSeedScenario : IDemoScenario
 {
@@ -44,18 +45,11 @@ internal sealed class NotificationSeedScenario : IDemoScenario
     {
         var projectId = ctx.RequireProject().Id;
 
-        var groups = ctx.AllRuns
-            .Select(r => r.Group)
-            .DistinctBy(g => g.Id)
-            .ToList();
-        var failedGroup = groups.ElementAtOrDefault(0);
-        var regressedGroup = groups.ElementAtOrDefault(1) ?? failedGroup;
-
         var proposal = (await proposals.GetAllAsync(cancellationToken)).FirstOrDefault();
 
-        // Listed oldest-first; the repository returns notifications newest-first, so the last spec
-        // here lands at the top of the inbox. The two unread anomalies + ready proposal give a
-        // badge count of 3 against one already-read alert.
+        // Listed oldest-first; the repository returns notifications newest-first. The live anomaly
+        // alerts are NOT faked here — AnomalySeedScenario (Order 60) runs the real detector over
+        // the seeded incident groups and persists its output on top of these.
         var specs = new List<NotificationSpec>
         {
             new(
@@ -74,24 +68,6 @@ internal sealed class NotificationSeedScenario : IDemoScenario
                 "Switching the Customer Support agent to Claude is projected to raise pass rate by 17 points.",
                 proposal is null ? null : NotificationTargetKind.OptimizationProposal,
                 proposal?.Id,
-                Read: false),
-
-            new(
-                NotificationKind.Anomaly,
-                NotificationSeverity.Warning,
-                "Pass-rate drop on the Tone suite",
-                "Pass rate fell from 88 % to 64 % versus the recent baseline — a 24-point regression.",
-                regressedGroup is null ? null : NotificationTargetKind.TestRunGroup,
-                regressedGroup?.Id,
-                Read: false),
-
-            new(
-                NotificationKind.Anomaly,
-                NotificationSeverity.Critical,
-                "Test run failed: endpoint unavailable",
-                "The latest run of the Tone suite could not complete — the model endpoint returned no results.",
-                failedGroup is null ? null : NotificationTargetKind.TestRunGroup,
-                failedGroup?.Id,
                 Read: false),
         };
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { agentCallsApi } from '../../../api/agent-calls';
-import { type ToolFactory, tool, ignore404, presentArg, includeSystemArg } from './shared';
+import { outlierFlagKeys, type OutlierFlagKey } from '../../../lib/outliers';
+import { type ToolFactory, tool, ignore404, isEntityId, presentArg, includeSystemArg } from './shared';
 import { clip } from './run-analysis';
 
 export const createTraceTools: ToolFactory = (ctx, store) => ({
@@ -41,6 +42,55 @@ export const createTraceTools: ToolFactory = (ctx, store) => ({
           ...(t.errorMessage ? { error: clip(t.errorMessage, 120) } : {}),
           durationMs: t.durationMs,
           tokens: t.inputTokens + t.outputTokens,
+          preview: t.messagePreview ? clip(t.messagePreview, 100) : null,
+          createdAt: t.createdAt,
+        })),
+      });
+    },
+  }),
+  get_agent_anomalies: tool({
+    description:
+      'Get the recent calls of ONE agent that were auto-flagged as statistical anomalies (outliers) ' +
+      'at ingestion — each call sits far outside the agent\'s own recent baseline (mean ± sigma). ' +
+      'Flag reasons: HighTokens (token count / cost spike), HighLatency, LowCacheHit (prompt-cache ' +
+      'hit rate collapsed), ManyToolCalls (tool-call loop). Use this to diagnose what is wrong with ' +
+      'an agent, then `get_trace` a few flagged calls for full detail. The matching calls are ' +
+      'rendered to the user as a card with the flagged reasons.',
+    parameters: z.object({
+      present: presentArg,
+      agentId: z.string().describe('The id of the agent whose flagged calls to fetch (from list_agents).'),
+      limit: z.number().int().min(1).max(20).optional().describe('Max flagged calls to return (default 10).'),
+    }),
+    confirm: false,
+    execute: async ({ agentId, limit }) => {
+      if (!isEntityId(agentId)) return { notFound: agentId };
+      // An explicit agent id already scopes the read, so include system agents like the
+      // agent-detail outliers widget does — the id may name one.
+      const { items } = await agentCallsApi.list({
+        projectId: ctx.projectId,
+        agentId,
+        outlierOnly: true,
+        includeSystemAgents: true,
+        pageSize: limit ?? 10,
+      });
+      const byReason: Partial<Record<OutlierFlagKey, number>> = {};
+      for (const item of items) {
+        for (const key of outlierFlagKeys(item.outlierFlags)) {
+          byReason[key] = (byReason[key] ?? 0) + 1;
+        }
+      }
+      return store('trace-list', items, {
+        agentId,
+        count: items.length,
+        byReason,
+        items: items.map((t) => ({
+          id: t.id,
+          reasons: outlierFlagKeys(t.outlierFlags),
+          tokens: t.inputTokens + t.outputTokens,
+          cachedInputTokens: t.cachedInputTokens,
+          toolCount: t.toolCount,
+          durationMs: t.durationMs,
+          httpStatus: t.httpStatus,
           preview: t.messagePreview ? clip(t.messagePreview, 100) : null,
           createdAt: t.createdAt,
         })),

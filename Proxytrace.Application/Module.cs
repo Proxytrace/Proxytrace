@@ -156,6 +156,10 @@ public sealed class Module : Autofac.Module
             .As<IAnomalyDetector>()
             .SingleInstance();
 
+        builder.RegisterType<AnomalyInputFactory>()
+            .As<IAnomalyInputFactory>()
+            .SingleInstance();
+
         builder.RegisterType<AnomalyDetectionService>()
             .As<IAnomalyDetectionService>()
             .AsSelf()

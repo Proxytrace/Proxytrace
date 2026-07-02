@@ -144,8 +144,13 @@ lifetime can hijack the account. Enable it only to recover a locked-out admin, t
 ## Kiosk mode
 
 Kiosk mode (`Kiosk:Enabled=true`) runs Proxytrace in-memory and auto-seeds a rich demo
-dataset (the "Showcase Project" with sample agents, traces, test suites and proposals) on
-startup. It is intended for demos and walkthroughs.
+dataset on startup — the "Showcase Project" with sample agents (including a deliberately
+defective email-triage agent whose test suite has just regressed), two weeks of trace history
+with statistics, anomaly-flagged outlier calls (token blow-ups, latency spikes, a runaway tool
+loop, a prompt-cache collapse), live anomaly notifications produced by the real detection
+engine, and a populated optimization loop: test suites, run history, theories in every
+lifecycle state with A/B evidence, and proposals from draft through adopted. It is intended
+for demos and walkthroughs.
 
 Kiosk is single-process: it does **not** require Redis. Captured-call ingestion runs over an
 in-process channel (`Messaging:Provider=InProcess`, forced automatically in kiosk regardless of

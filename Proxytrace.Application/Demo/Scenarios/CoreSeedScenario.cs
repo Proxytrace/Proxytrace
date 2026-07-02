@@ -118,6 +118,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
         var supportEndpoint = gpt4oEndpoint;
         var reviewEndpoint = claudeEndpoint;
         var analyticsEndpoint = gpt4oEndpoint;
+        var triageEndpoint = gpt4oMiniEndpoint;
 
         if (kioskEndpoint.IsConfigured)
         {
@@ -135,6 +136,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
             supportEndpoint = realEndpoint;
             reviewEndpoint = realEndpoint;
             analyticsEndpoint = realEndpoint;
+            triageEndpoint = realEndpoint;
         }
 
         var project = await projects.AddAsync(projectFactory(
@@ -186,6 +188,21 @@ internal sealed class CoreSeedScenario : IDemoScenario
             endpoint: analyticsEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.1),
+            isSystemAgent: false).AddAsync(cancellationToken);
+
+        // Deliberately defective agent: the underspecified prompt (no taxonomy, no priority
+        // definitions), the missing plan-lookup tool and the high temperature produce the
+        // misclassifications, fabrications and inconsistency the optimization loop then
+        // discovers — this is the kiosk's "watch Proxytrace find and fix it" storyline.
+        var triageAgent = await agentFactory(
+            "Email Triage Agent",
+            promptFactory("email-triage-system",
+                "You are an email triage assistant for a SaaS company. "
+                + "Read the customer email and reply with a category and a priority."),
+            tools: [],
+            endpoint: triageEndpoint,
+            project: project,
+            modelParameters: paramsFactory(temperature: 0.9),
             isSystemAgent: false).AddAsync(cancellationToken);
 
         var supportSamples = new (string user, string assistant, ulong inTok, ulong outTok, int latencyMs)[]
@@ -271,9 +288,29 @@ internal sealed class CoreSeedScenario : IDemoScenario
             _ = spreadHours;
         }
 
+        // Triage traces show the agent's defects verbatim: a missed outage (P3'd a "down for
+        // everyone" email), a fabricated plan tier (no lookup tool exists), an invented category,
+        // and one good answer so the failure isn't total.
+        var triageSamples = new (string user, string assistant, ulong inTok, ulong outTok, int latencyMs)[]
+        {
+            ("Subject: EVERYTHING IS DOWN. Our whole team can't log in, production dashboards are dead, we're losing money every minute.",
+                "Category: Account Access. Priority: P3. Suggested reply: password resets can be performed from the login page.",
+                188, 34, 460),
+            ("Subject: Question about invoice. Hi, we were billed $499 but I thought our plan was $299/month?",
+                "Category: Billing. Priority: P2. You are on the Platinum plan which is $499/month and includes 24/7 phone support.",
+                174, 41, 512),
+            ("Subject: Feature request — dark mode for the reporting screens would be great.",
+                "Category: UI Feedback And Suggestions Misc. Priority: P1.",
+                162, 22, 388),
+            ("Subject: How do I export my data as CSV?",
+                "Category: How-To. Priority: P4. You can export any table via the download icon in the top-right of the report view.",
+                158, 36, 402),
+        };
+
         await SeedTraces(supportAgent, supportEndpoint, supportSamples, spreadHours: 48);
         await SeedTraces(codeReviewAgent, reviewEndpoint, reviewSamples, spreadHours: 72);
         await SeedTraces(analyticsAgent, analyticsEndpoint, analyticsSamples, spreadHours: 36);
+        await SeedTraces(triageAgent, triageEndpoint, triageSamples, spreadHours: 24);
 
         await SeedToolCallConversation(supportAgent, supportEndpoint);
         await SeedMultiTurnConversation(supportAgent, supportEndpoint);
@@ -456,5 +493,6 @@ internal sealed class CoreSeedScenario : IDemoScenario
         ctx.CustomerSupportAgent = supportAgent;
         ctx.CodeReviewAgent = codeReviewAgent;
         ctx.DataAnalyticsAgent = analyticsAgent;
+        ctx.EmailTriageAgent = triageAgent;
     }
 }

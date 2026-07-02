@@ -21,6 +21,8 @@ import { AwaitActionsToolUI } from './AwaitActionsToolUI';
 import { RunFailuresToolUI } from './RunFailuresToolUI';
 import { RunComparisonToolUI } from './RunComparisonToolUI';
 import { TraceListToolUI } from './TraceListToolUI';
+import { AnomalyListToolUI } from './AnomalyListToolUI';
+import { EvaluatorListToolUI } from './EvaluatorListToolUI';
 import { TheoryListToolUI } from './TheoryListToolUI';
 import { presentGate } from './present-gate';
 
@@ -71,4 +73,6 @@ export const TRACEY_TOOL_UI: Record<string, ToolCallMessagePartComponent> = {
   get_run_failures: presentGate(RunFailuresToolUI),
   compare_runs: presentGate(RunComparisonToolUI),
   find_traces: presentGate(TraceListToolUI),
+  get_agent_anomalies: presentGate(AnomalyListToolUI),
+  list_evaluators: presentGate(EvaluatorListToolUI),
 };

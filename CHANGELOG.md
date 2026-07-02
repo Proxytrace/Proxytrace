@@ -11,6 +11,27 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Richer kiosk demo data covering the newer features.** The kiosk's seeded showcase now includes:
+  a deliberately defective *Email Triage* agent (vague prompt, missing tool, cheap model) whose test
+  suite regresses sharply — with the resulting alerts produced by the **real anomaly detector**
+  (pass-rate/latency regression + an endpoint-down failed run) instead of hand-written notification
+  text; anomaly-flagged outlier traces for every flag kind (a runaway tool loop, a 20k-token context
+  blow-up, a prompt-cache collapse, a 14-second giant review) plus a provider-timeout error and a
+  prompt-injection trace, so the outliers-only filter, distribution charts and Tracey's diagnose
+  tools have real material; prompt-cache usage and rare flagged latency/token spikes across the
+  14-day statistics backfill; and a completed optimization loop — validated/invalidated theories now
+  link a real (hidden) A/B candidate run, and the proposals board includes an *Adopted* proposal and
+  fresh triage hypotheses.
+
+- **Tracey can diagnose an agent from its anomalies.** Ask what's wrong with an agent (there's a
+  *Diagnose an agent* starter chip, too) and Tracey fetches its recent anomaly-flagged calls —
+  shown as a card with per-call reason badges (high tokens, high latency, low cache hit, many tool
+  calls) — analyzes the flagged traces to name the failure pattern, and turns the problem into test
+  cases: added to a fitting suite, or a new suite created with a matching evaluator (she can now
+  list and create evaluators — LLM judge or exact/numeric/JSON-schema match — and attach them at
+  suite creation). She then runs the suite, reads the failures, and validates a concrete fix with
+  an A/B-tested optimization theory, ending in a reviewable proposal when it improves the pass
+  rate.
 - **Conversation history for Tracey.** The Tracey AI page now keeps a conversation history: keep
   and revisit up to 20 past conversations per project, open any one to view and continue it, and
   delete the ones you no longer need. Conversations are titled automatically from your first message

@@ -58,6 +58,19 @@ describe('create_suite', () => {
     expect(result).toMatchObject({ id: 's1', name: 'My suite', caseCount: 1 });
   });
 
+  it('passes explicit evaluator ids through to the API', async () => {
+    const ctx = makeCtx();
+    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
+    testSuitesApi.create.mockResolvedValue(suite());
+
+    const tool = createSuiteTools(ctx, store).create_suite;
+    await run(tool, { name: 'My suite', agentId: 'a1', agentCallIds: ['call1'], evaluatorIds: ['e1', 'e2'] }, ctx);
+
+    expect(testSuitesApi.create).toHaveBeenCalledWith({
+      name: 'My suite', agentId: 'a1', agentCallIds: ['call1'], evaluatorIds: ['e1', 'e2'],
+    });
+  });
+
   it('returns notFound for a missing agent and never creates', async () => {
     const ctx = makeCtx();
     agentsApi.get.mockResolvedValue(null);

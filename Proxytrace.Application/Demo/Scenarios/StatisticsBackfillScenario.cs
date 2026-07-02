@@ -24,6 +24,13 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
     private const double ErrorRate = 0.03;
     private const double LatencyTailRate = 0.05;
 
+    // Rare, genuinely extreme calls flagged as outliers (matching what the ingestion-time
+    // detector would flag at mean ± 3σ against this backfill's baseline), so the "outliers only"
+    // trace filter, the distribution histograms and Tracey's anomaly tools have real data.
+    private const double LatencySpikeRate = 0.008;
+    private const double TokenSpikeRate = 0.01;
+    private const double UncachedShareRate = 0.30;
+
     private static readonly int[] DiurnalWeights =
         [2, 1, 1, 1, 1, 2, 4, 7, 9, 10, 10, 9, 8, 9, 10, 10, 9, 7, 5, 4, 3, 3, 2, 2];
 
@@ -64,6 +71,16 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
         ("Median order value last quarter?", "Median order value Q1 2026: $74.20."),
     ];
 
+    private static readonly (string User, string Assistant)[] TriagePool =
+    [
+        ("Subject: Password reset email never arrives.", "Category: Account Access. Priority: P3."),
+        ("Subject: API returns 429 for our nightly import since Tuesday.", "Category: Bug. Priority: P2."),
+        ("Subject: Please upgrade us to the annual plan.", "Category: Billing. Priority: P3."),
+        ("Subject: Dashboard loads blank in Safari.", "Category: Bug. Priority: P3."),
+        ("Subject: Can we get SSO with Okta?", "Category: Feature Request. Priority: P4."),
+        ("Subject: Everything is down again!!", "Category: UI Feedback. Priority: P3."),
+    ];
+
     private static readonly IReadOnlyDictionary<string, int[]> SuiteSchedule = new Dictionary<string, int[]>
     {
         ["customer-support-tone"] = [-13, -7, -1],
@@ -71,6 +88,9 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
         ["code-review-bugs"] = [-12, -4],
         ["code-review-style"] = [-11, -5],
         ["data-analytics-queries"] = [-9, -2],
+        // Three stable baseline runs, then the regression lands yesterday — recent enough for the
+        // anomaly to feel live, old enough that the baseline window is well established.
+        ["email-triage-priority"] = [-11, -8, -4, -1],
     };
 
     private readonly DemoSeedContext ctx;
@@ -129,6 +149,10 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                 ctx.RequireDataAnalyticsAgent(),
                 [new(ctx.RequireGpt4oEndpoint(), 0.60), new(ctx.RequireGpt4oMiniEndpoint(), 0.40)],
                 AnalyticsPool),
+            new BackfillProfile(
+                ctx.RequireEmailTriageAgent(),
+                [new(ctx.RequireGpt4oMiniEndpoint(), 1.00)],
+                TriagePool),
         };
 
         var calls = new List<IAgentCall>();
@@ -163,11 +187,37 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                 var endpoint = PickWeighted(profile.EndpointMix);
                 bool isError = random.Double() < ErrorRate;
                 (string userText, string assistantText) = random.Any(profile.Pool);
+
+                var flags = OutlierFlags.None;
+
                 ulong inTok = (ulong)random.Int(200, 451);
                 ulong outTok = (ulong)random.Int(40, 221);
-                int latencyMs = random.Double() < LatencyTailRate
-                    ? random.Int(1500, 3501)
-                    : random.Int(400, 901);
+                if (random.Double() < TokenSpikeRate)
+                {
+                    // A conversation that ballooned: far above the ~325-token mean of the window.
+                    inTok = (ulong)random.Int(2600, 5201);
+                    outTok = (ulong)random.Int(700, 1401);
+                    flags |= OutlierFlags.HighTokens;
+                }
+
+                int latencyMs;
+                if (random.Double() < LatencySpikeRate)
+                {
+                    latencyMs = random.Int(4200, 9001);
+                    flags |= OutlierFlags.HighLatency;
+                }
+                else
+                {
+                    latencyMs = random.Double() < LatencyTailRate
+                        ? random.Int(1500, 3501)
+                        : random.Int(400, 901);
+                }
+
+                // Most calls hit the prompt cache for part of the input; ~30% miss entirely,
+                // giving the cache-hit KPI and distribution a realistic spread.
+                ulong cachedIn = random.Double() < UncachedShareRate
+                    ? 0UL
+                    : (ulong)(inTok * random.Double(0.3, 0.8));
 
                 var systemMsg = profile.Agent.CreateSystemMessage();
                 var userMsg = new UserMessage([Content.FromText(userText)]);
@@ -177,7 +227,7 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                     ? null
                     : completionFactory(
                         new AssistantMessage([Content.FromText(assistantText)], []),
-                        new TokenUsage(inTok, outTok),
+                        new TokenUsage(inTok, outTok, cachedIn),
                         TimeSpan.FromMilliseconds(latencyMs));
 
                 (HttpStatusCode status, string? errorMessage, string? finishReason) = isError
@@ -196,7 +246,8 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                     errorMessage: errorMessage,
                     modelParameters: paramsFactory(temperature: 0.3),
                     existing: new BackdatedData(id, createdAt, createdAt),
-                    conversationId: null);
+                    conversationId: null,
+                    outlierFlags: isError ? OutlierFlags.None : flags);
 
                 calls.Add(call);
             }

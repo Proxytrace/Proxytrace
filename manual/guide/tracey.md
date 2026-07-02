@@ -132,6 +132,7 @@ Beyond reading your data, Tracey can change state on your behalf:
 | **Build a suite from traces** | Creates a new test suite for an agent, seeded from captured traces you point her at (see *Curating suites from traces*). |
 | **Add traces to a suite** | Adds more captured traces to an existing suite as new test cases. |
 | **Edit a suite's cases** | Sets a case's expected answer, or removes a case. |
+| **Create an evaluator** | Adds a scorer (an LLM judge or an exact/numeric/JSON-schema match) and attaches it to a suite she creates (see *Diagnosing an agent*). |
 | **Approve / reject a proposal** | Sets an optimization proposal's status. |
 | **Submit an optimization theory** | Theorizes a change to an agent and kicks off an A/B test (see *Optimizing an agent*). |
 
@@ -192,6 +193,7 @@ Her skills cover:
 | **Review proposals** | listing or reviewing proposals, or approving/rejecting one |
 | **Project insights** | overall stats/usage/cost, a provider, or finding/inspecting captured traces |
 | **Optimize an agent** | optimizing, improving, or tuning an agent (below) |
+| **Diagnose an agent** | what's wrong with an agent, its anomalies/outliers, or degraded behavior (below) |
 
 ## Optimizing an agent
 
@@ -227,6 +229,36 @@ Theories Tracey submits appear alongside optimizer- and user-submitted ones in t
 optimization pipeline, tagged **via Tracey AI**. Identical theories are de-duplicated and a
 project has a cap on how many can be validating at once, so if a submission is a duplicate or the
 queue is full, Tracey tells you instead of running it again.
+
+## Diagnosing an agent
+
+Ask Tracey **what's wrong with an agent** — or about its **anomalies** — and she works the
+problem end to end. There's a **Diagnose an agent** starter chip for it, too. Proxytrace
+[flags anomalous calls automatically](/guide/outliers): a call far outside the agent's own recent
+baseline is marked with the reason — high token count, high latency, low cache hit, or many tool
+calls. Tracey starts from those flags.
+
+The flow:
+
+1. **Anomalies.** She fetches the agent's recently flagged calls and shows them as a card — each
+   row links to the trace and carries its reason badges. No anomalies? She tells you the agent
+   looks healthy and stops.
+2. **Analysis.** She reads a few representative flagged traces and names the failure pattern —
+   e.g. a bloated prompt driving token spikes, prompt churn defeating the cache, or a tool-call
+   loop.
+3. **Test cases.** She turns the problem into something measurable. If a suite already targets
+   this kind of failure, she **adds the flagged traces** to it as cases; otherwise she **creates a
+   new suite** for the problem (your happy-path suite stays clean) with a **matching evaluator** —
+   usually an LLM judge whose instructions name the observed failure. Where a flagged call's
+   recorded response is itself the problem, she sets the case's **expected output** to what the
+   agent should have answered.
+4. **Run, theory, A/B test.** She runs the suite, reads the failures, and — when the evidence
+   supports a concrete fix — submits an **optimization theory**, exactly as in
+   [Optimizing an agent](#optimizing-an-agent): the change is A/B-tested in the background and
+   becomes a reviewable proposal if it improves the pass rate.
+
+Anomalies are statistical, so Tracey won't force a fix out of a one-off spike — if the flagged
+calls don't add up to a repeating, fixable pattern, she says so and stops.
 
 ## Conversation history
 

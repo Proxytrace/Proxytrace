@@ -8,6 +8,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
+using Proxytrace.Domain.TestSuite;
 using Proxytrace.Domain.Usage;
 
 namespace Proxytrace.Application.Demo.Scenarios;
@@ -49,12 +50,14 @@ internal sealed class TestRunSeedScenario : IDemoScenario
     private sealed record RunSpec(
         string SuiteKey,
         [UsedImplicitly] string GroupKey,
-        IReadOnlyList<EndpointPick> Endpoints);
+        IReadOnlyList<EndpointPick> Endpoints,
+        bool IsRegressedTriageGroup = false);
 
     [UsedImplicitly]
     private sealed record EndpointPick(
         Func<DemoSeedContext, IModelEndpoint> SelectEndpoint,
-        double PassRate);
+        double PassRate,
+        int LatencyBaseMs = 720);
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
@@ -97,73 +100,152 @@ internal sealed class TestRunSeedScenario : IDemoScenario
                     new(c => c.RequireGpt4oEndpoint(), PassRate: 0.75),
                     new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.88),
                 ]),
+
+            // Email triage: a stable baseline, then a fresh sharp regression (pass rate and
+            // latency) shaped to trip the real anomaly detector's rules during seeding. The two
+            // hard cases at the end of the suite fail in every run, including the baseline.
+            new("email-triage-priority", "triage-baseline",
+                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.75)]),
+            new("email-triage-priority", "triage-week-2",
+                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.75)]),
+            new("email-triage-priority", "triage-week-3",
+                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.75)]),
+            new("email-triage-priority", "triage-regression",
+                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.25, LatencyBaseMs: 1290)],
+                IsRegressedTriageGroup: true),
         };
 
         foreach (var spec in specs)
         {
-            if (!ctx.SuitesByKey.TryGetValue(spec.SuiteKey, out var suite))
-                throw new InvalidOperationException($"Test suite '{spec.SuiteKey}' not seeded.");
+            var suite = RequireSuite(spec.SuiteKey);
 
             var group = await createGroup(suite, isSystemRun: false, null, sampleCount: 1).AddAsync(cancellationToken);
             await group.SetRunning(cancellationToken);
 
             foreach (var pick in spec.Endpoints)
             {
-                var endpoint = pick.SelectEndpoint(ctx);
-                var run = await createRun(group, endpoint, sampleIndex: 0).AddAsync(cancellationToken);
-
-                var cases = suite.TestCases.ToArray();
-                int passing = (int)Math.Round(pick.PassRate * cases.Length);
-
-                ITestRun current = run;
-                for (int i = 0; i < cases.Length; i++)
-                {
-                    var testCase = cases[i];
-                    bool shouldPass = i < passing;
-                    var actualResponse = shouldPass
-                        ? testCase.ExpectedOutput
-                        : new AssistantMessage(
-                            [Content.FromText("(simulated weaker response for demo)")],
-                            []);
-
-                    var completion = createCompletion(
-                        actualResponse,
-                        new TokenUsage(inputTokenCount: 240, outputTokenCount: 90),
-                        TimeSpan.FromMilliseconds(720 + (i * 30)));
-
-                    var evaluations = suite.Evaluators
-                        .Select(ev =>
-                        {
-                            TokenUsage? evalUsage = null;
-                            decimal? evalCost = null;
-                            if (ev is IAgenticEvaluator agentic)
-                                {
-                                    evalUsage = new TokenUsage(inputTokenCount: 360UL + (ulong)(i * 4), outputTokenCount: 55UL + (ulong)(i * 2));
-                                    evalCost = agentic.Agent.Endpoint.CalculateCost(evalUsage);
-                                }
-                            return createEvaluation(
-                                ev,
-                                shouldPass ? EvaluationScore.Good : EvaluationScore.Bad,
-                                TimeSpan.FromMilliseconds(120 + (i * 5)),
-                                tokenUsage: evalUsage,
-                                cost: evalCost,
-                                reasoning: shouldPass
-                                    ? $"{ev.Name}: response matches expected tone and content."
-                                    : $"{ev.Name}: response is off-target or missing key elements.");
-                        })
-                        .ToArray();
-
-                    var result = await resultRepo.AddAsync(
-                        createResult(testCase, completion, evaluations),
-                        cancellationToken);
-                    current = await current.SetTestResult(result, cancellationToken);
-                }
-
-                ctx.AllRuns.Add(current);
+                var run = await SeedRunAsync(suite, group, pick, cancellationToken);
+                ctx.AllRuns.Add(run);
             }
 
             var reloadedGroup = await groupRepo.GetAsync(group.Id, cancellationToken);
-            await reloadedGroup.SetCompleted(cancellationToken);
+            reloadedGroup = await reloadedGroup.SetCompleted(cancellationToken);
+
+            if (spec.IsRegressedTriageGroup)
+                ctx.RegressedTriageGroup = reloadedGroup;
         }
+
+        await SeedFailedToneGroupAsync(cancellationToken);
+        await SeedAbCandidateRunsAsync(cancellationToken);
+    }
+
+    private ITestSuite RequireSuite(string suiteKey)
+        => ctx.SuitesByKey.TryGetValue(suiteKey, out var suite)
+            ? suite
+            : throw new InvalidOperationException($"Test suite '{suiteKey}' not seeded.");
+
+    /// <summary>
+    /// The endpoint-down shape: a group that starts running, whose single run never produces a
+    /// result, and which is then marked failed — exactly what the anomaly detector's hard rule
+    /// looks for. Kept out of <see cref="DemoSeedContext.AllRuns"/> so it is neither backdated nor
+    /// cited as evidence: it is "today's" incident.
+    /// </summary>
+    private async Task SeedFailedToneGroupAsync(CancellationToken cancellationToken)
+    {
+        var suite = RequireSuite("customer-support-tone");
+
+        var group = await createGroup(suite, isSystemRun: false, null, sampleCount: 1).AddAsync(cancellationToken);
+        await group.SetRunning(cancellationToken);
+        await createRun(group, ctx.RequireClaudeEndpoint(), sampleIndex: 0).AddAsync(cancellationToken);
+
+        var reloaded = await groupRepo.GetAsync(group.Id, cancellationToken);
+        ctx.FailedToneGroup = await reloaded.SetFailed(cancellationToken);
+    }
+
+    /// <summary>
+    /// Hidden system A/B candidate runs (one per agent that has a validated/invalidated theory), so
+    /// theories and proposals can point their A/B evidence at a real run entity.
+    /// </summary>
+    private async Task SeedAbCandidateRunsAsync(CancellationToken cancellationToken)
+    {
+        var candidates = new (string SuiteKey, Func<DemoSeedContext, IModelEndpoint> SelectEndpoint, double PassRate)[]
+        {
+            ("customer-support-tone", c => c.RequireGpt4oEndpoint(), 0.90),
+            ("data-analytics-queries", c => c.RequireGpt4oMiniEndpoint(), 0.88),
+        };
+
+        foreach (var (suiteKey, selectEndpoint, passRate) in candidates)
+        {
+            var suite = RequireSuite(suiteKey);
+            var group = await createGroup(suite, isSystemRun: true, null, sampleCount: 1).AddAsync(cancellationToken);
+            await group.SetRunning(cancellationToken);
+
+            var run = await SeedRunAsync(
+                suite, group, new EndpointPick(selectEndpoint, passRate), cancellationToken);
+
+            var reloaded = await groupRepo.GetAsync(group.Id, cancellationToken);
+            await reloaded.SetCompleted(cancellationToken);
+
+            ctx.AbCandidateRunsByAgent[suite.Agent.Id] = run;
+        }
+    }
+
+    private async Task<ITestRun> SeedRunAsync(
+        ITestSuite suite,
+        ITestRunGroup group,
+        EndpointPick pick,
+        CancellationToken cancellationToken)
+    {
+        var endpoint = pick.SelectEndpoint(ctx);
+        var run = await createRun(group, endpoint, sampleIndex: 0).AddAsync(cancellationToken);
+
+        var cases = suite.TestCases.ToArray();
+        int passing = (int)Math.Round(pick.PassRate * cases.Length);
+
+        ITestRun current = run;
+        for (int i = 0; i < cases.Length; i++)
+        {
+            var testCase = cases[i];
+            bool shouldPass = i < passing;
+            var actualResponse = shouldPass
+                ? testCase.ExpectedOutput
+                : new AssistantMessage(
+                    [Content.FromText("(simulated weaker response for demo)")],
+                    []);
+
+            var completion = createCompletion(
+                actualResponse,
+                new TokenUsage(inputTokenCount: 240, outputTokenCount: 90),
+                TimeSpan.FromMilliseconds(pick.LatencyBaseMs + (i * 30)));
+
+            var evaluations = suite.Evaluators
+                .Select(ev =>
+                {
+                    TokenUsage? evalUsage = null;
+                    decimal? evalCost = null;
+                    if (ev is IAgenticEvaluator agentic)
+                    {
+                        evalUsage = new TokenUsage(inputTokenCount: 360UL + (ulong)(i * 4), outputTokenCount: 55UL + (ulong)(i * 2));
+                        evalCost = agentic.Agent.Endpoint.CalculateCost(evalUsage);
+                    }
+                    return createEvaluation(
+                        ev,
+                        shouldPass ? EvaluationScore.Good : EvaluationScore.Bad,
+                        TimeSpan.FromMilliseconds(120 + (i * 5)),
+                        tokenUsage: evalUsage,
+                        cost: evalCost,
+                        reasoning: shouldPass
+                            ? $"{ev.Name}: response matches expected tone and content."
+                            : $"{ev.Name}: response is off-target or missing key elements.");
+                })
+                .ToArray();
+
+            var result = await resultRepo.AddAsync(
+                createResult(testCase, completion, evaluations),
+                cancellationToken);
+            current = await current.SetTestResult(result, cancellationToken);
+        }
+
+        return current;
     }
 }

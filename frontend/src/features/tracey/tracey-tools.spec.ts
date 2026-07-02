@@ -445,6 +445,49 @@ describe('tracey entity-fetch tools', () => {
     expect(result.summary.items[0]).toMatchObject({ id: 'th1', status: 'Invalidated' });
   });
 
+  it('get_agent_anomalies filters to outliers and decodes the flag bits into reasons', async () => {
+    const agentId = '11111111-1111-1111-1111-111111111111';
+    const items = [
+      {
+        id: 't1', agentName: 'Alpha', model: 'gpt-4o', httpStatus: 200, durationMs: 900,
+        inputTokens: 9000, outputTokens: 500, cachedInputTokens: 0, toolCount: 1,
+        messagePreview: 'huge prompt', createdAt: '2026-06-01T00:00:00Z',
+        outlierFlags: 3, // HighTokens | HighLatency
+      },
+      {
+        id: 't2', agentName: 'Alpha', model: 'gpt-4o', httpStatus: 200, durationMs: 100,
+        inputTokens: 10, outputTokens: 5, cachedInputTokens: 0, toolCount: 12,
+        messagePreview: 'tool loop', createdAt: '2026-06-01T00:01:00Z',
+        outlierFlags: 8, // ManyToolCalls
+      },
+    ];
+    agentCallsApi.list.mockResolvedValue({ items });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).get_agent_anomalies, { agentId, limit: 5 }, ctx) as {
+      artifactRef: string; kind: string;
+      summary: { count: number; byReason: Record<string, number>; items: { id: string; reasons: string[]; tokens: number }[] };
+    };
+
+    expect(agentCallsApi.list).toHaveBeenCalledWith({
+      projectId: 'proj-1', agentId, outlierOnly: true, includeSystemAgents: true, pageSize: 5,
+    });
+    expect(result.kind).toBe('trace-list');
+    expect(result.summary.count).toBe(2);
+    expect(result.summary.byReason).toEqual({ HighTokens: 1, HighLatency: 1, ManyToolCalls: 1 });
+    expect(result.summary.items[0]).toMatchObject({ id: 't1', reasons: ['HighTokens', 'HighLatency'], tokens: 9500 });
+    expect(result.summary.items[1]).toMatchObject({ id: 't2', reasons: ['ManyToolCalls'] });
+    // The card resolves the full list from the artifact store.
+    expect(await getArtifact(result.artifactRef)).toEqual(items);
+  });
+
+  it('get_agent_anomalies short-circuits a non-id agentId to notFound without calling the API', async () => {
+    const ctx = makeCtx();
+    const result = await exec(createTraceyTools(ctx).get_agent_anomalies, { agentId: 'tracey' }, ctx);
+    expect(result).toEqual({ notFound: 'tracey' });
+    expect(agentCallsApi.list).not.toHaveBeenCalled();
+  });
+
   it('get_trace stores the full call and returns a curated summary', async () => {
     const call = { id: 't1', model: 'gpt-4o', provider: 'openai', httpStatus: 200, inputTokens: 10, outputTokens: 20, durationMs: 500, costEur: 0.1 };
     agentCallsApi.get.mockResolvedValue(call);

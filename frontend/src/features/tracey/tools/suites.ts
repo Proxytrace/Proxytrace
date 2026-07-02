@@ -51,21 +51,26 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     create_suite: tool({
       description:
         'Create a benchmark suite for an agent, seeded from captured traces. Requires confirmation. ' +
-        '`agentCallIds` are trace ids from find_traces; each becomes a test case. Returns the new suite as a card.',
+        '`agentCallIds` are trace ids from find_traces; each becomes a test case. Pass evaluatorIds ' +
+        'to score the suite with specific evaluators (they replace the default); omit it to get a ' +
+        'default exact-match evaluator. Returns the new suite as a card.',
       parameters: z.object({
         name: z.string().min(1).describe('A short, descriptive name for the suite.'),
         agentId: z.string().describe('The id of the agent the suite benchmarks.'),
         agentCallIds: z.array(z.string()).min(1)
           .describe('Captured trace (agent-call) ids to seed as test cases — from find_traces.'),
+        evaluatorIds: z.array(z.string()).optional()
+          .describe('Evaluator ids to attach (from list_evaluators / create_evaluator). They replace ' +
+            'the default; omit to attach a default exact-match evaluator.'),
       }),
       confirm: true,
-      execute: async ({ name, agentId, agentCallIds }, c) => {
+      execute: async ({ name, agentId, agentCallIds, evaluatorIds }, c) => {
         const agent = await ignore404(() => agentsApi.get(agentId, { silentStatuses: [404] }));
         if (!agent) return { notFound: agentId };
         const n = agentCallIds.length;
         const ok = await c.confirm(`Create suite "${name}" for agent "${agent.name}" from ${n} trace${n === 1 ? '' : 's'}?`);
         if (!ok) return CANCELLED;
-        const suite = await testSuitesApi.create({ name, agentId, agentCallIds });
+        const suite = await testSuitesApi.create({ name, agentId, agentCallIds, evaluatorIds });
         return store('suite', suite, suiteDigest(suite));
       },
     }),

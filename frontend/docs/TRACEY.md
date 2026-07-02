@@ -174,25 +174,28 @@ column is which bundle activates the tool (`core` = always available).
 | `list_agents` / `get_agent` | read | no | core | `AgentListToolUI` / `AgentCardToolUI` |
 | `show_chart` / `show_table` / `show_text` | render | no | core | `ChartToolUI` / `TableToolUI` / `TextToolUI` |
 | `ask_questions` | interactive (HITL) | no | core | `AskQuestionsToolUI` |
-| `list_suites` / `get_suite` | read | no | `test-suites-and-runs`, `suite-curation` | `SuiteListToolUI` / `SuiteCardToolUI` |
-| `create_suite` / `add_to_suite` | write | **yes** | `suite-curation` | `SuiteCardToolUI` |
+| `list_suites` / `get_suite` | read | no | `test-suites-and-runs`, `suite-curation`, `diagnose-agent` | `SuiteListToolUI` / `SuiteCardToolUI` |
+| `create_suite` / `add_to_suite` | write | **yes** | `suite-curation`, `diagnose-agent` | `SuiteCardToolUI` |
 | `remove_test_case` | write | **yes** | `suite-curation` | `SuiteCardToolUI` |
-| `update_expected_output` | write | **yes** | `suite-curation` | `ToolCallCard` |
-| `list_runs` / `get_run` | read | no | `test-suites-and-runs` | `RunListToolUI` / `RunCardToolUI` |
-| `get_run_failures` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunFailuresToolUI` |
+| `update_expected_output` | write | **yes** | `suite-curation`, `diagnose-agent` | `ToolCallCard` |
+| `list_runs` / `get_run` | read | no | `test-suites-and-runs`, `diagnose-agent` | `RunListToolUI` / `RunCardToolUI` |
+| `get_run_failures` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent`, `diagnose-agent` | `RunFailuresToolUI` |
 | `compare_runs` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunComparisonToolUI` |
-| `start_test_run` | write | **yes** | `test-suites-and-runs` | `StartTestRunToolUI` (live) |
+| `start_test_run` | write | **yes** | `test-suites-and-runs`, `diagnose-agent` | `StartTestRunToolUI` (live) |
 | `cancel_test_run` | write | **yes** | `test-suites-and-runs` | `ToolCallCard` |
 | `list_proposals` / `get_proposal` | read | no | `review-proposals` | `ProposalListToolUI` / `ProposalCardToolUI` |
 | `set_proposal_status` | write | **yes** | `review-proposals` | `ToolCallCard` |
-| `list_theories` | read | no | `optimize-agent` | `TheoryListToolUI` |
+| `list_theories` | read | no | `optimize-agent`, `diagnose-agent` | `TheoryListToolUI` |
 | `get_dashboard_stats` | read | no | `project-insights` | `DashboardStatsToolUI` |
 | `get_provider` | read | no | `project-insights` | `ProviderCardToolUI` |
-| `find_traces` | read (search) | no | `project-insights`, `optimize-agent` | `TraceListToolUI` |
-| `get_trace` | read | no | `project-insights`, `optimize-agent` | `TraceCardToolUI` |
+| `find_traces` | read (search) | no | `project-insights`, `optimize-agent`, `diagnose-agent` | `TraceListToolUI` |
+| `get_trace` | read | no | `project-insights`, `optimize-agent`, `diagnose-agent` | `TraceCardToolUI` |
+| `get_agent_anomalies` | read | no | `diagnose-agent` | `AnomalyListToolUI` |
+| `list_evaluators` | read | no | `diagnose-agent` | `EvaluatorListToolUI` |
+| `create_evaluator` | write | **yes** | `diagnose-agent` | `ToolCallCard` |
 | `get_agent_stats` | read | no | `optimize-agent` | `AgentStatsToolUI` |
-| `submit_optimization_theory` | write | **yes** | `optimize-agent` | `TheoryToolUI` (live) |
-| `await_actions` | wait | no | `test-suites-and-runs`, `optimize-agent` | `AwaitActionsToolUI` |
+| `submit_optimization_theory` | write | **yes** | `optimize-agent`, `diagnose-agent` | `TheoryToolUI` (live) |
+| `await_actions` | wait | no | `test-suites-and-runs`, `optimize-agent`, `diagnose-agent` | `AwaitActionsToolUI` |
 
 ## Card density: reads render on demand (`present`)
 
@@ -481,6 +484,7 @@ Current skills (`skills/*.md`):
 | `review-proposals` | `list_proposals`, `get_proposal`, `set_proposal_status` |
 | `project-insights` | `get_dashboard_stats`, `get_provider`, `find_traces`, `get_trace` |
 | `optimize-agent` | `submit_optimization_theory`, `get_agent_stats`, `list_suites`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `find_traces`, `get_trace`, `list_theories`, `await_actions` |
+| `diagnose-agent` | `get_agent_anomalies`, `get_trace`, `find_traces`, `list_suites`, `get_suite`, `create_suite`, `add_to_suite`, `update_expected_output`, `list_evaluators`, `create_evaluator`, `start_test_run`, `list_runs`, `get_run`, `get_run_failures`, `list_theories`, `submit_optimization_theory`, `await_actions` |
 
 - **Add a skill:** drop a `skills/<name>.md` with YAML front-matter (`name`, `description`, optional
   `tools:` — a comma/space-separated bundle) and the playbook as the body. `registry.ts`
@@ -494,6 +498,13 @@ Current skills (`skills/*.md`):
   ground a hypothesis in real run/trace evidence, author one change, submit it. The submit tool
   posts to `POST /api/theories` (`source: TraceyAi`); the backend A/B-validates it and either spawns
   a Draft proposal or invalidates it. `TheoryToolUI` → `LiveTheoryCard` streams that status.
+- The **`diagnose-agent`** skill starts from `get_agent_anomalies` (the agent's outlier-flagged
+  calls — `outlierOnly=true` list, flag bits decoded into reasons in the digest), analyzes the
+  flagged traces, then turns the problem into test cases: add to a fitting suite, or create a new
+  anomaly suite with a matching evaluator (`list_evaluators` / `create_evaluator` +
+  `create_suite`'s `evaluatorIds`; an unlicensed Agentic create returns `notLicensed` and the
+  playbook falls back to the default exact-match evaluator). It then runs the suite and finishes
+  through the same theory → A/B path as `optimize-agent`.
 
 ## Product-manual search (`search_docs`)
 
