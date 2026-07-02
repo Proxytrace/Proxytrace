@@ -9,7 +9,7 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { buildRows } from '../../../lib/trace';
 import { useNowTick } from '../hooks/useNowTick';
-import { LiveStreamRow, LIVE_STREAM_GRID } from './LiveStreamRow';
+import { LiveStreamRow, LIVE_STREAM_GRID, LIVE_STREAM_GRID_WIDE, LIVE_STREAM_GRID_NARROW } from './LiveStreamRow';
 
 interface LiveTraceStreamProps {
   traces: AgentCallListItemDto[];
@@ -24,7 +24,11 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
   const now = useNowTick(5000);
 
   return (
-    <section data-testid="live-trace-stream" className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)]">
+    <section
+      data-testid="live-trace-stream"
+      className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)] @container"
+      style={{ '--live-grid': LIVE_STREAM_GRID_WIDE, '--live-grid-narrow': LIVE_STREAM_GRID_NARROW } as React.CSSProperties}
+    >
       <header className="flex items-end justify-between mb-3">
         <div>
           <span className="text-caption text-accent-hover font-mono tracking-[0.18em] uppercase font-bold flex items-center gap-1.5">
@@ -41,7 +45,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
       </header>
 
       <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-caption font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
-        <span /><span><Trans>Message</Trans></span><span className="text-center"><Trans>Turns</Trans></span><span className="text-center"><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
+        <span /><span><Trans>Message</Trans></span><span className="text-center @max-2xl:hidden"><Trans>Turns</Trans></span><span className="text-center @max-2xl:hidden"><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
       </div>
 
       {isLoading ? (

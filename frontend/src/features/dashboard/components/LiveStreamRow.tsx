@@ -14,8 +14,30 @@ import { cn } from '../../../lib/cn';
 // fixed-width (not auto) so the header grid and each row's grid compute identical
 // tracks; auto tracks would size to each grid's own content and drift out of line.
 // Columns: dot · message+agent · turns · model · status · tokens · latency · age.
+//
+// The panel this feed lives in (Dashboard's 1.45fr live-theater column) is narrower
+// than a viewport-based breakpoint would assume — at 1024/1280px viewport it's only
+// ~486–535px wide, well under the ~554px the full 8-track template needs before the
+// flexible message column even gets space (see #295). Viewport breakpoints (`lg:`/`xl:`)
+// can't see that; they only know the window width, not the sibling column eating into
+// this one. So — per DESIGN.md §4's "wide row grids" pattern (see also `tracesMeta.ts`'s
+// TRACE_GRID_CLS) — this collapses on a *container* query instead: the wrapping card
+// declares `@container` (LiveTraceStream.tsx) and exposes both templates as CSS vars;
+// below the `2xl` container breakpoint (~672px) the turns and model columns drop out
+// entirely (both the grid track and the corresponding cells, via `@max-2xl:hidden`),
+// leaving the message column all the room it needs even at narrow panel widths.
 // eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind grid-template class, not UI copy
-export const LIVE_STREAM_GRID = 'grid grid-cols-[14px_minmax(0,1fr)_64px_104px_56px_60px_64px_52px] gap-5';
+export const LIVE_STREAM_GRID = 'grid [grid-template-columns:var(--live-grid)] gap-5 @max-2xl:[grid-template-columns:var(--live-grid-narrow)] @max-2xl:gap-3';
+
+// Full (wide) and narrow column templates, exposed as CSS vars on the `@container` card — see
+// {@link LIVE_STREAM_GRID}. Kept as plain strings (not a combined object) so this file keeps
+// exporting only constants + the component, per react-refresh/only-export-components.
+export const LIVE_STREAM_GRID_WIDE = '14px minmax(0,1fr) 64px 104px 56px 60px 64px 52px';
+export const LIVE_STREAM_GRID_NARROW = '14px minmax(0,1fr) 56px 60px 64px 52px';
+
+/** Shared visibility class for the turns + model cells, which drop below the `2xl` container breakpoint. */
+// eslint-disable-next-line lingui/no-unlocalized-strings -- Tailwind class, not UI copy
+const NARROW_HIDDEN = '@max-2xl:hidden';
 
 interface Props {
   row: TraceRow;
@@ -47,8 +69,8 @@ export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
             {t.agentName ?? <Trans>unknown agent</Trans>}
           </span>
         </span>
-        <span className="text-muted text-center">—</span>
-        <span className="justify-self-center"><Pill label={t.model} color={modelColor(t.model)} size="sm" /></span>
+        <span className={cn('text-muted text-center', NARROW_HIDDEN)}>—</span>
+        <span className={cn('justify-self-center', NARROW_HIDDEN)}><Pill label={t.model} color={modelColor(t.model)} size="sm" /></span>
         <span className="text-caption font-semibold text-center" style={{ color: sc }}>{t.httpStatus}</span>
         <span className="text-secondary text-right min-w-[54px]">{fmtTokens(t.inputTokens + t.outputTokens)}</span>
         <span className="text-muted text-right min-w-[58px]">{fmtLatency(t.durationMs)}</span>
@@ -79,10 +101,10 @@ export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
           {head.agentName ?? <Trans>unknown agent</Trans>}
         </span>
       </span>
-      <span className="justify-self-center inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full text-accent bg-accent-subtle">
+      <span className={cn('justify-self-center inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full text-accent bg-accent-subtle', NARROW_HIDDEN)}>
         <Plural value={turns.length} one="# turn" other="# turns" />
       </span>
-      <span className="justify-self-center"><Pill label={head.model} color={modelColor(head.model)} size="sm" /></span>
+      <span className={cn('justify-self-center', NARROW_HIDDEN)}><Pill label={head.model} color={modelColor(head.model)} size="sm" /></span>
       <span className="text-caption font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : <Trans>mixed</Trans>}</span>
       <span className="text-secondary text-right min-w-[54px]">{fmtTokens(totalTokens)}</span>
       <span className="text-muted text-right min-w-[58px]">{fmtLatency(totalMs)}</span>
