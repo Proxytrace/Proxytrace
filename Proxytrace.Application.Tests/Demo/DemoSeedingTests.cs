@@ -6,11 +6,13 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Kiosk;
+using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Domain.Usage;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests.Demo;
@@ -82,6 +84,25 @@ public class DemoSeedingTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Seed_Endpoints_Price_Traces_With_Displayable_Cost()
+    {
+        var endpoints = await services.GetRequiredService<IRepository<IModelEndpoint>>()
+            .GetAllAsync(CancellationToken);
+        endpoints.Should().NotBeEmpty();
+
+        // Prices are EUR per 1M tokens (see ModelEndpoint.CalculateCost). A typical demo trace
+        // (~10k in / 500 out) must cost at least €0.0001, i.e. render non-zero in the UI's
+        // four-decimal cost display — per-token prices (1M× too small) show €0.0000 everywhere.
+        foreach (var endpoint in endpoints.Where(e => e.InputTokenCost is not null))
+        {
+            var cost = endpoint.CalculateCost(new TokenUsage(10_000, 500, 0));
+            cost.Should().NotBeNull();
+            cost.Should().BeGreaterThanOrEqualTo(0.0001m,
+                $"endpoint '{endpoint.Model.Name}' must price a typical trace above the UI display threshold");
+        }
+    }
+
+    [TestMethod]
     public async Task Seed_Flags_Outlier_Calls_With_Every_Flag_Kind()
     {
         var calls = await services.GetRequiredService<IRepository<IAgentCall>>()
@@ -143,6 +164,24 @@ public class DemoSeedingTests : BaseTest<Module>
             var contained = await runRepo.ContainsAsync(theory.ABTestRunId.Value, CancellationToken);
             contained.Should().BeTrue("the linked A/B candidate run must exist");
         }
+    }
+
+    [TestMethod]
+    public async Task Validated_Theories_Link_Distinct_Proposals()
+    {
+        var theories = await services.GetRequiredService<IRepository<IOptimizationTheory>>()
+            .GetAllAsync(CancellationToken);
+
+        // A proposal represents a single change through one review lifecycle; two theories must
+        // never share one, or promoting/dismissing one silently mutates the other and the second
+        // "Promote" 409s (Draft→Accepted refused once the shared proposal is already Accepted).
+        var linkedProposalIds = theories
+            .Select(t => t.ResultingProposalId)
+            .OfType<Guid>()
+            .ToList();
+
+        linkedProposalIds.Should().OnlyHaveUniqueItems(
+            "each seeded theory must back onto its own proposal — a shared proposal breaks the promote flow");
     }
 
     [TestMethod]

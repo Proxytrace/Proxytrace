@@ -232,8 +232,8 @@ export function pruneArtifacts(scope: string, keep: ReadonlySet<string>): Promis
 }
 
 /**
- * Collects every `artifactRef` carried by a persisted thread snapshot (assistant-ui's
- * `ExportedMessageRepository`). Scans the serialized snapshot so it stays decoupled from the exact
+ * Collects every `artifactRef` carried by a persisted conversation snapshot
+ * (`ConversationSnapshot`). Scans the serialized snapshot so it stays decoupled from the exact
  * message-part shape; the references are the set of artifacts the thread still needs.
  */
 export function collectArtifactRefs(snapshot: unknown): Set<string> {

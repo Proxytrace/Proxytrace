@@ -1,8 +1,11 @@
 /**
  * Persists Tracey conversations in `localStorage`, keyed by user + project so each user's
- * per-project chat history survives navigation and reloads. The stored snapshots are opaque,
- * JSON-serializable `ExportedMessageRepository` blobs; callers own the shape and round-trip them
- * through the runtime's `export()` / `import()`.
+ * per-project chat history survives navigation and reloads. The stored snapshots are JSON-safe
+ * {@link ConversationSnapshot} blobs in the AI SDK's native `UIMessage` format; callers round-trip
+ * them through the runtime's `exportExternalState()` / `importExternalState()`. (The runtime's
+ * plain `export()`/`import()` pair must NOT be used for storage: its ThreadMessages reference the
+ * underlying AI SDK messages through a Symbol-keyed property that `JSON.stringify` drops, so an
+ * imported snapshot silently rebuilds an empty chat.)
  *
  * Two layers:
  * - The legacy single-thread key (`loadThread`/`saveThread`/`clearThread`) — kept only so
@@ -13,7 +16,16 @@
  *   section below.
  */
 
-import type { ExportedMessageRepository } from '@assistant-ui/react';
+import type { UIMessage } from 'ai';
+
+/**
+ * One stored conversation in the AI SDK's native message format — the JSON-safe shape returned by
+ * the runtime's `exportExternalState()` and accepted by `importExternalState()`.
+ */
+export interface ConversationSnapshot {
+  headId?: string | null;
+  messages: Array<{ parentId: string | null; message: UIMessage }>;
+}
 
 const PREFIX = 'proxytrace.tracey.thread';
 
@@ -234,8 +246,9 @@ function isTextPart(part: unknown): part is { type: 'text'; text: string } {
 
 /**
  * Derives a conversation title from the first user message's text (whitespace-collapsed, truncated),
- * falling back to `fallback` when there is no user text yet. Reads the assistant-ui
- * `ExportedMessageRepository` shape defensively so a snapshot from another runtime version can't throw.
+ * falling back to `fallback` when there is no user text yet. Reads both the AI SDK `UIMessage`
+ * shape (`parts`) and the legacy assistant-ui thread-message shape (`content`) defensively so a
+ * snapshot from another format version can't throw.
  */
 export function deriveConversationTitle(snapshot: unknown, fallback: string): string {
   const messages = (snapshot as { messages?: unknown } | null)?.messages;
@@ -243,9 +256,10 @@ export function deriveConversationTitle(snapshot: unknown, fallback: string): st
   for (const entry of messages) {
     const message = (entry as { message?: unknown } | null)?.message;
     if ((message as { role?: unknown } | null)?.role !== 'user') continue;
-    const content = (message as { content?: unknown } | null)?.content;
-    if (!Array.isArray(content)) continue;
-    const text = content.filter(isTextPart).map(p => p.text).join(' ').replace(/\s+/g, ' ').trim();
+    const m = message as { parts?: unknown; content?: unknown };
+    const parts = Array.isArray(m.parts) ? m.parts : Array.isArray(m.content) ? m.content : null;
+    if (!parts) continue;
+    const text = parts.filter(isTextPart).map(p => p.text).join(' ').replace(/\s+/g, ' ').trim();
     if (text) return text.length > TITLE_MAX_LENGTH ? `${text.slice(0, TITLE_MAX_LENGTH - 1).trimEnd()}…` : text;
   }
   return fallback;
@@ -258,6 +272,20 @@ export function snapshotMessageCount(snapshot: unknown): number {
 }
 
 /**
+ * True when a snapshot is non-empty and in the current AI SDK format (every message carries
+ * `parts`). Legacy snapshots from the pre-fix format stored assistant-ui ThreadMessages
+ * (`content` shape) whose AI SDK originals were lost to JSON — importing them yields blank
+ * messages, so callers skip the restore and start the thread fresh instead.
+ */
+export function isRestorableSnapshot(snapshot: unknown): boolean {
+  const messages = (snapshot as { messages?: unknown } | null)?.messages;
+  if (!Array.isArray(messages) || messages.length === 0) return false;
+  return messages.every(entry =>
+    Array.isArray((entry as { message?: { parts?: unknown } } | null)?.message?.parts),
+  );
+}
+
+/**
  * One-time migration of the legacy single-thread blob into the conversation-history model. If no
  * index exists yet and a legacy thread with messages is present, it becomes the sole (active)
  * conversation; the legacy key is then removed so this never runs twice. Idempotent, and best-effort
@@ -266,7 +294,7 @@ export function snapshotMessageCount(snapshot: unknown): number {
  */
 export function migrateLegacyThread(userKey: string, projectKey: string, fallbackTitle: string): void {
   try {
-    const legacy = loadThread<ExportedMessageRepository>(userKey, projectKey);
+    const legacy = loadThread(userKey, projectKey);
     const indexExists = localStorage.getItem(indexKey(userKey, projectKey)) !== null;
     if (indexExists || !legacy || snapshotMessageCount(legacy) === 0) {
       // Nothing to fold in (already migrated, or empty/absent legacy). Drop a stale legacy blob.

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { MetricDistributionDto } from '../../../api/models';
-import { fmtCostEur, fmtLatency, fmtPct, fmtTokens } from '../../../lib/format';
+import { fmtCost, fmtLatency, fmtPct, fmtTokens } from '../../../lib/format';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { DensityCurve } from '../../../components/charts';
 import type { RangeKey } from '../../../lib/time-range';
@@ -55,7 +55,7 @@ export function DistributionStats({ agentId, range }: Props) {
     { key: 'input', label: <Trans>Input tokens</Trans>, unit: 'call', dist: distributions.inputTokensPerCall, fmt: fmtTokenStat, color: 'var(--teal)', valueUnit: t`tokens` },
     { key: 'output', label: <Trans>Output tokens</Trans>, unit: 'call', dist: distributions.outputTokensPerCall, fmt: fmtTokenStat, color: 'var(--teal)', valueUnit: t`tokens` },
     { key: 'latency', label: <Trans>Latency</Trans>, unit: 'call', dist: distributions.latencyMsPerCall, fmt: fmtLatency, color: 'var(--success)' },
-    { key: 'cost', label: <Trans>Cost</Trans>, unit: 'conv', dist: distributions.costPerConversationEur, fmt: fmtCostEur, color: 'var(--warn)' },
+    { key: 'cost', label: <Trans>Cost</Trans>, unit: 'conv', dist: distributions.costPerConversationEur, fmt: fmtCost, color: 'var(--warn)' },
     { key: 'cache', label: <Trans>Cache hit (t≥2)</Trans>, unit: 'conv', dist: distributions.cacheHitRatePerConversation, fmt: fmtPct, color: 'var(--accent-primary)' },
     { key: 'tools', label: <Trans>Tool calls</Trans>, unit: 'conv', dist: distributions.toolCallsPerConversation, fmt: fmtCount, color: 'var(--accent-primary)', valueUnit: t`tool calls` },
   ];

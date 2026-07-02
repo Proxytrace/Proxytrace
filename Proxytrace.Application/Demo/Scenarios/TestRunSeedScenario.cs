@@ -65,20 +65,20 @@ internal sealed class TestRunSeedScenario : IDemoScenario
         {
             // Customer Support tone: improving trend, plus a Claude comparison on the latest group
             new("customer-support-tone", "tone-baseline",
-                [new(c => c.RequireGpt4oEndpoint(), PassRate: 0.50)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.50)]),
             new("customer-support-tone", "tone-after-prompt-tweak",
-                [new(c => c.RequireGpt4oEndpoint(), PassRate: 0.67)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.67)]),
             new("customer-support-tone", "tone-current",
                 [
-                    new(c => c.RequireGpt4oEndpoint(), PassRate: 0.83),
+                    new(c => c.RequireGpt54Endpoint(), PassRate: 0.83),
                     new(c => c.RequireClaudeEndpoint(), PassRate: 1.00),
                 ]),
 
             // Customer Support refunds: small steady improvement
             new("customer-support-refunds", "refunds-week-1",
-                [new(c => c.RequireGpt4oEndpoint(), PassRate: 0.60)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.60)]),
             new("customer-support-refunds", "refunds-week-2",
-                [new(c => c.RequireGpt4oEndpoint(), PassRate: 0.80)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.80)]),
 
             // Code review bugs: high pass rate from the start
             new("code-review-bugs", "bugs-initial",
@@ -92,26 +92,26 @@ internal sealed class TestRunSeedScenario : IDemoScenario
             new("code-review-style", "style-after-prompt-attempt",
                 [new(c => c.RequireClaudeEndpoint(), PassRate: 0.40)]),
 
-            // Analytics: cheaper-model comparison favours gpt-4o-mini
+            // Analytics: cheaper-model comparison favours gpt-5.4-mini
             new("data-analytics-queries", "analytics-baseline",
-                [new(c => c.RequireGpt4oEndpoint(), PassRate: 0.75)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.75)]),
             new("data-analytics-queries", "analytics-mini-comparison",
                 [
-                    new(c => c.RequireGpt4oEndpoint(), PassRate: 0.75),
-                    new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.88),
+                    new(c => c.RequireGpt54Endpoint(), PassRate: 0.75),
+                    new(c => c.RequireGpt54MiniEndpoint(), PassRate: 0.88),
                 ]),
 
             // Email triage: a stable baseline, then a fresh sharp regression (pass rate and
             // latency) shaped to trip the real anomaly detector's rules during seeding. The two
             // hard cases at the end of the suite fail in every run, including the baseline.
             new("email-triage-priority", "triage-baseline",
-                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.75)]),
+                [new(c => c.RequireGpt54MiniEndpoint(), PassRate: 0.75)]),
             new("email-triage-priority", "triage-week-2",
-                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.75)]),
+                [new(c => c.RequireGpt54MiniEndpoint(), PassRate: 0.75)]),
             new("email-triage-priority", "triage-week-3",
-                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.75)]),
+                [new(c => c.RequireGpt54MiniEndpoint(), PassRate: 0.75)]),
             new("email-triage-priority", "triage-regression",
-                [new(c => c.RequireGpt4oMiniEndpoint(), PassRate: 0.25, LatencyBaseMs: 1290)],
+                [new(c => c.RequireGpt54MiniEndpoint(), PassRate: 0.25, LatencyBaseMs: 1290)],
                 IsRegressedTriageGroup: true),
         };
 
@@ -170,8 +170,8 @@ internal sealed class TestRunSeedScenario : IDemoScenario
     {
         var candidates = new (string SuiteKey, Func<DemoSeedContext, IModelEndpoint> SelectEndpoint, double PassRate)[]
         {
-            ("customer-support-tone", c => c.RequireGpt4oEndpoint(), 0.90),
-            ("data-analytics-queries", c => c.RequireGpt4oMiniEndpoint(), 0.88),
+            ("customer-support-tone", c => c.RequireGpt54Endpoint(), 0.90),
+            ("data-analytics-queries", c => c.RequireGpt54MiniEndpoint(), 0.88),
         };
 
         foreach (var (suiteKey, selectEndpoint, passRate) in candidates)

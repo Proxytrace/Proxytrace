@@ -3,6 +3,8 @@ import { EvaluatorKind } from '../api/models';
 const MODEL_COLORS: Record<string, string> = {
   'gpt-4o': '#d9a158',
   'gpt-4o-mini': '#74a8b6',
+  'gpt-5.4': '#d9a158',
+  'gpt-5.4-mini': '#74a8b6',
   'gpt-4.1': '#d9a158',
   'gpt-3.5-turbo': '#dd9a64',
   'claude-3.5-sonnet': '#46b97c',

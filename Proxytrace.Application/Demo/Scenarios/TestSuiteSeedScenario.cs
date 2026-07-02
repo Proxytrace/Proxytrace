@@ -31,7 +31,11 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
 
     public int Order => 20;
 
-    private sealed record CaseSpec(string UserMessage, string ExpectedAssistantReply);
+    private sealed record CaseSpec(
+        string UserMessage,
+        string ExpectedAssistantReply,
+        ToolRequest? ToolCall = null,
+        string? ToolResult = null);
 
     private sealed record SuiteSpec(
         string Key,
@@ -156,6 +160,13 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
             // Exercises the deliberately defective Email Triage agent. Cases are ordered easiest
             // first: the run seeder passes a prefix of the list, so the two ambiguous cases at the
             // end fail in every seeded run — the "hard to optimize" long tail the theories chase.
+            //
+            // The agent carries a `search_kb` tool and its prompt tells it to use it, but the test
+            // runner performs a single completion per case with no tool loop — so every case embeds
+            // the search_kb round-trip (assistant tool call + tool result) in its input
+            // conversation. A live re-run then lands on the final text turn instead of stalling on
+            // a tool-call response the evaluators would fail wholesale; the two hard cases at the
+            // end still fail on their actual ambiguity (sarcasm, mixed language), not on tooling.
             new(
                 Key: "email-triage-priority",
                 Name: "Email Triage — Category & Priority",
@@ -164,21 +175,37 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
                 Cases:
                 [
                     new("Subject: Can't log in since this morning, 'invalid credentials' on every attempt. Nobody on our team can access the workspace.",
-                        "Category: Outage. Priority: P1. Multiple users locked out of a workspace is a potential incident — escalate to on-call and acknowledge the customer within 15 minutes."),
+                        "Category: Outage. Priority: P1. Multiple users locked out of a workspace is a potential incident (KB-501) — escalate to on-call and acknowledge the customer within 15 minutes.",
+                        new ToolRequest(id: "case_kb_login_outage", name: "search_kb", arguments: """{"query":"workspace login failing invalid credentials all users"}"""),
+                        """{"articles":[{"id":"KB-501","title":"Diagnosing workspace-wide login failures","url":"https://help.example.com/kb/501"}]}"""),
                     new("Subject: Invoice #8841 charges us for 25 seats but we only have 19 users.",
-                        "Category: Billing. Priority: P2. Seat-count disputes are refund-relevant — route to billing with the invoice id and confirm the current seat count from the account record; never guess plan or seat details."),
+                        "Category: Billing. Priority: P2. Seat-count disputes are refund-relevant — route to billing with the invoice id, link KB-233 for how seats are counted, and confirm the current seat count from the account record; never guess plan or seat details.",
+                        new ToolRequest(id: "case_kb_invoice_seats", name: "search_kb", arguments: """{"query":"invoice seat count billing"}"""),
+                        """{"articles":[{"id":"KB-233","title":"How seat counting works on invoices","url":"https://help.example.com/kb/233"}]}"""),
                     new("Subject: The CSV export button greys out for reports longer than 10k rows.",
-                        "Category: Bug. Priority: P2. Reproducible functional defect with a workaround (smaller date ranges) — file with steps to reproduce and link the existing export-limit ticket if one exists."),
+                        "Category: Bug. Priority: P2. Reproducible functional defect with a workaround — point the customer at smaller date ranges per KB-118, file with steps to reproduce and link the existing export-limit ticket if one exists.",
+                        new ToolRequest(id: "case_kb_csv_export", name: "search_kb", arguments: """{"query":"CSV export button disabled large reports"}"""),
+                        """{"articles":[{"id":"KB-118","title":"Exporting tables as CSV","url":"https://help.example.com/kb/118"}]}"""),
                     new("Subject: Love the product! Would be great to have Slack notifications for failed syncs.",
-                        "Category: Feature Request. Priority: P4. Thank the customer, log the request against the notifications backlog, no commitment on timeline."),
+                        "Category: Feature Request. Priority: P4. No help article covers Slack notifications, so it doesn't exist today — thank the customer, log the request against the notifications backlog, no commitment on timeline.",
+                        new ToolRequest(id: "case_kb_slack_notify", name: "search_kb", arguments: """{"query":"Slack notifications for failed syncs"}"""),
+                        """{"articles":[]}"""),
                     new("Subject: REMINDER 3rd email!! Still waiting on my data deletion request from May 2nd.",
-                        "Category: Compliance. Priority: P1. An unanswered GDPR deletion request is time-boxed by law — escalate to the privacy officer immediately and confirm the statutory deadline to the customer."),
+                        "Category: Compliance. Priority: P1. An unanswered GDPR deletion request is time-boxed by law (KB-610) — escalate to the privacy officer immediately and confirm the statutory deadline to the customer.",
+                        new ToolRequest(id: "case_kb_gdpr_deletion", name: "search_kb", arguments: """{"query":"data deletion request GDPR deadline"}"""),
+                        """{"articles":[{"id":"KB-610","title":"Data deletion requests and statutory deadlines","url":"https://help.example.com/kb/610"}]}"""),
                     new("Subject: How do I add a read-only user to just one dashboard?",
-                        "Category: How-To. Priority: P3. Answer directly: invite the user with the Viewer role and share the single dashboard via its permissions panel."),
+                        "Category: How-To. Priority: P3. Answer directly with KB-152: invite the user with the Viewer role and share the single dashboard via its permissions panel.",
+                        new ToolRequest(id: "case_kb_viewer_role", name: "search_kb", arguments: """{"query":"read-only user single dashboard viewer role"}"""),
+                        """{"articles":[{"id":"KB-152","title":"Sharing a single dashboard with the Viewer role","url":"https://help.example.com/kb/152"}]}"""),
                     new("Subject: Great job on the new release, everything is *so* fast now that literally nothing loads anymore.",
-                        "Category: Outage. Priority: P1. The praise is sarcasm — 'nothing loads anymore' reports a regression after the release. Treat as an incident report, not feedback, and ask for browser/console details."),
+                        "Category: Outage. Priority: P1. The praise is sarcasm — 'nothing loads anymore' reports a regression after the release. Treat as an incident report, not feedback, and ask for browser/console details.",
+                        new ToolRequest(id: "case_kb_release_slow", name: "search_kb", arguments: """{"query":"slow loading after latest release"}"""),
+                        """{"articles":[{"id":"KB-095","title":"What's new in the latest release","url":"https://help.example.com/kb/095"}]}"""),
                     new("Subject: Hola, la sincronización falló anoche y perdimos los datos del reporte semanal. ¿Nos pueden ayudar? It's urgent, der Kunde wartet schon.",
-                        "Category: Bug. Priority: P1. Mixed-language email reporting data loss on a sync — data loss outranks the casual tone. Reply in the customer's primary language (Spanish) and escalate for data recovery."),
+                        "Category: Bug. Priority: P1. Mixed-language email reporting data loss on a sync — data loss outranks the casual tone. Reply in the customer's primary language (Spanish) and escalate for data recovery (KB-347).",
+                        new ToolRequest(id: "case_kb_sync_failed", name: "search_kb", arguments: """{"query":"sync failed missing report data"}"""),
+                        """{"articles":[{"id":"KB-347","title":"Recovering data after a failed sync","url":"https://help.example.com/kb/347"}]}"""),
                 ]),
         };
 
@@ -187,9 +214,18 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
             var cases = new List<ITestCase>(spec.Cases.Count);
             foreach (var caseSpec in spec.Cases)
             {
-                var input = new Conversation([
+                var messages = new List<Message>
+                {
                     new UserMessage([Content.FromText(caseSpec.UserMessage)])
-                ]);
+                };
+                if (caseSpec.ToolCall is not null)
+                {
+                    messages.Add(new AssistantMessage([], [caseSpec.ToolCall]));
+                    messages.Add(new ToolMessage(new ToolResponse(
+                        caseSpec.ToolCall,
+                        [Content.FromText(caseSpec.ToolResult ?? "")])));
+                }
+                var input = new Conversation(messages);
                 var expected = new AssistantMessage(
                     [Content.FromText(caseSpec.ExpectedAssistantReply)],
                     []);

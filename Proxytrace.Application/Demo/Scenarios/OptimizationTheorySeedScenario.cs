@@ -23,6 +23,10 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
     private readonly IToolUpdateTheory.CreateNew createToolUpdate;
     private readonly IRepository<IOptimizationTheory> repo;
     private readonly IOptimizationProposalRepository proposals;
+    // Proposal ids already handed to an earlier validated theory this seed run. A proposal is a
+    // single change through one review lifecycle, so two theories must never share one — otherwise
+    // promoting/dismissing one silently mutates the other and the second "Promote" 409s.
+    private readonly HashSet<Guid> claimedProposalIds = [];
 
     public OptimizationTheorySeedScenario(
         DemoSeedContext ctx,
@@ -53,7 +57,7 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
         // ── Proposed: hypotheses awaiting a test ──────────────────────────────────────────
         await SeedAsync(createModelSwitch(
             support, SuiteFor(support), TheorySource.Optimizer, Priority.High,
-            "Swapping gpt-4o-mini → claude-3.5-sonnet will raise bug-localisation recall enough to justify the cost.",
+            "Swapping gpt-5.4 → claude-sonnet-4.5 will raise bug-localisation recall enough to justify the cost.",
             ctx.RequireClaudeEndpoint(), EvidenceFor(support)), TheoryStatus.Proposed, cancellationToken);
 
         await SeedAsync(createSystemPrompt(
@@ -123,7 +127,7 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
         await SeedAsync(createModelSwitch(
             analytics, SuiteFor(analytics), TheorySource.Optimizer, Priority.Low,
             "Lowering temperature 0.7 → 0.2 will make repeated classifications consistent.",
-            ctx.RequireGpt4oMiniEndpoint(), EvidenceFor(analytics)),
+            ctx.RequireGpt54MiniEndpoint(), EvidenceFor(analytics)),
             TheoryStatus.Invalidated, cancellationToken, baseline: 0.89, projected: 0.90, pValue: 0.41);
     }
 
@@ -192,12 +196,18 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
 
     private async Task<Guid> FindProposalIdAsync(Guid agentId, ProposalKind kind, CancellationToken cancellationToken)
     {
-        var agentProposals = await proposals.GetByAgentAsync(agentId, cancellationToken);
+        var agentProposals = (await proposals.GetByAgentAsync(agentId, cancellationToken))
+            // Never hand the same proposal to two validated theories (see claimedProposalIds).
+            .Where(p => !claimedProposalIds.Contains(p.Id))
+            .ToArray();
         // Prefer a Draft proposal of the same kind so the drawer shows a coherent change for the
         // validated theory; fall back to any Draft, then any proposal.
         var match = agentProposals.FirstOrDefault(p => p.Status == ProposalStatus.Draft && p.Kind == kind)
             ?? agentProposals.FirstOrDefault(p => p.Status == ProposalStatus.Draft)
             ?? agentProposals.FirstOrDefault();
-        return match?.Id ?? throw new InvalidOperationException($"No seeded proposal to back a validated theory for agent {agentId}.");
+        if (match is null)
+            throw new InvalidOperationException($"No unclaimed seeded proposal to back a validated theory for agent {agentId}.");
+        claimedProposalIds.Add(match.Id);
+        return match.Id;
     }
 }

@@ -70,7 +70,7 @@ internal sealed class OutlierTraceSeedScenario : IDemoScenario
     private void SeedToolLoop(List<IAgentCall> calls, DateTimeOffset now)
     {
         var agent = ctx.RequireCustomerSupportAgent();
-        var endpoint = ctx.RequireGpt4oEndpoint();
+        var endpoint = ctx.RequireGpt54Endpoint();
         var conversationId = Guid.NewGuid();
         var system = agent.CreateSystemMessage();
         var user = new UserMessage([Content.FromText(
@@ -136,16 +136,39 @@ internal sealed class OutlierTraceSeedScenario : IDemoScenario
     /// <summary>
     /// A user pastes an entire schema dump into the analytics agent — 20k+ input tokens for a
     /// one-line question. The cost/token outlier that motivates trimming context client-side.
+    /// Both calls of the run_sql round-trip carry the paste, so both are flagged.
     /// </summary>
     private void SeedContextBlowUp(List<IAgentCall> calls, DateTimeOffset now)
     {
         var agent = ctx.RequireDataAnalyticsAgent();
+        var endpoint = ctx.RequireGpt54Endpoint();
+        var conversationId = Guid.NewGuid();
+        var system = agent.CreateSystemMessage();
         var schemaDump = string.Join("\n", Enumerable.Range(1, 140).Select(i =>
             $"CREATE TABLE shard_{i:D3}_events (id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL, "
             + "kind TEXT NOT NULL, payload JSONB, occurred_at TIMESTAMPTZ NOT NULL DEFAULT now());"));
 
         var user = new UserMessage([Content.FromText(
             "Here is our full schema, how many events did we log yesterday?\n\n" + schemaDump)]);
+
+        var sqlRequest = new ToolRequest(
+            id: "call_sql_events_yesterday",
+            name: "run_sql",
+            arguments: """{"query":"SELECT COUNT(*) FROM all_events WHERE occurred_at::date = (now() - INTERVAL '1 day')::date;"}""");
+        var toolCallMsg = new AssistantMessage([], [sqlRequest]);
+
+        calls.Add(BuildCall(
+            agent, endpoint,
+            request: new Conversation([system, user]),
+            response: completionFactory(toolCallMsg, new TokenUsage(21874, 64), TimeSpan.FromMilliseconds(2680)),
+            finishReason: "tool_calls",
+            createdAt: now.AddHours(-7),
+            conversationId: conversationId,
+            outlierFlags: OutlierFlags.HighTokens));
+
+        var toolMsg = new ToolMessage(new ToolResponse(
+            sqlRequest,
+            [Content.FromText("""{"rows":[{"count":1284733}],"row_count":1,"duration_ms":1408}""")]));
         var assistant = new AssistantMessage(
             [Content.FromText(
                 "Yesterday's event count across shards: 1,284,733.\n```sql\nSELECT COUNT(*) FROM all_events "
@@ -155,12 +178,12 @@ internal sealed class OutlierTraceSeedScenario : IDemoScenario
             []);
 
         calls.Add(BuildCall(
-            agent, ctx.RequireGpt4oEndpoint(),
-            request: new Conversation([agent.CreateSystemMessage(), user]),
-            response: completionFactory(assistant, new TokenUsage(21874, 212), TimeSpan.FromMilliseconds(2680)),
+            agent, endpoint,
+            request: new Conversation([system, user, toolCallMsg, toolMsg]),
+            response: completionFactory(assistant, new TokenUsage(21982, 212), TimeSpan.FromMilliseconds(2890)),
             finishReason: "stop",
-            createdAt: now.AddHours(-7),
-            conversationId: null,
+            createdAt: now.AddHours(-7).AddMinutes(1),
+            conversationId: conversationId,
             outlierFlags: OutlierFlags.HighTokens));
     }
 
@@ -171,43 +194,63 @@ internal sealed class OutlierTraceSeedScenario : IDemoScenario
     private void SeedCacheCollapse(List<IAgentCall> calls, DateTimeOffset now)
     {
         var agent = ctx.RequireCustomerSupportAgent();
-        var endpoint = ctx.RequireGpt4oEndpoint();
+        var endpoint = ctx.RequireGpt54Endpoint();
         var conversationId = Guid.NewGuid();
         var system = agent.CreateSystemMessage();
 
-        var turns = new (string User, string Assistant, ulong In, ulong Out, ulong Cached, int LatencyMs, OutlierFlags Flags)[]
-        {
-            ("Hi, I want to swap the blue lamp in order #31877 for the green one.",
-                "Happy to help — order #31877 is still in 'Preparing', so I can swap the item. Confirming: blue table lamp → green table lamp, same price. Shall I go ahead?",
-                412, 74, 0, 640, OutlierFlags.None),
-            ("Yes please, go ahead.",
-                "Done! Order #31877 now contains the green table lamp. You'll get an updated confirmation email in a few minutes.",
-                531, 48, 402, 480, OutlierFlags.None),
-            ("Actually — can you also gift-wrap it?",
-                "Of course. I've added gift wrapping (free for orders over €50). The order summary and dispatch date are unchanged.",
-                668, 52, 0, 1210, OutlierFlags.LowCacheHit),
-        };
-
         var history = new List<Message> { system };
         int minutesAgo = 96;
-        foreach (var t in turns)
-        {
-            var user = new UserMessage([Content.FromText(t.User)]);
-            history.Add(user);
-            var assistant = new AssistantMessage([Content.FromText(t.Assistant)], []);
 
+        void AddTurn(Message[] newMessages, AssistantMessage assistant, string finishReason,
+            ulong inTok, ulong outTok, ulong cached, int latencyMs, OutlierFlags flags)
+        {
+            history.AddRange(newMessages);
             calls.Add(BuildCall(
                 agent, endpoint,
                 request: new Conversation(history.ToArray()),
-                response: completionFactory(assistant, new TokenUsage(t.In, t.Out, t.Cached), TimeSpan.FromMilliseconds(t.LatencyMs)),
-                finishReason: "stop",
+                response: completionFactory(assistant, new TokenUsage(inTok, outTok, cached), TimeSpan.FromMilliseconds(latencyMs)),
+                finishReason: finishReason,
                 createdAt: now.AddMinutes(-minutesAgo),
                 conversationId: conversationId,
-                outlierFlags: t.Flags));
-
+                outlierFlags: flags));
             history.Add(assistant);
             minutesAgo -= 3;
         }
+
+        // Turn 1 checks the order status via lookup_order before promising the swap, so the
+        // status claim is grounded like every other order-specific support trace.
+        var lookupRequest = new ToolRequest(
+            id: "call_lookup_31877",
+            name: "lookup_order",
+            arguments: """{"order_id":"31877"}""");
+        var lookupMsg = new AssistantMessage([], [lookupRequest]);
+        AddTurn(
+            [new UserMessage([Content.FromText("Hi, I want to swap the blue lamp in order #31877 for the green one.")])],
+            lookupMsg, "tool_calls", 398, 26, 0, 520, OutlierFlags.None);
+
+        var toolMsg = new ToolMessage(new ToolResponse(
+            lookupRequest,
+            [Content.FromText("""{"order_id":"31877","status":"preparing","items":[{"sku":"LAMP-BLU","name":"Blue table lamp"}]}""")]));
+        AddTurn(
+            [toolMsg],
+            new AssistantMessage(
+                [Content.FromText("Good news — order #31877 is still in 'Preparing', so I can swap the item. Confirming: blue table lamp → green table lamp, same price. Shall I go ahead?")],
+                []),
+            "stop", 476, 64, 380, 610, OutlierFlags.None);
+
+        AddTurn(
+            [new UserMessage([Content.FromText("Yes please, go ahead.")])],
+            new AssistantMessage(
+                [Content.FromText("Done! I've submitted the swap to fulfillment — order #31877 now ships with the green table lamp. You'll get an updated confirmation email in a few minutes.")],
+                []),
+            "stop", 592, 52, 455, 480, OutlierFlags.None);
+
+        AddTurn(
+            [new UserMessage([Content.FromText("Actually — can you also gift-wrap it?")])],
+            new AssistantMessage(
+                [Content.FromText("Of course. I've added gift wrapping (free for orders over €50). The order summary and dispatch date are unchanged.")],
+                []),
+            "stop", 728, 52, 0, 1210, OutlierFlags.LowCacheHit);
     }
 
     /// <summary>
@@ -281,7 +324,7 @@ internal sealed class OutlierTraceSeedScenario : IDemoScenario
             []);
 
         calls.Add(BuildCall(
-            agent, ctx.RequireGpt4oMiniEndpoint(),
+            agent, ctx.RequireGpt54MiniEndpoint(),
             request: new Conversation([agent.CreateSystemMessage(), user]),
             response: completionFactory(assistant, new TokenUsage(196, 58), TimeSpan.FromMilliseconds(430)),
             finishReason: "stop",

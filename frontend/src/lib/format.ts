@@ -124,14 +124,14 @@ export function fmtPct100(v: number): string {
   return `${Math.round(v)}%`;
 }
 
-export function fmtCost(usd: number | null | undefined): string {
-  if (usd == null) return '—';
-  if (usd < 0.001) return '<$0.001';
-  return `$${usd.toFixed(4)}`;
-}
-
-export function fmtCostEur(eur: number | null | undefined): string {
+/**
+ * Formats a cost in EUR (all costs in Proxytrace are EUR, converted from the USD price feed).
+ * Sub-euro amounts keep 4 decimals (per-call costs live in the tenths of a cent); from €1 up,
+ * cents are enough.
+ */
+export function fmtCost(eur: number | null | undefined): string {
   if (eur == null) return '—';
   if (eur > 0 && eur < 0.001) return '<€0.001';
+  if (eur >= 1) return `€${eur.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return `€${eur.toFixed(4)}`;
 }

@@ -183,8 +183,8 @@ real provider endpoint, API key, and model — typically in
       "Model": "gpt-4o",
       "Kind": "OpenAi",
       "ProviderName": "Kiosk Provider",
-      "InputTokenCost": 0.0000025,
-      "OutputTokenCost": 0.00001
+      "InputTokenCost": 2.50,
+      "OutputTokenCost": 10.00
     }
   }
 }
@@ -209,7 +209,9 @@ and become the project's **system endpoint** powering all interactive features.
 - `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
   is missing or invalid, the API fails fast on startup with a clear error.
 - `Kind` is one of `OpenAi` or `OpenAiCompatible` (default `OpenAi`).
-- `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional.
+- `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional. Token costs are
+  **EUR per 1M tokens** (e.g. `2.50` for €2.50 per million input tokens). When omitted, the
+  endpoint falls back to a small-model rate (0.15 in / 0.60 out) so traces still display a cost.
 
 If `Kiosk:Endpoint` is omitted, the kiosk seeds the full demo dataset with credential-less
 providers (LLM calls will not succeed); interactive features including Tracey stay hidden

@@ -14,6 +14,7 @@ import {
   upsertConversation,
   removeConversation,
   deriveConversationTitle,
+  isRestorableSnapshot,
   snapshotMessageCount,
   migrateLegacyThread,
   MAX_CONVERSATIONS,
@@ -248,6 +249,31 @@ describe('tracey-storage · deriveConversationTitle & snapshotMessageCount', () 
     expect(snapshotMessageCount(snapshotWith([{ role: 'user', text: 'a' }, { role: 'assistant', text: 'b' }]))).toBe(2);
     expect(snapshotMessageCount(null)).toBe(0);
     expect(snapshotMessageCount({ messages: {} })).toBe(0);
+  });
+
+  it('derives the title from an AI SDK (`parts`) snapshot', () => {
+    const snap = {
+      headId: 'm1',
+      messages: [{ parentId: null, message: { id: 'm1', role: 'user', parts: [{ type: 'text', text: 'parts title' }] } }],
+    };
+    expect(deriveConversationTitle(snap, 'fallback')).toBe('parts title');
+  });
+});
+
+describe('tracey-storage · isRestorableSnapshot', () => {
+  it('accepts a non-empty AI SDK snapshot (all messages carry parts)', () => {
+    const snap = {
+      headId: 'm1',
+      messages: [{ parentId: null, message: { id: 'm1', role: 'user', parts: [{ type: 'text', text: 'hi' }] } }],
+    };
+    expect(isRestorableSnapshot(snap)).toBe(true);
+  });
+
+  it('rejects legacy (content-shaped), empty, and malformed snapshots', () => {
+    expect(isRestorableSnapshot(snapshotWith([{ role: 'user', text: 'legacy' }]))).toBe(false);
+    expect(isRestorableSnapshot({ headId: null, messages: [] })).toBe(false);
+    expect(isRestorableSnapshot({ messages: 'nope' })).toBe(false);
+    expect(isRestorableSnapshot(null)).toBe(false);
   });
 });
 

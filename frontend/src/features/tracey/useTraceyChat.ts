@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
-import type { ExportedMessageRepository } from '@assistant-ui/react';
 import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 import type {
   ChatTransport,
@@ -27,9 +26,10 @@ import {
   upsertConversation,
   removeConversation,
   deriveConversationTitle,
-  snapshotMessageCount,
+  isRestorableSnapshot,
   migrateLegacyThread,
   type ConversationMeta,
+  type ConversationSnapshot,
 } from './tracey-storage';
 import { collectArtifactRefs, pruneArtifacts } from './tracey-artifact-store';
 
@@ -208,16 +208,18 @@ export function useTraceyChat(): TraceyChat {
     // Mount-only (the set is stable here); pruning mid-stream could race a just-written blob.
     void pruneArtifacts(artifactScope, unionArtifactRefs(userKey, projectKey, index.items)).catch(() => {});
 
-    // Restore the active conversation. `import` replaces the thread, so it also clears a previous
-    // project's messages on a project switch; when there is nothing to restore we switch to a fresh
-    // thread to clear. Guard persistence for the whole restore.
+    // Restore the active conversation. Snapshots round-trip via export/importExternalState — the
+    // JSON-safe AI SDK message format; the plain export()/import() pair loses the Symbol-linked AI
+    // SDK messages in JSON, leaving an imported thread that renders empty. The import replaces the
+    // thread, so it also clears a previous project's messages on a project switch; when there is
+    // nothing to restore we switch to a fresh thread to clear. Guard persistence for the whole restore.
     restoringRef.current = true;
     const saved = index.activeId
-      ? loadConversationSnapshot<ExportedMessageRepository>(userKey, projectKey, index.activeId)
+      ? loadConversationSnapshot<ConversationSnapshot>(userKey, projectKey, index.activeId)
       : null;
-    if (saved && snapshotMessageCount(saved) > 0) {
+    if (saved && isRestorableSnapshot(saved)) {
       try {
-        thread.import(saved);
+        thread.importExternalState(saved);
         restoringRef.current = false;
       } catch {
         // Incompatible snapshot: fall back to a clean thread rather than showing stale messages.
@@ -231,9 +233,9 @@ export function useTraceyChat(): TraceyChat {
     // key). Fires per streamed token, so it only re-renders the rail on a structural change.
     const persist = () => {
       if (restoringRef.current) return;
-      let snapshot: ExportedMessageRepository;
+      let snapshot: ConversationSnapshot;
       try {
-        snapshot = thread.export();
+        snapshot = thread.exportExternalState() as ConversationSnapshot;
       } catch {
         return;
       }
@@ -296,20 +298,21 @@ export function useTraceyChat(): TraceyChat {
   const selectConversation = useCallback((id: string) => {
     if (id === activeIdRef.current) return;
     const meta = loadConversationIndex(userKey, projectKey).items.find(c => c.id === id);
-    const snapshot = loadConversationSnapshot<ExportedMessageRepository>(userKey, projectKey, id);
+    const snapshot = loadConversationSnapshot<ConversationSnapshot>(userKey, projectKey, id);
     restoringRef.current = true;
     activeIdRef.current = id;
     createdAtRef.current = meta?.createdAt ?? Date.now();
     setHistory(h => ({ items: h.items, activeId: id }));
     setActiveConversation(userKey, projectKey, id);
     // `await switchToNewThread()` BEFORE import — right after a switch the binding can transiently
-    // resolve to the empty core, whose `import` throws.
+    // resolve to the empty core, whose import throws. (When the current thread is already the
+    // fresh "new" one, switchToNewThread resolves as a no-op and the import lands in it — fine.)
     void runtime.threads
       .switchToNewThread()
       .then(() => {
-        if (snapshot && snapshotMessageCount(snapshot) > 0) {
+        if (snapshot && isRestorableSnapshot(snapshot)) {
           try {
-            runtime.thread.import(snapshot);
+            runtime.thread.importExternalState(snapshot);
           } catch {
             // Incompatible snapshot: leave the fresh empty thread.
           }

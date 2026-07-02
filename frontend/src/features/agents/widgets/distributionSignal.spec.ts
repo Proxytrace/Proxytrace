@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MetricDistributionDto } from '../../../api/models';
-import { fmtCostEur, fmtPct, fmtTokens } from '../../../lib/format';
+import { fmtCost, fmtPct, fmtTokens } from '../../../lib/format';
 import { hasDistributionSignal } from './distributionSignal';
 
 const fmtCount = (v: number) => v.toFixed(1);
@@ -40,11 +40,11 @@ describe('hasDistributionSignal', () => {
   });
 
   it('keeps a tiny-but-real cost shown as "<€0.001"', () => {
-    expect(hasDistributionSignal(dist(0.0003), fmtCostEur)).toBe(true);
+    expect(hasDistributionSignal(dist(0.0003), fmtCost)).toBe(true);
   });
 
   it('drops an exactly-zero cost', () => {
-    expect(hasDistributionSignal(dist(0), fmtCostEur)).toBe(false);
+    expect(hasDistributionSignal(dist(0), fmtCost)).toBe(false);
   });
 
   it('keeps real token / latency magnitudes', () => {

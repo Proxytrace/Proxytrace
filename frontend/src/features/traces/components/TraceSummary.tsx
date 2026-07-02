@@ -1,4 +1,4 @@
-import { fmtTokens, fmtLatency, fmtPct, fmtCostEur, cachedPct } from '../../../lib/format';
+import { fmtTokens, fmtLatency, fmtPct, fmtCost, cachedPct } from '../../../lib/format';
 import type { TraceSummaryStats } from '../traceSummary';
 import { useLingui } from '@lingui/react/macro';
 
@@ -45,7 +45,7 @@ export function TraceSummary({ stats }: Props) {
           ? t`${fmtTokens(stats.inputTokens)} in · ${fmtTokens(stats.outputTokens)} out · ${cached}% cached`
           : t`${fmtTokens(stats.inputTokens)} in · ${fmtTokens(stats.outputTokens)} out`}
       />
-      <StatTile testId="trace-summary-cost" label={t`Cost`} value={fmtCostEur(stats.totalCostEur)} sub={t`this page`} />
+      <StatTile testId="trace-summary-cost" label={t`Cost`} value={fmtCost(stats.totalCostEur)} sub={t`this page`} />
       <StatTile
         testId="trace-summary-latency"
         label={t`Avg latency`}

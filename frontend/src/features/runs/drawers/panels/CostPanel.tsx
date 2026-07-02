@@ -1,5 +1,5 @@
 import { Trans } from '@lingui/react/macro';
-import { fmtTokens } from '../../../../lib/format';
+import { fmtTokens, fmtCost } from '../../../../lib/format';
 import { CachedTokensHint } from '../../../../components/ui/CachedTokensHint';
 import type { EndpointUsageDto } from '../../../../api/models';
 
@@ -10,7 +10,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
     <div>
       <div className="flex items-baseline gap-2 mb-2.5">
         <div className="text-title font-semibold text-secondary"><Trans>Cost</Trans></div>
-        <div className="mono text-h2 font-bold text-primary">${totalCost.toFixed(4)}</div>
+        <div className="mono text-h2 font-bold text-primary">{fmtCost(totalCost)}</div>
         <div className="text-body-sm text-muted"><Trans>{fmtTokens(totalTok)} tok</Trans></div>
       </div>
       {totalCost > 0 && (
@@ -39,7 +39,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
               <CachedTokensHint cachedInput={ep.cachedTokIn} input={ep.tokIn} />
             </span>
             <span className="mono text-body-sm text-secondary text-right">{ep.calls}×</span>
-            <span className="mono text-body font-semibold text-primary text-right">${ep.costUsd.toFixed(4)}</span>
+            <span className="mono text-body font-semibold text-primary text-right">{fmtCost(ep.costUsd)}</span>
           </div>
         ))}
       </div>

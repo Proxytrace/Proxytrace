@@ -451,8 +451,19 @@ slid out of context counts as unloaded and a reload returns the full instruction
 2. **Storage layout (localStorage, `tracey-storage.ts`).** Two key families per user+project:
    - `proxytrace.tracey.conversations:{user}:{project}` → the **index**:
      `{ version, activeId, items: ConversationMeta[] }` (`items` capped at `MAX_CONVERSATIONS` = 20).
-   - `proxytrace.tracey.conversation:{user}:{project}:{id}` → one `ExportedMessageRepository`
-     **snapshot** per conversation.
+   - `proxytrace.tracey.conversation:{user}:{project}:{id}` → one `ConversationSnapshot` per
+     conversation: `{ headId, messages: [{ parentId, message: UIMessage }] }` — the AI SDK's
+     **native message format**, round-tripped through the runtime's `exportExternalState()` /
+     `importExternalState()`.
+
+   **Never persist `thread.export()` / restore with `thread.import()`.** Those carry assistant-ui
+   `ThreadMessage`s whose link back to the underlying AI SDK `UIMessage`s is a **Symbol-keyed
+   property that `JSON.stringify` drops**; importing a JSON round-tripped export "succeeds" but the
+   runtime's `onImport` finds no inner messages, rebuilds the chat state as `[]`, and the thread
+   renders empty — the history rail looks like clicking does nothing. `importExternalState`
+   converts stored `UIMessage`s back through the AI SDK converter, which rebinds them properly.
+   `isRestorableSnapshot` guards restores: a legacy (pre-fix, `content`-shaped) snapshot is skipped
+   and the thread starts fresh instead of showing blank messages.
 
    Snapshots stay in localStorage (large tool payloads already live in the IndexedDB artifact
    store, so a snapshot is just message text + compact digests). `saveConversationSnapshot` returns
@@ -468,8 +479,9 @@ slid out of context counts as unloaded and a reload returns the full instruction
      empty-thread / import notifications during a thread swap can't clobber a stored snapshot with
      an empty export.
    - **Switching conversations:** `await runtime.threads.switchToNewThread()` **before**
-     `thread.import(snapshot)` — right after a switch the binding can transiently resolve to the
-     empty core, whose `import` throws.
+     `thread.importExternalState(snapshot)` — right after a switch the binding can transiently
+     resolve to the empty core, whose import throws. (When the current thread is already the fresh
+     "new" one, `switchToNewThread` resolves as a no-op and the import lands in it — fine.)
    - **"New conversation" archives, it does not destroy.** The current conversation is already
      persisted under its id, so `startNewConversation` just detaches the active pointer and switches
      to a fresh thread. It must **not** call `clearArtifacts` (that would wipe every conversation's
@@ -478,7 +490,7 @@ slid out of context counts as unloaded and a reload returns the full instruction
      **render-time re-read pattern** (keyed on `{user}:{project}`, like `useTraceFilters`), because
      pages don't remount on a project switch.
    - A pre-history single-thread blob is folded in once by `migrateLegacyThread` (idempotent).
-   - Restore is pure localStorage + `import` — it must **not** depend on the session/JWT (which is
+   - Restore is pure localStorage + `importExternalState` — it must **not** depend on the session/JWT (which is
      in-memory-only and gone after a reload); a continued conversation renders instantly and its
      first *new* turn waits for the session exactly as a fresh chat does.
 

@@ -16,8 +16,8 @@ internal sealed class DemoSeedContext
     public IUser? DemoUser { get; set; }
     public IProject? Project { get; set; }
 
-    public IModelEndpoint? Gpt4oEndpoint { get; set; }
-    public IModelEndpoint? Gpt4oMiniEndpoint { get; set; }
+    public IModelEndpoint? Gpt54Endpoint { get; set; }
+    public IModelEndpoint? Gpt54MiniEndpoint { get; set; }
     public IModelEndpoint? ClaudeEndpoint { get; set; }
 
     public IAgent? CustomerSupportAgent { get; set; }
@@ -46,8 +46,8 @@ internal sealed class DemoSeedContext
 
     public IUser RequireDemoUser() => DemoUser ?? throw Missing(nameof(DemoUser));
     public IProject RequireProject() => Project ?? throw Missing(nameof(Project));
-    public IModelEndpoint RequireGpt4oEndpoint() => Gpt4oEndpoint ?? throw Missing(nameof(Gpt4oEndpoint));
-    public IModelEndpoint RequireGpt4oMiniEndpoint() => Gpt4oMiniEndpoint ?? throw Missing(nameof(Gpt4oMiniEndpoint));
+    public IModelEndpoint RequireGpt54Endpoint() => Gpt54Endpoint ?? throw Missing(nameof(Gpt54Endpoint));
+    public IModelEndpoint RequireGpt54MiniEndpoint() => Gpt54MiniEndpoint ?? throw Missing(nameof(Gpt54MiniEndpoint));
     public IModelEndpoint RequireClaudeEndpoint() => ClaudeEndpoint ?? throw Missing(nameof(ClaudeEndpoint));
     public IAgent RequireCustomerSupportAgent() => CustomerSupportAgent ?? throw Missing(nameof(CustomerSupportAgent));
     public IAgent RequireCodeReviewAgent() => CodeReviewAgent ?? throw Missing(nameof(CodeReviewAgent));

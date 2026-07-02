@@ -46,12 +46,12 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                 BuildDraft: (c, agent, evidence, ab) => createModelSwitch(
                     agent,
                     Priority.High,
-                    "Claude consistently outperforms gpt-4o on the tone suite (+17 percentage points pass rate). "
-                    + "Latency increase is negligible and per-call cost stays within budget.",
+                    "Claude consistently outperforms gpt-5.4 on the tone suite (+17 percentage points pass rate). "
+                    + "Latency increase is negligible and per-call cost drops to roughly a quarter.",
                     c.RequireClaudeEndpoint(),
                     0.71,
                     0.88,
-                    0.0001m,
+                    -0.0095m,
                     TimeSpan.FromMilliseconds(50),
                     evidence,
                     ab)),
@@ -113,12 +113,12 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                 BuildDraft: (c, agent, evidence, ab) => createModelSwitch(
                     agent,
                     Priority.Critical,
-                    "gpt-4o-mini outperformed gpt-4o on the analytics suite at roughly a fifth of the cost. "
-                    + "Switching saves ~80 % of inference spend with no quality loss.",
-                    c.RequireGpt4oMiniEndpoint(),
+                    "gpt-5.4-mini outperformed gpt-5.4 on the analytics suite at a fraction of the cost. "
+                    + "Switching saves ~95 % of inference spend with no quality loss.",
+                    c.RequireGpt54MiniEndpoint(),
                     0.69,
                     0.82,
-                    -0.0008m,
+                    -0.0120m,
                     TimeSpan.FromMilliseconds(-200),
                     evidence,
                     ab)),
@@ -163,13 +163,13 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                 BuildDraft: (c, agent, evidence, ab) => createModelSwitch(
                     agent,
                     Priority.High,
-                    "gpt-4o-mini persistently fails the ambiguous triage cases (sarcasm, mixed-language, implicit "
-                    + "urgency) that stay red across every run. gpt-4o resolves most of them in offline replay; "
+                    "gpt-5.4-mini persistently fails the ambiguous triage cases (sarcasm, mixed-language, implicit "
+                    + "urgency) that stay red across every run. gpt-5.4 resolves most of them in offline replay; "
                     + "the cost increase is bounded by triage's low volume.",
-                    c.RequireGpt4oEndpoint(),
+                    c.RequireGpt54Endpoint(),
                     0.25,
                     0.75,
-                    0.0004m,
+                    0.0110m,
                     TimeSpan.FromMilliseconds(320),
                     evidence,
                     ab)),

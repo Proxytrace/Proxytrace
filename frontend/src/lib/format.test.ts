@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fmtLatency, fmtTokens, fmtDuration, fmtElapsed, fmtPct, fmtPct100, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort, cachedPct } from './format'
+import { fmtLatency, fmtTokens, fmtDuration, fmtElapsed, fmtPct, fmtPct100, fmtCost, fmtDate, fmtDateTime, fmtDateTimeShort, cachedPct } from './format'
 
 describe('fmtLatency', () => {
   it('formats sub-second as ms', () => expect(fmtLatency(250)).toBe('250ms'))
@@ -52,15 +52,12 @@ describe('fmtPct100', () => {
 
 describe('fmtCost', () => {
   it('returns em dash for null', () => expect(fmtCost(null)).toBe('—'))
-  it('formats tiny cost as less-than', () => expect(fmtCost(0.0005)).toBe('<$0.001'))
-  it('formats normal cost', () => expect(fmtCost(0.0123)).toBe('$0.0123'))
-})
-
-describe('fmtCostEur', () => {
-  it('returns em dash for null', () => expect(fmtCostEur(null)).toBe('—'))
-  it('formats exact zero as euro', () => expect(fmtCostEur(0)).toBe('€0.0000'))
-  it('formats tiny cost as less-than', () => expect(fmtCostEur(0.0005)).toBe('<€0.001'))
-  it('formats normal cost', () => expect(fmtCostEur(0.0123)).toBe('€0.0123'))
+  it('formats exact zero as euro', () => expect(fmtCost(0)).toBe('€0.0000'))
+  it('formats tiny cost as less-than', () => expect(fmtCost(0.0005)).toBe('<€0.001'))
+  it('formats normal cost', () => expect(fmtCost(0.0123)).toBe('€0.0123'))
+  it('drops to cents from one euro up', () => expect(fmtCost(1.3841)).toBe('€1.38'))
+  it('keeps 4 decimals just below one euro', () => expect(fmtCost(0.9999)).toBe('€0.9999'))
+  it('groups thousands', () => expect(fmtCost(12345.678)).toBe('€12,345.68'))
 })
 
 // Constructed in local time and read back in local time, so assertions are TZ-independent.
