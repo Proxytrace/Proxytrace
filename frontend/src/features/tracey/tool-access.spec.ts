@@ -40,6 +40,16 @@ describe('tracey tool access', () => {
     expect(active).not.toContain('start_test_run');
   });
 
+  it('unlocks the diagnose-agent bundle — anomaly + evaluator tools stay gated until then', () => {
+    expect(CORE_TOOL_NAMES).not.toContain('get_agent_anomalies');
+    expect(CORE_TOOL_NAMES).not.toContain('create_evaluator');
+    const active = activeToolNamesFor(['diagnose-agent']);
+    expect(active).toContain('get_agent_anomalies');
+    expect(active).toContain('list_evaluators');
+    expect(active).toContain('create_evaluator');
+    expect(active).toContain('submit_optimization_theory');
+  });
+
   it('unions bundles when several skills are loaded', () => {
     const active = activeToolNamesFor(['review-proposals', 'test-suites-and-runs']);
     expect(active).toContain('set_proposal_status');

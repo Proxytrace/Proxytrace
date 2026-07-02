@@ -899,6 +899,9 @@ msgstr "Agent:"
 msgid "Agentic evaluators"
 msgstr "Agentic evaluators"
 
+msgid "Agentic evaluators require a licensed installation. Use a non-agentic kind or the suite's default exact-match evaluator instead."
+msgstr "Agentic Evaluators erfordern eine lizenzierte Installation. Verwenden Sie stattdessen einen nicht-agentic kind oder den standardmäßigen exact-match Evaluator der Suite."
+
 msgid "Agentic evaluators require a paid plan"
 msgstr "Agentic Evaluators erfordern einen kostenpflichtigen Plan"
 
@@ -1659,6 +1662,9 @@ msgstr "{0} lösen"
 msgid "Details"
 msgstr "Details"
 
+msgid "Diagnose an agent"
+msgstr "Einen Agent diagnostizieren"
+
 #. placeholder {0}: previous.versionNumber
 msgid "Diff vs v{0}"
 msgstr "Diff zu v{0}"
@@ -2302,6 +2308,9 @@ msgstr "Ungültiger Reset-Link"
 msgid "Invalidated"
 msgstr "Ungültig gemacht"
 
+msgid "Investigate flagged anomalies and validate a fix"
+msgstr "Markierte Anomalien untersuchen und einen Fix validieren"
+
 msgid "Invite a user"
 msgstr "User einladen"
 
@@ -2507,8 +2516,14 @@ msgstr "Agent wird geladen…"
 msgid "Loading agents…"
 msgstr "Agents werden geladen…"
 
+msgid "Loading anomalies…"
+msgstr "Anomalien werden geladen…"
+
 msgid "Loading dashboard…"
 msgstr "Dashboard wird geladen…"
+
+msgid "Loading evaluators…"
+msgstr "Evaluators werden geladen…"
 
 msgid "Loading preview…"
 msgstr "Vorschau wird geladen…"
@@ -2842,6 +2857,9 @@ msgstr "Keine Agents zum Anzeigen"
 msgid "No agents yet"
 msgstr "Noch keine Agents"
 
+msgid "No anomalies flagged recently."
+msgstr "In letzter Zeit wurden keine Anomalien markiert."
+
 msgid "No API keys yet"
 msgstr "Noch keine API keys"
 
@@ -2892,6 +2910,9 @@ msgstr "Noch keine Evaluations. Füge diesen Evaluator zu einer Suite hinzu und 
 
 msgid "No evaluators"
 msgstr "Keine Evaluators"
+
+msgid "No evaluators in this project yet."
+msgstr "In diesem Projekt gibt es noch keine Evaluators."
 
 msgid "No evaluators yet"
 msgstr "Noch keine Evaluators"

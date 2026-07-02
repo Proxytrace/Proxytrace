@@ -6,6 +6,7 @@ import type {
   AgentListItemDto,
   AgentTimeSummaryDto,
   DashboardViewDto,
+  EvaluatorDetailDto,
   OptimizationProposalDto,
   ProviderDto,
   TestResultDto,
@@ -45,6 +46,7 @@ export interface ArtifactPayloads {
   'agent-list': AgentListItemDto[];
   agent: AgentDto;
   'suite-list': TestSuiteListItemDto[];
+  'evaluator-list': EvaluatorDetailDto[];
   suite: TestSuiteDto;
   'run-list': TestRunDto[];
   run: TestRunDto;

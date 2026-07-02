@@ -11,6 +11,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Tracey can diagnose an agent from its anomalies.** Ask what's wrong with an agent (there's a
+  *Diagnose an agent* starter chip, too) and Tracey fetches its recent anomaly-flagged calls —
+  shown as a card with per-call reason badges (high tokens, high latency, low cache hit, many tool
+  calls) — analyzes the flagged traces to name the failure pattern, and turns the problem into test
+  cases: added to a fitting suite, or a new suite created with a matching evaluator (she can now
+  list and create evaluators — LLM judge or exact/numeric/JSON-schema match — and attach them at
+  suite creation). She then runs the suite, reads the failures, and validates a concrete fix with
+  an A/B-tested optimization theory, ending in a reviewable proposal when it improves the pass
+  rate.
 - **Conversation history for Tracey.** The Tracey AI page now keeps a conversation history: keep
   and revisit up to 20 past conversations per project, open any one to view and continue it, and
   delete the ones you no longer need. Conversations are titled automatically from your first message

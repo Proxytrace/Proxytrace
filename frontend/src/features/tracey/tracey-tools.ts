@@ -4,6 +4,7 @@ import { createAgentTools } from './tools/agents';
 import { createSuiteTools } from './tools/suites';
 import { createRunTools } from './tools/runs';
 import { createProposalTools } from './tools/proposals';
+import { createEvaluatorTools } from './tools/evaluators';
 import { createStatsTools } from './tools/stats';
 import { createProviderTools } from './tools/providers';
 import { createTraceTools } from './tools/traces';
@@ -27,6 +28,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     ...createSuiteTools(ctx, store),
     ...createRunTools(ctx, store),
     ...createProposalTools(ctx, store),
+    ...createEvaluatorTools(ctx, store),
     ...createStatsTools(ctx, store),
     ...createProviderTools(ctx, store),
     ...createTraceTools(ctx, store),
@@ -62,6 +64,9 @@ export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'get_provider', description: 'Get one model provider by id.' },
   { name: 'find_traces', description: 'Search captured traces (agent, text, status).' },
   { name: 'get_trace', description: 'Get one captured trace by id.' },
+  { name: 'get_agent_anomalies', description: "Recent anomaly-flagged (outlier) calls of an agent." },
+  { name: 'list_evaluators', description: "List the project's evaluators." },
+  { name: 'create_evaluator', description: 'Create an evaluator to score suites with (confirm).' },
   { name: 'get_dashboard_stats', description: 'Aggregate dashboard statistics.' },
   { name: 'get_agent_stats', description: 'Token usage, cost & latency for an agent.' },
   { name: 'start_test_run', description: 'Run a suite against an agent (confirm).' },
