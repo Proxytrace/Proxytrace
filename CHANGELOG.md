@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-02
+
 ### Changed
 
 - **A more polished Tracey AI experience.** The chat got a visual and interaction pass: the composer
