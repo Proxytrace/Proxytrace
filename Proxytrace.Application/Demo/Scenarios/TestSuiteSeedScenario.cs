@@ -45,6 +45,7 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
         var support = ctx.RequireCustomerSupportAgent();
         var review = ctx.RequireCodeReviewAgent();
         var analytics = ctx.RequireDataAnalyticsAgent();
+        var triage = ctx.RequireEmailTriageAgent();
         var helpfulness = ctx.RequireHelpfulness();
         var politeness = ctx.RequirePoliteness();
 
@@ -151,6 +152,33 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
                         "```sql\nSELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY duration_seconds) AS median_seconds\nFROM sessions\nWHERE started_at::date = now()::date;\n```"),
                     new("Churned users (no order in 60 days) who used to be weekly buyers.",
                         "```sql\nSELECT user_id\nFROM orders\nGROUP BY user_id\nHAVING MAX(order_at) < now() - INTERVAL '60 days'\n   AND COUNT(*) FILTER (\n       WHERE order_at BETWEEN now() - INTERVAL '180 days' AND now() - INTERVAL '60 days'\n   ) >= 12;\n```"),
+                ]),
+            // Exercises the deliberately defective Email Triage agent. Cases are ordered easiest
+            // first: the run seeder passes a prefix of the list, so the two ambiguous cases at the
+            // end fail in every seeded run — the "hard to optimize" long tail the theories chase.
+            new(
+                Key: "email-triage-priority",
+                Name: "Email Triage — Category & Priority",
+                Agent: triage,
+                Evaluators: [helpfulness],
+                Cases:
+                [
+                    new("Subject: Can't log in since this morning, 'invalid credentials' on every attempt. Nobody on our team can access the workspace.",
+                        "Category: Outage. Priority: P1. Multiple users locked out of a workspace is a potential incident — escalate to on-call and acknowledge the customer within 15 minutes."),
+                    new("Subject: Invoice #8841 charges us for 25 seats but we only have 19 users.",
+                        "Category: Billing. Priority: P2. Seat-count disputes are refund-relevant — route to billing with the invoice id and confirm the current seat count from the account record; never guess plan or seat details."),
+                    new("Subject: The CSV export button greys out for reports longer than 10k rows.",
+                        "Category: Bug. Priority: P2. Reproducible functional defect with a workaround (smaller date ranges) — file with steps to reproduce and link the existing export-limit ticket if one exists."),
+                    new("Subject: Love the product! Would be great to have Slack notifications for failed syncs.",
+                        "Category: Feature Request. Priority: P4. Thank the customer, log the request against the notifications backlog, no commitment on timeline."),
+                    new("Subject: REMINDER 3rd email!! Still waiting on my data deletion request from May 2nd.",
+                        "Category: Compliance. Priority: P1. An unanswered GDPR deletion request is time-boxed by law — escalate to the privacy officer immediately and confirm the statutory deadline to the customer."),
+                    new("Subject: How do I add a read-only user to just one dashboard?",
+                        "Category: How-To. Priority: P3. Answer directly: invite the user with the Viewer role and share the single dashboard via its permissions panel."),
+                    new("Subject: Great job on the new release, everything is *so* fast now that literally nothing loads anymore.",
+                        "Category: Outage. Priority: P1. The praise is sarcasm — 'nothing loads anymore' reports a regression after the release. Treat as an incident report, not feedback, and ask for browser/console details."),
+                    new("Subject: Hola, la sincronización falló anoche y perdimos los datos del reporte semanal. ¿Nos pueden ayudar? It's urgent, der Kunde wartet schon.",
+                        "Category: Bug. Priority: P1. Mixed-language email reporting data loss on a sync — data loss outranks the casual tone. Reply in the customer's primary language (Spanish) and escalate for data recovery."),
                 ]),
         };
 

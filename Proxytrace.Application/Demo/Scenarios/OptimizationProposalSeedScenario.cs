@@ -141,7 +141,7 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
 
             new(
                 SelectAgent: c => c.RequireDataAnalyticsAgent(),
-                Status: ProposalStatus.Draft,
+                Status: ProposalStatus.Adopted,
                 BuildDraft: (_, agent, evidence, ab) => createSystemPrompt(
                     agent,
                     Priority.Medium,
@@ -152,6 +152,25 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     + "(3) any assumptions you made. Never omit the SQL block.",
                     0.71,
                     0.89,
+                    evidence,
+                    ab)),
+
+            // The defective triage agent: the cheap model misses sarcasm, mixed languages and
+            // implicit urgency — the quality floor a prompt tweak alone hasn't recovered.
+            new(
+                SelectAgent: c => c.RequireEmailTriageAgent(),
+                Status: ProposalStatus.Draft,
+                BuildDraft: (c, agent, evidence, ab) => createModelSwitch(
+                    agent,
+                    Priority.High,
+                    "gpt-4o-mini persistently fails the ambiguous triage cases (sarcasm, mixed-language, implicit "
+                    + "urgency) that stay red across every run. gpt-4o resolves most of them in offline replay; "
+                    + "the cost increase is bounded by triage's low volume.",
+                    c.RequireGpt4oEndpoint(),
+                    0.25,
+                    0.75,
+                    0.0004m,
+                    TimeSpan.FromMilliseconds(320),
                     evidence,
                     ab)),
 
@@ -183,7 +202,9 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                 continue;
             }
             var evidence = runsForAgent.Take(3).Select(r => r.Id).ToArray();
-            var abTestRun = runsForAgent[0];
+            // Prefer the hidden system A/B candidate run seeded for this agent; fall back to the
+            // first user-facing run for agents without one.
+            var abTestRun = ctx.AbCandidateRunsByAgent.GetValueOrDefault(agent.Id) ?? runsForAgent[0];
 
             var draft = spec.BuildDraft(ctx, agent, evidence, abTestRun);
             var saved = await repo.AddAsync(draft, cancellationToken);
