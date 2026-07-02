@@ -48,7 +48,7 @@ export interface AwaitError {
   error: string;
 }
 
-interface RunAwaitResult extends AwaitResult {
+export interface RunAwaitResult extends AwaitResult {
   kind: 'test-run';
   status: TestRunStatus;
   suiteName: string;
@@ -56,12 +56,15 @@ interface RunAwaitResult extends AwaitResult {
   runs: { agentName: string; status: TestRunStatus; passed: number; failed: number; total: number; passRate: number }[];
 }
 
-interface TheoryAwaitResult extends AwaitResult {
+export interface TheoryAwaitResult extends AwaitResult {
   kind: 'theory';
   status: TheoryStatus;
   agentName: string;
   resultingProposalId: string | null;
 }
+
+/** What one awaited handle resolves to — discriminated by `kind` (the card narrows on it). */
+export type AnyAwaitResult = RunAwaitResult | TheoryAwaitResult;
 
 function summarizeRun(group: TestRunGroupDto, timedOut: boolean): RunAwaitResult {
   return {

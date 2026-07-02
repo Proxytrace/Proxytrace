@@ -269,6 +269,9 @@ body::after {
 }
 
 .fade-up { animation: fade-up 0.2s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .fade-up { animation: none; }
+}
 
 .pulse-dot {
   display: inline-block;

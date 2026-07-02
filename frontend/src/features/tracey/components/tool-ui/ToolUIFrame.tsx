@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { useLingui } from '@lingui/react/macro';
+import { AlertTriangleIcon } from '../../../../components/icons';
 import { Card } from '../../../../components/ui/Card';
 import { Spinner } from '../../../../components/ui/Spinner';
+import { cn } from '../../../../lib/cn';
 import type { ToolUIState } from './tool-ui-state';
 
 interface ToolUIFrameProps {
@@ -14,6 +16,11 @@ interface ToolUIFrameProps {
   hoverColor?: string;
   /** Optional element pinned to the card's top-right corner (e.g. a navigate affordance). */
   cornerAccessory?: ReactNode;
+  /**
+   * The card's contents are still streaming/updating (live run progress, an active wait):
+   * draws the animated `streaming-border` ring around the ready card per DESIGN.md §8.
+   */
+  live?: boolean;
   pendingLabel?: string;
   /**
    * Shaped placeholder rendered while pending, reserving the ready layout's height to avoid a
@@ -28,7 +35,8 @@ interface ToolUIFrameProps {
 /**
  * Shared chrome for every inline Tracey tool UI: a flat card with an optional icon + title
  * header, handling the pending and error states uniformly so each tool component only has to
- * render its ready content.
+ * render its ready content. Pending cards carry the animated streaming ring; ready cards enter
+ * with the standard fade-up (both respect `prefers-reduced-motion`).
  */
 export function ToolUIFrame({
   state,
@@ -37,6 +45,7 @@ export function ToolUIFrame({
   accentBar,
   hoverColor,
   cornerAccessory,
+  live,
   pendingLabel,
   pendingSkeleton,
   errorLabel,
@@ -49,13 +58,19 @@ export function ToolUIFrame({
   if (state === 'pending') {
     if (pendingSkeleton) {
       return (
-        <Card elevation="flat" padding="md" className="my-1" data-testid={testId} aria-busy={true}>
+        <Card elevation="flat" padding="md" className="streaming-border my-1" data-testid={testId} aria-busy={true}>
           {pendingSkeleton}
         </Card>
       );
     }
     return (
-      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId} aria-busy={true}>
+      <Card
+        elevation="flat"
+        padding="sm"
+        className="streaming-border my-1 flex items-center gap-2"
+        data-testid={testId}
+        aria-busy={true}
+      >
         <Spinner size={12} />
         <span className="text-body-sm text-muted">{resolvedPendingLabel}</span>
       </Card>
@@ -63,7 +78,8 @@ export function ToolUIFrame({
   }
   if (state === 'error') {
     return (
-      <Card elevation="flat" padding="sm" className="my-1" data-testid={testId}>
+      <Card elevation="flat" padding="sm" className="fade-up my-1 flex items-center gap-2" data-testid={testId}>
+        <span className="shrink-0 text-danger"><AlertTriangleIcon size={13} /></span>
         <span className="text-body-sm text-danger">{resolvedErrorLabel}</span>
       </Card>
     );
@@ -74,7 +90,7 @@ export function ToolUIFrame({
       padding="md"
       accentBar={accentBar}
       hoverGlow={hoverColor}
-      className="my-1"
+      className={cn('fade-up my-1', live && 'streaming-border')}
       data-testid={testId}
     >
       {(icon || title || cornerAccessory) && (

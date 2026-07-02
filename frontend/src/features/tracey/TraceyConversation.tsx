@@ -22,10 +22,19 @@ export function TraceyConversation() {
               tools); replaces the per-message typing dots so it shows through tool steps too. */}
           <ThreadPrimitive.If running>
             <div
-              className="flex items-center gap-1.5 text-body-sm text-secondary"
+              className="fade-up flex items-center gap-2 text-body-sm text-secondary"
               data-testid="tracey-busy-indicator"
             >
-              <span className="pulse-dot size-1.5 rounded-full bg-accent" />
+              <span className="flex items-center gap-1" aria-hidden>
+                {[0, 1, 2].map(i => (
+                  <span
+                    key={i}
+                    className="pulse-dot size-1.5 rounded-full bg-accent"
+                    // Negative delay phase-shifts each dot immediately, so the wave reads from the first frame.
+                    style={{ animationDelay: `${i * -220}ms` }}
+                  />
+                ))}
+              </span>
               <Trans>Thinking…</Trans>
             </div>
           </ThreadPrimitive.If>

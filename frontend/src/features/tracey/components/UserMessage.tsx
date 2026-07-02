@@ -12,8 +12,9 @@ const userParts = { Text: PlainText, tools: { by_name: TRACEY_TOOL_UI, Fallback:
 
 export function UserMessage() {
   return (
-    <MessagePrimitive.Root className="flex justify-end">
-      <div className="max-w-[80%] rounded-xl rounded-br-sm bg-accent px-3.5 py-2 text-title text-white">
+    <MessagePrimitive.Root className="fade-up flex justify-end">
+      {/* Gold fill carries dark accent-ink text per DESIGN.md — never white on gold. */}
+      <div className="max-w-[80%] rounded-xl rounded-br-sm bg-accent px-3.5 py-2 text-title font-medium text-accent-ink">
         <MessagePrimitive.Parts components={userParts} />
       </div>
     </MessagePrimitive.Root>

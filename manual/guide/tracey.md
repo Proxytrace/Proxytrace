@@ -146,9 +146,12 @@ tally; a **View run** link opens the full run page at any point.
 
 After starting a run (or submitting an optimization theory), Tracey **always waits for the result
 and reacts in the same reply** — she comes back with an analysis once the run completes, rather
-than leaving you to ask. If she's waiting on several runs at once, she waits for all of them and
-summarizes together. Very long runs are capped: if one hasn't finished in time she'll tell you it's
-still going so you can check back.
+than leaving you to ask. While she waits, the **waiting card** shows each action's live status —
+the suite and agent with a case-progress bar for a test run, the A/B phase for a theory — plus a
+stopwatch of how long she's been waiting. When everything settles, the card turns into a result
+summary: one row per action with its pass/fail tally and a verdict badge. If she's waiting on
+several runs at once, she waits for all of them and summarizes together. Very long runs are
+capped: if one hasn't finished in time the card marks it **Still running** so you can check back.
 
 ### Curating suites from traces
 

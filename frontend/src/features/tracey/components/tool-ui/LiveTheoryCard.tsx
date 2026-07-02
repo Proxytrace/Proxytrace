@@ -43,6 +43,7 @@ export function LiveTheoryCard({ initial }: { initial: TheoryDto }) {
       title={t`${kindLabel} for ${theory.agentName}`}
       icon={<SparklesIcon size={14} />}
       accentBar={color}
+      live={isRunning}
       testId="tracey-theory-card"
     >
       <div className="flex flex-col gap-2.5">

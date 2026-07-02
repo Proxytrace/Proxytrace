@@ -32,6 +32,7 @@ export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
       title={`${group.suiteName} → ${group.agentName}`}
       icon={<PlayIcon size={14} />}
       accentBar={color}
+      live={running}
       testId="tracey-run-progress-card"
     >
       <div className="flex flex-col gap-2.5">

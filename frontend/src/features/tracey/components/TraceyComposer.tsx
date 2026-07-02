@@ -1,5 +1,5 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
-import { ComposerPrimitive, ThreadPrimitive, useComposer, useComposerRuntime } from '@assistant-ui/react';
+import { ComposerPrimitive, ThreadPrimitive, useComposer, useComposerRuntime, useThread } from '@assistant-ui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { type I18n } from '@lingui/core';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
@@ -25,10 +25,12 @@ const ALL_ITEMS: SlashItem[] = [
 const COMPOSER_BTN_CLS = cn(
   'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md transition-[background,color,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40',
 );
-// Send: the gold primary CTA. Stop: neutral halt control (gold fill is reserved for the one
-// primary action per DESIGN.md, and a halt reads better as a calm neutral square).
+// Send: the gold primary CTA (dark accent-ink on the gold fill per DESIGN.md). Stop: neutral halt
+// control (gold fill is reserved for the one primary action, and a halt reads better as a calm
+// neutral square). The arrow nudges up on hover — a transform inside the fixed-size button, so it
+// never shifts layout.
 const SEND_BTN_CLS = cn(
-  'bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]',
+  'group bg-[image:var(--grad-accent)] text-accent-ink shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]',
 );
 const STOP_BTN_CLS = cn('border border-border bg-card-2 text-primary hover:bg-card');
 
@@ -45,6 +47,9 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
   const { t, i18n } = useLingui();
   const composer = useComposerRuntime();
   const text = useComposer(c => c.text);
+  // While a turn streams/runs tools the composer frame carries the animated streaming ring
+  // (DESIGN.md §8) so the "Tracey is working" signal lives right where the user's attention is.
+  const isRunning = useThread(thread => thread.isRunning);
   // The selection is tagged with the list ("key") it belongs to. When the menu (re)opens or the
   // query changes, that key changes and the highlight derives back to the first entry — so
   // keyboard nav always starts from a known position without an effect.
@@ -97,7 +102,7 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
       {showStarters && (
         <div className="flex flex-col items-center gap-4 pb-1 animate-[fade-up_var(--motion-slow)_var(--ease-standard)]">
           <div className="flex flex-col items-center gap-2.5 text-center">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-accent-subtle text-accent">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-accent-subtle text-accent ring-1 ring-[color-mix(in_srgb,var(--accent-primary)_28%,transparent)]">
               <SparklesIcon size={22} />
             </div>
             <div className="text-h1 font-semibold text-primary"><Trans>How can I help?</Trans></div>
@@ -122,7 +127,12 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
             onHover={setActive}
           />
         )}
-        <ComposerPrimitive.Root className="flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[var(--shadow-card)] transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]">
+        <ComposerPrimitive.Root
+          className={cn(
+            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[var(--shadow-card)] transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+            isRunning && 'streaming-border',
+          )}
+        >
           <ComposerPrimitive.Input
             autoFocus
             onKeyDown={onKeyDown}
@@ -156,7 +166,10 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
                   data-testid="tracey-send-btn"
                   className={cn(COMPOSER_BTN_CLS, SEND_BTN_CLS)}
                 >
-                  <ArrowUpIcon size={16} />
+                  <ArrowUpIcon
+                    size={16}
+                    className="transition-transform duration-[var(--motion-base)] ease-[var(--ease-standard)] group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
+                  />
                 </ComposerPrimitive.Send>
               </ThreadPrimitive.If>
               <ThreadPrimitive.If running>

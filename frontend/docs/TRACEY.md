@@ -377,10 +377,14 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
 - The wait honors the turn's **abort signal**: hitting Stop cancels the polling immediately
   instead of letting it run to the cap in the background (see "Stopping a turn"). The card then
   shows a neutral "Wait stopped" state — the backend run/theory keeps going regardless.
-- `confirm: false`. Its inline card (`AwaitActionsToolUI`) lists the awaited handles with a
-  spinner while waiting and one status row per action when done (timed-out → warn, failed handle →
-  danger); the per-item **live** cards (`StartTestRunToolUI`, `TheoryToolUI`) still stream the
-  detailed progress.
+- `confirm: false`. Its inline card (`AwaitActionsToolUI`) shows one **live row per handle while
+  waiting** — `useAwaitLiveStatus` polls each entity on the tool's cadence through the canonical
+  query keys (so it shares the cache with the live cards / SSE patches), rendering suite → agent +
+  case progress for a run and the A/B phase for a theory — plus an elapsed stopwatch
+  (`useElapsedSeconds`) and the `streaming-border` ring. When done it settles into one outcome row
+  per action (per-case counts, timed-out → warn, failed handle → danger) under a card-level verdict
+  badge (`awaitOutcome` in `await-card-logic.ts`, unit-tested); the per-item **live** cards
+  (`StartTestRunToolUI`, `TheoryToolUI`) still stream the detailed progress.
 
 ## Live cards (streaming write results)
 

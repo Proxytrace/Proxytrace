@@ -217,11 +217,16 @@ msgstr "{0} chars"
 msgid "{0} err"
 msgstr "{0} err"
 
+#. placeholder {0}: fmtPct(live.errorRate)
+msgid "{0} errors"
+msgstr "{0} errors"
+
 #. placeholder {0}: suite.evaluators.length
 msgid "{0} evaluators"
 msgstr "{0} evaluators"
 
 #. placeholder {0}: ab.failedCases
+#. placeholder {0}: cases.failed
 msgid "{0} failed"
 msgstr "{0} failed"
 
@@ -294,12 +299,17 @@ msgstr "{0} of {1} cases failing · <0>{2}</0> pass rate"
 msgid "{0} of {1} shown"
 msgstr "{0} of {1} shown"
 
+#. placeholder {0}: fmtLatency(live.p95Ms)
+msgid "{0} p95"
+msgstr "{0} p95"
+
 #. placeholder {0}: fmtPct100(run.passRate)
 #. placeholder {0}: fmtPct100(suite.passRate)
 msgid "{0} pass"
 msgstr "{0} pass"
 
 #. placeholder {0}: ab.passedCases
+#. placeholder {0}: cases.passed
 msgid "{0} passed"
 msgstr "{0} passed"
 
@@ -413,10 +423,8 @@ msgid "{0}/{1} passed · {2} · {3} tok"
 msgstr "{0}/{1} passed · {2} · {3} tok"
 
 #. placeholder {0}: live.tracesPerMinute.toFixed(1)
-#. placeholder {1}: fmtLatency(live.p95Ms)
-#. placeholder {2}: fmtPct(live.errorRate)
-msgid "{0}/min · {1} p95 · {2} errors"
-msgstr "{0}/min · {1} p95 · {2} errors"
+msgid "{0}/min"
+msgstr "{0}/min"
 
 #. placeholder {0}: gain.fromPct
 #. placeholder {1}: gain.toPct
@@ -706,6 +714,9 @@ msgstr "2 proposals"
 msgid "6-digit code"
 msgstr "6-digit code"
 
+msgid "95th percentile latency"
+msgstr "95th percentile latency"
+
 msgid "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
 msgstr "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
 
@@ -933,6 +944,9 @@ msgstr "All alerts by email"
 
 msgid "All cases passed."
 msgstr "All cases passed."
+
+msgid "All done"
+msgstr "All done"
 
 msgid "All projects"
 msgstr "All projects"
@@ -1687,6 +1701,9 @@ msgstr "Discard"
 msgid "Discovering models from your provider…"
 msgstr "Discovering models from your provider…"
 
+msgid "dismiss"
+msgstr "dismiss"
+
 msgid "Dismiss"
 msgstr "Dismiss"
 
@@ -2378,6 +2395,9 @@ msgstr "Last 24 hours"
 msgid "Last 24h"
 msgstr "Last 24h"
 
+msgid "last 30 days"
+msgstr "last 30 days"
+
 msgid "Last 30 days"
 msgstr "Last 30 days"
 
@@ -2467,6 +2487,9 @@ msgstr "List agents"
 
 msgid "live"
 msgstr "live"
+
+msgid "Live"
+msgstr "Live"
 
 msgid "LIVE"
 msgstr "LIVE"
@@ -2768,6 +2791,9 @@ msgstr "Name, system endpoint, and lifecycle for the active project."
 
 msgid "navigate"
 msgstr "navigate"
+
+msgid "Needs a look"
+msgstr "Needs a look"
 
 msgid "never"
 msgstr "never"
@@ -4192,6 +4218,9 @@ msgstr "Seed"
 msgid "Seed conversation from past trace or test case"
 msgstr "Seed conversation from past trace or test case"
 
+msgid "select"
+msgstr "select"
+
 msgid "Select a case or trace"
 msgstr "Select a case or trace"
 
@@ -4434,6 +4463,9 @@ msgstr "Start run"
 
 msgid "Starting test run…"
 msgstr "Starting test run…"
+
+msgid "Starting…"
+msgstr "Starting…"
 
 msgid "State"
 msgstr "State"
@@ -4717,6 +4749,11 @@ msgstr "Theorize and A/B-test an improvement"
 msgid "Theory"
 msgstr "Theory"
 
+#. placeholder {0}: item.agentName
+#. placeholder {0}: theory.agentName
+msgid "Theory · {0}"
+msgstr "Theory · {0}"
+
 msgid "Theory & A/B test details"
 msgstr "Theory & A/B test details"
 
@@ -4833,6 +4870,9 @@ msgstr "Tier"
 
 msgid "Time"
 msgstr "Time"
+
+msgid "Time waited"
+msgstr "Time waited"
 
 msgid "To"
 msgstr "To"
@@ -4956,6 +4996,9 @@ msgstr "traces / min"
 msgid "Traces guarding against past bugs and previously-fixed issues."
 msgstr "Traces guarding against past bugs and previously-fixed issues."
 
+msgid "Traces per minute"
+msgstr "Traces per minute"
+
 msgid "Tracey AI"
 msgstr "Tracey AI"
 
@@ -4964,6 +5007,9 @@ msgstr "Tracey AI assistant"
 
 msgid "Tracey couldn’t load this."
 msgstr "Tracey couldn’t load this."
+
+msgid "Tracey picks up the moment everything finishes."
+msgstr "Tracey picks up the moment everything finishes."
 
 msgid "Tracey produced an empty chart."
 msgstr "Tracey produced an empty chart."

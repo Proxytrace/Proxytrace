@@ -7,6 +7,10 @@ export type SlashItem =
   | { kind: 'action'; action: QuickAction }
   | { kind: 'tool'; name: string; description: string };
 
+const KBD_CLS = cn(
+  'rounded-sm border border-hairline bg-card px-1 py-px font-mono text-caption text-secondary shadow-[var(--shadow-pill)]',
+);
+
 interface SlashMenuProps {
   items: SlashItem[];
   activeIndex: number;
@@ -35,7 +39,7 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
       id="tracey-slash-menu"
       role="listbox"
       aria-label={t`Tracey quick actions and tools`}
-      className="absolute bottom-full left-0 right-0 mb-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-surface-2 py-1 shadow-[var(--shadow-float)]"
+      className="fade-up absolute bottom-full left-0 right-0 mb-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-surface-2 pt-1 shadow-[var(--shadow-float)] [scroll-padding-bottom:2.25rem]"
     >
       {items.map((item, index) => {
         const active = index === activeIndex;
@@ -77,6 +81,18 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
           </div>
         );
       })}
+      <div className="sticky bottom-0 mt-1 flex items-center gap-3 border-t border-hairline bg-surface-2 px-3 py-1.5 text-caption text-muted">
+        <span className="inline-flex items-center gap-1">
+          <kbd className={KBD_CLS}>↑↓</kbd> <Trans>navigate</Trans>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <kbd className={KBD_CLS}>↵</kbd> <Trans>select</Trans>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          {/* eslint-disable-next-line lingui/no-unlocalized-strings -- key name, not UI copy */}
+          <kbd className={KBD_CLS}>esc</kbd> <Trans>dismiss</Trans>
+        </span>
+      </div>
     </div>
   );
 }

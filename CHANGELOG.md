@@ -9,6 +9,19 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Changed
+
+- **A more polished Tracey AI experience.** The chat got a visual and interaction pass: the composer
+  now carries the animated streaming ring while Tracey works, the send button follows the gold
+  primary-action treatment, the slash menu animates in and shows its keyboard shortcuts, starter
+  chips stagger in and lift on hover, messages and tool cards fade in, and the "Thinking…" indicator
+  is an animated three-dot wave. The statistics cards render their figures as KPI tiles (with a
+  color-coded pass rate and a live-telemetry row). The **waiting card** for long-running actions was
+  redesigned: it now shows each awaited action's live backend status — suite → agent with a
+  case-progress bar for test runs, the A/B phase for theories — an elapsed stopwatch, and, once
+  finished, a per-action outcome list with pass/fail tallies under a card-level verdict badge. All
+  animations respect the system's reduced-motion preference.
+
 ### Added
 
 - **Richer kiosk demo data covering the newer features.** The kiosk's seeded showcase now includes:
