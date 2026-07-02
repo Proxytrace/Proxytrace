@@ -37,7 +37,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 TokenBucket: StatisticsBucket.Hourly,
                 RecentTraces: [],
                 Agents: [],
-                AgentLastCallTimes: new Dictionary<Guid, DateTimeOffset>()));
+                AgentLastCallTimes: new Dictionary<Guid, DateTimeOffset>(),
+                Pulse: new int[60]));
 
         var controller = ResolveController(dashboard);
 
@@ -68,7 +69,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 new DashboardTrends([], [], [], []),
                 [], [], [], [], [],
                 StatisticsBucket.Daily,
-                [], [], new Dictionary<Guid, DateTimeOffset>()));
+                [], [], new Dictionary<Guid, DateTimeOffset>(), new int[60]));
         var controller = ResolveController(dashboard);
         var projectId = Guid.NewGuid();
         var from = DateTimeOffset.UtcNow.AddDays(-1);

@@ -74,6 +74,8 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
             .Returns([]);
         callStats.GetTokenUsageByAgentAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
             .Returns([]);
+        callStats.GetPulseAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new int[60]);
     }
 
     [TestMethod]
@@ -210,6 +212,30 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
 
         view.Should().NotBeNull();
         max.Should().BeGreaterThan(1, "independent dashboard queries must run concurrently, not sequentially");
+    }
+
+    [TestMethod]
+    public async Task GetDashboardViewAsync_RequestsPulse_TrailingHourInMinuteBuckets()
+    {
+        var svc = Build(out var runStats, out var callStats, out var agents);
+        StubEmptyView(runStats, callStats);
+        agents.GetAllAsync(Arg.Any<CancellationToken>()).Returns([]);
+        int[] pulse = new int[60];
+        pulse[59] = 7;
+        callStats.GetPulseAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(pulse);
+
+        DashboardView view = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 6, agentLimit: 8, CancellationToken);
+
+        view.Pulse.Should().HaveCount(60);
+        view.Pulse[59].Should().Be(7);
+        // Trailing hour with one bucket per minute, regardless of the range filter.
+        await callStats.Received(1).GetPulseAsync(
+            Arg.Any<StatisticsFilter>(),
+            Arg.Any<DateTimeOffset>(),
+            Arg.Any<DateTimeOffset>(),
+            60,
+            Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
