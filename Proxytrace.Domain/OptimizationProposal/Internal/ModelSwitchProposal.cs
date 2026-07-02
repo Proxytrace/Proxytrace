@@ -1,10 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
 using Proxytrace.Common.Serialization;
-using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Agent;
-using Proxytrace.Domain.AgentVersion;
-using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
@@ -12,25 +9,12 @@ using Proxytrace.Domain.TestRun;
 namespace Proxytrace.Domain.OptimizationProposal.Internal;
 
 [UsedImplicitly]
-internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IModelSwitchProposal
+internal record ModelSwitchProposal : OptimizationProposal, IModelSwitchProposal
 {
-    public IAgent Agent { get; }
-    public ProposalKind Kind => ProposalKind.ModelSwitch;
-    public ProposalStatus Status { get; private init; }
-    public Priority Priority { get; }
-    public string Rationale { get; }
-    public ITestRun ABTestRun { get; }
-    public IModelEndpoint ProposedEndpoint { get; }
-    public double? CurrentPassRate { get; }
-    public double? ProposedPassRate { get; }
-    public decimal? ExpectedCostDelta { get; }
-    public TimeSpan? ExpectedLatencyDelta { get; }
-    public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
-    public string ContentHash { get; }
-    public DateTimeOffset? AdoptedAt { get; private init; }
-    public Guid? AdoptedAgentVersionId { get; private init; }
-    public int? AdoptedAgentVersionNumber { get; private init; }
-    public bool? AdoptedManually { get; private init; }
+    public override ProposalKind Kind => ProposalKind.ModelSwitch;
+    public IModelEndpoint ProposedEndpoint { get; private init; }
+    public decimal? ExpectedCostDelta { get; private init; }
+    public TimeSpan? ExpectedLatencyDelta { get; private init; }
 
     public ModelSwitchProposal(
         IAgent agent,
@@ -44,20 +28,13 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         ISerializer serializer,
-        IRepository<IOptimizationProposal> repository) : base(repository)
+        IRepository<IOptimizationProposal> repository)
+        : base(agent, priority, rationale, currentPassRate, proposedPassRate, evidenceTestRunIds, abTestRun,
+            OptimizationContentHash.ForModelSwitch(serializer, agent.Id, proposedEndpoint.Id), repository)
     {
-        Agent = agent;
-        Status = ProposalStatus.Draft;
-        Priority = priority;
-        Rationale = rationale;
         ProposedEndpoint = proposedEndpoint;
-        CurrentPassRate = currentPassRate;
-        ProposedPassRate = proposedPassRate;
         ExpectedCostDelta = expectedCostDelta;
         ExpectedLatencyDelta = expectedLatencyDelta;
-        EvidenceTestRunIds = evidenceTestRunIds.ToArray();
-        ABTestRun = abTestRun;
-        ContentHash = OptimizationContentHash.ForModelSwitch(serializer, agent.Id, proposedEndpoint.Id);
     }
 
     public ModelSwitchProposal(
@@ -78,60 +55,13 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         int? adoptedAgentVersionNumber,
         bool? adoptedManually,
         IDomainEntityData existing,
-        IRepository<IOptimizationProposal> repository) : base(existing, repository)
+        IRepository<IOptimizationProposal> repository)
+        : base(agent, status, priority, rationale, currentPassRate, proposedPassRate, evidenceTestRunIds, abTestRun,
+            contentHash, adoptedAt, adoptedAgentVersionId, adoptedAgentVersionNumber, adoptedManually, existing, repository)
     {
-        Agent = agent;
-        Status = status;
-        Priority = priority;
-        Rationale = rationale;
         ProposedEndpoint = proposedEndpoint;
-        CurrentPassRate = currentPassRate;
-        ProposedPassRate = proposedPassRate;
         ExpectedCostDelta = expectedCostDelta;
         ExpectedLatencyDelta = expectedLatencyDelta;
-        EvidenceTestRunIds = evidenceTestRunIds.ToArray();
-        ABTestRun = abTestRun;
-        ContentHash = contentHash;
-        AdoptedAt = adoptedAt;
-        AdoptedAgentVersionId = adoptedAgentVersionId;
-        AdoptedAgentVersionNumber = adoptedAgentVersionNumber;
-        AdoptedManually = adoptedManually;
-    }
-
-    public Task<IOptimizationProposal> Accept(CancellationToken cancellationToken = default)
-    {
-        if (Status != ProposalStatus.Draft)
-            throw new InvalidOperationException($"Cannot accept proposal {Id} from status {Status}.");
-
-        return ApplyAsync(this with { Status = ProposalStatus.Accepted }, cancellationToken);
-    }
-
-    public Task<IOptimizationProposal> Reject(CancellationToken cancellationToken = default)
-    {
-        if (Status != ProposalStatus.Draft)
-            throw new InvalidOperationException($"Cannot reject proposal {Id} from status {Status}.");
-
-        return ApplyAsync(this with { Status = ProposalStatus.Rejected }, cancellationToken);
-    }
-
-    public Task<IOptimizationProposal> MarkAdopted(
-        IAgentVersion? adoptedVersion,
-        bool manual,
-        CancellationToken cancellationToken = default)
-    {
-        if (Status != ProposalStatus.Accepted)
-            throw new InvalidOperationException($"Cannot mark proposal {Id} adopted from status {Status}.");
-
-        return ApplyAsync(
-            this with
-            {
-                Status = ProposalStatus.Adopted,
-                AdoptedAt = DateTimeOffset.UtcNow,
-                AdoptedAgentVersionId = adoptedVersion?.Id,
-                AdoptedAgentVersionNumber = adoptedVersion?.VersionNumber,
-                AdoptedManually = manual,
-            },
-            cancellationToken);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -139,47 +69,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
-        foreach (var result in Agent.Validate(validationContext))
-            yield return result;
-
         foreach (var result in ProposedEndpoint.Validate(validationContext))
             yield return result;
-
-        foreach (var result in ABTestRun.Validate(validationContext))
-            yield return result;
-
-        if (string.IsNullOrWhiteSpace(Rationale))
-            yield return Validation.NotNullOrWhiteSpace(Rationale);
-
-        if (CurrentPassRate is { } currentPassRate &&
-            (!double.IsFinite(currentPassRate) || currentPassRate is < 0 or > 1))
-            yield return new ValidationResult(
-                $"{nameof(CurrentPassRate)} must be a finite value between 0 and 1.",
-                [nameof(CurrentPassRate)]);
-
-        if (ProposedPassRate is { } proposedPassRate &&
-            (!double.IsFinite(proposedPassRate) || proposedPassRate is < 0 or > 1))
-            yield return new ValidationResult(
-                $"{nameof(ProposedPassRate)} must be a finite value between 0 and 1.",
-                [nameof(ProposedPassRate)]);
-
-        if (Status == ProposalStatus.Adopted)
-        {
-            yield return Validation.NotNull(AdoptedAt);
-            yield return Validation.NotNull(AdoptedManually);
-
-            if (AdoptedAt is { } adoptedAt)
-            {
-                yield return Validation.InPast(adoptedAt, nameof(AdoptedAt));
-                yield return Validation.NotBefore(adoptedAt, CreatedAt, nameof(AdoptedAt));
-            }
-        }
-        else
-        {
-            yield return Validation.Null(AdoptedAt);
-            yield return Validation.Null(AdoptedAgentVersionId);
-            yield return Validation.Null(AdoptedAgentVersionNumber);
-            yield return Validation.Null(AdoptedManually);
-        }
     }
 }

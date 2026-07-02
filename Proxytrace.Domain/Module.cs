@@ -48,15 +48,23 @@ public sealed class Module : Autofac.Module
             })
             .ToList();
 
+        // Dedupe (interface, implementation) pairs before registering: an implementation is often
+        // reachable through several discovered interfaces (e.g. Agent via both IAgent and
+        // IArchivable), and both passes resolve to the same most-derived interface. Note the
+        // IArchivable pass is load-bearing — it is the only route that discovers entities whose
+        // interface reaches IDomainEntity solely through IArchivable (IModelEndpoint, IModelProvider).
+        var entityRegistrations = new HashSet<(Type InterfaceType, Type ImplementationType)>();
         foreach (Type domainInterfaceType in domainInterfaceTypes)
         {
-            ConfigureEntity(builder, domainInterfaceType);
+            CollectEntityRegistrations(domainInterfaceType, entityRegistrations);
         }
 
-        // Register evaluators explicitly — IEvaluator has multiple concrete variants so
-        // auto-discovery can't pick the right default. ExactMatchEvaluator is the default IEvaluator.
-        // RegisterEvaluators(builder);
-        
+        foreach ((Type interfaceType, Type implementationType) in entityRegistrations)
+        {
+            ConfigureEntity(builder, interfaceType, implementationType);
+        }
+
+
         // Register generators for concrete domain object types (value objects without a repository)
         builder.RegisterAssemblyTypes(ThisAssembly)
             .Where(t => t is { IsAbstract: false, IsInterface: false })
@@ -110,19 +118,21 @@ public sealed class Module : Autofac.Module
         });
     }
 
-    private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)
+    private static void CollectEntityRegistrations(
+        Type domainInterfaceType,
+        ISet<(Type InterfaceType, Type ImplementationType)> registrations)
     {
         // find implementation of domainInterfaceType
         foreach (var domainObjectType in domainInterfaceType.GetImplementations())
         {
-            // find closes domainInterfaceType
+            // find closest domainInterfaceType
             // e.g. IEvaluator -> IAgenticEvaluator -> IPolitenessEvaluator should pick IPolitenessEvaluator
             var correctDomainInterfaceType = domainObjectType.GetInterfaces()
                 .Where(domainInterfaceType.IsAssignableFrom)
                 .OrderByDescending(i => i.GetInterfaces().Length) // pick the most derived interface
                 .First();
-            
-            ConfigureEntity(builder, correctDomainInterfaceType, domainObjectType);
+
+            registrations.Add((correctDomainInterfaceType, domainObjectType));
         }
     }
 

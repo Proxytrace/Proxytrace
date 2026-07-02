@@ -62,10 +62,12 @@ public sealed record TokenUsage : IDomainObject
     /// <summary>
     /// Overloads the - operator to subtract one TokenUsage from another, per token kind.
     /// Counts are clamped at zero so a larger subtrahend can never wrap the unsigned result.
+    /// When either operand is unknown (null) the difference is unknown, so null propagates —
+    /// notably <c>null - b</c> must not surface <c>b</c> itself as the "difference".
     /// </summary>
     public static TokenUsage? operator -(TokenUsage? a, TokenUsage? b)
         => a == null || b == null
-            ? a ?? b
+            ? null
             : new(
                 a.InputTokenCount > b.InputTokenCount ? a.InputTokenCount - b.InputTokenCount : 0,
                 a.OutputTokenCount > b.OutputTokenCount ? a.OutputTokenCount - b.OutputTokenCount : 0,

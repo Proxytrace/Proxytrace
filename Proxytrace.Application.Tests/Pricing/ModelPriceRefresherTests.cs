@@ -64,7 +64,32 @@ public sealed class ModelPriceRefresherTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task RefreshProvider_WhenDiscoveredModelHasNonPositiveCost_SkipsItWithoutThrowing()
+    public async Task RefreshProvider_WhenDiscoveredModelIsFree_CreatesZeroPricedEndpoint()
+    {
+        var client = Substitute.For<IProviderClient>();
+        IServiceProvider services = BuildServices(client);
+
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var modelRepo = services.GetRequiredService<IModelRepository>();
+        var free = await modelRepo.GetOrCreateAsync("free-model", CancellationToken);
+        var refresher = services.GetRequiredService<IModelPriceRefresher>();
+
+        // Zero is a valid, known price (free/local models). Discovery used to skip these models
+        // entirely, silently hiding them from the provider; they must now get a €0 endpoint.
+        client.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([
+                new PricedModel(free, new ModelPrice(0m, 0m)),
+            ]));
+
+        await refresher.RefreshProviderAsync(provider, CancellationToken);
+
+        var endpoints = await services.GetRequiredService<IModelEndpointRepository>().GetByProviderAsync(provider.Id, CancellationToken);
+        endpoints.Should().ContainSingle(e =>
+            e.Model.Name == "free-model" && e.InputTokenCost == 0m && e.OutputTokenCost == 0m);
+    }
+
+    [TestMethod]
+    public async Task RefreshProvider_WhenDiscoveredModelHasNegativeCost_SkipsItWithoutThrowing()
     {
         var client = Substitute.For<IProviderClient>();
         IServiceProvider services = BuildServices(client);
@@ -72,15 +97,15 @@ public sealed class ModelPriceRefresherTests : BaseTest<Module>
         var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
         var modelRepo = services.GetRequiredService<IModelRepository>();
         var priced = await modelRepo.GetOrCreateAsync("gpt-4o", CancellationToken);
-        var free = await modelRepo.GetOrCreateAsync("free-model", CancellationToken);
+        var broken = await modelRepo.GetOrCreateAsync("broken-model", CancellationToken);
         var refresher = services.GetRequiredService<IModelPriceRefresher>();
 
-        // A zero-cost model fails the endpoint's "must be positive" invariant. It used to surface as
-        // a 500 during setup (the activation validation throws); discovery must now skip it and still
-        // create the valid endpoint.
+        // A negative cost violates the endpoint's invariant and would throw during activation —
+        // which, inside setup, used to surface as a 500. Discovery must skip it and still create
+        // the valid endpoint.
         client.GetModelsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([
-                new PricedModel(free, new ModelPrice(0m, 0m)),
+                new PricedModel(broken, new ModelPrice(-1.0m, 2.0m)),
                 new PricedModel(priced, new ModelPrice(2.0m, 4.0m)),
             ]));
 
@@ -90,7 +115,7 @@ public sealed class ModelPriceRefresherTests : BaseTest<Module>
 
         var endpoints = await services.GetRequiredService<IModelEndpointRepository>().GetByProviderAsync(provider.Id, CancellationToken);
         endpoints.Should().ContainSingle(e => e.Model.Name == "gpt-4o" && e.OutputTokenCost == 4.0m);
-        endpoints.Should().NotContain(e => e.Model.Name == "free-model");
+        endpoints.Should().NotContain(e => e.Model.Name == "broken-model");
     }
 
     private IServiceProvider BuildServices(IProviderClient client) =>

@@ -20,6 +20,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Free models are no longer hidden from discovery.** A provider model with a price of 0 (free
+  tiers, self-hosted/local models) was silently skipped during model discovery and never got an
+  endpoint. Zero is now accepted as a valid, known price — free models appear with a €0 cost —
+  while "price unknown" (no cost shown) is still represented by an unpriced endpoint. Models whose
+  catalog price puts input above output (some batch/reasoning tiers) are no longer skipped either.
+- **Saving an unchanged system prompt no longer creates a new agent version.** The "has the prompt
+  actually changed?" check compared prompt templates by internal reference, so re-applying an
+  identical system prompt always minted a redundant agent version.
+- **Image content survives storage.** Captured image content lost its media type when persisted and
+  failed to load back; the media type is now stored and restored with the image bytes.
 - **Opening a trace from the title-bar search opens its details.** Clicking a trace result in the
   global search now lands on the Traces page with that trace's detail drawer open. Previously the
   page navigated and reset the filters but the drawer stayed closed, because clearing the deep-link

@@ -10,10 +10,11 @@ public interface IRepository<TDomainEntity>
     where TDomainEntity : IDomainEntity
 {
     /// <summary>
-    /// Gets a <typeparamref name="TDomainEntity"/> by its <paramref name="id"/>
-    /// <exception cref="EntityNotFoundException">Thrown when the entity is not found</exception>
+    /// Finds a <typeparamref name="TDomainEntity"/> by its <paramref name="id"/>, or returns
+    /// <see langword="null"/> when it does not exist. Use the <c>GetAsync</c> extension when a
+    /// missing entity should throw <see cref="EntityNotFoundException"/> instead.
     /// </summary>
-    Task<TDomainEntity?> FindAsync(    
+    Task<TDomainEntity?> FindAsync(
         Guid id,
         CancellationToken cancellationToken = default);
     

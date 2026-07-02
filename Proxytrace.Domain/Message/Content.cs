@@ -62,6 +62,7 @@ public sealed record Content : IDomainObject
         => other is not null &&
            Equals(Kind, other.Kind) &&
            Equals(Text, other.Text) &&
+           Equals(Data?.MediaType, other.Data?.MediaType) &&
            ((Data == null && other.Data == null) ||
             (Data?.ToArray() ?? []).SequenceEqual(other.Data?.ToArray() ?? []));
 
@@ -69,7 +70,7 @@ public sealed record Content : IDomainObject
     public override int GetHashCode()
         // Hash Data by length, not reference: Equals compares the bytes, so equal content (same bytes
         // ⇒ same length) hashes equally; differing bytes of equal length may collide, which is allowed.
-        => HashCode.Combine((int)Kind, Text, Data?.Length);
+        => HashCode.Combine((int)Kind, Text, Data?.Length, Data?.MediaType);
 
     public override string ToString()
         => Kind switch

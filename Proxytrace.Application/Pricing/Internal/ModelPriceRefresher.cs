@@ -47,9 +47,10 @@ internal sealed class ModelPriceRefresher : IModelPriceRefresher
         {
             if (!IsUsablePrice(pm.Price))
             {
-                // Best-effort: a non-positive or inverted discovered price violates the endpoint's
-                // own invariants and would throw during activation — which, since this runs inside
-                // setup, would 500 the whole completion. Skip that model instead of bricking setup.
+                // Best-effort: a negative or cached-above-input discovered price violates the
+                // endpoint's own invariants and would throw during activation — which, since this
+                // runs inside setup, would 500 the whole completion. Skip that model instead of
+                // bricking setup.
                 logger.LogWarning(
                     "Skipping model {Model} from provider {ProviderId}: invalid discovered price (in={Input}, out={Output})",
                     pm.Model.Name, provider.Id, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
@@ -79,14 +80,16 @@ internal sealed class ModelPriceRefresher : IModelPriceRefresher
     /// <summary>
     /// Whether a discovered price can back a model endpoint. Unknown (null) costs are allowed — they
     /// create an unpriced endpoint — but a present cost must satisfy the same invariants the endpoint
-    /// enforces (each positive, input ≤ output); otherwise activation validation throws.
+    /// enforces (each non-negative, cached ≤ input); otherwise activation validation throws.
+    /// Zero prices are usable: they are how free/local models are represented. Input &gt; output is
+    /// deliberately allowed — the endpoint documents that ordering as a non-invariant (some
+    /// batch/cached/reasoning tiers price input above output).
     /// </summary>
     private static bool IsUsablePrice(ModelPrice price)
     {
-        if (price.InputTokenCost is { } input && input <= 0) return false;
-        if (price.OutputTokenCost is { } output && output <= 0) return false;
-        if (price.CachedInputTokenCost is { } cached && cached <= 0) return false;
-        if (price.InputTokenCost is { } i && price.OutputTokenCost is { } o && i > o) return false;
+        if (price.InputTokenCost is { } input && input < 0) return false;
+        if (price.OutputTokenCost is { } output && output < 0) return false;
+        if (price.CachedInputTokenCost is { } cached && cached < 0) return false;
         if (price.CachedInputTokenCost is { } c && price.InputTokenCost is { } ci && c > ci) return false;
         return true;
     }

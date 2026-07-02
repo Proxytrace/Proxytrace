@@ -60,6 +60,21 @@ internal record PromptTemplate : IPromptTemplate
         return variables;
     }
 
+    /// <inheritdoc />
+    public virtual bool Equals(PromptTemplate? other)
+        => other is not null
+           && Name == other.Name
+           && Template == other.Template;
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+        // Name + Template fully determine the template (Variables is derived from Template), so
+        // they alone define value equality. The synthesized record members would compare the
+        // Variables HashSet by reference, making two identically-constructed templates unequal —
+        // which silently disabled every "has the prompt actually changed?" dedup check
+        // (e.g. Agent.ChangeSystemMessage).
+        => HashCode.Combine(Name, Template);
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         yield return Validation.NotNullOrWhiteSpace(Name);

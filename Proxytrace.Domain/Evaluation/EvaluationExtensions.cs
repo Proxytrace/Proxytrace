@@ -1,7 +1,7 @@
 namespace Proxytrace.Domain.Evaluation;
 
 /// <summary>
-/// Extemsopms for <see cref="IEvaluation"/>
+/// Extensions for <see cref="IEvaluation"/>
 /// </summary>
 internal static class EvaluationExtensions
 {

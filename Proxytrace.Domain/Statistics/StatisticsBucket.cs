@@ -9,19 +9,28 @@ public enum StatisticsBucket
 
 public static class StatisticsTime
 {
+    /// <summary>
+    /// UTC-aligned start of the bucket containing <paramref name="timestamp"/>. Normalizes to UTC
+    /// first so a non-UTC offset cannot shift the boundaries — <see cref="WidthMilliseconds"/> and
+    /// <see cref="BucketStartFromIndex"/> promise the epoch-division grouping and this method agree,
+    /// which only holds when both align on UTC.
+    /// </summary>
     public static DateTimeOffset BucketStart(this StatisticsBucket bucket, DateTimeOffset timestamp)
-        => bucket switch
+    {
+        DateTimeOffset utc = timestamp.ToUniversalTime();
+        return bucket switch
         {
             StatisticsBucket.FiveMinutes => new DateTimeOffset(
-                timestamp.Year, timestamp.Month, timestamp.Day,
-                timestamp.Hour, (timestamp.Minute / 5) * 5, 0, timestamp.Offset),
+                utc.Year, utc.Month, utc.Day,
+                utc.Hour, (utc.Minute / 5) * 5, 0, TimeSpan.Zero),
             StatisticsBucket.Hourly => new DateTimeOffset(
-                timestamp.Year, timestamp.Month, timestamp.Day,
-                timestamp.Hour, 0, 0, timestamp.Offset),
+                utc.Year, utc.Month, utc.Day,
+                utc.Hour, 0, 0, TimeSpan.Zero),
             StatisticsBucket.Daily => new DateTimeOffset(
-                timestamp.Year, timestamp.Month, timestamp.Day, 0, 0, 0, timestamp.Offset),
-            _ => timestamp,
+                utc.Year, utc.Month, utc.Day, 0, 0, 0, TimeSpan.Zero),
+            _ => utc,
         };
+    }
 
     /// <summary>
     /// Fixed width of a bucket in milliseconds. Because every granularity divides the Unix epoch

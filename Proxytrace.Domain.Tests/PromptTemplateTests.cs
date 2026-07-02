@@ -523,4 +523,26 @@ public class PromptTemplateTests : DomainTest<Module>
         promptTemplate.Variables.Should().Contain("__var__");
         promptTemplate.Variables.Should().Contain("--var--");
     }
+
+    [TestMethod]
+    public void Equals_SeparatelyConstructedIdenticalTemplates_AreEqual()
+    {
+        // Regression: the synthesized record equality compared the Variables HashSet by
+        // reference, so two identically-constructed templates were never equal — which silently
+        // disabled the "has the prompt actually changed?" dedup in Agent.ChangeSystemMessage.
+        var a = new PromptTemplate("test", "Hello {{name}}!");
+        var b = new PromptTemplate("test", "Hello {{name}}!");
+
+        a.Should().Be(b);
+        a.GetHashCode().Should().Be(b.GetHashCode());
+    }
+
+    [TestMethod]
+    public void Equals_DifferentTemplateText_AreNotEqual()
+    {
+        var a = new PromptTemplate("test", "Hello {{name}}!");
+        var b = new PromptTemplate("test", "Goodbye {{name}}!");
+
+        a.Should().NotBe(b);
+    }
 }
