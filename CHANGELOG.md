@@ -41,6 +41,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Tracey reliably follows up after waiting on long-running actions.** Three gaps could leave a
+  finished test run or theory validation without Tracey's promised same-turn analysis: a single
+  transient network/server hiccup during the minutes-long result poll permanently gave up on that
+  action (polling now rides out brief failures and only reports an error after several consecutive
+  failed checks); a wait that crashed still counted as "done", so Tracey could end her reply
+  without the outcome (the wait is now re-forced until it actually returns); and reloading the page
+  mid-wait corrupted the conversation so every later message failed (the interrupted wait is now
+  dropped from the model's view of the history).
 - **Free models are no longer hidden from discovery.** A provider model with a price of 0 (free
   tiers, self-hosted/local models) was silently skipped during model discovery and never got an
   endpoint. Zero is now accepted as a valid, known price — free models appear with a €0 cost —

@@ -96,7 +96,11 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
     const result = streamText({
       model: this.model,
       system: this.systemPrompt,
-      messages: await convertToModelMessages(windowed),
+      // `ignoreIncompleteToolCalls` drops tool parts that never got a result — e.g. an
+      // `await_actions` call orphaned by a page reload mid-wait. Without it the orphan converts
+      // to a tool-call with no tool result, the OpenAI-shape endpoint rejects every subsequent
+      // turn with a 400, and the conversation is permanently stuck.
+      messages: await convertToModelMessages(windowed, { ignoreIncompleteToolCalls: true }),
       tools: this.tools,
       // Progressive tool disclosure: every tool is defined (so the wire capture stays complete),
       // but only CORE plus the bundles of skills loaded so far this conversation are offered to
@@ -236,10 +240,12 @@ export function pendingAwaitables(steps: ReadonlyArray<StepResult<ToolSet>>): Aw
     for (const result of step.toolResults) {
       const handle = awaitableOf(result.output);
       if (handle) produced.push(handle);
-    }
-    for (const call of step.toolCalls) {
-      if (call.toolName !== 'await_actions') continue;
-      const handles = (call.input as { handles?: unknown }).handles;
+      // A handle counts as awaited only when the `await_actions` call actually *resolved* —
+      // `toolResults`, not `toolCalls`. An errored wait (invalid input, unexpected throw) has a
+      // call but no result; keying off calls let it silently satisfy the enforcement, and the
+      // model could end the turn without ever delivering the outcome. Now it re-forces instead.
+      if (result.toolName !== 'await_actions') continue;
+      const handles = (result.input as { handles?: unknown } | null)?.handles;
       if (!Array.isArray(handles)) continue;
       for (const h of handles) {
         const { kind, id } = (h as { kind?: unknown; id?: unknown } | null) ?? {};

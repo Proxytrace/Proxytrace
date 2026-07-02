@@ -107,6 +107,12 @@ describe('pendingAwaitables', () => {
     toolName: 'start_test_run',
     output: { artifactRef: 'ref', kind: 'test-run-group', summary: { id, awaitable: { kind: 'test-run', id } } },
   });
+  /** A *resolved* await_actions call — the only thing that satisfies the enforcement. */
+  const awaitResult = (handles: unknown) => ({
+    toolName: 'await_actions',
+    input: { handles },
+    output: { results: [], anyTimedOut: false },
+  });
 
   it('reports a started run whose handle has not been awaited', () => {
     const steps = [step({ toolResults: [storedRunResult('g1')] })];
@@ -118,10 +124,10 @@ describe('pendingAwaitables', () => {
     expect(pendingAwaitables(steps)).toEqual([{ kind: 'theory', id: 't1' }]);
   });
 
-  it('clears a handle once an await_actions call covers it', () => {
+  it('clears a handle once a resolved await_actions call covers it', () => {
     const steps = [
       step({ toolResults: [storedRunResult('g1')] }),
-      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'test-run', id: 'g1' }] } }] }),
+      step({ toolResults: [awaitResult([{ kind: 'test-run', id: 'g1' }])] }),
     ];
     expect(pendingAwaitables(steps)).toEqual([]);
   });
@@ -129,9 +135,19 @@ describe('pendingAwaitables', () => {
   it('keeps a second handle pending when only the first was awaited', () => {
     const steps = [
       step({ toolResults: [storedRunResult('g1'), storedRunResult('g2')] }),
-      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'test-run', id: 'g1' }] } }] }),
+      step({ toolResults: [awaitResult([{ kind: 'test-run', id: 'g1' }])] }),
     ];
     expect(pendingAwaitables(steps)).toEqual([{ kind: 'test-run', id: 'g2' }]);
+  });
+
+  it('re-forces when the await_actions call errored (call without result)', () => {
+    // An errored wait (invalid input, unexpected throw) has a toolCall but no toolResult — it
+    // must NOT satisfy the enforcement, or the model could end the turn without the outcome.
+    const steps = [
+      step({ toolResults: [storedRunResult('g1')] }),
+      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'test-run', id: 'g1' }] } }] }),
+    ];
+    expect(pendingAwaitables(steps)).toEqual([{ kind: 'test-run', id: 'g1' }]);
   });
 
   it('ignores results without a handle (cancelled, notFound, reads) and malformed await input', () => {
@@ -141,8 +157,8 @@ describe('pendingAwaitables', () => {
           { toolName: 'start_test_run', output: { cancelled: true } },
           { toolName: 'start_test_run', output: { notFound: 's1' } },
           { toolName: 'get_run', output: { artifactRef: 'r', kind: 'run', summary: { id: 'r1' } } },
+          awaitResult('oops'),
         ],
-        toolCalls: [{ toolName: 'await_actions', input: { handles: 'oops' } }],
       }),
     ];
     expect(pendingAwaitables(steps)).toEqual([]);
@@ -152,7 +168,7 @@ describe('pendingAwaitables', () => {
     // A run and a theory could (pathologically) share an id; the await must match on kind too.
     const steps = [
       step({ toolResults: [storedRunResult('shared')] }),
-      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'theory', id: 'shared' }] } }] }),
+      step({ toolResults: [awaitResult([{ kind: 'theory', id: 'shared' }])] }),
     ];
     expect(pendingAwaitables(steps)).toEqual([{ kind: 'test-run', id: 'shared' }]);
   });
