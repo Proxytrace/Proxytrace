@@ -55,6 +55,23 @@ export function resolveTimelineWindow(range: TimeRange, nowMs: number = Date.now
   return { from, to };
 }
 
+/**
+ * {@link resolveTimelineWindow} with *now* quantized to the end of the current bucket
+ * (`floor(now) + step − 1`), so relative ranges resolve to the **same** `from`/`to` strings for the
+ * whole bucket instead of drifting with the clock on every render. The drift changed the TanStack
+ * query key each render and put the timeline in a perpetual refetch loop; quantizing keeps the key
+ * stable within a bucket while still rolling the window forward at each bucket boundary. The
+ * quantized instant stays inside the current bucket, so the dense grid gains no empty future bucket.
+ */
+export function quantizedTimelineWindow(
+  range: TimeRange,
+  bucket: StatisticsBucket,
+  nowMs: number = Date.now(),
+): { from: string; to: string } {
+  const step = BUCKET_MS[bucket];
+  return resolveTimelineWindow(range, floorToBucket(nowMs, step) + step - 1);
+}
+
 /** Floors an epoch-ms instant to its UTC-aligned bucket boundary. Epoch 0 is UTC midnight and every
  * bucket size divides evenly into a day, so a single floor-to-multiple works for all granularities. */
 function floorToBucket(ms: number, stepMs: number): number {

@@ -3,17 +3,19 @@ import { anomaliesApi } from '../../../api/anomalies';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import type { StatisticsBucket } from '../../../lib/time-range';
-import { resolveTimelineWindow } from '../anomaliesMeta';
+import { quantizedTimelineWindow } from '../anomaliesMeta';
 import { type TimeRange } from '../../../lib/timeRange';
 
 /**
  * Sparse per-(bucket, agent) anomaly counts for the timeline plot, scoped to the current project and
  * the selected window/bucket/agent. The window is resolved to concrete `from`/`to` here (the API
- * requires both) and the query is keyed on the resolved params so a window change refetches.
+ * requires both) and the query is keyed on the resolved params so a window change refetches. The
+ * resolution is bucket-quantized — a raw `Date.now()` here would change the key (and refetch) on
+ * every render.
  */
 export function useAnomalyTimeline(timeRange: TimeRange, bucket: StatisticsBucket, agentFilter: string) {
   const { currentProjectId } = useCurrentProject();
-  const { from, to } = resolveTimelineWindow(timeRange);
+  const { from, to } = quantizedTimelineWindow(timeRange, bucket);
 
   const params = {
     from,
