@@ -38,6 +38,14 @@ distributions, ~5% errors, and ~30% multi-turn conversation grouping, then inser
 the real `AddRangeAsync`. (Do **not** use `IDomainEntityGenerator<IAgentCall>` for the bulk loop — it
 creates a fresh agent/version/endpoint per call.)
 
+The canned assistant-message pool includes three tool-calling shapes (fixed names like `web_search`,
+`run_sql`), so ~3/8 of successful calls carry `AgentCallToolEntity` rows through the real mapper —
+~600k tool rows at 1M calls. These back the traces table's tool-name filter perf paths:
+`agentCallsListByToolName` (the `EXISTS` semi-join) and `agentCallToolNames` (the project-scoped
+`DISTINCT` picker), plus the four whole-table sorted-list metrics (`agentCallsListSort*`) that guard
+the column-sort whitelist. See `_comment_traceSort` in `perf/perf-budgets.json` for the measured
+plans and the not-yet-paid `NULLS LAST` index lever.
+
 The seeder also loads `TestRunStats` projection rows (default ~25k, scaled down for small `--size`)
 spread across ~250 synthetic suites, for the suite-scoped query the test-suites controller runs (#253).
 Because `TestRunStatsEntity.TestRunId` is a 1:1 FK to `TestRunEntity`, one real anchor suite/group is

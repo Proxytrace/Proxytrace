@@ -66,6 +66,37 @@ internal static class QueryLatencyScenario
         await Measure("agentCallsHistogram",
             () => callRepo.GetHistogramAsync(new AgentCallFilter(AgentId: agentId), 50, cancellationToken));
 
+        // Sorted list paths — server-side ORDER BY on the denormalised columns, worst case (no
+        // narrowing filter, whole-table top-50). CreatedAt is the default already covered above.
+        await Measure("agentCallsListSortLatency",
+            () => callRepo.GetFilteredListAsync(new AgentCallFilter(SortBy: AgentCallSortField.Latency), 1, 50, cancellationToken));
+        await Measure("agentCallsListSortTokens",
+            () => callRepo.GetFilteredListAsync(new AgentCallFilter(SortBy: AgentCallSortField.TotalTokens), 1, 50, cancellationToken));
+        await Measure("agentCallsListSortToolCount",
+            () => callRepo.GetFilteredListAsync(new AgentCallFilter(SortBy: AgentCallSortField.ToolCount), 1, 50, cancellationToken));
+        await Measure("agentCallsListSortCacheHit",
+            () => callRepo.GetFilteredListAsync(new AgentCallFilter(SortBy: AgentCallSortField.CacheHitRate), 1, 50, cancellationToken));
+
+        // Tool-name filter (EXISTS semi-join against the per-call tool rows) + the distinct
+        // tool-name picker that feeds the filter's options.
+        if (projectId is { } toolProjectId)
+        {
+            var toolNames = await callRepo.GetToolNamesAsync(toolProjectId, cancellationToken);
+            if (toolNames.Count > 0)
+            {
+                string toolName = toolNames[0];
+                await Measure("agentCallsListByToolName",
+                    () => callRepo.GetFilteredListAsync(new AgentCallFilter(ToolName: toolName), 1, 50, cancellationToken));
+            }
+            else
+            {
+                Console.WriteLine("[db-layer] no tool rows seeded — skipping agentCallsListByToolName");
+            }
+
+            await Measure("agentCallToolNames",
+                () => callRepo.GetToolNamesAsync(toolProjectId, cancellationToken));
+        }
+
         // Dashboard statistics aggregations.
         await Measure("statsSummary",
             () => statsReader.GetSummaryAsync(filter, cancellationToken));

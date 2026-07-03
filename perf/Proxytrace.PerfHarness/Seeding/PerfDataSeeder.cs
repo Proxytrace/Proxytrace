@@ -148,6 +148,21 @@ internal sealed class PerfDataSeeder
                 assistantMessages.Add((await completionGenerator.CreateAsync(cancellationToken)).Response);
             }
 
+            // A fixed set of named tools so a realistic fraction (~3/8 of successful calls) carries
+            // tool-request rows — these back the ToolName filter's EXISTS semi-join and the distinct
+            // tool-name picker perf paths. Canned names keep the distinct set bounded like real traffic.
+            string[][] toolSets =
+            [
+                ["web_search"],
+                ["run_sql", "get_schema"],
+                ["lookup_order", "start_return"],
+            ];
+            foreach (string[] toolSet in toolSets)
+            {
+                var requests = toolSet.Select((name, i) => new ToolRequest($"tr{i}", name, "{}")).ToList();
+                assistantMessages.Add(new AssistantMessage([Content.FromText("Calling tools to answer…")], requests));
+            }
+
             var modelParameters = new List<IModelParameters>();
             for (int i = 0; i < 5; i++)
             {
