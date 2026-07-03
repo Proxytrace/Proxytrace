@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { cn } from '../../lib/cn';
 import { Tabs } from '../../components/ui/Tabs';
 import { RequiresFeature } from '../../components/license/RequiresFeature';
 import { AnomalyOverview } from './components/AnomalyOverview';
@@ -19,7 +20,12 @@ export default function AnomalyDashboard() {
   const [tab, setTab] = useState<TabValue>(TABS.overview);
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-4" data-testid="anomaly-dashboard">
+    // The detectors tab is a master/detail split with an internally-scrolling rail, so it needs the
+    // full viewport height; the overview keeps the natural page scroll.
+    <div
+      className={cn('w-full min-w-0 flex flex-col gap-4', tab === TABS.detectors && 'h-full min-h-0')}
+      data-testid="anomaly-dashboard"
+    >
       <header>
         <h1 className="text-h1 font-semibold text-primary"><Trans>Anomalies</Trans></h1>
         <p className="text-body-sm text-muted mt-1">

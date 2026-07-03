@@ -74,6 +74,8 @@ Each detector has:
   review.
 - **Scope** — apply the detector to **all agents** in the project, or pick specific agents.
 
+![The New detector dialog: name, review instructions, judge model, triggers, and the all-agents and enabled toggles](/screenshots/anomaly-dashboard/new-detector-dialog.png)
+
 ### How a review happens
 
 When a new call is captured, each enabled detector in scope checks the new turn against its
@@ -92,6 +94,15 @@ narrowly, and keep an eye on how often broad phrases match.
 
 ### Managing detectors
 
-Create, edit, enable/disable, and delete detectors from the dashboard's detector management area.
-Deleting a detector also removes its past flags and the hidden reviewer it used — it's a clean
-removal, not a soft disable (use the enable toggle if you only want to pause it).
+The **Detectors** tab is a two-column view, like the Evaluators page: the left column lists the
+project's detectors (searchable, with a status dot per detector), and the right column shows the
+selected detector in full — its review instructions, its triggers, and which agents it applies to.
+
+![The Detectors tab: the detector list on the left, and the selected detector's instructions, triggers, and agent scope on the right](/screenshots/anomaly-dashboard/detectors.png)
+
+- **Create** a detector with **New detector** at the top of the list.
+- **Enable or disable** the selected detector with the toggle in the detail header — no need to
+  open the edit dialog to pause one.
+- **Edit** opens the full form (name, instructions, review model, triggers, scope).
+- **Delete** removes the detector *and* its past flags and the hidden reviewer it used — it's a
+  clean removal, not a soft disable (use the enable toggle if you only want to pause it).

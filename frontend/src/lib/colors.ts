@@ -50,6 +50,11 @@ export function projectColor(id: string): string {
   return AGENT_PALETTE[hashStr(id) % AGENT_PALETTE.length];
 }
 
+/** Stable per-detector color for custom anomaly detectors (rail selection, accents). */
+export function detectorColor(id: string): string {
+  return AGENT_PALETTE[hashStr(id) % AGENT_PALETTE.length];
+}
+
 export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {
   [EvaluatorKind.Agentic]: '#d9a158',
   [EvaluatorKind.ExactMatch]: '#74a8b6',

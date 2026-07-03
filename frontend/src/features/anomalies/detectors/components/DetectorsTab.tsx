@@ -1,82 +1,100 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { PlusIcon } from '../../../../components/icons';
-import { Button } from '../../../../components/ui/Button';
-import { EmptyState } from '../../../../components/ui/EmptyState';
-import { SkeletonList } from '../../../../components/ui/Skeleton';
 import { ConfirmDialog } from '../../../../components/overlays/ConfirmDialog';
+import { LIST_RAIL_COLS } from '../../../../components/ui/ListRail';
+import { useSelectedId } from '../../../../hooks/useSelectedId';
 import useToast from '../../../../hooks/useToast';
 import type { CustomAnomalyDetectorDto } from '../../../../api/models';
+import { buildUpdatePayload, formFromDetector } from '../detectors';
 import { useDetectors } from '../hooks/useDetectors';
 import { useDetectorMutations } from '../hooks/useDetectorMutations';
-import { DetectorList } from './DetectorList';
+import { DetectorRail } from './DetectorRail';
+import { DetectorDetail } from './DetectorDetail';
+import { EmptyDetectorDetail } from './EmptyDetectorDetail';
 import { DetectorFormModal } from './DetectorFormModal';
 
-/** Detectors tab: lists the project's custom anomaly detectors with create / edit / delete. Mounted
- * behind `RequiresFeature` (Enterprise), so this body assumes the feature is licensed. */
+/** Detectors tab: master/detail over the project's custom anomaly detectors — rail on the left,
+ * the selected detector's instructions/triggers/scope on the right. Mounted behind
+ * `RequiresFeature` (Enterprise), so this body assumes the feature is licensed. */
 export function DetectorsTab() {
   const { t } = useLingui();
   const { show: toast } = useToast();
   const { detectors, isLoading, isError } = useDetectors();
-  const { remove } = useDetectorMutations();
+  const { update, remove } = useDetectorMutations();
+  const [selectedId, setSelectedId] = useSelectedId();
 
   // undefined = form closed; null = creating; a detector = editing it.
   const [formTarget, setFormTarget] = useState<CustomAnomalyDetectorDto | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<CustomAnomalyDetectorDto | null>(null);
 
+  const effectiveId = (selectedId && detectors.some(d => d.id === selectedId))
+    ? selectedId
+    : detectors[0]?.id ?? null;
+  const selected = detectors.find(d => d.id === effectiveId) ?? null;
+
+  function toggleEnabled(d: CustomAnomalyDetectorDto, next: boolean) {
+    update.mutate(
+      { id: d.id, request: buildUpdatePayload({ ...formFromDetector(d), isEnabled: next }) },
+      {
+        onSuccess: () => {
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
+          toast(next ? t`Detector enabled` : t`Detector disabled`, 'success');
+        },
+      },
+    );
+  }
+
   function confirmDelete() {
     if (!deleting) return;
-    remove.mutate(deleting.id, {
+    const targetId = deleting.id;
+    remove.mutate(targetId, {
       onSuccess: () => {
         // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
         toast(t`Detector deleted`, 'success');
+        if (selectedId === targetId) setSelectedId(null);
         setDeleting(null);
       },
     });
   }
 
+  if (isError) {
+    return (
+      <p className="text-body-sm text-danger py-6 text-center" data-testid="detectors-error">
+        <Trans>Couldn't load detectors.</Trans>
+      </p>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4" data-testid="detectors-tab">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-body-sm text-muted">
-          <Trans>Custom LLM detectors review matched calls and flag anomalies beyond the built-in statistical checks.</Trans>
-        </p>
-        {/* The empty state below carries its own create CTA — don't show two. */}
-        {detectors.length > 0 && (
-          <Button leftIcon={<PlusIcon size={15} />} onClick={() => setFormTarget(null)} data-testid="detector-create-btn">
-            <Trans>New detector</Trans>
-          </Button>
-        )}
-      </div>
+    <div className={`flex-1 grid ${LIST_RAIL_COLS} gap-3.5 min-h-0`} data-testid="detectors-tab">
+      <DetectorRail
+        detectors={detectors}
+        isLoading={isLoading}
+        selectedId={effectiveId}
+        onSelect={setSelectedId}
+        onNew={() => setFormTarget(null)}
+      />
 
-      {isLoading && <SkeletonList rows={3} height={64} />}
-
-      {!isLoading && isError && (
-        <p className="text-body-sm text-danger py-6 text-center" data-testid="detectors-error">
-          <Trans>Couldn't load detectors.</Trans>
-        </p>
-      )}
-
-      {!isLoading && !isError && detectors.length === 0 && (
-        <div data-testid="detector-empty-state">
-          <EmptyState
-            title={t`No detectors yet`}
-            description={t`Create a detector to review calls with an LLM and flag custom anomalies.`}
-            action={
-              <Button leftIcon={<PlusIcon size={15} />} onClick={() => setFormTarget(null)} data-testid="detector-create-btn">
-                <Trans>New detector</Trans>
-              </Button>
-            }
+      <main className="min-w-0 overflow-y-auto flex flex-col">
+        {selected ? (
+          <DetectorDetail
+            detector={selected}
+            onEdit={() => setFormTarget(selected)}
+            onDelete={() => setDeleting(selected)}
+            onToggleEnabled={next => toggleEnabled(selected, next)}
+            toggling={update.isPending}
           />
-        </div>
-      )}
-
-      {!isLoading && !isError && detectors.length > 0 && (
-        <DetectorList detectors={detectors} onEdit={setFormTarget} onDelete={setDeleting} />
-      )}
+        ) : (
+          !isLoading && <EmptyDetectorDetail hasAny={detectors.length > 0} onCreate={() => setFormTarget(null)} />
+        )}
+      </main>
 
       {formTarget !== undefined && (
-        <DetectorFormModal detector={formTarget} onClose={() => setFormTarget(undefined)} />
+        <DetectorFormModal
+          detector={formTarget}
+          onClose={() => setFormTarget(undefined)}
+          onSaved={setSelectedId}
+        />
       )}
 
       {deleting && (

@@ -27,6 +27,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   notification that deep-links to the trace. Scope a detector to all agents or selected ones, and
   enable or disable it without losing its configuration. Because reviews cost one model call per
   trigger-matched turn, triggers keep the LLM focused only on the calls that could be a problem.
+  Detectors are managed on the dashboard's **Detectors** tab — a two-column view (like Evaluators)
+  with the searchable detector list on the left and the selected detector's instructions, triggers,
+  and agent scope on the right, including a quick enable/disable toggle in the detail header.
 
 ### Changed
 

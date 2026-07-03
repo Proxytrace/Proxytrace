@@ -57,7 +57,6 @@ msgid "(You)"
 msgstr "(Usted)"
 
 #. placeholder {0}: agents.length
-#. placeholder {0}: d.agentIds.length
 msgid "{0, plural, one {# agent} other {# agents}}"
 msgstr "{0, plural, one {# agent} other {# agents}}"
 
@@ -746,6 +745,9 @@ msgstr "Se marca una llamada cuando una métrica está a tantas desviaciones est
 msgid "A call is reviewed only when a trigger matches — keeps LLM usage targeted."
 msgstr "Una llamada solo se revisa cuando coincide un disparador — mantiene el uso de LLM enfocado."
 
+msgid "A call is sent to the judge only when one of these matches."
+msgstr "Se envía una llamada al judge solo cuando una de estas coincide."
+
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "A grader model puntúa las respuestas en una escala fija de 1–5 (Terrible → Excellent) con razonamiento opcional. Elige un preset o escribe tu propia rubric."
 
@@ -935,6 +937,9 @@ msgstr "Plataforma de observabilidad de Agent"
 
 msgid "Agent Playground"
 msgstr "Playground de Agent"
+
+msgid "Agent scope"
+msgstr "Ámbito del Agent"
 
 msgid "Agent stats · 30d"
 msgstr "Estadísticas de Agent · 30d"
@@ -1336,6 +1341,9 @@ msgstr "Borra la búsqueda para ver todos los agents."
 msgid "Clear the search to see all cases."
 msgstr "Borra la búsqueda para ver todos los casos."
 
+msgid "Clear the search to see all detectors."
+msgstr "Borra la búsqueda para ver todos los detectors."
+
 msgid "Clear the search to see all evaluators."
 msgstr "Borra la búsqueda para ver todos los evaluators."
 
@@ -1537,9 +1545,6 @@ msgstr "No se pudo enviar la Theory."
 msgid "Create"
 msgstr "Crear"
 
-msgid "Create a detector to review calls with an LLM and flag custom anomalies."
-msgstr "Crea un detector para revisar llamadas con un LLM y marcar anomalías personalizadas."
-
 msgid "Create a project first to assign members."
 msgstr "Crea primero un proyecto para asignar miembros."
 
@@ -1578,6 +1583,9 @@ msgstr "Crea evaluators primero en la pestaña Evaluators."
 
 msgid "Create invite"
 msgstr "Crear invitación"
+
+msgid "Create one to review calls with an LLM judge."
+msgstr "Crea uno para revisar llamadas con un LLM judge."
 
 msgid "Create one to start evaluating."
 msgstr "Crea uno para empezar a evaluar."
@@ -1660,11 +1668,11 @@ msgstr "Detectores de anomalías personalizados"
 msgid "Custom detector"
 msgstr "Detector personalizado"
 
+msgid "Custom detectors review matched calls with an LLM judge and flag anomalies beyond the built-in statistical checks."
+msgstr "Los detectors personalizados revisan las llamadas coincidentes con un LLM judge y señalan anomalías más allá de las comprobaciones estadísticas integradas."
+
 msgid "Custom evaluators"
 msgstr "Evaluators personalizados"
-
-msgid "Custom LLM detectors review matched calls and flag anomalies beyond the built-in statistical checks."
-msgstr "Los detectores personalizados de LLM revisan las llamadas coincidentes y marcan anomalías más allá de las comprobaciones estadísticas integradas."
 
 msgid "Custom range"
 msgstr "Rango personalizado"
@@ -1720,9 +1728,6 @@ msgstr "Eliminar todos los datos que no son del modelo"
 msgid "Delete conversation"
 msgstr "Eliminar conversación"
 
-msgid "Delete detector"
-msgstr "Eliminar detector"
-
 msgid "Delete key"
 msgstr "Eliminar clave"
 
@@ -1777,6 +1782,12 @@ msgstr "Detector creado"
 msgid "Detector deleted"
 msgstr "Detector eliminado"
 
+msgid "Detector disabled"
+msgstr "Detector desactivado"
+
+msgid "Detector enabled"
+msgstr "Detector activado"
+
 msgid "Detector flags"
 msgstr "Detector flags"
 
@@ -1795,6 +1806,9 @@ msgstr "Diferencia vs v{0}"
 
 msgid "Disable"
 msgstr "Desactivar"
+
+msgid "Disable detector"
+msgstr "Desactivar detector"
 
 msgid "Disable schedule"
 msgstr "Desactivar programación"
@@ -1931,6 +1945,9 @@ msgstr "Configuración de email guardada"
 
 msgid "Email Settings Updated"
 msgstr "Configuración de correo electrónico actualizada"
+
+msgid "Enable detector"
+msgstr "Activar detector"
 
 msgid "Enable email notifications"
 msgstr "Activar notificaciones por email"
@@ -3706,6 +3723,9 @@ msgstr "Elige endpoint"
 msgid "Pick one from the list to view its definition, attached suites, and performance."
 msgstr "Elige uno de la lista para ver su definición, suites adjuntos y rendimiento."
 
+msgid "Pick one from the list to view its instructions, triggers, and agent scope."
+msgstr "Elige uno de la lista para ver sus instrucciones, triggers y ámbito del Agent."
+
 msgid "Pick to start"
 msgstr "Elige para comenzar"
 
@@ -4026,6 +4046,9 @@ msgstr "Eliminar trigger"
 
 msgid "Remove user"
 msgstr "Eliminar User"
+
+msgid "Removed agent"
+msgstr "Agent eliminado"
 
 msgid "Replaces the schema above — every example key becomes required; loosen by hand if needed."
 msgstr "Sustituye el esquema de arriba: cada clave de ejemplo pasa a ser obligatoria; ajústalo manualmente si hace falta."
@@ -4421,6 +4444,9 @@ msgstr "seleccionar"
 
 msgid "Select a case or trace"
 msgstr "Selecciona un case o Trace"
+
+msgid "Select a detector"
+msgstr "Selecciona un detector"
 
 msgid "Select a model endpoint"
 msgstr "Selecciona un Endpoint de modelo"
@@ -5003,6 +5029,12 @@ msgstr "Esto se convierte en el modelo predeterminado de tu proyecto. Todos los 
 msgid "This case was not run for this model."
 msgstr "Este caso no se ejecutó para este model."
 
+msgid "This detector only reviews calls from the agents below."
+msgstr "Este detector solo revisa llamadas de los Agents de abajo."
+
+msgid "This detector reviews calls from every agent in the project."
+msgstr "Este detector revisa llamadas de todos los Agents del proyecto."
+
 msgid "This evaluator hasn’t scored any test results yet — search for a case in the rail to load one."
 msgstr "Este evaluator aún no ha puntuado ningún resultado de test — busca un caso en la rail para cargar uno."
 
@@ -5526,6 +5558,9 @@ msgstr "Bienvenido a <0>Proxytrace</0>"
 
 msgid "What the agent should respond with…"
 msgstr "Qué debería responder el Agent…"
+
+msgid "What the judge model looks for in a matched call."
+msgstr "Qué busca el judge model en una llamada coincidente."
 
 msgid "What the judge model should look for in a matched turn."
 msgstr "Qué debe buscar el modelo juez en un turno coincidente."

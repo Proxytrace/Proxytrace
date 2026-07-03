@@ -27,9 +27,11 @@ import { TriggerEditor } from './TriggerEditor';
 interface Props {
   detector: CustomAnomalyDetectorDto | null;
   onClose: () => void;
+  /** Called with the saved detector's id (create + edit) so the page can select it. */
+  onSaved?: (id: string) => void;
 }
 
-export function DetectorFormModal({ detector, onClose }: Props) {
+export function DetectorFormModal({ detector, onClose, onSaved }: Props) {
   const { t, i18n } = useLingui();
   const { show: toast } = useToast();
   const { data: endpoints = [] } = useModelEndpoints();
@@ -51,9 +53,10 @@ export function DetectorFormModal({ detector, onClose }: Props) {
     if (validation) { setError(validation); return; }
     setError(null);
 
-    const onSuccess = () => {
+    const onSuccess = (saved: CustomAnomalyDetectorDto) => {
       // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
       toast(isEdit ? t`Detector updated` : t`Detector created`, 'success');
+      onSaved?.(saved.id);
       onClose();
     };
     if (isEdit) update.mutate({ id: detector.id, request: buildUpdatePayload(effective) }, { onSuccess });
