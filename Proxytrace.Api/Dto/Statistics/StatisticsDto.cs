@@ -48,6 +48,12 @@ public record LiveTelemetryDto(
 
 public record AgentTokenUsageDto(DateTimeOffset BucketStart, Guid AgentId, long InputTokens, long OutputTokens, long CachedInputTokens);
 
+/// <summary>
+/// Flagged (outlier) calls per (bucket, agent), split into the statistical ingestion-time flags and
+/// the custom-detector flag. A call carrying both kinds counts in both.
+/// </summary>
+public record AgentAnomalyStatDto(DateTimeOffset BucketStart, Guid AgentId, int StaticCount, int CustomCount);
+
 public record DashboardTrendsDto(
     IReadOnlyList<double> Traces,
     IReadOnlyList<double> LatencyMs,

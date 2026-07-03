@@ -85,6 +85,18 @@ public record AgentTokenUsageStat(
     long CachedInputTokens);
 
 /// <summary>
+/// Flagged (outlier) calls attributed to a single agent for one time bucket, split into the
+/// statistical ingestion-time bits and the async custom-detector bit. A call carrying both kinds of
+/// bits counts in both — the two counts answer "how many calls did each detector kind flag", not
+/// "how many flagged calls exist".
+/// </summary>
+public record AgentAnomalyStat(
+    DateTimeOffset BucketStart,
+    Guid AgentId,
+    int StaticCount,
+    int CustomCount);
+
+/// <summary>
 /// Bucketed trend series powering the dashboard stat-tile sparklines.
 /// </summary>
 public record DashboardTrends(

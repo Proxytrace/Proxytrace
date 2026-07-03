@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain.Statistics;
+using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Usage;
 using Proxytrace.Storage.Internal.Entities.Agent;
@@ -393,6 +394,54 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 InputTokens: r.Input,
                 OutputTokens: r.Output,
                 CachedInputTokens: r.Cached))
+            .OrderBy(s => s.BucketStart)
+            .ThenBy(s => s.AgentId)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Every statistical (ingestion-time) outlier bit — the whole mask except the async
+    /// <see cref="OutlierFlags.CustomAnomaly"/> bit. Kept in lockstep with <see cref="OutlierFlags"/>.
+    /// </summary>
+    private const OutlierFlags StaticOutlierBits =
+        OutlierFlags.HighTokens | OutlierFlags.HighLatency | OutlierFlags.LowCacheHit | OutlierFlags.ManyToolCalls;
+
+    public async Task<IReadOnlyList<AgentAnomalyStat>> GetAnomalyCountsByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
+    {
+        StorageDbContext context = contextFactory();
+
+        // The non-zero-flags predicate matches the partial outlier index (WHERE "OutlierFlags" <> 0,
+        // see AgentCallConfig), so only the small flagged fraction of the table is ever scanned. The
+        // integer-slot GROUP BY and the conditional bitmask counts all translate server-side — the
+        // same shape as GetTokenUsageByAgentAsync, with Count(predicate) like GetErrorRatesAsync.
+        // Keep the shape in sync with StatsQueryTranslationTests.AnomalyCountsAggregate_….
+        double widthMs = bucket.WidthMilliseconds();
+
+        var rows = await Query(context, filter)
+            .Where(c => c.OutlierFlags != OutlierFlags.None)
+            .Join(context.Set<AgentVersionEntity>().AsNoTracking(),
+                c => c.AgentVersionId, v => v.Id,
+                (c, v) => new { c.CreatedAt, v.AgentId, c.OutlierFlags })
+            .GroupBy(x => new
+            {
+                Bucket = (int)Math.Floor((x.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                x.AgentId,
+            })
+            .Select(g => new
+            {
+                g.Key.Bucket,
+                g.Key.AgentId,
+                Static = g.Count(x => (x.OutlierFlags & StaticOutlierBits) != OutlierFlags.None),
+                Custom = g.Count(x => (x.OutlierFlags & OutlierFlags.CustomAnomaly) != OutlierFlags.None),
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .Select(r => new AgentAnomalyStat(
+                BucketStart: bucket.BucketStartFromIndex(r.Bucket),
+                AgentId: r.AgentId,
+                StaticCount: r.Static,
+                CustomCount: r.Custom))
             .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.AgentId)
             .ToArray();
