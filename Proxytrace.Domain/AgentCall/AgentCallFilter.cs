@@ -11,4 +11,6 @@ public record AgentCallFilter(
     bool IncludeSystemAgents = true,
     string? Query = null,
     Guid? ConversationId = null,
-    bool OutlierOnly = false);
+    bool OutlierOnly = false,
+    AgentCallSortField SortBy = AgentCallSortField.CreatedAt,
+    bool SortDescending = true);

@@ -317,6 +317,18 @@ nested-loop plan (issue #246 — see the gotcha under [High-volume tables](#high
 It is PostgreSQL-only relational metadata, so its `Up`/`Down` are raw SQL and the in-memory provider
 ignores it.
 
+The `AddSortColumns` migration adds two **nullable** denormalised columns to `AgentCallEntity` —
+`TotalTokens` (`numeric(20,0)`, input + output tokens) and `CacheHitRate` (`double precision`,
+cached/input ratio) — each with a plain B-tree index, plus an index on the pre-existing
+`ResponseToolRequestCount` column. These back the traces-list sort (`AgentCallSortField`:
+`CreatedAt`/`Latency`/`TotalTokens`/`ToolCount`/`CacheHitRate`) with plain indexed-column ordering
+instead of a per-row computed expression. A same-migration SQL `UPDATE` backfills both columns for
+pre-existing rows from `InputTokens`/`OutputTokens`/`CachedInputTokens` (rows with no usage stay
+`NULL`). Sorting on a nullable column (`Latency`, `TotalTokens`, `CacheHitRate`) uses a "has value"
+pre-key (`ORDER BY (col IS NULL), col …`) so error traces with no usage/latency land **last** in
+both ascending and descending order rather than following Postgres's default nulls-first-on-DESC;
+an `Id` tiebreak keeps paging stable across equal values. See `AgentCallRepository.ApplySort`.
+
 The `NormalizeUserEmail` migration is **data-only** — it lowercases pre-existing rows so they match
 the new write-normalization (`Up`: `UPDATE "UserEntity" SET "Email" = lower("Email") WHERE "Email" <>
 lower("Email");`, no `Down`). It changes **no** schema and leaves the model snapshot untouched (the

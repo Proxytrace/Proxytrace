@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
@@ -58,8 +59,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         var total = await query.CountAsync(cancellationToken);
 
-        var stored = await query
-            .OrderByDescending(e => e.CreatedAt)
+        var stored = await ApplySort(query, filter)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -85,8 +85,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         // Project scalar columns only — the Request/Response/ModelParameters payload columns are
         // never read, so a page does not materialise (or transfer) large conversation JSON.
-        var rows = await query
-            .OrderByDescending(e => e.CreatedAt)
+        var rows = await ApplySort(query, filter)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(e => new ListRow(
@@ -343,6 +342,34 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         return query;
     }
+
+    // Nullable columns sort with a "has value" pre-key so error traces (null latency/usage) land
+    // last in BOTH directions instead of Postgres's default nulls-first on DESC. Id tiebreak keeps
+    // paging stable across identical values.
+    private static IOrderedQueryable<AgentCallEntity> ApplySort(IQueryable<AgentCallEntity> query, AgentCallFilter filter)
+    {
+        return filter.SortBy switch
+        {
+            AgentCallSortField.Latency => OrderNullable(query, e => e.LatencyMs == null, e => e.LatencyMs, filter.SortDescending),
+            AgentCallSortField.TotalTokens => OrderNullable(query, e => e.TotalTokens == null, e => e.TotalTokens, filter.SortDescending),
+            AgentCallSortField.CacheHitRate => OrderNullable(query, e => e.CacheHitRate == null, e => e.CacheHitRate, filter.SortDescending),
+            AgentCallSortField.ToolCount => filter.SortDescending
+                ? query.OrderByDescending(e => e.ResponseToolRequestCount).ThenByDescending(e => e.Id)
+                : query.OrderBy(e => e.ResponseToolRequestCount).ThenBy(e => e.Id),
+            _ => filter.SortDescending
+                ? query.OrderByDescending(e => e.CreatedAt).ThenByDescending(e => e.Id)
+                : query.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
+        };
+    }
+
+    private static IOrderedQueryable<AgentCallEntity> OrderNullable<TKey>(
+        IQueryable<AgentCallEntity> query,
+        Expression<Func<AgentCallEntity, bool>> isNull,
+        Expression<Func<AgentCallEntity, TKey>> key,
+        bool descending)
+        => descending
+            ? query.OrderBy(isNull).ThenByDescending(key).ThenByDescending(e => e.Id)
+            : query.OrderBy(isNull).ThenBy(key).ThenBy(e => e.Id);
 
     public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
         CancellationToken cancellationToken = default)

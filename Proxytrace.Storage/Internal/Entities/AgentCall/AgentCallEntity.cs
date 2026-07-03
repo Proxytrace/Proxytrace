@@ -29,4 +29,9 @@ internal record AgentCallEntity : Entity
     // columns only, without reading/deserialising the Request and Response payload columns.
     public string? RequestPreview { get; init; }
     public int ResponseToolRequestCount { get; init; }
+
+    // Denormalised at write time so token/cache sorts and range filters hit plain indexed columns
+    // instead of per-row expressions. Null when the call reported no usage.
+    public ulong? TotalTokens { get; init; }
+    public double? CacheHitRate { get; init; }
 }

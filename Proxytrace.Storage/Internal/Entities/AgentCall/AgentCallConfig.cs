@@ -65,6 +65,10 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
         builder.Property(e => e.RequestPreview).HasMaxLength(AgentCallPreview.MaxLength);
         builder.HasIndex(e => e.ConversationId);
+        builder.HasIndex(e => e.LatencyMs);
+        builder.HasIndex(e => e.TotalTokens);
+        builder.HasIndex(e => e.ResponseToolRequestCount);
+        builder.HasIndex(e => e.CacheHitRate);
 
         // Partial index serving the "outliers only" trace filter (WHERE OutlierFlags <> 0). Outliers
         // are a small fraction of rows, so a filtered index stays tiny and is the cheapest way to page
@@ -156,6 +160,10 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             ResponseToolRequestCount = domain.Response?.Response is AssistantMessage assistant
                 ? assistant.ToolRequests.Count
                 : 0,
+            TotalTokens = domain.Response?.Usage is { } u ? u.InputTokenCount + u.OutputTokenCount : null,
+            CacheHitRate = domain.Response?.Usage is { InputTokenCount: > 0 } usage
+                ? (double)usage.CachedInputTokenCount / usage.InputTokenCount
+                : null,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
