@@ -33,6 +33,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: msg`Dashboard`, icon: 'grid', to: '/dashboard' },
       { label: msg`Traces`, icon: 'activity', to: '/traces' },
+      { label: msg`Anomalies`, icon: 'alert', to: '/anomalies' },
       // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
       { label: msg`Tracey AI`, icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
       { label: msg`Audit Log`, icon: 'history', to: '/audit-log' },

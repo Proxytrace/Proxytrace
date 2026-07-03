@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { getAccessToken } from '../auth/token';
-import type { GroupRunCompleteEvent, NotificationEvent, ProposalEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
+import type { AnomalyFlaggedEvent, GroupRunCompleteEvent, NotificationEvent, ProposalEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
 
 // EventSource can't set Authorization headers, so the credential must ride in the query
 // string. Prefer a short-lived, single-use stream ticket (passed as `stream_ticket`, which
@@ -150,6 +150,20 @@ export function useTraceStream(onTrace: (e: TraceCreatedEvent) => void) {
     '/api/agent-calls/stream',
     ['trace-created'],
     onTrace,
+  );
+}
+
+/**
+ * Custom-detector anomaly stream: fires `anomaly-flagged` when a detector flags a call. Multiplexed
+ * per (url, events) like the other non-terminal streams. `useEventStream` already retries a dropped
+ * connection, and a stream that never connects simply yields no events — so subscribing is safe even
+ * before the backend endpoint ships; it never blocks or breaks the page.
+ */
+export function useAnomalyStream(projectId: string | undefined, onAnomaly: (e: AnomalyFlaggedEvent) => void) {
+  useEventStream<AnomalyFlaggedEvent>(
+    `/api/anomalies/stream${projectId ? `?projectId=${projectId}` : ''}`,
+    ['anomaly-flagged'],
+    onAnomaly,
   );
 }
 

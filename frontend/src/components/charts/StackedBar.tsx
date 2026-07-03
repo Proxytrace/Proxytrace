@@ -8,12 +8,14 @@ interface StackedBarProps {
   width?: number;
   height?: number;
   formatValue?: (v: number) => string;
+  /** Axis-tick formatter (raw tick value). Defaults to the `k`-suffixed thousands format. */
+  formatAxisTick?: (v: number) => string;
 }
 
-export function StackedBar({ data, width = 640, height = 200, formatValue }: StackedBarProps) {
+export function StackedBar({ data, width = 640, height = 200, formatValue, formatAxisTick }: StackedBarProps) {
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(width);
   const w = measuredWidth || width;
-  const chart = useMemo(() => computeStackedBar(data, w, height), [data, w, height]);
+  const chart = useMemo(() => computeStackedBar(data, w, height, formatAxisTick), [data, w, height, formatAxisTick]);
   const [hover, setHover] = useState<StackedRect | null>(null);
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {

@@ -19,7 +19,8 @@ export type LicenseFeature =
   | 'SsoOidc'
   | 'AuditLog'
   | 'Tracey'
-  | 'ScheduledTestRuns';
+  | 'ScheduledTestRuns'
+  | 'CustomAnomalyDetectors';
 
 /** Quantitative caps a license may impose. Mirrors backend `LicenseLimit`. */
 export type LicenseLimit =

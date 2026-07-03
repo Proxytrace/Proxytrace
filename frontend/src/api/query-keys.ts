@@ -118,4 +118,18 @@ export const QUERY_KEYS = {
   notifications: (projectId?: string) => ['notifications', projectId ?? null] as const,
   /** Prefix matching every notifications query — use for invalidation. */
   notificationsRoot: ['notifications'] as const,
+
+  /** Bucketed per-agent anomaly timeline for the anomaly dashboard. */
+  anomalyTimeline: (filter: object) => ['anomaly-timeline', filter] as const,
+  /** Prefix matching every anomaly-timeline query — use for SSE invalidation. */
+  anomalyTimelineRoot: ['anomaly-timeline'] as const,
+  /** Paged recent flagged calls for the anomaly dashboard. */
+  anomaliesRecent: (filter: object) => ['anomalies-recent', filter] as const,
+  /** Prefix matching every recent-anomalies query — use for SSE invalidation. */
+  anomaliesRecentRoot: ['anomalies-recent'] as const,
+
+  /** Custom anomaly detectors for a project (the list carries full detectors — no detail fetch). */
+  anomalyDetectors: (projectId?: string) => ['anomaly-detectors', projectId ?? null] as const,
+  /** Prefix matching every anomaly-detectors query — use for invalidation. */
+  anomalyDetectorsRoot: ['anomaly-detectors'] as const,
 };

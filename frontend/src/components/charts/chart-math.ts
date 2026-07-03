@@ -106,7 +106,15 @@ export interface StackedRect { x: number; y: number; w: number; h: number; color
 export interface StackedBar { rects: StackedRect[]; centerX: number; label: string; total: number; }
 export interface StackedBarData { bars: StackedBar[]; grid: GridLine[]; solidGridPath: string; dashedGridPath: string; baselineY: number; plotL: number; plotR: number; }
 
-export function computeStackedBar(data: StackedDatum[], width: number, height: number): StackedBarData {
+/**
+ * @param formatTick optional axis-tick formatter (receives the raw tick value). Defaults to the
+ * `k`-suffixed thousands format used by the token chart; small-integer series (e.g. anomaly counts)
+ * pass a plain-integer formatter so the axis reads `0/1/2/3` instead of a flat `0k`.
+ */
+export function computeStackedBar(
+  data: StackedDatum[], width: number, height: number,
+  formatTick?: (v: number) => string,
+): StackedBarData {
   const padL = 38, padR = 10, padT = 14, padB = 28;
   const w = width - padL - padR, h = height - padT - padB;
   const totals = data.map(d => d.segments.reduce((s, x) => s + x.value, 0));
@@ -114,9 +122,10 @@ export function computeStackedBar(data: StackedDatum[], width: number, height: n
   const slot = data.length > 0 ? w / data.length : w;
   const bw = slot * 0.58, gap = slot * 0.42;
   const yTicks = 4;
+  const fmtTick = formatTick ?? ((v: number) => String(Math.round(v / 1000)) + 'k');
   const grid: GridLine[] = Array.from({ length: yTicks }, (_, i) => ({
     y: padT + (i / (yTicks - 1)) * h,
-    val: String(Math.round(max * (1 - i / (yTicks - 1)) / 1000)) + 'k',
+    val: fmtTick(max * (1 - i / (yTicks - 1))),
     isDashed: i !== yTicks - 1,
   }));
   const bars: StackedBar[] = data.map((d, i) => {

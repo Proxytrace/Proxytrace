@@ -11,6 +11,7 @@ export const OutlierFlag = {
   HighLatency: 2,
   LowCacheHit: 4,
   ManyToolCalls: 8,
+  CustomAnomaly: 16,
 } as const;
 
 export type OutlierFlagKey = keyof typeof OutlierFlag;
@@ -21,6 +22,7 @@ export const OUTLIER_FLAG_LABEL: Record<OutlierFlagKey, MessageDescriptor> = {
   HighLatency: msg`High latency`,
   LowCacheHit: msg`Low cache hit`,
   ManyToolCalls: msg`Many tool calls`,
+  CustomAnomaly: msg`Custom detector`,
 };
 
 /** True when any outlier bit is set. */
