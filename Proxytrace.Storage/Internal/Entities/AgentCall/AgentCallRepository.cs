@@ -397,4 +397,29 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         context.Set<AgentCallEntity>().RemoveRange(toRemove);
         return await context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task SetOutlierFlagAsync(Guid id, OutlierFlags flag, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = context.Set<AgentCallEntity>().Where(x => x.Id == id);
+
+        // ExecuteUpdate performs the bitwise OR server-side in a single primary-key UPDATE, so a
+        // concurrent statistical flag write is never lost to a read-modify-write race. The
+        // in-memory provider (kiosk/tests) can't translate it, so fall back to load + with-copy
+        // there (single-reader review loop — no concurrent writer to race).
+        if (context.Database.IsRelational())
+        {
+            await query.ExecuteUpdateAsync(
+                setters => setters.SetProperty(e => e.OutlierFlags, e => e.OutlierFlags | flag),
+                cancellationToken);
+            return;
+        }
+
+        var stored = await query.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+        if (stored is null)
+            return;
+
+        context.Set<AgentCallEntity>().Update(stored with { OutlierFlags = stored.OutlierFlags | flag });
+        await context.SaveChangesAsync(cancellationToken);
+    }
 }
