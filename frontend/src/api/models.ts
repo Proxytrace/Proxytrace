@@ -192,6 +192,23 @@ export interface AgentAnomalyStatDto {
   customCount: number;
 }
 
+/** A custom detector's anomalous verdict on a call — attribution for the recent-anomalies list. */
+export interface CustomAnomalyHitDto {
+  detectorId: string;
+  detectorName: string;
+  matchedTrigger: string;
+  reasoning: string | null;
+}
+
+/**
+ * One recent-anomalies row: the flagged call in the traces list-item shape plus its
+ * custom-detector attributions (empty for purely statistical outliers).
+ */
+export interface AnomalyListItemDto {
+  call: AgentCallListItemDto;
+  customAnomalies: CustomAnomalyHitDto[];
+}
+
 /* ── Custom anomaly detectors ── */
 /** How a trigger pattern is matched against a conversation turn. Mirrors backend `TriggerKind`. */
 export enum TriggerKind { Phrase = 'Phrase', Regex = 'Regex' }

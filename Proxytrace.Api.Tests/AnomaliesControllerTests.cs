@@ -8,6 +8,7 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.CustomAnomaly;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Usage;
 using Proxytrace.Testing;
@@ -42,8 +43,34 @@ public sealed class AnomaliesControllerTests : BaseTest<Module>
 
         result.Total.Should().Be(1);
         var item = result.Items.Should().ContainSingle().Subject;
-        item.Id.Should().Be(flagged.Id);
-        item.OutlierFlags.Should().Be((int)(OutlierFlags.HighTokens | OutlierFlags.CustomAnomaly));
+        item.Call.Id.Should().Be(flagged.Id);
+        item.Call.OutlierFlags.Should().Be((int)(OutlierFlags.HighTokens | OutlierFlags.CustomAnomaly));
+        item.CustomAnomalies.Should().BeEmpty("the flag is set but no detector result exists");
+    }
+
+    [TestMethod]
+    public async Task GetRecent_CallWithDetectorResult_CarriesAttribution()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await NewAgentAsync(services);
+        var flagged = await AddCallAsync(services, agent, OutlierFlags.CustomAnomaly);
+        var detector = await services
+            .GetRequiredService<IDomainEntityGenerator<ICustomAnomalyDetector>>()
+            .CreateAsync(CancellationToken);
+        var createResult = services.GetRequiredService<ICustomAnomalyResult.CreateNew>();
+        await services.GetRequiredService<ICustomAnomalyResultRepository>().AddAsync(
+            createResult(detector.Id, flagged.Id, agent.Project.Id, "delete from", "Destructive SQL in user turn."),
+            CancellationToken);
+
+        var result = await controller.GetRecent(cancellationToken: CancellationToken);
+
+        var hit = result.Items.Should().ContainSingle().Subject
+            .CustomAnomalies.Should().ContainSingle().Subject;
+        hit.DetectorId.Should().Be(detector.Id);
+        hit.DetectorName.Should().Be(detector.Name);
+        hit.MatchedTrigger.Should().Be("delete from");
+        hit.Reasoning.Should().Be("Destructive SQL in user turn.");
     }
 
     [TestMethod]
@@ -58,7 +85,7 @@ public sealed class AnomaliesControllerTests : BaseTest<Module>
 
         var result = await controller.GetRecent(agentId: agentA.Id, cancellationToken: CancellationToken);
 
-        result.Items.Should().ContainSingle().Which.Id.Should().Be(flagged.Id);
+        result.Items.Should().ContainSingle().Which.Call.Id.Should().Be(flagged.Id);
     }
 
     [TestMethod]
@@ -105,7 +132,9 @@ public sealed class AnomaliesControllerTests : BaseTest<Module>
         services.GetRequiredService<IAgentCallRepository>(),
         services.GetRequiredService<IAgentRepository>(),
         services.GetRequiredService<AgentCallDtoMapper>(),
-        guard);
+        guard,
+        services.GetRequiredService<ICustomAnomalyResultRepository>(),
+        services.GetRequiredService<ICustomAnomalyDetectorRepository>());
 
     private async Task<IAgent> NewAgentAsync(IServiceProvider services)
         => await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);

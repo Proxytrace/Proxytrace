@@ -5,15 +5,16 @@ import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Pagination } from '../../../components/ui/Pagination';
+import { Tooltip } from '../../../components/ui/Tooltip';
 import { agentColor } from '../../../lib/colors';
 import { fmtRelative } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
 import { OUTLIER_FLAG_LABEL, outlierFlagKeys } from '../../../lib/outliers';
-import type { AgentCallListItemDto } from '../../../api/models';
+import type { AnomalyListItemDto } from '../../../api/models';
 import { RECENT_PAGE_SIZE } from '../hooks/useRecentAnomalies';
 
 interface Props {
-  items: AgentCallListItemDto[];
+  items: AnomalyListItemDto[];
   total: number;
   page: number;
   onPageChange: (page: number) => void;
@@ -51,20 +52,24 @@ export function RecentAnomaliesList({ items, total, page, onPageChange, isLoadin
       {!isLoading && !isError && items.length > 0 && (
         <>
           <div className="flex flex-col gap-0.5" data-testid="anomaly-recent-list">
-            {items.map(item => {
-              const preview = tracePreview(item);
-              const flags = outlierFlagKeys(item.outlierFlags);
+            {items.map(({ call, customAnomalies }) => {
+              const preview = tracePreview(call);
+              // A custom-flagged call shows its detector-name chips instead of the generic
+              // "Custom detector" label; the generic chip only remains as a fallback when the
+              // bit is set but no attribution row exists (e.g. detector deleted since).
+              const flags = outlierFlagKeys(call.outlierFlags)
+                .filter(key => key !== 'CustomAnomaly' || customAnomalies.length === 0);
               return (
                 <RowButton
-                  key={item.id}
-                  data-testid={`anomaly-recent-row-${item.id}`}
-                  onClick={() => navigate(`/traces?focus=${item.id}`)}
+                  key={call.id}
+                  data-testid={`anomaly-recent-row-${call.id}`}
+                  onClick={() => navigate(`/traces?focus=${call.id}`)}
                   title={preview ?? tOpenTrace}
                   className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded-md px-2 py-1.5 -mx-2 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
                 >
                   <ColoredBadge
-                    color={agentColor(item.agentId ?? item.id)}
-                    label={item.agentName ?? t`Unknown agent`}
+                    color={agentColor(call.agentId ?? call.id)}
+                    label={call.agentName ?? t`Unknown agent`}
                     dot
                   />
                   <span className="text-body-sm text-secondary truncate">
@@ -79,8 +84,23 @@ export function RecentAnomaliesList({ items, total, page, onPageChange, isLoadin
                         {i18n._(OUTLIER_FLAG_LABEL[key])}
                       </span>
                     ))}
+                    {customAnomalies.map(hit => (
+                      <Tooltip
+                        key={hit.detectorId}
+                        content={hit.reasoning
+                          ? t`Matched "${hit.matchedTrigger}" — ${hit.reasoning}`
+                          : t`Matched "${hit.matchedTrigger}"`}
+                      >
+                        <span
+                          data-testid={`anomaly-detector-chip-${call.id}-${hit.detectorId}`}
+                          className="shrink-0 rounded-full bg-danger-subtle text-danger text-caption px-1.5 py-0.5 whitespace-nowrap max-w-36 truncate"
+                        >
+                          {hit.detectorName}
+                        </span>
+                      </Tooltip>
+                    ))}
                   </span>
-                  <span className="shrink-0 text-caption text-muted w-14 text-right">{fmtRelative(item.createdAt)}</span>
+                  <span className="shrink-0 text-caption text-muted w-14 text-right">{fmtRelative(call.createdAt)}</span>
                 </RowButton>
               );
             })}

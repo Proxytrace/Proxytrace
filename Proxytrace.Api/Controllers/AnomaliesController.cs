@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.AgentCalls;
+using Proxytrace.Api.Dto.Anomalies;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.CustomAnomaly;
 using Proxytrace.Domain.Paging;
 
 namespace Proxytrace.Api.Controllers;
@@ -23,17 +25,23 @@ public class AnomaliesController : ControllerBase
     private readonly IAgentRepository agentRepository;
     private readonly AgentCallDtoMapper agentCallDtoMapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly ICustomAnomalyResultRepository customAnomalyResults;
+    private readonly ICustomAnomalyDetectorRepository customAnomalyDetectors;
 
     public AnomaliesController(
         IAgentCallRepository repository,
         IAgentRepository agentRepository,
         AgentCallDtoMapper agentCallDtoMapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        ICustomAnomalyResultRepository customAnomalyResults,
+        ICustomAnomalyDetectorRepository customAnomalyDetectors)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
         this.agentCallDtoMapper = agentCallDtoMapper;
         this.accessGuard = accessGuard;
+        this.customAnomalyResults = customAnomalyResults;
+        this.customAnomalyDetectors = customAnomalyDetectors;
     }
 
     // Same scoping rule as AgentCallsController.GetAll (#193): admins (accessible == null) may run
@@ -55,10 +63,11 @@ public class AnomaliesController : ControllerBase
     }
 
     /// <summary>
-    /// Most recent flagged calls, newest first, in the same list-item shape as the traces table.
+    /// Most recent flagged calls, newest first — the traces list-item shape enriched with the
+    /// custom-detector attributions (detector, matched trigger, reasoning) for each call.
     /// </summary>
     [HttpGet("recent")]
-    public async Task<PagedResult<AgentCallListItemDto>> GetRecent(
+    public async Task<PagedResult<AnomalyListItemDto>> GetRecent(
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
         [FromQuery] int page = 1,
@@ -67,9 +76,49 @@ public class AnomaliesController : ControllerBase
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
         if (!await CanListAsync(projectId, agentId, cancellationToken))
-            return new PagedResult<AgentCallListItemDto>([], 0, page, pageSize);
+            return new PagedResult<AnomalyListItemDto>([], 0, page, pageSize);
         var filter = new AgentCallFilter(AgentId: agentId, ProjectId: projectId, OutlierOnly: true);
         var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
-        return new PagedResult<AgentCallListItem>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
+        var hitsByCall = await GetCustomAnomalyHitsAsync(items, cancellationToken);
+        var dtos = items
+            .Select(item => new AnomalyListItemDto(
+                agentCallDtoMapper.ToListItemDto(item),
+                hitsByCall.GetValueOrDefault(item.Id, [])))
+            .ToList();
+        return new PagedResult<AnomalyListItemDto>(dtos, total, page, pageSize);
+    }
+
+    // One batch query for the page's attributions, then detector names resolved per distinct id
+    // (a handful at most). Results cascade away with their detector, so a missing detector is a
+    // delete race mid-request — those hits are dropped rather than shown nameless.
+    private async Task<Dictionary<Guid, IReadOnlyList<CustomAnomalyHitDto>>> GetCustomAnomalyHitsAsync(
+        IReadOnlyList<AgentCallListItem> items,
+        CancellationToken cancellationToken)
+    {
+        var flaggedIds = items
+            .Where(i => ((OutlierFlags)i.OutlierFlags).HasFlag(OutlierFlags.CustomAnomaly))
+            .Select(i => i.Id)
+            .ToList();
+        if (flaggedIds.Count == 0)
+            return [];
+
+        var results = await customAnomalyResults.GetByAgentCallIdsAsync(flaggedIds, cancellationToken);
+        var detectorNames = new Dictionary<Guid, string>();
+        foreach (var detectorId in results.Select(r => r.DetectorId).Distinct())
+        {
+            var detector = await customAnomalyDetectors.FindAsync(detectorId, cancellationToken);
+            if (detector is not null)
+                detectorNames[detectorId] = detector.Name;
+        }
+
+        return results
+            .Where(r => detectorNames.ContainsKey(r.DetectorId))
+            .GroupBy(r => r.AgentCallId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<CustomAnomalyHitDto>)g
+                    .Select(r => new CustomAnomalyHitDto(
+                        r.DetectorId, detectorNames[r.DetectorId], r.MatchedTrigger, r.Reasoning))
+                    .ToList());
     }
 }

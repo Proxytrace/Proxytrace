@@ -1,5 +1,5 @@
 import { api, qs } from './client';
-import type { AgentAnomalyStatDto, AgentCallListItemDto, PagedResult } from './models';
+import type { AgentAnomalyStatDto, AnomalyListItemDto, PagedResult } from './models';
 import type { StatisticsBucket } from '../lib/time-range';
 
 /** Query parameters for the bucketed anomaly timeline. `from`/`to` are required ISO instants.
@@ -24,7 +24,7 @@ export const anomaliesApi = {
   /** Sparse per-(bucket, agent) flagged-call counts, split into statistical vs custom-detector flags. */
   timeline: (params: AnomalyTimelineParams) =>
     api.get<AgentAnomalyStatDto[]>(`/api/statistics/anomalies/timeline${qs(params as Record<string, unknown>)}`),
-  /** Most-recent flagged calls, newest first, in the traces list-item shape. */
+  /** Most-recent flagged calls, newest first, with custom-detector attributions per call. */
   recent: (params: RecentAnomaliesParams) =>
-    api.get<PagedResult<AgentCallListItemDto>>(`/api/anomalies/recent${qs(params as Record<string, unknown>)}`),
+    api.get<PagedResult<AnomalyListItemDto>>(`/api/anomalies/recent${qs(params as Record<string, unknown>)}`),
 };
