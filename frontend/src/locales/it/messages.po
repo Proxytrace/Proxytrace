@@ -1057,6 +1057,9 @@ msgstr "Endpoint di Anthropic compatibile con OpenAI — usa la tua normale API 
 msgid "Any"
 msgstr "Qualsiasi"
 
+msgid "Any anomaly"
+msgstr "Qualsiasi anomalia"
+
 msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
 msgstr "Qualsiasi server compatibile con OpenAI: vLLM, Ollama, LiteLLM, OpenRouter, un gateway, …"
 
@@ -1325,6 +1328,9 @@ msgstr "chiudi"
 
 msgid "Clear"
 msgstr "Chiudi"
+
+msgid "Clear all"
+msgstr "Cancella tutto"
 
 msgid "Clear conversation"
 msgstr "Cancella conversazione"
@@ -2186,6 +2192,9 @@ msgstr "Torna alla license fornita dall'ambiente, o al piano Free."
 msgid "Fastest"
 msgstr "Più veloce"
 
+msgid "Filter"
+msgstr "Filtro"
+
 msgid "Filter agents by name…"
 msgstr "Filtra gli Agents per nome…"
 
@@ -2329,6 +2338,9 @@ msgstr "Latenza alta"
 
 msgid "High token count"
 msgstr "Numero di Token alto"
+
+msgid "High tokens"
+msgstr "Molti Tokens"
 
 msgid "Highest pass rate"
 msgstr "Tasso di passaggio più alto"
@@ -2808,6 +2820,10 @@ msgstr "corrisponde a <0>“{0}”</0>"
 msgid "Max"
 msgstr "Massimo"
 
+#. placeholder {0}: spec.unit
+msgid "Max ({0})"
+msgstr "Massimo ({0})"
+
 msgid "Max tokens"
 msgstr "Token massimi"
 
@@ -2856,6 +2872,10 @@ msgstr "Metadati"
 msgid "Min"
 msgstr "Min"
 
+#. placeholder {0}: spec.unit
+msgid "Min ({0})"
+msgstr "Minimo ({0})"
+
 msgid "Minimum samples"
 msgstr "Campioni minimi"
 
@@ -2885,6 +2905,9 @@ msgstr "endpoint del modello"
 
 msgid "Model endpoints to evaluate"
 msgstr "endpoint del modello da valutare"
+
+msgid "Model name contains…"
+msgstr "Il nome del Model contiene…"
 
 msgid "Model parameters"
 msgstr "parametri del modello"
@@ -3300,6 +3323,9 @@ msgstr "Nessun dato sui token ancora"
 msgid "No tool additions or removals."
 msgstr "Nessuna aggiunta o rimozione di Tool."
 
+msgid "No tool calls recorded"
+msgstr "Nessuna chiamata a Tool registrata"
+
 msgid "No tool requests yet."
 msgstr "Nessuna richiesta di Tool ancora."
 
@@ -3533,9 +3559,6 @@ msgstr "Impostazioni degli outlier aggiornate"
 
 msgid "Outlier: {reasons}"
 msgstr "Anomalia: {reasons}"
-
-msgid "Outliers only"
-msgstr "Solo anomalie"
 
 msgid "Output"
 msgstr "Output"
@@ -4029,6 +4052,9 @@ msgstr "Rimuovi"
 #. placeholder {0}: m.email
 msgid "Remove {0}"
 msgstr "Rimuovi {0}"
+
+msgid "Remove filter"
+msgstr "Rimuovi filtro"
 
 msgid "Remove from staged"
 msgstr "Rimuovi da staged"
@@ -4582,9 +4608,6 @@ msgstr "Condividi questo link monouso con l'utente. Non sarà mostrato di nuovo.
 msgid "Show"
 msgstr "Mostra"
 
-msgid "Show all traces"
-msgstr "Mostra tutti i Trace"
-
 msgid "Show available tools"
 msgstr "Mostra i Tool disponibili"
 
@@ -4596,9 +4619,6 @@ msgstr "Mostra i Run di validazione A/B effimeri"
 
 msgid "Show less"
 msgstr "Mostra meno"
-
-msgid "Show only outlier traces"
-msgstr "Mostra solo i Trace con anomalie"
 
 msgid "Show system agents"
 msgstr "Mostra gli Agent di sistema"
@@ -5168,6 +5188,9 @@ msgstr "Troppe richieste. Attendi qualche minuto e riprova."
 
 msgid "Too many theories are awaiting validation. Try again later."
 msgstr "Ci sono troppe Theory in attesa di validazione. Riprova più tardi."
+
+msgid "Tool"
+msgstr "Tool"
 
 msgid "TOOL"
 msgstr "TOOL"

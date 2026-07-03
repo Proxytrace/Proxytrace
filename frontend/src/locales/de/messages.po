@@ -1057,6 +1057,9 @@ msgstr "Anthropic’s OpenAI-compatible endpoint — use your regular Anthropic 
 msgid "Any"
 msgstr "Beliebig"
 
+msgid "Any anomaly"
+msgstr "Beliebige Anomalie"
+
 msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
 msgstr "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
 
@@ -1325,6 +1328,9 @@ msgstr "löschen"
 
 msgid "Clear"
 msgstr "Löschen"
+
+msgid "Clear all"
+msgstr "Alle löschen"
 
 msgid "Clear conversation"
 msgstr "Konversation löschen"
@@ -2186,6 +2192,9 @@ msgstr "Fällt auf die vom Umfeld bereitgestellte Lizenz oder auf den Free-Tarif
 msgid "Fastest"
 msgstr "Am schnellsten"
 
+msgid "Filter"
+msgstr "Filtern"
+
 msgid "Filter agents by name…"
 msgstr "Agents nach Name filtern…"
 
@@ -2329,6 +2338,9 @@ msgstr "Hohe Latenz"
 
 msgid "High token count"
 msgstr "Hohe Token-Anzahl"
+
+msgid "High tokens"
+msgstr "Hohe Tokens"
 
 msgid "Highest pass rate"
 msgstr "Höchste Erfolgsrate"
@@ -2808,6 +2820,10 @@ msgstr "übereinstimmte <0>“{0}”</0>"
 msgid "Max"
 msgstr "Max"
 
+#. placeholder {0}: spec.unit
+msgid "Max ({0})"
+msgstr "Max ({0})"
+
 msgid "Max tokens"
 msgstr "Max. Tokens"
 
@@ -2856,6 +2872,10 @@ msgstr "Metadaten"
 msgid "Min"
 msgstr "Min"
 
+#. placeholder {0}: spec.unit
+msgid "Min ({0})"
+msgstr "Min ({0})"
+
 msgid "Minimum samples"
 msgstr "Mindestanzahl an Stichproben"
 
@@ -2885,6 +2905,9 @@ msgstr "Modell-Endpunkte"
 
 msgid "Model endpoints to evaluate"
 msgstr "Modell-Endpunkte zur Auswertung"
+
+msgid "Model name contains…"
+msgstr "Modellname enthält…"
 
 msgid "Model parameters"
 msgstr "Modellparameter"
@@ -3300,6 +3323,9 @@ msgstr "Noch keine Token-Daten"
 msgid "No tool additions or removals."
 msgstr "Keine Tool-Hinzufügungen oder -Entfernungen."
 
+msgid "No tool calls recorded"
+msgstr "Keine Tool-Aufrufe erfasst"
+
 msgid "No tool requests yet."
 msgstr "Noch keine Tool-Anfragen."
 
@@ -3533,9 +3559,6 @@ msgstr "Ausreißer-Einstellungen aktualisiert"
 
 msgid "Outlier: {reasons}"
 msgstr "Ausreißer: {reasons}"
-
-msgid "Outliers only"
-msgstr "Nur Ausreißer"
 
 msgid "Output"
 msgstr "Ausgabe"
@@ -4029,6 +4052,9 @@ msgstr "Entfernen"
 #. placeholder {0}: m.email
 msgid "Remove {0}"
 msgstr "{0} entfernen"
+
+msgid "Remove filter"
+msgstr "Filter entfernen"
 
 msgid "Remove from staged"
 msgstr "Aus Staging entfernen"
@@ -4582,9 +4608,6 @@ msgstr "Teilen Sie diesen einmaligen Link mit dem User. Er wird nicht erneut ang
 msgid "Show"
 msgstr "Anzeigen"
 
-msgid "Show all traces"
-msgstr "Alle Traces anzeigen"
-
 msgid "Show available tools"
 msgstr "Verfügbare Tools anzeigen"
 
@@ -4596,9 +4619,6 @@ msgstr "Temporäre A/B validation runs anzeigen"
 
 msgid "Show less"
 msgstr "Weniger anzeigen"
-
-msgid "Show only outlier traces"
-msgstr "Nur Ausreißer-Traces anzeigen"
 
 msgid "Show system agents"
 msgstr "System Agents anzeigen"
@@ -5168,6 +5188,9 @@ msgstr "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es 
 
 msgid "Too many theories are awaiting validation. Try again later."
 msgstr "Zu viele Theories warten auf Validierung. Bitte später erneut versuchen."
+
+msgid "Tool"
+msgstr "Tool"
 
 msgid "TOOL"
 msgstr "TOOL"

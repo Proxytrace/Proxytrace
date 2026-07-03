@@ -1,12 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { agentFilterKey, isValidTimeRange } from './useTraceFilters';
-
-describe('agentFilterKey', () => {
-  it('namespaces the storage key per project', () => {
-    expect(agentFilterKey('proj-1')).toBe('traces.agentFilter.proj-1');
-    expect(agentFilterKey('proj-2')).not.toBe(agentFilterKey('proj-1'));
-  });
-});
+import { isValidTimeRange } from './useTraceFilters';
 
 describe('isValidTimeRange', () => {
   it('accepts the three valid range shapes', () => {

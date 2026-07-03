@@ -4,7 +4,9 @@ import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
 import { buildRows, hasActiveTraceFilters } from './tracesMeta';
-import type { TraceRow, TraceSortField } from './tracesMeta';
+import type { TraceAdvancedFilters, TraceRow, TraceSortField } from './tracesMeta';
+import { useTraceAdvancedFilters } from './hooks/useTraceAdvancedFilters';
+import { TraceFilterBar } from './components/TraceFilterBar';
 import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRange';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
@@ -32,9 +34,11 @@ export default function Traces() {
   const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('traces.pageSize', PAGE_SIZE);
   // Guard against a stale/garbage stored value — only accept a known option.
   const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
-  // Filter bar persists across refresh / navigation (agent filter is project-scoped).
-  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, outlierOnly, setOutlierOnly, agentFilter, setAgentFilter, sort, setSort, rangeWasRestored } =
-    useTraceFilters(currentProjectId);
+  // Toolbar state persists across refresh / navigation; the composable filter-bar state is
+  // project-scoped and owned by its own hook.
+  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, sort, setSort, rangeWasRestored } =
+    useTraceFilters();
+  const { filters: advanced, setFilters: setAdvanced, clearAll: clearAdvanced } = useTraceAdvancedFilters(currentProjectId);
   // Previous windows pushed by each zoom-in; double-clicking the timeline pops one.
   const [zoomStack, setZoomStack] = useState<TimeRange[]>([]);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
@@ -59,17 +63,16 @@ export default function Traces() {
   const { traces, total, isFetching, allAgents, agentBreakdown } = useTraceQueries({
     page,
     pageSize,
-    agentFilter,
+    advanced,
     debouncedSearch,
     showSystem,
-    outlierOnly,
     from,
     to,
     sort,
   });
 
   // Histogram spans the active window and respects every filter; brushing it zooms the window.
-  const { buckets } = useTraceHistogram({ from, to, agentFilter, debouncedSearch, showSystem });
+  const { buckets } = useTraceHistogram({ from, to, advanced, debouncedSearch, showSystem });
 
   // Only surface agents that actually have traces in the current range — an agent with a
   // zero count is noise on the Traces tab (it has nothing to show).
@@ -81,12 +84,12 @@ export default function Traces() {
   const agents = visibleAgents.filter(a => (callCounts.get(a.id) ?? 0) > 0);
 
   // Heal a restored filter that points at a system agent while system traces are hidden (the
-  // combo could persist before the toggle cleared it) — the dropdown would show the raw id.
+  // combo could persist before the toggle cleared it) — the chip would show the raw id.
   useEffect(() => {
-    if (!showSystem && agentFilter && allAgents.some(a => a.id === agentFilter && a.isSystemAgent)) {
-      setAgentFilter('');
+    if (!showSystem && advanced.agent && allAgents.some(a => a.id === advanced.agent && a.isSystemAgent)) {
+      setAdvanced({ agent: '' });
     }
-  }, [showSystem, agentFilter, allAgents, setAgentFilter]);
+  }, [showSystem, advanced.agent, allAgents, setAdvanced]);
 
   // Conversation grouping only makes sense in time order — under a metric sort, grouping
   // consecutive rows by conversation would silently reorder them, so every trace stays flat.
@@ -120,11 +123,11 @@ export default function Traces() {
     setPendingScrollId(trace.id);
     setTimeRange(ALL_TIME);
     setZoomStack([]);
-    setAgentFilter('');
+    clearAdvanced();
     setSearch('');
     setShowSystem(true);
     setPage(1);
-  }, [selectTrace, setTimeRange, setAgentFilter, setSearch, setShowSystem]);
+  }, [selectTrace, setTimeRange, clearAdvanced, setSearch, setShowSystem]);
 
   useFocusTrace({
     onTrace: handleFocusTrace,
@@ -149,8 +152,13 @@ export default function Traces() {
     });
   }
 
-  function handleAgentFilterChange(id: string) {
-    setAgentFilter(id);
+  function handleAdvancedChange(patch: Partial<TraceAdvancedFilters>) {
+    setAdvanced(patch);
+    setPage(1);
+  }
+
+  function handleClearAdvanced() {
+    clearAdvanced();
     setPage(1);
   }
 
@@ -183,9 +191,9 @@ export default function Traces() {
 
   function handleShowSystemChange(v: boolean) {
     // Hiding system traces removes system agents from the filter options — drop a now-orphaned
-    // selection so the dropdown doesn't fall back to rendering the raw agent id.
-    if (!v && agentFilter && allAgents.some(a => a.id === agentFilter && a.isSystemAgent)) {
-      setAgentFilter('');
+    // selection so the chip doesn't fall back to rendering the raw agent id.
+    if (!v && advanced.agent && allAgents.some(a => a.id === advanced.agent && a.isSystemAgent)) {
+      setAdvanced({ agent: '' });
     }
     setShowSystem(v);
     setPage(1);
@@ -193,11 +201,6 @@ export default function Traces() {
 
   function handlePageSizeChange(v: number) {
     setStoredPageSize(v);
-    setPage(1);
-  }
-
-  function handleOutlierOnlyChange(v: boolean) {
-    setOutlierOnly(v);
     setPage(1);
   }
 
@@ -215,15 +218,17 @@ export default function Traces() {
       <TraceToolbar
         search={search}
         timeRange={timeRange}
-        agentFilter={agentFilter}
         showSystem={showSystem}
-        outlierOnly={outlierOnly}
-        agents={agents}
         onSearchChange={handleSearchChange}
         onTimeRangeChange={handleTimeRangeChange}
-        onAgentFilterChange={handleAgentFilterChange}
         onShowSystemChange={handleShowSystemChange}
-        onOutlierOnlyChange={handleOutlierOnlyChange}
+      />
+
+      <TraceFilterBar
+        agents={agents}
+        filters={advanced}
+        onChange={handleAdvancedChange}
+        onClearAll={handleClearAdvanced}
       />
 
       {/* Keep the timeline mounted whenever the window is concrete — even if it holds no traces
@@ -244,7 +249,7 @@ export default function Traces() {
       <TraceTable
         rows={rows}
         isFetching={isFetching}
-        filtered={hasActiveTraceFilters({ agentFilter, search: debouncedSearch, timeRangeActive: from != null, outlierOnly })}
+        filtered={hasActiveTraceFilters({ search: debouncedSearch, timeRangeActive: from != null, advanced })}
         selectedId={selectedTrace?.id ?? null}
         expandedConvs={expandedConvs}
         sort={sort}

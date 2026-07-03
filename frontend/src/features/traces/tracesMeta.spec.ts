@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AgentCallListItemDto } from '../../api/models';
-import { buildRows, latencyBarPct, toolCount, autoTimeRange, hasActiveTraceFilters, traceListView, GRID_TEMPLATE, COL_WIDTHS, COL_HEADERS, DEFAULT_TRACE_SORT, SORT_FIELD_BY_COL, SORT_FIELD_TO_API, isValidTraceSort } from './tracesMeta';
+import { buildRows, latencyBarPct, toolCount, autoTimeRange, hasActiveTraceFilters, traceListView, EMPTY_ADVANCED_FILTERS, advancedFilterParams, isValidAdvancedFilters, GRID_TEMPLATE, COL_WIDTHS, COL_HEADERS, DEFAULT_TRACE_SORT, SORT_FIELD_BY_COL, SORT_FIELD_TO_API, isValidTraceSort } from './tracesMeta';
 
 // ── Minimal fixture factory ───────────────────────────────────────────────────
 
@@ -120,14 +120,10 @@ describe('toolCount', () => {
 // ── hasActiveTraceFilters (empty-state regression guard) ──────────────────────
 
 describe('hasActiveTraceFilters', () => {
-  const none = { agentFilter: '', search: '', timeRangeActive: false, outlierOnly: false };
+  const none = { search: '', timeRangeActive: false, advanced: EMPTY_ADVANCED_FILTERS };
 
   it('is false when no filter is applied (so a genuinely empty project shows setup instructions)', () => {
     expect(hasActiveTraceFilters(none)).toBe(false);
-  });
-
-  it('is true when an agent is selected', () => {
-    expect(hasActiveTraceFilters({ ...none, agentFilter: 'agent-1' })).toBe(true);
   });
 
   it('is true when a non-blank search term is entered', () => {
@@ -142,10 +138,68 @@ describe('hasActiveTraceFilters', () => {
     expect(hasActiveTraceFilters({ ...none, timeRangeActive: true })).toBe(true);
   });
 
-  // The regressed case: the outliers-only toggle hid every row but was not counted as a filter,
-  // so a filtered-empty list wrongly showed the first-time setup instructions.
-  it('is true when the outliers-only toggle is on', () => {
-    expect(hasActiveTraceFilters({ ...none, outlierOnly: true })).toBe(true);
+  // The historically regressed case: a filter that hides every row but is not counted here makes
+  // a filtered-empty list wrongly show the first-time setup instructions. EVERY advanced field
+  // must count.
+  it('is true when any advanced filter is set', () => {
+    for (const patch of [
+      { agent: 'agent-1' },
+      { anomaly: 'any' as const },
+      { anomaly: 'highLatency' as const },
+      { tool: 'web_search' },
+      { model: 'gpt' },
+      { statusClass: '5' as const },
+      { minTokens: '100' },
+      { maxTokens: '100' },
+      { minLatencyMs: '50' },
+      { maxLatencyMs: '50' },
+    ]) {
+      expect(hasActiveTraceFilters({ ...none, advanced: { ...EMPTY_ADVANCED_FILTERS, ...patch } })).toBe(true);
+    }
+  });
+});
+
+// ── Advanced filters → API params ──────────────────────────────────────────────
+
+describe('advancedFilterParams', () => {
+  it('maps nothing for the empty filter set', () => {
+    expect(advancedFilterParams(EMPTY_ADVANCED_FILTERS)).toEqual({});
+  });
+
+  it('maps agent, tool, model and status class', () => {
+    expect(advancedFilterParams({
+      ...EMPTY_ADVANCED_FILTERS, agent: 'a1', tool: 'web_search', model: 'gpt', statusClass: '5',
+    })).toEqual({ agentId: 'a1', toolName: 'web_search', model: 'gpt', httpStatusClass: 5 });
+  });
+
+  it("maps anomaly 'any' to outlierOnly and specific anomalies to their OutlierFlags bit", () => {
+    expect(advancedFilterParams({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'any' })).toEqual({ outlierOnly: true });
+    expect(advancedFilterParams({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'highTokens' })).toEqual({ anomalyFlags: 1 });
+    expect(advancedFilterParams({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'highLatency' })).toEqual({ anomalyFlags: 2 });
+    expect(advancedFilterParams({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'lowCacheHit' })).toEqual({ anomalyFlags: 4 });
+    expect(advancedFilterParams({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'manyToolCalls' })).toEqual({ anomalyFlags: 8 });
+    expect(advancedFilterParams({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'custom' })).toEqual({ anomalyFlags: 16 });
+  });
+
+  it('maps numeric ranges, ignoring blanks and non-numeric garbage', () => {
+    expect(advancedFilterParams({
+      ...EMPTY_ADVANCED_FILTERS, minTokens: '100', maxTokens: '5000', minLatencyMs: '250.5', maxLatencyMs: 'abc',
+    })).toEqual({ minTokens: 100, maxTokens: 5000, minLatencyMs: 250.5 });
+  });
+});
+
+describe('isValidAdvancedFilters', () => {
+  it('accepts the empty shape and a populated shape', () => {
+    expect(isValidAdvancedFilters(EMPTY_ADVANCED_FILTERS)).toBe(true);
+    expect(isValidAdvancedFilters({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'any', statusClass: '4' })).toBe(true);
+  });
+
+  it('rejects garbage from storage', () => {
+    expect(isValidAdvancedFilters(null)).toBe(false);
+    expect(isValidAdvancedFilters({})).toBe(false);
+    expect(isValidAdvancedFilters({ ...EMPTY_ADVANCED_FILTERS, anomaly: 'bogus' })).toBe(false);
+    expect(isValidAdvancedFilters({ ...EMPTY_ADVANCED_FILTERS, statusClass: '3' })).toBe(false);
+    expect(isValidAdvancedFilters({ ...EMPTY_ADVANCED_FILTERS, minTokens: 100 })).toBe(false);
   });
 });
 

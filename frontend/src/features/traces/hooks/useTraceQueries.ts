@@ -4,7 +4,7 @@ import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { DEFAULT_PAGE_SIZE } from '../../../lib/constants';
 import type { AgentCallFilter } from '../../../api/models';
-import { DEFAULT_TRACE_SORT, SORT_FIELD_TO_API, type TraceSort } from '../tracesMeta';
+import { advancedFilterParams, DEFAULT_TRACE_SORT, SORT_FIELD_TO_API, type TraceAdvancedFilters, type TraceSort } from '../tracesMeta';
 
 /** Default page size; the user can override it via the page-size selector. */
 export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
@@ -15,21 +15,20 @@ export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 interface TraceFilter {
   page: number;
   pageSize: number;
-  agentFilter: string;
+  advanced: TraceAdvancedFilters;
   debouncedSearch: string;
   showSystem: boolean;
-  outlierOnly: boolean;
   from: string | undefined;
   to: string | undefined;
   sort: TraceSort;
 }
 
 /**
- * Two queries serve the Traces page: the paginated call list (changes per page/search) and a
- * filter-bar overview (agents + breakdown + latency, keyed only on range/agent/project so it
+ * Two queries serve the Traces page: the paginated call list (changes per page/search/filter/sort)
+ * and a filter-bar overview (agents + breakdown + latency, keyed only on range/agent/project so it
  * survives pagination).
  */
-export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, showSystem, outlierOnly, from, to, sort }: TraceFilter) {
+export function useTraceQueries({ page, pageSize, advanced, debouncedSearch, showSystem, from, to, sort }: TraceFilter) {
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -39,9 +38,8 @@ export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, 
     page,
     pageSize,
     includeSystemAgents: showSystem,
-    ...(outlierOnly ? { outlierOnly: true } : {}),
+    ...advancedFilterParams(advanced),
     ...(projectId ? { projectId } : {}),
-    ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
     ...(trimmedSearch.length >= 2 ? { q: trimmedSearch } : {}),
@@ -59,8 +57,8 @@ export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, 
   });
 
   const overviewQuery = useQuery({
-    queryKey: QUERY_KEYS.agentCallsOverview(from, agentFilter || undefined, projectId),
-    queryFn: () => agentCallsApi.overview({ from, agentId: agentFilter || undefined, projectId }),
+    queryKey: QUERY_KEYS.agentCallsOverview(from, advanced.agent || undefined, projectId),
+    queryFn: () => agentCallsApi.overview({ from, agentId: advanced.agent || undefined, projectId }),
     placeholderData: keepPreviousData,
     enabled,
   });
