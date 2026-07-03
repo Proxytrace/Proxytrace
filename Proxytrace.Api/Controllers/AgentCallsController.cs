@@ -226,13 +226,41 @@ public class AgentCallsController : ControllerBase
         [FromQuery] bool includeSystemAgents = true,
         [FromQuery] string? q = null,
         [FromQuery] Guid? conversationId = null,
+        [FromQuery] bool outlierOnly = false,
+        [FromQuery] OutlierFlags? anomalyFlags = null,
+        [FromQuery] int? httpStatusClass = null,
+        [FromQuery] ulong? minTokens = null,
+        [FromQuery] ulong? maxTokens = null,
+        [FromQuery] double? minLatencyMs = null,
+        [FromQuery] double? maxLatencyMs = null,
+        [FromQuery] string? toolName = null,
         [FromQuery] int buckets = 60,
         CancellationToken cancellationToken = default)
     {
         buckets = Math.Clamp(buckets, 1, 240);
         if (!await CanListAsync(projectId, agentId, cancellationToken))
             return [];
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
+        // Same filter surface as GetAll (minus paging/sort — a histogram has neither), so the
+        // timeline always reflects exactly the rows the filtered table shows.
+        var filter = new AgentCallFilter(
+            AgentId: agentId,
+            ProjectId: projectId,
+            EndpointId: endpointId,
+            Model: model,
+            From: from,
+            To: to,
+            HttpStatus: httpStatus,
+            IncludeSystemAgents: includeSystemAgents,
+            Query: q,
+            ConversationId: conversationId,
+            OutlierOnly: outlierOnly,
+            AnomalyFlags: anomalyFlags,
+            HttpStatusClass: httpStatusClass,
+            MinTokens: minTokens,
+            MaxTokens: maxTokens,
+            MinLatencyMs: minLatencyMs,
+            MaxLatencyMs: maxLatencyMs,
+            ToolName: toolName);
         var result = await repository.GetHistogramAsync(filter, buckets, cancellationToken);
         return result.Select(b => new TraceHistogramBucketDto(b.Start, b.Total, b.Errors)).ToList();
     }

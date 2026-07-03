@@ -54,6 +54,39 @@ public sealed class AgentCallsControllerHistogramTests : BaseTest<Module>
             Arg.Any<CancellationToken>());
     }
 
+    [TestMethod]
+    public async Task GetHistogram_ForwardsTheFullFilterSurface_SoTheTimelineMatchesTheTable()
+    {
+        var repo = Substitute.For<IAgentCallRepository>();
+        repo.GetHistogramAsync(Arg.Any<AgentCallFilter>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        var controller = ResolveController(repo);
+
+        await controller.GetHistogram(
+            outlierOnly: true,
+            anomalyFlags: OutlierFlags.HighLatency,
+            httpStatusClass: 5,
+            minTokens: 100,
+            maxTokens: 5000,
+            minLatencyMs: 250,
+            maxLatencyMs: 9000,
+            toolName: "web_search",
+            cancellationToken: CancellationToken);
+
+        await repo.Received(1).GetHistogramAsync(
+            Arg.Is<AgentCallFilter>(f =>
+                f.OutlierOnly &&
+                f.AnomalyFlags == OutlierFlags.HighLatency &&
+                f.HttpStatusClass == 5 &&
+                f.MinTokens == 100 &&
+                f.MaxTokens == 5000 &&
+                f.MinLatencyMs == 250 &&
+                f.MaxLatencyMs == 9000 &&
+                f.ToolName == "web_search"),
+            Arg.Any<int>(),
+            Arg.Any<CancellationToken>());
+    }
+
     private AgentCallsController ResolveController(IAgentCallRepository repo)
     {
         var toolDtoMapper = new ToolDtoMapper();
