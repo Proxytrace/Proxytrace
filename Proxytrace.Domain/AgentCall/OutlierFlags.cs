@@ -24,4 +24,12 @@ public enum OutlierFlags : byte
 
     /// <summary>Tool-request count far above the agent's recent mean.</summary>
     ManyToolCalls = 8,
+
+    /// <summary>
+    /// Flagged by a user-defined LLM-based anomaly detector (see <c>ICustomAnomalyDetector</c>).
+    /// Unlike the statistical bits above, this one is set asynchronously after ingestion, once the
+    /// detector's LLM review returns an anomalous verdict; attribution (which detector, reasoning,
+    /// matched trigger) lives on the custom anomaly result entity.
+    /// </summary>
+    CustomAnomaly = 16,
 }
