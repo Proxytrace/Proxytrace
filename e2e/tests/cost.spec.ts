@@ -1,6 +1,7 @@
 import { test, expect } from '../helpers/fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
+import { selectAgentFilter } from '../helpers/traces-ui';
 
 // Per-token COST coverage.
 //
@@ -118,9 +119,8 @@ test.describe('Cost', () => {
     await page.goto('/traces', { waitUntil: 'load' });
     await expect(page.getByTestId('trace-table')).toBeVisible();
 
-    // Narrow to this agent (via the toolbar Agent filter) so the row is deterministic.
-    await page.getByTestId('traces-agent-filter').click();
-    await page.getByTestId(`traces-agent-filter-option-${agentId}`).click();
+    // Narrow to this agent (via the filter bar's Agent chip) so the row is deterministic.
+    await selectAgentFilter(page, agentId);
 
     // Open the detail drawer and switch to the Metadata tab where cost_eur is rendered.
     await page.getByTestId(`trace-row-${call.id}`).click();

@@ -1,5 +1,6 @@
 import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
+import { addTraceFilter } from '../helpers/traces-ui';
 
 // Mirror the backend OutlierFlags bitmask (Proxytrace.Domain.AgentCall.OutlierFlags).
 const HIGH_LATENCY = 2;
@@ -36,8 +37,9 @@ test.describe('Outlier detection', () => {
     await expect(page.getByTestId(`trace-row-${normal.id}`)).toBeVisible();
     await expect(page.getByTestId(`trace-outlier-marker-${HIGH_LATENCY}`)).toBeVisible();
 
-    // Turning on "Outliers only" hides the normal call and keeps the outlier.
-    await page.getByTestId('traces-outlier-toggle').click();
+    // The anomaly filter's "Any anomaly" option (the former "Outliers only" toggle) hides the
+    // normal call and keeps the outlier.
+    await addTraceFilter(page, 'anomaly', 'any');
     await expect(page.getByTestId(`trace-row-${outlier.id}`)).toBeVisible();
     await expect(page.getByTestId(`trace-row-${normal.id}`)).toHaveCount(0);
   });

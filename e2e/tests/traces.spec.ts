@@ -1,6 +1,7 @@
 import { test, expect } from '../helpers/fixtures';
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
+import { selectAgentFilter } from '../helpers/traces-ui';
 
 // Traces page (/traces) coverage.
 //
@@ -23,12 +24,6 @@ async function makeClient(request: APIRequestContext): Promise<ProxytraceApiClie
   const { token } = await client.login('admin@e2e.test', 'E2ePassword1!');
   client.setToken(token);
   return client;
-}
-
-// Narrow the table to one agent via the toolbar "Agent:" dropdown.
-async function selectAgentFilter(page: Page, agentId: string): Promise<void> {
-  await page.getByTestId('traces-agent-filter').click();
-  await page.getByTestId(`traces-agent-filter-option-${agentId}`).click();
 }
 
 test.describe('Traces', () => {

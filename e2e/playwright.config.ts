@@ -43,6 +43,7 @@ export default defineConfig({
         '**/providers.spec.ts',
         '**/suites.spec.ts',
         '**/traces.spec.ts',
+        '**/traces-filters.spec.ts',
         '**/traces-grouping.spec.ts',
         '**/outliers.spec.ts',
         '**/evaluators.spec.ts',
