@@ -12,5 +12,11 @@ public record AgentCallFilter(
     string? Query = null,
     Guid? ConversationId = null,
     bool OutlierOnly = false,
+    OutlierFlags? AnomalyFlags = null,
+    int? HttpStatusClass = null,
+    ulong? MinTokens = null,
+    ulong? MaxTokens = null,
+    double? MinLatencyMs = null,
+    double? MaxLatencyMs = null,
     AgentCallSortField SortBy = AgentCallSortField.CreatedAt,
     bool SortDescending = true);

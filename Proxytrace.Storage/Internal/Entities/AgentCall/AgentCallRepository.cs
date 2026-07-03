@@ -307,6 +307,37 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => e.OutlierFlags != OutlierFlags.None);
         }
 
+        if (filter.AnomalyFlags is { } anomalyFlags && anomalyFlags != OutlierFlags.None)
+        {
+            query = query.Where(e => (e.OutlierFlags & anomalyFlags) != 0);
+        }
+
+        if (filter.HttpStatusClass is { } statusClass)
+        {
+            var lower = statusClass * 100;
+            query = query.Where(e => e.HttpStatus >= lower && e.HttpStatus < lower + 100);
+        }
+
+        if (filter.MinTokens.HasValue)
+        {
+            query = query.Where(e => e.TotalTokens >= filter.MinTokens.Value);
+        }
+
+        if (filter.MaxTokens.HasValue)
+        {
+            query = query.Where(e => e.TotalTokens <= filter.MaxTokens.Value);
+        }
+
+        if (filter.MinLatencyMs.HasValue)
+        {
+            query = query.Where(e => e.LatencyMs >= filter.MinLatencyMs.Value);
+        }
+
+        if (filter.MaxLatencyMs.HasValue)
+        {
+            query = query.Where(e => e.LatencyMs <= filter.MaxLatencyMs.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(filter.Query))
         {
             if (filter.ProjectId is null)

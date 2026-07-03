@@ -240,6 +240,67 @@ public sealed class AgentCallListQueryTests : BaseTest<Module>
         items.Select(i => i.Id).Should().Equal(lowHitRate.Id, highHitRate.Id, error.Id);
     }
 
+    [TestMethod]
+    public async Task GetFilteredList_FilterByAnomalyFlags_ReturnsOnlyRowsWithThatBitSet()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+        var (agent, endpoint) = await SeedAgentAsync(services);
+
+        var highLatencyOnly = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 500);
+        var highTokensOnly = await SeedCallAsync(services, agent, endpoint, new TokenUsage(900, 100), latencyMs: 50);
+        var both = await SeedCallAsync(services, agent, endpoint, new TokenUsage(900, 100), latencyMs: 500);
+
+        await repo.SetOutlierFlagAsync(highLatencyOnly.Id, OutlierFlags.HighLatency, CancellationToken);
+        await repo.SetOutlierFlagAsync(highTokensOnly.Id, OutlierFlags.HighTokens, CancellationToken);
+        await repo.SetOutlierFlagAsync(both.Id, OutlierFlags.HighLatency, CancellationToken);
+        await repo.SetOutlierFlagAsync(both.Id, OutlierFlags.HighTokens, CancellationToken);
+
+        var (items, total) = await repo.GetFilteredListAsync(
+            new AgentCallFilter(AnomalyFlags: OutlierFlags.HighLatency), 1, 50, CancellationToken);
+
+        total.Should().Be(2);
+        items.Select(i => i.Id).Should().BeEquivalentTo([highLatencyOnly.Id, both.Id]);
+    }
+
+    [TestMethod]
+    public async Task GetFilteredList_FilterByHttpStatusClass_ReturnsOnlyThatHundredRangeAtBoundaries()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+        var (agent, endpoint) = await SeedAgentAsync(services);
+
+        var lowerBoundary = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 100, httpStatus: (HttpStatusCode)500);
+        var upperBoundary = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 100, httpStatus: (HttpStatusCode)599);
+        var justBelow = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 100, httpStatus: (HttpStatusCode)499);
+        var justAbove = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 100, httpStatus: (HttpStatusCode)600);
+
+        var (items, total) = await repo.GetFilteredListAsync(
+            new AgentCallFilter(HttpStatusClass: 5), 1, 50, CancellationToken);
+
+        total.Should().Be(2);
+        items.Select(i => i.Id).Should().BeEquivalentTo([lowerBoundary.Id, upperBoundary.Id]);
+    }
+
+    [TestMethod]
+    public async Task GetFilteredList_FilterByMinTokensAndMaxLatencyMs_BoundsCorrectlyAndExcludesNullUsageRows()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+        var (agent, endpoint) = await SeedAgentAsync(services);
+
+        var matching = await SeedCallAsync(services, agent, endpoint, new TokenUsage(900, 100), latencyMs: 50);
+        var tooFewTokens = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 50);
+        var tooSlow = await SeedCallAsync(services, agent, endpoint, new TokenUsage(900, 100), latencyMs: 500);
+        var nullUsage = await SeedCallAsync(services, agent, endpoint, usage: null, latencyMs: null);
+
+        var (items, total) = await repo.GetFilteredListAsync(
+            new AgentCallFilter(MinTokens: 500, MaxLatencyMs: 100), 1, 50, CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle(i => i.Id == matching.Id);
+    }
+
     private async Task<(IAgent Agent, IModelEndpoint Endpoint)> SeedAgentAsync(IServiceProvider services)
     {
         var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
@@ -260,7 +321,8 @@ public sealed class AgentCallListQueryTests : BaseTest<Module>
         TokenUsage? usage,
         double? latencyMs,
         int toolCount = 0,
-        DateTimeOffset? createdAt = null)
+        DateTimeOffset? createdAt = null,
+        HttpStatusCode? httpStatus = null)
     {
         var conversationGen = services.GetRequiredService<IDomainObjectGenerator<Conversation>>();
         var createCompletion = services.GetRequiredService<ICompletion.Create>();
@@ -275,6 +337,8 @@ public sealed class AgentCallListQueryTests : BaseTest<Module>
                 usage,
                 TimeSpan.FromMilliseconds(latencyMs ?? 0));
 
+        var resolvedHttpStatus = httpStatus ?? (response is null ? HttpStatusCode.BadGateway : HttpStatusCode.OK);
+
         IAgentCall call = createdAt is { } timestamp
             ? services.GetRequiredService<IAgentCall.CreateExisting>()(
                 agent: agent,
@@ -282,7 +346,7 @@ public sealed class AgentCallListQueryTests : BaseTest<Module>
                 endpoint: endpoint,
                 request: request,
                 response: response,
-                httpStatus: response is null ? HttpStatusCode.BadGateway : HttpStatusCode.OK,
+                httpStatus: resolvedHttpStatus,
                 finishReason: response is null ? null : "stop",
                 errorMessage: response is null ? "upstream timeout" : null,
                 modelParameters: agent.ModelParameters,
@@ -293,7 +357,7 @@ public sealed class AgentCallListQueryTests : BaseTest<Module>
                 endpoint,
                 request,
                 response,
-                httpStatus: response is null ? HttpStatusCode.BadGateway : HttpStatusCode.OK,
+                httpStatus: resolvedHttpStatus,
                 errorMessage: response is null ? "upstream timeout" : null);
 
         var repo = services.GetRequiredService<IRepository<IAgentCall>>();
