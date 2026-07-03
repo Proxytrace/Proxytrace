@@ -141,6 +141,10 @@ msgstr "{0, plural, one {# tool} other {# tools}}"
 msgid "{0, plural, one {# trace} other {# traces}}"
 msgstr "{0, plural, one {# trace} other {# traces}}"
 
+#. placeholder {0}: d.triggers.length
+msgid "{0, plural, one {# trigger} other {# triggers}}"
+msgstr "{0, plural, one {# trigger} other {# triggers}}"
+
 #. placeholder {0}: turns.length
 msgid "{0, plural, one {# turn} other {# turns}}"
 msgstr "{0, plural, one {# tour} other {# tours}}"
@@ -181,6 +185,12 @@ msgstr "{0} · {1} runs"
 #. placeholder {2}: fmtRelative(suite.lastRunAt)
 msgid "{0} · {1} runs · last {2}"
 msgstr "{0} · {1} runs · dernière mise à jour {2}"
+
+#. placeholder {0}: agentName(c.agentId)
+#. placeholder {1}: c.staticCount
+#. placeholder {2}: c.customCount
+msgid "{0} · {1} static / {2} custom"
+msgstr "{0} · {1} statiques / {2} personnalisés"
 
 #. placeholder {0}: fmtTokens(summary.inputTokens)
 msgid "{0} · {cached}% cached"
@@ -233,6 +243,12 @@ msgstr "{0} échoués"
 #. placeholder {0}: fmtDuration(ms)
 msgid "{0} faster"
 msgstr "{0} plus rapide"
+
+#. placeholder {0}: r.total
+#. placeholder {1}: r.staticTotal
+#. placeholder {2}: r.customTotal
+msgid "{0} flagged · {1} statistical / {2} detector"
+msgstr "{0} signalé · {1} statistique / {2} détecteur"
 
 #. placeholder {0}: proposal.kind
 #. placeholder {1}: proposal.agentName
@@ -629,6 +645,9 @@ msgstr "+{added} ajoutés"
 msgid "+{hidden} more"
 msgstr "+{hidden} de plus"
 
+msgid "+{legendOverflow} more"
+msgstr "+{legendOverflow} de plus"
+
 msgid "+7pt"
 msgstr "+7 pt"
 
@@ -711,6 +730,9 @@ msgstr "1 suite de tests"
 msgid "2 proposals"
 msgstr "2 propositions"
 
+msgid "5 min"
+msgstr "5 min"
+
 msgid "6-digit code"
 msgstr "Code à 6 chiffres"
 
@@ -719,6 +741,12 @@ msgstr "Latence au 95e centile"
 
 msgid "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
 msgstr "Un call est signalé lorsqu’une métrique se situe à ce nombre d’écarts types de la moyenne récente de l’Agent. Une valeur plus basse est plus sensible."
+
+msgid "A call is reviewed only when a trigger matches — keeps LLM usage targeted."
+msgstr "Une appel n’est révisé que lorsqu’un trigger correspond — cela permet de cibler l’utilisation de LLM."
+
+msgid "A call is sent to the judge only when one of these matches."
+msgstr "Un appel est envoyé au judge uniquement lorsqu’une de ces correspondances se produit."
 
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "Un modèle évaluateur attribue une note aux réponses sur une échelle fixe de 1 à 5 (Terrible → Excellent) avec un raisonnement facultatif. Choisissez un preset ou rédigez votre propre rubric."
@@ -819,6 +847,9 @@ msgstr "Ajouter {0} au Suite"
 msgid "Add a provider to route traffic through Proxytrace."
 msgstr "Ajoutez un provider pour acheminer le trafic via Proxytrace."
 
+msgid "Add between 1 and {MAX_TRIGGERS} triggers."
+msgstr "Ajoutez entre 1 et {MAX_TRIGGERS} triggers."
+
 msgid "Add cases from captured traces to seed this suite."
 msgstr "Ajoutez des cas à partir de traces capturées pour amorcer ce Suite."
 
@@ -842,6 +873,9 @@ msgstr "Ajouter au Suite"
 
 msgid "Add tool request"
 msgstr "Ajouter une requête de Tool"
+
+msgid "Add trigger"
+msgstr "Ajouter un trigger"
 
 msgid "Add users to this project to grant them access."
 msgstr "Ajoutez des users à ce projet pour leur donner accès."
@@ -904,6 +938,9 @@ msgstr "Plateforme d’observabilité des Agents"
 msgid "Agent Playground"
 msgstr "Agent Playground"
 
+msgid "Agent scope"
+msgstr "Portée de l'Agent"
+
 msgid "Agent stats · 30d"
 msgstr "Statistiques de l’Agent · 30j"
 
@@ -924,6 +961,9 @@ msgstr "Les évaluateurs agentic nécessitent un abonnement payant"
 
 msgid "Agents"
 msgstr "Agents"
+
+msgid "Agents affected"
+msgstr "Agents concernés"
 
 msgid "Agents are auto-created when traces are captured."
 msgstr "Les Agents sont créés automatiquement lorsque des Traces sont capturées."
@@ -990,6 +1030,24 @@ msgstr "Anomalies"
 msgid "Anomalies and alerts from your test runs will appear here."
 msgstr "Les anomalies et alertes de vos runs de test apparaîtront ici."
 
+msgid "Anomalies over time"
+msgstr "Anomalies au fil du temps"
+
+msgid "Anomalous trace"
+msgstr "Trace anormale"
+
+msgid "Anomaly"
+msgstr "Anomalie"
+
+msgid "Anomaly Detector Created"
+msgstr "Anomaly Detector créé"
+
+msgid "Anomaly Detector Deleted"
+msgstr "Anomaly Detector supprimé"
+
+msgid "Anomaly Detector Updated"
+msgstr "Anomaly Detector mis à jour"
+
 msgid "Anthropic"
 msgstr "Anthropic"
 
@@ -1025,6 +1083,9 @@ msgstr "Appliquer"
 
 msgid "Apply this change in your agent's code — Proxytrace flips the proposal to Adopted when the exact change shows up in live traffic. Applied a tweaked variant? Mark it adopted manually."
 msgstr "Appliquez cette modification dans le code de votre Agent — Proxytrace fait passer la Proposal à Adopted lorsque la modification exacte apparaît dans le trafic réel. Vous avez appliqué une variante ajustée ? Marquez-la adoptée manuellement."
+
+msgid "Apply to all agents"
+msgstr "Appliquer à tous les Agents"
 
 msgid "Approximate tokens (chars / 4)"
 msgstr "Tokens approximatifs (caractères / 4)"
@@ -1243,6 +1304,9 @@ msgstr "Vérifier les résultats"
 msgid "Check your inbox"
 msgstr "Vérifiez votre boîte de réception"
 
+msgid "Choose a judge model endpoint."
+msgstr "Choisissez un endpoint de modèle juge."
+
 msgid "Choose a new password"
 msgstr "Choisissez un nouveau mot de passe"
 
@@ -1279,6 +1343,9 @@ msgstr "Effacez la recherche pour voir tous les Agents."
 
 msgid "Clear the search to see all cases."
 msgstr "Effacez la recherche pour voir tous les cas."
+
+msgid "Clear the search to see all detectors."
+msgstr "Effacez la recherche pour voir tous les detectors."
 
 msgid "Clear the search to see all evaluators."
 msgstr "Effacez la recherche pour voir tous les Evaluators."
@@ -1460,6 +1527,15 @@ msgstr "Impossible de démarrer la configuration. Veuillez réessayer."
 msgid "Could not verify the code. Please try again."
 msgstr "Impossible de vérifier le code. Veuillez réessayer."
 
+msgid "Couldn't load detectors."
+msgstr "Impossible de charger les détecteurs."
+
+msgid "Couldn't load recent anomalies."
+msgstr "Impossible de charger les anomalies récentes."
+
+msgid "Couldn't load the anomaly timeline."
+msgstr "Impossible de charger la chronologie des anomalies."
+
 msgid "Couldn’t load this evaluation."
 msgstr "Impossible de charger cette évaluation."
 
@@ -1502,11 +1578,17 @@ msgstr "Créez un Agent avant de créer un Test Suite."
 msgid "Create an evaluator first, then come back here to probe it against past test results."
 msgstr "Créez d’abord un evaluator, puis revenez ici pour le tester sur des résultats de test passés."
 
+msgid "Create detector"
+msgstr "Créer un détecteur"
+
 msgid "Create evaluators in the Evaluators tab first."
 msgstr "Créez d’abord des evaluators dans l’onglet Evaluators."
 
 msgid "Create invite"
 msgstr "Créer une invitation"
+
+msgid "Create one to review calls with an LLM judge."
+msgstr "Créez-en un pour examiner les appels avec un judge LLM."
 
 msgid "Create one to start evaluating."
 msgstr "En créez un pour commencer l’évaluation."
@@ -1582,6 +1664,15 @@ msgstr "Personnalisé"
 
 msgid "Custom (write your own)"
 msgstr "Personnalisé (écrivez le vôtre)"
+
+msgid "Custom anomaly detectors"
+msgstr "Détecteurs d’anomalies personnalisées"
+
+msgid "Custom detector"
+msgstr "Détecteur personnalisé"
+
+msgid "Custom detectors review matched calls with an LLM judge and flag anomalies beyond the built-in statistical checks."
+msgstr "Les detectors personnalisés examinent les appels correspondants avec un judge LLM et signalent les anomalies au-delà des vérifications statistiques intégrées."
 
 msgid "Custom evaluators"
 msgstr "Evaluators personnalisés"
@@ -1688,6 +1779,27 @@ msgstr "Détacher {0}"
 msgid "Details"
 msgstr "Détails"
 
+msgid "Detector created"
+msgstr "Détecteur créé"
+
+msgid "Detector deleted"
+msgstr "Détecteur supprimé"
+
+msgid "Detector disabled"
+msgstr "Detector désactivé"
+
+msgid "Detector enabled"
+msgstr "Detector activé"
+
+msgid "Detector flags"
+msgstr "Flags du détecteur"
+
+msgid "Detector updated"
+msgstr "Détecteur mis à jour"
+
+msgid "Detectors"
+msgstr "Détecteurs"
+
 msgid "Diagnose an agent"
 msgstr "Diagnostiquer un Agent"
 
@@ -1697,6 +1809,9 @@ msgstr "Diff vs v{0}"
 
 msgid "Disable"
 msgstr "Désactiver"
+
+msgid "Disable detector"
+msgstr "Désactiver le detector"
 
 msgid "Disable schedule"
 msgstr "Désactiver la planification"
@@ -1776,6 +1891,9 @@ msgstr "p. ex. analyse de production"
 msgid "e.g. production-agent"
 msgstr "p. ex. production-agent"
 
+msgid "e.g. Refund promise watcher"
+msgstr "p. ex. Surveillance de promesse de remboursement"
+
 msgid "Edge Cases"
 msgstr "Cas limites"
 
@@ -1785,6 +1903,9 @@ msgstr "Modifier"
 #. placeholder {0}: META[editTarget.kind] ? i18n._(META[editTarget.kind].label) : 'Evaluator'
 msgid "Edit {0}"
 msgstr "Modifier {0}"
+
+msgid "Edit detector"
+msgstr "Modifier le détecteur"
 
 msgid "Edit endpoint"
 msgstr "Modifier endpoint"
@@ -1827,6 +1948,9 @@ msgstr "Paramètres d’email enregistrés"
 
 msgid "Email Settings Updated"
 msgstr "Paramètres d'e-mail mis à jour"
+
+msgid "Enable detector"
+msgstr "Activer le detector"
 
 msgid "Enable email notifications"
 msgstr "Activer les notifications par email"
@@ -1941,6 +2065,9 @@ msgstr "Evaluators"
 
 msgid "every"
 msgstr "chaque"
+
+msgid "Every trigger needs a pattern."
+msgstr "Chaque trigger a besoin d’un pattern."
 
 msgid "Evidence"
 msgstr "Preuve"
@@ -2079,6 +2206,18 @@ msgstr "Corrigé"
 
 msgid "Flag agent calls that deviate from their agent's recent behaviour."
 msgstr "Signaler les calls de l’Agent qui s’écartent du comportement récent de leur Agent."
+
+msgid "Flag the turn when the assistant promises a refund without approval."
+msgstr "Signalez le tour lorsque l’Assistant promet un remboursement sans approbation."
+
+msgid "Flagged agent calls over time, and the agents that need the most attention."
+msgstr "Appels Agent signalés au fil du temps, et les Agents qui nécessitent le plus d’attention."
+
+msgid "Flagged calls"
+msgstr "Appels signalés"
+
+msgid "Flagged calls will appear here as they arrive."
+msgstr "Les appels signalés apparaîtront ici au fur et à mesure."
 
 msgid "Flaky"
 msgstr "Instable"
@@ -2373,6 +2512,9 @@ msgstr "Judge"
 msgid "Judge model"
 msgstr "Modèle de Judge"
 
+msgid "Judge model endpoint"
+msgstr "Endpoint du modèle juge"
+
 msgid "Key"
 msgstr "Clé"
 
@@ -2650,6 +2792,19 @@ msgstr "Marquer comme lu"
 msgid "Marked adopted"
 msgstr "Marqué comme adopté"
 
+#. placeholder {0}: hit.matchedTrigger
+msgid "Matched \"{0}\""
+msgstr "Correspond à \"{0}\""
+
+#. placeholder {0}: hit.matchedTrigger
+#. placeholder {1}: hit.reasoning
+msgid "Matched \"{0}\" — {1}"
+msgstr "Correspond à \"{0}\" — {1}"
+
+#. placeholder {0}: hit.matchedTrigger
+msgid "matched <0>“{0}”</0>"
+msgstr "correspond à <0>“{0}”</0>"
+
 msgid "Max"
 msgstr "Max"
 
@@ -2764,6 +2919,9 @@ msgstr "Quota mensuel de traces atteint — les nouvelles traces sont ignorées 
 msgid "More actions"
 msgstr "Plus d'actions"
 
+msgid "Most flagged agents"
+msgstr "Agents les plus signalés"
+
 msgid "Mostly correct"
 msgstr "Plutôt correct"
 
@@ -2798,6 +2956,9 @@ msgstr "N"
 msgid "Name"
 msgstr "Nom"
 
+msgid "Name is required."
+msgstr "Le nom est requis."
+
 msgid "Name suite"
 msgstr "Nommer la Suite"
 
@@ -2824,6 +2985,9 @@ msgstr "Nouveau"
 
 msgid "New conversation"
 msgstr "Nouvelle conversation"
+
+msgid "New detector"
+msgstr "Nouveau détecteur"
 
 msgid "New evaluator"
 msgstr "Nouvel Evaluator"
@@ -2901,6 +3065,9 @@ msgstr "Aucun Agent pour le moment"
 msgid "No anomalies flagged recently."
 msgstr "Aucune anomalie signalée récemment."
 
+msgid "No anomalies in this window"
+msgstr "Aucune anomalie dans cette période"
+
 msgid "No API keys yet"
 msgstr "Aucune API key pour le moment"
 
@@ -2927,6 +3094,9 @@ msgstr "Aucune décision pour le moment — la validation doit d'abord se termin
 
 msgid "no delta predicted"
 msgstr "aucun delta prévu"
+
+msgid "No detectors yet"
+msgstr "Aucun détecteur pour le moment"
 
 msgid "No email alerts"
 msgstr "Aucune alerte par email"
@@ -2957,6 +3127,9 @@ msgstr "Aucun evaluator dans ce projet pour le moment."
 
 msgid "No evaluators yet"
 msgstr "Aucun Evaluator pour le moment"
+
+msgid "No flagged agents in this window."
+msgstr "Aucun agent signalé dans cette fenêtre."
 
 msgid "No improvement"
 msgstr "Aucune amélioration"
@@ -3217,6 +3390,9 @@ msgstr "Rien ici pour le moment"
 msgid "Nothing here yet."
 msgstr "Rien ici pour le moment."
 
+msgid "Nothing was flagged for the selected range."
+msgstr "Aucune anomalie n’a été signalée pour la plage sélectionnée."
+
 msgid "Notifications"
 msgstr "Notifications"
 
@@ -3252,6 +3428,9 @@ msgstr "OK"
 
 msgid "on this page"
 msgstr "sur cette page"
+
+msgid "One of the regex triggers is not a valid pattern."
+msgstr "L’un des déclencheurs regex n’est pas un motif valide."
 
 msgid "Online"
 msgstr "En ligne"
@@ -3515,6 +3694,12 @@ msgstr "Sortie par modèle"
 msgid "Performance"
 msgstr "Performance"
 
+msgid "Phrase"
+msgstr "Phrase"
+
+msgid "Phrase to match…"
+msgstr "Phrase à correspondre…"
+
 msgid "pick"
 msgstr "choisir"
 
@@ -3544,6 +3729,9 @@ msgstr "Choisissez un endpoint"
 
 msgid "Pick one from the list to view its definition, attached suites, and performance."
 msgstr "Choisissez-en un dans la liste pour voir sa définition, les suites associées et ses performances."
+
+msgid "Pick one from the list to view its instructions, triggers, and agent scope."
+msgstr "Choisissez-en un dans la liste pour afficher ses instructions, ses déclencheurs et la portée de l'Agent."
 
 msgid "Pick to start"
 msgstr "Choisissez pour commencer"
@@ -3778,6 +3966,9 @@ msgstr "Tokens reçus"
 msgid "Recent"
 msgstr "Récent"
 
+msgid "Recent anomalies"
+msgstr "Anomalies récentes"
+
 msgid "Recent evaluations"
 msgstr "Évaluations récentes"
 
@@ -3787,11 +3978,17 @@ msgstr "Outliers récents"
 msgid "Recent traces"
 msgstr "Traces récentes"
 
+msgid "Regex"
+msgstr "Regex"
+
 msgid "Regressed"
 msgstr "Régressé"
 
 msgid "Regression"
 msgstr "Régression"
+
+msgid "Regular expression…"
+msgstr "Expression régulière…"
 
 msgid "Reindex now"
 msgstr "Réindexer maintenant"
@@ -3851,8 +4048,14 @@ msgstr "Supprimer le Tool"
 msgid "Remove tool request"
 msgstr "Supprimer la requête de Tool"
 
+msgid "Remove trigger"
+msgstr "Supprimer le déclencheur"
+
 msgid "Remove user"
 msgstr "Supprimer le User"
+
+msgid "Removed agent"
+msgstr "Agent supprimé"
 
 msgid "Replaces the schema above — every example key becomes required; loosen by hand if needed."
 msgstr "Remplace le schéma ci-dessus — chaque clé d’exemple devient obligatoire ; assouplissez-le à la main si besoin."
@@ -3922,6 +4125,12 @@ msgstr "Relancer la découverte"
 
 msgid "Reveal"
 msgstr "Révéler"
+
+msgid "Review instructions"
+msgstr "Instructions de revue"
+
+msgid "Review instructions are required."
+msgstr "Les instructions de revue sont obligatoires."
 
 msgid "Review proposals"
 msgstr "Examiner les propositions"
@@ -4110,6 +4319,9 @@ msgstr "Plannings"
 msgid "Schema is appended automatically — only describe what to grade and what each score means."
 msgstr "Le schéma est ajouté automatiquement — décrivez uniquement ce qu’il faut évaluer et ce que signifie chaque score."
 
+msgid "Scoped agents"
+msgstr "Agents ciblés"
+
 msgid "Score"
 msgstr "Score"
 
@@ -4240,6 +4452,12 @@ msgstr "sélectionner"
 msgid "Select a case or trace"
 msgstr "Sélectionnez un cas ou une trace"
 
+msgid "Select a detector"
+msgstr "Sélectionnez un detector"
+
+msgid "Select a model endpoint"
+msgstr "Sélectionnez un endpoint de modèle"
+
 msgid "Select a run to see details."
 msgstr "Sélectionnez un Run pour voir les détails."
 
@@ -4255,6 +4473,9 @@ msgstr "Sélectionnez une trace à prévisualiser"
 msgid "Select agent"
 msgstr "Sélectionnez un Agent"
 
+msgid "Select agents"
+msgstr "Sélectionner des agents"
+
 msgid "Select all"
 msgstr "Tout sélectionner"
 
@@ -4266,6 +4487,9 @@ msgstr "Sélectionnez un Agent pour voir les détails."
 
 msgid "Select an evaluator"
 msgstr "Sélectionnez un evaluator"
+
+msgid "Select at least one agent, or apply to all agents."
+msgstr "Sélectionnez au moins un agent, ou appliquez à tous les agents."
 
 msgid "Select evaluators"
 msgstr "Sélectionnez des evaluators"
@@ -4396,6 +4620,9 @@ msgstr "Affichage des {WIZARD_TRACE_PAGE_SIZE} premières Traces — réduisez v
 msgid "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
 msgstr "Affichage des {0} Runs les plus récents sur {1} — ouvrez la page Runs pour la liste complète."
 
+msgid "Showing the most recent buckets — narrow the range for the full window."
+msgstr "Affichage des buckets les plus récents — réduisez la plage pour voir la fenêtre complète."
+
 msgid "Shown in full only once, when created"
 msgstr "Affichée en entier une seule fois, lors de la création"
 
@@ -4482,6 +4709,9 @@ msgstr "Démarrage du test run…"
 
 msgid "State"
 msgstr "État"
+
+msgid "Statistical flags"
+msgstr "Flags statistiques"
 
 msgid "Status"
 msgstr "Statut"
@@ -4806,6 +5036,12 @@ msgstr "Cela deviendra le modèle par défaut de votre projet. Tous les modèles
 msgid "This case was not run for this model."
 msgstr "Ce case n’a pas été exécuté pour ce model."
 
+msgid "This detector only reviews calls from the agents below."
+msgstr "Ce detector examine uniquement les appels des Agents ci-dessous."
+
+msgid "This detector reviews calls from every agent in the project."
+msgstr "Ce detector examine les appels de tous les Agents du projet."
+
 msgid "This evaluator hasn’t scored any test results yet — search for a case in the rail to load one."
 msgstr "Cet evaluator n’a encore scoré aucun résultat de Test Suite — recherchez un case dans la rail pour en charger un."
 
@@ -4848,6 +5084,9 @@ msgstr "Ce lien de réinitialisation du mot de passe est manquant ou mal formé.
 
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Cela supprime définitivement le Run et ses résultats. Cette action est irréversible."
+
+msgid "This removes the detector and its review history. This can't be undone."
+msgstr "Cela supprime le détecteur et son historique de revue. Cette action est irréversible."
 
 msgid "This reset link is invalid or has expired. Request a new one."
 msgstr "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau."
@@ -5036,6 +5275,15 @@ msgstr "Actions rapides et tools de Tracey"
 msgid "Tracey's session failed to start. Try again in a moment."
 msgstr "La session de Tracey n’a pas pu démarrer. Réessayez dans un instant."
 
+msgid "Trigger pattern"
+msgstr "Motif du déclencheur"
+
+msgid "Trigger type"
+msgstr "Type de déclencheur"
+
+msgid "Triggers"
+msgstr "Déclencheurs"
+
 msgid "Try a different search term."
 msgstr "Essayez un autre terme de recherche."
 
@@ -5099,6 +5347,9 @@ msgstr "Inconnu"
 
 msgid "unknown agent"
 msgstr "agent inconnu"
+
+msgid "Unknown agent"
+msgstr "Agent inconnu"
 
 msgid "Unlimited agents"
 msgstr "Agents illimités"
@@ -5314,6 +5565,12 @@ msgstr "Bienvenue sur <0>Proxytrace</0>"
 
 msgid "What the agent should respond with…"
 msgstr "Ce que l'Agent doit renvoyer…"
+
+msgid "What the judge model looks for in a matched call."
+msgstr "Ce que le modèle judge recherche dans un appel correspondant."
+
+msgid "What the judge model should look for in a matched turn."
+msgstr "Ce que le modèle juge doit rechercher dans un tour correspondant."
 
 msgid "When"
 msgstr "Quand"

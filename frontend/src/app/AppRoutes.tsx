@@ -26,6 +26,7 @@ import { OutlierSettingsSection } from '../features/settings/sections/OutlierSet
 const Setup = lazy(() => import('../features/setup/Setup'));
 const Dashboard = lazy(() => import('../features/dashboard/Dashboard'));
 const Traces = lazy(() => import('../features/traces/Traces'));
+const AnomalyDashboard = lazy(() => import('../features/anomalies/AnomalyDashboard'));
 const TraceyAI = lazy(() => import('../features/tracey/TraceyAI'));
 const Agents = lazy(() => import('../features/agents/Agents'));
 const Suites = lazy(() => import('../features/suites/Suites'));
@@ -91,6 +92,7 @@ export function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={wrap(<Dashboard />)} />
         <Route path="traces" element={wrap(<Traces />)} />
+        <Route path="anomalies" element={wrap(<AnomalyDashboard />)} />
         <Route path="tracey-ai" element={wrap(<RequiresFeature feature="Tracey"><TraceyAI /></RequiresFeature>)} />
         <Route path="agents" element={wrap(<Agents />)} />
         <Route path="suites" element={wrap(<Suites />)} />

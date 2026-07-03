@@ -14,4 +14,7 @@ public enum NotificationTargetKind
 
     /// <summary>The notification points at an <c>IOptimizationProposal</c>.</summary>
     OptimizationProposal,
+
+    /// <summary>The notification points at an <c>IAgentCall</c> (trace).</summary>
+    AgentCall,
 }

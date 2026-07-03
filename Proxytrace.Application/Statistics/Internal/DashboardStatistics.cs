@@ -216,6 +216,9 @@ internal class DashboardStatistics : IDashboardStatistics
     public Task<IReadOnlyList<LatencyStat>> GetLatencyAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
         => callStats.GetLatencyAsync(filter, cancellationToken);
 
+    public Task<IReadOnlyList<AgentAnomalyStat>> GetAnomalyCountsByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
+        => callStats.GetAnomalyCountsByAgentAsync(filter, bucket, cancellationToken);
+
     internal async Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StatisticsSummary callSummary = await callStats.GetSummaryAsync(filter, cancellationToken);

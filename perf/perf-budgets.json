@@ -20,6 +20,7 @@
     "statsCostEstimate": 600,
     "statsCallTrends": 1100,
     "statsPulse": 25,
+    "anomalyTimeline": 60,
     "agentOverview": 250,
     "agentDistributions": 250,
     "testRunStatsBySuite": 60,
@@ -27,6 +28,8 @@
     "testRunStatsPassTotals": 150,
     "testRunStatsRecentCohorts": 200
   },
+
+  "_comment_anomaly": "anomalyTimeline guards the anomaly-dashboard timeline aggregate (GetAnomalyCountsByAgentAsync): a GROUP BY (bucket, agent) with bitmask split counts over WHERE OutlierFlags <> 0, which rides the partial outlier index — the seeder flags ~3% of calls, so at 1M rows the scan touches ~30k rows, far cheaper than the full-window stats aggregates. Calibrated 2026-07-03 on the full 1M seed: observed p95 45.8ms.",
 
   "_comment_testRunStats": "testRunStatsBySuite/testRunStatsBySuitePage guard the suite-scoped TestRunStats projection query (issue #253). The test-suites controller previously materialized the whole TestRunStatsEntity table and filtered in memory on every suites list + single-suite GET; the fix pushes the suite set into SQL (WHERE SuiteId IN (...)), backed by the existing index on TestRunStatsEntity.SuiteId. The query returns only the rows for the requested suite(s), so it is an index range read independent of total table size. testRunStatsPassTotals/testRunStatsRecentCohorts guard the dashboard's server-side TestRunStats aggregates (issue #288): the pass-rate totals (single scalar GROUP BY row) and the sparkline cohorts (GROUP BY (GroupId, EndpointId) ordered by max(RunCompletedAt), capped at 50) that replaced two O(all-history) materializations in DashboardStatistics. All four budgets are UNCALIBRATED PLACEHOLDERS (set conservatively; the aggregates scan the ~25k-row seeded table but return a bounded result) — RECALIBRATE on a full ~1M / 25k-test-run seed (set ~20-30% above the observed p95).",
 

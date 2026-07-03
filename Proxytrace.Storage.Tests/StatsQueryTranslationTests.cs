@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Security;
 using Proxytrace.Storage.Internal.Entities.AgentCall;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Statistics;
 using Proxytrace.Testing;
 
@@ -110,6 +112,40 @@ public sealed class StatsQueryTranslationTests
 
         sql.Should().Contain("GROUP BY");
         sql.Should().Contain("LIMIT");
+    }
+
+    [TestMethod]
+    public void AnomalyCountsAggregate_BitmaskSplitPerBucketPerAgent_TranslatesToServerSideGroupBy()
+    {
+        using IContainer container = BuildPostgresContainer();
+        var context = container.Resolve<StorageDbContext>();
+
+        // The GetAnomalyCountsByAgentAsync shape: outlier rows only (matches the partial index
+        // filter), integer-slot day buckets per agent, and the static/custom bitmask split counts.
+        const double widthMs = 24 * 60 * 60 * 1000d;
+        const OutlierFlags staticBits =
+            OutlierFlags.HighTokens | OutlierFlags.HighLatency | OutlierFlags.LowCacheHit | OutlierFlags.ManyToolCalls;
+        string sql = context.Set<AgentCallEntity>()
+            .Where(c => c.OutlierFlags != OutlierFlags.None)
+            .Join(context.Set<AgentVersionEntity>(),
+                c => c.AgentVersionId, v => v.Id,
+                (c, v) => new { c.CreatedAt, v.AgentId, c.OutlierFlags })
+            .GroupBy(x => new
+            {
+                Bucket = (int)Math.Floor((x.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                x.AgentId,
+            })
+            .Select(g => new
+            {
+                g.Key.Bucket,
+                g.Key.AgentId,
+                Static = g.Count(x => (x.OutlierFlags & staticBits) != OutlierFlags.None),
+                Custom = g.Count(x => (x.OutlierFlags & OutlierFlags.CustomAnomaly) != OutlierFlags.None),
+            })
+            .ToQueryString();
+
+        sql.Should().Contain("GROUP BY");
+        sql.Should().Contain("<> 0");
     }
 
     [TestMethod]

@@ -32,6 +32,7 @@ export default defineConfig({
             { text: 'Proxy Setup', link: '/guide/proxy-setup' },
             { text: 'Capturing Traces', link: '/guide/capturing-traces' },
             { text: 'Finding Outliers', link: '/guide/outliers' },
+            { text: 'Anomaly Dashboard', link: '/guide/anomaly-dashboard' },
             { text: 'Agents', link: '/guide/agents' },
             { text: 'Test Suites & Cases', link: '/guide/test-suites-and-cases' },
             { text: 'Evaluators', link: '/guide/evaluators' },

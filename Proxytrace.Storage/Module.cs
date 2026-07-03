@@ -13,6 +13,7 @@ using Proxytrace.Domain.Statistics;
 using Proxytrace.Domain.TestSupport;
 using Proxytrace.Storage.Internal;
 using Proxytrace.Storage.Internal.Entities;
+using Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector;
 using Proxytrace.Storage.Internal.Entities.Project;
 using Proxytrace.Storage.Internal.Entities.TestRunSchedule;
 using Proxytrace.Storage.Internal.Entities.TestSuite;
@@ -131,6 +132,7 @@ public sealed class Module : Autofac.Module
         ConfigureEntities(builder);
         ConfigureEntity(typeof(TestSuiteEvaluatorEntity), builder);
         ConfigureEntity(typeof(TestRunScheduleEndpointEntity), builder);
+        ConfigureEntity(typeof(CustomAnomalyDetectorAgentEntity), builder);
         ConfigureEntity(typeof(ProjectUserEntity), builder);
         ConfigureEntity(typeof(Internal.Entities.TestResult.EvaluationStatEntity), builder);
 

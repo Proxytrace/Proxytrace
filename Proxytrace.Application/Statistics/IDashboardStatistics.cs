@@ -16,4 +16,10 @@ public interface IDashboardStatistics
     Task<IReadOnlyList<AgentBreakdownStat>> GetAgentBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<LatencyStat>> GetLatencyAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Bucketed per-agent anomaly counts (statistical vs custom-detector split) for the anomaly
+    /// dashboard timeline.
+    /// </summary>
+    Task<IReadOnlyList<AgentAnomalyStat>> GetAnomalyCountsByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default);
 }

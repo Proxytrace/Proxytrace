@@ -7,6 +7,7 @@ const ROUTES = [
   { path: '/', label: 'root' },
   { path: '/dashboard', label: 'dashboard' },
   { path: '/traces', label: 'traces' },
+  { path: '/anomalies', label: 'anomalies' },
   { path: '/agents', label: 'agents' },
   { path: '/suites', label: 'suites' },
   { path: '/runs', label: 'runs' },

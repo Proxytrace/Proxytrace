@@ -12,4 +12,5 @@ public enum LicenseFeature
     AuditLog,
     Tracey,
     ScheduledTestRuns,
+    CustomAnomalyDetectors,
 }

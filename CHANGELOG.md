@@ -9,6 +9,35 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **A new Anomaly dashboard.** A dedicated **Anomalies** page (in the sidebar, after Traces) brings
+  every agent's anomalies together in one place: a table of recently flagged calls (agent, message
+  preview, why it was flagged, when) beside a statistics column — a live, stacked per-agent
+  timeline with an agent legend (five-minute, hourly, or daily buckets), summary tiles (flagged
+  calls, statistical vs. detector flags, agents affected), and a **Most flagged agents** ranking
+  with proportional share bars. Filter by agent and click any row to open the trace's full detail
+  panel right on the dashboard (the same panel as the Traces page, with prev/next stepping through
+  the flagged calls). The whole page updates in real time as calls are captured and flagged.
+
+- **Custom LLM-based anomaly detectors (Enterprise).** Define your own anomaly detectors per
+  project: describe what "anomalous" means in plain-language review instructions, pick a review
+  model, and set 1–20 trigger words or regular expressions that gate which calls get reviewed. When
+  a trigger matches a new turn, the detector's model reviews it and — on an anomalous verdict — flags
+  the call with a **Custom detector** chip, adds it to the Anomaly dashboard, and raises a
+  notification that deep-links to the trace. Scope a detector to all agents or selected ones, and
+  enable or disable it without losing its configuration. Because reviews cost one model call per
+  trigger-matched turn, triggers keep the LLM focused only on the calls that could be a problem.
+  Detectors are managed on the dashboard's **Detectors** tab — a two-column view (like Evaluators)
+  with the searchable detector list on the left and the selected detector's instructions, triggers,
+  and agent scope on the right, including a quick enable/disable toggle in the detail header.
+
+- **Anomalous traces announce themselves in the trace detail panel.** Opening a flagged call's
+  details — from the Traces list or the Anomaly dashboard — now shows an **Anomalous trace**
+  warning banner right below the header: the statistical reasons as chips (high latency, high
+  token count, …) and, for custom-detector hits, the detector's name, the trigger that matched,
+  and the reviewer's reasoning.
+
 ### Changed
 
 - **The dashboard is now a live mission control.** A new full-width pulse band charts

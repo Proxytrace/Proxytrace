@@ -14,6 +14,8 @@ using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Auth.Local.Internal;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Cleanup.Internal;
+using Proxytrace.Application.CustomAnomaly;
+using Proxytrace.Application.CustomAnomaly.Internal;
 using Proxytrace.Application.Demo;
 using Proxytrace.Application.Demo.Internal;
 using Proxytrace.Application.ErrorLog;
@@ -134,6 +136,10 @@ public sealed class Module : Autofac.Module
             .As<INotificationBroadcaster>()
             .SingleInstance();
 
+        builder.RegisterType<CustomAnomalyBroadcaster>()
+            .As<ICustomAnomalyBroadcaster>()
+            .SingleInstance();
+
         // Notification system. NotificationService fans every NotificationRequest out to all
         // registered INotificationChannel implementations (auto-discovered below). v1 ships the
         // dashboard channel (persists + SSE) and an email stub; future channels need no caller change.
@@ -181,6 +187,33 @@ public sealed class Module : Autofac.Module
                     return kiosk.Enabled && !endpoint.IsConfigured
                         ? new NullHostedService()
                         : sc.GetRequiredService<AnomalyDetectionService>();
+                }));
+        }
+
+        // Custom anomaly review. Mirrors the anomaly detection service above: a queue fed from the
+        // ingestion processor per persisted call, drained by a background worker that trigger-gates
+        // an LLM review per matching detector.
+        builder.RegisterType<CustomAnomalyReviewService>()
+            .As<ICustomAnomalyReviewQueue>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(CustomAnomalyReviewService));
+
+        const string customAnomalyReviewHostedServiceKey = "Proxytrace.Application.CustomAnomalyReviewService.Registered";
+        if (!builder.Properties.ContainsKey(customAnomalyReviewHostedServiceKey))
+        {
+            builder.Properties[customAnomalyReviewHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services
+                => services.AddSingleton<IHostedService>(sc =>
+                {
+                    var kiosk = sc.GetRequiredService<KioskOptions>();
+                    var endpoint = sc.GetRequiredService<KioskEndpointOptions>();
+
+                    // Disabled only in a read-only kiosk (no LLM endpoint), matching the test
+                    // runner: with no judge model configured, reviews cannot run.
+                    return kiosk.Enabled && !endpoint.IsConfigured
+                        ? new NullHostedService()
+                        : sc.GetRequiredService<CustomAnomalyReviewService>();
                 }));
         }
 

@@ -365,6 +365,104 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("AuditLogEntryEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorAgentEntity", b =>
+                {
+                    b.Property<Guid>("DetectorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AgentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("DetectorId", "AgentId");
+
+                    b.HasIndex("AgentId");
+
+                    b.ToTable("CustomAnomalyDetectorAgentEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Agent")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AllAgents")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("Project")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Triggers")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Agent");
+
+                    b.HasIndex("Project", "IsEnabled");
+
+                    b.ToTable("CustomAnomalyDetectorEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyResult.CustomAnomalyResultEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AgentCallId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DetectorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MatchedTrigger")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reasoning")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentCallId");
+
+                    b.HasIndex("DetectorId");
+
+                    b.HasIndex("ProjectId", "CreatedAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("CustomAnomalyResultEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.EmailSettings.EmailSettingsEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1566,6 +1664,45 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorAgentEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorEntity", null)
+                        .WithMany("ScopedAgents")
+                        .HasForeignKey("DetectorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Agent")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyResult.CustomAnomalyResultEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallEntity", null)
+                        .WithMany()
+                        .HasForeignKey("AgentCallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorEntity", null)
+                        .WithMany()
+                        .HasForeignKey("DetectorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Invite.InviteEntity", b =>
                 {
                     b.HasOne("Proxytrace.Storage.Internal.Entities.User.UserEntity", null)
@@ -1805,6 +1942,11 @@ namespace Proxytrace.Storage.Migrations
                         .HasForeignKey("User")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorEntity", b =>
+                {
+                    b.Navigation("ScopedAgents");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", b =>

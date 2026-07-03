@@ -23,7 +23,8 @@ public record AgentCallDto(
     ModelParametersDto ModelParameters,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    Guid? ConversationId);
+    Guid? ConversationId,
+    int OutlierFlags);
 
 public record AgentCallMessageDto(string Role, string Content, IReadOnlyList<AgentCallToolRequestDto> ToolRequests, string? ToolCallId = null);
 

@@ -179,6 +179,86 @@ export interface TracesOverviewDto {
   agentBreakdown: AgentBreakdownDto[];
   latency: LatencyStatDto[];
 }
+/**
+ * One bucketed per-agent anomaly cell for the anomaly-dashboard timeline. The series is **sparse**
+ * (only non-empty cells are returned, sorted by `bucketStart` then `agentId`): `staticCount` is
+ * calls flagged by the statistical ingestion-time outlier detector, `customCount` calls flagged by
+ * a custom detector (a call carrying both counts in both). See `GET /api/statistics/anomalies/timeline`.
+ */
+export interface AgentAnomalyStatDto {
+  bucketStart: string;
+  agentId: string;
+  staticCount: number;
+  customCount: number;
+}
+
+/** A custom detector's anomalous verdict on a call — attribution for the recent-anomalies list. */
+export interface CustomAnomalyHitDto {
+  detectorId: string;
+  detectorName: string;
+  matchedTrigger: string;
+  reasoning: string | null;
+}
+
+/**
+ * One recent-anomalies row: the flagged call in the traces list-item shape plus its
+ * custom-detector attributions (empty for purely statistical outliers).
+ */
+export interface AnomalyListItemDto {
+  call: AgentCallListItemDto;
+  customAnomalies: CustomAnomalyHitDto[];
+}
+
+/* ── Custom anomaly detectors ── */
+/** How a trigger pattern is matched against a conversation turn. Mirrors backend `TriggerKind`. */
+export enum TriggerKind { Phrase = 'Phrase', Regex = 'Regex' }
+
+/** One trigger gating a detector's LLM review: a phrase (case-insensitive substring) or a regex. */
+export interface AnomalyTriggerDto {
+  kind: TriggerKind;
+  pattern: string;
+}
+
+/** A user-defined LLM-based anomaly detector. The list endpoint returns the full object (no separate
+ * detail fetch) — it carries the review instructions, judge endpoint, triggers and agent scope. */
+export interface CustomAnomalyDetectorDto {
+  id: string;
+  name: string;
+  /** LLM review instructions (the hidden judge agent's system prompt). */
+  instructions: string;
+  projectId: string;
+  endpointId: string;
+  endpointName: string;
+  triggers: AnomalyTriggerDto[];
+  /** When true the detector reviews every agent's calls; otherwise only {@link agentIds}. */
+  allAgents: boolean;
+  agentIds: string[];
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCustomAnomalyDetectorRequest {
+  projectId: string;
+  name: string;
+  instructions: string;
+  endpointId: string;
+  triggers: AnomalyTriggerDto[];
+  allAgents: boolean;
+  agentIds?: string[];
+  isEnabled: boolean;
+}
+
+export interface UpdateCustomAnomalyDetectorRequest {
+  name: string;
+  instructions: string;
+  /** Null/omitted keeps the detector's current judge endpoint. */
+  endpointId?: string;
+  triggers: AnomalyTriggerDto[];
+  allAgents: boolean;
+  agentIds?: string[];
+  isEnabled: boolean;
+}
 /** Single-call dashboard payload bundling every widget's data. */
 export interface DashboardViewDto {
   summary: SummaryDto;
@@ -1018,6 +1098,14 @@ export interface TraceCreatedEvent {
   provider: string;
   createdAt: string;
 }
+/** Emitted on `GET /api/anomalies/stream` when a custom detector flags a call (event `anomaly-flagged`). */
+export interface AnomalyFlaggedEvent {
+  agentCallId: string;
+  agentId: string;
+  projectId: string;
+  detectorId: string;
+  detectorName: string;
+}
 export interface TestCaseStartedEvent { type: 'test-case-started'; runId: string; groupId: string; testCaseId: string; }
 export interface InferenceDoneEvent { type: 'inference-done'; runId: string; groupId: string; testCaseId: string; }
 export interface EvaluationArrivedEvent { type: 'evaluation-arrived'; runId: string; groupId: string; testCaseId: string; evaluation: EvaluationResultDto; }
@@ -1172,6 +1260,9 @@ export enum AuditAction {
   SecretsBackfilled = 'SecretsBackfilled',
   AccessDenied = 'AccessDenied',
   OutlierSettingsUpdated = 'OutlierSettingsUpdated',
+  CustomAnomalyDetectorCreated = 'CustomAnomalyDetectorCreated',
+  CustomAnomalyDetectorUpdated = 'CustomAnomalyDetectorUpdated',
+  CustomAnomalyDetectorDeleted = 'CustomAnomalyDetectorDeleted',
 }
 
 export enum AuditActorType {
