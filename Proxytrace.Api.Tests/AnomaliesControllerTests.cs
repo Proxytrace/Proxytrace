@@ -114,6 +114,81 @@ public sealed class AnomaliesControllerTests : BaseTest<Module>
         result.Items.Should().BeEmpty();
     }
 
+    [TestMethod]
+    public async Task GetForCall_UnknownCall_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.GetForCall(Guid.NewGuid(), CancellationToken);
+
+        result.Result.Should().BeOfType<Microsoft.AspNetCore.Mvc.NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetForCall_StatisticalOutlierOnly_ReturnsEmptyList()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await NewAgentAsync(services);
+        var call = await AddCallAsync(services, agent, OutlierFlags.HighTokens | OutlierFlags.HighLatency);
+
+        var result = await controller.GetForCall(call.Id, CancellationToken);
+
+        result.Value.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetForCall_CustomAnomalyWithResult_ReturnsAttribution()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await NewAgentAsync(services);
+        var call = await AddCallAsync(services, agent, OutlierFlags.CustomAnomaly);
+        var detector = await services
+            .GetRequiredService<IDomainEntityGenerator<ICustomAnomalyDetector>>()
+            .CreateAsync(CancellationToken);
+        var createResult = services.GetRequiredService<ICustomAnomalyResult.CreateNew>();
+        await services.GetRequiredService<ICustomAnomalyResultRepository>().AddAsync(
+            createResult(detector.Id, call.Id, agent.Project.Id, "drop table", "Destructive SQL in user turn."),
+            CancellationToken);
+
+        var result = await controller.GetForCall(call.Id, CancellationToken);
+
+        var hit = result.Value.Should().ContainSingle().Subject;
+        hit.DetectorId.Should().Be(detector.Id);
+        hit.DetectorName.Should().Be(detector.Name);
+        hit.MatchedTrigger.Should().Be("drop table");
+        hit.Reasoning.Should().Be("Destructive SQL in user turn.");
+    }
+
+    [TestMethod]
+    public async Task GetForCall_CustomAnomalyFlagWithoutResultRow_ReturnsEmptyList()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await NewAgentAsync(services);
+        var call = await AddCallAsync(services, agent, OutlierFlags.CustomAnomaly);
+
+        var result = await controller.GetForCall(call.Id, CancellationToken);
+
+        result.Value.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetForCall_InaccessibleProject_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var agent = await NewAgentAsync(services);
+        var call = await AddCallAsync(services, agent, OutlierFlags.CustomAnomaly);
+        var controller = ResolveController(services, DenyingGuard());
+
+        // Other tenants' calls are hidden behind a 404, not an empty list.
+        var result = await controller.GetForCall(call.Id, CancellationToken);
+
+        result.Result.Should().BeOfType<Microsoft.AspNetCore.Mvc.NotFoundResult>();
+    }
+
     // A non-admin who is a member of nothing: every project is inaccessible, scope set is empty.
     private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
     {

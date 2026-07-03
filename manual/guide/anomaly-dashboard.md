@@ -45,8 +45,10 @@ reviewer's reasoning for calling the call anomalous.
 ![The recent-anomalies table: each row names the agent, previews the message, and shows the flags that caught it](/screenshots/anomaly-dashboard/recent-anomalies.png)
 
 - **Filter by agent** to narrow the list to a single agent when you're chasing one problem.
-- **Click a row** to jump straight to that call in the Traces list (it opens focused on the flagged
-  trace), where you can read the full conversation, tokens, and timing.
+- **Click a row** to open the call's full detail panel right here on the dashboard — the same
+  panel as in the [Traces list](/guide/capturing-traces#the-trace-detail-panel), with the
+  conversation, tokens, timing, and a warning banner explaining why the call was flagged. Use the
+  arrows in the panel header (or your keyboard) to step through the flagged calls one by one.
 
 ## Custom anomaly detectors
 

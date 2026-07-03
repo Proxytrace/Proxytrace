@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { agentCallsApi } from '../../../api/agent-calls';
-import { QUERY_KEYS } from '../../../api/query-keys';
-import { useSelectedId } from '../../../hooks/useSelectedId';
-import type { AgentCallDto } from '../../../api/models';
+import { agentCallsApi } from '../api/agent-calls';
+import { QUERY_KEYS } from '../api/query-keys';
+import { useSelectedId } from './useSelectedId';
+import type { AgentCallDto } from '../api/models';
 
 /**
  * Keeps the open trace-detail selection in the URL (`?trace=<id>`) so it survives

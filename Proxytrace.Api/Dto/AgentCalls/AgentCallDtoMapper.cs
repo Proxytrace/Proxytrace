@@ -39,7 +39,8 @@ public sealed class AgentCallDtoMapper
         ModelParametersDto.FromDomain(c.ModelParameters),
         c.CreatedAt,
         c.UpdatedAt,
-        c.ConversationId);
+        c.ConversationId,
+        (int)c.OutlierFlags);
 
     /// <summary>
     /// Maps the storage-projected <see cref="AgentCallListItem"/> (traces table list path) straight

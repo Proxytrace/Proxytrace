@@ -17,6 +17,7 @@ import { Tabs } from '../../../components/ui/Tabs';
 import { DetailPanel } from '../../../components/overlays/DetailPanel';
 import { PromoteModal } from '../PromoteModal';
 import { DrawerStat } from './DrawerStat';
+import { TraceAnomalyBanner } from './TraceAnomalyBanner';
 import { TraceMessagesTab } from './TraceMessagesTab';
 import { TraceRawJsonTab, TraceMetadataTab } from './TraceMetadataTab';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
@@ -177,6 +178,8 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             )}
           </div>
         </div>
+
+        <TraceAnomalyBanner trace={trace} />
 
         {/* Stat band */}
         <div className="mx-5 mt-3.5 px-4 py-3.5 bg-card-2 rounded-xl grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))] gap-3.5 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">

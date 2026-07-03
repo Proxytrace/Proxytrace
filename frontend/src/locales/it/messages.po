@@ -1033,6 +1033,9 @@ msgstr "Anomalie e avvisi dei tuoi test run appariranno qui."
 msgid "Anomalies over time"
 msgstr "Anomalie nel tempo"
 
+msgid "Anomalous trace"
+msgstr "Trace anomalo"
+
 msgid "Anomaly"
 msgstr "Anomalia"
 
@@ -2797,6 +2800,10 @@ msgstr "Corrisponde a \"{0}\""
 #. placeholder {1}: hit.reasoning
 msgid "Matched \"{0}\" — {1}"
 msgstr "Corrisponde a \"{0}\" — {1}"
+
+#. placeholder {0}: hit.matchedTrigger
+msgid "matched <0>“{0}”</0>"
+msgstr "corrisponde a <0>“{0}”</0>"
 
 msgid "Max"
 msgstr "Massimo"

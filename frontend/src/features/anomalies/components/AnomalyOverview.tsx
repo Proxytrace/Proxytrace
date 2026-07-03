@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { useAgents } from '../../agents/hooks/useAgents';
+import { TraceDetail } from '../../traces/TraceDetail';
+import { useSelectedTrace } from '../../../hooks/useSelectedTrace';
 import { useAnomalyFilters } from '../hooks/useAnomalyFilters';
 import { useAnomalyTimeline } from '../hooks/useAnomalyTimeline';
 import { useRecentAnomalies } from '../hooks/useRecentAnomalies';
@@ -27,6 +29,12 @@ export function AnomalyOverview() {
 
   const timeline = useAnomalyTimeline(filters.timeRange, filters.bucket, filters.agentFilter);
   const recent = useRecentAnomalies(filters.agentFilter, page);
+
+  // Clicking a row opens the shared trace-detail drawer right here (?trace= in the URL, same
+  // convention as the Traces page); prev/next walk the current page of the recent list.
+  const [selectedTrace, selectTrace] = useSelectedTrace();
+  const recentIds = recent.items.map(item => item.call.id);
+  const selectedIdx = selectedTrace ? recentIds.indexOf(selectedTrace.id) : -1;
 
   const nameById = useMemo(() => {
     const map = new Map(allAgents.map(a => [a.id, a.name]));
@@ -60,6 +68,7 @@ export function AnomalyOverview() {
           onPageChange={setPage}
           isLoading={recent.isLoading}
           isError={recent.isError}
+          onSelectTrace={selectTrace}
         />
         <div className="flex flex-col gap-4 min-w-0">
           <AnomalyTimelineCard
@@ -75,6 +84,15 @@ export function AnomalyOverview() {
           <NeedsHelpStrip rows={timeline.rows} agentName={nameById} onSelectAgent={selectAgent} />
         </div>
       </div>
+
+      {selectedTrace && (
+        <TraceDetail
+          trace={selectedTrace}
+          onClose={() => selectTrace(null)}
+          onPrev={selectedIdx > 0 ? () => selectTrace(recentIds[selectedIdx - 1]) : undefined}
+          onNext={selectedIdx >= 0 && selectedIdx < recentIds.length - 1 ? () => selectTrace(recentIds[selectedIdx + 1]) : undefined}
+        />
+      )}
     </div>
   );
 }

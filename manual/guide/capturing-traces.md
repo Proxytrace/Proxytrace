@@ -93,8 +93,16 @@ across projects.
 ![The trace detail panel: latency, token and cost metrics above the Messages tab, which lays out the system, user, and assistant conversation.](/screenshots/traces/detail.png)
 
 Click a trace to open its detail panel. The header shows the trace ID with a **copy**
-button beside it that puts the full ID on your clipboard. The **Messages** tab lays out the
-conversation as a stack of expandable blocks:
+button beside it that puts the full ID on your clipboard.
+
+If the call was [flagged as an outlier](/guide/outliers) or by a
+[custom anomaly detector](/guide/anomaly-dashboard#custom-anomaly-detectors), an **Anomalous
+trace** warning banner appears right below the header, so a problematic call is unmissable the
+moment you open it. The banner lists the statistical reasons as chips (high latency, high token
+count, …) and, for detector hits, names the detector, shows the trigger that matched, and quotes
+the reviewer's reasoning.
+
+The **Messages** tab lays out the conversation as a stack of expandable blocks:
 
 - **System messages** and **tool calls** start **collapsed** to keep long traces scannable —
   click a block's header to expand it. User and assistant messages start expanded.

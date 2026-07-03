@@ -16,8 +16,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   preview, why it was flagged, when) beside a statistics column — a live, stacked per-agent
   timeline with an agent legend (five-minute, hourly, or daily buckets), summary tiles (flagged
   calls, statistical vs. detector flags, agents affected), and a **Most flagged agents** ranking
-  with proportional share bars. Filter by agent and click any row to jump straight to the focused
-  trace. The whole page updates in real time as calls are captured and flagged.
+  with proportional share bars. Filter by agent and click any row to open the trace's full detail
+  panel right on the dashboard (the same panel as the Traces page, with prev/next stepping through
+  the flagged calls). The whole page updates in real time as calls are captured and flagged.
 
 - **Custom LLM-based anomaly detectors (Enterprise).** Define your own anomaly detectors per
   project: describe what "anomalous" means in plain-language review instructions, pick a review
@@ -30,6 +31,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   Detectors are managed on the dashboard's **Detectors** tab — a two-column view (like Evaluators)
   with the searchable detector list on the left and the selected detector's instructions, triggers,
   and agent scope on the right, including a quick enable/disable toggle in the detail header.
+
+- **Anomalous traces announce themselves in the trace detail panel.** Opening a flagged call's
+  details — from the Traces list or the Anomaly dashboard — now shows an **Anomalous trace**
+  warning banner right below the header: the statistical reasons as chips (high latency, high
+  token count, …) and, for custom-detector hits, the detector's name, the trigger that matched,
+  and the reviewer's reasoning.
 
 ### Changed
 

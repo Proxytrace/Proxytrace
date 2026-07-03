@@ -40,6 +40,10 @@ chip to see which characteristics tripped (for example, *High latency, Many tool
 grouped conversation, the chip on the collapsed row covers any turn that was flagged; expand it to
 see which turns.
 
+Opening a flagged call's [detail panel](/guide/capturing-traces#the-trace-detail-panel) shows an
+**Anomalous trace** banner below the header with the reasons it was flagged — so you never miss
+that the trace you're reading is an outlier.
+
 To focus on just the flagged calls, switch on the **Outliers only** toggle in the Traces
 toolbar. It combines with every other filter — agent, time range, search — so you can ask
 questions like "show me the outliers for this agent in the last 24 hours". Toggle it back off

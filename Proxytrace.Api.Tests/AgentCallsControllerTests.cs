@@ -13,6 +13,9 @@ using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.Message;
+using Proxytrace.Domain.Usage;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -66,6 +69,40 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
 
         result.Value.Should().NotBeNull();
         result.Value.Id.Should().Be(call.Id);
+    }
+
+    [TestMethod]
+    public async Task Get_FlaggedCall_CarriesOutlierFlags()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var createCompletion = services.GetRequiredService<ICompletion.Create>();
+        var conversation = Conversation.Create().With(new UserMessage([Content.FromText("hi")]));
+        ICompletion completion = createCompletion(
+            new AssistantMessage([Content.FromText("ok")], []),
+            new TokenUsage(100, 10, 0),
+            TimeSpan.FromMilliseconds(100));
+        var call = await services.GetRequiredService<IAgentCallRepository>().AddAsync(
+            createCall(
+                agent: agent,
+                version: agent.CurrentVersion,
+                endpoint: agent.Endpoint,
+                request: conversation,
+                response: completion,
+                httpStatus: System.Net.HttpStatusCode.OK,
+                finishReason: "stop",
+                errorMessage: null,
+                modelParameters: agent.ModelParameters,
+                outlierFlags: OutlierFlags.HighTokens | OutlierFlags.HighLatency),
+            CancellationToken);
+
+        var result = await controller.Get(call.Id, CancellationToken);
+
+        // The detail drawer's anomaly banner reads this off the fat DTO — it must survive mapping.
+        result.Value.Should().NotBeNull();
+        result.Value.OutlierFlags.Should().Be((int)(OutlierFlags.HighTokens | OutlierFlags.HighLatency));
     }
 
     [TestMethod]

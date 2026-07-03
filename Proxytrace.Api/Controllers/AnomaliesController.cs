@@ -79,7 +79,11 @@ public class AnomaliesController : ControllerBase
             return new PagedResult<AnomalyListItemDto>([], 0, page, pageSize);
         var filter = new AgentCallFilter(AgentId: agentId, ProjectId: projectId, OutlierOnly: true);
         var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
-        var hitsByCall = await GetCustomAnomalyHitsAsync(items, cancellationToken);
+        var flaggedIds = items
+            .Where(i => ((OutlierFlags)i.OutlierFlags).HasFlag(OutlierFlags.CustomAnomaly))
+            .Select(i => i.Id)
+            .ToList();
+        var hitsByCall = await GetCustomAnomalyHitsAsync(flaggedIds, cancellationToken);
         var dtos = items
             .Select(item => new AnomalyListItemDto(
                 agentCallDtoMapper.ToListItemDto(item),
@@ -88,17 +92,34 @@ public class AnomaliesController : ControllerBase
         return new PagedResult<AnomalyListItemDto>(dtos, total, page, pageSize);
     }
 
+    /// <summary>
+    /// Custom-detector attributions for one flagged call — the detector rows (name, matched
+    /// trigger, reasoning) the trace detail drawer shows beneath the outlier chips. Empty for a
+    /// purely statistical outlier. Other tenants' calls are hidden behind a 404, mirroring
+    /// <c>AgentCallsController.Get</c>.
+    /// </summary>
+    [HttpGet("{callId:guid}")]
+    public async Task<ActionResult<IReadOnlyList<CustomAnomalyHitDto>>> GetForCall(
+        Guid callId, CancellationToken cancellationToken)
+    {
+        var call = await repository.FindAsync(callId, cancellationToken);
+        if (call is null)
+            return NotFound();
+        if (!await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
+            return NotFound();
+        if (!call.OutlierFlags.HasFlag(OutlierFlags.CustomAnomaly))
+            return new List<CustomAnomalyHitDto>();
+        var hitsByCall = await GetCustomAnomalyHitsAsync([callId], cancellationToken);
+        return hitsByCall.GetValueOrDefault(callId, []).ToList();
+    }
+
     // One batch query for the page's attributions, then detector names resolved per distinct id
     // (a handful at most). Results cascade away with their detector, so a missing detector is a
     // delete race mid-request — those hits are dropped rather than shown nameless.
     private async Task<Dictionary<Guid, IReadOnlyList<CustomAnomalyHitDto>>> GetCustomAnomalyHitsAsync(
-        IReadOnlyList<AgentCallListItem> items,
+        IReadOnlyList<Guid> flaggedIds,
         CancellationToken cancellationToken)
     {
-        var flaggedIds = items
-            .Where(i => ((OutlierFlags)i.OutlierFlags).HasFlag(OutlierFlags.CustomAnomaly))
-            .Select(i => i.Id)
-            .ToList();
         if (flaggedIds.Count == 0)
             return [];
 

@@ -1,5 +1,4 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useNavigate } from 'react-router-dom';
 import { DataTable, type DataColumn } from '../../../components/ui/DataTable';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -19,13 +18,13 @@ interface Props {
   onPageChange: (page: number) => void;
   isLoading: boolean;
   isError: boolean;
+  onSelectTrace: (id: string) => void;
 }
 
 /** The dashboard's work list: recently flagged calls as a table (agent · message · why · when).
- * Clicking a row opens the call focused in the Traces list. */
-export function RecentAnomaliesList({ items, total, page, onPageChange, isLoading, isError }: Props) {
+ * Clicking a row opens the shared trace-detail drawer in place. */
+export function RecentAnomaliesList({ items, total, page, onPageChange, isLoading, isError, onSelectTrace }: Props) {
   const { t } = useLingui();
-  const navigate = useNavigate();
 
   /* eslint-disable lingui/no-unlocalized-strings -- `width` values are CSS grid tracks, not UI copy */
   const columns: DataColumn<AnomalyListItemDto>[] = [
@@ -97,7 +96,7 @@ export function RecentAnomaliesList({ items, total, page, onPageChange, isLoadin
               columns={columns}
               rows={items}
               rowKey={item => item.call.id}
-              onRowClick={item => navigate(`/traces?focus=${item.call.id}`)}
+              onRowClick={item => onSelectTrace(item.call.id)}
               emptySlot={
                 <div data-testid="anomaly-recent-empty-state">
                   <EmptyState title={t`No anomalies in this window`} description={t`Flagged calls will appear here as they arrive.`} />

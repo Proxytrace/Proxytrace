@@ -128,6 +128,9 @@ export const QUERY_KEYS = {
   /** Prefix matching every recent-anomalies query — use for SSE invalidation. */
   anomaliesRecentRoot: ['anomalies-recent'] as const,
 
+  /** Custom-detector attributions for one trace (the detail drawer's anomaly banner). */
+  anomalyHits: (callId?: string) => ['anomaly-hits', callId ?? null] as const,
+
   /** Custom anomaly detectors for a project (the list carries full detectors — no detail fetch). */
   anomalyDetectors: (projectId?: string) => ['anomaly-detectors', projectId ?? null] as const,
   /** Prefix matching every anomaly-detectors query — use for invalidation. */

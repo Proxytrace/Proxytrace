@@ -10,7 +10,7 @@ import { useTraceQueries } from './hooks/useTraceQueries';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { useTraceFilters } from './hooks/useTraceFilters';
 import { useFocusTrace } from './hooks/useFocusTrace';
-import { useSelectedTrace } from './hooks/useSelectedTrace';
+import { useSelectedTrace } from '../../hooks/useSelectedTrace';
 import { useScrollToTrace } from './hooks/useScrollToTrace';
 import { useTraceSseStream } from './hooks/useTraceSseStream';
 import { TraceToolbar } from './components/TraceToolbar';
