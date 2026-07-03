@@ -110,6 +110,29 @@ Proxytrace detects an Azure upstream and lists its deployments instead, so `mode
 returns your deployment names (e.g. `gpt-4o-prod`) rather than an empty list.
 :::
 
+## Reaching other upstream endpoints
+
+Some upstreams expose endpoints beyond the chat/completions API — most commonly a **health
+check** (`/health`), but also anything else the provider serves at its host. Because your
+client's base URL points at Proxytrace, a call to `https://your-proxytrace-host/{project}/health`
+would otherwise have nowhere to go.
+
+Proxytrace **transparently forwards any path under `/{project}/…` that is not part of the
+`openai/v1` API** straight to the upstream provider's host, using the provider's real key. So
+`GET /{project}/health` reaches the upstream's `/health`, `GET /{project}/v1/models` reaches its
+`/v1/models`, and so on — no configuration needed.
+
+These pass-through calls are **not captured as traces** (only the `openai/v1` API is). They still
+require a valid key for the project, exactly like a traced call. If the upstream answers with a
+redirect, Proxytrace relays the `3xx` (including its `Location`) back to your client verbatim
+rather than following it server-side — `Location` values are not rewritten to proxy URLs.
+
+::: tip Which upstream, which path
+The target is the **host** of the project's provider — the same provider your LLM calls resolve
+to. The path after `/{project}/` is forwarded to that host's root, so `/{project}/health` maps to
+`https://<upstream-host>/health`, alongside (not under) the provider's `/v1` API path.
+:::
+
 ## Next step
 
 Once traffic flows, learn how [traces are captured and explored](/guide/capturing-traces).
