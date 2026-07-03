@@ -27,7 +27,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         dashboard.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new DashboardView(
                 Summary: new StatisticsSummary(TotalCalls: 42, TotalInputTokens: 100, TotalOutputTokens: 200, TotalCachedInputTokens: 40, AvgLatencyMs: 12.5, OverallPassRate: 0.95),
-                LiveTelemetry: new LiveTelemetry(TracesPerMinute: 1, TokensPerSecond: 2, QueueDepth: 3, ErrorRate: 0.1, P95Ms: 55, ProxyVersion: "v1"),
+                LiveTelemetry: new LiveTelemetry(TracesPerMinute: 1, TokensPerSecond: 2, QueueDepth: 3, ErrorRate: 0.1, P95Ms: 55),
                 Trends: new DashboardTrends([1], [2], [3], [4]),
                 AgentBreakdown: [new AgentBreakdownStat(agentId, 7)],
                 Latency: [new LatencyStat(endpointId, 10, 20, 30, 1, 100, 50)],
@@ -65,7 +65,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         dashboard.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new DashboardView(
                 new StatisticsSummary(0, 0, 0, 0, 0, null),
-                new LiveTelemetry(0, 0, 0, 0, 0, "v"),
+                new LiveTelemetry(0, 0, 0, 0, 0),
                 new DashboardTrends([], [], [], []),
                 [], [], [], [], [],
                 StatisticsBucket.Daily,

@@ -44,8 +44,7 @@ public record LiveTelemetryDto(
     double TokensPerSecond,
     int QueueDepth,
     double ErrorRate,
-    double P95Ms,
-    string ProxyVersion);
+    double P95Ms);
 
 public record AgentTokenUsageDto(DateTimeOffset BucketStart, Guid AgentId, long InputTokens, long OutputTokens, long CachedInputTokens);
 
