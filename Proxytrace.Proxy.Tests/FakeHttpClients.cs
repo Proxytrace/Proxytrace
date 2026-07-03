@@ -3,25 +3,38 @@ using System.Text;
 
 namespace Proxytrace.Proxy.Tests;
 
-/// <summary>Returns a fixed response body for every request.</summary>
+/// <summary>Returns a fixed response body (and optional response headers) for every request.</summary>
 internal sealed class FakeHttpMessageHandler : HttpMessageHandler
 {
     private readonly string responseBody;
     private readonly HttpStatusCode statusCode;
+    private readonly IReadOnlyDictionary<string, string> responseHeaders;
 
-    public FakeHttpMessageHandler(string responseBody, HttpStatusCode statusCode = HttpStatusCode.OK)
+    public FakeHttpMessageHandler(
+        string responseBody,
+        HttpStatusCode statusCode = HttpStatusCode.OK,
+        IReadOnlyDictionary<string, string>? responseHeaders = null)
     {
         this.responseBody = responseBody;
         this.statusCode = statusCode;
+        this.responseHeaders = responseHeaders ?? new Dictionary<string, string>();
     }
 
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
-        => Task.FromResult(new HttpResponseMessage(statusCode)
+    {
+        var response = new HttpResponseMessage(statusCode)
         {
             Content = new StringContent(responseBody, Encoding.UTF8, "application/json"),
-        });
+        };
+        foreach (var (key, value) in responseHeaders)
+        {
+            response.Headers.TryAddWithoutValidation(key, value);
+        }
+
+        return Task.FromResult(response);
+    }
 
     public static string BuildOpenAiResponse(string assistantText)
     {
@@ -73,12 +86,18 @@ internal sealed class CapturingHttpMessageHandler : HttpMessageHandler
     public bool LastHadContent { get; private set; }
     public byte[] LastBody { get; private set; } = [];
     public string? LastContentType { get; private set; }
+    public Uri? LastUri { get; private set; }
+    public string? LastAuthorization { get; private set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
         LastMethod = request.Method;
+        LastUri = request.RequestUri;
+        LastAuthorization = request.Headers.TryGetValues("Authorization", out var auth)
+            ? string.Join(",", auth)
+            : null;
         LastHadContent = request.Content is not null;
         if (request.Content is not null)
         {

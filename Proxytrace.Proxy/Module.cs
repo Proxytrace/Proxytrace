@@ -88,6 +88,12 @@ internal sealed class Module : Autofac.Module
             services.AddMemoryCache();
             // The upstream target is per-request (provider endpoint), so only the timeout matters here.
             services.AddHttpClient("openai", client => client.Timeout = TimeSpan.FromMinutes(5));
+
+            // Non-LLM pass-through relays redirects to the client verbatim instead of following them
+            // server-side (the BCL would also strip Authorization on the redirect hop), so it needs
+            // its own handler with auto-redirect off.
+            services.AddHttpClient("passthrough", client => client.Timeout = TimeSpan.FromMinutes(5))
+                .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
         });
     }
 

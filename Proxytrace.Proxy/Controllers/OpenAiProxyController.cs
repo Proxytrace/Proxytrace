@@ -52,6 +52,18 @@ public class OpenAiProxyController : ControllerBase
         "x-ratelimit-reset-requests"
     ]);
 
+    // Pass-through responses are generic HTTP, not OpenAI API replies: additionally forward the
+    // headers that make redirects, throttling, caching, and method discovery work. Still a
+    // whitelist — hop-by-hop and cookie headers stay stripped.
+    private static readonly IReadOnlyCollection<string> PassthroughResponseHeaders = new HashSet<string>(
+    [
+        .. ForwardedResponseHeaders,
+        "location",
+        "retry-after",
+        "allow",
+        "cache-control"
+    ]);
+
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IIngestionStream stream;
     private readonly IApiKeyResolver apiKeyResolver;
@@ -79,38 +91,20 @@ public class OpenAiProxyController : ControllerBase
     [Route("openai/v1/{**path}")]
     [Route("{project}/openai/v1/{**path}")]
     [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpHead, HttpOptions]
-    public async Task Proxy(string path, string? project, CancellationToken cancellationToken)
+    public async Task Proxy(string? path, string? project, CancellationToken cancellationToken)
     {
-        if (kioskOptions.Enabled)
+        // {**path} also matches zero segments (`GET /openai/v1`), in which case the route value is
+        // absent and the parameter binds null.
+        path ??= string.Empty;
+
+        BufferedProxyRequest? buffered = await GuardAndBufferRequestAsync(path, project, cancellationToken);
+        if (buffered is null)
         {
-            Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-            Response.ContentType = "application/json";
-            await Response.WriteAsync(
-                "{\"kiosk\":true,\"message\":\"Proxy disabled in demo mode.\"}",
-                cancellationToken);
             return;
         }
 
-        // Reject path traversal: {**path} could otherwise contain "../" and reach arbitrary paths
-        // on the upstream host, escaping the intended OpenAI API surface.
-        if (path.Contains("..", StringComparison.Ordinal))
-        {
-            Response.StatusCode = StatusCodes.Status400BadRequest;
-            return;
-        }
-
-        if (Request.ContentLength is > MaxRequestBodyBytes)
-        {
-            Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
-            return;
-        }
-
-        ResolvedApiKey? resolved = await GetResolvedKeyAsync(project, cancellationToken);
-        if (resolved is null)
-        {
-            Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return;
-        }
+        ResolvedApiKey resolved = buffered.Resolved;
+        var requestBodyBytes = buffered.RequestBodyBytes;
 
         // Azure has no OpenAI-style /models route that lists usable models — its deployments live at
         // /openai/deployments?api-version=…, so a blind passthrough returns an empty list. Translate
@@ -120,18 +114,6 @@ public class OpenAiProxyController : ControllerBase
             && ProviderEndpoints.IsAzure(resolved.Provider.Endpoint))
         {
             await ServeAzureModelsAsync(resolved.Provider, cancellationToken);
-            return;
-        }
-
-        // Read request body up-front (we always need it for ingestion)
-        using var requestBodyStream = new MemoryStream();
-        await Request.Body.CopyToAsync(requestBodyStream, cancellationToken);
-        var requestBodyBytes = requestBodyStream.ToArray();
-
-        // Re-check after buffering: a chunked request reports no ContentLength up-front.
-        if (requestBodyBytes.LongLength > MaxRequestBodyBytes)
-        {
-            Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
             return;
         }
 
@@ -177,15 +159,7 @@ public class OpenAiProxyController : ControllerBase
         // the streaming path) once the body has been fully copied/captured.
         using (upstreamResponse)
         {
-            // Copy upstream status + safe response headers to our response
-            Response.StatusCode = (int)upstreamResponse.StatusCode;
-            foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
-            {
-                if (ForwardedResponseHeaders.Contains(header.Key.ToLowerInvariant()))
-                {
-                    Response.Headers[header.Key] = string.Join(", ", header.Value);
-                }
-            }
+            CopyUpstreamStatusAndHeaders(upstreamResponse, ForwardedResponseHeaders);
 
             if (isStreaming)
             {
@@ -194,6 +168,157 @@ public class OpenAiProxyController : ControllerBase
             else
             {
                 await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
+            }
+        }
+    }
+
+    // ── Non-LLM pass-through ────────────────────────────────────────────────────
+
+    // Transparent reverse proxy for every OTHER path under `/{project}/…` — anything that is not the
+    // traced `openai/v1/…` surface. A client whose base URL is `/{project}` can reach the non-LLM
+    // endpoints the upstream exposes (e.g. `/health`, `/v1/models`) through the same base URL. These
+    // calls are forwarded to the provider's host ORIGIN and are deliberately NOT ingested/traced.
+    // The literal `{project}/openai/v1/…` route out-ranks this all-parameter catch-all, so LLM calls
+    // never reach here.
+    [Route("{project}/{**rest}")]
+    [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpHead, HttpOptions]
+    public async Task Passthrough(string project, string? rest, CancellationToken cancellationToken)
+    {
+        var path = rest ?? string.Empty;
+
+        BufferedProxyRequest? buffered = await GuardAndBufferRequestAsync(path, project, cancellationToken);
+        if (buffered is null)
+        {
+            return;
+        }
+
+        // Map to the provider's host ORIGIN (scheme+host+port), not its versioned API endpoint:
+        // `openai/v1/…` is a Proxytrace routing prefix, so the upstream's `/health` etc. live at the
+        // host root, siblings of the endpoint's `/v1` path.
+        var origin = new Uri(buffered.Resolved.Provider.Endpoint.GetLeftPart(UriPartial.Authority));
+        using var upstream = BuildUpstreamRequest(path, buffered.RequestBodyBytes, buffered.Resolved.Provider.ApiKey, origin);
+
+        // The dedicated "passthrough" client does NOT auto-follow redirects: a transparent proxy
+        // relays the 3xx (with its Location) to the client instead of chasing it server-side, where
+        // the BCL would also strip the Authorization header on the hop.
+        var client = httpClientFactory.CreateClient("passthrough");
+
+        HttpResponseMessage upstreamResponse;
+        try
+        {
+            upstreamResponse = await client.SendAsync(upstream, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Upstream pass-through to /{Path} failed", path);
+            Response.StatusCode = StatusCodes.Status502BadGateway;
+            return;
+        }
+
+        using (upstreamResponse)
+        {
+            await ForwardResponseAsync(upstreamResponse, cancellationToken);
+        }
+    }
+
+    // Copy an upstream response straight back to the client — status, whitelisted headers, and the
+    // body byte-for-byte — without capturing or ingesting anything. A raw byte pump with a per-chunk
+    // flush transparently handles both plain and event-stream bodies; pass-through is not an OpenAI
+    // request, so it skips the streaming detection / stream_options injection the traced path does.
+    private async Task ForwardResponseAsync(HttpResponseMessage upstreamResponse, CancellationToken cancellationToken)
+    {
+        CopyUpstreamStatusAndHeaders(upstreamResponse, PassthroughResponseHeaders);
+
+        var buffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
+        try
+        {
+            await using var upstreamStream = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
+
+            int read;
+            while ((read = await upstreamStream.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
+            {
+                await Response.Body.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    // ── Shared guard rails ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The request-side result both proxy actions need: the fully buffered request body and the
+    /// resolved API key.
+    /// </summary>
+    private sealed record BufferedProxyRequest(byte[] RequestBodyBytes, ResolvedApiKey Resolved);
+
+    // Shared prologue for both proxy actions — kiosk refusal, path-traversal guard, request-size
+    // caps, API-key resolution, and request-body buffering. Returns null when the request was
+    // already terminated with a response status code.
+    private async Task<BufferedProxyRequest?> GuardAndBufferRequestAsync(
+        string path,
+        string? project,
+        CancellationToken cancellationToken)
+    {
+        if (kioskOptions.Enabled)
+        {
+            Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            Response.ContentType = "application/json";
+            await Response.WriteAsync(
+                "{\"kiosk\":true,\"message\":\"Proxy disabled in demo mode.\"}",
+                cancellationToken);
+            return null;
+        }
+
+        // Reject path traversal: a catch-all route value could otherwise contain "../" and reach
+        // arbitrary paths on the upstream host, escaping the intended forward target.
+        if (path.Contains("..", StringComparison.Ordinal))
+        {
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            return null;
+        }
+
+        if (Request.ContentLength is > MaxRequestBodyBytes)
+        {
+            Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            return null;
+        }
+
+        ResolvedApiKey? resolved = await GetResolvedKeyAsync(project, cancellationToken);
+        if (resolved is null)
+        {
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return null;
+        }
+
+        using var requestBodyStream = new MemoryStream();
+        await Request.Body.CopyToAsync(requestBodyStream, cancellationToken);
+        var requestBodyBytes = requestBodyStream.ToArray();
+
+        // Re-check after buffering: a chunked request reports no ContentLength up-front.
+        if (requestBodyBytes.LongLength > MaxRequestBodyBytes)
+        {
+            Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            return null;
+        }
+
+        return new BufferedProxyRequest(requestBodyBytes, resolved);
+    }
+
+    // Copy upstream status + whitelisted response headers to our response.
+    private void CopyUpstreamStatusAndHeaders(
+        HttpResponseMessage upstreamResponse,
+        IReadOnlyCollection<string> whitelist)
+    {
+        Response.StatusCode = (int)upstreamResponse.StatusCode;
+        foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
+        {
+            if (whitelist.Contains(header.Key.ToLowerInvariant()))
+            {
+                Response.Headers[header.Key] = string.Join(", ", header.Value);
             }
         }
     }

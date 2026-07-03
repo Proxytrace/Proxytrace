@@ -38,6 +38,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   token count, …) and, for custom-detector hits, the detector's name, the trigger that matched,
   and the reviewer's reasoning.
 
+- **Non-LLM upstream endpoints now pass through the proxy.** Any path under your project base URL
+  that isn't part of the OpenAI API (for example `/{project}/health`) is transparently forwarded to
+  your provider's upstream host instead of returning `404`, so clients can reach a provider's health
+  check or other endpoints through the same base URL they use for completions. These pass-through
+  calls are not captured as traces and still require a valid project API key. Redirect, throttling,
+  and caching response headers (`Location`, `Retry-After`, `Allow`, `Cache-Control`) are relayed,
+  and upstream redirects are passed back to the client verbatim instead of being followed
+  server-side.
+
 ### Changed
 
 - **The dashboard is now a live mission control.** A new full-width pulse band charts
