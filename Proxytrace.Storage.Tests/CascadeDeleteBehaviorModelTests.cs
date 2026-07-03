@@ -48,6 +48,22 @@ public sealed class CascadeDeleteBehaviorModelTests : BaseTest<Module>
                 "a hard delete of a ModelEndpoint must never cascade-delete its TestRun history");
     }
 
+    [TestMethod]
+    public void AgentCallToolToAgentCall_IsCascade_SoDeletingATraceRemovesItsToolRows()
+    {
+        // The opposite direction from the FKs above: AgentCallToolEntity is an owned child
+        // projection (one row per distinct requested tool name), so it must NOT outlive its
+        // parent trace as an orphan row. Asserted on model metadata for the same reason as the
+        // Restrict FKs above — AbstractRepository.RemoveAsync loads the parent by primary key only
+        // (no Include of Tools), so the in-memory provider's client-side cascade (which only
+        // touches currently-tracked entities) never fires; PostgreSQL enforces this at the database
+        // via the real `ON DELETE CASCADE`, which only the model metadata — not a round-trip
+        // delete against the in-memory provider — can verify here.
+        DeleteBehaviorFor<AgentCallToolEntity>(nameof(AgentCallToolEntity.AgentCallId))
+            .Should().Be(DeleteBehavior.Cascade,
+                "a deleted trace must not leave orphaned tool-name rows behind");
+    }
+
     private DeleteBehavior DeleteBehaviorFor<TEntity>(string foreignKeyPropertyName)
     {
         IServiceProvider services = GetServices();

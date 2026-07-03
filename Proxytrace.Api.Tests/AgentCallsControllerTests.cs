@@ -171,6 +171,75 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         result.Items.Should().BeEmpty();
     }
 
+    // ── tool-name filter + picker ──────────────────────────────────────────────
+
+    [TestMethod]
+    public async Task GetAll_FilterByToolName_ReturnsOnlyMatchingCall()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var matching = await SeedCallWithToolsAsync(services, agent, ["web_search", "get_weather"]);
+        await SeedCallWithToolsAsync(services, agent, ["get_weather"]);
+
+        var result = await controller.GetAll(toolName: "web_search", cancellationToken: CancellationToken);
+
+        result.Items.Should().ContainSingle(c => c.Id == matching.Id);
+    }
+
+    [TestMethod]
+    public async Task GetToolNames_ReturnsDistinctSortedNamesForProject()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        await SeedCallWithToolsAsync(services, agent, ["web_search", "get_weather"]);
+
+        var names = await controller.GetToolNames(agent.Project.Id, CancellationToken);
+
+        names.Should().Equal("get_weather", "web_search");
+    }
+
+    [TestMethod]
+    public async Task GetToolNames_WhenCallerCannotAccessProject_ReturnsEmpty()
+    {
+        IServiceProvider services = GetServices();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        await SeedCallWithToolsAsync(services, agent, ["web_search"]);
+        var controller = ResolveController(services, DenyingGuard());
+
+        var names = await controller.GetToolNames(agent.Project.Id, CancellationToken);
+
+        names.Should().BeEmpty();
+    }
+
+    private async Task<IAgentCall> SeedCallWithToolsAsync(
+        IServiceProvider services,
+        IAgent agent,
+        IReadOnlyList<string> toolNames)
+    {
+        var createCall = services.GetRequiredService<IAgentCall.CreateNew>();
+        var createCompletion = services.GetRequiredService<ICompletion.Create>();
+        var conversation = Conversation.Create().With(new UserMessage([Content.FromText("hi")]));
+        var assistantMessage = new AssistantMessage(
+            [Content.FromText("ok")],
+            toolNames.Select((name, i) => new ToolRequest($"tr{i}", name, "{}")).ToList());
+        ICompletion completion = createCompletion(assistantMessage, new TokenUsage(100, 10, 0), TimeSpan.FromMilliseconds(100));
+
+        return await services.GetRequiredService<IAgentCallRepository>().AddAsync(
+            createCall(
+                agent: agent,
+                version: agent.CurrentVersion,
+                endpoint: agent.Endpoint,
+                request: conversation,
+                response: completion,
+                httpStatus: System.Net.HttpStatusCode.OK,
+                finishReason: "stop",
+                errorMessage: null,
+                modelParameters: agent.ModelParameters),
+            CancellationToken);
+    }
+
     // A non-admin who is a member of nothing: every project is inaccessible, scope set is empty.
     private static Proxytrace.Api.Auth.IProjectAccessGuard DenyingGuard()
     {

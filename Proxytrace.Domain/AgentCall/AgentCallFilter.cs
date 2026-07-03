@@ -18,5 +18,6 @@ public record AgentCallFilter(
     ulong? MaxTokens = null,
     double? MinLatencyMs = null,
     double? MaxLatencyMs = null,
+    string? ToolName = null,
     AgentCallSortField SortBy = AgentCallSortField.CreatedAt,
     bool SortDescending = true);

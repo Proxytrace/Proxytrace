@@ -92,6 +92,15 @@ public class AgentCallsController : ControllerBase
         [FromQuery] string? q = null,
         [FromQuery] Guid? conversationId = null,
         [FromQuery] bool outlierOnly = false,
+        [FromQuery] OutlierFlags? anomalyFlags = null,
+        [FromQuery] int? httpStatusClass = null,
+        [FromQuery] ulong? minTokens = null,
+        [FromQuery] ulong? maxTokens = null,
+        [FromQuery] double? minLatencyMs = null,
+        [FromQuery] double? maxLatencyMs = null,
+        [FromQuery] string? toolName = null,
+        [FromQuery] AgentCallSortField sortBy = AgentCallSortField.CreatedAt,
+        [FromQuery] bool sortDesc = true,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -99,9 +108,43 @@ public class AgentCallsController : ControllerBase
         (page, pageSize) = Paging.Clamp(page, pageSize);
         if (!await CanListAsync(projectId, agentId, cancellationToken))
             return new PagedResult<AgentCallListItemDto>([], 0, page, pageSize);
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId, outlierOnly);
+        var filter = new AgentCallFilter(
+            AgentId: agentId,
+            ProjectId: projectId,
+            EndpointId: endpointId,
+            Model: model,
+            From: from,
+            To: to,
+            HttpStatus: httpStatus,
+            IncludeSystemAgents: includeSystemAgents,
+            Query: q,
+            ConversationId: conversationId,
+            OutlierOnly: outlierOnly,
+            AnomalyFlags: anomalyFlags,
+            HttpStatusClass: httpStatusClass,
+            MinTokens: minTokens,
+            MaxTokens: maxTokens,
+            MinLatencyMs: minLatencyMs,
+            MaxLatencyMs: maxLatencyMs,
+            ToolName: toolName,
+            SortBy: sortBy,
+            SortDescending: sortDesc);
         var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallListItem>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
+    }
+
+    /// <summary>
+    /// Distinct tool names requested by any trace in the project — backs the traces filter's
+    /// tool-name picker. Empty when the caller cannot access the project.
+    /// </summary>
+    [HttpGet("tool-names")]
+    public async Task<IReadOnlyList<string>> GetToolNames(
+        [FromQuery] Guid projectId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await CanListAsync(projectId, null, cancellationToken))
+            return [];
+        return await repository.GetToolNamesAsync(projectId, cancellationToken);
     }
 
     /// <summary>

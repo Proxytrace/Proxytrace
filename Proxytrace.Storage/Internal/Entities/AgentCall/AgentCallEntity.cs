@@ -34,4 +34,8 @@ internal record AgentCallEntity : Entity
     // instead of per-row expressions. Null when the call reported no usage.
     public ulong? TotalTokens { get; init; }
     public double? CacheHitRate { get; init; }
+
+    // One row per distinct tool name requested in the response — backs the ToolName filter's EXISTS
+    // semi-join and the project-scoped tool-name picker. See AgentCallToolEntity/AgentCallToolConfig.
+    public List<AgentCallToolEntity> Tools { get; init; } = [];
 }

@@ -120,6 +120,23 @@ Set the connection string in:
   ingestion by the outlier detector. A **partial index** (`WHERE "OutlierFlags" <> 0`) backs the
   "outliers only" trace filter cheaply — outliers are a small fraction of this high-volume table. The
   filter is relational metadata; the in-memory provider ignores it. See [`domain-concepts.md`](domain-concepts.md).
+- **Per-call tool-name projection (`AgentCallToolEntity`).** A storage-only child of `AgentCallEntity`
+  (no domain counterpart, same rule as junction entities — see [`domain-entities.md`](domain-entities.md))
+  with one row per distinct tool name the response requested, written at ingestion from
+  `AgentCallConfig.Map`. `ProjectId` is denormalised from the agent version so the tool-name picker's
+  `DISTINCT` query (`GetToolNamesAsync`) stays single-table. Two indexes back it:
+  `(ProjectId, ToolName)` for the picker and `(ToolName, AgentCallId)` for the `ToolName` filter's
+  `EXISTS` semi-join (`BuildFilteredQueryAsync`). Unlike the bare-record junction entities
+  (`TestSuiteEvaluatorEntity` et al.), `AgentCallToolEntity` extends `Entity` — it needs its own `Id`
+  as a real per-row projection, not a composite-key join — so it is picked up automatically by
+  `Module.ConfigureEntities`' assembly scan and is **not** listed among the explicit
+  `ConfigureEntity(...)` calls (adding it there too would double-register its `IModelConfiguration`).
+  The `AgentCallId` FK is `Cascade` so a deleted trace never leaves orphaned tool rows; this is
+  enforced by PostgreSQL's `ON DELETE CASCADE` and asserted on EF model metadata
+  (`CascadeDeleteBehaviorModelTests`), not a round-trip delete — like the other cascade-behavior
+  gotchas below, `AbstractRepository.RemoveAsync` loads the parent by primary key only (no
+  `Include(Tools)`), so the in-memory provider's client-side cascade (which only touches entities
+  already tracked in the change tracker) does not fire there.
 
 > **Gotcha — keep planner statistics fresh on AgentCallEntity (issue #246).** The dashboard/statistics
 > aggregates (`AgentCallStatsQueries`) translate to server-side `GROUP BY` / `sum` / `percentile_cont` —
@@ -328,6 +345,13 @@ pre-existing rows from `InputTokens`/`OutputTokens`/`CachedInputTokens` (rows wi
 pre-key (`ORDER BY (col IS NULL), col …`) so error traces with no usage/latency land **last** in
 both ascending and descending order rather than following Postgres's default nulls-first-on-DESC;
 an `Id` tiebreak keeps paging stable across equal values. See `AgentCallRepository.ApplySort`.
+
+The `AddAgentCallTool` migration adds the `AgentCallToolEntity` table (see
+[High-volume tables](#high-volume-tables-agentcall) above): `AgentCallId` (FK, `Cascade`),
+`ProjectId`, `ToolName` (`character varying(256)`), plus the standard `Id`/`CreatedAt`/`UpdatedAt`
+columns and its two composite indexes. Going-forward only — existing traces get no rows backfilled,
+so their tool requests (if any) are invisible to the `ToolName` filter and tool-name picker until
+they are re-ingested; `ResponseToolRequestCount` (unaffected by this migration) still reflects them.
 
 The `NormalizeUserEmail` migration is **data-only** — it lowercases pre-existing rows so they match
 the new write-normalization (`Up`: `UPDATE "UserEntity" SET "Email" = lower("Email") WHERE "Email" <>

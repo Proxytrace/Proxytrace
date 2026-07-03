@@ -164,6 +164,21 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             CacheHitRate = domain.Response?.Usage is { InputTokenCount: > 0 } usage
                 ? (double)usage.CachedInputTokenCount / usage.InputTokenCount
                 : null,
+            Tools = domain.Response?.Response is AssistantMessage msg
+                ? msg.ToolRequests
+                    .Select(t => t.Name)
+                    .Distinct()
+                    .Select(name => new AgentCallToolEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        AgentCallId = domain.Id,
+                        ProjectId = domain.Version.ProjectId,
+                        ToolName = name,
+                        CreatedAt = domain.CreatedAt,
+                        UpdatedAt = domain.UpdatedAt,
+                    })
+                    .ToList()
+                : [],
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

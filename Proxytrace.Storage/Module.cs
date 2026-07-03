@@ -135,6 +135,11 @@ public sealed class Module : Autofac.Module
         ConfigureEntity(typeof(CustomAnomalyDetectorAgentEntity), builder);
         ConfigureEntity(typeof(ProjectUserEntity), builder);
         ConfigureEntity(typeof(Internal.Entities.TestResult.EvaluationStatEntity), builder);
+        // AgentCallToolEntity is NOT listed here like the storage-only entities above: unlike those
+        // (bare records with no Id, so ConfigureEntities' IEntity scan skips them), it extends Entity
+        // and therefore already implements IEntity — ConfigureEntities already registers it and its
+        // config via the assembly scan. Adding it here too would double-register its
+        // IModelConfiguration, running AgentCallToolConfig.Configure twice against the same model.
 
         builder.RegisterType<AmbientDbContext>()
             .AsSelf()

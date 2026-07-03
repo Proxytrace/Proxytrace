@@ -338,6 +338,13 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => e.LatencyMs <= filter.MaxLatencyMs.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.ToolName))
+        {
+            var toolName = filter.ToolName;
+            query = query.Where(e => context.Set<AgentCallToolEntity>()
+                .Any(t => t.AgentCallId == e.Id && t.ToolName == toolName));
+        }
+
         if (!string.IsNullOrWhiteSpace(filter.Query))
         {
             if (filter.ProjectId is null)
@@ -479,5 +486,17 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         context.Set<AgentCallEntity>().Update(stored with { OutlierFlags = stored.OutlierFlags | flag });
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> GetToolNamesAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        return await context.Set<AgentCallToolEntity>()
+            .AsNoTracking()
+            .Where(t => t.ProjectId == projectId)
+            .Select(t => t.ToolName)
+            .Distinct()
+            .OrderBy(n => n)
+            .ToListAsync(cancellationToken);
     }
 }
