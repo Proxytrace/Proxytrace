@@ -85,6 +85,15 @@ public sealed class Module : Autofac.Module
             builder.RegisterServiceCollection(services =>
                 services.AddHostedService(sp => sp.GetRequiredService<AgentCallPreviewBackfillService>()));
 
+            // One-time, idempotent backfill of the per-call tool-name rows for traces ingested before
+            // that table existed. Registered after the DB initializer so it runs once migrations
+            // have applied. Resolvable as itself so tests can drive it directly.
+            builder.RegisterType<AgentCallToolBackfillService>()
+                .AsSelf()
+                .SingleInstance();
+            builder.RegisterServiceCollection(services =>
+                services.AddHostedService(sp => sp.GetRequiredService<AgentCallToolBackfillService>()));
+
             // One-time, idempotent backfill of the evaluator-statistics projection for test results
             // recorded before that table existed. Registered after the DB initializer so it runs once
             // migrations have applied. Resolvable as itself so tests can drive it directly.

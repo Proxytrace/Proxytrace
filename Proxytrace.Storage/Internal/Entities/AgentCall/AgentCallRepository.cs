@@ -493,7 +493,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         var context = contextFactory();
         return await context.Set<AgentCallToolEntity>()
             .AsNoTracking()
-            .Where(t => t.ProjectId == projectId)
+            // Blank names are backfill markers (see AgentCallToolBackfillService), not real tools.
+            .Where(t => t.ProjectId == projectId && t.ToolName != string.Empty)
             .Select(t => t.ToolName)
             .Distinct()
             .OrderBy(n => n)
