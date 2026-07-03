@@ -213,4 +213,90 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
 
         result.Result.Should().BeOfType<NotFoundResult>();
     }
+
+    // ── anomaly timeline ───────────────────────────────────────────────────────
+
+    [TestMethod]
+    public async Task GetAnomalyTimeline_MissingFromTo_ReturnsBadRequest()
+    {
+        var controller = ResolveController();
+
+        var result = await controller.GetAnomalyTimeline(from: null, to: null, cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task GetAnomalyTimeline_FromNotBeforeTo_ReturnsBadRequest()
+    {
+        var controller = ResolveController();
+        var now = DateTimeOffset.UtcNow;
+
+        var result = await controller.GetAnomalyTimeline(from: now, to: now.AddDays(-1), cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task GetAnomalyTimeline_WithWindow_MapsDtoAndPassesFilter()
+    {
+        var dashboard = Substitute.For<IDashboardStatistics>();
+        var agentId = Guid.NewGuid();
+        var bucketStart = DateTimeOffset.UtcNow;
+        dashboard.GetAnomalyCountsByAgentAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+            .Returns([new AgentAnomalyStat(bucketStart, agentId, StaticCount: 3, CustomCount: 1)]);
+        var controller = ResolveController(dashboard);
+        var from = bucketStart.AddDays(-7);
+        var to = bucketStart.AddDays(1);
+
+        var result = await controller.GetAnomalyTimeline(from: from, to: to, bucket: StatisticsBucket.Hourly, cancellationToken: CancellationToken);
+
+        var dto = result.Value.Should().ContainSingle().Subject;
+        dto.BucketStart.Should().Be(bucketStart);
+        dto.AgentId.Should().Be(agentId);
+        dto.StaticCount.Should().Be(3);
+        dto.CustomCount.Should().Be(1);
+        await dashboard.Received(1).GetAnomalyCountsByAgentAsync(
+            Arg.Is<StatisticsFilter>(f => f.From == from && f.To == to),
+            StatisticsBucket.Hourly, Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task GetAnomalyTimeline_WhenProjectInaccessible_ReturnsNotFound()
+    {
+        var controller = ResolveController(accessGuard: DenyingGuard());
+        var now = DateTimeOffset.UtcNow;
+
+        var result = await controller.GetAnomalyTimeline(
+            from: now.AddDays(-1), to: now, projectId: Guid.NewGuid(), cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetAnomalyTimeline_WhenAgentInaccessible_ReturnsNotFound()
+    {
+        var agents = Substitute.For<IAgentRepository>();
+        agents.GetProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Guid.NewGuid());
+        var controller = ResolveController(agents: agents, accessGuard: DenyingGuard());
+        var now = DateTimeOffset.UtcNow;
+
+        var result = await controller.GetAnomalyTimeline(
+            from: now.AddDays(-1), to: now, agentId: Guid.NewGuid(), cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetAnomalyTimeline_AsNonAdminWithoutScope_ReturnsForbidden()
+    {
+        var controller = ResolveController(accessGuard: DenyingGuard());
+        var now = DateTimeOffset.UtcNow;
+
+        var result = await controller.GetAnomalyTimeline(from: now.AddDays(-1), to: now, cancellationToken: CancellationToken);
+
+        // The unscoped global series spans all tenants — refused to a non-admin, like the dashboard.
+        result.Result.Should().BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
 }

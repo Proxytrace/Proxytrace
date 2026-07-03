@@ -8,6 +8,10 @@ internal sealed record SeedOptions(
     int DaysSpread = 90,
     double ErrorRate = 0.05,
     double ConversationRate = 0.30,
+    // Fraction of calls stamped with a non-zero OutlierFlags bitmask so the partial outlier index
+    // and the anomaly aggregates (anomalyTimeline) measure against a realistically small flagged
+    // subset; a share of flagged rows also carries the CustomAnomaly bit (see BuildCall).
+    double OutlierRate = 0.03,
     int BatchSize = 10_000,
     int RandomSeed = 1234,
     // Per-run test-run statistics rows (TestRunStatsEntity), spread across TestRunSuitePoolSize

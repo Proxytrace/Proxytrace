@@ -26,6 +26,14 @@ public interface IAgentCallStatsReader
 
     Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Per-bucket, per-agent counts of flagged (outlier) calls, split into the statistical
+    /// ingestion-time bits and the async custom-detector bit (a call with both kinds counts in both).
+    /// Only rows with a non-zero <c>OutlierFlags</c> are scanned, so the query rides the partial
+    /// outlier index instead of the whole table.
+    /// </summary>
+    Task<IReadOnlyList<AgentAnomalyStat>> GetAnomalyCountsByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default);
+
     Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, DateTimeOffset since, DateTimeOffset now, CancellationToken cancellationToken = default);
 
     Task<CallTrends> GetCallTrendsAsync(StatisticsFilter filter, int buckets, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default);

@@ -95,6 +95,45 @@ public class StatisticsController : ControllerBase
             Pulse: view.Pulse);
     }
 
+    /// <summary>
+    /// Bucketed per-agent anomaly counts for the anomaly dashboard timeline: flagged (outlier) calls
+    /// per (bucket, agent), split into the statistical ingestion-time flags and the custom-detector
+    /// flag (a call carrying both kinds counts in both).
+    /// </summary>
+    [HttpGet("anomalies/timeline")]
+    public async Task<ActionResult<IReadOnlyList<AgentAnomalyStatDto>>> GetAnomalyTimeline(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        [FromQuery] Guid? agentId = null,
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+        if (from.Value >= to.Value)
+            return BadRequest("Query parameter 'from' must be before 'to'.");
+
+        // Tenant scoping mirrors GetDashboardView/GetAgentOverview: a supplied projectId or agentId
+        // must be one the caller can access (hidden behind 404); the unscoped cross-tenant series is
+        // admin-only.
+        if (projectId is { } requestedProjectId && !await accessGuard.CanAccessProjectAsync(requestedProjectId, cancellationToken))
+            return NotFound();
+        if (agentId is { } requestedAgentId && !await CanAccessAgentAsync(requestedAgentId, cancellationToken))
+            return NotFound();
+        if (projectId is null && agentId is null
+            && await accessGuard.GetAccessibleProjectIdsAsync(cancellationToken) is not null)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        var filter = new StatisticsFilter(from, to, projectId, agentId);
+        var rows = await dashboard.GetAnomalyCountsByAgentAsync(filter, bucket, cancellationToken);
+        return rows
+            .Select(r => new AgentAnomalyStatDto(r.BucketStart, r.AgentId, r.StaticCount, r.CustomCount))
+            .ToArray();
+    }
+
     [HttpGet("agents/{agentId:guid}/overview")]
     public async Task<ActionResult<AgentOverviewDto>> GetAgentOverview(
         Guid agentId,

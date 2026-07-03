@@ -207,6 +207,23 @@ internal sealed class PerfDataSeeder
             errorMessage = null;
         }
 
+        // ~OutlierRate of calls carry outlier flags: one random statistical bit (occasionally two),
+        // and a quarter of flagged rows also carry the async CustomAnomaly bit so both the static and
+        // custom count paths of the anomaly aggregates are exercised.
+        OutlierFlags outlierFlags = OutlierFlags.None;
+        if (rng.NextDouble() < options.OutlierRate)
+        {
+            outlierFlags = (OutlierFlags)(1 << rng.Next(4));
+            if (rng.NextDouble() < 0.2)
+            {
+                outlierFlags |= (OutlierFlags)(1 << rng.Next(4));
+            }
+            if (rng.NextDouble() < 0.25)
+            {
+                outlierFlags |= OutlierFlags.CustomAnomaly;
+            }
+        }
+
         var data = new SeedEntityData(Guid.NewGuid(), createdAt, createdAt);
         return createExisting(
             agent: agent,
@@ -219,7 +236,8 @@ internal sealed class PerfDataSeeder
             errorMessage: errorMessage,
             modelParameters: modelParameters,
             existing: data,
-            conversationId: conversationId);
+            conversationId: conversationId,
+            outlierFlags: outlierFlags);
     }
 
     /// <summary>
