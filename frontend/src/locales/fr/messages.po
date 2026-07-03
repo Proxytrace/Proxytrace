@@ -792,7 +792,7 @@ msgid "Active"
 msgstr "Actif"
 
 msgid "Activity · last 60 min"
-msgstr ""
+msgstr "Activité · 60 dernières min"
 
 msgid "Actor"
 msgstr "Auteur"
@@ -875,7 +875,7 @@ msgid "against <0>{selectedModelName}</0>"
 msgstr "contre <0>{selectedModelName}</0>"
 
 msgid "Age"
-msgstr ""
+msgstr "Âge"
 
 msgid "Agent"
 msgstr "Agent"
@@ -1127,7 +1127,7 @@ msgid "Awaiting decision"
 msgstr "En attente de décision"
 
 msgid "awaiting samples"
-msgstr ""
+msgstr "en attente d’échantillons"
 
 msgid "awaiting telemetry"
 msgstr "en attente de télémétrie"
@@ -1895,7 +1895,7 @@ msgid "Error rate"
 msgstr "Taux d'erreur"
 
 msgid "errors"
-msgstr ""
+msgstr "erreurs"
 
 msgid "Estimated cost in EUR"
 msgstr "Coût estimé en EUR"
@@ -2276,7 +2276,7 @@ msgid "Info"
 msgstr "Info"
 
 msgid "ingestion backlog"
-msgstr ""
+msgstr "retard d’ingestion"
 
 msgid "Ingestion proxy"
 msgstr "Proxy d'ingestion"
@@ -2510,7 +2510,7 @@ msgid "LIVE"
 msgstr "EN DIRECT"
 
 msgid "Live feed"
-msgstr ""
+msgstr "Flux en direct"
 
 msgid "live re-score"
 msgstr "re-score en direct"
@@ -3389,11 +3389,11 @@ msgid "p95 {0} · p99 {1}"
 msgstr "p95 {0} · p99 {1}"
 
 msgid "p95 Latency"
-msgstr ""
+msgstr "Latence p95"
 
 #. placeholder {0}: fmtLatency(latencyStats.p99)
 msgid "p99 {0}"
-msgstr ""
+msgstr "p99 {0}"
 
 msgid "Parallel · {count} selected"
 msgstr "Parallèle · {count} sélectionné"
@@ -3724,7 +3724,7 @@ msgid "Pulled from the provider; prices load automatically."
 msgstr "Récupéré auprès du provider ; les prix se chargent automatiquement."
 
 msgid "Queue"
-msgstr ""
+msgstr "File d’attente"
 
 msgid "Queued"
 msgstr "En file d'attente"
@@ -4916,7 +4916,7 @@ msgid "Tokens out"
 msgstr "Tokens sortants"
 
 msgid "tokens/s"
-msgstr ""
+msgstr "tokens/s"
 
 msgid "tolerance"
 msgstr "tolérance"
@@ -5013,7 +5013,7 @@ msgid "Traces per minute"
 msgstr "Traces par minute"
 
 msgid "traces/min"
-msgstr ""
+msgstr "traces/min"
 
 msgid "Tracey AI"
 msgstr "Tracey AI"
@@ -5098,7 +5098,7 @@ msgid "Unknown"
 msgstr "Inconnu"
 
 msgid "unknown agent"
-msgstr ""
+msgstr "agent inconnu"
 
 msgid "Unlimited agents"
 msgstr "Agents illimités"
