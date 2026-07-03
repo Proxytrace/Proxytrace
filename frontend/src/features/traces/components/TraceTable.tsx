@@ -68,7 +68,7 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
       <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         {/* Sticky column header */}
         <div
-          className={cn('grid px-4 py-2 border-b border-hairline sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
+          className={cn('grid items-center px-4 py-2 border-b border-hairline sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
         >
           {COL_HEADERS.map((header, i) => {
             const headerLabel = i18n._(COL_HEADER_LABELS[i]);
