@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { statisticsApi } from '../../../api/statistics';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { REFETCH_INTERVAL_FAST } from '../../../lib/constants';
+import { DASHBOARD_RECENT_TRACES } from '../dashboardMeta';
 
 interface DashboardQueryOptions {
   /** Lower time bound, or `undefined` for the all-time bucket. */
@@ -18,7 +19,7 @@ interface DashboardQueryOptions {
 export function useDashboardView({ from, projectId, enabled }: DashboardQueryOptions) {
   return useQuery({
     queryKey: QUERY_KEYS.statisticsDashboard(from, projectId),
-    queryFn: () => statisticsApi.dashboard({ from, projectId }),
+    queryFn: () => statisticsApi.dashboard({ from, projectId, recentTraceCount: DASHBOARD_RECENT_TRACES }),
     refetchInterval: REFETCH_INTERVAL_FAST,
     enabled,
   });

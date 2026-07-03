@@ -19,6 +19,9 @@ internal class DashboardStatistics : IDashboardStatistics
     /// </summary>
     private const int SparklineCohortLimit = 50;
 
+    // The pulse band's fixed contract: 60 one-minute buckets over the trailing hour.
+    private const int PulseMinutes = 60;
+
     /// <summary>
     /// When the view cache holds at least this many entries, expired ones are swept on the next
     /// miss. Distinct filters (e.g. per-viewer <c>From</c> timestamps) would otherwise leave
@@ -176,10 +179,12 @@ internal class DashboardStatistics : IDashboardStatistics
             ? agents.GetByProjectAsync(projectId, cancellationToken)
             : agents.GetAllAsync(cancellationToken), cancellationToken);
         Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTimesTask = Task.Run(() => agentCalls.GetLastCallTimesAsync(cancellationToken), cancellationToken);
+        Task<IReadOnlyList<int>> pulseTask = Task.Run(() => GetPulseAsync(filter, cancellationToken), cancellationToken);
 
         await Task.WhenAll(
             summaryTask, telemetryTask, trendsTask, agentBreakdownTask, latencyTask,
-            modelBreakdownTask, tokenBucketTask, tokenUsageTask, tokenByAgentTask, recentTask, agentsTask, lastCallTimesTask);
+            modelBreakdownTask, tokenBucketTask, tokenUsageTask, tokenByAgentTask, recentTask, agentsTask, lastCallTimesTask,
+            pulseTask);
 
         StatisticsBucket tokenBucket = tokenBucketTask.Result;
 
@@ -205,7 +210,8 @@ internal class DashboardStatistics : IDashboardStatistics
             TokenBucket: tokenBucket,
             RecentTraces: recentTask.Result.Items,
             Agents: topAgents,
-            AgentLastCallTimes: lastCallTimes);
+            AgentLastCallTimes: lastCallTimes,
+            Pulse: pulseTask.Result);
     }
 
     public Task<IReadOnlyList<AgentBreakdownStat>> GetAgentBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
@@ -248,6 +254,12 @@ internal class DashboardStatistics : IDashboardStatistics
 
     internal Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
         => callStats.GetTokenUsageByAgentAsync(filter, bucket, cancellationToken);
+
+    private Task<IReadOnlyList<int>> GetPulseAsync(StatisticsFilter filter, CancellationToken cancellationToken)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        return callStats.GetPulseAsync(filter, now.AddMinutes(-PulseMinutes), now, PulseMinutes, cancellationToken);
+    }
 
     internal async Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {

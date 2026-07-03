@@ -330,6 +330,78 @@ body::after {
   .indeterminate-bar::after { animation: none; left: 0; width: 100%; opacity: 0.4; }
 }
 
+/* ── Dashboard showpiece tier (dashboard route only — see DESIGN.md "Dashboard exception") ── */
+
+/* Vertical light sweep across the pulse band when a trace arrives. */
+@keyframes pulse-sweep {
+  from { left: -2%; opacity: 0.9; }
+  to   { left: 102%; opacity: 0; }
+}
+.pulse-sweep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--accent-hover), transparent);
+  animation: pulse-sweep 1.2s var(--ease-standard) both;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-sweep { animation: none; display: none; }
+}
+
+/* Slow ambient shimmer for an idle (flatlined) pulse band — intentional, not broken. */
+@keyframes pulse-idle-sweep {
+  0%   { left: -30%; }
+  100% { left: 110%; }
+}
+.pulse-idle-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 25%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-primary) 7%, transparent), transparent);
+  animation: pulse-idle-sweep 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-idle-sweep::after { animation: none; display: none; }
+}
+
+/* One-shot amber wash on a freshly arrived feed row. */
+@keyframes arrival-flash {
+  0%   { background-color: color-mix(in srgb, var(--accent-primary) 16%, transparent); }
+  100% { background-color: transparent; }
+}
+.arrival-flash { animation: arrival-flash 1.6s var(--ease-standard) both; }
+@media (prefers-reduced-motion: reduce) {
+  .arrival-flash { animation: none; }
+}
+
+/* Draw-in for a chart line path; the element sets --draw-length to (an upper bound of) its length. */
+@keyframes chart-draw-in {
+  from { stroke-dashoffset: var(--draw-length, 2000); }
+  to   { stroke-dashoffset: 0; }
+}
+.chart-draw-in {
+  stroke-dasharray: var(--draw-length, 2000);
+  animation: chart-draw-in 1.1s var(--ease-standard) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-draw-in { stroke-dasharray: none; animation: none; }
+}
+
+/* Micro "odometer" tick when a live counter changes value (element keyed on the value). */
+@keyframes digit-tick {
+  0%   { transform: translateY(-15%); opacity: 0.4; color: var(--accent-hover); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.digit-tick { display: inline-block; animation: digit-tick 0.35s var(--ease-standard) both; }
+@media (prefers-reduced-motion: reduce) {
+  .digit-tick { animation: none; }
+}
+
 /* ── Nav ── */
 .nav-item {
   display: flex;

@@ -15,6 +15,8 @@ interface AreaChartProps {
   xLabelFn?: (i: number, n: number) => string | null;
   formatValue?: (v: number) => string;
   tooltipLabelFn?: (i: number) => string;
+  /** Animate the line path drawing in on mount via `.chart-draw-in`. Default false. */
+  drawIn?: boolean;
 }
 
 export function AreaChart({
@@ -29,6 +31,7 @@ export function AreaChart({
   xLabelFn,
   formatValue,
   tooltipLabelFn,
+  drawIn = false,
 }: AreaChartProps) {
   const padL = padding?.l ?? (showAxis ? 38 : 4);
   const padR = padding?.r ?? (showAxis ? 10 : 4);
@@ -88,7 +91,15 @@ export function AreaChart({
           </>
         )}
         <path d={chart.areaPath} fill={`url(#${gradientId})`} />
-        <path d={chart.linePath} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d={chart.linePath}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={drawIn ? 'chart-draw-in' : undefined}
+        />
         {showEndMarker && hoverIdx === null && (
           <>
             <circle cx={chart.endX} cy={chart.endY} r="8" fill={color} opacity="0.15" />

@@ -110,7 +110,8 @@ public record DashboardView(
     StatisticsBucket TokenBucket,
     IReadOnlyList<IAgentCall> RecentTraces,
     IReadOnlyList<IAgent> Agents,
-    IReadOnlyDictionary<Guid, DateTimeOffset> AgentLastCallTimes);
+    IReadOnlyDictionary<Guid, DateTimeOffset> AgentLastCallTimes,
+    IReadOnlyList<int> Pulse);
 
 /// <summary>
 /// Equal-width bucketed call-traffic series (excludes pass rate, which comes from run stats).

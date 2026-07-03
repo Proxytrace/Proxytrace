@@ -259,12 +259,31 @@ Inline `style={{ ... }}` is acceptable **only** for genuinely runtime-computed v
 - New rows entering a list animate with `fade-up` (already in CSS). Don't reorder existing rows on insert — only prepend or append per the list's stated sort.
 - Never block interaction during background updates. SSE updates are partial — patch the cached query, don't refetch the page.
 
+## 8.1 Dashboard exception — showpiece tier
+
+The dashboard (`features/dashboard/`, route `/dashboard`) is the product's stakeholder-facing
+showpiece and is deliberately allowed to exceed the "calm, not flashy" baseline — a scoped,
+user-approved exception (spec: 2026-07-02 dashboard showpiece). What the exception covers:
+
+- **Showpiece keyframes** (`index.css`, "Dashboard showpiece tier" block): `pulse-sweep`,
+  `pulse-idle-sweep`, `arrival-flash`, `chart-draw-in`, `digit-tick`. Dashboard-only — do not
+  use them on other routes.
+- **Display-tier type**: the hero token number (68px gradient-clipped) and pulse counters
+  (`text-display` mono) sit outside the type scale intentionally.
+- **Glow**: SVG glow filters on the pulse EKG line and gauge; semantic glow on a non-zero
+  error counter.
+
+Everything else still binds on the dashboard: token palette only (no new hexes), existing
+radii/shadows, `prefers-reduced-motion` guards on every keyframe, accessibility rules (§7).
+The anti-patterns in §9 remain in force outside this scoped list — in particular, no animated
+gradients on idle UI anywhere else, and no glassmorphism even here.
+
 ---
 
 ## 9. Anti-patterns — do not introduce these
 
-- Glassmorphism, frosted blur on regular cards (only modal overlay uses backdrop-blur, and only at 4px).
-- Vibrant rainbow gradients, neon glows, or animated gradients on idle UI.
+- Glassmorphism, frosted blur on regular cards (only modal overlay uses backdrop-blur, and only at 4px) — no exception, including the dashboard (see §8.1).
+- Vibrant rainbow gradients, neon glows, or animated gradients on idle UI — the dashboard's showpiece keyframes (§8.1) are the sole, scoped exception; they stay dashboard-only.
 - Light-mode styles. Proxytrace is dark-only today; do not add light-mode classes "just in case." If/when light mode happens, it'll be a tracked initiative with new tokens.
 - Custom shadows / radii / type sizes outside the scale.
 - `border-2` or thicker borders on UI chrome — our borders are 1px hairlines. Thicker borders only on focus rings (2px) and explicit dividers.

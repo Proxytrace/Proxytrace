@@ -791,6 +791,9 @@ msgstr "Activar licencia"
 msgid "Active"
 msgstr "Activo"
 
+msgid "Activity · last 60 min"
+msgstr ""
+
 msgid "Actor"
 msgstr "Actor"
 
@@ -870,6 +873,9 @@ msgstr "Adoptado en v{0}"
 
 msgid "against <0>{selectedModelName}</0>"
 msgstr "contra <0>{selectedModelName}</0>"
+
+msgid "Age"
+msgstr ""
 
 msgid "Agent"
 msgstr "Agent"
@@ -1119,6 +1125,9 @@ msgstr "En espera de adopción"
 
 msgid "Awaiting decision"
 msgstr "En espera de decisión"
+
+msgid "awaiting samples"
+msgstr ""
 
 msgid "awaiting telemetry"
 msgstr "en espera de telemetría"
@@ -1882,11 +1891,11 @@ msgstr "Registro de errores"
 msgid "Error message required"
 msgstr "Se requiere un mensaje de error"
 
-msgid "error rate"
-msgstr "tasa de error"
-
 msgid "Error rate"
 msgstr "Tasa de error"
+
+msgid "errors"
+msgstr ""
 
 msgid "Estimated cost in EUR"
 msgstr "Costo estimado en EUR"
@@ -2266,6 +2275,9 @@ msgstr "Configuración de indexado para el proyecto activo."
 msgid "Info"
 msgstr "Información"
 
+msgid "ingestion backlog"
+msgstr ""
+
 msgid "Ingestion proxy"
 msgstr "Proxy de ingestión"
 
@@ -2497,11 +2509,11 @@ msgstr "En vivo"
 msgid "LIVE"
 msgstr "EN VIVO"
 
+msgid "Live feed"
+msgstr ""
+
 msgid "live re-score"
 msgstr "recalificación en vivo"
-
-msgid "Live trace stream"
-msgstr "Flujo de Traces en vivo"
 
 msgid "LLM"
 msgstr "LLM"
@@ -3376,8 +3388,12 @@ msgstr "p95 {0}"
 msgid "p95 {0} · p99 {1}"
 msgstr "p95 {0} · p99 {1}"
 
-msgid "p95 latency"
-msgstr "latencia p95"
+msgid "p95 Latency"
+msgstr ""
+
+#. placeholder {0}: fmtLatency(latencyStats.p99)
+msgid "p99 {0}"
+msgstr ""
 
 msgid "Parallel · {count} selected"
 msgstr "Paralelo · {count} seleccionados"
@@ -3690,9 +3706,6 @@ msgstr "Providers"
 msgid "Providers, Models & Endpoints"
 msgstr "Providers, Models & Endpoints"
 
-msgid "proxy"
-msgstr "proxy"
-
 #. placeholder {0}: data.latestVersion
 #. placeholder {1}: data.currentVersion
 msgid "Proxytrace <0>{0}</0> is available — you're running <1>{1}</1>."
@@ -3710,8 +3723,8 @@ msgstr "pt"
 msgid "Pulled from the provider; prices load automatically."
 msgstr "Se cargan automáticamente desde el provider; los precios se actualizan solos."
 
-msgid "queue depth"
-msgstr "profundidad de cola"
+msgid "Queue"
+msgstr ""
 
 msgid "Queued"
 msgstr "En cola"
@@ -4896,14 +4909,14 @@ msgstr "tokens"
 msgid "Tokens"
 msgstr "Tokens"
 
-msgid "tokens / sec"
-msgstr "tokens / sec"
-
 msgid "Tokens in"
 msgstr "Tokens de entrada"
 
 msgid "Tokens out"
 msgstr "Tokens de salida"
+
+msgid "tokens/s"
+msgstr ""
 
 msgid "tolerance"
 msgstr "tolerancia"
@@ -4993,14 +5006,14 @@ msgstr "traces"
 msgid "Traces"
 msgstr "Traces"
 
-msgid "traces / min"
-msgstr "traces / min"
-
 msgid "Traces guarding against past bugs and previously-fixed issues."
 msgstr "Traces que protegen contra errores pasados y problemas corregidos anteriormente."
 
 msgid "Traces per minute"
 msgstr "Traces por minuto"
+
+msgid "traces/min"
+msgstr ""
 
 msgid "Tracey AI"
 msgstr "Tracey AI"
@@ -5083,6 +5096,9 @@ msgstr "Deshacer eliminación"
 
 msgid "Unknown"
 msgstr "Desconocido"
+
+msgid "unknown agent"
+msgstr ""
 
 msgid "Unlimited agents"
 msgstr "Agentes ilimitados"

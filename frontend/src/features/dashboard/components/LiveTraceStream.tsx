@@ -8,7 +8,9 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { buildRows } from '../../../lib/trace';
-import { LiveStreamRow, LIVE_STREAM_GRID } from './LiveStreamRow';
+import { useNowTick } from '../hooks/useNowTick';
+import { LiveStreamRow, LIVE_STREAM_GRID, LIVE_STREAM_GRID_WIDE, LIVE_STREAM_GRID_NARROW, NARROW_HIDDEN } from './LiveStreamRow';
+import { cn } from '../../../lib/cn';
 
 interface LiveTraceStreamProps {
   traces: AgentCallListItemDto[];
@@ -20,15 +22,20 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
   const { t } = useLingui();
   const navigate = useNavigate();
   const rows = useMemo(() => buildRows(traces), [traces]);
+  const now = useNowTick(5000);
 
   return (
-    <section data-testid="live-trace-stream" className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)]">
+    <section
+      data-testid="live-trace-stream"
+      className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)] @container"
+      style={{ '--live-grid': LIVE_STREAM_GRID_WIDE, '--live-grid-narrow': LIVE_STREAM_GRID_NARROW } as React.CSSProperties}
+    >
       <header className="flex items-end justify-between mb-3">
         <div>
-          <h3 className="text-h2 font-semibold flex items-center gap-2">
-            <span className="size-[7px] rounded-full bg-accent-hover pulse-dot shadow-[0_0_10px_var(--accent-hover)]" />
-            <Trans>Live trace stream</Trans>
-          </h3>
+          <span className="text-caption text-accent-hover font-mono tracking-[0.18em] uppercase font-bold flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-success pulse-dot shadow-[0_0_10px_var(--success)]" />
+            <Trans>Live feed</Trans>
+          </span>
           <p className="text-body-sm text-muted mt-0.5 font-mono">
             <Trans>auto-refresh · {traces.length} most recent</Trans>
           </p>
@@ -39,12 +46,12 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
       </header>
 
       <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-caption font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
-        <span /><span><Trans>Message</Trans></span><span className="text-center"><Trans>Turns</Trans></span><span className="text-center"><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span>
+        <span /><span><Trans>Message</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Turns</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
       </div>
 
       {isLoading ? (
         <div className="py-3 flex flex-col gap-1.5">
-          {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height={26} className="rounded-sm" />)}
+          {Array.from({ length: 12 }, (_, i) => <Skeleton key={i} height={26} className="rounded-sm" />)}
         </div>
       ) : rows.length === 0 ? (
         <div className="py-10">
@@ -61,6 +68,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
               row={row}
               freshIds={freshIds}
               isLast={i === rows.length - 1}
+              now={now}
               onSelect={id => navigate(`/traces?focus=${id}`)}
             />
           ))}

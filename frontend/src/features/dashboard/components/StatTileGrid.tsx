@@ -1,10 +1,10 @@
-// 2×2 grid of KPI stat tiles in the hero row.
+// Grid of KPI stat tiles in the hero row.
 
 import { useLingui } from '@lingui/react/macro';
-import { ActivityIcon, ClockIcon, ZapIcon, TargetIcon } from '../../../components/icons';
+import { ActivityIcon, ClockIcon, ZapIcon, TargetIcon, ServerIcon, SigmaIcon } from '../../../components/icons';
 import type { SummaryDto, LiveTelemetryDto, DashboardTrendsDto } from '../../../api/models';
 import { fmtLatency } from '../../../lib/format';
-import type { LatencyStats } from '../dashboardMeta';
+import { teleFmt, type LatencyStats } from '../dashboardMeta';
 import { StatTile } from './StatTile';
 
 interface StatTileGridProps {
@@ -19,7 +19,7 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
 
   return (
-    <div data-testid="dashboard-stat-tiles" className="grid grid-cols-2 grid-rows-2 gap-2">
+    <div data-testid="dashboard-stat-tiles" className="grid grid-cols-2 lg:grid-cols-3 gap-2">
       <StatTile
         accent
         testId="stat-tile-traces"
@@ -76,6 +76,27 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         trace={trends?.passRate}
         traceColor="var(--success)"
         traceFormat={v => t`${v.toFixed(0)}% pass`}
+      />
+      <StatTile
+        testId="stat-tile-queue"
+        icon={<ServerIcon size={11} />}
+        label={t`Queue`}
+        value={telemetry ? String(telemetry.queueDepth) : '—'}
+        countTo={telemetry ? telemetry.queueDepth : undefined}
+        formatCount={v => String(Math.round(v))}
+        sub={t`ingestion backlog`}
+        traceColor="var(--teal)"
+      />
+      <StatTile
+        testId="stat-tile-p95"
+        icon={<SigmaIcon size={11} />}
+        label={t`p95 Latency`}
+        value={latencyStats ? String(Math.round(latencyStats.p95)) : teleFmt(telemetry?.p95Ms, v => String(Math.round(v)))}
+        countTo={latencyStats ? latencyStats.p95 : telemetry?.p95Ms}
+        formatCount={v => String(Math.round(v))}
+        unit={t`ms`}
+        sub={latencyStats ? t`p99 ${fmtLatency(latencyStats.p99)}` : t`awaiting samples`}
+        traceColor="var(--warn)"
       />
     </div>
   );

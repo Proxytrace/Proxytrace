@@ -16,7 +16,8 @@ import {
 import { useDashboardView } from './hooks/useDashboardQueries';
 import { useLiveClock } from './hooks/useLiveClock';
 import { useFreshTraces } from './hooks/useFreshTraces';
-import { TelemetryStrip } from './components/TelemetryStrip';
+import { usePulse } from './hooks/usePulse';
+import { PulseBand } from './components/PulseBand';
 import { HeroTokenCard } from './components/HeroTokenCard';
 import { StatTileGrid } from './components/StatTileGrid';
 import { LiveTraceStream } from './components/LiveTraceStream';
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const queryOpts = { from, projectId, enabled };
 
   const { data: dashboard, isLoading: dashboardLoading } = useDashboardView(queryOpts);
+  const { pulse, lastBeat } = usePulse(dashboard?.pulse, projectId);
 
   // ── SSE: invalidate on new traces ───────────────────────────────────────────
 
@@ -94,13 +96,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Telemetry strip */}
-      <TelemetryStrip telemetry={telemetry} latencyStats={latencyStats} />
+      {/* ① Pulse band — the 5-second hook */}
+      <div className="fade-up [animation-delay:40ms]">
+        <PulseBand pulse={pulse} lastBeat={lastBeat} telemetry={telemetry} />
+      </div>
 
-      {/* Hero bento: token card + 2×2 stat tiles */}
-      <div
-        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:80ms]"
-      >
+      {/* ② Live theater + ③ token hero */}
+      <div className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1.15fr)] gap-2 [animation-delay:80ms]">
+        <LiveTraceStream traces={recentTraces} isLoading={dashboardLoading} freshIds={freshIds} />
         <HeroTokenCard
           summary={summary}
           tokenVolume={tokenSeries.values}
@@ -111,31 +114,25 @@ export default function Dashboard() {
           onRangeChange={setRange}
           isLoading={dashboardLoading}
         />
+      </div>
+
+      {/* ④ Scale + quality band */}
+      <div className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)] gap-2 [animation-delay:120ms]">
         <StatTileGrid
           summary={summary}
           telemetry={telemetry}
           trends={trends}
           latencyStats={latencyStats}
         />
-      </div>
-
-      {/* Live stream + pass-rate gauge */}
-      <div
-        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:120ms]"
-      >
-        <LiveTraceStream traces={recentTraces} isLoading={dashboardLoading} freshIds={freshIds} />
         <PassRateGauge summary={summary} />
       </div>
 
-      {/* Token usage by agent + latency distribution */}
-      <div
-        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:160ms]"
-      >
+      <div className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:160ms]">
         <TokenByAgentSection share={tokenAgentShare} range={range} isLoading={dashboardLoading} />
         <LatencySection latencyHist={latencyHist} latencyStats={latencyStats} isLoading={dashboardLoading} />
       </div>
 
-      {/* Agents */}
+      {/* ⑤ Agents */}
       <AgentsSection agents={agents} agentBreakdown={agentBreakdown} />
 
     </div>

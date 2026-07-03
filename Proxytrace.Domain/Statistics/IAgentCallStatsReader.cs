@@ -30,6 +30,12 @@ public interface IAgentCallStatsReader
 
     Task<CallTrends> GetCallTrendsAsync(StatisticsFilter filter, int buckets, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Per-bucket call counts over [from, to] as a dense array (oldest → newest, zeros for empty
+    /// buckets). Drives the dashboard's live pulse band: 60 one-minute buckets over the trailing hour.
+    /// </summary>
+    Task<IReadOnlyList<int>> GetPulseAsync(StatisticsFilter filter, DateTimeOffset from, DateTimeOffset to, int buckets, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
 
     Task<(IReadOnlyList<AgentTimeSeriesPoint> Series, AgentTimeSummary Summary)> GetAgentWindowAsync(

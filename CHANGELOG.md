@@ -9,6 +9,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Changed
+
+- **The dashboard is now a live mission control.** A new full-width pulse band charts
+  per-minute call activity over the last hour and beats in real time as traces arrive. The
+  live trace feed moved to center stage with richer rows (agent identity, live age, arrival
+  flash), the token headline grew into an animated gradient display, and queue depth and p95
+  latency joined the stat tiles. Charts draw in on load; all motion honors reduced-motion
+  preferences. The old telemetry strip's proxy-version label was retired along with the strip
+  itself — the API still reports `proxyVersion`, but its UI home was removed deliberately.
+
 ## [1.4.0] - 2026-07-02
 
 ### Changed

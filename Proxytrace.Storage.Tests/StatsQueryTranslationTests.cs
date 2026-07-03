@@ -111,4 +111,21 @@ public sealed class StatsQueryTranslationTests
         sql.Should().Contain("GROUP BY");
         sql.Should().Contain("LIMIT");
     }
+
+    [TestMethod]
+    public void PulseAggregate_PerMinuteCountBuckets_TranslatesToServerSideGroupBy()
+    {
+        using IContainer container = BuildPostgresContainer();
+        var context = container.Resolve<StorageDbContext>();
+
+        // The GetPulseAsync shape: integer-slot minute buckets with a bare per-bucket count.
+        DateTimeOffset from = DateTimeOffset.UtcNow.AddMinutes(-60);
+        const double bucketMs = 60_000d;
+        string sql = context.Set<AgentCallEntity>()
+            .GroupBy(c => (int)Math.Floor((c.CreatedAt - from).TotalMilliseconds / bucketMs))
+            .Select(g => new { Index = g.Key, Count = g.Count() })
+            .ToQueryString();
+
+        sql.Should().Contain("GROUP BY");
+    }
 }

@@ -19,7 +19,9 @@ public record DashboardViewDto(
     /// <summary>Bucket granularity used for the token series, e.g. "fiveMinutes", "hourly", "daily".</summary>
     string TokenBucket,
     IReadOnlyList<AgentCallListItemDto> RecentTraces,
-    IReadOnlyList<AgentListItemDto> Agents);
+    IReadOnlyList<AgentListItemDto> Agents,
+    /// <summary>Per-minute call counts over the trailing hour (60 entries, oldest → newest).</summary>
+    IReadOnlyList<int> Pulse);
 
 public record SummaryDto(
     long TotalCalls,
