@@ -301,6 +301,42 @@ public sealed class AgentCallListQueryTests : BaseTest<Module>
         items.Should().ContainSingle(i => i.Id == matching.Id);
     }
 
+    [TestMethod]
+    public async Task GetFilteredList_FilterByMaxTokens_ExcludesRowsAboveBoundAndNullUsageRows()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+        var (agent, endpoint) = await SeedAgentAsync(services);
+
+        var atBound = await SeedCallAsync(services, agent, endpoint, new TokenUsage(400, 100), latencyMs: 50); // total 500, matches MaxTokens: 500 inclusively
+        var aboveBound = await SeedCallAsync(services, agent, endpoint, new TokenUsage(900, 100), latencyMs: 50); // total 1000, excluded
+        var nullUsage = await SeedCallAsync(services, agent, endpoint, usage: null, latencyMs: null);
+
+        var (items, total) = await repo.GetFilteredListAsync(
+            new AgentCallFilter(MaxTokens: 500), 1, 50, CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle(i => i.Id == atBound.Id);
+    }
+
+    [TestMethod]
+    public async Task GetFilteredList_FilterByMinLatencyMs_ExcludesRowsBelowBoundAndNullLatencyRows()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+        var (agent, endpoint) = await SeedAgentAsync(services);
+
+        var atBound = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 100); // matches MinLatencyMs: 100 inclusively
+        var belowBound = await SeedCallAsync(services, agent, endpoint, new TokenUsage(10, 10), latencyMs: 50); // excluded
+        var nullLatency = await SeedCallAsync(services, agent, endpoint, usage: null, latencyMs: null);
+
+        var (items, total) = await repo.GetFilteredListAsync(
+            new AgentCallFilter(MinLatencyMs: 100), 1, 50, CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle(i => i.Id == atBound.Id);
+    }
+
     private async Task<(IAgent Agent, IModelEndpoint Endpoint)> SeedAgentAsync(IServiceProvider services)
     {
         var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
