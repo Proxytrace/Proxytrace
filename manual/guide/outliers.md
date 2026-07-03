@@ -50,3 +50,10 @@ to return to the full list.
 Each agent's detail page has a **Recent outliers** widget listing that agent's most recently
 flagged calls, with the reason for each. Click a row to open the trace, or **View all** to
 jump to the Traces list. It updates live as new calls are captured.
+
+## See the whole picture
+
+To watch anomalies across *every* agent at once — a live timeline, a "needs help" ranking of the
+noisiest agents, and a feed of recently flagged calls — open the
+[Anomaly dashboard](/guide/anomaly-dashboard). It also hosts **custom anomaly detectors**, where an
+LLM reviews calls against instructions you write (an Enterprise feature).

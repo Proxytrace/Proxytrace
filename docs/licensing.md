@@ -20,7 +20,7 @@ public interface ILicenseService
 - **Gate every premium capability through `ILicenseService`.** Before exposing or executing a gated
   feature, check `IsFeatureEnabled(...)` / `GetLimit(...)`. Current gated features:
   `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`, `Tracey`,
-  `ScheduledTestRuns`.
+  `ScheduledTestRuns`, `CustomAnomalyDetectors`.
 - **`Current` is never null** and defaults to the **Free** tier — write code that degrades to Free,
   never code that assumes a paid tier or null-guards the snapshot.
 - **Treat `long.MaxValue` from `GetLimit` as unlimited** — do not cap or special-case it elsewhere.
@@ -102,3 +102,9 @@ JWT carries one extra claim, `offline` (a JSON boolean), and the server emits it
   stays ungated so existing schedules remain visible. At use time `TestRunSchedulerService` skips
   unlicensed schedules without deleting them, so a downgrade pauses scheduled runs and a re-upgrade
   resumes them — the feature degrades gracefully rather than destroying configuration.
+- **`CustomAnomalyDetectors`** (Enterprise) gates the user-defined LLM-based anomaly detectors. The
+  whole `CustomAnomalyDetectorsController` (all CRUD, including list) carries
+  `[RequiresFeature(LicenseFeature.CustomAnomalyDetectors)]` and returns **402** when unlicensed, so
+  the management UI is hidden without a license. The anomaly *dashboard* itself (timeline,
+  recent-flagged list) is ungated — it also surfaces the built-in statistical outliers, which every
+  tier gets.

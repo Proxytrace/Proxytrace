@@ -9,6 +9,23 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **A new Anomaly dashboard.** A dedicated **Anomalies** page (in the sidebar, after Traces) brings
+  every agent's anomalies together in one place: a live, stacked per-agent timeline (five-minute,
+  hourly, or daily buckets), a "needs help" ranking of the agents with the most anomalies, and a
+  feed of recently flagged calls. Filter the feed by agent and click any row to jump straight to the
+  focused trace. The whole page updates in real time as calls are captured and flagged.
+
+- **Custom LLM-based anomaly detectors (Enterprise).** Define your own anomaly detectors per
+  project: describe what "anomalous" means in plain-language review instructions, pick a review
+  model, and set 1–20 trigger words or regular expressions that gate which calls get reviewed. When
+  a trigger matches a new turn, the detector's model reviews it and — on an anomalous verdict — flags
+  the call with a **Custom detector** chip, adds it to the Anomaly dashboard, and raises a
+  notification that deep-links to the trace. Scope a detector to all agents or selected ones, and
+  enable or disable it without losing its configuration. Because reviews cost one model call per
+  trigger-matched turn, triggers keep the LLM focused only on the calls that could be a problem.
+
 ### Changed
 
 - **The dashboard is now a live mission control.** A new full-width pulse band charts

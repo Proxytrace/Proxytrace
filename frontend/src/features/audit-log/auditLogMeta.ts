@@ -66,6 +66,9 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, MessageDescriptor> = {
   [AuditAction.SetupCleanupPurged]: msg`Data Purged`,
   [AuditAction.SecretsBackfilled]: msg`Secrets Backfilled`,
   [AuditAction.AccessDenied]: msg`Access Denied`,
+  [AuditAction.CustomAnomalyDetectorCreated]: msg`Anomaly Detector Created`,
+  [AuditAction.CustomAnomalyDetectorUpdated]: msg`Anomaly Detector Updated`,
+  [AuditAction.CustomAnomalyDetectorDeleted]: msg`Anomaly Detector Deleted`,
 };
 
 export const AUDIT_ACTOR_TYPE_LABEL: Record<AuditActorType, MessageDescriptor> = {
@@ -143,4 +146,7 @@ export const ACTION_COLOR: Record<AuditAction, string> = {
   [AuditAction.SetupCleanupPurged]: 'var(--danger)',
   [AuditAction.SecretsBackfilled]: 'var(--accent-primary)',
   [AuditAction.AccessDenied]: 'var(--danger)',
+  [AuditAction.CustomAnomalyDetectorCreated]: 'var(--success)',
+  [AuditAction.CustomAnomalyDetectorUpdated]: 'var(--warn)',
+  [AuditAction.CustomAnomalyDetectorDeleted]: 'var(--danger)',
 };

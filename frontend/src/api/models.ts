@@ -1260,6 +1260,9 @@ export enum AuditAction {
   SecretsBackfilled = 'SecretsBackfilled',
   AccessDenied = 'AccessDenied',
   OutlierSettingsUpdated = 'OutlierSettingsUpdated',
+  CustomAnomalyDetectorCreated = 'CustomAnomalyDetectorCreated',
+  CustomAnomalyDetectorUpdated = 'CustomAnomalyDetectorUpdated',
+  CustomAnomalyDetectorDeleted = 'CustomAnomalyDetectorDeleted',
 }
 
 export enum AuditActorType {

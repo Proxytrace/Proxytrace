@@ -57,6 +57,7 @@ msgid "(You)"
 msgstr "(You)"
 
 #. placeholder {0}: agents.length
+#. placeholder {0}: d.agentIds.length
 msgid "{0, plural, one {# agent} other {# agents}}"
 msgstr "{0, plural, one {# agent} other {# agents}}"
 
@@ -141,9 +142,17 @@ msgstr "{0, plural, one {# tool} other {# tools}}"
 msgid "{0, plural, one {# trace} other {# traces}}"
 msgstr "{0, plural, one {# trace} other {# traces}}"
 
+#. placeholder {0}: d.triggers.length
+msgid "{0, plural, one {# trigger} other {# triggers}}"
+msgstr "{0, plural, one {# trigger} other {# triggers}}"
+
 #. placeholder {0}: turns.length
 msgid "{0, plural, one {# turn} other {# turns}}"
 msgstr "{0, plural, one {# turn} other {# turns}}"
+
+#. placeholder {0}: r.total
+msgid "{0, plural, one {anomaly} other {anomalies}}"
+msgstr "{0, plural, one {anomaly} other {anomalies}}"
 
 #. placeholder {0}: suite.testCaseCount
 msgid "{0, plural, one {case} other {cases}}"
@@ -181,6 +190,12 @@ msgstr "{0} · {1} runs"
 #. placeholder {2}: fmtRelative(suite.lastRunAt)
 msgid "{0} · {1} runs · last {2}"
 msgstr "{0} · {1} runs · last {2}"
+
+#. placeholder {0}: agentName(c.agentId)
+#. placeholder {1}: c.staticCount
+#. placeholder {2}: c.customCount
+msgid "{0} · {1} static / {2} custom"
+msgstr "{0} · {1} static / {2} custom"
 
 #. placeholder {0}: fmtTokens(summary.inputTokens)
 msgid "{0} · {cached}% cached"
@@ -711,6 +726,9 @@ msgstr "1 test suite"
 msgid "2 proposals"
 msgstr "2 proposals"
 
+msgid "5 min"
+msgstr "5 min"
+
 msgid "6-digit code"
 msgstr "6-digit code"
 
@@ -719,6 +737,9 @@ msgstr "95th percentile latency"
 
 msgid "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
 msgstr "A call is flagged when a metric is this many standard deviations from the agent's recent mean. Lower is more sensitive."
+
+msgid "A call is reviewed only when a trigger matches — keeps LLM usage targeted."
+msgstr "A call is reviewed only when a trigger matches — keeps LLM usage targeted."
 
 msgid "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
 msgstr "A grader model scores responses on a fixed 1–5 scale (Terrible → Excellent) with optional reasoning. Pick a preset or write your own rubric."
@@ -819,6 +840,9 @@ msgstr "Add {0} to suite"
 msgid "Add a provider to route traffic through Proxytrace."
 msgstr "Add a provider to route traffic through Proxytrace."
 
+msgid "Add between 1 and {MAX_TRIGGERS} triggers."
+msgstr "Add between 1 and {MAX_TRIGGERS} triggers."
+
 msgid "Add cases from captured traces to seed this suite."
 msgstr "Add cases from captured traces to seed this suite."
 
@@ -842,6 +866,9 @@ msgstr "Add to suite"
 
 msgid "Add tool request"
 msgstr "Add tool request"
+
+msgid "Add trigger"
+msgstr "Add trigger"
 
 msgid "Add users to this project to grant them access."
 msgstr "Add users to this project to grant them access."
@@ -990,6 +1017,18 @@ msgstr "Anomalies"
 msgid "Anomalies and alerts from your test runs will appear here."
 msgstr "Anomalies and alerts from your test runs will appear here."
 
+msgid "Anomalies over time"
+msgstr "Anomalies over time"
+
+msgid "Anomaly Detector Created"
+msgstr "Anomaly Detector Created"
+
+msgid "Anomaly Detector Deleted"
+msgstr "Anomaly Detector Deleted"
+
+msgid "Anomaly Detector Updated"
+msgstr "Anomaly Detector Updated"
+
 msgid "Anthropic"
 msgstr "Anthropic"
 
@@ -1025,6 +1064,9 @@ msgstr "Apply"
 
 msgid "Apply this change in your agent's code — Proxytrace flips the proposal to Adopted when the exact change shows up in live traffic. Applied a tweaked variant? Mark it adopted manually."
 msgstr "Apply this change in your agent's code — Proxytrace flips the proposal to Adopted when the exact change shows up in live traffic. Applied a tweaked variant? Mark it adopted manually."
+
+msgid "Apply to all agents"
+msgstr "Apply to all agents"
 
 msgid "Approximate tokens (chars / 4)"
 msgstr "Approximate tokens (chars / 4)"
@@ -1243,6 +1285,9 @@ msgstr "Check results"
 msgid "Check your inbox"
 msgstr "Check your inbox"
 
+msgid "Choose a judge model endpoint."
+msgstr "Choose a judge model endpoint."
+
 msgid "Choose a new password"
 msgstr "Choose a new password"
 
@@ -1460,6 +1505,15 @@ msgstr "Could not start setup. Please try again."
 msgid "Could not verify the code. Please try again."
 msgstr "Could not verify the code. Please try again."
 
+msgid "Couldn't load detectors."
+msgstr "Couldn't load detectors."
+
+msgid "Couldn't load recent anomalies."
+msgstr "Couldn't load recent anomalies."
+
+msgid "Couldn't load the anomaly timeline."
+msgstr "Couldn't load the anomaly timeline."
+
 msgid "Couldn’t load this evaluation."
 msgstr "Couldn’t load this evaluation."
 
@@ -1471,6 +1525,9 @@ msgstr "Couldn’t submit the theory."
 
 msgid "Create"
 msgstr "Create"
+
+msgid "Create a detector to review calls with an LLM and flag custom anomalies."
+msgstr "Create a detector to review calls with an LLM and flag custom anomalies."
 
 msgid "Create a project first to assign members."
 msgstr "Create a project first to assign members."
@@ -1501,6 +1558,9 @@ msgstr "Create an agent before building a test suite."
 
 msgid "Create an evaluator first, then come back here to probe it against past test results."
 msgstr "Create an evaluator first, then come back here to probe it against past test results."
+
+msgid "Create detector"
+msgstr "Create detector"
 
 msgid "Create evaluators in the Evaluators tab first."
 msgstr "Create evaluators in the Evaluators tab first."
@@ -1583,8 +1643,17 @@ msgstr "Custom"
 msgid "Custom (write your own)"
 msgstr "Custom (write your own)"
 
+msgid "Custom anomaly detectors"
+msgstr "Custom anomaly detectors"
+
+msgid "Custom detector"
+msgstr "Custom detector"
+
 msgid "Custom evaluators"
 msgstr "Custom evaluators"
+
+msgid "Custom LLM detectors review matched calls and flag anomalies beyond the built-in statistical checks."
+msgstr "Custom LLM detectors review matched calls and flag anomalies beyond the built-in statistical checks."
 
 msgid "Custom range"
 msgstr "Custom range"
@@ -1640,6 +1709,9 @@ msgstr "Delete all non-model data"
 msgid "Delete conversation"
 msgstr "Delete conversation"
 
+msgid "Delete detector"
+msgstr "Delete detector"
+
 msgid "Delete key"
 msgstr "Delete key"
 
@@ -1687,6 +1759,18 @@ msgstr "Detach {0}"
 
 msgid "Details"
 msgstr "Details"
+
+msgid "Detector created"
+msgstr "Detector created"
+
+msgid "Detector deleted"
+msgstr "Detector deleted"
+
+msgid "Detector updated"
+msgstr "Detector updated"
+
+msgid "Detectors"
+msgstr "Detectors"
 
 msgid "Diagnose an agent"
 msgstr "Diagnose an agent"
@@ -1776,6 +1860,9 @@ msgstr "e.g. Production analytics"
 msgid "e.g. production-agent"
 msgstr "e.g. production-agent"
 
+msgid "e.g. Refund promise watcher"
+msgstr "e.g. Refund promise watcher"
+
 msgid "Edge Cases"
 msgstr "Edge Cases"
 
@@ -1785,6 +1872,9 @@ msgstr "Edit"
 #. placeholder {0}: META[editTarget.kind] ? i18n._(META[editTarget.kind].label) : 'Evaluator'
 msgid "Edit {0}"
 msgstr "Edit {0}"
+
+msgid "Edit detector"
+msgstr "Edit detector"
 
 msgid "Edit endpoint"
 msgstr "Edit endpoint"
@@ -1942,6 +2032,9 @@ msgstr "Evaluators"
 msgid "every"
 msgstr "every"
 
+msgid "Every trigger needs a pattern."
+msgstr "Every trigger needs a pattern."
+
 msgid "Evidence"
 msgstr "Evidence"
 
@@ -2079,6 +2172,15 @@ msgstr "Fixed"
 
 msgid "Flag agent calls that deviate from their agent's recent behaviour."
 msgstr "Flag agent calls that deviate from their agent's recent behaviour."
+
+msgid "Flag the turn when the assistant promises a refund without approval."
+msgstr "Flag the turn when the assistant promises a refund without approval."
+
+msgid "Flagged agent calls over time, and the agents that need the most attention."
+msgstr "Flagged agent calls over time, and the agents that need the most attention."
+
+msgid "Flagged calls will appear here as they arrive."
+msgstr "Flagged calls will appear here as they arrive."
 
 msgid "Flaky"
 msgstr "Flaky"
@@ -2373,6 +2475,9 @@ msgstr "Judge"
 msgid "Judge model"
 msgstr "Judge model"
 
+msgid "Judge model endpoint"
+msgstr "Judge model endpoint"
+
 msgid "Key"
 msgstr "Key"
 
@@ -2650,6 +2755,15 @@ msgstr "Mark as read"
 msgid "Marked adopted"
 msgstr "Marked adopted"
 
+#. placeholder {0}: hit.matchedTrigger
+msgid "Matched \"{0}\""
+msgstr "Matched \"{0}\""
+
+#. placeholder {0}: hit.matchedTrigger
+#. placeholder {1}: hit.reasoning
+msgid "Matched \"{0}\" — {1}"
+msgstr "Matched \"{0}\" — {1}"
+
 msgid "Max"
 msgstr "Max"
 
@@ -2798,6 +2912,9 @@ msgstr "N"
 msgid "Name"
 msgstr "Name"
 
+msgid "Name is required."
+msgstr "Name is required."
+
 msgid "Name suite"
 msgstr "Name suite"
 
@@ -2809,6 +2926,9 @@ msgstr "navigate"
 
 msgid "Needs attention"
 msgstr "Needs attention"
+
+msgid "Needs help most"
+msgstr "Needs help most"
 
 msgid "never"
 msgstr "never"
@@ -2824,6 +2944,9 @@ msgstr "New"
 
 msgid "New conversation"
 msgstr "New conversation"
+
+msgid "New detector"
+msgstr "New detector"
 
 msgid "New evaluator"
 msgstr "New evaluator"
@@ -2901,6 +3024,9 @@ msgstr "No agents yet"
 msgid "No anomalies flagged recently."
 msgstr "No anomalies flagged recently."
 
+msgid "No anomalies in this window"
+msgstr "No anomalies in this window"
+
 msgid "No API keys yet"
 msgstr "No API keys yet"
 
@@ -2927,6 +3053,9 @@ msgstr "No decision yet — validation must finish first."
 
 msgid "no delta predicted"
 msgstr "no delta predicted"
+
+msgid "No detectors yet"
+msgstr "No detectors yet"
 
 msgid "No email alerts"
 msgstr "No email alerts"
@@ -3217,6 +3346,9 @@ msgstr "Nothing here yet"
 msgid "Nothing here yet."
 msgstr "Nothing here yet."
 
+msgid "Nothing was flagged for the selected range."
+msgstr "Nothing was flagged for the selected range."
+
 msgid "Notifications"
 msgstr "Notifications"
 
@@ -3252,6 +3384,9 @@ msgstr "OK"
 
 msgid "on this page"
 msgstr "on this page"
+
+msgid "One of the regex triggers is not a valid pattern."
+msgstr "One of the regex triggers is not a valid pattern."
 
 msgid "Online"
 msgstr "Online"
@@ -3514,6 +3649,12 @@ msgstr "Per-model output"
 
 msgid "Performance"
 msgstr "Performance"
+
+msgid "Phrase"
+msgstr "Phrase"
+
+msgid "Phrase to match…"
+msgstr "Phrase to match…"
 
 msgid "pick"
 msgstr "pick"
@@ -3778,6 +3919,9 @@ msgstr "Receiving tokens"
 msgid "Recent"
 msgstr "Recent"
 
+msgid "Recent anomalies"
+msgstr "Recent anomalies"
+
 msgid "Recent evaluations"
 msgstr "Recent evaluations"
 
@@ -3787,11 +3931,17 @@ msgstr "Recent outliers"
 msgid "Recent traces"
 msgstr "Recent traces"
 
+msgid "Regex"
+msgstr "Regex"
+
 msgid "Regressed"
 msgstr "Regressed"
 
 msgid "Regression"
 msgstr "Regression"
+
+msgid "Regular expression…"
+msgstr "Regular expression…"
 
 msgid "Reindex now"
 msgstr "Reindex now"
@@ -3850,6 +4000,9 @@ msgstr "Remove tool"
 
 msgid "Remove tool request"
 msgstr "Remove tool request"
+
+msgid "Remove trigger"
+msgstr "Remove trigger"
 
 msgid "Remove user"
 msgstr "Remove user"
@@ -3922,6 +4075,12 @@ msgstr "Retry discovery"
 
 msgid "Reveal"
 msgstr "Reveal"
+
+msgid "Review instructions"
+msgstr "Review instructions"
+
+msgid "Review instructions are required."
+msgstr "Review instructions are required."
 
 msgid "Review proposals"
 msgstr "Review proposals"
@@ -4110,6 +4269,9 @@ msgstr "Schedules"
 msgid "Schema is appended automatically — only describe what to grade and what each score means."
 msgstr "Schema is appended automatically — only describe what to grade and what each score means."
 
+msgid "Scoped agents"
+msgstr "Scoped agents"
+
 msgid "Score"
 msgstr "Score"
 
@@ -4240,6 +4402,9 @@ msgstr "select"
 msgid "Select a case or trace"
 msgstr "Select a case or trace"
 
+msgid "Select a model endpoint"
+msgstr "Select a model endpoint"
+
 msgid "Select a run to see details."
 msgstr "Select a run to see details."
 
@@ -4255,6 +4420,9 @@ msgstr "Select a trace to preview"
 msgid "Select agent"
 msgstr "Select agent"
 
+msgid "Select agents"
+msgstr "Select agents"
+
 msgid "Select all"
 msgstr "Select all"
 
@@ -4266,6 +4434,9 @@ msgstr "Select an agent to view details."
 
 msgid "Select an evaluator"
 msgstr "Select an evaluator"
+
+msgid "Select at least one agent, or apply to all agents."
+msgstr "Select at least one agent, or apply to all agents."
 
 msgid "Select evaluators"
 msgstr "Select evaluators"
@@ -4395,6 +4566,9 @@ msgstr "Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to 
 #. placeholder {1}: total.toLocaleString()
 msgid "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
 msgstr "Showing the {0} most recent of {1} runs — open the Runs page for the full list."
+
+msgid "Showing the most recent buckets — narrow the range for the full window."
+msgstr "Showing the most recent buckets — narrow the range for the full window."
 
 msgid "Shown in full only once, when created"
 msgstr "Shown in full only once, when created"
@@ -4849,6 +5023,9 @@ msgstr "This password reset link is missing or malformed. Request a new one."
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "This permanently deletes the run and its results. This action cannot be undone."
 
+msgid "This removes the detector and its review history. This can't be undone."
+msgstr "This removes the detector and its review history. This can't be undone."
+
 msgid "This reset link is invalid or has expired. Request a new one."
 msgstr "This reset link is invalid or has expired. Request a new one."
 
@@ -5036,6 +5213,15 @@ msgstr "Tracey quick actions and tools"
 msgid "Tracey's session failed to start. Try again in a moment."
 msgstr "Tracey's session failed to start. Try again in a moment."
 
+msgid "Trigger pattern"
+msgstr "Trigger pattern"
+
+msgid "Trigger type"
+msgstr "Trigger type"
+
+msgid "Triggers"
+msgstr "Triggers"
+
 msgid "Try a different search term."
 msgstr "Try a different search term."
 
@@ -5099,6 +5285,9 @@ msgstr "Unknown"
 
 msgid "unknown agent"
 msgstr "unknown agent"
+
+msgid "Unknown agent"
+msgstr "Unknown agent"
 
 msgid "Unlimited agents"
 msgstr "Unlimited agents"
@@ -5314,6 +5503,9 @@ msgstr "Welcome to <0>Proxytrace</0>"
 
 msgid "What the agent should respond with…"
 msgstr "What the agent should respond with…"
+
+msgid "What the judge model should look for in a matched turn."
+msgstr "What the judge model should look for in a matched turn."
 
 msgid "When"
 msgstr "When"

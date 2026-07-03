@@ -21,6 +21,7 @@ hooks in `frontend/src/api/event-stream.ts`.
 | `/api/test-runs/{id}/stream` | one run (membership-checked) | `test-case-started`, `inference-done`, `evaluation-arrived`, `test-result-arrived`, `run-complete`* | `TestRunEvent` subtypes | Live single-run progress (per-case, per-evaluator) |
 | `/api/test-run-groups/{id}/stream` | one group (all its runs; membership-checked) | the five run events above + `group-run-complete`* | `TestRunEvent` subtypes | Live multi-endpoint comparison run |
 | `/api/notifications/stream?projectId=` | per project (global broadcaster, server-filtered per connection) | `notification-created`, `notification-status-changed` | `NotificationEvent` subtypes | Anomaly detection raised an alert / a notification was read or dismissed → the top-bar notifications inbox (`NotificationsMenu`, mounted in `Shell`). The broadcaster is global, but the controller writes a frame only when `evt.ProjectId == projectId` or the event is global (null project), so another project's notification content never reaches the connection. |
+| `/api/anomalies/stream?projectId=` | global broadcaster (`ICustomAnomalyBroadcaster`), server-filtered per frame to the caller's member projects | `anomaly-flagged` | `AnomalyFlaggedEvent` | A user-defined anomaly detector's LLM review flagged a call → live Anomaly dashboard (`/anomalies`: recent-flagged list + timeline). Filtered per frame against the caller's accessible project ids (`AnomalyStreamController`; admins receive all). |
 
 `*` = **terminal** event. The client closes the `EventSource` on the terminal event and the run/group
 views are **pure-SSE (no polling)**; on terminal they invalidate the relevant TanStack queries to
@@ -83,6 +84,7 @@ in `frontend/src/api/models.ts`.
 - **Notification events** (`NotificationEvent` carries `Id`, `ProjectId?`):
   - `NotificationCreatedEvent` — `+ Kind, Severity, Title, Message, Status, TargetKind?, TargetId?, CreatedAt` (published by `DashboardNotificationChannel`; de-duplication handled upstream by `NotificationService`)
   - `NotificationStatusChangedEvent` — `+ Status, UpdatedAt` (published by `NotificationsController` on mark-read / dismiss)
+- **`AnomalyFlaggedEvent`** — `AgentCallId, AgentId, ProjectId, DetectorId, DetectorName` (published by the custom-anomaly review pipeline on an anomalous verdict; `ProjectId` lets the global `/api/anomalies/stream` filter each frame to the caller's member projects). Consumed by `useAnomalyStream` (`frontend/src/api/event-stream.ts`) on the Anomaly dashboard.
 - **Run events** (`TestRunEvent` carries `RunId`, `GroupId`):
   - `TestCaseStartedEvent` — `+ TestCaseId`
   - `InferenceDoneEvent` — `+ TestCaseId`
