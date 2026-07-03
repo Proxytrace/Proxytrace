@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ALL_TIME, type TimeRange, type TimeRangePreset } from '../../../lib/timeRange';
 import { useLocalStorageState } from '../../../hooks/useLocalStorageState';
+import { DEFAULT_TRACE_SORT, isValidTraceSort, type TraceSort } from '../tracesMeta';
 
 /**
  * Owns the persisted Traces filter bar so the page survives refresh / navigation.
@@ -54,6 +55,8 @@ export interface TraceFilters {
   setOutlierOnly: (value: boolean) => void;
   agentFilter: string;
   setAgentFilter: (id: string) => void;
+  sort: TraceSort;
+  setSort: (sort: TraceSort) => void;
   /** True when a saved time range was restored at mount (suppresses first-load auto-default). */
   rangeWasRestored: boolean;
 }
@@ -62,6 +65,8 @@ export function useTraceFilters(projectId: string | null): TraceFilters {
   const [rawRange, setTimeRange] = useLocalStorageState<TimeRange>(RANGE_KEY, ALL_TIME);
   const timeRange = isValidTimeRange(rawRange) ? rawRange : ALL_TIME;
   const [search, setSearch] = useLocalStorageState<string>('traces.search', '');
+  const [rawSort, setSort] = useLocalStorageState<TraceSort>('traces.sort', DEFAULT_TRACE_SORT);
+  const sort = isValidTraceSort(rawSort) ? rawSort : DEFAULT_TRACE_SORT;
   const [showSystem, setShowSystem] = useLocalStorageState<boolean>('traces.showSystem', false);
   const [outlierOnly, setOutlierOnly] = useLocalStorageState<boolean>('traces.outlierOnly', false);
 
@@ -109,6 +114,8 @@ export function useTraceFilters(projectId: string | null): TraceFilters {
     setOutlierOnly,
     agentFilter,
     setAgentFilter,
+    sort,
+    setSort,
     rangeWasRestored,
   };
 }

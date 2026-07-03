@@ -108,6 +108,38 @@ export const TRACE_GRID_CLS =
 /** Per-column visibility class, index-aligned with COL_WIDTHS/COL_HEADERS. */
 export const COL_VIS_CLS = COL_MOBILE_VISIBLE.map(v => (v ? '' : '@max-2xl:hidden'));
 
+// ── Column sorting ──────────────────────────────────────────────────────────────
+
+export type TraceSortField = 'time' | 'latency' | 'tokens' | 'toolCount' | 'cacheHit';
+
+export interface TraceSort {
+  field: TraceSortField;
+  desc: boolean;
+}
+
+export const DEFAULT_TRACE_SORT: TraceSort = { field: 'time', desc: true };
+
+/** Backend `AgentCallSortField` enum member per sort field (query-string `sortBy` value). */
+export const SORT_FIELD_TO_API: Record<TraceSortField, string> = {
+  time: 'createdAt',
+  latency: 'latency',
+  tokens: 'totalTokens',
+  toolCount: 'toolCount',
+  cacheHit: 'cacheHitRate',
+};
+
+/** Sort field per column, index-aligned with {@link COL_HEADERS}; null = not sortable. */
+export const SORT_FIELD_BY_COL: readonly (TraceSortField | null)[] = [
+  null, null, null, null, 'toolCount', 'tokens', 'cacheHit', 'latency', null, 'time',
+];
+
+/** Guard a value parsed from storage against the {@link TraceSort} shape (user-editable JSON). */
+export function isValidTraceSort(v: unknown): v is TraceSort {
+  if (typeof v !== 'object' || v === null) return false;
+  const s = v as { field?: unknown; desc?: unknown };
+  return typeof s.desc === 'boolean' && typeof s.field === 'string' && s.field in SORT_FIELD_TO_API;
+}
+
 // ── Latency bar math ──────────────────────────────────────────────────────────
 
 /** Returns percentage (0–100) for the latency mini-bar (scale: 6 000 ms = 100%). */

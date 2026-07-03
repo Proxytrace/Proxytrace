@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AgentCallListItemDto } from '../../api/models';
-import { buildRows, latencyBarPct, toolCount, autoTimeRange, hasActiveTraceFilters, traceListView, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
+import { buildRows, latencyBarPct, toolCount, autoTimeRange, hasActiveTraceFilters, traceListView, GRID_TEMPLATE, COL_WIDTHS, COL_HEADERS, DEFAULT_TRACE_SORT, SORT_FIELD_BY_COL, SORT_FIELD_TO_API, isValidTraceSort } from './tracesMeta';
 
 // ── Minimal fixture factory ───────────────────────────────────────────────────
 
@@ -215,5 +215,46 @@ describe('autoTimeRange', () => {
     expect(autoTimeRange(new Date(now - 3 * 86_400_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '7d' });
     expect(autoTimeRange(new Date(now - 20 * 86_400_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '30d' });
     expect(autoTimeRange(new Date(now - 90 * 86_400_000).toISOString(), now)).toEqual({ kind: 'all' });
+  });
+});
+
+// ── Column sorting meta ─────────────────────────────────────────────────────────
+
+describe('trace sort meta', () => {
+  it('DEFAULT_TRACE_SORT is newest-first time order', () => {
+    expect(DEFAULT_TRACE_SORT).toEqual({ field: 'time', desc: true });
+  });
+
+  it('SORT_FIELD_BY_COL is index-aligned with COL_HEADERS and marks exactly the sortable columns', () => {
+    expect(SORT_FIELD_BY_COL).toHaveLength(COL_HEADERS.length);
+    const byHeader = Object.fromEntries(COL_HEADERS.map((h, i) => [h, SORT_FIELD_BY_COL[i]]));
+    expect(byHeader['Tools']).toBe('toolCount');
+    expect(byHeader['Tokens']).toBe('tokens');
+    expect(byHeader['Cached']).toBe('cacheHit');
+    expect(byHeader['Latency']).toBe('latency');
+    expect(byHeader['Time']).toBe('time');
+    expect(byHeader['Message']).toBeNull();
+    expect(byHeader['Agent']).toBeNull();
+    expect(byHeader['Model']).toBeNull();
+    expect(byHeader['Status']).toBeNull();
+  });
+
+  it('SORT_FIELD_TO_API covers every sort field with the backend enum name', () => {
+    expect(SORT_FIELD_TO_API).toEqual({
+      time: 'createdAt',
+      latency: 'latency',
+      tokens: 'totalTokens',
+      toolCount: 'toolCount',
+      cacheHit: 'cacheHitRate',
+    });
+  });
+
+  it('isValidTraceSort accepts valid shapes and rejects garbage from storage', () => {
+    expect(isValidTraceSort({ field: 'time', desc: true })).toBe(true);
+    expect(isValidTraceSort({ field: 'latency', desc: false })).toBe(true);
+    expect(isValidTraceSort({ field: 'bogus', desc: true })).toBe(false);
+    expect(isValidTraceSort({ field: 'time' })).toBe(false);
+    expect(isValidTraceSort(null)).toBe(false);
+    expect(isValidTraceSort('time')).toBe(false);
   });
 });

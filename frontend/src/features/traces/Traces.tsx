@@ -4,6 +4,7 @@ import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
 import { buildRows, hasActiveTraceFilters } from './tracesMeta';
+import type { TraceRow, TraceSortField } from './tracesMeta';
 import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRange';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
@@ -32,7 +33,7 @@ export default function Traces() {
   // Guard against a stale/garbage stored value — only accept a known option.
   const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
   // Filter bar persists across refresh / navigation (agent filter is project-scoped).
-  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, outlierOnly, setOutlierOnly, agentFilter, setAgentFilter, rangeWasRestored } =
+  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, outlierOnly, setOutlierOnly, agentFilter, setAgentFilter, sort, setSort, rangeWasRestored } =
     useTraceFilters(currentProjectId);
   // Previous windows pushed by each zoom-in; double-clicking the timeline pops one.
   const [zoomStack, setZoomStack] = useState<TimeRange[]>([]);
@@ -64,6 +65,7 @@ export default function Traces() {
     outlierOnly,
     from,
     to,
+    sort,
   });
 
   // Histogram spans the active window and respects every filter; brushing it zooms the window.
@@ -86,7 +88,12 @@ export default function Traces() {
     }
   }, [showSystem, agentFilter, allAgents, setAgentFilter]);
 
-  const rows = useMemo(() => buildRows(traces), [traces]);
+  // Conversation grouping only makes sense in time order — under a metric sort, grouping
+  // consecutive rows by conversation would silently reorder them, so every trace stays flat.
+  const rows = useMemo<TraceRow[]>(
+    () => (sort.field === 'time' ? buildRows(traces) : traces.map(trace => ({ type: 'flat', trace }))),
+    [traces, sort.field],
+  );
   // At-a-glance aggregate of the current page slice (recomputes as page/filter/range changes).
   const summary = useMemo(() => summarizeTraces(traces), [traces]);
 
@@ -194,6 +201,13 @@ export default function Traces() {
     setPage(1);
   }
 
+  // A new column sorts descending (the "big values first" read a metric column implies);
+  // clicking the active column toggles direction.
+  function handleSortChange(field: TraceSortField) {
+    setSort(sort.field === field ? { field, desc: !sort.desc } : { field, desc: true });
+    setPage(1);
+  }
+
   return (
     // md+: fixed-height column, the table scrolls internally. Below md the toolbar/KPIs leave the
     // table only a sliver, so the page scrolls naturally instead and the table takes its content height.
@@ -233,6 +247,8 @@ export default function Traces() {
         filtered={hasActiveTraceFilters({ agentFilter, search: debouncedSearch, timeRangeActive: from != null, outlierOnly })}
         selectedId={selectedTrace?.id ?? null}
         expandedConvs={expandedConvs}
+        sort={sort}
+        onSortChange={handleSortChange}
         onSelectTrace={t => selectTrace(t.id)}
         onToggleConv={toggleConv}
       />

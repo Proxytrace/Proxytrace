@@ -12,6 +12,7 @@ export const QUERY_KEYS = {
   agentCallsRoot: ['agent-calls'] as const,
   agentCallsOverview: (from?: string, agentId?: string, projectId?: string) => ['agent-calls', 'overview', from, agentId, projectId ?? null] as const,
   agentCallsHistogram: (filter: object) => ['agent-calls', 'histogram', filter] as const,
+  agentCallToolNames: (projectId?: string) => ['agent-calls', 'tool-names', projectId ?? null] as const,
   agentCallsForSuiteCreate: (agentId: string, from?: string) => ['agent-calls', 'suite-create', agentId, from ?? null] as const,
   agentCallsForSuiteEdit: (agentId?: string) => ['agent-calls', 'suite-edit', agentId] as const,
 

@@ -13,6 +13,8 @@ export const agentCallsApi = {
     api.get<TracesOverviewDto>(`/api/agent-calls/overview${qs(params ?? {})}`),
   histogram: (filter: AgentCallFilter & { buckets?: number }) =>
     api.get<TraceHistogramBucket[]>(`/api/agent-calls/histogram${qs(filter as Record<string, unknown>)}`),
+  /** Distinct tool names requested by any trace in the project — backs the tool filter's picker. */
+  toolNames: (projectId: string) => api.get<string[]>(`/api/agent-calls/tool-names${qs({ projectId })}`),
   get: (id: string, opts?: RequestOptions) => api.get<AgentCallDto>(`/api/agent-calls/${id}`, opts),
   delete: (id: string) => api.del(`/api/agent-calls/${id}`),
 };

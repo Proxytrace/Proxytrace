@@ -914,6 +914,20 @@ export interface AgentCallFilter {
   conversationId?: string;
   /** When true, return only calls flagged as outliers (any {@link AgentCallListItemDto.outlierFlags} bit set). */
   outlierOnly?: boolean;
+  /** OutlierFlags bitmask; matches calls with ANY of the requested anomaly bits set. */
+  anomalyFlags?: number;
+  /** Status class (2/4/5) matching the whole 2xx/4xx/5xx range, unlike the exact {@link httpStatus}. */
+  httpStatusClass?: number;
+  /** Only calls whose response requested this tool (exact name). */
+  toolName?: string;
+  minTokens?: number;
+  maxTokens?: number;
+  minLatencyMs?: number;
+  maxLatencyMs?: number;
+  /** Backend AgentCallSortField enum member name; omitted = createdAt. */
+  sortBy?: string;
+  /** Sort direction; omitted = descending. */
+  sortDesc?: boolean;
   page?: number;
   pageSize?: number;
 }

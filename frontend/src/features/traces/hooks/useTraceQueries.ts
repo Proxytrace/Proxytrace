@@ -4,6 +4,7 @@ import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { DEFAULT_PAGE_SIZE } from '../../../lib/constants';
 import type { AgentCallFilter } from '../../../api/models';
+import { DEFAULT_TRACE_SORT, SORT_FIELD_TO_API, type TraceSort } from '../tracesMeta';
 
 /** Default page size; the user can override it via the page-size selector. */
 export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
@@ -20,6 +21,7 @@ interface TraceFilter {
   outlierOnly: boolean;
   from: string | undefined;
   to: string | undefined;
+  sort: TraceSort;
 }
 
 /**
@@ -27,7 +29,7 @@ interface TraceFilter {
  * filter-bar overview (agents + breakdown + latency, keyed only on range/agent/project so it
  * survives pagination).
  */
-export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, showSystem, outlierOnly, from, to }: TraceFilter) {
+export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, showSystem, outlierOnly, from, to, sort }: TraceFilter) {
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -43,6 +45,10 @@ export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, 
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
     ...(trimmedSearch.length >= 2 ? { q: trimmedSearch } : {}),
+    // Default (time desc) stays implicit so existing query keys — and the backend default — hold.
+    ...(sort.field !== DEFAULT_TRACE_SORT.field || sort.desc !== DEFAULT_TRACE_SORT.desc
+      ? { sortBy: SORT_FIELD_TO_API[sort.field], sortDesc: sort.desc }
+      : {}),
   };
 
   const tracesQuery = useQuery({
