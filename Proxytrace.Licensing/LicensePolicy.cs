@@ -30,6 +30,7 @@ public static class LicensePolicy
             LicenseFeature.AuditLog,
             LicenseFeature.Tracey,
             LicenseFeature.ScheduledTestRuns,
+            LicenseFeature.CustomAnomalyDetectors,
         },
         new Dictionary<LicenseLimit, long>
         {

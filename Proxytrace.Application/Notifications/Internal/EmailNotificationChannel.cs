@@ -102,6 +102,7 @@ internal sealed class EmailNotificationChannel : INotificationChannel
             NotificationTargetKind.TestRunGroup => $"/runs?id={i}",
             NotificationTargetKind.Agent => $"/agents?id={i}",
             NotificationTargetKind.OptimizationProposal => $"/proposals?id={i}",
+            NotificationTargetKind.AgentCall => $"/traces?focus={i}",
             _ => null,
         };
         return route is null ? null : appBaseUrl.TrimEnd('/') + route;

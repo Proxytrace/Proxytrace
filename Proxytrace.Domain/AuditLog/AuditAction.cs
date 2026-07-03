@@ -104,4 +104,9 @@ public enum AuditAction
     // projection ITestSuiteRepository.GetProjectIdByTestCaseAsync, since a test case has no FK to a
     // project of its own).
     TestCaseUpdated = 65,
+
+    // User-defined LLM-based anomaly detector lifecycle.
+    CustomAnomalyDetectorCreated = 66,
+    CustomAnomalyDetectorUpdated = 67,
+    CustomAnomalyDetectorDeleted = 68,
 }

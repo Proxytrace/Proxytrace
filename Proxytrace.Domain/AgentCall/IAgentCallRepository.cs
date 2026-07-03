@@ -55,4 +55,11 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
         CancellationToken cancellationToken = default);
 
     Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// ORs <paramref name="flag"/> into the call's <see cref="IAgentCall.OutlierFlags"/> bitmask,
+    /// preserving any bits already set. Used by the asynchronous custom-anomaly review to flag a
+    /// call after ingestion. A no-op when the call no longer exists.
+    /// </summary>
+    Task SetOutlierFlagAsync(Guid id, OutlierFlags flag, CancellationToken cancellationToken = default);
 }
