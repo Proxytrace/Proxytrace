@@ -223,7 +223,6 @@ export interface LiveTelemetryDto {
   queueDepth: number;
   errorRate: number;
   p95Ms: number;
-  proxyVersion: string;
 }
 export interface AgentTokenUsageDto {
   bucketStart: string;

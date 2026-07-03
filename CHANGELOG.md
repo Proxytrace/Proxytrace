@@ -17,7 +17,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   flash), the token headline grew into an animated gradient display, and queue depth and p95
   latency joined the stat tiles. Charts draw in on load; all motion honors reduced-motion
   preferences. The old telemetry strip's proxy-version label was retired along with the strip
-  itself — the API still reports `proxyVersion`, but its UI home was removed deliberately.
+  itself.
+
+### Fixed
+
+- The redesigned dashboard's labels (activity band, live feed, queue and latency tiles) are now
+  translated into German, Spanish, French, and Italian instead of falling back to English.
+
+### Removed
+
+- The dashboard API's live-telemetry payload no longer carries the unused `proxyVersion` field;
+  its only consumer was the retired telemetry strip.
 
 ## [1.4.0] - 2026-07-02
 

@@ -444,8 +444,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             TokensPerSecond: tokens / windowSeconds,
             QueueDepth: 0,
             ErrorRate: total == 0 ? 0d : errors / (double)total,
-            P95Ms: p95,
-            ProxyVersion: string.Empty);
+            P95Ms: p95);
     }
 
     private async Task<double> GetWindowPercentileRelationalAsync(

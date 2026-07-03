@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using Proxytrace.Domain.Statistics;
 using Proxytrace.Domain.Statistics.TestRun;
-using Proxytrace.Common.Hosting;
 using Proxytrace.Common.Time;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -34,7 +33,6 @@ internal class DashboardStatistics : IDashboardStatistics
     private readonly IAgentRepository agents;
     private readonly IAgentCallRepository agentCalls;
     private readonly IIngestionStream ingestionStream;
-    private readonly IAppVersion appVersion;
     private readonly ITransaction transaction;
     private readonly IClock clock;
     private readonly DashboardCacheOptions cacheOptions;
@@ -51,7 +49,6 @@ internal class DashboardStatistics : IDashboardStatistics
         IAgentRepository agents,
         IAgentCallRepository agentCalls,
         IIngestionStream ingestionStream,
-        IAppVersion appVersion,
         ITransaction transaction,
         IClock clock,
         DashboardCacheOptions cacheOptions)
@@ -61,7 +58,6 @@ internal class DashboardStatistics : IDashboardStatistics
         this.agents = agents;
         this.agentCalls = agentCalls;
         this.ingestionStream = ingestionStream;
-        this.appVersion = appVersion;
         this.transaction = transaction;
         this.clock = clock;
         this.cacheOptions = cacheOptions;
@@ -268,7 +264,6 @@ internal class DashboardStatistics : IDashboardStatistics
         long queueDepth = await ingestionStream.GetQueueDepthAsync(cancellationToken);
         return traffic with
         {
-            ProxyVersion = "v" + appVersion.Version,
             QueueDepth = (int)Math.Min(queueDepth, int.MaxValue),
         };
     }

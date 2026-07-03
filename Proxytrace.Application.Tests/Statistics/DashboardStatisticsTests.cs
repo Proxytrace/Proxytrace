@@ -4,7 +4,6 @@ using NSubstitute;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Domain.Statistics.TestRun;
-using Proxytrace.Common.Hosting;
 using Proxytrace.Common.Time;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -29,8 +28,6 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         agents = Substitute.For<IAgentRepository>();
         var agentCalls = Substitute.For<IAgentCallRepository>();
         var ingestionStream = Substitute.For<IIngestionStream>();
-        var appVersion = Substitute.For<IAppVersion>();
-        appVersion.Version.Returns("0.0.0-dev");
         // Default substitute reports IsActive == false (not inside a transaction), which is the
         // expected state for the dashboard fan-out guard.
         var transaction = Substitute.For<ITransaction>();
@@ -42,7 +39,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         // Caching is opt-in per test (Ttl 0 disables it) so the behavioral tests below observe every
         // underlying call; the cache-specific tests pass an explicit TTL.
         return new DashboardStatistics(
-            runStats, callStats, agents, agentCalls, ingestionStream, appVersion, transaction,
+            runStats, callStats, agents, agentCalls, ingestionStream, transaction,
             clock, cacheOptions ?? new DashboardCacheOptions { TtlSeconds = 0d });
     }
 
@@ -59,7 +56,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
             .Returns(new StatisticsSummary(0, 0, 0, 0, 0, null));
         callStats.GetLiveTelemetryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
-            .Returns(new LiveTelemetry(0, 0, 0, 0, 0, string.Empty));
+            .Returns(new LiveTelemetry(0, 0, 0, 0, 0));
         callStats.GetCallTrendsAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
             .Returns(new CallTrends([], [], []));
         callStats.GetAgentBreakdownAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
@@ -190,7 +187,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track(new StatisticsSummary(0, 0, 0, 0, 0, null))));
         callStats.GetLiveTelemetryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromResult(Track(new LiveTelemetry(0, 0, 0, 0, 0, string.Empty))));
+            .Returns(_ => Task.FromResult(Track(new LiveTelemetry(0, 0, 0, 0, 0))));
         callStats.GetCallTrendsAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Track(new CallTrends([], [], []))));
         callStats.GetAgentBreakdownAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())

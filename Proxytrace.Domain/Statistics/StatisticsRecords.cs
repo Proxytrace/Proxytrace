@@ -65,15 +65,14 @@ public record AgentBreakdownStat(
     int CallCount);
 
 /// <summary>
-/// Real-time proxy telemetry surfaced on the dashboard "mission control" strip.
+/// Real-time proxy telemetry surfaced on the dashboard.
 /// </summary>
 public record LiveTelemetry(
     double TracesPerMinute,
     double TokensPerSecond,
     int QueueDepth,
     double ErrorRate,
-    double P95Ms,
-    string ProxyVersion);
+    double P95Ms);
 
 /// <summary>
 /// Token usage attributed to a single agent for one time bucket (for the stacked token-by-agent chart).
