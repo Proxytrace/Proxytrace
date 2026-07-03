@@ -2,6 +2,7 @@ using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.CustomAnomaly;
 using Proxytrace.Application.Outliers;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
@@ -25,6 +26,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
     private readonly ITraceBroadcaster traceBroadcaster;
     private readonly ILicenseService license;
     private readonly IOutlierDetector outlierDetector;
+    private readonly ICustomAnomalyReviewQueue anomalyReviewQueue;
     private readonly ILogger<AgentCallProcessor> logger;
 
     public AgentCallProcessor(
@@ -38,6 +40,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         ITraceBroadcaster traceBroadcaster,
         ILicenseService license,
         IOutlierDetector outlierDetector,
+        ICustomAnomalyReviewQueue anomalyReviewQueue,
         ILogger<AgentCallProcessor> logger)
     {
         this.agentCallRepository = agentCallRepository;
@@ -50,6 +53,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         this.traceBroadcaster = traceBroadcaster;
         this.license = license;
         this.outlierDetector = outlierDetector;
+        this.anomalyReviewQueue = anomalyReviewQueue;
         this.logger = logger;
     }
 
@@ -139,6 +143,14 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
 
             call = await agentCallRepository.AddAsync(call, cancellationToken);
             traceBroadcaster.Publish(TraceCreatedEvent.Create(call));
+
+            // Queue the persisted call for custom-anomaly review — a cheap in-process channel
+            // write (the LLM review runs asynchronously in the background worker). System agents'
+            // traffic (evaluator judges, Tracey) is internal plumbing and is not reviewed.
+            if (!agent.IsSystemAgent)
+            {
+                await anomalyReviewQueue.EnqueueAsync(call.Id, cancellationToken);
+            }
         }
         catch (OperationCanceledException)
         {
