@@ -41,9 +41,12 @@ export function DetectorsTab() {
         <p className="text-body-sm text-muted">
           <Trans>Custom LLM detectors review matched calls and flag anomalies beyond the built-in statistical checks.</Trans>
         </p>
-        <Button leftIcon={<PlusIcon size={15} />} onClick={() => setFormTarget(null)} data-testid="detector-create-btn">
-          <Trans>New detector</Trans>
-        </Button>
+        {/* The empty state below carries its own create CTA — don't show two. */}
+        {detectors.length > 0 && (
+          <Button leftIcon={<PlusIcon size={15} />} onClick={() => setFormTarget(null)} data-testid="detector-create-btn">
+            <Trans>New detector</Trans>
+          </Button>
+        )}
       </div>
 
       {isLoading && <SkeletonList rows={3} height={64} />}
@@ -60,7 +63,7 @@ export function DetectorsTab() {
             title={t`No detectors yet`}
             description={t`Create a detector to review calls with an LLM and flag custom anomalies.`}
             action={
-              <Button leftIcon={<PlusIcon size={15} />} onClick={() => setFormTarget(null)}>
+              <Button leftIcon={<PlusIcon size={15} />} onClick={() => setFormTarget(null)} data-testid="detector-create-btn">
                 <Trans>New detector</Trans>
               </Button>
             }

@@ -7,7 +7,7 @@ import { StackedBar } from '../../../components/charts';
 import { agentColor } from '../../../lib/colors';
 import type { AgentAnomalyStatDto } from '../../../api/models';
 import type { StatisticsBucket } from '../../../lib/time-range';
-import { buildDenseTimeline, toStackedData, type AnomalyCell } from '../anomaliesMeta';
+import { buildDenseTimeline, rankAgents, toStackedData, type AnomalyCell } from '../anomaliesMeta';
 
 interface Props {
   rows: AgentAnomalyStatDto[];
@@ -19,26 +19,31 @@ interface Props {
   agentName: (id: string) => string;
 }
 
-const CHART_HEIGHT = 240;
+const CHART_HEIGHT = 200;
+/** Agents named in the legend; the rest collapse into a "+N more" note. */
+const LEGEND_LIMIT = 6;
 
 export function AnomalyTimelineCard({ rows, from, to, bucket, isLoading, isError, agentName }: Props) {
   const { t } = useLingui();
 
-  const { data, truncated, hasData } = useMemo(() => {
+  const { data, truncated, hasData, legend, legendOverflow } = useMemo(() => {
     const dense = buildDenseTimeline(rows, from, to, bucket);
     const segmentLabel = (c: AnomalyCell) =>
       t`${agentName(c.agentId)} · ${c.staticCount} static / ${c.customCount} custom`;
+    const ranked = rankAgents(rows, Number.MAX_SAFE_INTEGER);
     return {
       data: toStackedData(dense.buckets, bucket, { color: agentColor, segmentLabel }),
       truncated: dense.truncated,
       hasData: dense.buckets.some(b => b.total > 0),
+      legend: ranked.slice(0, LEGEND_LIMIT),
+      legendOverflow: Math.max(0, ranked.length - LEGEND_LIMIT),
     };
   }, [rows, from, to, bucket, agentName, t]);
 
   return (
     <Card padding="md" data-testid="anomaly-timeline-card">
-      <div className="flex items-baseline justify-between gap-2 mb-3">
-        <h2 className="text-h2 font-semibold text-primary"><Trans>Anomalies over time</Trans></h2>
+      <div className="flex items-baseline justify-between gap-2 mb-3 flex-wrap">
+        <h2 className="text-h2 font-semibold text-primary leading-none"><Trans>Anomalies over time</Trans></h2>
         {truncated && (
           <span className="text-caption text-muted">
             <Trans>Showing the most recent buckets — narrow the range for the full window.</Trans>
@@ -66,7 +71,24 @@ export function AnomalyTimelineCard({ rows, from, to, bucket, isLoading, isError
 
       {!isLoading && !isError && hasData && (
         <div data-testid="anomaly-timeline-chart">
-          <StackedBar data={data} height={CHART_HEIGHT} formatAxisTick={v => String(Math.round(v))} />
+          <StackedBar data={data} height={CHART_HEIGHT} integerTicks formatAxisTick={v => String(v)} />
+          {legend.length > 0 && (
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mt-2" data-testid="anomaly-timeline-legend">
+              {legend.map(r => (
+                <span key={r.agentId} className="flex items-center gap-1.5 text-body-sm text-secondary">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: agentColor(r.agentId) }}
+                    aria-hidden
+                  />
+                  {agentName(r.agentId)}
+                </span>
+              ))}
+              {legendOverflow > 0 && (
+                <span className="text-body-sm text-muted"><Trans>+{legendOverflow} more</Trans></span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </Card>

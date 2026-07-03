@@ -150,10 +150,6 @@ msgstr "{0, plural, one {# trigger} other {# triggers}}"
 msgid "{0, plural, one {# turn} other {# turns}}"
 msgstr "{0, plural, one {# tour} other {# tours}}"
 
-#. placeholder {0}: r.total
-msgid "{0, plural, one {anomaly} other {anomalies}}"
-msgstr "{0, plural, one {anomaly} other {anomalies}}"
-
 #. placeholder {0}: suite.testCaseCount
 msgid "{0, plural, one {case} other {cases}}"
 msgstr "{0, plural, one {cas} other {cas}}"
@@ -248,6 +244,12 @@ msgstr "{0} échoués"
 #. placeholder {0}: fmtDuration(ms)
 msgid "{0} faster"
 msgstr "{0} plus rapide"
+
+#. placeholder {0}: r.total
+#. placeholder {1}: r.staticTotal
+#. placeholder {2}: r.customTotal
+msgid "{0} flagged · {1} statistical / {2} detector"
+msgstr "{0} signalé · {1} statistique / {2} détecteur"
 
 #. placeholder {0}: proposal.kind
 #. placeholder {1}: proposal.agentName
@@ -644,6 +646,9 @@ msgstr "+{added} ajoutés"
 msgid "+{hidden} more"
 msgstr "+{hidden} de plus"
 
+msgid "+{legendOverflow} more"
+msgstr "+{legendOverflow} de plus"
+
 msgid "+7pt"
 msgstr "+7 pt"
 
@@ -952,6 +957,9 @@ msgstr "Les évaluateurs agentic nécessitent un abonnement payant"
 msgid "Agents"
 msgstr "Agents"
 
+msgid "Agents affected"
+msgstr "Agents concernés"
+
 msgid "Agents are auto-created when traces are captured."
 msgstr "Les Agents sont créés automatiquement lorsque des Traces sont capturées."
 
@@ -1019,6 +1027,9 @@ msgstr "Les anomalies et alertes de vos runs de test apparaîtront ici."
 
 msgid "Anomalies over time"
 msgstr "Anomalies au fil du temps"
+
+msgid "Anomaly"
+msgstr "Anomalie"
 
 msgid "Anomaly Detector Created"
 msgstr "Anomaly Detector créé"
@@ -1766,6 +1777,9 @@ msgstr "Détecteur créé"
 msgid "Detector deleted"
 msgstr "Détecteur supprimé"
 
+msgid "Detector flags"
+msgstr "Flags du détecteur"
+
 msgid "Detector updated"
 msgstr "Détecteur mis à jour"
 
@@ -2178,6 +2192,9 @@ msgstr "Signalez le tour lorsque l’Assistant promet un remboursement sans appr
 
 msgid "Flagged agent calls over time, and the agents that need the most attention."
 msgstr "Appels Agent signalés au fil du temps, et les Agents qui nécessitent le plus d’attention."
+
+msgid "Flagged calls"
+msgstr "Appels signalés"
 
 msgid "Flagged calls will appear here as they arrive."
 msgstr "Les appels signalés apparaîtront ici au fur et à mesure."
@@ -2878,6 +2895,9 @@ msgstr "Quota mensuel de traces atteint — les nouvelles traces sont ignorées 
 msgid "More actions"
 msgstr "Plus d'actions"
 
+msgid "Most flagged agents"
+msgstr "Agents les plus signalés"
+
 msgid "Mostly correct"
 msgstr "Plutôt correct"
 
@@ -2926,9 +2946,6 @@ msgstr "naviguer"
 
 msgid "Needs attention"
 msgstr "Attention requise"
-
-msgid "Needs help most"
-msgstr "Nécessite le plus d’aide"
 
 msgid "never"
 msgstr "jamais"
@@ -3086,6 +3103,9 @@ msgstr "Aucun evaluator dans ce projet pour le moment."
 
 msgid "No evaluators yet"
 msgstr "Aucun Evaluator pour le moment"
+
+msgid "No flagged agents in this window."
+msgstr "Aucun agent signalé dans cette fenêtre."
 
 msgid "No improvement"
 msgstr "Aucune amélioration"
@@ -4656,6 +4676,9 @@ msgstr "Démarrage du test run…"
 
 msgid "State"
 msgstr "État"
+
+msgid "Statistical flags"
+msgstr "Flags statistiques"
 
 msgid "Status"
 msgstr "Statut"

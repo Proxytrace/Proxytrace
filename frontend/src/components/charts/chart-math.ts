@@ -104,21 +104,42 @@ export interface StackedSegment { value: number; color: string; label?: string; 
 export interface StackedDatum { label: string; segments: StackedSegment[]; }
 export interface StackedRect { x: number; y: number; w: number; h: number; color: string; top: boolean; value: number; label: string; }
 export interface StackedBar { rects: StackedRect[]; centerX: number; label: string; total: number; }
-export interface StackedBarData { bars: StackedBar[]; grid: GridLine[]; solidGridPath: string; dashedGridPath: string; baselineY: number; plotL: number; plotR: number; }
+export interface StackedBarData { bars: StackedBar[]; grid: GridLine[]; solidGridPath: string; dashedGridPath: string; baselineY: number; plotL: number; plotR: number; labelStep: number; }
+
+/** Approximate mono axis-label glyph width at font-size 10. */
+const AXIS_CHAR_PX = 6;
+/** Minimum clear space between two adjacent axis labels. */
+const AXIS_LABEL_GAP_PX = 10;
+
+/**
+ * Every how-many bars an x-axis label fits without colliding with its neighbor: the longest label's
+ * estimated width (plus a gap) must fit in `step` bar slots. Always ≥ 1.
+ */
+export function axisLabelStep(slotWidth: number, labels: readonly string[]): number {
+  const maxLen = labels.reduce((m, l) => Math.max(m, l.length), 0);
+  const needed = maxLen * AXIS_CHAR_PX + AXIS_LABEL_GAP_PX;
+  if (slotWidth <= 0) return 1;
+  return Math.max(1, Math.ceil(needed / slotWidth));
+}
 
 /**
  * @param formatTick optional axis-tick formatter (receives the raw tick value). Defaults to the
  * `k`-suffixed thousands format used by the token chart; small-integer series (e.g. anomaly counts)
  * pass a plain-integer formatter so the axis reads `0/1/2/3` instead of a flat `0k`.
+ * @param integerTicks snap the axis max so all four tick values are whole numbers — for count
+ * series, where fractional ticks would round to duplicate labels (`2/1/1/0`).
  */
 export function computeStackedBar(
   data: StackedDatum[], width: number, height: number,
   formatTick?: (v: number) => string,
+  integerTicks = false,
 ): StackedBarData {
   const padL = 38, padR = 10, padT = 14, padB = 28;
   const w = width - padL - padR, h = height - padT - padB;
   const totals = data.map(d => d.segments.reduce((s, x) => s + x.value, 0));
-  const max = Math.max(...totals, 0) * 1.1 || 1;
+  const rawMax = Math.max(...totals, 0);
+  // Integer axes round the 10%-headroom max up to a multiple of 3 so the quarter ticks are whole.
+  const max = integerTicks ? Math.max(3, Math.ceil((rawMax * 1.1) / 3) * 3) : rawMax * 1.1 || 1;
   const slot = data.length > 0 ? w / data.length : w;
   const bw = slot * 0.58, gap = slot * 0.42;
   const yTicks = 4;
@@ -141,7 +162,8 @@ export function computeStackedBar(
     return { rects, centerX: x + bw / 2, label: d.label, total: totals[i] };
   });
   const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
-  return { bars, grid, solidGridPath, dashedGridPath, baselineY: padT + h, plotL: padL, plotR: padL + w };
+  const labelStep = axisLabelStep(slot, data.map(d => d.label));
+  return { bars, grid, solidGridPath, dashedGridPath, baselineY: padT + h, plotL: padL, plotR: padL + w, labelStep };
 }
 
 /** Path for a rect with only its top two corners rounded. */

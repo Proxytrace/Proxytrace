@@ -169,3 +169,23 @@ export function rankAgents(rows: readonly AgentAnomalyStatDto[], limit = 5): Age
 export function totalAnomalies(rows: readonly AgentAnomalyStatDto[]): number {
   return rows.reduce((s, r) => s + r.staticCount + r.customCount, 0);
 }
+
+export interface WindowSummary {
+  total: number;
+  staticTotal: number;
+  customTotal: number;
+  agentCount: number;
+}
+
+/** The KPI-row numbers for the window: flagged-call totals split by source, and how many distinct
+ * agents produced at least one flag. */
+export function summarizeWindow(rows: readonly AgentAnomalyStatDto[]): WindowSummary {
+  const agents = new Set<string>();
+  let staticTotal = 0, customTotal = 0;
+  for (const row of rows) {
+    staticTotal += row.staticCount;
+    customTotal += row.customCount;
+    if (row.staticCount + row.customCount > 0) agents.add(row.agentId);
+  }
+  return { total: staticTotal + customTotal, staticTotal, customTotal, agentCount: agents.size };
+}

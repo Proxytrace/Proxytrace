@@ -150,10 +150,6 @@ msgstr "{0, plural, one {# disparador} other {# disparadores}}"
 msgid "{0, plural, one {# turn} other {# turns}}"
 msgstr "{0, plural, one {# turno} other {# turnos}}"
 
-#. placeholder {0}: r.total
-msgid "{0, plural, one {anomaly} other {anomalies}}"
-msgstr "{0, plural, one {anomalía} other {anomalías}}"
-
 #. placeholder {0}: suite.testCaseCount
 msgid "{0, plural, one {case} other {cases}}"
 msgstr "{0, plural, one {caso} other {casos}}"
@@ -248,6 +244,12 @@ msgstr "{0} fallidos"
 #. placeholder {0}: fmtDuration(ms)
 msgid "{0} faster"
 msgstr "{0} más rápido"
+
+#. placeholder {0}: r.total
+#. placeholder {1}: r.staticTotal
+#. placeholder {2}: r.customTotal
+msgid "{0} flagged · {1} statistical / {2} detector"
+msgstr "{0} marcados · {1} estadístico / {2} detector"
 
 #. placeholder {0}: proposal.kind
 #. placeholder {1}: proposal.agentName
@@ -644,6 +646,9 @@ msgstr "+{added} añadido"
 msgid "+{hidden} more"
 msgstr "+{hidden} más"
 
+msgid "+{legendOverflow} more"
+msgstr "+{legendOverflow} más"
+
 msgid "+7pt"
 msgstr "+7 pt"
 
@@ -952,6 +957,9 @@ msgstr "Los evaluadores agentic requieren un plan de pago"
 msgid "Agents"
 msgstr "Agents"
 
+msgid "Agents affected"
+msgstr "Agents afectados"
+
 msgid "Agents are auto-created when traces are captured."
 msgstr "Los Agents se crean automáticamente cuando se capturan Traces."
 
@@ -1019,6 +1027,9 @@ msgstr "Los errores y alertas de tus test runs aparecerán aquí."
 
 msgid "Anomalies over time"
 msgstr "Anomalías a lo largo del tiempo"
+
+msgid "Anomaly"
+msgstr "Anomalía"
 
 msgid "Anomaly Detector Created"
 msgstr "Detector de anomalías creado"
@@ -1766,6 +1777,9 @@ msgstr "Detector creado"
 msgid "Detector deleted"
 msgstr "Detector eliminado"
 
+msgid "Detector flags"
+msgstr "Detector flags"
+
 msgid "Detector updated"
 msgstr "Detector actualizado"
 
@@ -2178,6 +2192,9 @@ msgstr "Marca el turno cuando el Assistant promete un reembolso sin aprobación.
 
 msgid "Flagged agent calls over time, and the agents that need the most attention."
 msgstr "Llamadas de Agent marcadas a lo largo del tiempo, y los Agents que más atención necesitan."
+
+msgid "Flagged calls"
+msgstr "Llamadas marcadas"
 
 msgid "Flagged calls will appear here as they arrive."
 msgstr "Las llamadas marcadas aparecerán aquí a medida que lleguen."
@@ -2878,6 +2895,9 @@ msgstr "Se alcanzó la cuota mensual de Traces; los nuevos Traces se están desc
 msgid "More actions"
 msgstr "Más acciones"
 
+msgid "Most flagged agents"
+msgstr "Agents más marcados"
+
 msgid "Mostly correct"
 msgstr "Mayormente correcto"
 
@@ -2926,9 +2946,6 @@ msgstr "navegar"
 
 msgid "Needs attention"
 msgstr "Requiere atención"
-
-msgid "Needs help most"
-msgstr "Necesita más ayuda"
 
 msgid "never"
 msgstr "nunca"
@@ -3086,6 +3103,9 @@ msgstr "Aún no hay evaluadores en este proyecto."
 
 msgid "No evaluators yet"
 msgstr "Aún no hay evaluadores"
+
+msgid "No flagged agents in this window."
+msgstr "No hay Agents marcados en esta ventana."
 
 msgid "No improvement"
 msgstr "Sin mejora"
@@ -4656,6 +4676,9 @@ msgstr "Iniciando ejecución de prueba…"
 
 msgid "State"
 msgstr "Estado"
+
+msgid "Statistical flags"
+msgstr "Marcas estadísticas"
 
 msgid "Status"
 msgstr "Estado"

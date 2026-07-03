@@ -12,10 +12,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 ### Added
 
 - **A new Anomaly dashboard.** A dedicated **Anomalies** page (in the sidebar, after Traces) brings
-  every agent's anomalies together in one place: a live, stacked per-agent timeline (five-minute,
-  hourly, or daily buckets), a "needs help" ranking of the agents with the most anomalies, and a
-  feed of recently flagged calls. Filter the feed by agent and click any row to jump straight to the
-  focused trace. The whole page updates in real time as calls are captured and flagged.
+  every agent's anomalies together in one place: a table of recently flagged calls (agent, message
+  preview, why it was flagged, when) beside a statistics column — a live, stacked per-agent
+  timeline with an agent legend (five-minute, hourly, or daily buckets), summary tiles (flagged
+  calls, statistical vs. detector flags, agents affected), and a **Most flagged agents** ranking
+  with proportional share bars. Filter by agent and click any row to jump straight to the focused
+  trace. The whole page updates in real time as calls are captured and flagged.
 
 - **Custom LLM-based anomaly detectors (Enterprise).** Define your own anomaly detectors per
   project: describe what "anomalous" means in plain-language review instructions, pick a review

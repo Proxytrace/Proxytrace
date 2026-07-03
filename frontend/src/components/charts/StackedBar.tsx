@@ -10,12 +10,17 @@ interface StackedBarProps {
   formatValue?: (v: number) => string;
   /** Axis-tick formatter (raw tick value). Defaults to the `k`-suffixed thousands format. */
   formatAxisTick?: (v: number) => string;
+  /** Snap the y-axis to whole-number ticks — for count series (see {@link computeStackedBar}). */
+  integerTicks?: boolean;
 }
 
-export function StackedBar({ data, width = 640, height = 200, formatValue, formatAxisTick }: StackedBarProps) {
+export function StackedBar({ data, width = 640, height = 200, formatValue, formatAxisTick, integerTicks = false }: StackedBarProps) {
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(width);
   const w = measuredWidth || width;
-  const chart = useMemo(() => computeStackedBar(data, w, height, formatAxisTick), [data, w, height, formatAxisTick]);
+  const chart = useMemo(
+    () => computeStackedBar(data, w, height, formatAxisTick, integerTicks),
+    [data, w, height, formatAxisTick, integerTicks],
+  );
   const [hover, setHover] = useState<StackedRect | null>(null);
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,7 +56,9 @@ export function StackedBar({ data, width = 640, height = 200, formatValue, forma
                 ? <path key={j} d={roundedTopRectPath(r.x, r.y, r.w, r.h, 3)} fill={r.color} opacity={dim ? 0.5 : 1} />
                 : <rect key={j} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.color} opacity={dim ? 0.5 : 1} />;
             })}
-            <text x={bar.centerX} y={height - 10} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontFamily="JetBrains Mono, monospace">{bar.label}</text>
+            {i % chart.labelStep === 0 && (
+              <text x={bar.centerX} y={height - 10} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontFamily="JetBrains Mono, monospace">{bar.label}</text>
+            )}
           </g>
         ))}
       </svg>

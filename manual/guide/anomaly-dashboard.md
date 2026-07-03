@@ -15,24 +15,34 @@ It brings together two kinds of signal:
 
 ## The Overview
 
-The Overview tab gives you the shape of anomalies over time and points you at the agents that need
-attention:
+![The Anomalies overview: the recent-anomalies table on the left, with the timeline, summary tiles, and most-flagged-agents ranking on the right](/screenshots/anomaly-dashboard/overview.png)
 
-- **Anomaly timeline** — a stacked chart of flagged calls over time, split per agent, so a spike in
-  one agent stands out from the background. Switch the bucket size between **five minutes**,
-  **hourly**, and **daily** to zoom from "what just happened" out to "how has this week looked".
-- **Needs help** — a ranking of the agents with the most anomalies in the window, so the noisiest
-  agent is always at the top of the list rather than buried.
+The Overview tab puts the work list and the statistics side by side: the left column is the table
+of [recently flagged calls](#recent-flagged-calls), and the right column gives you the shape of the
+window at a glance:
+
+- **Anomaly timeline** — a stacked chart of flagged calls over time, split per agent (the legend
+  below the chart names each color), so a spike in one agent stands out from the background. Switch
+  the bucket size between **five minutes**, **hourly**, and **daily** to zoom from "what just
+  happened" out to "how has this week looked".
+- **Summary tiles** — four numbers for the selected window: total **flagged calls**, how many came
+  from the built-in **statistical** checks vs. your **custom detectors**, and how many **agents**
+  are affected.
+- **Most flagged agents** — a ranking of the agents with the most anomalies in the window, each with
+  a share bar sized against the worst agent, so the noisiest agent is always at the top of the list
+  rather than buried. Click an agent to filter the whole page to it.
 
 The page updates **live** as new calls are captured and as detectors flag them — you don't need to
 refresh to see a fresh spike appear.
 
 ## Recent flagged calls
 
-Below the overview is a list of the **most recently flagged calls**, newest first. Each row shows
-the agent, when the call landed, and why it was flagged. Calls flagged by a custom detector carry a
-**custom-detector chip**; hover it to see which trigger fired and the reviewer's reasoning for
-calling the call anomalous.
+The main table lists the **most recently flagged calls**, newest first. Each row shows the agent,
+a preview of the user message, why the call was flagged, and when it landed. Calls flagged by a
+custom detector carry a **custom-detector chip**; hover it to see which trigger fired and the
+reviewer's reasoning for calling the call anomalous.
+
+![The recent-anomalies table: each row names the agent, previews the message, and shows the flags that caught it](/screenshots/anomaly-dashboard/recent-anomalies.png)
 
 - **Filter by agent** to narrow the list to a single agent when you're chasing one problem.
 - **Click a row** to jump straight to that call in the Traces list (it opens focused on the flagged

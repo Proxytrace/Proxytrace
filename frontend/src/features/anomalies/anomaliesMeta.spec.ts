@@ -4,6 +4,7 @@ import {
   buildDenseTimeline,
   rankAgents,
   resolveTimelineWindow,
+  summarizeWindow,
   toStackedData,
   totalAnomalies,
   MAX_BUCKETS,
@@ -115,6 +116,22 @@ describe('rankAgents', () => {
 describe('totalAnomalies', () => {
   it('sums static and custom counts across all rows', () => {
     expect(totalAnomalies([row('t', A, 2, 3), row('t', B, 1, 0)])).toBe(6);
+  });
+});
+
+describe('summarizeWindow', () => {
+  it('splits totals by source and counts distinct flagged agents', () => {
+    const rows = [row('t1', A, 2, 3), row('t2', A, 1, 0), row('t1', B, 0, 4)];
+    expect(summarizeWindow(rows)).toEqual({ total: 10, staticTotal: 3, customTotal: 7, agentCount: 2 });
+  });
+
+  it('ignores zero-count rows when counting agents', () => {
+    const rows = [row('t1', A, 0, 0), row('t1', B, 1, 0)];
+    expect(summarizeWindow(rows)).toEqual({ total: 1, staticTotal: 1, customTotal: 0, agentCount: 1 });
+  });
+
+  it('is all-zero for an empty window', () => {
+    expect(summarizeWindow([])).toEqual({ total: 0, staticTotal: 0, customTotal: 0, agentCount: 0 });
   });
 });
 

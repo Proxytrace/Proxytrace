@@ -6,6 +6,7 @@ import { useAnomalyTimeline } from '../hooks/useAnomalyTimeline';
 import { useRecentAnomalies } from '../hooks/useRecentAnomalies';
 import { useAnomalyLiveUpdates } from '../hooks/useAnomalyLiveUpdates';
 import { AnomalyToolbar } from './AnomalyToolbar';
+import { AnomalyKpis } from './AnomalyKpis';
 import { AnomalyTimelineCard } from './AnomalyTimelineCard';
 import { NeedsHelpStrip } from './NeedsHelpStrip';
 import { RecentAnomaliesList } from './RecentAnomaliesList';
@@ -50,17 +51,8 @@ export function AnomalyOverview() {
         onAgentFilterChange={selectAgent}
       />
 
-      <AnomalyTimelineCard
-        rows={timeline.rows}
-        from={timeline.from}
-        to={timeline.to}
-        bucket={filters.bucket}
-        isLoading={timeline.isLoading}
-        isError={timeline.isError}
-        agentName={nameById}
-      />
-
-      <div className="grid grid-cols-1 @3xl:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
+      {/* Work list left, statistics (chart + bento tiles + ranking) right. */}
+      <div className="grid grid-cols-1 @4xl:grid-cols-[minmax(0,1fr)_380px] gap-4 items-start">
         <RecentAnomaliesList
           items={recent.items}
           total={recent.total}
@@ -69,7 +61,19 @@ export function AnomalyOverview() {
           isLoading={recent.isLoading}
           isError={recent.isError}
         />
-        <NeedsHelpStrip rows={timeline.rows} agentName={nameById} onSelectAgent={selectAgent} />
+        <div className="flex flex-col gap-4 min-w-0">
+          <AnomalyTimelineCard
+            rows={timeline.rows}
+            from={timeline.from}
+            to={timeline.to}
+            bucket={filters.bucket}
+            isLoading={timeline.isLoading}
+            isError={timeline.isError}
+            agentName={nameById}
+          />
+          <AnomalyKpis rows={timeline.rows} isLoading={timeline.isLoading} />
+          <NeedsHelpStrip rows={timeline.rows} agentName={nameById} onSelectAgent={selectAgent} />
+        </div>
       </div>
     </div>
   );
