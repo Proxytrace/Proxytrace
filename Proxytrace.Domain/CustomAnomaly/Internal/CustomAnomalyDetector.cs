@@ -15,6 +15,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
     public bool AllAgents { get; private init; }
     public IReadOnlyCollection<IAgent> ScopedAgents { get; private init; }
     public bool IsEnabled { get; private init; }
+    public bool BlockUpstream { get; private init; }
 
     public IProject Project
         => Agent.Project;
@@ -26,6 +27,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
         bool allAgents,
         IReadOnlyCollection<IAgent> scopedAgents,
         bool isEnabled,
+        bool blockUpstream,
         IRepository<ICustomAnomalyDetector> repository) : base(repository)
     {
         Name = name;
@@ -34,6 +36,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
         AllAgents = allAgents;
         ScopedAgents = scopedAgents.ToArray();
         IsEnabled = isEnabled;
+        BlockUpstream = blockUpstream;
     }
 
     public CustomAnomalyDetector(
@@ -43,6 +46,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
         bool allAgents,
         IReadOnlyCollection<IAgent> scopedAgents,
         bool isEnabled,
+        bool blockUpstream,
         IDomainEntityData existing,
         IRepository<ICustomAnomalyDetector> repository) : base(existing, repository)
     {
@@ -52,6 +56,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
         AllAgents = allAgents;
         ScopedAgents = scopedAgents.ToArray();
         IsEnabled = isEnabled;
+        BlockUpstream = blockUpstream;
     }
 
     public Task<ICustomAnomalyDetector> Update(
@@ -60,6 +65,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
         bool allAgents,
         IReadOnlyCollection<IAgent> scopedAgents,
         bool isEnabled,
+        bool blockUpstream,
         CancellationToken cancellationToken = default)
         => ApplyAsync(this with
         {
@@ -68,6 +74,7 @@ internal record CustomAnomalyDetector : DomainEntity<ICustomAnomalyDetector>, IC
             AllAgents = allAgents,
             ScopedAgents = scopedAgents.ToArray(),
             IsEnabled = isEnabled,
+            BlockUpstream = blockUpstream,
         }, cancellationToken);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

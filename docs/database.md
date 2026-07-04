@@ -373,6 +373,14 @@ PostgreSQL-only; the in-memory provider ignores it. **Caveat:** if two rows alre
 case (`Foo@x.com` and `foo@x.com`), the `UPDATE` collides with the unique index and fails — those
 duplicate accounts must be merged/removed first (none are expected in practice).
 
+The `AddDetectorBlockUpstream` migration adds the non-nullable
+`CustomAnomalyDetectorEntity.BlockUpstream` boolean column with a SQL default of `false`
+(via `HasDefaultValue(false)` in `CustomAnomalyDetectorConfig`), backfilling pre-existing detectors
+to non-blocking. The column marks detectors the proxy enforces in real time (rejecting
+trigger-matching requests before they reach the upstream provider); the proxy reads it through
+`GetEnabledBlockingRulesByProjectAsync`, a scalar projection on the small detector config table
+served by the existing `(Project, IsEnabled)` index — not a high-volume path.
+
 ## Quick start
 
 Bring up a PostgreSQL instance (the repo's `docker-compose.yml` ships one) and run the API:

@@ -99,6 +99,13 @@ resp = client.chat.completions.create(
 The call runs exactly as before — but it is now captured. Open **Traces** to confirm it
 arrives. See [Capturing Traces](/guide/capturing-traces).
 
+::: warning Requests can be blocked in real time
+If the project has [blocking anomaly detectors](/guide/anomaly-dashboard#blocking-detectors)
+configured (an Enterprise feature — e.g. a password-pattern guard), the proxy rejects a matching
+request **before it reaches the provider** with HTTP `403` and an OpenAI-style error whose `code`
+is `proxytrace_blocked`. The blocked call still appears as a flagged trace.
+:::
+
 ## Listing models
 
 `client.models.list()` (`GET /openai/v1/models`) is forwarded to your upstream provider, so

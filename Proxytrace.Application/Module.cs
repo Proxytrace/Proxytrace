@@ -140,6 +140,11 @@ public sealed class Module : Autofac.Module
             .As<ICustomAnomalyBroadcaster>()
             .SingleInstance();
 
+        // Records attribution + SSE + notification for calls the proxy blocked before upstream.
+        builder.RegisterType<BlockedCallRecorder>()
+            .As<IBlockedCallRecorder>()
+            .SingleInstance();
+
         // Notification system. NotificationService fans every NotificationRequest out to all
         // registered INotificationChannel implementations (auto-discovered below). v1 ships the
         // dashboard channel (persists + SSE) and an email stub; future channels need no caller change.

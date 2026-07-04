@@ -42,6 +42,12 @@ export function DetectorRow({ detector: d, isSelected, onSelect }: Props) {
           <span className="truncate">{d.endpointName}</span>
           <span className="opacity-40">·</span>
           <span className="shrink-0"><Plural value={d.triggers.length} one="# trigger" other="# triggers" /></span>
+          {d.blockUpstream && (
+            <>
+              <span className="opacity-40">·</span>
+              <span className="shrink-0 text-danger font-sans"><Trans>Blocking</Trans></span>
+            </>
+          )}
         </div>
       </div>
       {!d.isEnabled && <span className="text-caption text-muted shrink-0"><Trans>Off</Trans></span>}

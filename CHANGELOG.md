@@ -11,6 +11,19 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Real-time blocking anomaly detectors.** A custom anomaly detector can now also **block**: turn
+  on *Block matching requests at the proxy* and the proxy checks each incoming request's body
+  against the detector's phrase/regex triggers **before forwarding** — on a match the request is
+  rejected with an OpenAI-compatible `403` (`code: proxytrace_blocked`) and **never reaches the
+  upstream provider**. The canonical use case is stopping secrets (e.g. a password pattern) from
+  being sent to the LLM provider. Blocked calls still show up as traces, flagged **Blocked at
+  proxy**, with the detector and matched trigger attributed in the trace's anomaly banner, a live
+  entry on the Anomaly dashboard, and a notification. Blocking is trigger-match only (the LLM
+  review never runs in the request path), applies rule changes within ~30 seconds, fails open if
+  the rules cannot be loaded, and — for detectors scoped to specific agents — enforces only when
+  the client names its agent via the `x-proxytrace-agent` header. Part of the Enterprise custom
+  anomaly detectors feature.
+
 - **Sortable trace table + composable filters.** The Traces table can now be sorted by any
   metric column — Latency, Tokens, Tools, Cached, or Time — with a click on the column header
   (click again to flip direction); sorting is server-side, so "slowest call" means across all

@@ -57,6 +57,29 @@ internal sealed class Module : Autofac.Module
         // docs/security.md.
         builder.RegisterModule<Proxytrace.Infrastructure.Security.SecretProtectionModule>();
 
+        // Licensing: the proxy enforces the Enterprise-gated blocking detectors at use time, so it
+        // needs the real license snapshot. ServerCheckEnabled is ALWAYS false here (in both build
+        // flavors): the main app owns the license-server heartbeat and the offline-grace cache file
+        // in the shared PROXYTRACE_DATA_DIR — a second checker would double the heartbeats and race
+        // that cache. Consequence (accepted): a revoked-but-unexpired license keeps blocking active
+        // in the proxy until it expires or the stored key is removed. The DB-stored license is
+        // applied and kept fresh by ProxyStoredLicenseService below (polling — the proxy cannot
+        // hear the app's in-process license Changed event).
+        if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
+        {
+            builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
+            builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration, kiosk.Enabled)));
+        }
+
+        var licensePollSeconds = configuration.GetSection("Licensing").GetValue<int?>("StoredLicensePollSeconds") ?? 300;
+        builder.RegisterServiceCollection(services => services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sp =>
+            new ProxyStoredLicenseService(
+                sp.GetRequiredService<ILifetimeScope>(),
+                sp.GetRequiredService<Proxytrace.Licensing.ILicenseActivator>(),
+                sp.GetRequiredService<Proxytrace.Licensing.ILicenseService>(),
+                TimeSpan.FromSeconds(Math.Max(1, licensePollSeconds)),
+                sp.GetRequiredService<ILogger<ProxyStoredLicenseService>>())));
+
         // The storage model-building graph references IAgentNameGenerator (implemented in the
         // application layer we do not load). The proxy never creates agents, so a stub suffices.
         builder.RegisterType<UnusedAgentNameGenerator>()
@@ -83,6 +106,23 @@ internal sealed class Module : Autofac.Module
             .As<IApiKeyResolver>()
             .InstancePerLifetimeScope();
 
+        // Real-time blocking anomaly detectors: same per-lifetime-scope reasoning as the key
+        // resolver above (the repository holds a per-call StorageDbContext); the shared state is
+        // the singleton IMemoryCache.
+        var blockingTtlSeconds = configuration.GetSection("BlockingRuleCache").GetValue<int?>("TtlSeconds") ?? 30;
+        builder.Register(ctx => new CachedBlockingRuleProvider(
+                ctx.Resolve<Proxytrace.Domain.CustomAnomaly.ICustomAnomalyDetectorRepository>(),
+                ctx.Resolve<Proxytrace.Licensing.ILicenseService>(),
+                ctx.Resolve<IMemoryCache>(),
+                TimeSpan.FromSeconds(blockingTtlSeconds),
+                ctx.Resolve<ILogger<CachedBlockingRuleProvider>>()))
+            .As<IBlockingRuleProvider>()
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<RequestBlocker>()
+            .As<IRequestBlocker>()
+            .InstancePerLifetimeScope();
+
         builder.RegisterServiceCollection(services =>
         {
             services.AddMemoryCache();
@@ -95,6 +135,56 @@ internal sealed class Module : Autofac.Module
             services.AddHttpClient("passthrough", client => client.Timeout = TimeSpan.FromMinutes(5))
                 .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
         });
+    }
+
+    private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(
+        IConfiguration configuration,
+        bool kioskEnabled)
+    {
+        var section = configuration.GetSection("Licensing");
+
+#if DEBUG
+        var serverUrl = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_SERVER_URL")
+                        ?? "https://license.proxytrace.dev";
+        var keyOverride = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_PUBLIC_KEY");
+#else
+        const string serverUrl = "https://license.proxytrace.dev";
+        string? keyOverride = null;
+#endif
+
+        // Env var wins; fall back to the "Licensing:License" config value (mirrors the API host).
+        var licenseJwt = (Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE")
+                          ?? section.GetValue<string>("License"))?.Trim();
+
+        // With ServerCheckEnabled=false this file is never written; a distinct name keeps it from
+        // ever colliding with the API's offline-grace cache in the shared data directory.
+        var dataDirectory = Environment.GetEnvironmentVariable("PROXYTRACE_DATA_DIR");
+        var cachePath = string.IsNullOrWhiteSpace(dataDirectory)
+            ? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "proxytrace",
+                "license-cache.proxy.json")
+            : Path.Combine(dataDirectory, "license-cache.proxy.json");
+
+        IReadOnlyList<string> keys = string.IsNullOrWhiteSpace(keyOverride)
+            ? Proxytrace.Licensing.LicensePublicKeys.GetActiveKeys()
+            : keyOverride.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return new Proxytrace.Licensing.LicensingConfiguration
+        {
+            ServerUrl = serverUrl,
+            PublicKeys = keys,
+            LicenseJwt = string.IsNullOrEmpty(licenseJwt) ? null : licenseJwt,
+            // Always false in the proxy — see the registration comment above.
+            ServerCheckEnabled = false,
+            CacheFilePath = cachePath,
+
+            // Kiosk/demo deployments always run on a fake, perpetual Enterprise license (the proxy
+            // refuses traffic in kiosk mode anyway, but the snapshot keeps container build sane).
+            OverrideSnapshot = kioskEnabled
+                ? Proxytrace.Licensing.LicenseSnapshot.Enterprise("kiosk@proxytrace.dev")
+                : null,
+        };
     }
 
     private static MessagingConfiguration BuildMessagingConfiguration(IConfiguration configuration)

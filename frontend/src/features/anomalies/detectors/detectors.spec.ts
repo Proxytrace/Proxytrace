@@ -19,6 +19,7 @@ function validForm(overrides: Partial<DetectorFormState> = {}): DetectorFormStat
     allAgents: true,
     agentIds: [],
     isEnabled: true,
+    blockUpstream: false,
     ...overrides,
   };
 }
@@ -76,6 +77,12 @@ describe('payload builders', () => {
     expect(payload.allAgents).toBe(false);
     expect(payload.agentIds).toEqual(['a1', 'a2']);
   });
+
+  it('carries blockUpstream through both payloads', () => {
+    expect(buildCreatePayload('proj-1', validForm({ blockUpstream: true })).blockUpstream).toBe(true);
+    expect(buildUpdatePayload(validForm({ blockUpstream: true })).blockUpstream).toBe(true);
+    expect(buildUpdatePayload(validForm()).blockUpstream).toBe(false);
+  });
 });
 
 describe('form seeding', () => {
@@ -90,10 +97,10 @@ describe('form seeding', () => {
     const detector: CustomAnomalyDetectorDto = {
       id: 'd1', name: 'D', instructions: 'I', projectId: 'p', endpointId: 'e', endpointName: 'gpt',
       triggers: [{ kind: TriggerKind.Regex, pattern: 'x' }], allAgents: false, agentIds: ['a1'],
-      isEnabled: false, createdAt: 't', updatedAt: 't',
+      isEnabled: false, blockUpstream: true, createdAt: 't', updatedAt: 't',
     };
     const form = formFromDetector(detector);
-    expect(form).toMatchObject({ name: 'D', instructions: 'I', endpointId: 'e', allAgents: false, isEnabled: false });
+    expect(form).toMatchObject({ name: 'D', instructions: 'I', endpointId: 'e', allAgents: false, isEnabled: false, blockUpstream: true });
     form.triggers[0].pattern = 'mutated';
     form.agentIds.push('a2');
     expect(detector.triggers[0].pattern).toBe('x'); // clone, not shared

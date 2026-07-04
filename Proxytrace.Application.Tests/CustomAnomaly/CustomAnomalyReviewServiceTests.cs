@@ -228,7 +228,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var detector = factory(
             name, judge, [new AnomalyTrigger(TriggerKind.Phrase, phrase)],
-            allAgents: scopedAgents is null, scopedAgents: scopedAgents ?? [], isEnabled: isEnabled);
+            allAgents: scopedAgents is null, scopedAgents: scopedAgents ?? [], isEnabled: isEnabled, blockUpstream: false);
         return await services.GetRequiredService<ICustomAnomalyDetectorRepository>()
             .AddAsync(detector, CancellationToken);
     }

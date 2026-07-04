@@ -43,6 +43,9 @@ internal class CustomAnomalyDetectorConfig
 
         // Serves the project-scoped list and the review pipeline's enabled-only lookup.
         builder.HasIndex(e => new { e.Project, e.IsEnabled });
+
+        // SQL default backfills pre-existing detectors to non-blocking.
+        builder.Property(e => e.BlockUpstream).HasDefaultValue(false);
     }
 
     public async Task<ICustomAnomalyDetector> Map(
@@ -67,6 +70,7 @@ internal class CustomAnomalyDetectorConfig
             allAgents: storedEntity.AllAgents,
             scopedAgents: scopedAgents,
             isEnabled: storedEntity.IsEnabled,
+            blockUpstream: storedEntity.BlockUpstream,
             existing: storedEntity);
     }
 
@@ -82,6 +86,7 @@ internal class CustomAnomalyDetectorConfig
             Triggers = serializer.Serialize(domainEntity.Triggers.ToList()),
             AllAgents = domainEntity.AllAgents,
             IsEnabled = domainEntity.IsEnabled,
+            BlockUpstream = domainEntity.BlockUpstream,
             CreatedAt = domainEntity.CreatedAt,
             UpdatedAt = domainEntity.UpdatedAt,
             ScopedAgents = domainEntity.ScopedAgents

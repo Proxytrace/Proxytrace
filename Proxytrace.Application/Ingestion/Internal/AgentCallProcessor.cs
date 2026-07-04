@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.CustomAnomaly;
+using Proxytrace.Application.CustomAnomaly.Internal;
 using Proxytrace.Application.Outliers;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
@@ -27,6 +28,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
     private readonly ILicenseService license;
     private readonly IOutlierDetector outlierDetector;
     private readonly ICustomAnomalyReviewQueue anomalyReviewQueue;
+    private readonly IBlockedCallRecorder blockedCallRecorder;
     private readonly ILogger<AgentCallProcessor> logger;
 
     public AgentCallProcessor(
@@ -41,6 +43,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         ILicenseService license,
         IOutlierDetector outlierDetector,
         ICustomAnomalyReviewQueue anomalyReviewQueue,
+        IBlockedCallRecorder blockedCallRecorder,
         ILogger<AgentCallProcessor> logger)
     {
         this.agentCallRepository = agentCallRepository;
@@ -54,6 +57,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         this.license = license;
         this.outlierDetector = outlierDetector;
         this.anomalyReviewQueue = anomalyReviewQueue;
+        this.blockedCallRecorder = blockedCallRecorder;
         this.logger = logger;
     }
 
@@ -125,8 +129,12 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
                 agent = await agent.ChangeModelParameters(parsed.ModelParameters, cancellationToken);
             }
 
-            var outlierFlags = await DetectOutliersAsync(
-                agent, parsed.Response, isTurn2Plus: priorConversationCall is not null, cancellationToken);
+            // A proxy-blocked call never reached the provider: it carries no usable metrics for the
+            // statistical baseline, so it is flagged Blocked instead of outlier-evaluated.
+            var outlierFlags = job.BlockedByDetectorId is not null
+                ? OutlierFlags.Blocked
+                : await DetectOutliersAsync(
+                    agent, parsed.Response, isTurn2Plus: priorConversationCall is not null, cancellationToken);
 
             var call = createNewCall(
                 agent: agent,
@@ -144,11 +152,18 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             call = await agentCallRepository.AddAsync(call, cancellationToken);
             traceBroadcaster.Publish(TraceCreatedEvent.Create(call));
 
-            // Queue the persisted call for custom-anomaly review — a cheap in-process channel
-            // write (the LLM review runs asynchronously in the background worker). System agents'
-            // traffic (evaluator judges, Tracey) is internal plumbing and is not reviewed.
-            if (!agent.IsSystemAgent)
+            if (job is { BlockedByDetectorId: { } blockedBy, BlockedDetectorName: { } blockedName, BlockedTriggerPattern: { } blockedPattern })
             {
+                // Proxy-blocked: record attribution + SSE + notification instead of enqueueing the
+                // LLM review — there is no provider response to judge.
+                await blockedCallRecorder.RecordAsync(
+                    call, blockedBy, blockedName, blockedPattern, cancellationToken);
+            }
+            else if (!agent.IsSystemAgent)
+            {
+                // Queue the persisted call for custom-anomaly review — a cheap in-process channel
+                // write (the LLM review runs asynchronously in the background worker). System agents'
+                // traffic (evaluator judges, Tracey) is internal plumbing and is not reviewed.
                 await anomalyReviewQueue.EnqueueAsync(call.Id, cancellationToken);
             }
         }

@@ -1,9 +1,11 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Proxytrace.Common.Serialization;
 using Proxytrace.Domain;
 using Proxytrace.Domain.CustomAnomaly;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Exceptions;
+using Proxytrace.Storage.Internal.Entities.Agent;
 
 namespace Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector;
 
@@ -12,13 +14,17 @@ internal class CustomAnomalyDetectorRepository
     : AbstractRepository<ICustomAnomalyDetector, CustomAnomalyDetectorEntity>,
       ICustomAnomalyDetectorRepository
 {
+    private readonly ISerializer serializer;
+
     public CustomAnomalyDetectorRepository(
         IMapper<ICustomAnomalyDetector, CustomAnomalyDetectorEntity> mapper,
+        ISerializer serializer,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
         AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
+        this.serializer = serializer;
     }
 
     public async Task<IReadOnlyList<ICustomAnomalyDetector>> GetByProjectAsync(
@@ -45,6 +51,52 @@ internal class CustomAnomalyDetectorRepository
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<BlockingDetectorRule>> GetEnabledBlockingRulesByProjectAsync(
+        Guid projectId,
+        CancellationToken cancellationToken = default)
+    {
+        // Scalar projection only — no domain mapping. Mapping would hydrate the hidden judge agent
+        // and scoped-agent graph, which the proxy (the caller) stubs out; blocking needs patterns
+        // and scoped agent NAMES, nothing more.
+        var context = contextFactory();
+        var stored = await context.Set<CustomAnomalyDetectorEntity>()
+            .AsNoTracking()
+            .Where(e => e.Project == projectId && e.IsEnabled && e.BlockUpstream)
+            .Select(e => new { e.Id, e.Name, e.Triggers, e.AllAgents })
+            .ToListAsync(cancellationToken);
+
+        if (stored.Count == 0)
+            return [];
+
+        var scopedDetectorIds = stored.Where(e => !e.AllAgents).Select(e => e.Id).ToList();
+        Dictionary<Guid, List<string>> namesByDetector = [];
+        if (scopedDetectorIds.Count > 0)
+        {
+            var rows = await context.Set<CustomAnomalyDetectorAgentEntity>()
+                .AsNoTracking()
+                .Where(j => scopedDetectorIds.Contains(j.DetectorId))
+                .Join(
+                    context.Set<AgentEntity>().AsNoTracking(),
+                    j => j.AgentId,
+                    a => a.Id,
+                    (j, a) => new { j.DetectorId, AgentName = a.Name })
+                .ToListAsync(cancellationToken);
+
+            namesByDetector = rows
+                .GroupBy(r => r.DetectorId)
+                .ToDictionary(g => g.Key, g => g.Select(r => r.AgentName).ToList());
+        }
+
+        return stored
+            .Select(e => new BlockingDetectorRule(
+                DetectorId: e.Id,
+                DetectorName: e.Name,
+                Triggers: serializer.DeserializeRequired<List<AnomalyTrigger>>(e.Triggers),
+                AllAgents: e.AllAgents,
+                ScopedAgentNames: namesByDetector.TryGetValue(e.Id, out var names) ? names : []))
+            .ToList();
     }
 
     protected override async Task UpdateRelationsAsync(

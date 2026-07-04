@@ -107,4 +107,12 @@ JWT carries one extra claim, `offline` (a JSON boolean), and the server emits it
   `[RequiresFeature(LicenseFeature.CustomAnomalyDetectors)]` and returns **402** when unlicensed, so
   the management UI is hidden without a license. The anomaly *dashboard* itself (timeline,
   recent-flagged list) is ungated — it also surfaces the built-in statistical outliers, which every
-  tier gets.
+  tier gets. The same feature also covers **real-time blocking** (`BlockUpstream` detectors enforced
+  in the proxy): the proxy references `Proxytrace.Licensing` and its `CachedBlockingRuleProvider`
+  checks `IsFeatureEnabled(CustomAnomalyDetectors)` at use time — unlicensed, no requests are
+  blocked but the configuration is preserved (graceful degrade, mirroring `ScheduledTestRuns`). The
+  proxy runs the licensing module with `ServerCheckEnabled = false` (the main app owns the
+  license-server heartbeat and the offline-grace cache) and applies the DB-stored license via a
+  polling `ProxyStoredLicenseService` (~5 min, configurable `Licensing:StoredLicensePollSeconds`);
+  accepted consequence: a revoked-but-unexpired license keeps blocking active in the proxy until it
+  expires or the stored key is removed.

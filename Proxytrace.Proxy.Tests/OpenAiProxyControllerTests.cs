@@ -276,6 +276,7 @@ public sealed class OpenAiProxyControllerTests
             httpClientFactory ?? new FakeHttpClientFactory("{}"),
             stream,
             resolver,
+            Substitute.For<IRequestBlocker>(),
             new KioskOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 

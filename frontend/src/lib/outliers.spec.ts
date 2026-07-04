@@ -30,4 +30,9 @@ describe('outliers', () => {
   it('ignores bits outside the known set', () => {
     expect(outlierFlagKeys(OutlierFlag.HighTokens | 0x80)).toEqual(['HighTokens']);
   });
+
+  it('decodes the proxy-blocked bit', () => {
+    expect(outlierFlagKeys(OutlierFlag.Blocked)).toEqual(['Blocked']);
+    expect(isOutlier(OutlierFlag.Blocked)).toBe(true);
+  });
 });

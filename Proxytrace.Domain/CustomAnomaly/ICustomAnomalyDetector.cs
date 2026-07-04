@@ -32,6 +32,14 @@ public interface ICustomAnomalyDetector : IDomainEntity<ICustomAnomalyDetector>
 
     bool IsEnabled { get; }
 
+    /// <summary>
+    /// Whether the proxy enforces this detector in real time: on a trigger match against the raw
+    /// request body the call is rejected before it reaches the upstream provider (the LLM judge
+    /// never runs inline — blocking is trigger-match only). Blocked calls are still recorded as
+    /// traces, flagged with <c>OutlierFlags.Blocked</c>.
+    /// </summary>
+    bool BlockUpstream { get; }
+
     /// <summary>The owning project (the hidden agent's project).</summary>
     IProject Project { get; }
 
@@ -41,7 +49,8 @@ public interface ICustomAnomalyDetector : IDomainEntity<ICustomAnomalyDetector>
         IReadOnlyList<AnomalyTrigger> triggers,
         bool allAgents,
         IReadOnlyCollection<IAgent> scopedAgents,
-        bool isEnabled);
+        bool isEnabled,
+        bool blockUpstream);
 
     public delegate ICustomAnomalyDetector CreateExisting(
         string name,
@@ -50,6 +59,7 @@ public interface ICustomAnomalyDetector : IDomainEntity<ICustomAnomalyDetector>
         bool allAgents,
         IReadOnlyCollection<IAgent> scopedAgents,
         bool isEnabled,
+        bool blockUpstream,
         IDomainEntityData existing);
 
     /// <summary>
@@ -63,5 +73,6 @@ public interface ICustomAnomalyDetector : IDomainEntity<ICustomAnomalyDetector>
         bool allAgents,
         IReadOnlyCollection<IAgent> scopedAgents,
         bool isEnabled,
+        bool blockUpstream,
         CancellationToken cancellationToken = default);
 }

@@ -31,6 +31,7 @@ internal class CustomAnomalyDetectorGenerator : DomainEntityGenerator<ICustomAno
             triggers: [new AnomalyTrigger(TriggerKind.Phrase, "refund")],
             allAgents: true,
             scopedAgents: [],
-            isEnabled: true);
+            isEnabled: true,
+            blockUpstream: false);
     }
 }

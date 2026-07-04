@@ -22,5 +22,8 @@ internal record CustomAnomalyDetectorEntity : Entity
 
     public required bool IsEnabled { get; init; }
 
+    /// <summary>Whether the proxy rejects trigger-matching requests before they reach the provider.</summary>
+    public required bool BlockUpstream { get; init; }
+
     public required ICollection<CustomAnomalyDetectorAgentEntity> ScopedAgents { get; init; }
 }

@@ -20,6 +20,7 @@ export interface DetectorFormState {
   allAgents: boolean;
   agentIds: string[];
   isEnabled: boolean;
+  blockUpstream: boolean;
 }
 
 export function initDetectorForm(endpointId = ''): DetectorFormState {
@@ -31,6 +32,7 @@ export function initDetectorForm(endpointId = ''): DetectorFormState {
     allAgents: true,
     agentIds: [],
     isEnabled: true,
+    blockUpstream: false,
   };
 }
 
@@ -43,6 +45,7 @@ export function formFromDetector(d: CustomAnomalyDetectorDto): DetectorFormState
     allAgents: d.allAgents,
     agentIds: [...d.agentIds],
     isEnabled: d.isEnabled,
+    blockUpstream: d.blockUpstream,
   };
 }
 
@@ -99,6 +102,7 @@ export function buildCreatePayload(projectId: string, form: DetectorFormState): 
     allAgents: form.allAgents,
     agentIds: form.allAgents ? undefined : form.agentIds,
     isEnabled: form.isEnabled,
+    blockUpstream: form.blockUpstream,
   };
 }
 
@@ -111,6 +115,7 @@ export function buildUpdatePayload(form: DetectorFormState): UpdateCustomAnomaly
     allAgents: form.allAgents,
     agentIds: form.allAgents ? undefined : form.agentIds,
     isEnabled: form.isEnabled,
+    blockUpstream: form.blockUpstream,
   };
 }
 

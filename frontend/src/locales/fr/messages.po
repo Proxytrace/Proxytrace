@@ -1232,6 +1232,18 @@ msgstr "Benchmarks"
 msgid "best"
 msgstr "meilleur"
 
+msgid "Block matching requests at the proxy"
+msgstr "Bloquer les requêtes correspondantes au niveau du proxy"
+
+msgid "Blocked at proxy"
+msgstr "Bloqué au proxy"
+
+msgid "Blocked at the proxy — never reached the provider"
+msgstr "Bloqué au proxy — n'a jamais atteint le fournisseur"
+
+msgid "Blocking"
+msgstr "Bloquant"
+
 msgid "Boundary inputs, unusual conversations, rare tool combinations."
 msgstr "Entrées limites, conversations inhabituelles, rares combinaisons de Tool."
 
@@ -2817,6 +2829,9 @@ msgstr "Correspond à \"{0}\" — {1}"
 msgid "matched <0>“{0}”</0>"
 msgstr "correspond à <0>“{0}”</0>"
 
+msgid "Matching requests are rejected at the proxy before reaching the provider"
+msgstr "Les requêtes correspondantes sont rejetées au proxy avant d'atteindre le fournisseur"
+
 msgid "Max"
 msgstr "Max"
 
@@ -4027,6 +4042,9 @@ msgstr "Rejeter"
 
 msgid "Reject (error)"
 msgstr "Rejeter (erreur)"
+
+msgid "Reject a request before it reaches the provider when a trigger matches — e.g. a password pattern. Trigger match only; the LLM review does not run for blocked calls. Changes take effect within about 30 seconds."
+msgstr "Rejette une requête avant qu'elle n'atteigne le fournisseur lorsqu'un trigger correspond — p. ex. un motif de mot de passe. Correspondance de trigger uniquement ; la revue LLM ne s'exécute pas pour les appels bloqués. Les modifications prennent effet en 30 secondes environ."
 
 msgid "Reject theory"
 msgstr "Rejeter la Theory"

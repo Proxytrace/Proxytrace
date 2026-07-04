@@ -191,6 +191,7 @@ public sealed class CustomAnomalyDetectorsControllerTests : BaseTest<Module>
                 AllAgents = false,
                 AgentIds = [scopedAgent.Id],
                 IsEnabled = false,
+                BlockUpstream = false,
             },
             CancellationToken);
 
@@ -226,6 +227,7 @@ public sealed class CustomAnomalyDetectorsControllerTests : BaseTest<Module>
                 Triggers = [new AnomalyTriggerDto(TriggerKind.Phrase, "refund")],
                 AllAgents = true,
                 IsEnabled = true,
+                BlockUpstream = false,
             },
             CancellationToken);
 
