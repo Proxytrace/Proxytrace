@@ -80,6 +80,31 @@ slash command — send it as-is to invoke that tool directly.
 Tracey **streams** her replies as they are generated and renders them as Markdown (headings,
 lists, tables, and code blocks).
 
+## Ask Tracey from anywhere
+
+You don't have to start on the Tracey page. Wherever the app shows something worth
+investigating, a gold **⚡ Ask Tracey** button appears next to it. Clicking it opens Tracey AI
+in a fresh conversation and immediately asks her about the thing you were looking at — with all
+the context (ids, anomaly reasons, pass rates) already filled in:
+
+- **A trace's detail drawer** — for a flagged trace, Tracey analyzes why the anomaly happened
+  and how to prevent it (the detector hits and outlier reasons are passed along); for a normal
+  trace she reviews and summarizes it.
+- **An agent's header** — if the agent has suites with a low pass rate, Tracey digs into the
+  failing runs and proposes an improvement to A/B-test; otherwise she reviews the agent's recent
+  anomalies and results.
+- **A test run's header** — Tracey fetches the run's failures, groups them by cause, and
+  suggests fixes.
+- **A theory's detail drawer** (Proposals board) — Tracey walks through the proposed change,
+  its evidence and A/B result, and recommends accepting or rejecting.
+- **The Anomalies page** — Tracey investigates the recent flagged calls across agents and
+  recommends prevention.
+- **The Dashboard** — Tracey gives a project health review.
+
+Your current conversation isn't lost — it is archived to the conversation history (right-hand
+rail) and the button starts a new one. The button only appears when Tracey is available
+(Enterprise license, interactive mode, a project selected).
+
 ## Follow-up suggestions
 
 After Tracey answers, two **follow-up suggestions** appear as clickable chips beneath her reply —

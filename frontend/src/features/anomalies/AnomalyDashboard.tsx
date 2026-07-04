@@ -5,6 +5,8 @@ import { Tabs } from '../../components/ui/Tabs';
 import { RequiresFeature } from '../../components/license/RequiresFeature';
 import { AnomalyOverview } from './components/AnomalyOverview';
 import { DetectorsTab } from './detectors/components/DetectorsTab';
+import { AskTraceyButton } from '../../components/tracey/AskTraceyButton';
+import { anomaliesOverviewPrompt } from '../../components/tracey/askTraceyPrompts';
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- tab value tokens, not UI copy
 const TABS = { overview: 'overview', detectors: 'detectors' } as const;
@@ -26,11 +28,14 @@ export default function AnomalyDashboard() {
       className={cn('w-full min-w-0 flex flex-col gap-4', tab === TABS.detectors && 'h-full min-h-0')}
       data-testid="anomaly-dashboard"
     >
-      <header>
-        <h1 className="text-h1 font-semibold text-primary"><Trans>Anomalies</Trans></h1>
-        <p className="text-body-sm text-muted mt-1">
-          <Trans>Flagged agent calls over time, and the agents that need the most attention.</Trans>
-        </p>
+      <header className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-h1 font-semibold text-primary"><Trans>Anomalies</Trans></h1>
+          <p className="text-body-sm text-muted mt-1">
+            <Trans>Flagged agent calls over time, and the agents that need the most attention.</Trans>
+          </p>
+        </div>
+        <AskTraceyButton data-testid="ask-tracey-btn-anomalies" prompt={anomaliesOverviewPrompt()} />
       </header>
 
       <Tabs

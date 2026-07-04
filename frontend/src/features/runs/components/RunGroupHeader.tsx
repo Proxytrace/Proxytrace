@@ -8,6 +8,8 @@ import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { isActive, runStatusColor } from '../results';
 import { RunProgressBar } from './RunProgressBar';
+import { AskTraceyButton } from '../../../components/tracey/AskTraceyButton';
+import { runGroupPrompt } from '../../../components/tracey/askTraceyPrompts';
 
 /**
  * Header for a run group: title, agent, status, and a unified meta line (id · age · model
@@ -69,6 +71,10 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
       </div>
 
       <div className="flex gap-2 shrink-0">
+        <AskTraceyButton
+          data-testid="ask-tracey-btn-run-group"
+          prompt={() => runGroupPrompt(group)}
+        />
         {active && (
           <Button
             variant="secondary"

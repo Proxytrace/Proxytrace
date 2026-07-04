@@ -78,6 +78,7 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `components/TraceyConversationRail.tsx` | The conversation-history **right-hand rail** (collapsed by default). Lists stored conversations newest-first, highlights the active one, and offers new / open (view == continue) / delete (with a `ConfirmDialog`). Presentational — all state lives in `useTraceyChat`. |
 | `tracey-actions.tsx` | React context (`navigate`) for assistant-ui message-part components that can't take props. |
 | `tracey-quick-actions.ts` | Curated prompt presets: the empty-thread starter chips (clicking one **sends** its prompt immediately) + the top of the slash menu (which prefills for editing). |
+| `useAskTracey.ts` | The app-wide **Ask Tracey** send queue: `askTracey(prompt)` navigates to the page, starts a fresh conversation, and appends the prompt once the session is `ready` (sends reject before that). Exposed on `TraceyChat`, consumed by `components/tracey/AskTraceyButton`. |
 | `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens (input / cached-input / output / total) + duration + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, the `FollowUpSuggestions` chips after the last finished turn, empty state. |
@@ -526,6 +527,21 @@ opens Tracey from provision nothing. The query uses `throwOnError: false` so a f
 bubble to an ErrorBoundary and crash the shell — it surfaces as the contained "error" state on the
 page. The session is also gated on `useKiosk().interactive`, since Tracey makes real LLM calls and
 is unavailable in non-interactive kiosk mode.
+
+## Ask Tracey entry points (context-aware buttons)
+
+Pages deep-link *into* Tracey via `TraceyChat.askTracey(prompt)`:
+`components/tracey/AskTraceyButton.tsx` (gold pill, glinting `ZapFilledIcon`, hidden when
+`TraceyChat.available` is false — Free license / non-interactive kiosk / no project) calls it with
+a prompt built by the pure builders in `components/tracey/askTraceyPrompts.ts` (unit-tested).
+`askTracey` archives the current conversation (`startFreshThread`), navigates to `/tracey-ai`,
+`activate()`s the session, and queues the prompt in `useAskTracey.ts` until `status === 'ready'`
+(the transport rejects sends before the session resolves; an `error` status drops the queued
+prompt). Current placements: trace drawer header (anomaly-aware — includes outlier flags +
+detector hits), agent header (pass-rate-aware), run group header (failure-aware), theory drawer,
+anomalies page, dashboard. The prompts carry real entity ids and end with an "ids come from the
+app UI" note that matches the app-provided-ids exception in `TRACEY_SYSTEM_PROMPT` — do not
+remove one without the other. Prompts stay untranslated (like `tracey-quick-actions.ts`).
 
 ## Skills (on-demand playbooks + tool bundles)
 

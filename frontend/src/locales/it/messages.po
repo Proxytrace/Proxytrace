@@ -1105,6 +1105,9 @@ msgstr "Chiedimi qualcosa sui tuoi agent, suite, run o proposal — oppure chied
 msgid "Ask an admin for a new invite link."
 msgstr "Chiedi a un Admin un nuovo link di invito."
 
+msgid "Ask Tracey"
+msgstr "Chiedi a Tracey"
+
 msgid "Ask Tracey…  (/ for tools)"
 msgstr "Chiedi a Tracey…  (/ per Tools)"
 

@@ -1105,6 +1105,9 @@ msgstr "Frage nach deinen Agents, Suites, Runs oder Proposals — oder lass mich
 msgid "Ask an admin for a new invite link."
 msgstr "Bitte einen Admin um einen neuen Einladungslink."
 
+msgid "Ask Tracey"
+msgstr "Tracey fragen"
+
 msgid "Ask Tracey…  (/ for tools)"
 msgstr "Frag Tracey…  (/ für Tools)"
 

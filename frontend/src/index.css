@@ -310,6 +310,19 @@ body::after {
   .btn-sheen::after { animation: none; display: none; }
 }
 
+/* Ask-Tracey bolt glint — a periodic soft glow pulse on the bolt icon of `AskTraceyButton`
+   (components/tracey). Deliberately subtle: the accent glow breathes every ~3s rather than
+   flashing. Scoped to that button; do not reuse on idle UI. */
+@keyframes tracey-bolt {
+  0%, 62%, 100% { opacity: 1; filter: none; }
+  74% { opacity: 0.6; filter: drop-shadow(0 0 3px var(--accent-primary)); }
+  86% { opacity: 1; filter: drop-shadow(0 0 6px var(--accent-primary)); }
+}
+.tracey-bolt { animation: tracey-bolt 3.2s var(--ease-standard) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tracey-bolt { animation: none; }
+}
+
 /* Indeterminate progress sliver — an A/B validation in flight with no countable progress. */
 @keyframes indeterminate-bar {
   0%   { left: -40%; }

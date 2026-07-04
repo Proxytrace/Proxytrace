@@ -10,6 +10,8 @@ interface DrawerProps {
   onNext?: () => void;
   children: React.ReactNode;
   subtitle?: string;
+  /** Optional header actions, rendered between the title block and the close button. */
+  actions?: React.ReactNode;
 }
 
 /**
@@ -17,7 +19,7 @@ interface DrawerProps {
  * header (optional prev/next nav, title/subtitle, close) and a scrollable body. For a bespoke
  * header/tab layout, render {@link DetailPanel} directly instead.
  */
-export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: DrawerProps) {
+export function Drawer({ title, onClose, onPrev, onNext, children, subtitle, actions }: DrawerProps) {
   const { t } = useLingui();
   return (
     <DetailPanel onClose={onClose} onPrev={onPrev} onNext={onNext}>
@@ -48,6 +50,7 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
           {title && <div className="text-h2 font-semibold text-primary truncate">{title}</div>}
           {subtitle && <div className="text-body-sm text-muted mt-0.5">{subtitle}</div>}
         </div>
+        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
         <IconButton onClick={onClose} aria-label={t`Close`} className="shrink-0"><XIcon size={14} /></IconButton>
       </div>
       <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5">

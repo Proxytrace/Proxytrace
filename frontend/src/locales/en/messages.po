@@ -1105,6 +1105,9 @@ msgstr "Ask about your agents, suites, runs, or proposals — or have me run a s
 msgid "Ask an admin for a new invite link."
 msgstr "Ask an admin for a new invite link."
 
+msgid "Ask Tracey"
+msgstr "Ask Tracey"
+
 msgid "Ask Tracey…  (/ for tools)"
 msgstr "Ask Tracey…  (/ for tools)"
 
