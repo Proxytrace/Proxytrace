@@ -45,11 +45,6 @@ export default function Users() {
 
   return (
     <div className="space-y-8 p-6 max-w-6xl">
-      <header>
-        <h1 className="text-h1 font-semibold"><Trans>Users</Trans></h1>
-        <p className="text-body-sm text-muted mt-1"><Trans>Manage roles, project access, and invitations.</Trans></p>
-      </header>
-
       {isLocal && (
         <section className="space-y-3">
           <h2 className="text-h2 font-semibold"><Trans>Invite a user</Trans></h2>

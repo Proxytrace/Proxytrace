@@ -1,23 +1,27 @@
-import { useMemo } from 'react';
-import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { SparklesIcon } from '../../components/icons';
+import { useMemo, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { ChevronRightIcon } from '../../components/icons';
 import { useSelectedId } from '../../hooks/useSelectedId';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import { agentColor } from '../../lib/colors';
+import { cn } from '../../lib/cn';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
-import { Skeleton } from '../../components/ui/Skeleton';
-import { BoardStats } from './components/BoardStats';
-import { TheoryCard } from './components/TheoryCard';
-import { TheoryColumn } from './components/TheoryColumn';
-import { TheoryDrawer } from './TheoryDrawer';
+import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
+import type { FilterDropdownOption } from '../../components/ui/FilterDropdown';
+import { DossierPane } from './components/DossierPane';
+import { LoopStrip } from './components/LoopStrip';
+import { QueueRail } from './components/QueueRail';
 import { useProposals } from './hooks/useProposals';
 import { useTheories } from './hooks/useTheories';
 import { useSuiteNames } from './hooks/useSuiteNames';
 import { useSetProposalStatus } from './hooks/useSetProposalStatus';
 import { useResetTheory } from './hooks/useResetTheory';
 import { useRejectTheory } from './hooks/useRejectTheory';
-import { ProposalStatus, TheoryStatus } from '../../api/models';
-import { BOARD_COLUMNS, boardStats, groupByColumn } from './theoryBoard';
+import { TheoryStatus } from '../../api/models';
+import type { QueueGroupKey } from './theoryQueue';
+import { groupIntoQueue, indexProposals, loopStats, proposalFor, queueGroupOf } from './theoryQueue';
 
 export default function Proposals() {
   const { t } = useLingui();
@@ -32,12 +36,13 @@ export default function Proposals() {
   const resetTheory = useResetTheory();
   const rejectTheory = useRejectTheory();
 
-  // The open theory drawer is encoded in ?id= so it survives refresh and links.
+  // The open dossier is encoded in ?id= so it survives refresh and links; the agent filter
+  // lives in ?agentId= — the deep-link target from agent/theory cards elsewhere in the app.
   const [selectedId, setSelectedId] = useSelectedId();
-  // Agent filter lives in ?agentId= — shareable, survives refresh, and is the deep-link
-  // target from agent/theory cards elsewhere in the app.
   // eslint-disable-next-line lingui/no-unlocalized-strings -- query-param key, not UI copy
   const [agentFilter, setAgentFilter] = useSelectedId('agentId');
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const agentOptions = useMemo<FilterDropdownOption[]>(() => {
     const byAgent = new Map<string, { name: string; count: number }>();
@@ -53,52 +58,35 @@ export default function Proposals() {
   }, [theories, t]);
 
   const visibleTheories = agentFilter ? theories.filter(t => t.agentId === agentFilter) : theories;
+  const proposalById = useMemo(() => indexProposals(proposals), [proposals]);
+  const groups = groupIntoQueue(visibleTheories, proposalById);
+  const stats = loopStats(visibleTheories, proposalById);
 
-  const groups = groupByColumn(visibleTheories);
-  const stats = boardStats(visibleTheories);
+  // On mobile the queue and dossier are separate screens: only an explicit selection opens the
+  // dossier. Desktop defaults to the first proposal that needs a decision.
+  const explicitTheory = selectedId ? theories.find(t => t.id === selectedId) ?? null : null;
+  const selectedTheory = explicitTheory ?? (isMobile ? null : groups.decision[0] ?? null);
+  const selectedProposal = selectedTheory ? proposalFor(selectedTheory, proposalById) : null;
 
-  const selectedTheory = selectedId ? theories.find(t => t.id === selectedId) ?? null : null;
-  const selectedProposal = selectedTheory?.resultingProposalId
-    ? proposals.find(p => p.id === selectedTheory.resultingProposalId) ?? null
-    : null;
+  // A deep link into a history item must not hide behind the collapsed group.
+  const selectedInHistory =
+    explicitTheory != null && queueGroupOf(explicitTheory, proposalFor(explicitTheory, proposalById)) === 'history';
+
+  const jumpToGroup = (group: QueueGroupKey) => {
+    if (group === 'history') setHistoryOpen(true);
+    requestAnimationFrame(() => {
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- DOM element id + scroll options, not UI copy
+      document.getElementById(`queue-group-${group}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   return (
-    <div className="flex flex-col gap-3.5 w-full xl:flex-1 xl:min-h-0">
-      {/* Header */}
-      <div className="fade-up flex items-start justify-between gap-4 shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <h1 className="text-h1 font-semibold leading-none tracking-[-0.02em] m-0"><Trans>Optimization Theories</Trans></h1>
-            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-body-sm font-semibold text-accent-hover bg-[image:linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_20%,transparent),color-mix(in_srgb,var(--teal)_12%,transparent))]">
-              <SparklesIcon size={11} /> <Trans>Auto-generated</Trans>
-            </span>
-          </div>
-          <p className="text-body-sm text-muted m-0">
-            <Trans>Hypotheses spawned from failing test results, moving through validation — from untested to proven.</Trans>
-          </p>
-        </div>
-        <BoardStats stats={stats} />
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-3.5 min-h-0">
+      {/* Title bar: the loop strip is the page's header */}
+      <div className="fade-up shrink-0 rounded-lg bg-card px-3 py-2 shadow-[var(--shadow-card)]">
+        <LoopStrip stats={stats} onJump={jumpToGroup} />
       </div>
 
-      {/* Agent filter */}
-      {theories.length > 0 && (
-        <div className="fade-up flex items-center gap-3 shrink-0 [animation-delay:30ms]" data-testid="proposals-agent-filter">
-          <FilterDropdown
-            label={t`Agent`}
-            value={agentFilter ?? ''}
-            options={agentOptions}
-            onChange={key => setAgentFilter(key || null)}
-            active={!!agentFilter}
-            accent={agentFilter ? agentColor(agentFilter) : undefined}
-            width={240}
-          />
-          <span className="text-body-sm text-muted">
-            <Plural value={visibleTheories.length} one="# theory" other="# theories" />
-          </span>
-        </div>
-      )}
-
-      {/* Board */}
       {!isLoading && theories.length === 0 ? (
         <EmptyState
           title={t`No optimization theories yet`}
@@ -106,48 +94,67 @@ export default function Proposals() {
         />
       ) : (
         <div
-          className="fade-up grid gap-3.5 [animation-delay:40ms] grid-cols-1 md:grid-cols-2 xl:grid-cols-4 xl:flex-1 xl:min-h-0"
-          data-testid="theory-board"
+          className={cn(
+            'fade-up flex-1 min-h-0 [animation-delay:40ms]',
+            isMobile ? 'flex flex-col' : `grid gap-4 ${LIST_RAIL_COLS}`,
+          )}
+          data-testid="review-desk"
         >
-          {BOARD_COLUMNS.map(column => {
-            const columnTheories = groups[column.status];
-            return (
-              <TheoryColumn key={column.status} column={column} count={columnTheories.length}>
-                {isLoading
-                  ? Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-[150px] rounded-lg" />)
-                  : columnTheories.length === 0
-                    ? <p className="text-caption text-muted px-1 py-2"><Trans>Nothing here yet.</Trans></p>
-                    : columnTheories.map(theory => (
-                        <TheoryCard
-                          key={theory.id}
-                          theory={theory}
-                          suiteName={suiteName(theory.suiteId)}
-                          onOpen={() => setSelectedId(theory.id)}
-                          onPromote={() => { if (theory.resultingProposalId) setStatus.mutate({ id: theory.resultingProposalId, status: ProposalStatus.Accepted }); }}
-                          isPromoting={setStatus.isPending && setStatus.variables?.id === theory.resultingProposalId && setStatus.variables?.status === ProposalStatus.Accepted}
-                          onReject={() => rejectTheory.mutate(theory.id)}
-                          isRejecting={rejectTheory.isPending && rejectTheory.variables === theory.id}
-                        />
-                      ))}
-              </TheoryColumn>
-            );
-          })}
-        </div>
-      )}
+          {(!isMobile || !selectedTheory) && (
+            <QueueRail
+              groups={groups}
+              proposals={proposalById}
+              selection={{ id: selectedTheory?.id ?? null, onSelect: setSelectedId }}
+              history={{
+                open: historyOpen || selectedInHistory,
+                onToggle: () => setHistoryOpen(o => !o || selectedInHistory),
+                winRate: stats.winRate,
+              }}
+              filter={{
+                value: agentFilter ?? '',
+                options: agentOptions,
+                accent: agentFilter ? agentColor(agentFilter) : undefined,
+                onChange: key => setAgentFilter(key || null),
+              }}
+              loading={isLoading}
+            />
+          )}
 
-      {selectedTheory && (
-        <TheoryDrawer
-          theory={selectedTheory}
-          proposal={selectedProposal}
-          suiteName={suiteName(selectedTheory.suiteId)}
-          onSetStatus={(status) => { if (selectedProposal) setStatus.mutate({ id: selectedProposal.id, status }); }}
-          onReset={() => resetTheory.mutate(selectedTheory.id)}
-          onReject={() => rejectTheory.mutate(selectedTheory.id)}
-          actionPending={setStatus.isPending}
-          resetPending={resetTheory.isPending}
-          rejectPending={rejectTheory.isPending}
-          onClose={() => setSelectedId(null)}
-        />
+          {(!isMobile || selectedTheory) && (
+            <div className={cn('flex min-h-0 min-w-0 flex-col gap-2', isMobile && 'flex-1')}>
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 self-start"
+                  data-testid="proposals-back-to-list"
+                  onClick={() => setSelectedId(null)}
+                  leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
+                >
+                  <Trans>All proposals</Trans>
+                </Button>
+              )}
+              {selectedTheory ? (
+                <DossierPane
+                  key={selectedTheory.id}
+                  theory={selectedTheory}
+                  proposal={selectedProposal}
+                  suiteName={suiteName(selectedTheory.suiteId)}
+                  onSetStatus={status => { if (selectedProposal) setStatus.mutate({ id: selectedProposal.id, status }); }}
+                  onReset={() => resetTheory.mutate(selectedTheory.id)}
+                  onReject={() => rejectTheory.mutate(selectedTheory.id)}
+                  actionPending={setStatus.isPending}
+                  resetPending={resetTheory.isPending}
+                  rejectPending={rejectTheory.isPending}
+                />
+              ) : (
+                <Card>
+                  <div className="py-15 text-center text-body text-muted"><Trans>Select a proposal to review it.</Trans></div>
+                </Card>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

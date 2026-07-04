@@ -96,26 +96,27 @@ test.describe('Optimization Theories', () => {
     expect(rejected.status).toBe('Invalidated');
   });
 
-  test('rejecting a Proposed theory from the board removes its reject action', async ({ page }) => {
+  test('rejecting a Proposed theory from its dossier removes the reject action', async ({ page }) => {
     const theory = await api.seedTheory({
       agentId,
       status: 'Proposed',
-      rationale: `dismiss from board ${Date.now()}`,
+      rationale: `dismiss from queue ${Date.now()}`,
     });
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await expect(page.getByTestId(`theory-card-${theory.id}`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId(`theory-row-${theory.id}`)).toBeVisible({ timeout: 10_000 });
 
-    await page.getByTestId(`theory-reject-btn-${theory.id}`).click();
+    await page.getByTestId(`theory-row-${theory.id}`).click();
+    await page.getByTestId('dossier').getByTestId('theory-reject-btn').click();
 
-    // Once rejected the theory is Invalidated, so its Proposed-only reject action disappears while
-    // the card itself stays on the board (now in the Rejected column).
-    await expect(page.getByTestId(`theory-reject-btn-${theory.id}`)).toBeHidden({ timeout: 10_000 });
-    await expect(page.getByTestId(`theory-card-${theory.id}`)).toBeVisible();
+    // Once rejected the theory is Invalidated: its dossier stays open (the selection survives)
+    // but the Proposed-only reject action gives way to the terminal outcome + reset.
+    await expect(page.getByTestId('theory-reject-btn')).toBeHidden({ timeout: 10_000 });
+    await expect(page.getByTestId('dossier').getByTestId('proposal-reset-btn')).toBeVisible();
     expect((await api.getTheory(theory.id)).status).toBe('Invalidated');
   });
 
-  test('submitted theory appears as a card on the theories board', async ({ page }) => {
+  test('submitted theory appears as a row in the review-desk queue', async ({ page }) => {
     const theory = await api.submitTheory({
       agentId,
       suiteId,
@@ -124,9 +125,9 @@ test.describe('Optimization Theories', () => {
     });
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await expect(page.getByTestId('theory-board')).toBeVisible();
-    // The card carries a column-independent testid; background A/B validation may move it between
-    // columns, but it remains on the board.
-    await expect(page.getByTestId(`theory-card-${theory.id}`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('review-desk')).toBeVisible();
+    // The row carries a group-independent testid; background A/B validation may move it between
+    // the In flight sub-states, but it stays in the queue.
+    await expect(page.getByTestId(`theory-row-${theory.id}`)).toBeVisible({ timeout: 10_000 });
   });
 });

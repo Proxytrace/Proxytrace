@@ -17,8 +17,9 @@ Any producer can submit a theory into the same validation pipeline:
   (`POST /api/theories`), naming the target agent, the suite to validate against, and the
   proposed change.
 
-You watch every theory move through validation on the **Proposals** page, which is laid out
-as an **Optimization Theories** board (see [Reviewing the board](#reviewing-the-board)).
+You watch every theory move through validation on the **Proposals** page — a review desk
+whose queue groups theories by what they need from you (see
+[The review desk](#the-review-desk)).
 
 ## What a theory contains
 
@@ -53,35 +54,42 @@ Proposed → Validating → Validated   → becomes an Optimization Proposal
 You never lose work: every hypothesis — including the ones that did not pan out — is
 recorded, which is also what powers deduplication.
 
-## Reviewing the board
+## The review desk
 
-![The Optimization Theories board: Proposed, Validating, Validated, and Rejected columns of theory cards, with a summary strip of theory count, win rate, and proven gain.](/screenshots/theories/board.png)
+![The Proposals review desk: the queue rail grouped by urgency on the left, the loop strip on top, and a selected theory's dossier with its gain, diff, and decision bar on the right.](/screenshots/theories/board.png)
 
-Open **Proposals** in the sidebar. Theories are arranged on a pipeline board with one column
-per lifecycle state — **Proposed**, **Validating**, **Validated**, and **Rejected** — and a
-summary strip showing the total theory count, how many have been **tested**, the **win rate**
-(share of tested theories that were validated), and the total **proven gain** in percentage
-points.
+Open **Proposals** in the sidebar. The page is a two-column **review desk**: a queue on the
+left, and the selected item's full **dossier** on the right.
 
-Each card shows the kind, rationale, target agent, and suite. **Validated** cards show the
-measured pass-rate jump and a **Promote** button that accepts the resulting proposal in one
-click; **Rejected** cards show the (non-)improvement and the p-value verdict.
+The queue groups theories by what they need from you, most urgent first:
 
-Click an unproven or rejected card to open its **decision flow** — a top-to-bottom timeline of
-the theory's lifecycle: the **evidence** runs that motivated it → the **theory** (the proposed
-change as a diff) → the **A/B validation** result → the **proposal** it produced (if the test
-won) → the **outcome**. A theory the A/B disproved is *auto-rejected* (no human review).
+- **Needs decision** — validated theories whose proposal awaits your Promote/Dismiss call.
+- **Awaiting adoption** — promoted proposals Proxytrace is watching live traffic for.
+- **In flight** — theories that are queued (*Proposed*) or mid-A/B-test (*Validating*, with a
+  live progress bar).
+- **History** — everything decided (adopted, dismissed, or disproven), collapsed by default,
+  with the **win rate** (share of tested theories that validated) in its header.
 
-A **validated** theory's drawer skips the timeline and leads with what matters for the decision:
-the **effective gain** (the measured pass-rate jump, with the p-value verdict) and the **concrete
-change to apply** — the prompt diff, tool definition diff, or model swap — with **Promote** and
-**Dismiss** immediately at hand. The background that produced the proposal (the theory's
-rationale, the evidence runs, and the full A/B test result) stays available under a collapsed
-**Theory & A/B test details** section.
+Above the queue, the **loop strip** shows the whole optimization pipeline at a glance —
+*testing → need decision → awaiting adoption → decided* — closing with the total **proven
+gain** in percentage points. Click any node to jump to its group.
 
-The board updates itself as theories move through the pipeline — it polls live while any theory
-is still validating, so status changes, spawned proposals, and recorded metrics appear without a
-manual refresh.
+Each queue row shows the kind, rationale, and target agent; rows in *Needs decision* add the
+measured pass-rate jump and the p-value verdict. Selecting a row opens its dossier:
+
+- An **unproven** theory's dossier shows where validation stands, the **planned change**, the
+  rationale, and the evidence runs that motivated it.
+- A **validated** theory's dossier leads with what matters for the decision: the **effective
+  gain** (the measured pass-rate jump, with the p-value verdict) as the headline, the
+  **concrete change to apply** — the prompt diff, tool definition diff, or model swap — in the
+  wide column, and the evidence (the full A/B result, source runs, and rationale) alongside.
+  **Promote** and **Dismiss** sit in the pinned decision bar at the bottom.
+- A **disproven or dismissed** theory keeps the same dossier with its (non-)improvement and
+  verdict, so history stays inspectable.
+
+The page updates itself as theories move through the pipeline — it polls live while any theory
+is still validating, so rows move between groups and recorded metrics appear without a manual
+refresh.
 
 The A/B validation detail carries a **View A/B run** link to the exact run that decided the
 theory. The link is attached **as soon as the run starts**, so it is already present while the
@@ -91,17 +99,17 @@ that A/B run revealed and selected.
 
 ## Dismissing a theory
 
-You don't have to wait for the A/B test on every theory. Two actions let you take a theory out of
-the pipeline yourself — both on the card and in its decision flow:
+You don't have to wait for the A/B test on every theory. Two actions in the dossier's decision
+bar let you take a theory out of the pipeline yourself:
 
 - **Reject** (on a *Proposed* theory) — dismisses it **without running A/B validation**. Use it for
   hypotheses you've already judged not worth a validation run.
 - **Cancel validation** (on a *Validating* theory) — **aborts the in-flight A/B run** and dismisses
   the theory. Use it to stop a run you no longer need.
 
-Either action moves the theory to **Rejected**. Because it was never measured, the card shows that
-it was "dismissed without running an A/B validation" rather than a pass-rate verdict — and you can
-still **Reset to Proposed** later to validate it after all.
+Either action moves the theory to **History**. Because it was never measured, the dossier shows
+that it was "dismissed without running an A/B validation" rather than a pass-rate verdict — and
+you can still **Reset to Proposed** later to validate it after all.
 
 Theories validate **one at a time**: only a single A/B run is ever in flight, and the rest wait in
 the queue. Rejecting queued theories or cancelling the running one is how you keep that backlog under
@@ -109,7 +117,7 @@ control.
 
 ## Re-validating a theory
 
-A **Validated** or **Rejected** theory's drawer carries a **Reset to Proposed** button. It
+A validated or dismissed theory's dossier carries a **Reset to Proposed** button. It
 returns the theory to the start of the lifecycle — deleting any draft/dismissed proposal it
 spawned, clearing the recorded A/B metrics, and re-queuing it for a fresh validation run. Use it
 to retry a theory after the agent, suite, or model has changed.
@@ -123,8 +131,8 @@ proposals are not resettable.
 Send a `POST /api/theories` request naming the agent, the suite to validate against, your
 rationale, and the proposed change (a new system prompt, a replacement endpoint, or updated
 tools). Proxytrace deduplicates and validates it exactly like an optimizer-produced theory;
-if it wins, it appears in the **Validated** column ready to promote, and you can follow its
-status across the board as it moves through validation.
+if it wins, it appears under **Needs decision** ready to promote, and you can follow it through
+the queue as it moves through validation.
 
 ## Deduplication
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trans, Plural, useLingui } from '@lingui/react/macro';
+import { Plural, useLingui } from '@lingui/react/macro';
 import { useSearchParams } from 'react-router-dom';
 import { SearchIcon } from '../../components/icons';
 import { Input } from '../../components/ui/Input';
@@ -85,16 +85,6 @@ export default function ErrorLog() {
 
   return (
     <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-3.5">
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-h1 font-semibold text-primary"><Trans>Error Log</Trans></h1>
-          <p className="text-body-sm text-muted mt-1">
-            <Trans>Latest application errors and critical failures captured across the backend.</Trans>
-          </p>
-        </div>
-        <SegmentedControl value={levelFilter} onChange={handleLevelChange} segments={LEVEL_SEGMENTS} />
-      </header>
-
       <div className="shrink-0 flex items-center gap-3 flex-wrap">
         <div className="flex-1 min-w-[220px] max-w-[460px]">
           <Input
@@ -107,6 +97,9 @@ export default function ErrorLog() {
           />
         </div>
         <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} testId="error-log-time" />
+        <div className="ml-auto">
+          <SegmentedControl value={levelFilter} onChange={handleLevelChange} segments={LEVEL_SEGMENTS} />
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">

@@ -95,7 +95,7 @@ the context (ids, anomaly reasons, pass rates) already filled in:
   anomalies and results.
 - **A test run's header** — Tracey fetches the run's failures, groups them by cause, and
   suggests fixes.
-- **A theory's detail drawer** (Proposals board) — Tracey walks through the proposed change,
+- **A theory's dossier** (Proposals review desk) — Tracey walks through the proposed change,
   its evidence and A/B result, and recommends accepting or rejecting.
 - **The Anomalies page** — Tracey investigates the recent flagged calls across agents and
   recommends prevention.

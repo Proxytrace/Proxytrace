@@ -82,10 +82,6 @@ msgstr "{0, plural, one {# evaluator} other {# evaluators}}"
 msgid "{0, plural, one {# failing run motivated this} other {# failing runs motivated this}}"
 msgstr "{0, plural, one {# run défaillant a motivé cela} other {# runs défaillants ont motivé cela}}"
 
-#. placeholder {0}: theory.evidenceTestRunIds.length
-msgid "{0, plural, one {# failing run} other {# failing runs}}"
-msgstr "{0, plural, one {# run défaillant} other {# runs défaillants}}"
-
 #. placeholder {0}: p.memberCount
 msgid "{0, plural, one {# member} other {# members}}"
 msgstr "{0, plural, one {# member} other {# members}}"
@@ -126,10 +122,6 @@ msgstr "{0, plural, one {# suite pour cet agent} other {# suites pour cet agent}
 #. placeholder {0}: suites.length
 msgid "{0, plural, one {# suite} other {# suites}}"
 msgstr "{0, plural, one {# suite} other {# suites}}"
-
-#. placeholder {0}: visibleTheories.length
-msgid "{0, plural, one {# theory} other {# theories}}"
-msgstr "{0, plural, one {# théorie} other {# théories}}"
 
 #. placeholder {0}: a.toolCount
 #. placeholder {0}: agent.toolCount
@@ -635,10 +627,6 @@ msgstr "+ Ajout en attente"
 msgid "+{0} more"
 msgstr "+{0} de plus"
 
-#. placeholder {0}: stats.provenGainPt
-msgid "+{0}pt"
-msgstr "+{0} pt"
-
 msgid "+{added} added"
 msgstr "+{added} ajoutés"
 
@@ -706,9 +694,6 @@ msgstr "○ Non attaché"
 msgid "● Attached"
 msgstr "● Attaché"
 
-msgid "0pt"
-msgstr "0 pt"
-
 msgid "1 agent"
 msgstr "1 agent"
 
@@ -754,13 +739,6 @@ msgstr "Un modèle évaluateur attribue une note aux réponses sur une échelle 
 msgid "A metric is only judged once the agent has at least this many recent calls."
 msgstr "Une métrique n’est évaluée que lorsque l’Agent a au moins ce nombre de calls récents."
 
-msgid "A proposal is created only once the A/B test shows an improvement."
-msgstr "Une proposal n’est créée que lorsque le A/B test montre une amélioration."
-
-#. placeholder {0}: proposal ? ` (${theoryShortId(proposal.id).replace('thy_', 'prop_')})` : ''
-msgid "A reviewable draft proposal{0} was created from the winning A/B test."
-msgstr "Une ébauche de proposal révisable{0} a été créée à partir du A/B test gagnant."
-
 msgid "A reviewer chose not to apply this change."
 msgstr "Un reviewer a choisi de ne pas appliquer ce changement."
 
@@ -779,14 +757,8 @@ msgstr "A/B en cours d’exécution"
 msgid "A/B test"
 msgstr "A/B test"
 
-msgid "A/B test in flight"
-msgstr "A/B test en cours d’exécution"
-
 msgid "A/B testing"
 msgstr "Test A/B"
-
-msgid "A/B validation"
-msgstr "Validation A/B"
 
 msgid "Acceptable"
 msgstr "Acceptable"
@@ -997,11 +969,11 @@ msgstr "Tout est terminé"
 msgid "All projects"
 msgstr "Tous les projets"
 
+msgid "All proposals"
+msgstr "Toutes les Proposal"
+
 msgid "All runs"
 msgstr "Tous les runs"
-
-msgid "All security and lifecycle events across the workspace."
-msgstr "Tous les événements de sécurité et de cycle de vie dans l'espace de travail."
 
 msgid "All suites"
 msgstr "Tous les suites"
@@ -1152,18 +1124,12 @@ msgstr "Code d'authentification"
 msgid "Auto"
 msgstr "Auto"
 
-msgid "Auto-generated"
-msgstr "Auto-généré"
-
 #. placeholder {0}: traces.length
 msgid "auto-refresh · {0} most recent"
 msgstr "auto-refresh · {0} les plus récentes"
 
 msgid "Auto-reindex on change"
 msgstr "Reindexer automatiquement à la modification"
-
-msgid "Auto-rejected by A/B"
-msgstr "Auto-rejeté par A/B"
 
 msgid "Avg"
 msgstr "Moy."
@@ -1187,11 +1153,11 @@ msgstr "Score moyen"
 msgid "Awaited actions"
 msgstr "Actions en attente"
 
+msgid "awaiting adoption"
+msgstr "en attente d’adoption"
+
 msgid "Awaiting adoption"
 msgstr "En attente d’adoption"
-
-msgid "Awaiting decision"
-msgstr "En attente de décision"
 
 msgid "awaiting samples"
 msgstr "en attente d’échantillons"
@@ -1429,9 +1395,6 @@ msgstr "Configurez les fournisseurs de modèles en amont et gérez les clés API
 
 msgid "Configure your evaluator."
 msgstr "Configurez votre Evaluator."
-
-msgid "Confirmed — ready to ship"
-msgstr "Confirmé — prêt à être déployé"
 
 msgid "Connect your model provider"
 msgstr "Connectez votre fournisseur de modèle"
@@ -1722,6 +1685,9 @@ msgstr "Données purgées"
 msgid "days"
 msgstr "jours"
 
+msgid "decided"
+msgstr "décidé"
+
 msgid "Default model"
 msgstr "Modèle par défaut"
 
@@ -1864,9 +1830,6 @@ msgstr "Ignoré"
 msgid "Dismissed — a reviewer chose not to apply this change."
 msgstr "Ignoré — un évaluateur a choisi de ne pas appliquer ce changement."
 
-msgid "Disproven by A/B"
-msgstr "Infirmé par A/B"
-
 msgid "Divergent"
 msgstr "Divergent"
 
@@ -1884,9 +1847,6 @@ msgstr "Télécharger"
 
 msgid "Download .md"
 msgstr "Télécharger .md"
-
-msgid "Draft created"
-msgstr "Brouillon créé"
 
 msgid "Drag to reorder"
 msgstr "Glisser pour réorganiser"
@@ -1948,9 +1908,6 @@ msgstr "Modifiable"
 
 msgid "edited"
 msgstr "modifié"
-
-msgid "Effective gain"
-msgstr "Gain effectif"
 
 msgid "Email"
 msgstr "E-mail"
@@ -2028,9 +1985,6 @@ msgid "ERROR"
 msgstr "ERREUR"
 
 msgid "Error log"
-msgstr "Journal d'erreurs"
-
-msgid "Error Log"
 msgstr "Journal d'erreurs"
 
 msgid "Error message required"
@@ -2234,9 +2188,6 @@ msgstr "Signaler les calls de l’Agent qui s’écartent du comportement récen
 msgid "Flag the turn when the assistant promises a refund without approval."
 msgstr "Signalez le tour lorsque l’Assistant promet un remboursement sans approbation."
 
-msgid "Flagged agent calls over time, and the agents that need the most attention."
-msgstr "Appels Agent signalés au fil du temps, et les Agents qui nécessitent le plus d’attention."
-
 msgid "Flagged calls"
 msgstr "Appels signalés"
 
@@ -2381,15 +2332,6 @@ msgstr "Nombre de calls réussis les plus récents de l’Agent qui servent de b
 msgid "https://api.openai.com/v1"
 msgstr "https://api.openai.com/v1"
 
-msgid "Hypotheses awaiting a test"
-msgstr "Hypothèses en attente d’un test"
-
-msgid "Hypotheses spawned from failing test results, moving through validation — from untested to proven."
-msgstr "Hypothèses issues de résultats de test en échec, passant par la validation — de non testées à prouvées."
-
-msgid "Hypothesised"
-msgstr "Hypothétique"
-
 msgid "id"
 msgstr "id"
 
@@ -2407,9 +2349,6 @@ msgstr "Amélioré"
 
 msgid "Improved the pass rate."
 msgstr "Amélioration du taux de réussite."
-
-msgid "Improvement confirmed"
-msgstr "Amélioration confirmée"
 
 msgid "in"
 msgstr "dans"
@@ -2629,9 +2568,6 @@ msgstr "Distribution de la latence"
 msgid "Latency stats appear after traces arrive."
 msgstr "Les statistiques de latence apparaissent après l’arrivée des Traces."
 
-msgid "Latest application errors and critical failures captured across the backend."
-msgstr "Les dernières erreurs applicatives et pannes critiques capturées dans le backend."
-
 msgid "latest suite run"
 msgstr "dernière exécution de Suite"
 
@@ -2797,12 +2733,6 @@ msgstr "Faible taux de cache hit"
 
 msgid "Manage"
 msgstr "Gérer"
-
-msgid "Manage how you sign in to your account."
-msgstr "Gérez la façon dont vous vous connectez à votre compte."
-
-msgid "Manage roles, project access, and invitations."
-msgstr "Gérez les rôles, l’accès aux projets et les invitations."
 
 msgid "Manage this installation's license key."
 msgstr "Gérez la clé de licence de cette installation."
@@ -3009,8 +2939,14 @@ msgstr "Nom, endpoint système et cycle de vie pour le projet actif."
 msgid "navigate"
 msgstr "naviguer"
 
+msgid "need decision"
+msgstr "besoin de décision"
+
 msgid "Needs attention"
 msgstr "Attention requise"
+
+msgid "Needs decision"
+msgstr "Nécessite une décision"
 
 msgid "never"
 msgstr "jamais"
@@ -3129,9 +3065,6 @@ msgstr "Aucune donnée"
 
 msgid "No data in range"
 msgstr "Aucune donnée dans l'intervalle"
-
-msgid "No decision yet — validation must finish first."
-msgstr "Aucune décision pour le moment — la validation doit d'abord se terminer."
 
 msgid "no delta predicted"
 msgstr "aucun delta prévu"
@@ -3265,9 +3198,6 @@ msgstr "Aucun projet"
 msgid "No projects yet"
 msgstr "Aucun projet pour le moment"
 
-msgid "No proposal generated — the change did not beat the baseline."
-msgstr "Aucune Proposal générée — la modification n’a pas battu la baseline."
-
 msgid "No providers yet"
 msgstr "Aucun provider pour le moment"
 
@@ -3398,9 +3328,6 @@ msgstr "Aucun"
 msgid "None configured"
 msgstr "Aucune configuration"
 
-msgid "None generated"
-msgstr "Aucune génération"
-
 msgid "Not attached to any suite yet."
 msgstr "Pas encore attaché à un Suite."
 
@@ -3425,14 +3352,8 @@ msgstr "JSON non valide — {detail}"
 msgid "Not valid JSON — showing raw text"
 msgstr "JSON non valide — affichage du texte brut"
 
-msgid "Not yet tested"
-msgstr "Pas encore testé"
-
 msgid "Nothing here yet"
 msgstr "Rien ici pour le moment"
-
-msgid "Nothing here yet."
-msgstr "Rien ici pour le moment."
 
 msgid "Nothing was flagged for the selected range."
 msgstr "Aucune anomalie n’a été signalée pour la plage sélectionnée."
@@ -3539,9 +3460,6 @@ msgstr "Optimisation demandée"
 msgid "Optimization theories"
 msgstr "Théories d'optimisation"
 
-msgid "Optimization Theories"
-msgstr "Optimization Theories"
-
 msgid "Optimize an agent"
 msgstr "Optimiser un Agent"
 
@@ -3562,9 +3480,6 @@ msgstr "Autre"
 
 msgid "out"
 msgstr "sortie"
-
-msgid "Outcome"
-msgstr "Résultat"
 
 msgid "Outlier detection"
 msgstr "Détection des outliers"
@@ -3714,9 +3629,6 @@ msgstr "Suppression en attente"
 msgid "Pending review"
 msgstr "En attente de revue"
 
-msgid "Pending validation"
-msgstr "En attente de validation"
-
 msgid "per call"
 msgstr "par appel"
 
@@ -3779,6 +3691,9 @@ msgstr "Choisissez pour commencer"
 
 msgid "Pick your default model"
 msgstr "Choisissez votre modèle par défaut"
+
+msgid "Planned change"
+msgstr "changement prévu"
 
 msgid "Plot token usage"
 msgstr "Tracer l’usage des Tokens"
@@ -3865,9 +3780,6 @@ msgstr "Promu"
 msgid "Promoted — awaiting adoption in your agent."
 msgstr "Promu — en attente d'adoption dans votre Agent."
 
-msgid "Promoting…"
-msgstr "Promotion…"
-
 msgid "Prompt rewrite"
 msgstr "Réécriture du Prompt"
 
@@ -3905,8 +3817,8 @@ msgstr "Tools proposés ({0}) : "
 msgid "Protect your account with a time-based one-time code from an authenticator app, in addition to your password."
 msgstr "Protégez votre compte avec un code à usage unique basé sur le temps depuis une application d'authentification, en plus de votre mot de passe."
 
-msgid "Proven gain"
-msgstr "Gain prouvé"
+msgid "proven"
+msgstr "prouvé"
 
 msgid "Provide result"
 msgstr "Fournir le résultat"
@@ -3957,6 +3869,12 @@ msgstr "File d’attente"
 
 msgid "Queued"
 msgstr "En file d'attente"
+
+msgid "Queued — the candidate change has not been benchmarked yet. A proposal is created only once the A/B test shows an improvement."
+msgstr "En file d’attente — le changement candidat n’a pas encore été benchmarké. Une Proposal n’est créée que lorsque le A/B test montre une amélioration."
+
+msgid "Queued for validation"
+msgstr "En attente de validation"
 
 msgid "Quick actions"
 msgstr "Actions rapides"
@@ -4039,9 +3957,6 @@ msgstr "Réindexation commencée"
 
 msgid "Reindexing"
 msgstr "Réindexation"
-
-msgid "Reject"
-msgstr "Rejeter"
 
 msgid "Reject (error)"
 msgstr "Rejeter (erreur)"
@@ -4478,9 +4393,6 @@ msgstr "Secrets renseignés rétroactivement"
 msgid "Security"
 msgstr "Sécurité"
 
-msgid "Security and lifecycle events for this project."
-msgstr "Événements de sécurité et de cycle de vie pour ce projet."
-
 msgid "Security and lifecycle events will appear here as they occur."
 msgstr "Les événements de sécurité et de cycle de vie apparaîtront ici au fur et à mesure."
 
@@ -4504,6 +4416,9 @@ msgstr "Sélectionnez un detector"
 
 msgid "Select a model endpoint"
 msgstr "Sélectionnez un endpoint de modèle"
+
+msgid "Select a proposal to review it."
+msgstr "Sélectionnez une Proposal pour la consulter."
 
 msgid "Select a run to see details."
 msgstr "Sélectionnez un Run pour voir les détails."
@@ -4688,9 +4603,6 @@ msgstr "significatif"
 msgid "sk-…"
 msgstr "sk-…"
 
-msgid "Skipped"
-msgstr "Ignoré"
-
 msgid "SMTP host"
 msgstr "Hôte SMTP"
 
@@ -4793,15 +4705,6 @@ msgstr "Diffusion…"
 
 msgid "Submit"
 msgstr "Envoyer"
-
-msgid "Submitted directly"
-msgstr "Envoyé directement"
-
-msgid "Submitted via {sourceLabel} — no failing runs attached. Validated against {suite}."
-msgstr "Envoyé via {sourceLabel} — aucun run en échec attaché. Validé avec {suite}."
-
-msgid "Submitted via {sourceLabel} · validated against {suite}"
-msgstr "Envoyé via {sourceLabel} · validé avec {suite}"
 
 msgid "Submitting theory…"
 msgstr "Soumission de la Theory…"
@@ -4987,17 +4890,14 @@ msgstr "Suites de test"
 msgid "Test suites & Test cases"
 msgstr "Suites de test et cas de test"
 
-msgid "Tested"
-msgstr "Testé"
+msgid "testing"
+msgstr "en test"
 
 msgid "Text response"
 msgstr "Réponse textuelle"
 
-msgid "The A/B test found no improvement, so the theory was rejected automatically — no review needed."
-msgstr "Le A/B test n’a révélé aucune amélioration, la théorie a donc été rejetée automatiquement — aucune révision nécessaire."
-
-msgid "The candidate change has not been benchmarked yet."
-msgstr "La modification candidate n’a pas encore été benchmarkée."
+msgid "The A/B test found no improvement, so the theory was rejected automatically."
+msgstr "Le A/B test n’a révélé aucune amélioration, la Theory a donc été rejetée automatiquement."
 
 msgid "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
 msgstr "La modification a dépassé la référence. Promouvez-la pour obtenir le dossier de transfert, ou ignorez-la."
@@ -5024,9 +4924,6 @@ msgstr "La licence est figée par ce déploiement (mode démo) et ne peut pas ê
 msgid "The native OpenAI API — works out of the box."
 msgstr "L’API native OpenAI — fonctionne immédiatement."
 
-msgid "Theories"
-msgstr "Theories"
-
 msgid "Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate."
 msgstr "Les Theories apparaissent ici lorsqu’un optimizer, vous ou Tracey AI proposez une modification à valider."
 
@@ -5040,9 +4937,6 @@ msgstr "Theory"
 #. placeholder {0}: theory.agentName
 msgid "Theory · {0}"
 msgstr "Theory · {0}"
-
-msgid "Theory & A/B test details"
-msgstr "Détails de Theory et de A/B test"
 
 msgid "Theory Invalidated"
 msgstr "Theory invalidée"
@@ -5377,9 +5271,6 @@ msgstr "Tapez ci-dessous pour envoyer un message, ou utilisez Ajouter un message
 msgid "Type your answer…"
 msgstr "Saisissez votre réponse…"
 
-msgid "Unassigned suite"
-msgstr "Suite non assignée"
-
 msgid "Undo"
 msgstr "Annuler"
 
@@ -5508,11 +5399,14 @@ msgid "Version history"
 msgstr "Historique des versions"
 
 #. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
-msgid "via {0}"
-msgstr "via {0}"
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validated against {1}"
+msgstr "via {0} · validé par rapport à {1}"
 
-msgid "via {sourceLabel}"
-msgstr "via {sourceLabel}"
+#. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validating against {1}"
+msgstr "via {0} · validation par rapport à {1}"
 
 msgid "via Tracey AI"
 msgstr "via Tracey AI"
@@ -5595,6 +5489,9 @@ msgstr "Parcourir les propositions d’optimisation ouvertes"
 msgid "Warning"
 msgstr "Avertissement"
 
+msgid "Watching traffic"
+msgstr "Surveillance du trafic"
+
 msgid "Wednesday"
 msgstr "Mercredi"
 
@@ -5631,6 +5528,9 @@ msgstr "Lorsque cette option est activée, les notifications sont envoyées par 
 msgid "Which agent should this suite test?"
 msgstr "Quel Agent ce Suite doit-elle tester ?"
 
+msgid "Why this change"
+msgstr "Pourquoi ce changement"
+
 msgid "widget"
 msgstr "widget"
 
@@ -5640,8 +5540,8 @@ msgstr "Sera supprimé"
 msgid "Will be kept"
 msgstr "Sera conservé"
 
-msgid "Win rate"
-msgstr "Taux de victoire"
+msgid "win rate"
+msgstr "taux de victoire"
 
 msgid "Wipes runtime/trace data while preserving configuration. This action cannot be undone."
 msgstr "Efface les données d'exécution/trace tout en conservant la configuration. Cette action est irréversible."

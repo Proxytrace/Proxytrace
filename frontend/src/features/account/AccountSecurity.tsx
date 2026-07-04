@@ -26,11 +26,6 @@ export default function AccountSecurity() {
 
   return (
     <div className="space-y-8 p-6 max-w-3xl">
-      <header>
-        <h1 className="text-h1 font-semibold"><Trans>Account security</Trans></h1>
-        <p className="text-body-sm text-muted mt-1"><Trans>Manage how you sign in to your account.</Trans></p>
-      </header>
-
       <Card padding="lg">
         <Card.Header>
           <div className="flex items-center gap-2">

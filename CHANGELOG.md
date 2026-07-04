@@ -86,6 +86,23 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Compact page layouts everywhere.** The remaining pages that still opened with a large
+  title and subtitle — Proposals, Anomalies, Error Log, Audit Log, Users, and Account
+  security — now start directly with their content (the top bar's breadcrumb already names
+  the page). Filters and actions that lived in those headers moved into the pages' toolbars.
+
+- **The Proposals page is now a review desk.** The four-column theory kanban (whose first two
+  columns sat empty most of the time) is replaced by a master/detail decision inbox. A queue
+  rail groups theories by urgency — *Needs decision* first, then *Awaiting adoption*, live
+  *In flight* items, and a collapsed *History* — and a loop strip across the top shows the
+  optimization pipeline at a glance (testing → need decision → awaiting adoption → decided,
+  closing with the total proven gain; each node jumps to its group). Selecting an item opens a
+  full-width dossier in place of the old drawer: the measured gain and significance lead, the
+  proposed change diff finally has room, evidence (A/B results, source runs, rationale) sits
+  alongside, and Promote / Dismiss live in a pinned decision bar. Promoted proposals surface
+  their handoff package first; validated-but-promoted, adopted, and dismissed items no longer
+  masquerade as reviewable.
+
 - **The dashboard is now a live mission control.** A new full-width pulse band charts
   per-minute call activity over the last hour and beats in real time as traces arrive. The
   live trace feed moved to center stage with richer rows (agent identity, live age, arrival

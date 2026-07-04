@@ -7,7 +7,7 @@ import type { MessageDescriptor } from '@lingui/core';
 import type { OptimizationProposalDto, TheoryDto } from '../../api/models';
 import { ProposalStatus } from '../../api/models';
 import type { DisplayTone } from './shared';
-import { passRateTransition } from './theoryBoard';
+import { passRateTransition } from './theoryQueue';
 
 export interface GainSummary {
   /** Baseline pass rate in percent, when known. */
