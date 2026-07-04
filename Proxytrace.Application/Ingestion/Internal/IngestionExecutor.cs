@@ -55,7 +55,10 @@ internal sealed class IngestionExecutor : IIngestionExecutor
             TimeSpan.FromMilliseconds(message.DurationMs),
             (HttpStatusCode)message.HttpStatus,
             message.SessionId,
-            message.AgentName);
+            message.AgentName,
+            message.BlockedByDetectorId,
+            message.BlockedDetectorName,
+            message.BlockedTriggerPattern);
 
         await processor.IngestAsync(job, cancellationToken);
     }

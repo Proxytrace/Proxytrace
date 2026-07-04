@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using Proxytrace.Application.CustomAnomaly;
 using Proxytrace.Domain.CustomAnomaly;
 
 namespace Proxytrace.Domain.Tests;
@@ -88,6 +87,34 @@ public sealed class TriggerMatcherTests
 
         match.Should().NotBeNull();
         match.Trigger.Should().Be(valid);
+    }
+
+    [TestMethod]
+    public void FindFirstMatch_SameRegexRepeatedly_KeepsMatchingViaCachedCompilation()
+    {
+        // The proxy hot path evaluates the same patterns per request; the compiled-regex cache
+        // must be transparent — repeated evaluation returns the same result every time.
+        var trigger = new AnomalyTrigger(TriggerKind.Regex, @"pass(word)?\s*[:=]");
+
+        for (var i = 0; i < 3; i++)
+        {
+            var match = TriggerMatcher.FindFirstMatch("my password: hunter2", [trigger]);
+            match.Should().NotBeNull();
+            match.Excerpt.Should().Be("password:");
+        }
+    }
+
+    [TestMethod]
+    public void FindFirstMatch_ManyDistinctRegexes_SurvivesCacheOverflow()
+    {
+        // More distinct patterns than the bounded cache holds — the overflow drop must be
+        // invisible to callers.
+        for (var i = 0; i < 300; i++)
+        {
+            var trigger = new AnomalyTrigger(TriggerKind.Regex, $"pattern-{i}-[0-9]+");
+            var match = TriggerMatcher.FindFirstMatch($"xx pattern-{i}-42 yy", [trigger]);
+            match.Should().NotBeNull();
+        }
     }
 
     [TestMethod]

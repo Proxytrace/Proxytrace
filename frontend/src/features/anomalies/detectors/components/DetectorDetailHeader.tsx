@@ -44,6 +44,15 @@ export function DetectorDetailHeader({ detector: d, onEdit, onDelete, onToggleEn
                 <Trans>Disabled</Trans>
               </span>
             )}
+            {d.blockUpstream && (
+              <span
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-danger-subtle text-danger text-caption font-semibold"
+                title={t`Matching requests are rejected at the proxy before reaching the provider`}
+                data-testid="detector-blocking-badge"
+              >
+                <Trans>Blocking</Trans>
+              </span>
+            )}
           </div>
           <div className="flex gap-3.5 mt-1.5 text-body-sm text-muted flex-wrap font-mono">
             <span><span className="opacity-70"><Trans>id</Trans></span> {d.id.slice(0, ID_SHORT_LEN)}…</span>

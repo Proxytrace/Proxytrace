@@ -9,6 +9,13 @@ namespace Proxytrace.Messaging;
 /// <c>X-Proxytrace-Agent</c> request header or a same-origin client like Tracey). The consumer then
 /// attributes the call to that named agent directly, skipping the prompt/tool similarity matcher.
 /// </para>
+/// <para>
+/// The <c>Blocked*</c> fields are set when the proxy rejected the call before it reached the
+/// upstream provider (a blocking anomaly detector's trigger matched the request body).
+/// <c>ResponseBody</c> then carries the synthetic error JSON the client received — the request was
+/// never forwarded. All three are trailing optionals so older messages already in the stream keep
+/// deserializing during a rolling deploy.
+/// </para>
 /// </summary>
 public sealed record IngestMessage(
     Guid ProviderId,
@@ -18,4 +25,7 @@ public sealed record IngestMessage(
     long DurationMs,
     int HttpStatus,
     string? SessionId,
-    string? AgentName = null);
+    string? AgentName = null,
+    Guid? BlockedByDetectorId = null,
+    string? BlockedDetectorName = null,
+    string? BlockedTriggerPattern = null);

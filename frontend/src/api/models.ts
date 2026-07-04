@@ -234,6 +234,8 @@ export interface CustomAnomalyDetectorDto {
   allAgents: boolean;
   agentIds: string[];
   isEnabled: boolean;
+  /** When true the proxy rejects trigger-matching requests before they reach the provider. */
+  blockUpstream: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -247,6 +249,7 @@ export interface CreateCustomAnomalyDetectorRequest {
   allAgents: boolean;
   agentIds?: string[];
   isEnabled: boolean;
+  blockUpstream: boolean;
 }
 
 export interface UpdateCustomAnomalyDetectorRequest {
@@ -258,6 +261,7 @@ export interface UpdateCustomAnomalyDetectorRequest {
   allAgents: boolean;
   agentIds?: string[];
   isEnabled: boolean;
+  blockUpstream: boolean;
 }
 /** Single-call dashboard payload bundling every widget's data. */
 export interface DashboardViewDto {
@@ -1119,6 +1123,8 @@ export interface AnomalyFlaggedEvent {
   projectId: string;
   detectorId: string;
   detectorName: string;
+  /** True when the proxy rejected the call before it reached the provider (blocking detector). */
+  blocked: boolean;
 }
 export interface TestCaseStartedEvent { type: 'test-case-started'; runId: string; groupId: string; testCaseId: string; }
 export interface InferenceDoneEvent { type: 'inference-done'; runId: string; groupId: string; testCaseId: string; }

@@ -132,7 +132,8 @@ public class CustomAnomalyDetectorsController : ControllerBase
                 isSystemAgent: true).AddAsync(cancellationToken);
 
             var detector = createDetector(
-                request.Name, agent, ToTriggers(request.Triggers), request.AllAgents, scopedAgents, request.IsEnabled);
+                request.Name, agent, ToTriggers(request.Triggers), request.AllAgents, scopedAgents,
+                request.IsEnabled, request.BlockUpstream);
             var saved = await detectorRepository.AddAsync(detector, cancellationToken);
 
             created = (saved.Id, saved.Name, project.Id, BuildAuditDetails(saved));
@@ -185,7 +186,7 @@ public class CustomAnomalyDetectorsController : ControllerBase
 
             var saved = await detector.Update(
                 request.Name, ToTriggers(request.Triggers), request.AllAgents, scopedAgents, request.IsEnabled,
-                cancellationToken);
+                request.BlockUpstream, cancellationToken);
 
             updated = (saved.Id, saved.Name, saved.Project.Id, BuildAuditDetails(saved));
             return ToDto(saved, agent);
@@ -300,6 +301,7 @@ public class CustomAnomalyDetectorsController : ControllerBase
             triggerCount = detector.Triggers.Count,
             allAgents = detector.AllAgents,
             isEnabled = detector.IsEnabled,
+            blockUpstream = detector.BlockUpstream,
         });
 
     private static CustomAnomalyDetectorDto ToDto(ICustomAnomalyDetector detector)
@@ -317,6 +319,7 @@ public class CustomAnomalyDetectorsController : ControllerBase
             AllAgents: detector.AllAgents,
             AgentIds: detector.ScopedAgents.Select(a => a.Id).ToArray(),
             IsEnabled: detector.IsEnabled,
+            BlockUpstream: detector.BlockUpstream,
             CreatedAt: detector.CreatedAt,
             UpdatedAt: detector.UpdatedAt);
 }

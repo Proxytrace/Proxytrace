@@ -67,6 +67,7 @@ public class OpenAiProxyController : ControllerBase
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IIngestionStream stream;
     private readonly IApiKeyResolver apiKeyResolver;
+    private readonly IRequestBlocker requestBlocker;
     private readonly KioskOptions kioskOptions;
     private readonly ILogger<OpenAiProxyController> logger;
 
@@ -74,12 +75,14 @@ public class OpenAiProxyController : ControllerBase
         IHttpClientFactory httpClientFactory,
         IIngestionStream stream,
         IApiKeyResolver apiKeyResolver,
+        IRequestBlocker requestBlocker,
         KioskOptions kioskOptions,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
         this.stream = stream;
         this.apiKeyResolver = apiKeyResolver;
+        this.requestBlocker = requestBlocker;
         this.kioskOptions = kioskOptions;
         this.logger = logger;
     }
@@ -126,6 +129,18 @@ public class OpenAiProxyController : ControllerBase
         var agentName = Request.Headers.TryGetValue(AgentNameHeader, out var an)
             ? an.ToString()
             : null;
+
+        // Real-time blocking detectors: evaluate the raw request body before any upstream contact.
+        // On a match the call is rejected (never forwarded) but still recorded as a blocked trace.
+        var blockSw = Stopwatch.StartNew();
+        BlockedRequestMatch? blocked = await requestBlocker.EvaluateAsync(
+            resolved.Project.Id, agentName, requestBody, cancellationToken);
+        if (blocked is not null)
+        {
+            await RejectBlockedRequestAsync(
+                resolved, requestBody, blocked, blockSw.Elapsed, sessionId, agentName, cancellationToken);
+            return;
+        }
 
         var isStreaming = IsStreamingRequest(requestBody, Request.ContentType);
 
@@ -559,7 +574,8 @@ public class OpenAiProxyController : ControllerBase
         HttpStatusCode httpStatus,
         string? sessionId,
         string? agentName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        BlockedRequestMatch? blocked = null)
     {
         try
         {
@@ -572,13 +588,76 @@ public class OpenAiProxyController : ControllerBase
                     DurationMs: (long)duration.TotalMilliseconds,
                     HttpStatus: (int)httpStatus,
                     SessionId: sessionId,
-                    AgentName: agentName),
+                    AgentName: agentName,
+                    BlockedByDetectorId: blocked?.DetectorId,
+                    BlockedDetectorName: blocked?.DetectorName,
+                    BlockedTriggerPattern: blocked?.TriggerPattern),
                 cancellationToken);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to publish ingestion message after proxy call");
         }
+    }
+
+    // ── Real-time blocking ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Rejects a request a blocking detector matched: 403 with an OpenAI-compatible error body (so
+    /// SDKs surface a clean, non-retryable PermissionDenied error), then publishes the blocked call
+    /// to the ingestion stream so it still appears as a (flagged) trace. The error names the
+    /// detector but NEVER the matched excerpt — the excerpt may be the secret being protected. The
+    /// same JSON doubles as the recorded ResponseBody: the ingestion parser reads error.message for
+    /// non-2xx statuses, so the trace carries the block reason without parser changes.
+    /// </summary>
+    private async Task RejectBlockedRequestAsync(
+        ResolvedApiKey resolved,
+        string requestBody,
+        BlockedRequestMatch blocked,
+        TimeSpan elapsed,
+        string? sessionId,
+        string? agentName,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation(
+            "Blocked request to project {ProjectId} by detector {DetectorId} ({DetectorName})",
+            resolved.Project.Id, blocked.DetectorId, blocked.DetectorName);
+
+        var errorJson = BuildBlockedErrorJson(blocked.DetectorName);
+
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+        Response.ContentType = "application/json";
+        await Response.WriteAsync(errorJson, cancellationToken);
+
+        // CancellationToken.None: a client disconnect right after the 403 must not drop the record.
+        await EnqueueSafeAsync(
+            resolved.Provider,
+            resolved.Project,
+            requestBody,
+            responseBody: errorJson,
+            duration: elapsed,
+            httpStatus: HttpStatusCode.Forbidden,
+            sessionId: sessionId,
+            agentName: agentName,
+            CancellationToken.None,
+            blocked: blocked);
+    }
+
+    private static string BuildBlockedErrorJson(string detectorName)
+    {
+        // Serialize via the JSON writer (not string interpolation) so a detector name containing
+        // quotes cannot break out of the error payload.
+        var payload = new
+        {
+            error = new
+            {
+                message = $"Request blocked by Proxytrace anomaly detector '{detectorName}'.",
+                type = "invalid_request_error",
+                param = (string?)null,
+                code = "proxytrace_blocked",
+            },
+        };
+        return System.Text.Json.JsonSerializer.Serialize(payload);
     }
 
     private HttpRequestMessage BuildUpstreamRequest(string path, byte[] bodyBytes, string providerApiKey, Uri providerEndpoint)

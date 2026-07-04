@@ -23,7 +23,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var detector = factory("Refund promises", agent, [PhraseTrigger], true, [], true);
+        var detector = factory("Refund promises", agent, [PhraseTrigger], true, [], true, false);
 
         detector.Should().NotBeNull();
         detector.Name.Should().Be("Refund promises");
@@ -43,8 +43,8 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var first = factory("Detector", agent, [PhraseTrigger], true, [], true);
-        var second = factory("Detector", agent, [PhraseTrigger], true, [], true);
+        var first = factory("Detector", agent, [PhraseTrigger], true, [], true, false);
+        var second = factory("Detector", agent, [PhraseTrigger], true, [], true, false);
 
         first.Id.Should().NotBe(second.Id);
     }
@@ -56,7 +56,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var act = () => factory("  ", agent, [PhraseTrigger], true, [], true);
+        var act = () => factory("  ", agent, [PhraseTrigger], true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -68,7 +68,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var act = () => factory("Detector", agent, [], true, [], true);
+        var act = () => factory("Detector", agent, [], true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -83,7 +83,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
             .Select(i => new AnomalyTrigger(TriggerKind.Phrase, $"phrase-{i}"))
             .ToArray();
 
-        var act = () => factory("Detector", agent, triggers, true, [], true);
+        var act = () => factory("Detector", agent, triggers, true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -95,7 +95,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var act = () => factory("Detector", agent, [new AnomalyTrigger(TriggerKind.Phrase, " ")], true, [], true);
+        var act = () => factory("Detector", agent, [new AnomalyTrigger(TriggerKind.Phrase, " ")], true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -107,7 +107,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var act = () => factory("Detector", agent, [new AnomalyTrigger(TriggerKind.Regex, "[unclosed")], true, [], true);
+        var act = () => factory("Detector", agent, [new AnomalyTrigger(TriggerKind.Regex, "[unclosed")], true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -121,7 +121,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
 
         // Backreferences parse under classic Regex but are rejected by NonBacktracking — the point
         // of validating with the SAME options the review pipeline matches with.
-        var act = () => factory("Detector", agent, [new AnomalyTrigger(TriggerKind.Regex, @"(a)\1")], true, [], true);
+        var act = () => factory("Detector", agent, [new AnomalyTrigger(TriggerKind.Regex, @"(a)\1")], true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -134,7 +134,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var agent = await services.GetRequiredService<IAgentGenerator>()
             .CreateAsync("Regular Agent", isSystemAgent: false, cancellationToken: CancellationToken);
 
-        var act = () => factory("Detector", agent, [PhraseTrigger], true, [], true);
+        var act = () => factory("Detector", agent, [PhraseTrigger], true, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -146,7 +146,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ICustomAnomalyDetector.CreateNew>();
         var agent = await CreateSystemAgent(services, CancellationToken);
 
-        var act = () => factory("Detector", agent, [PhraseTrigger], false, [], true);
+        var act = () => factory("Detector", agent, [PhraseTrigger], false, [], true, false);
 
         act.Should().Throw<Exception>();
     }
@@ -187,7 +187,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
             new AnomalyTrigger(TriggerKind.Phrase, "lawsuit"),
         };
 
-        await detector.Update("Renamed", newTriggers, false, [scopedAgent], false, CancellationToken);
+        await detector.Update("Renamed", newTriggers, false, [scopedAgent], false, false, CancellationToken);
 
         var reloaded = await repository.GetAsync(detector.Id, CancellationToken);
         reloaded.Name.Should().Be("Renamed");
@@ -205,7 +205,7 @@ public sealed class CustomAnomalyDetectorValidationTests : DomainTest<Module>
             .CreateAsync(CancellationToken);
 
         await FluentActions
-            .Invoking(() => detector.Update(detector.Name, [], detector.AllAgents, [], detector.IsEnabled, CancellationToken))
+            .Invoking(() => detector.Update(detector.Name, [], detector.AllAgents, [], detector.IsEnabled, detector.BlockUpstream, CancellationToken))
             .Should().ThrowAsync<Exception>();
     }
 }

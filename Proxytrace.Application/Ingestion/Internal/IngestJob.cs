@@ -12,4 +12,7 @@ internal sealed record IngestJob(
     TimeSpan Duration,
     HttpStatusCode HttpStatus,
     string? SessionId = null,
-    string? AgentName = null);
+    string? AgentName = null,
+    Guid? BlockedByDetectorId = null,
+    string? BlockedDetectorName = null,
+    string? BlockedTriggerPattern = null);

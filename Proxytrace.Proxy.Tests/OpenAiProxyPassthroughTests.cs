@@ -240,6 +240,7 @@ public sealed class OpenAiProxyPassthroughTests
             new FakeHttpClientFactory("{}"),
             Substitute.For<IIngestionStream>(),
             ResolverFor(ApiKey(new Uri("http://upstream.test/v1"))),
+            Substitute.For<IRequestBlocker>(),
             new KioskOptions { Enabled = true },
             NullLogger<OpenAiProxyController>.Instance);
         controller.ControllerContext = BuildContext("Bearer valid");
@@ -259,6 +260,7 @@ public sealed class OpenAiProxyPassthroughTests
             httpClientFactory ?? new FakeHttpClientFactory("{}"),
             stream,
             resolver,
+            Substitute.For<IRequestBlocker>(),
             new KioskOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 

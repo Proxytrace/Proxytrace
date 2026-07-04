@@ -134,6 +134,22 @@ export function DetectorFormModal({ detector, onClose, onSaved }: Props) {
           </FormField>
         )}
 
+        <div>
+          <Switch
+            checked={form.blockUpstream}
+            onChange={v => setForm(f => ({ ...f, blockUpstream: v }))}
+            label={t`Block matching requests at the proxy`}
+            data-testid="detector-block-upstream-switch"
+          />
+          <p className="text-caption text-muted mt-1">
+            <Trans>
+              Reject a request before it reaches the provider when a trigger matches — e.g. a
+              password pattern. Trigger match only; the LLM review does not run for blocked calls.
+              Changes take effect within about 30 seconds.
+            </Trans>
+          </p>
+        </div>
+
         <Switch
           checked={form.isEnabled}
           onChange={v => setForm(f => ({ ...f, isEnabled: v }))}

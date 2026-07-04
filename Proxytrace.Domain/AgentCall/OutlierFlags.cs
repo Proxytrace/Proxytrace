@@ -32,4 +32,12 @@ public enum OutlierFlags : byte
     /// matched trigger) lives on the custom anomaly result entity.
     /// </summary>
     CustomAnomaly = 16,
+
+    /// <summary>
+    /// The call was rejected by the proxy before it reached the upstream provider: a blocking
+    /// custom anomaly detector's trigger matched the request body (see
+    /// <c>ICustomAnomalyDetector.BlockUpstream</c>). Set at ingestion of the blocked trace;
+    /// attribution (which detector, matched trigger) lives on the custom anomaly result entity.
+    /// </summary>
+    Blocked = 32,
 }

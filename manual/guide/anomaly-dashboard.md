@@ -75,6 +75,9 @@ Each detector has:
   for more precise matching. Only calls whose newest turn contains at least one trigger are sent for
   review.
 - **Scope** — apply the detector to **all agents** in the project, or pick specific agents.
+- **Block matching requests at the proxy** — an optional real-time mode: instead of only reviewing a
+  call *after* it went through, the proxy rejects a matching request **before it reaches the
+  provider**. See [Blocking detectors](#blocking-detectors).
 
 ![The New detector dialog: name, review instructions, judge model, triggers, and the all-agents and enabled toggles](/screenshots/anomaly-dashboard/new-detector-dialog.png)
 
@@ -93,6 +96,43 @@ triggers: they keep reviews (and their cost) targeted at the calls that could pl
 problem, instead of reviewing every single trace. Write triggers that are specific enough to gate
 narrowly, and keep an eye on how often broad phrases match.
 :::
+
+### Blocking detectors
+
+Sometimes flagging after the fact is too late — the canonical example is a **secret leak**: once a
+password or API key has been sent to the upstream LLM provider, no review can un-send it. Turn on
+**Block matching requests at the proxy** and the detector becomes a real-time guard: the proxy
+checks every incoming request body against the detector's triggers *before* forwarding it, and on a
+match the request is **rejected instead of forwarded** — it never reaches the provider.
+
+For example, a blocking detector with the regex trigger `pass(word)?\s*[:=]\s*\S+` stops requests
+that carry something that looks like a credential.
+
+What the caller sees: the proxy answers with **HTTP 403** and an OpenAI-compatible error body whose
+`code` is `proxytrace_blocked` and whose message names the detector (never the matched text), so
+SDKs fail cleanly with a non-retryable permission error.
+
+What you see: the blocked call still shows up as a **trace**, flagged **Blocked at proxy**, with a
+banner in the trace detail explaining that it never reached the provider and which detector and
+trigger stopped it. It appears on this dashboard's recent-flagged list live and raises a
+[notification](/guide/notifications) — so blocking never hides traffic, it just stops it.
+
+Things to know:
+
+- **Trigger match only.** Blocking uses the detector's phrase/regex triggers — the LLM review never
+  runs in the request path (it would add seconds to every call), and blocked calls are not reviewed
+  afterwards (there is no reply to review).
+- **Matching runs on the raw request JSON** — system prompt, messages, and tool definitions are all
+  covered. A pattern that spans quotes or line breaks must match their JSON-escaped form (`\"`,
+  `\n`); typical secret patterns are unaffected.
+- **Scoped detectors need the agent header.** The proxy can only attribute a request to an agent
+  when the client sends the `x-proxytrace-agent` header. A detector scoped to specific agents only
+  blocks requests that name one of them; **all-agents** detectors always apply.
+- **Changes take effect within about 30 seconds** — the proxy caches the blocking rules briefly.
+- **Best-effort, not a hard guarantee.** If the proxy cannot load the rules (for example the
+  database is briefly unreachable), it fails open and forwards rather than taking your LLM traffic
+  down; the post-hoc review pipeline still flags what slipped through.
+- Blocking is part of the same **Enterprise** feature as custom detectors.
 
 ### Managing detectors
 

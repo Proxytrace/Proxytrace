@@ -15,6 +15,7 @@ public record CustomAnomalyDetectorDto(
     bool AllAgents,
     IReadOnlyList<Guid> AgentIds,
     bool IsEnabled,
+    bool BlockUpstream,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
@@ -33,6 +34,9 @@ public sealed record CreateCustomAnomalyDetectorRequest
     public bool AllAgents { get; init; } = true;
     public IReadOnlyList<Guid>? AgentIds { get; init; }
     public bool IsEnabled { get; init; } = true;
+
+    /// <summary>Whether the proxy rejects trigger-matching requests before they reach the provider.</summary>
+    public bool BlockUpstream { get; init; }
 }
 
 public sealed record UpdateCustomAnomalyDetectorRequest
@@ -47,4 +51,7 @@ public sealed record UpdateCustomAnomalyDetectorRequest
     public required bool AllAgents { get; init; }
     public IReadOnlyList<Guid>? AgentIds { get; init; }
     public required bool IsEnabled { get; init; }
+
+    /// <summary>Whether the proxy rejects trigger-matching requests before they reach the provider.</summary>
+    public required bool BlockUpstream { get; init; }
 }

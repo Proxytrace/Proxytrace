@@ -7,7 +7,8 @@ public record AnomalyFlaggedEvent(
     Guid AgentId,
     Guid ProjectId,
     Guid DetectorId,
-    string DetectorName);
+    string DetectorName,
+    bool Blocked = false);
 
 public interface ICustomAnomalyBroadcaster
 {

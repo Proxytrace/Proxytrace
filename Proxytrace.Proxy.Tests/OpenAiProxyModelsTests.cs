@@ -89,6 +89,7 @@ public sealed class OpenAiProxyModelsTests
             new SingleClientFactory(handler),
             Substitute.For<IIngestionStream>(),
             ResolverFor(key),
+            Substitute.For<IRequestBlocker>(),
             new KioskOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 
