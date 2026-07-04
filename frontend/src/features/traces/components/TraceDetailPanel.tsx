@@ -18,6 +18,9 @@ import { DetailPanel } from '../../../components/overlays/DetailPanel';
 import { PromoteModal } from '../PromoteModal';
 import { DrawerStat } from './DrawerStat';
 import { TraceAnomalyBanner } from './TraceAnomalyBanner';
+import { useTraceAnomalyHits } from '../hooks/useTraceAnomalyHits';
+import { AskTraceyButton } from '../../../components/tracey/AskTraceyButton';
+import { tracePrompt } from '../../../components/tracey/askTraceyPrompts';
 import { TraceMessagesTab } from './TraceMessagesTab';
 import { TraceRawJsonTab, TraceMetadataTab } from './TraceMetadataTab';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
@@ -57,6 +60,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   }
 
   const suitesQuery = useAgentSuites(trace.agentId);
+  const anomalyHits = useTraceAnomalyHits(trace);
   const suites = suitesQuery.data?.items ?? [];
   const hasResponse = !!trace.response;
   const promoteDisabled = !trace.agentId || !hasResponse || suitesQuery.isLoading || suites.length === 0;
@@ -155,6 +159,10 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             </IconButton>
           )}
           <div className="flex items-center gap-2 shrink-0">
+            <AskTraceyButton
+              data-testid="ask-tracey-btn-trace"
+              prompt={() => tracePrompt(trace, anomalyHits)}
+            />
             <Button
               data-testid="promote-btn"
               onClick={() => !promoteDisabled && setPromoting(true)}
