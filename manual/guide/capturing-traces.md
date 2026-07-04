@@ -42,13 +42,44 @@ Typical things you can do:
   detail panel — Proxytrace adds a muted **"(N% cached)"** hint showing what share of the input
   was cache-served. The cached portion is priced at the provider's cheaper cached-input rate (when
   it's known), so the displayed **cost** already reflects the discount.
-- **Agent filter** (the *Agent:* dropdown in the toolbar) focuses the table on one agent. Only
-  agents that actually have traces in the selected time range are listed.
+![The composable filter bar: an Agent chip and an "Any anomaly" chip stacked above the table, with the timeline and page summary following the filtered set.](/screenshots/traces/filters.png)
+
+- **Filters** compose through the **+ Filter** button on the toolbar line, beside search and
+  the time range. Pick a field, pick a value, and the filter appears as a removable chip on the
+  row below; add as many as you need — they combine (a trace must match every chip). Click a
+  chip to change its value or remove it; **Clear all** drops every chip at once. Available
+  filters:
+  - **Agent** — focus on one agent. Only agents that actually have traces in the selected
+    time range are listed.
+  - **Anomaly** — only flagged traces: **Any anomaly**, or a specific reason (high tokens,
+    high latency, low cache hit, many tool calls, or a
+    [custom detector](/guide/anomaly-dashboard#custom-anomaly-detectors) hit).
+  - **Tool** — traces whose response requested a given tool, picked from the tools seen in
+    this project. With an **Agent** filter active, the list narrows to just the tools that
+    agent actually used, so you never pick a tool that would return nothing.
+  - **Model** — model name contains the text you enter.
+  - **Status** — the HTTP status class (2xx / 4xx / 5xx).
+  - **Tokens** / **Latency** — numeric bounds (min, max, or both), e.g. every call over
+    2,000 ms or above 10k total tokens.
+  - **System traces** — a toggle rather than a value filter: turn it on to *include* traces
+    from Proxytrace's own system agents (hidden by default). While on it shows as a
+    **System traces** chip; remove the chip (or **Clear all**) to hide them again.
 - **Search** matches anywhere inside captured message content (and the response), not just
   at the start of a word — searching `efund` finds a trace mentioning `refund`. You can also
   search by model name or the short trace ID.
 - **Per page** lets you choose how many traces to show at once (20, 50, 100, or 200). The
   total trace count for the current filter is shown alongside the pager.
+
+### Sorting the table
+
+Click a column header to sort the table by that column: **Latency**, **Tokens**, **Tools**
+(tool-call count), **Cached** (cache-hit rate), or **Time**. The first click sorts descending
+(largest first — the slowest call, the heaviest token bill); clicking the active column again
+flips the direction. An arrow on the header shows the active sort, which is remembered in your
+browser. Sorting is server-side, so "slowest call in the window" means across *all* matching
+traces, not just the visible page. While sorted by anything other than Time, multi-turn
+conversations are shown as individual calls rather than grouped rows — grouping only makes
+sense in time order.
 
 ### The timeline
 
@@ -69,8 +100,8 @@ hovering a bar shows its exact time, count, and error count.
 
 If you zoom into a window with no traces, the strip stays put (showing *"No traces in this
 range"*) so you can always scroll back out.
-- The timeline reflects the **same agent, search, and system-trace filters** as the table,
-  so its shape always matches what you're looking at.
+- The timeline reflects the **same filters** as the table — search, the time range, and every
+  filter chip (including **System traces**) — so its shape always matches what you're looking at.
 
 ### The time-range picker
 
@@ -82,11 +113,11 @@ all-time.
 
 When you **first** open Traces, the range automatically snaps to the smallest quick range that
 still contains data, so you never land on an empty view. After that, your filter bar — time
-range, agent, search, and the system-trace toggle — is **remembered in your browser**, so it
-survives a refresh or navigating away and back. The auto-snap only runs until you have a saved
-range; once you've picked one it is always restored. The agent filter is remembered **per
-project** (agents belong to a project), while the time range, search, and toggle are shared
-across projects.
+range, search, the **System traces** setting, the column sort, and every filter chip — is
+**remembered in your browser**, so it survives a refresh or navigating away and back. The
+auto-snap only runs until you have a saved range; once you've picked one it is always restored.
+The value filter chips are remembered **per project** (agents and tools belong to a project),
+while the time range, search, sort, and the System traces setting are shared across projects.
 
 ### The trace detail panel
 

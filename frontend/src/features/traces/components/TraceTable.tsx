@@ -1,7 +1,7 @@
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
-import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, TRACE_GRID_CLS, traceListView } from '../tracesMeta';
-import type { TraceRow } from '../tracesMeta';
+import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, SORT_FIELD_BY_COL, TRACE_GRID_CLS, traceListView } from '../tracesMeta';
+import type { TraceRow, TraceSort, TraceSortField } from '../tracesMeta';
 import { cn } from '../../../lib/cn';
 import { FlatTraceRow } from './FlatTraceRow';
 import { ConversationGroupRow } from './ConversationGroupRow';
@@ -9,7 +9,7 @@ import { TracesEmptyState } from './TracesEmptyState';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { COL_HEADER_LABELS } from '../tracesMeta';
 import { Tooltip } from '../../../components/ui/Tooltip';
-import { AlertTriangleIcon } from '../../../components/icons';
+import { AlertTriangleIcon, ArrowDownIcon, ArrowUpIcon } from '../../../components/icons';
 
 interface Props {
   rows: TraceRow[];
@@ -18,11 +18,46 @@ interface Props {
   filtered: boolean;
   selectedId: string | null;
   expandedConvs: Set<string>;
+  sort: TraceSort;
+  /** Header click: a new column sorts descending; the active column toggles direction. */
+  onSortChange: (field: TraceSortField) => void;
   onSelectTrace: (trace: AgentCallListItemDto) => void;
   onToggleConv: (id: string) => void;
 }
 
-export function TraceTable({ rows, isFetching, filtered, selectedId, expandedConvs, onSelectTrace, onToggleConv }: Props) {
+// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS utility classes, not UI copy
+const HEADER_TEXT_CLS = 'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]';
+
+function SortableHeader({ label, field, sort, onSortChange, alignRight }: {
+  label: string;
+  field: TraceSortField;
+  sort: TraceSort;
+  onSortChange: (field: TraceSortField) => void;
+  alignRight: boolean;
+}) {
+  const active = sort.field === field;
+  return (
+    // eslint-disable-next-line no-restricted-syntax -- bespoke sortable column header; Button's ghost padding/height doesn't fit the dense sticky header row
+    <button
+      type="button"
+      data-testid={`traces-sort-${field}`}
+      onClick={() => onSortChange(field)}
+      className={cn(
+        HEADER_TEXT_CLS,
+        'inline-flex items-center gap-1 cursor-pointer bg-transparent p-0 border-0',
+        'transition-colors duration-[var(--motion-fast)] hover:text-secondary',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] rounded-sm',
+        alignRight && 'justify-end',
+        active && 'text-accent-text',
+      )}
+    >
+      {label}
+      {active && (sort.desc ? <ArrowDownIcon size={10} /> : <ArrowUpIcon size={10} />)}
+    </button>
+  );
+}
+
+export function TraceTable({ rows, isFetching, filtered, selectedId, expandedConvs, sort, onSortChange, onSelectTrace, onToggleConv }: Props) {
   const { i18n } = useLingui();
   return (
     <div
@@ -33,18 +68,33 @@ export function TraceTable({ rows, isFetching, filtered, selectedId, expandedCon
       <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         {/* Sticky column header */}
         <div
-          className={cn('grid px-4 py-2 border-b border-hairline sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
+          className={cn('grid items-center px-4 py-2 border-b border-hairline sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
         >
           {COL_HEADERS.map((header, i) => {
             const headerLabel = i18n._(COL_HEADER_LABELS[i]);
             const isAnomaly = header === '';
+            const sortField = SORT_FIELD_BY_COL[i];
+            const alignRight = i === COL_HEADERS.length - 1;
+            if (sortField) {
+              return (
+                <span key={i} className={cn(alignRight && 'text-right', COL_VIS_CLS[i])}>
+                  <SortableHeader
+                    label={headerLabel}
+                    field={sortField}
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    alignRight={alignRight}
+                  />
+                </span>
+              );
+            }
             return (
               <span
                 key={i}
                 className={cn(
-                  'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]',
+                  HEADER_TEXT_CLS,
                   isAnomaly && 'flex items-center justify-center',
-                  i === COL_HEADERS.length - 1 && 'text-right',
+                  alignRight && 'text-right',
                   COL_VIS_CLS[i],
                 )}
               >

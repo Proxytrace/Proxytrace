@@ -3,7 +3,7 @@
 
 import { msg } from '@lingui/core/macro';
 import { type MessageDescriptor } from '@lingui/core';
-import type { AgentCallListItemDto } from '../../api/models';
+import type { AgentCallFilter, AgentCallListItemDto } from '../../api/models';
 import { ALL_TIME, type TimeRange, type TimeRangePreset } from '../../lib/timeRange';
 
 // ── Time range helpers ────────────────────────────────────────────────────────
@@ -39,25 +39,116 @@ export function toolCount(trace: AgentCallListItemDto): number {
   return trace.toolCount;
 }
 
+// ── Advanced (composable) filters ───────────────────────────────────────────────
+
+export type TraceAnomalyFilter = '' | 'any' | 'highTokens' | 'highLatency' | 'lowCacheHit' | 'manyToolCalls' | 'custom';
+export type TraceStatusClassFilter = '' | '2' | '4' | '5';
+
+/**
+ * The filter-bar state: one slot per composable filter, empty string = not active. Numeric bounds
+ * stay strings so the inputs remain controlled; {@link advancedFilterParams} parses them.
+ */
+export interface TraceAdvancedFilters {
+  agent: string;
+  anomaly: TraceAnomalyFilter;
+  tool: string;
+  model: string;
+  statusClass: TraceStatusClassFilter;
+  minTokens: string;
+  maxTokens: string;
+  minLatencyMs: string;
+  maxLatencyMs: string;
+}
+
+export const EMPTY_ADVANCED_FILTERS: TraceAdvancedFilters = {
+  agent: '',
+  anomaly: '',
+  tool: '',
+  model: '',
+  statusClass: '',
+  minTokens: '',
+  maxTokens: '',
+  minLatencyMs: '',
+  maxLatencyMs: '',
+};
+
+/** Backend OutlierFlags bit per specific anomaly option (mirrors OutlierFlags.cs). */
+export const ANOMALY_FLAG_BITS: Record<Exclude<TraceAnomalyFilter, '' | 'any'>, number> = {
+  highTokens: 1,
+  highLatency: 2,
+  lowCacheHit: 4,
+  manyToolCalls: 8,
+  custom: 16,
+};
+
+const ANOMALY_VALUES: readonly TraceAnomalyFilter[] = ['', 'any', 'highTokens', 'highLatency', 'lowCacheHit', 'manyToolCalls', 'custom'];
+const STATUS_CLASS_VALUES: readonly TraceStatusClassFilter[] = ['', '2', '4', '5'];
+
+/** Guard a value parsed from storage against the {@link TraceAdvancedFilters} shape. */
+export function isValidAdvancedFilters(v: unknown): v is TraceAdvancedFilters {
+  if (typeof v !== 'object' || v === null) return false;
+  const f = v as Record<keyof TraceAdvancedFilters, unknown>;
+  return (
+    typeof f.agent === 'string' &&
+    typeof f.tool === 'string' &&
+    typeof f.model === 'string' &&
+    typeof f.minTokens === 'string' &&
+    typeof f.maxTokens === 'string' &&
+    typeof f.minLatencyMs === 'string' &&
+    typeof f.maxLatencyMs === 'string' &&
+    ANOMALY_VALUES.includes(f.anomaly as TraceAnomalyFilter) &&
+    STATUS_CLASS_VALUES.includes(f.statusClass as TraceStatusClassFilter)
+  );
+}
+
+function numericParam(raw: string): number | null {
+  const n = Number(raw);
+  return raw.trim() !== '' && Number.isFinite(n) ? n : null;
+}
+
+/** API query params for the active advanced filters (blank / unparsable slots map to nothing). */
+export function advancedFilterParams(f: TraceAdvancedFilters): Partial<AgentCallFilter> {
+  const minTokens = numericParam(f.minTokens);
+  const maxTokens = numericParam(f.maxTokens);
+  const minLatencyMs = numericParam(f.minLatencyMs);
+  const maxLatencyMs = numericParam(f.maxLatencyMs);
+  return {
+    ...(f.agent ? { agentId: f.agent } : {}),
+    ...(f.anomaly === 'any' ? { outlierOnly: true } : {}),
+    ...(f.anomaly && f.anomaly !== 'any' ? { anomalyFlags: ANOMALY_FLAG_BITS[f.anomaly] } : {}),
+    ...(f.tool ? { toolName: f.tool } : {}),
+    ...(f.model ? { model: f.model } : {}),
+    ...(f.statusClass ? { httpStatusClass: Number(f.statusClass) } : {}),
+    ...(minTokens !== null ? { minTokens } : {}),
+    ...(maxTokens !== null ? { maxTokens } : {}),
+    ...(minLatencyMs !== null ? { minLatencyMs } : {}),
+    ...(maxLatencyMs !== null ? { maxLatencyMs } : {}),
+  };
+}
+
+/** Number of active filter-bar slots (tokens/latency each count once per bound). */
+export function countActiveAdvancedFilters(f: TraceAdvancedFilters): number {
+  return (Object.keys(EMPTY_ADVANCED_FILTERS) as (keyof TraceAdvancedFilters)[])
+    .filter(k => f[k] !== '').length;
+}
+
 /**
  * Whether any user-applied filter is narrowing the traces list. Drives the empty state: an empty
  * list with a filter active shows "no traces match your filters"; with none, the first-time setup
- * instructions. Every filter that can hide rows MUST be reflected here — omitting one (e.g. the
- * outliers-only toggle) makes a filtered-empty list look like an empty project and wrongly shows the
- * setup instructions. `showSystem` is deliberately excluded: its default (system traces hidden) is
- * the baseline view, so counting it would mark a genuinely empty project as filtered.
+ * instructions. Every filter that can hide rows MUST be reflected here — omitting one (historically
+ * the outliers-only toggle) makes a filtered-empty list look like an empty project and wrongly shows
+ * the setup instructions. `showSystem` is deliberately excluded: its default (system traces hidden)
+ * is the baseline view, so counting it would mark a genuinely empty project as filtered.
  */
 export function hasActiveTraceFilters(input: {
-  agentFilter: string;
   search: string;
   timeRangeActive: boolean;
-  outlierOnly: boolean;
+  advanced: TraceAdvancedFilters;
 }): boolean {
   return (
-    !!input.agentFilter ||
     input.search.trim().length > 0 ||
     input.timeRangeActive ||
-    input.outlierOnly
+    countActiveAdvancedFilters(input.advanced) > 0
   );
 }
 
@@ -107,6 +198,38 @@ export const TRACE_GRID_CLS =
 
 /** Per-column visibility class, index-aligned with COL_WIDTHS/COL_HEADERS. */
 export const COL_VIS_CLS = COL_MOBILE_VISIBLE.map(v => (v ? '' : '@max-2xl:hidden'));
+
+// ── Column sorting ──────────────────────────────────────────────────────────────
+
+export type TraceSortField = 'time' | 'latency' | 'tokens' | 'toolCount' | 'cacheHit';
+
+export interface TraceSort {
+  field: TraceSortField;
+  desc: boolean;
+}
+
+export const DEFAULT_TRACE_SORT: TraceSort = { field: 'time', desc: true };
+
+/** Backend `AgentCallSortField` enum member per sort field (query-string `sortBy` value). */
+export const SORT_FIELD_TO_API: Record<TraceSortField, string> = {
+  time: 'createdAt',
+  latency: 'latency',
+  tokens: 'totalTokens',
+  toolCount: 'toolCount',
+  cacheHit: 'cacheHitRate',
+};
+
+/** Sort field per column, index-aligned with {@link COL_HEADERS}; null = not sortable. */
+export const SORT_FIELD_BY_COL: readonly (TraceSortField | null)[] = [
+  null, null, null, null, 'toolCount', 'tokens', 'cacheHit', 'latency', null, 'time',
+];
+
+/** Guard a value parsed from storage against the {@link TraceSort} shape (user-editable JSON). */
+export function isValidTraceSort(v: unknown): v is TraceSort {
+  if (typeof v !== 'object' || v === null) return false;
+  const s = v as { field?: unknown; desc?: unknown };
+  return typeof s.desc === 'boolean' && typeof s.field === 'string' && s.field in SORT_FIELD_TO_API;
+}
 
 // ── Latency bar math ──────────────────────────────────────────────────────────
 

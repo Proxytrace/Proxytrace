@@ -81,6 +81,9 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("AgentVersionId")
                         .HasColumnType("uuid");
 
+                    b.Property<double?>("CacheHitRate")
+                        .HasColumnType("double precision");
+
                     b.Property<decimal?>("CachedInputTokens")
                         .HasColumnType("numeric(20,0)");
 
@@ -134,11 +137,16 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<int>("ResponseToolRequestCount")
                         .HasColumnType("integer");
 
+                    b.Property<decimal?>("TotalTokens")
+                        .HasColumnType("numeric(20,0)");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CacheHitRate");
 
                     b.HasIndex("ConversationId");
 
@@ -146,12 +154,58 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("EndpointId");
 
+                    b.HasIndex("LatencyMs");
+
                     b.HasIndex("OutlierFlags")
                         .HasFilter("\"OutlierFlags\" <> 0");
+
+                    b.HasIndex("ResponseToolRequestCount");
+
+                    b.HasIndex("TotalTokens");
 
                     b.HasIndex("AgentVersionId", "CreatedAt");
 
                     b.ToTable("AgentCallEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallToolEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AgentCallId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AgentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ToolName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentCallId");
+
+                    b.HasIndex("ProjectId", "ToolName");
+
+                    b.HasIndex("ToolName", "AgentCallId");
+
+                    b.HasIndex("ProjectId", "AgentId", "ToolName");
+
+                    b.ToTable("AgentCallToolEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", b =>
@@ -1628,6 +1682,15 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallToolEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallEntity", null)
+                        .WithMany("Tools")
+                        .HasForeignKey("AgentCallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", b =>
                 {
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
@@ -1942,6 +2005,11 @@ namespace Proxytrace.Storage.Migrations
                         .HasForeignKey("User")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallEntity", b =>
+                {
+                    b.Navigation("Tools");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.CustomAnomalyDetector.CustomAnomalyDetectorEntity", b =>

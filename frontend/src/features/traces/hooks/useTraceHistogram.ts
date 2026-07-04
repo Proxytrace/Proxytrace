@@ -3,6 +3,7 @@ import { agentCallsApi } from '../../../api/agent-calls';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import type { AgentCallFilter, TraceHistogramBucket } from '../../../api/models';
+import { advancedFilterParams, type TraceAdvancedFilters } from '../tracesMeta';
 
 // Bucketing is done in-memory server-side (AgentCallHistogram.Build) after the rows are already
 // projected, so a higher count costs nothing on the DB — only a marginally larger JSON payload.
@@ -13,13 +14,13 @@ const BUCKETS = 120;
 interface Params {
   from: string | undefined;
   to: string | undefined;
-  agentFilter: string;
+  advanced: TraceAdvancedFilters;
   debouncedSearch: string;
   showSystem: boolean;
 }
 
 /** Count+error timeline for the active time-range window, respecting all other filters. */
-export function useTraceHistogram({ from, to, agentFilter, debouncedSearch, showSystem }: Params): {
+export function useTraceHistogram({ from, to, advanced, debouncedSearch, showSystem }: Params): {
   buckets: TraceHistogramBucket[];
   isFetching: boolean;
 } {
@@ -31,8 +32,8 @@ export function useTraceHistogram({ from, to, agentFilter, debouncedSearch, show
   const filter: AgentCallFilter & { buckets: number } = {
     buckets: BUCKETS,
     includeSystemAgents: showSystem,
+    ...advancedFilterParams(advanced),
     ...(projectId ? { projectId } : {}),
-    ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
     ...(trimmedSearch.length >= 2 ? { q: trimmedSearch } : {}),

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
@@ -58,8 +59,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         var total = await query.CountAsync(cancellationToken);
 
-        var stored = await query
-            .OrderByDescending(e => e.CreatedAt)
+        var stored = await ApplySort(query, filter)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -85,8 +85,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         // Project scalar columns only — the Request/Response/ModelParameters payload columns are
         // never read, so a page does not materialise (or transfer) large conversation JSON.
-        var rows = await query
-            .OrderByDescending(e => e.CreatedAt)
+        var rows = await ApplySort(query, filter)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(e => new ListRow(
@@ -308,6 +307,44 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => e.OutlierFlags != OutlierFlags.None);
         }
 
+        if (filter.AnomalyFlags is { } anomalyFlags && anomalyFlags != OutlierFlags.None)
+        {
+            query = query.Where(e => (e.OutlierFlags & anomalyFlags) != 0);
+        }
+
+        if (filter.HttpStatusClass is { } statusClass)
+        {
+            var lower = statusClass * 100;
+            query = query.Where(e => e.HttpStatus >= lower && e.HttpStatus < lower + 100);
+        }
+
+        if (filter.MinTokens.HasValue)
+        {
+            query = query.Where(e => e.TotalTokens >= filter.MinTokens.Value);
+        }
+
+        if (filter.MaxTokens.HasValue)
+        {
+            query = query.Where(e => e.TotalTokens <= filter.MaxTokens.Value);
+        }
+
+        if (filter.MinLatencyMs.HasValue)
+        {
+            query = query.Where(e => e.LatencyMs >= filter.MinLatencyMs.Value);
+        }
+
+        if (filter.MaxLatencyMs.HasValue)
+        {
+            query = query.Where(e => e.LatencyMs <= filter.MaxLatencyMs.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.ToolName))
+        {
+            var toolName = filter.ToolName;
+            query = query.Where(e => context.Set<AgentCallToolEntity>()
+                .Any(t => t.AgentCallId == e.Id && t.ToolName == toolName));
+        }
+
         if (!string.IsNullOrWhiteSpace(filter.Query))
         {
             if (filter.ProjectId is null)
@@ -343,6 +380,34 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         return query;
     }
+
+    // Nullable columns sort with a "has value" pre-key so error traces (null latency/usage) land
+    // last in BOTH directions instead of Postgres's default nulls-first on DESC. Id tiebreak keeps
+    // paging stable across identical values.
+    private static IOrderedQueryable<AgentCallEntity> ApplySort(IQueryable<AgentCallEntity> query, AgentCallFilter filter)
+    {
+        return filter.SortBy switch
+        {
+            AgentCallSortField.Latency => OrderNullable(query, e => e.LatencyMs == null, e => e.LatencyMs, filter.SortDescending),
+            AgentCallSortField.TotalTokens => OrderNullable(query, e => e.TotalTokens == null, e => e.TotalTokens, filter.SortDescending),
+            AgentCallSortField.CacheHitRate => OrderNullable(query, e => e.CacheHitRate == null, e => e.CacheHitRate, filter.SortDescending),
+            AgentCallSortField.ToolCount => filter.SortDescending
+                ? query.OrderByDescending(e => e.ResponseToolRequestCount).ThenByDescending(e => e.Id)
+                : query.OrderBy(e => e.ResponseToolRequestCount).ThenBy(e => e.Id),
+            _ => filter.SortDescending
+                ? query.OrderByDescending(e => e.CreatedAt).ThenByDescending(e => e.Id)
+                : query.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
+        };
+    }
+
+    private static IOrderedQueryable<AgentCallEntity> OrderNullable<TKey>(
+        IQueryable<AgentCallEntity> query,
+        Expression<Func<AgentCallEntity, bool>> isNull,
+        Expression<Func<AgentCallEntity, TKey>> key,
+        bool descending)
+        => descending
+            ? query.OrderBy(isNull).ThenByDescending(key).ThenByDescending(e => e.Id)
+            : query.OrderBy(isNull).ThenBy(key).ThenBy(e => e.Id);
 
     public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
         CancellationToken cancellationToken = default)
@@ -421,5 +486,29 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         context.Set<AgentCallEntity>().Update(stored with { OutlierFlags = stored.OutlierFlags | flag });
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> GetToolNamesAsync(
+        Guid projectId, Guid? agentId = null, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = context.Set<AgentCallToolEntity>()
+            .AsNoTracking()
+            // Blank names are backfill markers (see AgentCallToolBackfillService), not real tools.
+            .Where(t => t.ProjectId == projectId && t.ToolName != string.Empty);
+
+        // Scope to one agent when a filter is active. AgentId is denormalised onto the tool row, so
+        // this stays a single-table index-only DISTINCT (the (ProjectId, AgentId, ToolName) index) —
+        // no join to the high-volume call table.
+        if (agentId.HasValue)
+        {
+            query = query.Where(t => t.AgentId == agentId.Value);
+        }
+
+        return await query
+            .Select(t => t.ToolName)
+            .Distinct()
+            .OrderBy(n => n)
+            .ToListAsync(cancellationToken);
     }
 }

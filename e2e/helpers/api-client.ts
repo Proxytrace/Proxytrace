@@ -596,6 +596,8 @@ export class ProxytraceApiClient {
     conversationId?: string;
     /** Raw OutlierFlags bitmask to stamp on the seeded call (mirrors the backend enum). */
     outlierFlags?: number;
+    /** Tool names the seeded response "requested" — populates the tool-name filter rows. */
+    toolNames?: string[];
   }): Promise<{ id: string; agentId: string | null }> {
     const res = await this.request.post('/api/agent-calls/seed', {
       headers: this.headers(),
@@ -610,6 +612,7 @@ export class ProxytraceApiClient {
         durationMs: opts.durationMs ?? 100,
         conversationId: opts.conversationId ?? null,
         outlierFlags: opts.outlierFlags ?? null,
+        toolNames: opts.toolNames ?? null,
       },
     });
     if (!res.ok()) throw new Error(`seed agent-call failed: ${res.status()} ${await res.text()}`);

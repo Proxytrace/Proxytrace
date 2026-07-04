@@ -62,4 +62,13 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
     /// call after ingestion. A no-op when the call no longer exists.
     /// </summary>
     Task SetOutlierFlagAsync(Guid id, OutlierFlags flag, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the distinct tool names requested by any call in the given project, sorted
+    /// alphabetically. Backs the traces filter's tool-name picker. When <paramref name="agentId"/>
+    /// is supplied, the result is scoped to that agent's calls — so an active agent filter only
+    /// offers tools that agent actually used.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetToolNamesAsync(
+        Guid projectId, Guid? agentId = null, CancellationToken cancellationToken = default);
 }

@@ -1057,6 +1057,9 @@ msgstr "Le endpoint OpenAI-compatible d’Anthropic — utilisez votre clé API 
 msgid "Any"
 msgstr "N’importe lequel"
 
+msgid "Any anomaly"
+msgstr "Toute anomalie"
+
 msgid "Any OpenAI-compatible server: vLLM, Ollama, LiteLLM, OpenRouter, a gateway, …"
 msgstr "Tout serveur OpenAI-compatible : vLLM, Ollama, LiteLLM, OpenRouter, une passerelle, …"
 
@@ -1325,6 +1328,9 @@ msgstr "effacer"
 
 msgid "Clear"
 msgstr "Effacer"
+
+msgid "Clear all"
+msgstr "Tout effacer"
 
 msgid "Clear conversation"
 msgstr "Effacer la conversation"
@@ -2186,6 +2192,9 @@ msgstr "Revient à la licence fournie par l'environnement, ou au niveau Free."
 msgid "Fastest"
 msgstr "Le plus rapide"
 
+msgid "Filter"
+msgstr "Filtrer"
+
 msgid "Filter agents by name…"
 msgstr "Filtrer les agents par nom…"
 
@@ -2318,9 +2327,6 @@ msgstr "Masquer les agents système"
 msgid "Hide tools"
 msgstr "Masquer les Tools"
 
-msgid "Hide traces from system agents"
-msgstr "Masquer les traces des agents système"
-
 msgid "High"
 msgstr "Élevé"
 
@@ -2329,6 +2335,9 @@ msgstr "Latence élevée"
 
 msgid "High token count"
 msgstr "Nombre élevé de Tokens"
+
+msgid "High tokens"
+msgstr "Tokens élevés"
 
 msgid "Highest pass rate"
 msgstr "Taux de réussite le plus élevé"
@@ -2398,6 +2407,9 @@ msgstr "En cours"
 
 msgid "In production"
 msgstr "En production"
+
+msgid "Including traces from system agents."
+msgstr "Inclut les traces provenant des agents système."
 
 msgid "Incorrect password."
 msgstr "Mot de passe incorrect."
@@ -2808,6 +2820,10 @@ msgstr "correspond à <0>“{0}”</0>"
 msgid "Max"
 msgstr "Max"
 
+#. placeholder {0}: spec.unit
+msgid "Max ({0})"
+msgstr "Max ({0})"
+
 msgid "Max tokens"
 msgstr "Max tokens"
 
@@ -2856,6 +2872,10 @@ msgstr "Métadonnées"
 msgid "Min"
 msgstr "Min"
 
+#. placeholder {0}: spec.unit
+msgid "Min ({0})"
+msgstr "Min ({0})"
+
 msgid "Minimum samples"
 msgstr "Nombre minimum d’échantillons"
 
@@ -2885,6 +2905,9 @@ msgstr "Endpoints de modèle"
 
 msgid "Model endpoints to evaluate"
 msgstr "Endpoints de modèle à évaluer"
+
+msgid "Model name contains…"
+msgstr "Le nom du modèle contient…"
 
 msgid "Model parameters"
 msgstr "Paramètres du modèle"
@@ -3300,6 +3323,9 @@ msgstr "Aucune donnée de Token pour le moment"
 msgid "No tool additions or removals."
 msgstr "Aucun ajout ni suppression de Tool."
 
+msgid "No tool calls recorded"
+msgstr "Aucun appel de Tool enregistré"
+
 msgid "No tool requests yet."
 msgstr "Aucune demande de Tool pour le moment."
 
@@ -3533,9 +3559,6 @@ msgstr "Paramètres des valeurs aberrantes mis à jour"
 
 msgid "Outlier: {reasons}"
 msgstr "Outlier : {reasons}"
-
-msgid "Outliers only"
-msgstr "Outliers uniquement"
 
 msgid "Output"
 msgstr "Sortie"
@@ -4029,6 +4052,9 @@ msgstr "Supprimer"
 #. placeholder {0}: m.email
 msgid "Remove {0}"
 msgstr "Supprimer {0}"
+
+msgid "Remove filter"
+msgstr "Supprimer le filtre"
 
 msgid "Remove from staged"
 msgstr "Retirer des éléments préparés"
@@ -4582,9 +4608,6 @@ msgstr "Partagez ce lien à usage unique avec l'utilisateur. Il ne sera plus aff
 msgid "Show"
 msgstr "Afficher"
 
-msgid "Show all traces"
-msgstr "Afficher tous les Traces"
-
 msgid "Show available tools"
 msgstr "Afficher les Tools disponibles"
 
@@ -4597,17 +4620,11 @@ msgstr "Afficher les exécutions de validation A/B éphémères"
 msgid "Show less"
 msgstr "Afficher moins"
 
-msgid "Show only outlier traces"
-msgstr "Afficher uniquement les Traces d’outlier"
-
 msgid "Show system agents"
 msgstr "Afficher les Agents système"
 
 msgid "Show the agents in this project"
 msgstr "Afficher les Agents de ce projet"
-
-msgid "Show traces from system agents"
-msgstr "Afficher les Traces des Agents système"
 
 msgid "Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more."
 msgstr "Affichage des {MOVE_CANDIDATE_FETCH_LIMIT} premiers Agents. Affinez avec la recherche pour en գտrer plus."
@@ -4622,6 +4639,9 @@ msgstr "Affichage des {0} Runs les plus récents sur {1} — ouvrez la page Runs
 
 msgid "Showing the most recent buckets — narrow the range for the full window."
 msgstr "Affichage des buckets les plus récents — réduisez la plage pour voir la fenêtre complète."
+
+msgid "Shown"
+msgstr "Affichées"
 
 msgid "Shown in full only once, when created"
 msgstr "Affichée en entier une seule fois, lors de la création"
@@ -4828,8 +4848,8 @@ msgstr "Prompt System"
 msgid "System Prompt diff"
 msgstr "Diff du Prompt System"
 
-msgid "System Traces"
-msgstr "Traces System"
+msgid "System traces"
+msgstr "Traces système"
 
 msgid "t/s"
 msgstr "t/s"
@@ -5168,6 +5188,9 @@ msgstr "Trop de tentatives. Veuillez patienter quelques minutes puis réessayer.
 
 msgid "Too many theories are awaiting validation. Try again later."
 msgstr "Trop de theories sont en attente de validation. Réessayez plus tard."
+
+msgid "Tool"
+msgstr "Tool"
 
 msgid "TOOL"
 msgstr "OUTIL"

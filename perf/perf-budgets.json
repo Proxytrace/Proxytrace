@@ -12,6 +12,13 @@
     "agentCallsListByAgent": 40,
     "agentCallsListByTimeRange": 80,
     "agentCallsHistogram": 150,
+    "agentCallsListSortLatency": 550,
+    "agentCallsListSortTokens": 600,
+    "agentCallsListSortToolCount": 450,
+    "agentCallsListSortCacheHit": 580,
+    "agentCallsListByToolName": 420,
+    "agentCallToolNames": 110,
+    "agentCallToolNamesByAgent": 40,
     "statsSummary": 500,
     "statsLatencyPercentiles": 1200,
     "statsTokenUsage": 1200,
@@ -20,7 +27,7 @@
     "statsCostEstimate": 600,
     "statsCallTrends": 1100,
     "statsPulse": 25,
-    "anomalyTimeline": 60,
+    "anomalyTimeline": 85,
     "agentOverview": 250,
     "agentDistributions": 250,
     "testRunStatsBySuite": 60,
@@ -29,7 +36,9 @@
     "testRunStatsRecentCohorts": 200
   },
 
-  "_comment_anomaly": "anomalyTimeline guards the anomaly-dashboard timeline aggregate (GetAnomalyCountsByAgentAsync): a GROUP BY (bucket, agent) with bitmask split counts over WHERE OutlierFlags <> 0, which rides the partial outlier index — the seeder flags ~3% of calls, so at 1M rows the scan touches ~30k rows, far cheaper than the full-window stats aggregates. Calibrated 2026-07-03 on the full 1M seed: observed p95 45.8ms.",
+  "_comment_anomaly": "anomalyTimeline guards the anomaly-dashboard timeline aggregate (GetAnomalyCountsByAgentAsync): a GROUP BY (bucket, agent) with bitmask split counts over WHERE OutlierFlags <> 0, which rides the partial outlier index — the seeder flags ~3% of calls, so at 1M rows the scan touches ~30k rows, far cheaper than the full-window stats aggregates. Recalibrated 2026-07-03 after the traces-sorting columns widened the row (TotalTokens/CacheHitRate): observed p95 54.8ms warm, 64.8ms on the first cold pass after a fresh seed — the budget covers the cold pass.",
+
+  "_comment_traceSort": "agentCallsListSort* guard the traces table's server-side column sorts (SortBy whitelist) measured at their worst case: no narrowing filter, whole-table top-50 at 1M rows. The nullable columns (LatencyMs/TotalTokens/CacheHitRate) sort with a '(col IS NULL)' pre-key for nulls-last-in-both-directions, which the planner cannot serve from the plain single-column index — the plan is a parallel seq scan + top-N heapsort (~230ms of the total; the rest is the page COUNT). ToolCount rides its index via incremental sort but its low cardinality makes that no cheaper. Filtered sorts (project/agent/time window — the normal UI state) are far cheaper. If these ever blow past budget, the lever is a raw-SQL '(col DESC NULLS LAST, Id DESC)' index pair per column plus NULLS LAST ordering EF can't express — deliberately not paid while worst case sits ~300-440ms. agentCallsListByToolName guards the ToolName EXISTS semi-join against AgentCallToolEntity ((ToolName, AgentCallId) index); agentCallToolNames guards the project-scoped DISTINCT picker ((ProjectId, ToolName) index-only scan); agentCallToolNamesByAgent guards the agent-scoped picker shown when an agent filter is active — AgentId is denormalised onto the tool row so it stays a single-table index-only DISTINCT over the (ProjectId, AgentId, ToolName) index (no join to the call table), and being scoped to one agent it scans only that agent's slice of the index, so it is far cheaper than the project-wide picker (~2ms vs ~67ms measured). Calibrated 2026-07-03 at 1M calls / ~600k tool rows: sorts p95 310-440ms, byToolName ~297ms, toolNames ~72ms; agentCallToolNamesByAgent recalibrated 2026-07-04 at 1M calls (p95 ~2.2ms, budget 40ms for small-number/CI jitter headroom, in-family with the fast list queries).",
 
   "_comment_testRunStats": "testRunStatsBySuite/testRunStatsBySuitePage guard the suite-scoped TestRunStats projection query (issue #253). The test-suites controller previously materialized the whole TestRunStatsEntity table and filtered in memory on every suites list + single-suite GET; the fix pushes the suite set into SQL (WHERE SuiteId IN (...)), backed by the existing index on TestRunStatsEntity.SuiteId. The query returns only the rows for the requested suite(s), so it is an index range read independent of total table size. testRunStatsPassTotals/testRunStatsRecentCohorts guard the dashboard's server-side TestRunStats aggregates (issue #288): the pass-rate totals (single scalar GROUP BY row) and the sparkline cohorts (GROUP BY (GroupId, EndpointId) ordered by max(RunCompletedAt), capped at 50) that replaced two O(all-history) materializations in DashboardStatistics. All four budgets are UNCALIBRATED PLACEHOLDERS (set conservatively; the aggregates scan the ~25k-row seeded table but return a bounded result) — RECALIBRATE on a full ~1M / 25k-test-run seed (set ~20-30% above the observed p95).",
 

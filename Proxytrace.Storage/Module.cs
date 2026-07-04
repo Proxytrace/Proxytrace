@@ -85,6 +85,15 @@ public sealed class Module : Autofac.Module
             builder.RegisterServiceCollection(services =>
                 services.AddHostedService(sp => sp.GetRequiredService<AgentCallPreviewBackfillService>()));
 
+            // One-time, idempotent backfill of the per-call tool-name rows for traces ingested before
+            // that table existed. Registered after the DB initializer so it runs once migrations
+            // have applied. Resolvable as itself so tests can drive it directly.
+            builder.RegisterType<AgentCallToolBackfillService>()
+                .AsSelf()
+                .SingleInstance();
+            builder.RegisterServiceCollection(services =>
+                services.AddHostedService(sp => sp.GetRequiredService<AgentCallToolBackfillService>()));
+
             // One-time, idempotent backfill of the evaluator-statistics projection for test results
             // recorded before that table existed. Registered after the DB initializer so it runs once
             // migrations have applied. Resolvable as itself so tests can drive it directly.
@@ -135,6 +144,11 @@ public sealed class Module : Autofac.Module
         ConfigureEntity(typeof(CustomAnomalyDetectorAgentEntity), builder);
         ConfigureEntity(typeof(ProjectUserEntity), builder);
         ConfigureEntity(typeof(Internal.Entities.TestResult.EvaluationStatEntity), builder);
+        // AgentCallToolEntity is NOT listed here like the storage-only entities above: unlike those
+        // (bare records with no Id, so ConfigureEntities' IEntity scan skips them), it extends Entity
+        // and therefore already implements IEntity — ConfigureEntities already registers it and its
+        // config via the assembly scan. Adding it here too would double-register its
+        // IModelConfiguration, running AgentCallToolConfig.Configure twice against the same model.
 
         builder.RegisterType<AmbientDbContext>()
             .AsSelf()

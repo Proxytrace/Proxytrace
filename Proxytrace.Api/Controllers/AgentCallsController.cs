@@ -92,6 +92,15 @@ public class AgentCallsController : ControllerBase
         [FromQuery] string? q = null,
         [FromQuery] Guid? conversationId = null,
         [FromQuery] bool outlierOnly = false,
+        [FromQuery] OutlierFlags? anomalyFlags = null,
+        [FromQuery] int? httpStatusClass = null,
+        [FromQuery] ulong? minTokens = null,
+        [FromQuery] ulong? maxTokens = null,
+        [FromQuery] double? minLatencyMs = null,
+        [FromQuery] double? maxLatencyMs = null,
+        [FromQuery] string? toolName = null,
+        [FromQuery] AgentCallSortField sortBy = AgentCallSortField.CreatedAt,
+        [FromQuery] bool sortDesc = true,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -99,9 +108,45 @@ public class AgentCallsController : ControllerBase
         (page, pageSize) = Paging.Clamp(page, pageSize);
         if (!await CanListAsync(projectId, agentId, cancellationToken))
             return new PagedResult<AgentCallListItemDto>([], 0, page, pageSize);
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId, outlierOnly);
+        var filter = new AgentCallFilter(
+            AgentId: agentId,
+            ProjectId: projectId,
+            EndpointId: endpointId,
+            Model: model,
+            From: from,
+            To: to,
+            HttpStatus: httpStatus,
+            IncludeSystemAgents: includeSystemAgents,
+            Query: q,
+            ConversationId: conversationId,
+            OutlierOnly: outlierOnly,
+            AnomalyFlags: anomalyFlags,
+            HttpStatusClass: httpStatusClass,
+            MinTokens: minTokens,
+            MaxTokens: maxTokens,
+            MinLatencyMs: minLatencyMs,
+            MaxLatencyMs: maxLatencyMs,
+            ToolName: toolName,
+            SortBy: sortBy,
+            SortDescending: sortDesc);
         var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallListItem>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
+    }
+
+    /// <summary>
+    /// Distinct tool names requested by any trace in the project — backs the traces filter's
+    /// tool-name picker. When <paramref name="agentId"/> is supplied (an agent filter is active),
+    /// the list is scoped to that agent's traces. Empty when the caller cannot access the project.
+    /// </summary>
+    [HttpGet("tool-names")]
+    public async Task<IReadOnlyList<string>> GetToolNames(
+        [FromQuery] Guid projectId,
+        [FromQuery] Guid? agentId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await CanListAsync(projectId, agentId, cancellationToken))
+            return [];
+        return await repository.GetToolNamesAsync(projectId, agentId, cancellationToken);
     }
 
     /// <summary>
@@ -183,13 +228,41 @@ public class AgentCallsController : ControllerBase
         [FromQuery] bool includeSystemAgents = true,
         [FromQuery] string? q = null,
         [FromQuery] Guid? conversationId = null,
+        [FromQuery] bool outlierOnly = false,
+        [FromQuery] OutlierFlags? anomalyFlags = null,
+        [FromQuery] int? httpStatusClass = null,
+        [FromQuery] ulong? minTokens = null,
+        [FromQuery] ulong? maxTokens = null,
+        [FromQuery] double? minLatencyMs = null,
+        [FromQuery] double? maxLatencyMs = null,
+        [FromQuery] string? toolName = null,
         [FromQuery] int buckets = 60,
         CancellationToken cancellationToken = default)
     {
         buckets = Math.Clamp(buckets, 1, 240);
         if (!await CanListAsync(projectId, agentId, cancellationToken))
             return [];
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
+        // Same filter surface as GetAll (minus paging/sort — a histogram has neither), so the
+        // timeline always reflects exactly the rows the filtered table shows.
+        var filter = new AgentCallFilter(
+            AgentId: agentId,
+            ProjectId: projectId,
+            EndpointId: endpointId,
+            Model: model,
+            From: from,
+            To: to,
+            HttpStatus: httpStatus,
+            IncludeSystemAgents: includeSystemAgents,
+            Query: q,
+            ConversationId: conversationId,
+            OutlierOnly: outlierOnly,
+            AnomalyFlags: anomalyFlags,
+            HttpStatusClass: httpStatusClass,
+            MinTokens: minTokens,
+            MaxTokens: maxTokens,
+            MinLatencyMs: minLatencyMs,
+            MaxLatencyMs: maxLatencyMs,
+            ToolName: toolName);
         var result = await repository.GetHistogramAsync(filter, buckets, cancellationToken);
         return result.Select(b => new TraceHistogramBucketDto(b.Start, b.Total, b.Errors)).ToList();
     }
@@ -227,7 +300,9 @@ public class AgentCallsController : ControllerBase
             conversation = conversation.WithSystemMessage(new SystemMessage([Proxytrace.Domain.Message.Content.FromText(request.SystemContent)]));
         conversation = conversation.With(new UserMessage([Proxytrace.Domain.Message.Content.FromText(request.UserContent)]));
 
-        var assistantMessage = new AssistantMessage([Proxytrace.Domain.Message.Content.FromText(request.AssistantContent)], []);
+        var assistantMessage = new AssistantMessage(
+            [Proxytrace.Domain.Message.Content.FromText(request.AssistantContent)],
+            (request.ToolNames ?? []).Select((name, i) => new ToolRequest($"seed-{i}", name, "{}")).ToList());
         var usage = new TokenUsage((ulong)request.InputTokens, (ulong)request.OutputTokens);
         ICompletion completion = createCompletion(
             assistantMessage,

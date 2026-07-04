@@ -11,6 +11,20 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Sortable trace table + composable filters.** The Traces table can now be sorted by any
+  metric column — Latency, Tokens, Tools, Cached, or Time — with a click on the column header
+  (click again to flip direction); sorting is server-side, so "slowest call" means across all
+  matching traces, not just the visible page. The toolbar's agent dropdown and "Outliers only"
+  pill are replaced by a composable **+ Filter** button that sits on the toolbar line beside
+  search and the time range: stack removable filter chips for agent, anomaly type (any, or a
+  specific reason like high latency or a custom-detector hit), tool name (picked from the tools
+  your traces actually called — and once you've picked an agent, only the tools *that* agent
+  used), model, HTTP status class (2xx/4xx/5xx), token/latency ranges,
+  and **System traces** (include traces from system agents — chosen from **+ Filter** instead
+  of a separate toggle). Filters combine, the timeline follows them, and
+  your chips are remembered per project. Traces captured before this release are indexed
+  automatically on upgrade so the tool-name filter covers them too.
+
 - **A new Anomaly dashboard.** A dedicated **Anomalies** page (in the sidebar, after Traces) brings
   every agent's anomalies together in one place: a table of recently flagged calls (agent, message
   preview, why it was flagged, when) beside a statistics column — a live, stacked per-agent

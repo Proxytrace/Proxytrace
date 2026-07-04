@@ -16,4 +16,7 @@ public record SeedAgentCallRequest(
     Guid? ConversationId,
     // Raw OutlierFlags bitmask to stamp on the seeded call (the seed bypasses ingestion, so the
     // detector never runs). Lets e2e create a deterministic outlier without building a baseline.
-    int? OutlierFlags = null);
+    int? OutlierFlags = null,
+    // Tool names the assistant response "requested" — populates the per-call tool rows exactly as
+    // ingestion would, so e2e can exercise the tool-name filter without a real tool-calling LLM.
+    IReadOnlyList<string>? ToolNames = null);
