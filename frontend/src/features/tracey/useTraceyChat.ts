@@ -17,6 +17,7 @@ import { useKiosk } from '../../contexts/KioskContext';
 import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
+import { useAskTracey } from './useAskTracey';
 import { useFollowUpSuggestions, type FollowUpState } from './useFollowUpSuggestions';
 import {
   loadConversationIndex,
@@ -110,6 +111,18 @@ export interface TraceyChat {
    * the page calls it on mount and the session then stays alive across navigation.
    */
   activate: () => void;
+  /**
+   * True when Tracey can actually be used here: a project is selected, kiosk mode is
+   * interactive, and the Tracey license feature is on. `AskTraceyButton` renders only when
+   * true (mirrors the sidebar nav gating).
+   */
+  available: boolean;
+  /**
+   * App-wide "Ask Tracey" entry: archives the current conversation, navigates to the Tracey
+   * page, activates the session, and sends `prompt` as the first message of a fresh
+   * conversation (queued until the session is ready).
+   */
+  askTracey: (prompt: string) => void;
 }
 
 export function useTraceyChat(): TraceyChat {
@@ -299,7 +312,7 @@ export function useTraceyChat(): TraceyChat {
     return thread.subscribe(persist);
   }, [runtime, userKey, projectKey, artifactScope]);
 
-  const startNewConversation = useCallback(() => {
+  const startFreshThread = useCallback((): Promise<void> => {
     // The current conversation is already persisted under its id, so it stays in history. Just
     // detach the active pointer and switch to a fresh empty thread; the next message mints a new id.
     restoringRef.current = true;
@@ -307,8 +320,10 @@ export function useTraceyChat(): TraceyChat {
     createdAtRef.current = 0;
     setHistory(h => ({ items: h.items, activeId: null }));
     setActiveConversation(userKey, projectKey, null);
-    void runtime.threads.switchToNewThread().finally(() => { restoringRef.current = false; });
+    return runtime.threads.switchToNewThread().finally(() => { restoringRef.current = false; });
   }, [runtime, userKey, projectKey]);
+
+  const startNewConversation = useCallback(() => { void startFreshThread(); }, [startFreshThread]);
 
   const selectConversation = useCallback((id: string) => {
     if (id === activeIdRef.current) return;
@@ -357,6 +372,9 @@ export function useTraceyChat(): TraceyChat {
         ? 'error'
         : 'ready';
 
+  const available = !!projectId && interactive && traceyLicensed;
+  const askTracey = useAskTracey({ runtime, status, activate, startFreshThread, navigate });
+
   return {
     runtime,
     status,
@@ -368,5 +386,7 @@ export function useTraceyChat(): TraceyChat {
     navigate,
     followUps,
     activate,
+    available,
+    askTracey,
   };
 }
