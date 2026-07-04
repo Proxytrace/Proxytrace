@@ -25,6 +25,8 @@ import { PassRateGauge } from './components/PassRateGauge';
 import { TokenByAgentSection } from './components/TokenByAgentSection';
 import { LatencySection } from './components/LatencySection';
 import { AgentsSection } from './components/AgentsSection';
+import { AskTraceyButton } from '../../components/tracey/AskTraceyButton';
+import { projectHealthPrompt } from '../../components/tracey/askTraceyPrompts';
 
 export default function Dashboard() {
   const { t } = useLingui();
@@ -90,9 +92,12 @@ export default function Dashboard() {
           <h1 className="text-[20px] font-extrabold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
           <p className="text-body-sm text-muted">{currentProject?.name ?? t`All projects`}</p>
         </div>
-        <div className="flex items-center gap-2.5 font-mono text-caption text-muted">
-          <span className="text-primary font-semibold tracking-[0.04em] tabular-nums">{clock}</span>
-          <span className="tracking-[0.14em] uppercase"><Trans>UTC · proxy</Trans></span>
+        <div className="flex items-center gap-3">
+          <AskTraceyButton data-testid="ask-tracey-btn-dashboard" prompt={projectHealthPrompt()} />
+          <div className="flex items-center gap-2.5 font-mono text-caption text-muted">
+            <span className="text-primary font-semibold tracking-[0.04em] tabular-nums">{clock}</span>
+            <span className="tracking-[0.14em] uppercase"><Trans>UTC · proxy</Trans></span>
+          </div>
         </div>
       </div>
 
