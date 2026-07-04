@@ -8,6 +8,8 @@ import { fmtRelative } from '../../../lib/format';
 import { EndpointSelector } from '../EndpointSelector';
 import { useAgentVersions } from '../hooks/useAgentVersions';
 import { AgentActionsMenu } from './AgentActionsMenu';
+import { AskTraceyButton } from '../../../components/tracey/AskTraceyButton';
+import { agentPrompt } from '../../../components/tracey/askTraceyPrompts';
 
 interface Props {
   agent: AgentDto;
@@ -94,6 +96,10 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <AskTraceyButton
+            data-testid="ask-tracey-btn-agent"
+            prompt={() => agentPrompt(agent, overview?.suitePassRates ?? [])}
+          />
           <EndpointSelector agent={agent} />
           <Button
             size="sm"
