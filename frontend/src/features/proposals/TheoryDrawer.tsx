@@ -6,6 +6,8 @@ import { KIND_META } from './shared';
 import { theoryShortId } from './theoryBoard';
 import { DecisionFlow } from './components/DecisionFlow';
 import { ValidatedProposalView } from './components/ValidatedProposalView';
+import { AskTraceyButton } from '../../components/tracey/AskTraceyButton';
+import { theoryPrompt } from '../../components/tracey/askTraceyPrompts';
 
 interface Props {
   theory: TheoryDto;
@@ -32,6 +34,7 @@ export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, onReset
     <Drawer
       title={`${theoryShortId(theory.id)} · ${i18n._(KIND_META[theory.kind].label)}`}
       subtitle={theory.agentName}
+      actions={<AskTraceyButton data-testid="ask-tracey-btn-theory" prompt={() => theoryPrompt(theory)} />}
       onClose={onClose}
     >
       {theory.status === TheoryStatus.Validated ? <ValidatedProposalView {...body} /> : <DecisionFlow {...body} />}
