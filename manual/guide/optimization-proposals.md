@@ -11,7 +11,7 @@ Each proposal is grounded in evidence from [test runs](/guide/running-tests).
 
 ## What a proposal contains
 
-![A validated theory's proposal drawer: the effective pass-rate gain with its p-value, the proposed system-prompt change shown as a diff, and the Promote / Dismiss actions.](/screenshots/proposals/detail.png)
+![A validated theory's dossier: the effective pass-rate gain with its p-value as the headline, the proposed system-prompt change shown as a diff beside the evidence, and the Promote / Dismiss decision bar.](/screenshots/proposals/detail.png)
 
 - **Kind** — the type of change (e.g. switch model, update system prompt).
 - **Rationale** — why the change is suggested.
@@ -24,15 +24,14 @@ Each proposal is grounded in evidence from [test runs](/guide/running-tests).
 
 ## Reviewing proposals
 
-Open **Proposals** in the sidebar. The page is the **Optimization Theories** board: every
-proposal belongs to a **Validated** theory, shown in the board's *Validated* column (see
-[Reviewing the board](/guide/optimization-theories#reviewing-the-board)). For each one:
+Open **Proposals** in the sidebar. The page is a **review desk**: every reviewable proposal
+belongs to a validated theory, queued under **Needs decision** in the left rail (see
+[The review desk](/guide/optimization-theories#the-review-desk)). For each one:
 
-1. **Promote** straight from the validated card to accept it, or click the card to open the
-   full review drawer.
-2. In the drawer, read the rationale, inspect the A/B results and linked evidence runs, and
-   compare the proposed change against the current agent definition.
-3. **Promote** to accept it, or **Dismiss** to reject it.
+1. Select the item — the first *Needs decision* entry is opened for you.
+2. In the dossier, read the measured gain and its significance, inspect the A/B results and
+   linked evidence runs, and compare the proposed change against the current agent definition.
+3. **Promote** to accept it, or **Dismiss** to reject it — both in the pinned decision bar.
 
 ## Promoting = handoff, not auto-apply
 
@@ -56,7 +55,7 @@ After you promote a proposal, Proxytrace watches the agent's live traffic for th
 
 - A **prompt or tool** proposal flips to **Adopted** when a request arrives whose system
   prompt / tool set matches the proposed change **exactly** (a new agent version is detected
-  and linked — the board shows *"Adopted in v{N}"*).
+  and linked — the queue shows *"Adopted in v{N}"*).
 - A **model switch** proposal flips to **Adopted** when the agent's calls start arriving on
   the proposed model endpoint.
 

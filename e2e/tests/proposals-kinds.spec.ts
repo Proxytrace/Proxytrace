@@ -1,11 +1,11 @@
 import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
-// proposals.spec.ts covers SystemPrompt theories. The board's theory detail reuses the same
+// proposals.spec.ts covers SystemPrompt theories. The review desk's dossier reuses the same
 // kind-specific sections (ModelSwitchSection / ToolUpdateSection), so we seed ModelSwitch and
 // ToolUpdate theories (no optimizer pipeline, no LLM) and assert those sections render in the
-// theory drawer.
-test.describe('Theory board — ModelSwitch & ToolUpdate kinds', () => {
+// dossier pane.
+test.describe('Review desk — ModelSwitch & ToolUpdate kinds', () => {
   let token: string;
   let agentId: string;
   let proposedEndpointId: string;
@@ -50,17 +50,17 @@ test.describe('Theory board — ModelSwitch & ToolUpdate kinds', () => {
     ).id;
   });
 
-  test('a ModelSwitch theory renders ModelSwitchSection in its flow', async ({ page }) => {
+  test('a ModelSwitch theory renders ModelSwitchSection in its dossier', async ({ page }) => {
     await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`theory-card-${modelSwitchId}`).click();
-    await expect(page.getByTestId('decision-flow')).toBeVisible();
+    await page.getByTestId(`theory-row-${modelSwitchId}`).click();
+    await expect(page.getByTestId('inflight-dossier')).toBeVisible();
     await expect(page.getByTestId('model-switch-section')).toBeVisible();
   });
 
-  test('a ToolUpdate theory renders ToolUpdateSection in its flow', async ({ page }) => {
+  test('a ToolUpdate theory renders ToolUpdateSection in its dossier', async ({ page }) => {
     await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`theory-card-${toolUpdateId}`).click();
-    await expect(page.getByTestId('decision-flow')).toBeVisible();
+    await page.getByTestId(`theory-row-${toolUpdateId}`).click();
+    await expect(page.getByTestId('inflight-dossier')).toBeVisible();
     await expect(page.getByTestId('tool-update-section')).toBeVisible();
     await expect(page.getByTestId('tool-update-section')).toContainText('web_search');
   });

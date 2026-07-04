@@ -82,10 +82,6 @@ msgstr "{0, plural, one {# evaluator} other {# evaluators}}"
 msgid "{0, plural, one {# failing run motivated this} other {# failing runs motivated this}}"
 msgstr "{0, plural, one {# failing run motivated this} other {# failing runs motivated this}}"
 
-#. placeholder {0}: theory.evidenceTestRunIds.length
-msgid "{0, plural, one {# failing run} other {# failing runs}}"
-msgstr "{0, plural, one {# failing run} other {# failing runs}}"
-
 #. placeholder {0}: p.memberCount
 msgid "{0, plural, one {# member} other {# members}}"
 msgstr "{0, plural, one {# member} other {# members}}"
@@ -126,10 +122,6 @@ msgstr "{0, plural, one {# suite for this agent} other {# suites for this agent}
 #. placeholder {0}: suites.length
 msgid "{0, plural, one {# suite} other {# suites}}"
 msgstr "{0, plural, one {# suite} other {# suites}}"
-
-#. placeholder {0}: visibleTheories.length
-msgid "{0, plural, one {# theory} other {# theories}}"
-msgstr "{0, plural, one {# theory} other {# theories}}"
 
 #. placeholder {0}: a.toolCount
 #. placeholder {0}: agent.toolCount
@@ -635,10 +627,6 @@ msgstr "+ Pending add"
 msgid "+{0} more"
 msgstr "+{0} more"
 
-#. placeholder {0}: stats.provenGainPt
-msgid "+{0}pt"
-msgstr "+{0}pt"
-
 msgid "+{added} added"
 msgstr "+{added} added"
 
@@ -706,9 +694,6 @@ msgstr "○ Not attached"
 msgid "● Attached"
 msgstr "● Attached"
 
-msgid "0pt"
-msgstr "0pt"
-
 msgid "1 agent"
 msgstr "1 agent"
 
@@ -754,13 +739,6 @@ msgstr "A grader model scores responses on a fixed 1–5 scale (Terrible → Exc
 msgid "A metric is only judged once the agent has at least this many recent calls."
 msgstr "A metric is only judged once the agent has at least this many recent calls."
 
-msgid "A proposal is created only once the A/B test shows an improvement."
-msgstr "A proposal is created only once the A/B test shows an improvement."
-
-#. placeholder {0}: proposal ? ` (${theoryShortId(proposal.id).replace('thy_', 'prop_')})` : ''
-msgid "A reviewable draft proposal{0} was created from the winning A/B test."
-msgstr "A reviewable draft proposal{0} was created from the winning A/B test."
-
 msgid "A reviewer chose not to apply this change."
 msgstr "A reviewer chose not to apply this change."
 
@@ -779,14 +757,8 @@ msgstr "A/B runs"
 msgid "A/B test"
 msgstr "A/B test"
 
-msgid "A/B test in flight"
-msgstr "A/B test in flight"
-
 msgid "A/B testing"
 msgstr "A/B testing"
-
-msgid "A/B validation"
-msgstr "A/B validation"
 
 msgid "Acceptable"
 msgstr "Acceptable"
@@ -997,6 +969,9 @@ msgstr "All done"
 msgid "All projects"
 msgstr "All projects"
 
+msgid "All proposals"
+msgstr "All proposals"
+
 msgid "All runs"
 msgstr "All runs"
 
@@ -1162,9 +1137,6 @@ msgstr "auto-refresh · {0} most recent"
 msgid "Auto-reindex on change"
 msgstr "Auto-reindex on change"
 
-msgid "Auto-rejected by A/B"
-msgstr "Auto-rejected by A/B"
-
 msgid "Avg"
 msgstr "Avg"
 
@@ -1187,11 +1159,11 @@ msgstr "Avg score"
 msgid "Awaited actions"
 msgstr "Awaited actions"
 
+msgid "awaiting adoption"
+msgstr "awaiting adoption"
+
 msgid "Awaiting adoption"
 msgstr "Awaiting adoption"
-
-msgid "Awaiting decision"
-msgstr "Awaiting decision"
 
 msgid "awaiting samples"
 msgstr "awaiting samples"
@@ -1429,9 +1401,6 @@ msgstr "Configure upstream model providers and manage Proxytrace API keys."
 
 msgid "Configure your evaluator."
 msgstr "Configure your evaluator."
-
-msgid "Confirmed — ready to ship"
-msgstr "Confirmed — ready to ship"
 
 msgid "Connect your model provider"
 msgstr "Connect your model provider"
@@ -1722,6 +1691,9 @@ msgstr "Data Purged"
 msgid "days"
 msgstr "days"
 
+msgid "decided"
+msgstr "decided"
+
 msgid "Default model"
 msgstr "Default model"
 
@@ -1864,9 +1836,6 @@ msgstr "Dismissed"
 msgid "Dismissed — a reviewer chose not to apply this change."
 msgstr "Dismissed — a reviewer chose not to apply this change."
 
-msgid "Disproven by A/B"
-msgstr "Disproven by A/B"
-
 msgid "Divergent"
 msgstr "Divergent"
 
@@ -1884,9 +1853,6 @@ msgstr "Download"
 
 msgid "Download .md"
 msgstr "Download .md"
-
-msgid "Draft created"
-msgstr "Draft created"
 
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
@@ -1948,9 +1914,6 @@ msgstr "Editable"
 
 msgid "edited"
 msgstr "edited"
-
-msgid "Effective gain"
-msgstr "Effective gain"
 
 msgid "Email"
 msgstr "Email"
@@ -2381,15 +2344,6 @@ msgstr "How many of the agent's most recent successful calls form the baseline."
 msgid "https://api.openai.com/v1"
 msgstr "https://api.openai.com/v1"
 
-msgid "Hypotheses awaiting a test"
-msgstr "Hypotheses awaiting a test"
-
-msgid "Hypotheses spawned from failing test results, moving through validation — from untested to proven."
-msgstr "Hypotheses spawned from failing test results, moving through validation — from untested to proven."
-
-msgid "Hypothesised"
-msgstr "Hypothesised"
-
 msgid "id"
 msgstr "id"
 
@@ -2407,9 +2361,6 @@ msgstr "Improved"
 
 msgid "Improved the pass rate."
 msgstr "Improved the pass rate."
-
-msgid "Improvement confirmed"
-msgstr "Improvement confirmed"
 
 msgid "in"
 msgstr "in"
@@ -3009,8 +2960,14 @@ msgstr "Name, system endpoint, and lifecycle for the active project."
 msgid "navigate"
 msgstr "navigate"
 
+msgid "need decision"
+msgstr "need decision"
+
 msgid "Needs attention"
 msgstr "Needs attention"
+
+msgid "Needs decision"
+msgstr "Needs decision"
 
 msgid "never"
 msgstr "never"
@@ -3129,9 +3086,6 @@ msgstr "No data"
 
 msgid "No data in range"
 msgstr "No data in range"
-
-msgid "No decision yet — validation must finish first."
-msgstr "No decision yet — validation must finish first."
 
 msgid "no delta predicted"
 msgstr "no delta predicted"
@@ -3265,9 +3219,6 @@ msgstr "No projects"
 msgid "No projects yet"
 msgstr "No projects yet"
 
-msgid "No proposal generated — the change did not beat the baseline."
-msgstr "No proposal generated — the change did not beat the baseline."
-
 msgid "No providers yet"
 msgstr "No providers yet"
 
@@ -3398,9 +3349,6 @@ msgstr "None"
 msgid "None configured"
 msgstr "None configured"
 
-msgid "None generated"
-msgstr "None generated"
-
 msgid "Not attached to any suite yet."
 msgstr "Not attached to any suite yet."
 
@@ -3425,14 +3373,8 @@ msgstr "Not valid JSON — {detail}"
 msgid "Not valid JSON — showing raw text"
 msgstr "Not valid JSON — showing raw text"
 
-msgid "Not yet tested"
-msgstr "Not yet tested"
-
 msgid "Nothing here yet"
 msgstr "Nothing here yet"
-
-msgid "Nothing here yet."
-msgstr "Nothing here yet."
 
 msgid "Nothing was flagged for the selected range."
 msgstr "Nothing was flagged for the selected range."
@@ -3539,9 +3481,6 @@ msgstr "Optimization Requested"
 msgid "Optimization theories"
 msgstr "Optimization theories"
 
-msgid "Optimization Theories"
-msgstr "Optimization Theories"
-
 msgid "Optimize an agent"
 msgstr "Optimize an agent"
 
@@ -3562,9 +3501,6 @@ msgstr "Other"
 
 msgid "out"
 msgstr "out"
-
-msgid "Outcome"
-msgstr "Outcome"
 
 msgid "Outlier detection"
 msgstr "Outlier detection"
@@ -3714,9 +3650,6 @@ msgstr "Pending removal"
 msgid "Pending review"
 msgstr "Pending review"
 
-msgid "Pending validation"
-msgstr "Pending validation"
-
 msgid "per call"
 msgstr "per call"
 
@@ -3779,6 +3712,9 @@ msgstr "Pick to start"
 
 msgid "Pick your default model"
 msgstr "Pick your default model"
+
+msgid "Planned change"
+msgstr "Planned change"
 
 msgid "Plot token usage"
 msgstr "Plot token usage"
@@ -3865,9 +3801,6 @@ msgstr "Promoted"
 msgid "Promoted — awaiting adoption in your agent."
 msgstr "Promoted — awaiting adoption in your agent."
 
-msgid "Promoting…"
-msgstr "Promoting…"
-
 msgid "Prompt rewrite"
 msgstr "Prompt rewrite"
 
@@ -3905,8 +3838,11 @@ msgstr "Proposed tools ({0}): "
 msgid "Protect your account with a time-based one-time code from an authenticator app, in addition to your password."
 msgstr "Protect your account with a time-based one-time code from an authenticator app, in addition to your password."
 
-msgid "Proven gain"
-msgstr "Proven gain"
+msgid "proven"
+msgstr "proven"
+
+msgid "Proven changes waiting for your decision — validated by A/B tests on your own benchmarks."
+msgstr "Proven changes waiting for your decision — validated by A/B tests on your own benchmarks."
 
 msgid "Provide result"
 msgstr "Provide result"
@@ -3957,6 +3893,12 @@ msgstr "Queue"
 
 msgid "Queued"
 msgstr "Queued"
+
+msgid "Queued — the candidate change has not been benchmarked yet. A proposal is created only once the A/B test shows an improvement."
+msgstr "Queued — the candidate change has not been benchmarked yet. A proposal is created only once the A/B test shows an improvement."
+
+msgid "Queued for validation"
+msgstr "Queued for validation"
 
 msgid "Quick actions"
 msgstr "Quick actions"
@@ -4039,9 +3981,6 @@ msgstr "Reindex started"
 
 msgid "Reindexing"
 msgstr "Reindexing"
-
-msgid "Reject"
-msgstr "Reject"
 
 msgid "Reject (error)"
 msgstr "Reject (error)"
@@ -4505,6 +4444,9 @@ msgstr "Select a detector"
 msgid "Select a model endpoint"
 msgstr "Select a model endpoint"
 
+msgid "Select a proposal to review it."
+msgstr "Select a proposal to review it."
+
 msgid "Select a run to see details."
 msgstr "Select a run to see details."
 
@@ -4688,9 +4630,6 @@ msgstr "significant"
 msgid "sk-…"
 msgstr "sk-…"
 
-msgid "Skipped"
-msgstr "Skipped"
-
 msgid "SMTP host"
 msgstr "SMTP host"
 
@@ -4793,15 +4732,6 @@ msgstr "Streaming…"
 
 msgid "Submit"
 msgstr "Submit"
-
-msgid "Submitted directly"
-msgstr "Submitted directly"
-
-msgid "Submitted via {sourceLabel} — no failing runs attached. Validated against {suite}."
-msgstr "Submitted via {sourceLabel} — no failing runs attached. Validated against {suite}."
-
-msgid "Submitted via {sourceLabel} · validated against {suite}"
-msgstr "Submitted via {sourceLabel} · validated against {suite}"
 
 msgid "Submitting theory…"
 msgstr "Submitting theory…"
@@ -4987,17 +4917,14 @@ msgstr "Test Suites"
 msgid "Test suites & Test cases"
 msgstr "Test suites & Test cases"
 
-msgid "Tested"
-msgstr "Tested"
+msgid "testing"
+msgstr "testing"
 
 msgid "Text response"
 msgstr "Text response"
 
-msgid "The A/B test found no improvement, so the theory was rejected automatically — no review needed."
-msgstr "The A/B test found no improvement, so the theory was rejected automatically — no review needed."
-
-msgid "The candidate change has not been benchmarked yet."
-msgstr "The candidate change has not been benchmarked yet."
+msgid "The A/B test found no improvement, so the theory was rejected automatically."
+msgstr "The A/B test found no improvement, so the theory was rejected automatically."
 
 msgid "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
 msgstr "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
@@ -5024,9 +4951,6 @@ msgstr "The license is fixed by this deployment (demo mode) and cannot be change
 msgid "The native OpenAI API — works out of the box."
 msgstr "The native OpenAI API — works out of the box."
 
-msgid "Theories"
-msgstr "Theories"
-
 msgid "Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate."
 msgstr "Theories appear here when an optimizer, you, or Tracey AI proposes a change to validate."
 
@@ -5040,9 +4964,6 @@ msgstr "Theory"
 #. placeholder {0}: theory.agentName
 msgid "Theory · {0}"
 msgstr "Theory · {0}"
-
-msgid "Theory & A/B test details"
-msgstr "Theory & A/B test details"
 
 msgid "Theory Invalidated"
 msgstr "Theory Invalidated"
@@ -5377,9 +5298,6 @@ msgstr "Type below to send a message, or use Add message to insert turns manuall
 msgid "Type your answer…"
 msgstr "Type your answer…"
 
-msgid "Unassigned suite"
-msgstr "Unassigned suite"
-
 msgid "Undo"
 msgstr "Undo"
 
@@ -5508,11 +5426,14 @@ msgid "Version history"
 msgstr "Version history"
 
 #. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
-msgid "via {0}"
-msgstr "via {0}"
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validated against {1}"
+msgstr "via {0} · validated against {1}"
 
-msgid "via {sourceLabel}"
-msgstr "via {sourceLabel}"
+#. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validating against {1}"
+msgstr "via {0} · validating against {1}"
 
 msgid "via Tracey AI"
 msgstr "via Tracey AI"
@@ -5595,6 +5516,9 @@ msgstr "Walk through open optimization proposals"
 msgid "Warning"
 msgstr "Warning"
 
+msgid "Watching traffic"
+msgstr "Watching traffic"
+
 msgid "Wednesday"
 msgstr "Wednesday"
 
@@ -5631,6 +5555,9 @@ msgstr "When on, notifications are emailed to users who opt in."
 msgid "Which agent should this suite test?"
 msgstr "Which agent should this suite test?"
 
+msgid "Why this change"
+msgstr "Why this change"
+
 msgid "widget"
 msgstr "widget"
 
@@ -5640,8 +5567,8 @@ msgstr "Will be deleted"
 msgid "Will be kept"
 msgstr "Will be kept"
 
-msgid "Win rate"
-msgstr "Win rate"
+msgid "win rate"
+msgstr "win rate"
 
 msgid "Wipes runtime/trace data while preserving configuration. This action cannot be undone."
 msgstr "Wipes runtime/trace data while preserving configuration. This action cannot be undone."

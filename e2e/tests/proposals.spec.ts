@@ -1,17 +1,18 @@
 import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
-// Verifies the Optimization Theories board (the /proposals route) end to end. The board is
-// theory-driven: theories flow Proposed → Validating → Validated/Rejected, and a validated
-// theory links to a reviewable proposal. Both are seeded via test-only endpoints
-// (POST /api/theories/seed, POST /api/proposals/seed) so the states are deterministic and need
-// no real LLM.
+// Verifies the Optimization Proposals review desk (the /proposals route) end to end. The page is
+// a master/detail decision inbox: theories flow Proposed → Validating → Validated/Invalidated in
+// the queue rail (grouped by urgency — Needs decision / Awaiting adoption / In flight / History),
+// and the selected theory opens as a dossier in the right pane. Both theories and proposals are
+// seeded via test-only endpoints (POST /api/theories/seed, POST /api/proposals/seed) so the
+// states are deterministic and need no real LLM.
 //
-// Stable data-testids: `theory-board`, `theory-column-<status>`, `theory-column-count-<status>`,
-// `theory-card-<id>`, `theory-handle-<id>`, `theory-promote-btn-<id>`, `decision-flow` (drawer,
-// unproven theory), and — for a validated theory's drawer — `validated-proposal`, `gain-hero`,
-// `prompt-diff`, `proposal-promote-btn` / `proposal-dismiss-btn` / `proposal-reset-btn`.
-test.describe('Optimization Theories board', () => {
+// Stable data-testids: `review-desk`, `proposals-rail`, `queue-group-<key>`,
+// `queue-group-count-<key>`, `theory-row-<id>`, `dossier`, `inflight-dossier` (unproven theory),
+// and — for a validated theory's dossier — `validated-proposal`, `gain-hero`, `prompt-diff`,
+// `proposal-promote-btn` / `proposal-dismiss-btn` / `proposal-reset-btn` / `theory-reject-btn`.
+test.describe('Optimization Proposals review desk', () => {
   let token: string;
   let agentId: string;
 
@@ -37,37 +38,38 @@ test.describe('Optimization Theories board', () => {
     expect(seeded?.status).toBe('Proposed');
   });
 
-  test('a proposed theory renders as a card in the Proposed column', async ({ page, request }) => {
+  test('a proposed theory renders as a row in the In flight group', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
-    const rationale = `E2E board proposed ${Date.now()}`;
+    const rationale = `E2E queue proposed ${Date.now()}`;
     const { id } = await api.seedTheory({ agentId, status: 'Proposed', rationale });
 
     await page.goto('/proposals', { waitUntil: 'load' });
 
-    await expect(page.getByTestId('theory-board')).toBeVisible();
-    const card = page.getByTestId(`theory-card-${id}`);
-    await expect(card).toBeVisible();
-    // The card lives inside the Proposed column.
-    await expect(page.getByTestId('theory-column-Proposed').getByTestId(`theory-card-${id}`)).toBeVisible();
-    await expect(card.getByText(rationale)).toBeVisible();
+    await expect(page.getByTestId('review-desk')).toBeVisible();
+    const row = page.getByTestId(`theory-row-${id}`);
+    await expect(row).toBeVisible();
+    // The row lives inside the In flight group.
+    await expect(page.getByTestId('queue-group-inflight').getByTestId(`theory-row-${id}`)).toBeVisible();
+    await expect(row.getByText(rationale)).toBeVisible();
   });
 
-  test('opening a theory shows its decision flow', async ({ page, request }) => {
+  test('opening an in-flight theory shows its dossier with the planned change', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
-    const rationale = `E2E theory flow ${Date.now()}`;
+    const rationale = `E2E theory dossier ${Date.now()}`;
     const { id } = await api.seedTheory({ agentId, status: 'Proposed', rationale });
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`theory-card-${id}`).click();
+    await page.getByTestId(`theory-row-${id}`).click();
 
-    const flow = page.getByTestId('decision-flow');
-    await expect(flow).toBeVisible();
-    // The flow lays out the lifecycle stages top to bottom.
-    await expect(flow.getByTestId('flow-step-evidence')).toBeVisible();
-    await expect(flow.getByTestId('flow-step-outcome')).toBeVisible();
+    const dossier = page.getByTestId('dossier');
+    await expect(dossier).toBeVisible();
+    await expect(dossier.getByTestId('inflight-dossier')).toBeVisible();
+    await expect(dossier.getByText(rationale)).toBeVisible();
+    // An unproven theory offers its dismissal, not a promote.
+    await expect(dossier.getByTestId('theory-reject-btn')).toBeVisible();
   });
 
-  test('a validated theory leads with the proven gain and change diff in the drawer', async ({ page, request }) => {
+  test('a validated theory leads with the proven gain and change diff in the dossier', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
     // A validated theory references a reviewable proposal; seed the proposal first and link it.
     const currentMessage = `You are a helpful assistant. [${Date.now()}]`;
@@ -93,20 +95,20 @@ test.describe('Optimization Theories board', () => {
 
     await page.goto('/proposals', { waitUntil: 'load' });
 
-    const card = page.getByTestId(`theory-card-${theoryId}`);
-    await expect(page.getByTestId('theory-column-Validated').getByTestId(`theory-card-${theoryId}`)).toBeVisible();
-    await card.click();
+    const row = page.getByTestId(`theory-row-${theoryId}`);
+    await expect(page.getByTestId('queue-group-decision').getByTestId(`theory-row-${theoryId}`)).toBeVisible();
+    await row.click();
 
-    // A validated theory swaps the decision flow for the proposal-first view: the effective
-    // gain leads, the concrete change is front and center, and Promote is immediately at hand.
-    const view = page.getByTestId('validated-proposal');
-    await expect(view).toBeVisible();
-    await expect(view.getByTestId('gain-hero')).toContainText('+12pt');
-    await expect(view.getByTestId('prompt-diff')).toBeVisible();
-    await expect(view.getByTestId('proposal-promote-btn')).toBeVisible();
+    // A validated theory's dossier leads with the effective gain, the concrete change is front
+    // and center, and Promote is immediately at hand in the decision bar.
+    const dossier = page.getByTestId('dossier');
+    await expect(dossier.getByTestId('validated-proposal')).toBeVisible();
+    await expect(dossier.getByTestId('gain-hero')).toContainText('+12pt');
+    await expect(dossier.getByTestId('prompt-diff')).toBeVisible();
+    await expect(dossier.getByTestId('proposal-promote-btn')).toBeVisible();
   });
 
-  test('dismissing from the drawer flips the linked proposal to Rejected', async ({ page, request }) => {
+  test('dismissing from the dossier flips the linked proposal to Rejected', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
     const { id: proposalId } = await api.seedProposal({
       agentId,
@@ -124,8 +126,8 @@ test.describe('Optimization Theories board', () => {
     });
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`theory-card-${theoryId}`).click();
-    await page.getByTestId('validated-proposal').getByTestId('proposal-dismiss-btn').click();
+    await page.getByTestId(`theory-row-${theoryId}`).click();
+    await page.getByTestId('dossier').getByTestId('proposal-dismiss-btn').click();
 
     await expect
       .poll(
@@ -156,8 +158,9 @@ test.describe('Optimization Theories board', () => {
     });
 
     await page.goto('/proposals', { waitUntil: 'load' });
+    await page.getByTestId(`theory-row-${theoryId}`).click();
 
-    const promote = page.getByTestId(`theory-promote-btn-${theoryId}`);
+    const promote = page.getByTestId('proposal-promote-btn');
     await expect(promote).toBeVisible();
     await promote.click();
 
@@ -173,19 +176,20 @@ test.describe('Optimization Theories board', () => {
   });
 });
 
-// A real, LLM-generated proposal still surfaces on the board: its winning theory is Validated and
-// links to the generated proposal. Generation runs only against a *completed* test run group and
-// hits a live model, so this is LLM-gated.
+// A real, LLM-generated proposal still surfaces on the review desk: its winning theory is
+// Validated and links to the generated proposal. Generation runs only against a *completed* test
+// run group and hits a live model, so this is LLM-gated.
 test.describe('@llm optimizer pipeline', () => {
   test.skip(!process.env.OPENAI_API_KEY, 'requires OPENAI_API_KEY env var');
 
-  // Exercises the real optimizer → theory → A/B validation → board pipeline end to end. We assert
-  // the deterministic, meaningful outcome: from a failing run, the optimizer surfaces a theory that
-  // *completes validation* (reaches a terminal Validated/Invalidated state) and renders on the
-  // board. We deliberately do NOT assert that a proposal is produced — whether the A/B *wins*
-  // depends on the model exactly-matching a string, which is inherently non-deterministic. (Earlier
-  // this whole pipeline hung on an optimistic-concurrency conflict in the A/B run; this guards it.)
-  test('optimizer surfaces a theory that completes validation on the board', async ({ page, request }) => {
+  // Exercises the real optimizer → theory → A/B validation → review-desk pipeline end to end. We
+  // assert the deterministic, meaningful outcome: from a failing run, the optimizer surfaces a
+  // theory that *completes validation* (reaches a terminal Validated/Invalidated state) and
+  // renders in the queue. We deliberately do NOT assert that a proposal is produced — whether the
+  // A/B *wins* depends on the model exactly-matching a string, which is inherently
+  // non-deterministic. (Earlier this whole pipeline hung on an optimistic-concurrency conflict in
+  // the A/B run; this guards it.)
+  test('optimizer surfaces a theory that completes validation on the review desk', async ({ page, request }) => {
     test.setTimeout(180_000);
 
     const api = new ProxytraceApiClient(request);
@@ -221,12 +225,14 @@ test.describe('@llm optimizer pipeline', () => {
     // state at all proves the A/B validation ran to completion (the concurrency bug would have
     // aborted it).
     let theoryId: string | undefined;
+    let terminalStatus: string | undefined;
     await expect
       .poll(
         async () => {
           const theories = await api.getTheories({ agentId: agent.id });
           const terminal = theories.find((t) => t.status === 'Validated' || t.status === 'Invalidated');
           theoryId = terminal?.id;
+          terminalStatus = terminal?.status;
           return terminal?.status;
         },
         { timeout: 120_000, intervals: [3_000], message: 'optimizer theory never completed validation' },
@@ -234,8 +240,12 @@ test.describe('@llm optimizer pipeline', () => {
       .toMatch(/Validated|Invalidated/);
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await expect(page.getByTestId('theory-board')).toBeVisible();
+    await expect(page.getByTestId('review-desk')).toBeVisible();
     expect(theoryId, 'a validated/invalidated theory id should be available').toBeTruthy();
-    await expect(page.getByTestId(`theory-card-${theoryId}`)).toBeVisible({ timeout: 15_000 });
+    // An invalidated theory lands in the collapsed History group — expand it before asserting.
+    if (terminalStatus === 'Invalidated') {
+      await page.getByTestId('queue-history-toggle').click();
+    }
+    await expect(page.getByTestId(`theory-row-${theoryId}`)).toBeVisible({ timeout: 15_000 });
   });
 });
