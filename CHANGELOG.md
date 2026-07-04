@@ -11,6 +11,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Ask Tracey everywhere.** Context-aware ⚡ *Ask Tracey* buttons now appear throughout the
+  app — on a trace's detail drawer (anomaly-aware: flagged traces ask *why did this anomaly
+  happen and how do we prevent it*, with the detector hits passed along), on an agent's header
+  (pass-rate-aware: agents with weak suites ask for an improvement to A/B-test), on a test
+  run's header (explain the failures and suggest fixes), on a theory's drawer (walk through the
+  proposal and recommend accept/reject), and on the Anomalies and Dashboard pages (project-wide
+  investigation / health review). Clicking one jumps to Tracey AI and starts a fresh
+  conversation pre-loaded with the entity's context; the previous conversation is kept in the
+  history rail.
+
 - **Real-time blocking anomaly detectors.** A custom anomaly detector can now also **block**: turn
   on *Block matching requests at the proxy* and the proxy checks each incoming request's body
   against the detector's phrase/regex triggers **before forwarding** — on a match the request is
