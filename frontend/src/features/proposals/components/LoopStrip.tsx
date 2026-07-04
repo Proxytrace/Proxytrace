@@ -46,7 +46,7 @@ export function LoopStrip({ stats, onJump }: Props) {
         </span>
       ))}
       {stats.provenGainPt > 0 && (
-        <span className="mono ml-2 inline-flex items-center gap-1.5 text-body-sm font-semibold text-success" data-testid="loop-proven-gain">
+        <span className="mono ml-auto inline-flex items-center gap-1.5 pl-2 text-body-sm font-semibold text-success" data-testid="loop-proven-gain">
           +{stats.provenGainPt}<Trans>pt</Trans>
           <span className="font-normal text-muted">
             <Trans>proven</Trans>

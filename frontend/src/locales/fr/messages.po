@@ -975,9 +975,6 @@ msgstr "Toutes les Proposal"
 msgid "All runs"
 msgstr "Tous les runs"
 
-msgid "All security and lifecycle events across the workspace."
-msgstr "Tous les événements de sécurité et de cycle de vie dans l'espace de travail."
-
 msgid "All suites"
 msgstr "Tous les suites"
 
@@ -1126,9 +1123,6 @@ msgstr "Code d'authentification"
 
 msgid "Auto"
 msgstr "Auto"
-
-msgid "Auto-generated"
-msgstr "Auto-généré"
 
 #. placeholder {0}: traces.length
 msgid "auto-refresh · {0} most recent"
@@ -1993,9 +1987,6 @@ msgstr "ERREUR"
 msgid "Error log"
 msgstr "Journal d'erreurs"
 
-msgid "Error Log"
-msgstr "Journal d'erreurs"
-
 msgid "Error message required"
 msgstr "Message d'erreur requis"
 
@@ -2196,9 +2187,6 @@ msgstr "Signaler les calls de l’Agent qui s’écartent du comportement récen
 
 msgid "Flag the turn when the assistant promises a refund without approval."
 msgstr "Signalez le tour lorsque l’Assistant promet un remboursement sans approbation."
-
-msgid "Flagged agent calls over time, and the agents that need the most attention."
-msgstr "Appels Agent signalés au fil du temps, et les Agents qui nécessitent le plus d’attention."
 
 msgid "Flagged calls"
 msgstr "Appels signalés"
@@ -2580,9 +2568,6 @@ msgstr "Distribution de la latence"
 msgid "Latency stats appear after traces arrive."
 msgstr "Les statistiques de latence apparaissent après l’arrivée des Traces."
 
-msgid "Latest application errors and critical failures captured across the backend."
-msgstr "Les dernières erreurs applicatives et pannes critiques capturées dans le backend."
-
 msgid "latest suite run"
 msgstr "dernière exécution de Suite"
 
@@ -2748,12 +2733,6 @@ msgstr "Faible taux de cache hit"
 
 msgid "Manage"
 msgstr "Gérer"
-
-msgid "Manage how you sign in to your account."
-msgstr "Gérez la façon dont vous vous connectez à votre compte."
-
-msgid "Manage roles, project access, and invitations."
-msgstr "Gérez les rôles, l’accès aux projets et les invitations."
 
 msgid "Manage this installation's license key."
 msgstr "Gérez la clé de licence de cette installation."
@@ -3841,9 +3820,6 @@ msgstr "Protégez votre compte avec un code à usage unique basé sur le temps d
 msgid "proven"
 msgstr "prouvé"
 
-msgid "Proven changes waiting for your decision — validated by A/B tests on your own benchmarks."
-msgstr "Changements prouvés en attente de votre décision — validés par des A/B test sur vos propres benchmarks."
-
 msgid "Provide result"
 msgstr "Fournir le résultat"
 
@@ -4416,9 +4392,6 @@ msgstr "Secrets renseignés rétroactivement"
 
 msgid "Security"
 msgstr "Sécurité"
-
-msgid "Security and lifecycle events for this project."
-msgstr "Événements de sécurité et de cycle de vie pour ce projet."
 
 msgid "Security and lifecycle events will appear here as they occur."
 msgstr "Les événements de sécurité et de cycle de vie apparaîtront ici au fur et à mesure."

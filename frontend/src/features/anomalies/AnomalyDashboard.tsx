@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../lib/cn';
 import { Tabs } from '../../components/ui/Tabs';
 import { RequiresFeature } from '../../components/license/RequiresFeature';
@@ -28,24 +28,17 @@ export default function AnomalyDashboard() {
       className={cn('w-full min-w-0 flex flex-col gap-4', tab === TABS.detectors && 'h-full min-h-0')}
       data-testid="anomaly-dashboard"
     >
-      <header className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-h1 font-semibold text-primary"><Trans>Anomalies</Trans></h1>
-          <p className="text-body-sm text-muted mt-1">
-            <Trans>Flagged agent calls over time, and the agents that need the most attention.</Trans>
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        <Tabs
+          value={tab}
+          onChange={v => setTab(v as TabValue)}
+          items={[
+            { value: TABS.overview, label: t`Overview`, 'data-testid': 'anomaly-tab-overview' },
+            { value: TABS.detectors, label: t`Detectors`, 'data-testid': 'anomaly-tab-detectors' },
+          ]}
+        />
         <AskTraceyButton data-testid="ask-tracey-btn-anomalies" prompt={anomaliesOverviewPrompt()} />
-      </header>
-
-      <Tabs
-        value={tab}
-        onChange={v => setTab(v as TabValue)}
-        items={[
-          { value: TABS.overview, label: t`Overview`, 'data-testid': 'anomaly-tab-overview' },
-          { value: TABS.detectors, label: t`Detectors`, 'data-testid': 'anomaly-tab-detectors' },
-        ]}
-      />
+      </div>
 
       {tab === TABS.overview && <AnomalyOverview />}
       {tab === TABS.detectors && (

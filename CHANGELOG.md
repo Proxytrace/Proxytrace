@@ -86,6 +86,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Compact page layouts everywhere.** The remaining pages that still opened with a large
+  title and subtitle — Proposals, Anomalies, Error Log, Audit Log, Users, and Account
+  security — now start directly with their content (the top bar's breadcrumb already names
+  the page). Filters and actions that lived in those headers moved into the pages' toolbars.
+
 - **The Proposals page is now a review desk.** The four-column theory kanban (whose first two
   columns sat empty most of the time) is replaced by a master/detail decision inbox. A queue
   rail groups theories by urgency — *Needs decision* first, then *Awaiting adoption*, live

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { ChevronRightIcon, SparklesIcon } from '../../components/icons';
+import { ChevronRightIcon } from '../../components/icons';
 import { useSelectedId } from '../../hooks/useSelectedId';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { agentColor } from '../../lib/colors';
@@ -82,19 +82,8 @@ export default function Proposals() {
 
   return (
     <div className="flex w-full min-w-0 flex-1 flex-col gap-3.5 min-h-0">
-      {/* Header */}
-      <div className="fade-up flex flex-wrap items-start justify-between gap-x-4 gap-y-2 shrink-0">
-        <div>
-          <div className="mb-1.5 flex items-center gap-2.5">
-            <h1 className="m-0 text-h1 font-semibold leading-none tracking-[-0.02em]"><Trans>Optimization proposals</Trans></h1>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[image:linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_20%,transparent),color-mix(in_srgb,var(--teal)_12%,transparent))] px-2 py-0.5 text-body-sm font-semibold text-accent-hover">
-              <SparklesIcon size={11} /> <Trans>Auto-generated</Trans>
-            </span>
-          </div>
-          <p className="m-0 text-body-sm text-muted">
-            <Trans>Proven changes waiting for your decision — validated by A/B tests on your own benchmarks.</Trans>
-          </p>
-        </div>
+      {/* Title bar: the loop strip is the page's header */}
+      <div className="fade-up shrink-0 rounded-lg bg-card px-3 py-2 shadow-[var(--shadow-card)]">
         <LoopStrip stats={stats} onJump={jumpToGroup} />
       </div>
 

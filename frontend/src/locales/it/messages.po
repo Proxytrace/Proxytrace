@@ -975,9 +975,6 @@ msgstr "Tutte le proposal"
 msgid "All runs"
 msgstr "Tutti i Run"
 
-msgid "All security and lifecycle events across the workspace."
-msgstr "Tutti gli eventi di sicurezza e ciclo di vita nell'area di lavoro."
-
 msgid "All suites"
 msgstr "Tutte le Suite"
 
@@ -1126,9 +1123,6 @@ msgstr "Codice di autenticazione"
 
 msgid "Auto"
 msgstr "Automatico"
-
-msgid "Auto-generated"
-msgstr "Generato automaticamente"
 
 #. placeholder {0}: traces.length
 msgid "auto-refresh · {0} most recent"
@@ -1993,9 +1987,6 @@ msgstr "ERRORE"
 msgid "Error log"
 msgstr "Registro errori"
 
-msgid "Error Log"
-msgstr "Registro Errori"
-
 msgid "Error message required"
 msgstr "Il messaggio di errore è obbligatorio"
 
@@ -2196,9 +2187,6 @@ msgstr "Segnala le chiamate dell'Agent che si discostano dal comportamento recen
 
 msgid "Flag the turn when the assistant promises a refund without approval."
 msgstr "Segnala il turno quando l'Assistant promette un rimborso senza approvazione."
-
-msgid "Flagged agent calls over time, and the agents that need the most attention."
-msgstr "Le chiamate agent segnalate nel tempo, e gli agent che richiedono più attenzione."
 
 msgid "Flagged calls"
 msgstr "Chiamate segnalate"
@@ -2580,9 +2568,6 @@ msgstr "Distribuzione della latenza"
 msgid "Latency stats appear after traces arrive."
 msgstr "Le statistiche di latenza appaiono dopo l'arrivo dei Trace."
 
-msgid "Latest application errors and critical failures captured across the backend."
-msgstr "Gli ultimi errori dell'applicazione e i guasti critici rilevati nel backend."
-
 msgid "latest suite run"
 msgstr "ultimo run suite"
 
@@ -2748,12 +2733,6 @@ msgstr "Basso tasso di cache hit"
 
 msgid "Manage"
 msgstr "Gestisci"
-
-msgid "Manage how you sign in to your account."
-msgstr "Gestisci come accedi al tuo account."
-
-msgid "Manage roles, project access, and invitations."
-msgstr "Gestisci ruoli, accesso ai progetti e inviti."
 
 msgid "Manage this installation's license key."
 msgstr "Gestisci la chiave di licenza di questa installazione."
@@ -3841,9 +3820,6 @@ msgstr "Proteggi il tuo account con un codice monouso basato sul tempo da un'app
 msgid "proven"
 msgstr "dimostrato"
 
-msgid "Proven changes waiting for your decision — validated by A/B tests on your own benchmarks."
-msgstr "Modifiche dimostrate in attesa della tua decisione — validate da A/B test sui tuoi benchmark."
-
 msgid "Provide result"
 msgstr "Fornisci risultato"
 
@@ -4416,9 +4392,6 @@ msgstr "Secret retrocompilati"
 
 msgid "Security"
 msgstr "Sicurezza"
-
-msgid "Security and lifecycle events for this project."
-msgstr "Eventi di sicurezza e ciclo di vita per questo project."
 
 msgid "Security and lifecycle events will appear here as they occur."
 msgstr "Gli eventi di sicurezza e ciclo di vita appariranno qui man mano che si verificano."

@@ -975,9 +975,6 @@ msgstr "All proposals"
 msgid "All runs"
 msgstr "All runs"
 
-msgid "All security and lifecycle events across the workspace."
-msgstr "All security and lifecycle events across the workspace."
-
 msgid "All suites"
 msgstr "All suites"
 
@@ -1126,9 +1123,6 @@ msgstr "Authentication code"
 
 msgid "Auto"
 msgstr "Auto"
-
-msgid "Auto-generated"
-msgstr "Auto-generated"
 
 #. placeholder {0}: traces.length
 msgid "auto-refresh · {0} most recent"
@@ -1993,9 +1987,6 @@ msgstr "ERROR"
 msgid "Error log"
 msgstr "Error log"
 
-msgid "Error Log"
-msgstr "Error Log"
-
 msgid "Error message required"
 msgstr "Error message required"
 
@@ -2196,9 +2187,6 @@ msgstr "Flag agent calls that deviate from their agent's recent behaviour."
 
 msgid "Flag the turn when the assistant promises a refund without approval."
 msgstr "Flag the turn when the assistant promises a refund without approval."
-
-msgid "Flagged agent calls over time, and the agents that need the most attention."
-msgstr "Flagged agent calls over time, and the agents that need the most attention."
 
 msgid "Flagged calls"
 msgstr "Flagged calls"
@@ -2580,9 +2568,6 @@ msgstr "Latency distribution"
 msgid "Latency stats appear after traces arrive."
 msgstr "Latency stats appear after traces arrive."
 
-msgid "Latest application errors and critical failures captured across the backend."
-msgstr "Latest application errors and critical failures captured across the backend."
-
 msgid "latest suite run"
 msgstr "latest suite run"
 
@@ -2748,12 +2733,6 @@ msgstr "Low cache hit"
 
 msgid "Manage"
 msgstr "Manage"
-
-msgid "Manage how you sign in to your account."
-msgstr "Manage how you sign in to your account."
-
-msgid "Manage roles, project access, and invitations."
-msgstr "Manage roles, project access, and invitations."
 
 msgid "Manage this installation's license key."
 msgstr "Manage this installation's license key."
@@ -3841,9 +3820,6 @@ msgstr "Protect your account with a time-based one-time code from an authenticat
 msgid "proven"
 msgstr "proven"
 
-msgid "Proven changes waiting for your decision — validated by A/B tests on your own benchmarks."
-msgstr "Proven changes waiting for your decision — validated by A/B tests on your own benchmarks."
-
 msgid "Provide result"
 msgstr "Provide result"
 
@@ -4416,9 +4392,6 @@ msgstr "Secrets Backfilled"
 
 msgid "Security"
 msgstr "Security"
-
-msgid "Security and lifecycle events for this project."
-msgstr "Security and lifecycle events for this project."
 
 msgid "Security and lifecycle events will appear here as they occur."
 msgstr "Security and lifecycle events will appear here as they occur."
