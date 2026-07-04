@@ -65,7 +65,10 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
 
     /// <summary>
     /// Returns the distinct tool names requested by any call in the given project, sorted
-    /// alphabetically. Backs the traces filter's tool-name picker.
+    /// alphabetically. Backs the traces filter's tool-name picker. When <paramref name="agentId"/>
+    /// is supplied, the result is scoped to that agent's calls — so an active agent filter only
+    /// offers tools that agent actually used.
     /// </summary>
-    Task<IReadOnlyList<string>> GetToolNamesAsync(Guid projectId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> GetToolNamesAsync(
+        Guid projectId, Guid? agentId = null, CancellationToken cancellationToken = default);
 }

@@ -123,10 +123,12 @@ Set the connection string in:
 - **Per-call tool-name projection (`AgentCallToolEntity`).** A storage-only child of `AgentCallEntity`
   (no domain counterpart, same rule as junction entities — see [`domain-entities.md`](domain-entities.md))
   with one row per distinct tool name the response requested, written at ingestion from
-  `AgentCallConfig.Map`. `ProjectId` is denormalised from the agent version so the tool-name picker's
-  `DISTINCT` query (`GetToolNamesAsync`) stays single-table. Two indexes back it:
-  `(ProjectId, ToolName)` for the picker and `(ToolName, AgentCallId)` for the `ToolName` filter's
-  `EXISTS` semi-join (`BuildFilteredQueryAsync`). Unlike the bare-record junction entities
+  `AgentCallConfig.Map`. `ProjectId` **and** `AgentId` are denormalised from the agent version so the
+  tool-name picker's `DISTINCT` query (`GetToolNamesAsync`) stays single-table — both project-wide and
+  when an agent filter is active (`GetToolNamesAsync(projectId, agentId)` scopes the picker to that
+  agent's tools). Three indexes back it: `(ProjectId, ToolName)` for the project-wide picker,
+  `(ProjectId, AgentId, ToolName)` for the agent-scoped picker, and `(ToolName, AgentCallId)` for the
+  `ToolName` filter's `EXISTS` semi-join (`BuildFilteredQueryAsync`). Unlike the bare-record junction entities
   (`TestSuiteEvaluatorEntity` et al.), `AgentCallToolEntity` extends `Entity` — it needs its own `Id`
   as a real per-row projection, not a composite-key join — so it is picked up automatically by
   `Module.ConfigureEntities`' assembly scan and is **not** listed among the explicit
@@ -352,6 +354,15 @@ The `AddAgentCallTool` migration adds the `AgentCallToolEntity` table (see
 columns and its two composite indexes. Going-forward only — existing traces get no rows backfilled,
 so their tool requests (if any) are invisible to the `ToolName` filter and tool-name picker until
 they are re-ingested; `ResponseToolRequestCount` (unaffected by this migration) still reflects them.
+
+The `AddAgentCallToolAgentId` migration adds the non-nullable `AgentCallToolEntity.AgentId` column
+(denormalised from the agent version, like `ProjectId`) plus the `(ProjectId, AgentId, ToolName)`
+index, so the tool-name picker can scope to a single agent as a single-table index-only `DISTINCT`
+(no join to the high-volume call table) when an agent filter is active. Unlike `AddAgentCallTool`,
+this one **backfills**: the column is added with a temporary empty-`uuid` default (so it lands on
+existing tool rows), a SQL `UPDATE … FROM "AgentCallEntity" … "AgentVersionEntity"` sets each row's
+`AgentId` from its call's version, then the default is dropped so the column matches the model. On a
+fresh install the tool table is empty at this point, so the backfill is a no-op. PostgreSQL-only.
 
 The `NormalizeUserEmail` migration is **data-only** — it lowercases pre-existing rows so they match
 the new write-normalization (`Up`: `UPDATE "UserEntity" SET "Email" = lower("Email") WHERE "Email" <>

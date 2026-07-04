@@ -488,13 +488,24 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<string>> GetToolNamesAsync(Guid projectId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetToolNamesAsync(
+        Guid projectId, Guid? agentId = null, CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
-        return await context.Set<AgentCallToolEntity>()
+        var query = context.Set<AgentCallToolEntity>()
             .AsNoTracking()
             // Blank names are backfill markers (see AgentCallToolBackfillService), not real tools.
-            .Where(t => t.ProjectId == projectId && t.ToolName != string.Empty)
+            .Where(t => t.ProjectId == projectId && t.ToolName != string.Empty);
+
+        // Scope to one agent when a filter is active. AgentId is denormalised onto the tool row, so
+        // this stays a single-table index-only DISTINCT (the (ProjectId, AgentId, ToolName) index) —
+        // no join to the high-volume call table.
+        if (agentId.HasValue)
+        {
+            query = query.Where(t => t.AgentId == agentId.Value);
+        }
+
+        return await query
             .Select(t => t.ToolName)
             .Distinct()
             .OrderBy(n => n)

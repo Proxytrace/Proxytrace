@@ -99,15 +99,16 @@ internal sealed class AgentCallToolBackfillService : IHostedService
             await using var owned = contextFactory();
             var db = owned.Value;
 
-            // ProjectId is denormalised onto each tool row (see AgentCallToolEntity), so join the
-            // call's agent version to recover it — exactly what ingestion reads from the domain graph.
+            // ProjectId and AgentId are denormalised onto each tool row (see AgentCallToolEntity), so
+            // join the call's agent version to recover them — exactly what ingestion reads from the
+            // domain graph.
             var batch = await (
                     from call in db.Set<AgentCallEntity>()
                     join version in db.Set<AgentVersionEntity>() on call.AgentVersionId equals version.Id
                     where call.ResponseToolRequestCount > 0
                           && !db.Set<AgentCallToolEntity>().Any(t => t.AgentCallId == call.Id)
                     orderby call.CreatedAt
-                    select new { call.Id, call.Response, call.CreatedAt, call.UpdatedAt, version.Project })
+                    select new { call.Id, call.Response, call.CreatedAt, call.UpdatedAt, version.Project, version.AgentId })
                 .Take(batchSize)
                 .ToListAsync(cancellationToken);
 
@@ -129,6 +130,7 @@ internal sealed class AgentCallToolBackfillService : IHostedService
                     Id = Guid.NewGuid(),
                     AgentCallId = row.Id,
                     ProjectId = row.Project,
+                    AgentId = row.AgentId,
                     ToolName = name,
                     CreatedAt = row.CreatedAt,
                     UpdatedAt = row.UpdatedAt,

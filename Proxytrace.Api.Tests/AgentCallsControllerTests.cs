@@ -195,7 +195,20 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
         await SeedCallWithToolsAsync(services, agent, ["web_search", "get_weather"]);
 
-        var names = await controller.GetToolNames(agent.Project.Id, CancellationToken);
+        var names = await controller.GetToolNames(agent.Project.Id, cancellationToken: CancellationToken);
+
+        names.Should().Equal("get_weather", "web_search");
+    }
+
+    [TestMethod]
+    public async Task GetToolNames_WithAgentId_ScopesToThatAgent()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        await SeedCallWithToolsAsync(services, agent, ["web_search", "get_weather"]);
+
+        var names = await controller.GetToolNames(agent.Project.Id, agent.Id, CancellationToken);
 
         names.Should().Equal("get_weather", "web_search");
     }
@@ -208,7 +221,7 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         await SeedCallWithToolsAsync(services, agent, ["web_search"]);
         var controller = ResolveController(services, DenyingGuard());
 
-        var names = await controller.GetToolNames(agent.Project.Id, CancellationToken);
+        var names = await controller.GetToolNames(agent.Project.Id, cancellationToken: CancellationToken);
 
         names.Should().BeEmpty();
     }

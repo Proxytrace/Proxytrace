@@ -44,21 +44,26 @@ Typical things you can do:
   it's known), so the displayed **cost** already reflects the discount.
 ![The composable filter bar: an Agent chip and an "Any anomaly" chip stacked above the table, with the timeline and page summary following the filtered set.](/screenshots/traces/filters.png)
 
-- **Filters** compose through the **+ Filter** button below the toolbar. Pick a field, pick a
-  value, and the filter appears as a removable chip; add as many as you need — they combine
-  (a trace must match every chip). Click a chip to change its value or remove it; **Clear all**
-  drops every chip at once. Available filters:
+- **Filters** compose through the **+ Filter** button on the toolbar line, beside search and
+  the time range. Pick a field, pick a value, and the filter appears as a removable chip on the
+  row below; add as many as you need — they combine (a trace must match every chip). Click a
+  chip to change its value or remove it; **Clear all** drops every chip at once. Available
+  filters:
   - **Agent** — focus on one agent. Only agents that actually have traces in the selected
     time range are listed.
   - **Anomaly** — only flagged traces: **Any anomaly**, or a specific reason (high tokens,
     high latency, low cache hit, many tool calls, or a
     [custom detector](/guide/anomaly-dashboard#custom-anomaly-detectors) hit).
   - **Tool** — traces whose response requested a given tool, picked from the tools seen in
-    this project.
+    this project. With an **Agent** filter active, the list narrows to just the tools that
+    agent actually used, so you never pick a tool that would return nothing.
   - **Model** — model name contains the text you enter.
   - **Status** — the HTTP status class (2xx / 4xx / 5xx).
   - **Tokens** / **Latency** — numeric bounds (min, max, or both), e.g. every call over
     2,000 ms or above 10k total tokens.
+  - **System traces** — a toggle rather than a value filter: turn it on to *include* traces
+    from Proxytrace's own system agents (hidden by default). While on it shows as a
+    **System traces** chip; remove the chip (or **Clear all**) to hide them again.
 - **Search** matches anywhere inside captured message content (and the response), not just
   at the start of a word — searching `efund` finds a trace mentioning `refund`. You can also
   search by model name or the short trace ID.
@@ -95,8 +100,8 @@ hovering a bar shows its exact time, count, and error count.
 
 If you zoom into a window with no traces, the strip stays put (showing *"No traces in this
 range"*) so you can always scroll back out.
-- The timeline reflects the **same filters** as the table — search, the system-trace toggle,
-  and every filter chip — so its shape always matches what you're looking at.
+- The timeline reflects the **same filters** as the table — search, the time range, and every
+  filter chip (including **System traces**) — so its shape always matches what you're looking at.
 
 ### The time-range picker
 
@@ -108,11 +113,11 @@ all-time.
 
 When you **first** open Traces, the range automatically snaps to the smallest quick range that
 still contains data, so you never land on an empty view. After that, your filter bar — time
-range, search, the system-trace toggle, the column sort, and every filter chip — is
+range, search, the **System traces** setting, the column sort, and every filter chip — is
 **remembered in your browser**, so it survives a refresh or navigating away and back. The
 auto-snap only runs until you have a saved range; once you've picked one it is always restored.
-The filter chips are remembered **per project** (agents and tools belong to a project), while
-the time range, search, sort, and toggle are shared across projects.
+The value filter chips are remembered **per project** (agents and tools belong to a project),
+while the time range, search, sort, and the System traces setting are shared across projects.
 
 ### The trace detail panel
 

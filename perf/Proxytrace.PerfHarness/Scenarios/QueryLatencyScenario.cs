@@ -81,7 +81,7 @@ internal static class QueryLatencyScenario
         // tool-name picker that feeds the filter's options.
         if (projectId is { } toolProjectId)
         {
-            var toolNames = await callRepo.GetToolNamesAsync(toolProjectId, cancellationToken);
+            var toolNames = await callRepo.GetToolNamesAsync(toolProjectId, cancellationToken: cancellationToken);
             if (toolNames.Count > 0)
             {
                 string toolName = toolNames[0];
@@ -94,7 +94,12 @@ internal static class QueryLatencyScenario
             }
 
             await Measure("agentCallToolNames",
-                () => callRepo.GetToolNamesAsync(toolProjectId, cancellationToken));
+                () => callRepo.GetToolNamesAsync(toolProjectId, cancellationToken: cancellationToken));
+
+            // Agent-scoped picker: the tool list shown when an agent filter is active. AgentId is
+            // denormalised onto the tool row, so this stays a single-table index-only DISTINCT.
+            await Measure("agentCallToolNamesByAgent",
+                () => callRepo.GetToolNamesAsync(toolProjectId, agentId, cancellationToken));
         }
 
         // Dashboard statistics aggregations.

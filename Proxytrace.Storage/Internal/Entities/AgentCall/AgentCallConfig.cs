@@ -173,6 +173,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
                         Id = Guid.NewGuid(),
                         AgentCallId = domain.Id,
                         ProjectId = domain.Version.ProjectId,
+                        AgentId = domain.Version.AgentId,
                         ToolName = name,
                         CreatedAt = domain.CreatedAt,
                         UpdatedAt = domain.UpdatedAt,

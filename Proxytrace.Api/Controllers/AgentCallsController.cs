@@ -135,16 +135,18 @@ public class AgentCallsController : ControllerBase
 
     /// <summary>
     /// Distinct tool names requested by any trace in the project — backs the traces filter's
-    /// tool-name picker. Empty when the caller cannot access the project.
+    /// tool-name picker. When <paramref name="agentId"/> is supplied (an agent filter is active),
+    /// the list is scoped to that agent's traces. Empty when the caller cannot access the project.
     /// </summary>
     [HttpGet("tool-names")]
     public async Task<IReadOnlyList<string>> GetToolNames(
         [FromQuery] Guid projectId,
+        [FromQuery] Guid? agentId = null,
         CancellationToken cancellationToken = default)
     {
-        if (!await CanListAsync(projectId, null, cancellationToken))
+        if (!await CanListAsync(projectId, agentId, cancellationToken))
             return [];
-        return await repository.GetToolNamesAsync(projectId, cancellationToken);
+        return await repository.GetToolNamesAsync(projectId, agentId, cancellationToken);
     }
 
     /// <summary>

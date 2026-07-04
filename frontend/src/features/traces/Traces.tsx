@@ -7,6 +7,7 @@ import { buildRows, hasActiveTraceFilters } from './tracesMeta';
 import type { TraceAdvancedFilters, TraceRow, TraceSortField } from './tracesMeta';
 import { useTraceAdvancedFilters } from './hooks/useTraceAdvancedFilters';
 import { TraceFilterBar } from './components/TraceFilterBar';
+import { TraceFilterPicker } from './components/TraceFilterPicker';
 import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRange';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
@@ -159,6 +160,8 @@ export default function Traces() {
 
   function handleClearAdvanced() {
     clearAdvanced();
+    // The system-traces view toggle now reads as a filter chip, so "Clear all" drops it too.
+    setShowSystem(false);
     setPage(1);
   }
 
@@ -218,10 +221,17 @@ export default function Traces() {
       <TraceToolbar
         search={search}
         timeRange={timeRange}
-        showSystem={showSystem}
         onSearchChange={handleSearchChange}
         onTimeRangeChange={handleTimeRangeChange}
-        onShowSystemChange={handleShowSystemChange}
+        trailing={
+          <TraceFilterPicker
+            agents={agents}
+            filters={advanced}
+            onChange={handleAdvancedChange}
+            showSystem={showSystem}
+            onShowSystemChange={handleShowSystemChange}
+          />
+        }
       />
 
       <TraceFilterBar
@@ -229,6 +239,8 @@ export default function Traces() {
         filters={advanced}
         onChange={handleAdvancedChange}
         onClearAll={handleClearAdvanced}
+        showSystem={showSystem}
+        onShowSystemChange={handleShowSystemChange}
       />
 
       {/* Keep the timeline mounted whenever the window is concrete — even if it holds no traces

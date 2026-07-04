@@ -15,8 +15,12 @@ internal class AgentCallToolConfig : AbstractEntityConfiguration<AgentCallToolEn
             .HasForeignKey(t => t.AgentCallId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Serves the tool-name picker's DISTINCT query (project-scoped, index-only scan).
+        // Serves the tool-name picker's project-wide DISTINCT query (index-only scan).
         builder.HasIndex(t => new { t.ProjectId, t.ToolName });
+
+        // Serves the tool-name picker's agent-scoped DISTINCT query (agent filter active) — keeps it
+        // single-table + index-only, mirroring the project-wide index above.
+        builder.HasIndex(t => new { t.ProjectId, t.AgentId, t.ToolName });
 
         // Serves the EXISTS filter semi-join (AgentCallId == e.Id && ToolName == filter.ToolName).
         builder.HasIndex(t => new { t.ToolName, t.AgentCallId });

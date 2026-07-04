@@ -15,10 +15,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   metric column — Latency, Tokens, Tools, Cached, or Time — with a click on the column header
   (click again to flip direction); sorting is server-side, so "slowest call" means across all
   matching traces, not just the visible page. The toolbar's agent dropdown and "Outliers only"
-  pill are replaced by a composable **+ Filter** bar: stack removable filter chips for agent,
-  anomaly type (any, or a specific reason like high latency or a custom-detector hit), tool
-  name (picked from the tools your traces actually called), model, HTTP status class
-  (2xx/4xx/5xx), and token/latency ranges. Filters combine, the timeline follows them, and
+  pill are replaced by a composable **+ Filter** button that sits on the toolbar line beside
+  search and the time range: stack removable filter chips for agent, anomaly type (any, or a
+  specific reason like high latency or a custom-detector hit), tool name (picked from the tools
+  your traces actually called — and once you've picked an agent, only the tools *that* agent
+  used), model, HTTP status class (2xx/4xx/5xx), token/latency ranges,
+  and **System traces** (include traces from system agents — chosen from **+ Filter** instead
+  of a separate toggle). Filters combine, the timeline follows them, and
   your chips are remembered per project. Traces captured before this release are indexed
   automatically on upgrade so the tool-name filter covers them too.
 

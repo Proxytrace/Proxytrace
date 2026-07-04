@@ -1,25 +1,25 @@
+import type { ReactNode } from 'react';
 import { SearchIcon } from '../../../components/icons';
 import { TimeRangePicker } from '../../../components/ui/TimeRangePicker';
 import { Input } from '../../../components/ui/Input';
 import type { TimeRange } from '../../../lib/timeRange';
-import { Trans, useLingui } from '@lingui/react/macro';
-import { FilterTogglePill } from './FilterTogglePill';
+import { useLingui } from '@lingui/react/macro';
 
 interface Props {
   search: string;
   timeRange: TimeRange;
-  showSystem: boolean;
   onSearchChange: (v: string) => void;
   onTimeRangeChange: (r: TimeRange) => void;
-  onShowSystemChange: (v: boolean) => void;
+  /** Trailing controls on the same line — the "+ Filter" picker sits here (see TraceFilterPicker). */
+  trailing?: ReactNode;
 }
 
 /**
- * The always-visible toolbar row: search, time range, and the system-traces view toggle.
- * Everything else (agent, anomaly, tool, model, status, numeric ranges) composes through the
- * TraceFilterBar chips rendered below.
+ * The always-visible toolbar row: search, time range, and the "+ Filter" picker (passed as
+ * `trailing`). Active filters — agent, tool, model, status, numeric ranges, and the system-traces
+ * view toggle — compose through that picker and surface as chips in TraceFilterBar below.
  */
-export function TraceToolbar({ search, timeRange, showSystem, onSearchChange, onTimeRangeChange, onShowSystemChange }: Props) {
+export function TraceToolbar({ search, timeRange, onSearchChange, onTimeRangeChange, trailing }: Props) {
   const { t } = useLingui();
   return (
     <div className="fade-up relative z-20 flex items-center gap-2 flex-wrap shrink-0 [animation-delay:80ms]">
@@ -35,13 +35,7 @@ export function TraceToolbar({ search, timeRange, showSystem, onSearchChange, on
 
       <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} testId="traces-time" />
 
-      <FilterTogglePill
-        checked={showSystem}
-        onChange={onShowSystemChange}
-        testId="traces-system-toggle"
-        title={showSystem ? t`Hide traces from system agents` : t`Show traces from system agents`}
-        label={<Trans>System Traces</Trans>}
-      />
+      {trailing}
     </div>
   );
 }

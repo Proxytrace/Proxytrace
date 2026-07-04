@@ -20,3 +20,12 @@ export async function removeTraceFilter(page: Page, field: string): Promise<void
   await page.getByTestId(`traces-filter-chip-${field}`).click();
   await page.getByTestId('traces-filter-remove').click();
 }
+
+/**
+ * Turns on "System traces" from the "+ Filter" picker. Unlike the value filters it's a boolean
+ * view toggle, so it flips on click and surfaces as a removable "System traces" chip.
+ */
+export async function toggleSystemTraces(page: Page): Promise<void> {
+  await page.getByTestId('traces-add-filter').click();
+  await page.getByTestId('traces-filter-field-system').click();
+}

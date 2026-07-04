@@ -63,9 +63,30 @@ public sealed class AgentCallToolTests : BaseTest<Module>
         await SeedCallWithToolsAsync(services, agent, ["web_search"]); // duplicate name — must not repeat in result
         await SeedCallWithToolsAsync(services, otherProjectAgent, ["send_email"]); // different project — must not leak
 
-        var names = await repo.GetToolNamesAsync(agent.Project.Id, CancellationToken);
+        var names = await repo.GetToolNamesAsync(agent.Project.Id, cancellationToken: CancellationToken);
 
         names.Should().Equal("get_weather", "web_search");
+    }
+
+    [TestMethod]
+    public async Task GetToolNamesAsync_WithAgentId_ReturnsOnlyThatAgentsTools()
+    {
+        IServiceProvider services = GetServices();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        // A second agent in the SAME project — so the scope must be by agent, not merely by project.
+        var otherAgent = await CreateAgentInProjectAsync(services, agent.Project, agent.Endpoint);
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+
+        await SeedCallWithToolsAsync(services, agent, ["web_search", "get_weather"]);
+        await SeedCallWithToolsAsync(services, agent, ["web_search"]); // duplicate — must not repeat
+        await SeedCallWithToolsAsync(services, otherAgent, ["send_email"]); // other agent — must not leak
+
+        var scoped = await repo.GetToolNamesAsync(agent.Project.Id, agent.Id, CancellationToken);
+        scoped.Should().Equal("get_weather", "web_search");
+
+        // The project-wide picker (no agent filter) still lists both agents' tools.
+        var projectWide = await repo.GetToolNamesAsync(agent.Project.Id, cancellationToken: CancellationToken);
+        projectWide.Should().Equal("get_weather", "send_email", "web_search");
     }
 
     [TestMethod]
@@ -86,6 +107,13 @@ public sealed class AgentCallToolTests : BaseTest<Module>
     {
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        return await CreateAgentInProjectAsync(services, project, endpoint);
+    }
+
+    // A fresh (random) system prompt gives a distinct version fingerprint, so a second agent in an
+    // existing project never collides on the per-project (Project, Fingerprint) unique index.
+    private async Task<IAgent> CreateAgentInProjectAsync(IServiceProvider services, IProject project, IModelEndpoint endpoint)
+    {
         var promptTemplate = await services.GetRequiredService<IDomainObjectGenerator<IPromptTemplate>>().CreateAsync(CancellationToken);
         var modelParameters = await services.GetRequiredService<IDomainObjectGenerator<IModelParameters>>().CreateAsync(CancellationToken);
         var agentRepository = services.GetRequiredService<IAgentRepository>();

@@ -2327,9 +2327,6 @@ msgstr "System-Agents ausblenden"
 msgid "Hide tools"
 msgstr "Tools ausblenden"
 
-msgid "Hide traces from system agents"
-msgstr "Traces von System-Agents ausblenden"
-
 msgid "High"
 msgstr "Hoch"
 
@@ -2410,6 +2407,9 @@ msgstr "Läuft"
 
 msgid "In production"
 msgstr "In Produktion"
+
+msgid "Including traces from system agents."
+msgstr "Inklusive Traces von System Agents."
 
 msgid "Incorrect password."
 msgstr "Falsches Passwort."
@@ -4626,9 +4626,6 @@ msgstr "System Agents anzeigen"
 msgid "Show the agents in this project"
 msgstr "Die Agents in diesem Projekt anzeigen"
 
-msgid "Show traces from system agents"
-msgstr "Traces von System Agents anzeigen"
-
 msgid "Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more."
 msgstr "Es werden die ersten {MOVE_CANDIDATE_FETCH_LIMIT} Agents angezeigt. Verfeinern Sie die Suche, um mehr zu finden."
 
@@ -4642,6 +4639,9 @@ msgstr "Es werden die {0} neuesten von {1} Runs angezeigt — öffnen Sie die Ru
 
 msgid "Showing the most recent buckets — narrow the range for the full window."
 msgstr "Es werden die neuesten Buckets angezeigt — schränken Sie den Bereich für das gesamte Fenster ein."
+
+msgid "Shown"
+msgstr "Angezeigt"
 
 msgid "Shown in full only once, when created"
 msgstr "Nur einmal vollständig angezeigt, bei der Erstellung"
@@ -4848,7 +4848,7 @@ msgstr "System Prompt"
 msgid "System Prompt diff"
 msgstr "System Prompt-Diff"
 
-msgid "System Traces"
+msgid "System traces"
 msgstr "System Traces"
 
 msgid "t/s"

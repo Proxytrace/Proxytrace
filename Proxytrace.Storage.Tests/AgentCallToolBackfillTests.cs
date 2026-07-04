@@ -37,6 +37,8 @@ public sealed class AgentCallToolBackfillTests : BaseTest<Module>
         var rows = await ReadToolRows(contextFactory, call.Id);
         rows.Select(r => r.ToolName).Should().BeEquivalentTo(["web_search", "get_weather"]);
         rows.Should().OnlyContain(r => r.ProjectId == agent.Project.Id);
+        // AgentId is denormalised on backfill too, so the agent-scoped picker sees pre-upgrade traces.
+        rows.Should().OnlyContain(r => r.AgentId == agent.Id);
     }
 
     [TestMethod]
@@ -89,7 +91,7 @@ public sealed class AgentCallToolBackfillTests : BaseTest<Module>
         await ReplaceResponse(contextFactory, call.Id, new AssistantMessage([Content.FromText("ok")], []));
         await services.GetRequiredService<AgentCallToolBackfillService>().BackfillAsync(CancellationToken);
 
-        (await repo.GetToolNamesAsync(agent.Project.Id, CancellationToken)).Should().BeEmpty();
+        (await repo.GetToolNamesAsync(agent.Project.Id, cancellationToken: CancellationToken)).Should().BeEmpty();
     }
 
     [TestMethod]

@@ -1,7 +1,7 @@
 import { test, expect } from '../helpers/fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
-import { addTraceFilter, removeTraceFilter, selectAgentFilter } from '../helpers/traces-ui';
+import { addTraceFilter, removeTraceFilter, selectAgentFilter, toggleSystemTraces } from '../helpers/traces-ui';
 
 // Traces table column sorting + composable filter bar (/traces).
 //
@@ -111,5 +111,45 @@ test.describe('Traces sorting + filter bar', () => {
     await page.getByTestId('traces-clear-filters').click();
     await expect(page.getByTestId(`trace-row-${withTool.id}`)).toBeVisible();
     await expect(page.getByTestId(`trace-row-${withoutTool.id}`)).toBeVisible();
+  });
+
+  test('the tool filter only offers tools the selected agent actually used', async ({ page, request }) => {
+    const client = await makeClient(request);
+    const agentA = await client.createAgent({ name: uniqueName('Tool Scope A'), endpointId });
+    const agentB = await client.createAgent({ name: uniqueName('Tool Scope B'), endpointId });
+    const toolA = `e2e_tool_a_${Date.now()}`;
+    const toolB = `e2e_tool_b_${Date.now()}`;
+    await client.seedAgentCall({ agentId: agentA.id, userContent: 'a', assistantContent: 'r', toolNames: [toolA] });
+    await client.seedAgentCall({ agentId: agentB.id, userContent: 'b', assistantContent: 'r', toolNames: [toolB] });
+
+    await page.goto('/traces', { waitUntil: 'load' });
+    await selectAgentFilter(page, agentA.id);
+    await expect(page.getByTestId('traces-filter-chip-agent')).toBeVisible();
+
+    // With agent A selected, the tool picker lists only agent A's tool — not agent B's.
+    await page.getByTestId('traces-add-filter').click();
+    await page.getByTestId('traces-filter-field-tool').click();
+    await expect(page.getByTestId(`traces-filter-option-${toolA}`)).toBeVisible();
+    await expect(page.getByTestId(`traces-filter-option-${toolB}`)).toHaveCount(0);
+  });
+
+  test('System traces is toggled on from + Filter as a chip; Clear all removes it', async ({ page, request }) => {
+    const client = await makeClient(request);
+    const { id: agentId } = await client.createAgent({ name: uniqueName('System Filter Agent'), endpointId });
+    await client.seedAgentCall({ agentId, userContent: 'hello', assistantContent: 'r' });
+
+    await page.goto('/traces', { waitUntil: 'load' });
+    await selectAgentFilter(page, agentId);
+    await expect(page.getByTestId('traces-filter-chip-agent')).toBeVisible();
+
+    // System traces lives in the same "+ Filter" picker as the value filters and, once on,
+    // surfaces as its own removable chip (no standalone toolbar toggle any more).
+    await toggleSystemTraces(page);
+    await expect(page.getByTestId('traces-filter-chip-system')).toBeVisible();
+
+    // "Clear all" drops every chip, including System traces.
+    await page.getByTestId('traces-clear-filters').click();
+    await expect(page.getByTestId('traces-filter-chip-system')).toHaveCount(0);
+    await expect(page.getByTestId('traces-filter-chip-agent')).toHaveCount(0);
   });
 });
