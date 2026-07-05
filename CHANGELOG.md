@@ -173,6 +173,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   thing distinguishing one agent from another. The palette is now eight genuinely distinct,
   theme-legible hues (also used for project and provider colors), so stacked timelines, the
   most-flagged-agents ranking, agent badges, and the project/provider avatars stay readable.
+- **Settings project and member avatars get distinct colors too.** The Settings project list, the
+  Settings members list, and the add-member picker drew their avatar colors from a second, separate
+  palette that still carried the original defect — six slots collapsing to about three visible hues
+  (a repeated teal and three near-identical warm golds) — so unrelated projects and teammates kept
+  landing on the same or an indistinguishable color even after the agent palette was deduplicated.
+  These avatars now share the single eight-hue palette used everywhere else, so each project and
+  member reads as its own color.
 - **The kiosk demo no longer spews failed test-run errors on boot.** The showcase's seeded
   incident run and its hidden A/B comparison runs were persisted in a not-yet-finished state and
   then executed by the real test runner against the read-only demo model, which has no LLM

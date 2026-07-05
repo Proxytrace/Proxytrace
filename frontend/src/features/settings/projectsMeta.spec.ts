@@ -19,11 +19,17 @@ describe('initials', () => {
 });
 
 describe('colorFor', () => {
-  it('returns a token from the palette', () => {
-    expect(colorFor('abc')).toMatch(/^var\(--/);
+  it('returns a raw hex color from the shared avatar palette', () => {
+    expect(colorFor('abc')).toMatch(/^#[0-9a-f]{6}$/i);
   });
   it('is stable for the same id', () => {
     expect(colorFor('project-1')).toBe(colorFor('project-1'));
+  });
+  it('spreads ids across many distinct hues (no single-hue collapse)', () => {
+    const ids = Array.from({ length: 24 }, (_, i) => `entity-${i}`);
+    const distinct = new Set(ids.map(colorFor));
+    expect(distinct.size).toBeGreaterThan(1); // must never collapse to a single hue
+    expect(distinct.size).toBeGreaterThanOrEqual(6); // genuinely distinct (palette holds 8)
   });
 });
 

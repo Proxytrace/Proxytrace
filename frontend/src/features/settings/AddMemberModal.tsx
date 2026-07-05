@@ -7,26 +7,13 @@ import { Input } from '../../components/ui/Input';
 import { RowButton } from '../../components/ui/RowButton';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { useUsers } from './hooks/useUsers';
+import { colorFor, initials } from './projectsMeta';
 
 interface AddMemberModalProps {
   excludeIds: string[];
   onPick: (userId: string) => void;
   onCancel: () => void;
   loading?: boolean;
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function colorFor(id: string): string {
-  const palette = ['var(--accent-primary)', 'var(--success)', 'var(--teal)', 'var(--teal)', 'var(--warn)', 'var(--accent-hover)'];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  return palette[Math.abs(hash) % palette.length];
 }
 
 export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMemberModalProps) {
