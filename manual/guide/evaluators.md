@@ -77,7 +77,7 @@ name and scores stay visible in the history you've already collected.
 
 ## The Evaluator Playground
 
-The **Evaluator Playground** (in the sidebar under *Evaluators*) lets you probe a single
+The **Evaluator Playground** (in the sidebar under *Improve*) lets you probe a single
 evaluator against a past test result and watch its score react to edits — without launching a
 full run. It's a three-pane workspace:
 

@@ -11,6 +11,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **The sidebar now follows your workflow.** Navigation is regrouped into **Monitor**
+  (Dashboard, Traces, Anomalies), **Build** (Agents, Agent Playground), and **Improve** — the
+  whole optimization loop in order (Test Suites, Evaluators, Evaluator Playground, Test Runs,
+  Proposals), so a proposal and the run that produced it finally live side by side. **Tracey AI**
+  moved to a dedicated slot at the top, and the **Audit Log**, an admin **Settings** shortcut,
+  and the Documentation link now sit together in a utility area above the project selector.
 - **Tracey AI chat is easier on the eyes — and looks the part.** Chat messages, the composer, and
   in-chat headings now render at a comfortable reading size instead of the app's compact data
   scale, and the whole page picked up an identity: an animated gold-and-teal halo around Tracey's

@@ -16,7 +16,7 @@ captured as a trace — she is the platform's first dogfood agent.
 
 ## Opening Tracey AI
 
-Open **Tracey AI** from the sidebar (under *Overview*). The page is the chat itself; plots,
+Open **Tracey AI** from the sidebar (the top entry). The page is the chat itself; plots,
 tables, entity cards, and question widgets render **inline in the conversation** as Tracey
 produces them. A **conversation-history panel** can be opened on the right via the sidebar icon
 in the chat header. Your conversations are remembered per project on this device — see

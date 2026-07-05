@@ -1192,9 +1192,6 @@ msgstr "Benchmark what matters"
 msgid "Benchmarking the change against the current agent…"
 msgstr "Benchmarking the change against the current agent…"
 
-msgid "Benchmarks"
-msgstr "Benchmarks"
-
 msgid "best"
 msgstr "best"
 
@@ -1212,6 +1209,9 @@ msgstr "Blocking"
 
 msgid "Boundary inputs, unusual conversations, rare tool combinations."
 msgstr "Boundary inputs, unusual conversations, rare tool combinations."
+
+msgid "Build"
+msgstr "Build"
 
 msgid "Building chart…"
 msgstr "Building chart…"
@@ -2332,6 +2332,9 @@ msgstr "Idle"
 msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
 msgstr "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
 
+msgid "Improve"
+msgstr "Improve"
+
 msgid "Improve failing runs"
 msgstr "Improve failing runs"
 
@@ -2874,6 +2877,9 @@ msgstr "Modified from agent default"
 
 msgid "Monday"
 msgstr "Monday"
+
+msgid "Monitor"
+msgstr "Monitor"
 
 msgid "Monthly trace quota reached — new traces are being dropped until the quota resets next month."
 msgstr "Monthly trace quota reached — new traces are being dropped until the quota resets next month."

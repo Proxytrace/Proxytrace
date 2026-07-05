@@ -1192,9 +1192,6 @@ msgstr "Evalúa lo que importa"
 msgid "Benchmarking the change against the current agent…"
 msgstr "Evaluando el cambio contra el agent actual…"
 
-msgid "Benchmarks"
-msgstr "Benchmarks"
-
 msgid "best"
 msgstr "mejor"
 
@@ -1212,6 +1209,9 @@ msgstr "Bloqueante"
 
 msgid "Boundary inputs, unusual conversations, rare tool combinations."
 msgstr "Entradas límite, conversaciones inusuales, combinaciones raras de Tools."
+
+msgid "Build"
+msgstr "Construir"
 
 msgid "Building chart…"
 msgstr "Generando gráfico…"
@@ -2332,6 +2332,9 @@ msgstr "Inactivo"
 msgid "If an account exists for that email, password reset instructions are on the way. If email delivery is not configured on this server, contact your administrator to obtain a reset link."
 msgstr "Si existe una cuenta para ese correo, las instrucciones para restablecer la contraseña ya están en camino. Si el envío de correo no está configurado en este servidor, contacta a tu administrador para obtener un enlace de restablecimiento."
 
+msgid "Improve"
+msgstr "Mejorar"
+
 msgid "Improve failing runs"
 msgstr "Mejorar ejecuciones fallidas"
 
@@ -2874,6 +2877,9 @@ msgstr "Modificado respecto al valor predeterminado del Agent"
 
 msgid "Monday"
 msgstr "Lunes"
+
+msgid "Monitor"
+msgstr "Monitorear"
 
 msgid "Monthly trace quota reached — new traces are being dropped until the quota resets next month."
 msgstr "Se alcanzó la cuota mensual de Traces; los nuevos Traces se están descartando hasta que la cuota se restablezca el próximo mes."

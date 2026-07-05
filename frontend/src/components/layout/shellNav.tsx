@@ -27,44 +27,52 @@ export interface NavGroup {
   items: NavEntry[];
 }
 
+// Groups follow the product workflow: Monitor (watch live traffic) → Build (author agents) →
+// Improve (the optimization loop, in loop order: suites → evaluators → runs → proposals).
+// Tracey sits alone on top — the assistant is cross-cutting, not part of one workflow stage.
 export const navGroups: NavGroup[] = [
   {
-    label: msg`Overview`,
+    label: null,
+    items: [
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
+      { label: msg`Tracey AI`, icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
+    ],
+  },
+  {
+    label: msg`Monitor`,
     items: [
       { label: msg`Dashboard`, icon: 'grid', to: '/dashboard' },
       { label: msg`Traces`, icon: 'activity', to: '/traces' },
       { label: msg`Anomalies`, icon: 'alert', to: '/anomalies' },
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
-      { label: msg`Tracey AI`, icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
-      { label: msg`Audit Log`, icon: 'history', to: '/audit-log' },
     ],
   },
   {
-    label: msg`Agents`,
+    label: msg`Build`,
     items: [
       { label: msg`Agents`, icon: 'users', to: '/agents' },
       { label: msg`Agent Playground`, icon: 'beaker', to: '/playground' },
+    ],
+  },
+  {
+    label: msg`Improve`,
+    items: [
+      { label: msg`Test Suites`, icon: 'checkbox', to: '/suites' },
+      { label: msg`Evaluators`, icon: 'scale', to: '/evaluators' },
+      { label: msg`Evaluator Playground`, icon: 'target', to: '/evaluator-playground' },
+      { label: msg`Test Runs`, icon: 'play', to: '/runs' },
       // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
       { label: msg`Proposals`, icon: 'sparkles', to: '/proposals', requiresFeature: 'OptimizationProposals' },
     ],
   },
-  {
-    label: msg`Evaluators`,
-    items: [
-      { label: msg`Evaluators`, icon: 'scale', to: '/evaluators' },
-      { label: msg`Evaluator Playground`, icon: 'target', to: '/evaluator-playground' },
-    ],
-  },
-  {
-    label: msg`Benchmarks`,
-    items: [
-      { label: msg`Test Suites`, icon: 'checkbox', to: '/suites' },
-      { label: msg`Test Runs`, icon: 'play', to: '/runs' },
-    ],
-  },
 ];
 
-export const navItems: NavEntry[] = navGroups.flatMap(g => g.items);
+// Utility destinations pinned to the sidebar footer, below the scrolling groups.
+export const footerNavEntries: NavEntry[] = [
+  { label: msg`Audit Log`, icon: 'history', to: '/audit-log' },
+  { label: msg`Settings`, icon: 'settings', to: '/settings', adminOnly: true },
+];
+
+export const navItems: NavEntry[] = [...navGroups.flatMap(g => g.items), ...footerNavEntries];
 
 export const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   grid: <GridIcon size={16} />,

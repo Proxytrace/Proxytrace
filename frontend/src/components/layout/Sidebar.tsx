@@ -3,7 +3,7 @@ import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
 import { isNavEntryLocked } from './navGating';
 import { ProjectSelector } from './ProjectSelector';
-import { navGroups, NAV_ICONS } from './shellNav';
+import { navGroups, footerNavEntries, NAV_ICONS } from './shellNav';
 import { useLicense } from '../../api/license';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useIsMobile } from '../../hooks/useMediaQuery';
@@ -35,6 +35,19 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
   // Role is only populated in local-auth mode; OIDC users won't see admin-only nav (the backend
   // still enforces authorization regardless).
   const isAdmin = useCurrentUser()?.role === 'Admin';
+
+  // Visibility filters run before rendering so a fully-hidden group (e.g. the Tracey hero slot on
+  // a read-only kiosk) drops out entirely instead of leaving a stray divider.
+  const visibleGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items
+        // Hide Tracey's nav entry when the kiosk is read-only (no LLM endpoint configured).
+        .filter(item => !(item.to === '/tracey-ai' && !interactive))
+        .filter(item => !item.adminOnly || isAdmin),
+    }))
+    .filter(group => group.items.length > 0);
+  const visibleFooterEntries = footerNavEntries.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -78,7 +91,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
           onClick={onMobileNavClose}
           className={`flex-1 flex flex-col overflow-y-auto ${navCollapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
         >
-          {navGroups.map((group, gIdx) => (
+          {visibleGroups.map((group, gIdx) => (
             <div key={gIdx} className="flex flex-col gap-0.5">
               {gIdx > 0 && (
                 <div className={`my-1.5 border-t border-hairline ${navCollapsed ? 'mx-1' : 'mx-2'}`} />
@@ -88,12 +101,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
                   {i18n._(group.label)}
                 </div>
               )}
-              {group.items
-                // Hide Tracey's nav entry when the kiosk is read-only (no LLM endpoint configured).
-                .filter(item => !(item.to === '/tracey-ai' && !interactive))
-                // Admin-only entries (e.g. Error Log) are hidden for non-admins.
-                .filter(item => !item.adminOnly || isAdmin)
-                .map(item =>
+              {group.items.map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
                     key={item.to}
@@ -115,8 +123,21 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
           ))}
         </nav>
 
-        {/* Docs link — opens the bundled manual served at /docs */}
-        <div className={`${navCollapsed ? 'px-2' : 'px-3'}`}>
+        {/* Utility zone — audit log, admin settings, docs. Link clicks close the mobile drawer. */}
+        <div
+          onClick={onMobileNavClose}
+          className={`flex flex-col gap-0.5 border-t border-hairline ${navCollapsed ? 'px-2 py-2' : 'px-3 py-2'}`}
+        >
+          {visibleFooterEntries.map(item => (
+            <NavItem
+              key={item.to}
+              label={i18n._(item.label)}
+              icon={NAV_ICONS[item.icon]}
+              to={item.to}
+              collapsed={navCollapsed}
+            />
+          ))}
+          {/* Docs link — opens the bundled manual served at /docs */}
           <a
             href="/docs/"
             target="_blank"
