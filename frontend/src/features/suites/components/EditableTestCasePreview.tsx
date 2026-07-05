@@ -6,8 +6,8 @@ import { Button } from '../../../components/ui/Button';
 import { EditPencilIcon } from '../../../components/icons';
 import useToast from '../../../hooks/useToast';
 import { TestCasePreview } from './TestCasePreview';
-import { ExpectedOutputEditor } from '../components/ExpectedOutputEditor';
-import { expectedFromDto, toMessage, validateExpected } from '../components/expectedOutput';
+import { ExpectedOutputEditor } from '../../../components/expected-output/ExpectedOutputEditor';
+import { expectedFromDto, toMessage, validateExpected } from '../../../components/expected-output/expectedOutput';
 
 interface Props {
   testCase: TestCaseDto;

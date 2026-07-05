@@ -1,7 +1,7 @@
-import type { AgentCallDto } from '../../../api/models';
-import { JsonBlock } from '../../../components/ui/JsonBlock';
-import { ModelParametersGrid } from '../../../components/ui/ModelParametersGrid';
-import { fmtDate } from '../../../lib/format';
+import type { AgentCallDto } from '../../api/models';
+import { JsonBlock } from '../ui/JsonBlock';
+import { ModelParametersGrid } from '../ui/ModelParametersGrid';
+import { fmtDate } from '../../lib/format';
 import { Trans } from '@lingui/react/macro';
 
 // ── Raw JSON tab ───────────────────────────────────────────────────────────────

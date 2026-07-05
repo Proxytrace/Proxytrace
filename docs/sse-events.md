@@ -101,6 +101,14 @@ The client prefers a **short-lived single-use stream ticket** from `GET /api/aut
 (`access_token`) only if the ticket endpoint is unreachable. See `resolveStreamCredential` in
 `event-stream.ts`.
 
+**Reconnection.** Because the ticket is single-use and baked into the URL, the browser's native
+`EventSource` reconnect would replay a *consumed* ticket and 401 — silently killing the stream after
+the first drop (backend restart, proxy blip, laptop sleep) so the UI stops updating until a full page
+reload. `subscribeShared` therefore owns reconnection: on `onerror` it closes the source and reopens
+with a **freshly-minted ticket** (re-running `withAuth`) after an exponential backoff (1s→30s cap,
+reset on any delivered frame). This is auth-mode-agnostic — it does not rely on the cookie fallback,
+which OIDC mode lacks.
+
 SSE responses set `Content-Type: text/event-stream`, `Cache-Control: no-cache`, and
 `X-Accel-Buffering: no` (disables proxy buffering so frames flush immediately).
 

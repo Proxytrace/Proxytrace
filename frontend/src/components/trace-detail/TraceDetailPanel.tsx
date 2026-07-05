@@ -1,29 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { AgentCallDto, MessageDto } from '../../../api/models';
-import { useAgentSuites } from '../hooks/usePromoteTrace';
-import { agentColor, modelColor } from '../../../lib/colors';
-import { fmtLatency, fmtTokens, fmtRelative, cachedPct } from '../../../lib/format';
-import { cn } from '../../../lib/cn';
+import type { AgentCallDto, MessageDto } from '../../api/models';
+import { useAgentSuites } from './usePromoteTrace';
+import { fmtLatency, fmtTokens, cachedPct } from '../../lib/format';
 import {
-  PlusIcon, ChevronRightIcon, ClockIcon, CoinsIcon,
+  ClockIcon, CoinsIcon,
   ArrowDownToLineIcon, ArrowUpFromLineIcon, ServerIcon,
-} from '../../../components/icons';
-import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
-import { CopyButton } from '../../../components/ui/CopyButton';
-import { ColoredBadge } from '../../../components/ui/ColoredBadge';
-import { Button, IconButton } from '../../../components/ui/Button';
-import { Tabs } from '../../../components/ui/Tabs';
-import { DetailPanel } from '../../../components/overlays/DetailPanel';
-import { PromoteModal } from '../PromoteModal';
+} from '../icons';
+import { ToolMessageBubble } from '../ui/ToolMessageBubble';
+import { Button } from '../ui/Button';
+import { Tabs } from '../ui/Tabs';
+import { DetailPanel } from '../overlays/DetailPanel';
+import { PromoteModal } from './PromoteModal';
 import { DrawerStat } from './DrawerStat';
 import { TraceAnomalyBanner } from './TraceAnomalyBanner';
-import { useTraceAnomalyHits } from '../hooks/useTraceAnomalyHits';
-import { AskTraceyButton } from '../../../components/tracey/AskTraceyButton';
-import { tracePrompt } from '../../../components/tracey/askTraceyPrompts';
+import { useTraceAnomalyHits } from './useTraceAnomalyHits';
+import { TraceDetailHeader } from './TraceDetailHeader';
 import { TraceMessagesTab } from './TraceMessagesTab';
 import { TraceRawJsonTab, TraceMetadataTab } from './TraceMetadataTab';
-import { Trans, Plural, useLingui } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import { type MessageDescriptor } from '@lingui/core';
 
@@ -71,20 +66,13 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
       : suitesQuery.isLoading
         ? t`Loading test suites…`
         : suites.length === 0
-          ? t`No test suite for this agent yet.`
+          ? t`No test suite for this agent yet — create one on the Test Suites page first.`
           : '';
 
-  const aColor = agentColor(trace.agentId ?? trace.id);
-  const mColor = modelColor(trace.model);
-  const statusOk = trace.httpStatus >= 200 && trace.httpStatus < 300;
-  const statusErr = trace.httpStatus >= 500;
-  const statusColor = statusOk ? 'var(--success)' : statusErr ? 'var(--danger)' : 'var(--warn)';
-  const statusLabel = statusOk ? t`OK` : statusErr ? t`ERROR` : t`RATE_LIMIT`;
   const tokTotal = trace.inputTokens + trace.outputTokens;
   const cachePct = cachedPct(trace.cachedInputTokens, trace.inputTokens);
 
   const allMessages: MessageDto[] = [...trace.request, ...(trace.response ? [trace.response] : [])];
-  const toolCallCount = allMessages.reduce((n, m) => n + (m.toolRequests?.length ?? 0), 0);
   const msgCount = allMessages.length;
 
   const toolResultByCallId = new Map<string, MessageDto>();
@@ -111,81 +99,18 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   return (
     <>
       <DetailPanel onClose={onClose} onPrev={onPrev} onNext={onNext} keyboardEnabled={!promoting} testId="trace-detail">
-        {/* Header */}
-        <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
-              <span className="mono text-title font-semibold">{trace.id.slice(0, 18)}…</span>
-              <CopyButton text={trace.id} label={t`Copy trace ID`} className="shrink-0" />
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-caption font-semibold font-mono',
-                  statusOk ? 'bg-success-subtle' : statusErr ? 'bg-danger-subtle' : 'bg-[color-mix(in_srgb,var(--warn)_15%,transparent)]',
-                )}
-                style={{ color: statusColor }}
-              >
-                <span className="w-[5px] h-[5px] rounded-full" style={{ background: statusColor }} />
-                {trace.httpStatus} {statusLabel}
-              </span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-              {trace.agentName && trace.agentId && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  data-testid="trace-detail-agent-name"
-                  onClick={() => { onClose(); navigate(`/agents?id=${trace.agentId}`); }}
-                  title={t`Open agent`}
-                  className="p-0.5 rounded-full"
-                >
-                  <ColoredBadge color={aColor} label={trace.agentName} dot size="md" />
-                </Button>
-              )}
-              <ColoredBadge color={mColor} label={trace.model} dot size="md" />
-              <span className="text-body-sm text-muted">
-                · {fmtRelative(trace.createdAt)} · <Plural value={msgCount} one="# msg" other="# msgs" /> · <Plural value={toolCallCount} one="# tool call" other="# tool calls" />
-              </span>
-            </div>
-          </div>
-          {onPrev && (
-            <IconButton size="sm" onClick={onPrev} aria-label={t`Previous trace`} className="shrink-0 rotate-180">
-              <ChevronRightIcon size={14} strokeWidth={2.5} />
-            </IconButton>
-          )}
-          {onNext && (
-            <IconButton size="sm" onClick={onNext} aria-label={t`Next trace`} className="shrink-0">
-              <ChevronRightIcon size={14} strokeWidth={2.5} />
-            </IconButton>
-          )}
-          <div className="flex items-center gap-2 shrink-0">
-            <AskTraceyButton
-              data-testid="ask-tracey-btn-trace"
-              prompt={() => tracePrompt(trace, anomalyHits)}
-            />
-            <Button
-              data-testid="promote-btn"
-              onClick={() => !promoteDisabled && setPromoting(true)}
-              disabled={promoteDisabled}
-              title={promoteTooltip || undefined}
-              variant="primary"
-              size="sm"
-              leftIcon={<PlusIcon strokeWidth={2.5} size={12} />}
-            >
-              <Trans>Promote to test case</Trans>
-            </Button>
-            {trace.agentId && hasResponse && !suitesQuery.isLoading && suites.length === 0 && (
-              <Button
-                variant="link"
-                className="text-body-sm"
-                onClick={() => { onClose(); navigate('/suites'); }}
-                title={t`Create a test suite for this agent`}
-              >
-                <Trans>Create suite →</Trans>
-              </Button>
-            )}
-          </div>
-        </div>
+        <TraceDetailHeader
+          trace={trace}
+          anomalyHits={anomalyHits}
+          onClose={onClose}
+          onPrev={onPrev}
+          onNext={onNext}
+          promote={{
+            disabled: promoteDisabled,
+            tooltip: promoteTooltip,
+            onStart: () => setPromoting(true),
+          }}
+        />
 
         <TraceAnomalyBanner trace={trace} />
 

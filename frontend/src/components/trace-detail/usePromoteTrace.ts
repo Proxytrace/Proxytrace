@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { testSuitesApi } from '../../../api/test-suites';
-import { QUERY_KEYS } from '../../../api/query-keys';
-import type { TestSuiteMessageDto } from '../../../api/models';
+import { testSuitesApi } from '../../api/test-suites';
+import { QUERY_KEYS } from '../../api/query-keys';
+import type { TestSuiteMessageDto } from '../../api/models';
 
 const SUITE_PICKER_PAGE_SIZE = 200;
 

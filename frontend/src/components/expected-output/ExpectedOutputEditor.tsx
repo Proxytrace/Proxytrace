@@ -1,10 +1,10 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import type { ToolRequestInputDto, ToolSpecDto } from '../../../api/models';
-import { Textarea } from '../../../components/ui/Textarea';
-import { Button, IconButton } from '../../../components/ui/Button';
-import { FilterTabs } from '../../../components/ui/FilterTabs';
-import { PlusIcon, TrashIcon } from '../../../components/icons';
-import { cn } from '../../../lib/cn';
+import type { ToolRequestInputDto, ToolSpecDto } from '../../api/models';
+import { Textarea } from '../ui/Textarea';
+import { Button, IconButton } from '../ui/Button';
+import { FilterTabs } from '../ui/FilterTabs';
+import { PlusIcon, TrashIcon } from '../icons';
+import { cn } from '../../lib/cn';
 import { ToolNameCombobox } from './ToolNameCombobox';
 import { type ExpectedOutput, argsValid, argsSkeleton, isArgsEmpty } from './expectedOutput';
 

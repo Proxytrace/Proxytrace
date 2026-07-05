@@ -22,16 +22,25 @@ export function TraceyChatPanel({ chat, railCollapsed, onToggleRail }: TraceyCha
   // bottom spacer animates to 0 on the first message (and back when the conversation is cleared),
   // which slides the composer down to / up from the bottom.
   const isEmpty = useThread(t => t.messages.length === 0);
+  // The header halo spins fast while a turn runs — the panel-level "Tracey is working" signal.
+  const isRunning = useThread(t => t.isRunning);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface-2">
+    // Tracey tier (DESIGN.md §8.2): the panel carries a faint drifting gold/teal aurora at the top.
+    <div className="tracey-aurora flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface-2">
       <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-accent-subtle text-accent ring-1 ring-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]">
+          {/* Identity halo instead of a static ring; spins up while she's thinking. */}
+          <span
+            className={cn(
+              'tracey-halo flex size-8 items-center justify-center rounded-lg bg-accent-subtle text-accent',
+              isRunning && 'tracey-halo-active',
+            )}
+          >
             <SparklesIcon size={16} />
           </span>
           <div>
-            <div className="text-h2 font-semibold leading-tight text-primary"><Trans>Tracey AI</Trans></div>
+            <div className="tracey-gradient-text text-h2 font-semibold leading-tight"><Trans>Tracey AI</Trans></div>
             <div className="text-body-sm text-muted"><Trans>Your in-app assistant</Trans></div>
           </div>
         </div>

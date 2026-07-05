@@ -494,9 +494,6 @@ msgstr "{lineCount, plural, one {# line} other {# lines}}"
 msgid "{memberCount, plural, one {# member} other {# members}}"
 msgstr "{memberCount, plural, one {# member} other {# members}}"
 
-msgid "{msgCount, plural, one {# msg} other {# msgs}}"
-msgstr "{msgCount, plural, one {# msg} other {# msgs}}"
-
 msgid "{n} agents"
 msgstr "{n} agents"
 
@@ -568,9 +565,6 @@ msgstr "{sizeB} B"
 
 msgid "{tok} · {cached}% cached"
 msgstr "{tok} · {cached}% cached"
-
-msgid "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
-msgstr "{toolCallCount, plural, one {# tool call} other {# tool calls}}"
 
 msgid "{total, plural, one {error} other {errors}}"
 msgstr "{total, plural, one {error} other {errors}}"
@@ -839,6 +833,9 @@ msgstr "Add message"
 
 msgid "Add provider"
 msgstr "Add provider"
+
+msgid "Add test"
+msgstr "Add test"
 
 msgid "Add to suite"
 msgstr "Add to suite"
@@ -1547,9 +1544,6 @@ msgstr "Create a project in the Projects section to manage its members."
 msgid "Create a schedule to run a suite on a recurring cadence."
 msgstr "Create a schedule to run a suite on a recurring cadence."
 
-msgid "Create a test suite for this agent"
-msgstr "Create a test suite for this agent"
-
 msgid "Create account"
 msgstr "Create account"
 
@@ -1588,9 +1582,6 @@ msgstr "Create schedule"
 
 msgid "Create suite"
 msgstr "Create suite"
-
-msgid "Create suite →"
-msgstr "Create suite →"
 
 msgid "Create Test Suite"
 msgstr "Create Test Suite"
@@ -3021,6 +3012,9 @@ msgstr "No additional configuration."
 msgid "No additional details for this event."
 msgstr "No additional details for this event."
 
+msgid "No agent"
+msgstr "No agent"
+
 msgid "No agent token data"
 msgstr "No agent token data"
 
@@ -3253,8 +3247,8 @@ msgstr "No test runs yet"
 msgid "No test runs yet."
 msgstr "No test runs yet."
 
-msgid "No test suite for this agent yet."
-msgstr "No test suite for this agent yet."
+msgid "No test suite for this agent yet — create one on the Test Suites page first."
+msgstr "No test suite for this agent yet — create one on the Test Suites page first."
 
 msgid "No test suites in this project yet."
 msgstr "No test suites in this project yet."
@@ -3767,12 +3761,6 @@ msgstr "Projects, Users & API keys"
 
 msgid "Promote"
 msgstr "Promote"
-
-msgid "Promote to test case"
-msgstr "Promote to test case"
-
-msgid "Promote to Test Case"
-msgstr "Promote to Test Case"
 
 msgid "Promoted"
 msgstr "Promoted"

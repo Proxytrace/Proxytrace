@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
-import type { ToolSpecDto } from '../../../api/models';
-import { Input } from '../../../components/ui/Input';
-import { RowButton } from '../../../components/ui/RowButton';
-import { ChevronDownIcon } from '../../../components/icons';
-import { cn } from '../../../lib/cn';
+import type { ToolSpecDto } from '../../api/models';
+import { Input } from '../ui/Input';
+import { RowButton } from '../ui/RowButton';
+import { ChevronDownIcon } from '../icons';
+import { cn } from '../../lib/cn';
 
 interface Props {
   value: string;

@@ -77,6 +77,8 @@ Type scale (data-dense — do not enlarge without a strong reason):
 | `text-h2` | 14px | Card titles |
 | `text-h1` | 18px | Page titles, drawer headers |
 | `text-display` | 28px | KPI numbers only |
+| `text-chat` | 15px | **Tracey chat prose only** (§8.2) — messages, composer, in-chat h3 |
+| `text-chat-title` | 16px | **Tracey chat only** (§8.2) — in-chat markdown h2 |
 
 Weights: 400 (default), 500 (nav, secondary buttons), 600 (titles, primary buttons, KPI), 700 (rare — model pills already at 600). Never use 800/900.
 
@@ -278,12 +280,36 @@ radii/shadows, `prefers-reduced-motion` guards on every keyframe, accessibility 
 The anti-patterns in §9 remain in force outside this scoped list — in particular, no animated
 gradients on idle UI anywhere else, and no glassmorphism even here.
 
+## 8.2 Tracey exception — assistant tier
+
+Tracey AI (`features/tracey/`, route `/tracey-ai`) is the product's hero feature and, like the
+dashboard, is a scoped, user-approved exception to the "calm, not flashy" baseline
+(2026-07-05 Tracey showpiece). What the exception covers:
+
+- **Reading-tier type**: chat is a prose-reading surface, not a data grid, so message text,
+  the composer, and the user bubble sit at `text-chat` (15px) with in-chat markdown headings
+  at `text-chat-title` (16px) / `text-h1` — see `chat-markdown.tsx`. The empty-thread hero
+  line uses `text-display` (outside its KPI-only role, intentionally). These two tokens are
+  **Tracey-only**; do not use them on data-dense views.
+- **Tracey tier CSS** (`index.css`, "Tracey assistant tier" block): `tracey-halo` /
+  `tracey-halo-active` (the conic gold→teal identity ring on her avatar — slow idle rotation,
+  fast spin while a turn runs), `tracey-aurora` (faint drifting gold/teal glow at the top of
+  the chat panel), `tracey-gradient-text` (gradient-clipped wordmark/hero line), and
+  `tracey-thinking-text` (shimmering "Thinking…"). The idle halo/aurora motion is allowed
+  **here only** — everywhere else the "no animated gradients on idle UI" rule stands.
+- **User bubble finish**: the gold gradient fill + `--shadow-btn` under-glow (normally the
+  primary button's alone) also dress the user's chat bubble.
+
+Everything else still binds: token palette only (no new hexes), existing radii/shadows,
+`prefers-reduced-motion` guards on every keyframe (the halo degrades to a static gradient
+ring, the shimmer to plain secondary text), accessibility rules (§7), and no glassmorphism.
+
 ---
 
 ## 9. Anti-patterns — do not introduce these
 
 - Glassmorphism, frosted blur on regular cards (only modal overlay uses backdrop-blur, and only at 4px) — no exception, including the dashboard (see §8.1).
-- Vibrant rainbow gradients, neon glows, or animated gradients on idle UI — the dashboard's showpiece keyframes (§8.1) are the sole, scoped exception; they stay dashboard-only.
+- Vibrant rainbow gradients, neon glows, or animated gradients on idle UI — the dashboard's showpiece keyframes (§8.1) and Tracey's assistant tier (§8.2) are the only scoped exceptions; they stay on their routes.
 - Light-mode styles. Proxytrace is dark-only today; do not add light-mode classes "just in case." If/when light mode happens, it'll be a tracked initiative with new tokens.
 - Custom shadows / radii / type sizes outside the scale.
 - `border-2` or thicker borders on UI chrome — our borders are 1px hairlines. Thicker borders only on focus rings (2px) and explicit dividers.

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { useAgents } from '../../agents/hooks/useAgents';
-import { TraceDetail } from '../../traces/TraceDetail';
+import { TraceDetailPanel as TraceDetail } from '../../../components/trace-detail/TraceDetailPanel';
 import { useSelectedTrace } from '../../../hooks/useSelectedTrace';
 import { useAnomalyFilters } from '../hooks/useAnomalyFilters';
 import { useAnomalyTimeline } from '../hooks/useAnomalyTimeline';

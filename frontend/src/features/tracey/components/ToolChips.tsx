@@ -37,7 +37,7 @@ export function ToolChips() {
           className={CHIP}
           style={{ animationDelay: `${index * 45}ms` }}
         >
-          <Badge label={i18n._(action.label)} variant="accent" shape="pill" size="sm" className={CHIP_BADGE} />
+          <Badge label={i18n._(action.label)} variant="accent" shape="pill" size="md" className={CHIP_BADGE} />
         </button>
       ))}
     </div>
