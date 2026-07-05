@@ -699,7 +699,10 @@ a `.tsx` that also exports a component, or you break the fast-refresh lint rule)
   real transport is swapped in after the session query resolves.
 - All Tracey state lives in `useTraceyChat`; conversation and `tool-ui/` components stay
   presentational. Data fetching goes through TanStack Query — no raw `useEffect`/`fetch`.
-- Styling follows DESIGN.md tokens, including the restyled assistant-ui primitives. File-size and
+- Styling follows DESIGN.md tokens, including the restyled assistant-ui primitives. The chat is
+  the scoped **Tracey assistant tier** (DESIGN.md §8.2): prose renders at the reading tier
+  (`text-chat`, via `components/chat-markdown.tsx`), and the halo / aurora / gradient-text /
+  thinking-shimmer classes are Tracey-only. File-size and
   component rules from BEST_PRACTICES.md apply — split tool UIs into `components/` if a file
   approaches the cap.
 

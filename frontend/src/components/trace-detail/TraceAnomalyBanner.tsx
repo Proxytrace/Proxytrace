@@ -1,9 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import type { AgentCallDto } from '../../../api/models';
-import { AlertTriangleIcon } from '../../../components/icons';
-import { cn } from '../../../lib/cn';
-import { isOutlier, outlierFlagKeys, OUTLIER_FLAG_LABEL, OutlierFlag } from '../../../lib/outliers';
-import { useTraceAnomalyHits } from '../hooks/useTraceAnomalyHits';
+import type { AgentCallDto } from '../../api/models';
+import { AlertTriangleIcon } from '../icons';
+import { cn } from '../../lib/cn';
+import { isOutlier, outlierFlagKeys, OUTLIER_FLAG_LABEL, OutlierFlag } from '../../lib/outliers';
+import { useTraceAnomalyHits } from './useTraceAnomalyHits';
 
 interface Props {
   trace: AgentCallDto;

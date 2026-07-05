@@ -10,7 +10,7 @@ The intended workflow is to **promote production traces** into durable benchmark
 
 1. Find a [trace](/guide/capturing-traces) that represents a critical behavior or a
    regression you want to guard against.
-2. Promote it into a test case — the captured input becomes the case input.
+2. Open its detail panel and click **Add test** — the captured input becomes the case input.
 3. Group related cases into a test suite.
 
 Because cases come from real traffic, suites stay grounded in behaviors that actually
@@ -54,7 +54,7 @@ The captured response is only a starting point. When the traced output is *not* 
 want the agent to produce — you intend to change the agent to hit a target — edit the
 expected output directly:
 
-- **In the Promote dialog**, the *Expected output* section is editable before you add the
+- **In the Add test dialog**, the *Expected output* section is editable before you add the
   case to a suite.
 - **In the suite detail panel**, select a case and choose **Edit expected output** to revise
   an existing case.

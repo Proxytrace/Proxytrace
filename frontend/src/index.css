@@ -49,6 +49,9 @@
   --text-h2: 14px;
   --text-h1: 18px;
   --text-display: 28px;
+  /* Reading tier — Tracey chat prose only (see DESIGN.md "Tracey exception") */
+  --text-chat: 15px;
+  --text-chat-title: 16px;
 
   /* Font stacks (text uses the bundled @fontsource-variable faces) */
   --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -136,6 +139,9 @@
   --text-h2: 14px;
   --text-h1: 18px;
   --text-display: 28px;
+  /* Reading tier — Tracey chat prose only (see DESIGN.md "Tracey exception") */
+  --text-chat: 15px;
+  --text-chat-title: 16px;
 
   /* Border-tint percentages (used with color-mix) */
   --border-tint-weak: 0.14;
@@ -413,6 +419,92 @@ body::after {
 .digit-tick { display: inline-block; animation: digit-tick 0.35s var(--ease-standard) both; }
 @media (prefers-reduced-motion: reduce) {
   .digit-tick { animation: none; }
+}
+
+/* ── Tracey assistant tier (Tracey AI chat only — see DESIGN.md "Tracey exception") ── */
+
+/* Identity halo — a conic gold→teal ring around Tracey's avatar. Rotates slowly while idle
+   (her "alive" signal) and spins fast while a turn is running (.tracey-halo-active). With
+   reduced motion the ring stays as a static gradient — identity without movement. */
+@property --tracey-halo-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes tracey-halo-spin {
+  to { --tracey-halo-angle: 360deg; }
+}
+.tracey-halo { position: relative; }
+.tracey-halo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--tracey-halo-angle),
+    var(--accent-primary),
+    var(--teal) 120deg,
+    color-mix(in srgb, var(--accent-primary) 35%, transparent) 210deg,
+    var(--accent-hover) 300deg,
+    var(--accent-primary)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: tracey-halo-spin 9s linear infinite;
+}
+.tracey-halo-active::before { animation-duration: 1.6s; }
+@media (prefers-reduced-motion: reduce) {
+  .tracey-halo::before { animation: none; }
+}
+
+/* Aurora — a faint gold/teal glow drifting along the top of the chat panel. */
+@keyframes tracey-aurora-drift {
+  from { transform: translateX(-2.5%); }
+  to   { transform: translateX(2.5%); }
+}
+.tracey-aurora { position: relative; }
+.tracey-aurora::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 220px;
+  border-radius: inherit;
+  background:
+    radial-gradient(55% 95% at 22% 0%, color-mix(in srgb, var(--accent-primary) 7%, transparent), transparent 70%),
+    radial-gradient(45% 85% at 78% 0%, color-mix(in srgb, var(--teal) 6%, transparent), transparent 70%);
+  pointer-events: none;
+  animation: tracey-aurora-drift 16s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tracey-aurora::before { animation: none; }
+}
+
+/* Gradient-clipped identity text — the "Tracey AI" wordmark and the empty-thread hero line. */
+.tracey-gradient-text {
+  background: linear-gradient(92deg, var(--text-primary) 0%, var(--accent-hover) 55%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+/* Shimmering "Thinking…" label while a turn runs (reuses the shimmer keyframe). */
+.tracey-thinking-text {
+  background: linear-gradient(90deg, var(--text-secondary) 25%, var(--text-primary) 50%, var(--text-secondary) 75%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  animation: shimmer 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tracey-thinking-text {
+    animation: none;
+    background: none;
+    color: var(--text-secondary);
+  }
 }
 
 /* ── Nav ── */

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { MessageDto, ToolArgumentDto, ToolSpecDto } from '../../../api/models';
+import type { MessageDto, ToolArgumentDto, ToolSpecDto } from '../../api/models';
 import {
   argsValid,
   argsSkeleton,

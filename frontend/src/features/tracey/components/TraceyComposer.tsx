@@ -100,13 +100,16 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 px-4">
       {showStarters && (
-        <div className="flex flex-col items-center gap-4 pb-1 animate-[fade-up_var(--motion-slow)_var(--ease-standard)]">
-          <div className="flex flex-col items-center gap-2.5 text-center">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-accent-subtle text-accent ring-1 ring-[color-mix(in_srgb,var(--accent-primary)_28%,transparent)]">
-              <SparklesIcon size={22} />
+        <div className="flex flex-col items-center gap-5 pb-2 animate-[fade-up_var(--motion-slow)_var(--ease-standard)]">
+          <div className="flex flex-col items-center gap-3 text-center">
+            {/* The identity halo (Tracey tier) replaces the static ring — see DESIGN.md §8.2. */}
+            <div className="tracey-halo flex size-14 items-center justify-center rounded-xl bg-accent-subtle text-accent">
+              <SparklesIcon size={26} />
             </div>
-            <div className="text-h1 font-semibold text-primary"><Trans>How can I help?</Trans></div>
-            <div className="max-w-md text-title text-secondary">
+            <div className="tracey-gradient-text text-display font-semibold leading-tight">
+              <Trans>How can I help?</Trans>
+            </div>
+            <div className="max-w-md text-chat text-secondary">
               <Trans>
                 Ask about your agents, suites, runs, or proposals — or have me run a suite, review a
                 proposal, or plot your data.
@@ -142,7 +145,7 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
             // eslint-disable-next-line lingui/no-unlocalized-strings -- DOM element id, not UI copy
             aria-controls={open ? 'tracey-slash-menu' : undefined}
             placeholder={t`Ask Tracey…  (/ for tools)`}
-            className="max-h-48 min-h-16 w-full resize-none bg-transparent px-1 pt-1 text-body text-primary outline-none placeholder:text-muted"
+            className="max-h-48 min-h-16 w-full resize-none bg-transparent px-1 pt-1 text-chat text-primary outline-none placeholder:text-muted"
           />
           <div className="flex items-center justify-end gap-2">
             <div className="flex items-center gap-1">

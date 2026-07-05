@@ -1,4 +1,4 @@
-import type { MessageDto, TestSuiteMessageDto, ToolArgumentDto, ToolRequestInputDto, ToolSpecDto } from '../../../api/models';
+import type { MessageDto, TestSuiteMessageDto, ToolArgumentDto, ToolRequestInputDto, ToolSpecDto } from '../../api/models';
 
 /**
  * Edited expected output. `toolRequests === null` means plain-text mode; a (possibly

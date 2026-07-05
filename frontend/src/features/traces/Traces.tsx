@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Pagination } from '../../components/ui/Pagination';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
-import { TraceDetail } from './TraceDetail';
+import { TraceDetailPanel as TraceDetail } from '../../components/trace-detail/TraceDetailPanel';
 import type { AgentCallDto } from '../../api/models';
 import { buildRows, hasActiveTraceFilters } from './tracesMeta';
 import type { TraceAdvancedFilters, TraceRow, TraceSortField } from './tracesMeta';

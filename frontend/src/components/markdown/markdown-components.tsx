@@ -42,7 +42,7 @@ export const markdownComponents: Components = {
     <h1 className="mb-2 mt-3 text-h2 font-semibold text-primary first:mt-0" {...clean(props)} />
   ),
   h2: (props) => (
-    <h2 className="mb-2 mt-3 text-h3 font-semibold text-primary first:mt-0" {...clean(props)} />
+    <h2 className="mb-2 mt-3 text-title font-semibold text-primary first:mt-0" {...clean(props)} />
   ),
   h3: (props) => (
     <h3 className="mb-1.5 mt-2.5 text-title font-semibold text-primary first:mt-0" {...clean(props)} />

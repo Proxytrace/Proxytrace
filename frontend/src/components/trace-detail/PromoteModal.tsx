@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import type { AgentCallDto, TestSuiteListItemDto } from '../../api/models';
-import { usePromoteTrace } from './hooks/usePromoteTrace';
+import { usePromoteTrace } from './usePromoteTrace';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtPct100 } from '../../lib/format';
 import { cn } from '../../lib/cn';
-import { PlusIcon, CheckIcon } from '../../components/icons';
-import { ColoredBadge } from '../../components/ui/ColoredBadge';
-import { MessageBubble } from '../../components/ui/MessageBubble';
-import { ExpectedOutputEditor } from '../suites/components/ExpectedOutputEditor';
+import { PlusIcon, CheckIcon } from '../icons';
+import { ColoredBadge } from '../ui/ColoredBadge';
+import { MessageBubble } from '../ui/MessageBubble';
+import { ExpectedOutputEditor } from '../expected-output/ExpectedOutputEditor';
 import {
   expectedFromResponse,
   toMessage,
   validateExpected,
-} from '../suites/components/expectedOutput';
+} from '../expected-output/expectedOutput';
 import useToast from '../../hooks/useToast';
-import { Button } from '../../components/ui/Button';
-import { RowButton } from '../../components/ui/RowButton';
-import { Modal } from '../../components/overlays/Modal';
+import { Button } from '../ui/Button';
+import { RowButton } from '../ui/RowButton';
+import { Modal } from '../overlays/Modal';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
 
 interface Props {
@@ -53,7 +53,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
 
   return (
     <Modal
-      title={t`Promote to Test Case`}
+      title={t`Add test`}
       onClose={onClose}
       maxWidth={980}
       headerActions={

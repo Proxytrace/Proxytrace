@@ -48,7 +48,8 @@ interface SharedStream {
 
 const sharedStreams = new Map<string, SharedStream>();
 
-function subscribeShared(
+// Exported for tests (reconnection behaviour); internal to this module otherwise.
+export function subscribeShared(
   url: string,
   eventNames: string[],
   handler: (event: unknown) => void,
@@ -59,21 +60,47 @@ function subscribeShared(
     const handlers = new Set<(event: unknown) => void>();
     let es: EventSource | null = null;
     let closed = false;
-    void withAuth(url).then((authedUrl) => {
-      if (closed) return;
-      es = new EventSource(authedUrl);
-      for (const name of eventNames) {
-        es.addEventListener(name, (e: MessageEvent) => {
-          const event = { type: name, ...JSON.parse(e.data) };
-          handlers.forEach((h) => h(event));
-        });
-      }
-    });
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempt = 0;
+
+    // The stream credential (a single-use ticket) is baked into the URL, so the browser's native
+    // EventSource reconnect would replay the *consumed* ticket and get a 401 — permanently killing
+    // the stream after the first drop (a dev backend restart, a proxy blip, a laptop sleep). The
+    // list then goes stale until a full page reload mints a fresh ticket. So we take reconnection
+    // over: on any error we close this source (stopping the doomed native retry) and reopen with a
+    // freshly-minted ticket after an exponential backoff. Reopening re-runs `withAuth`, so this
+    // works in every auth mode — including OIDC, where there is no session-cookie fallback.
+    const open = () => {
+      void withAuth(url).then((authedUrl) => {
+        if (closed) return;
+        const source = new EventSource(authedUrl);
+        es = source;
+        source.onopen = () => { attempt = 0; };
+        for (const name of eventNames) {
+          source.addEventListener(name, (e: MessageEvent) => {
+            attempt = 0; // a delivered frame proves the connection is healthy
+            const event = { type: name, ...JSON.parse(e.data) };
+            handlers.forEach((h) => h(event));
+          });
+        }
+        source.onerror = () => {
+          source.close();
+          // Ignore errors from a source we've already replaced or torn down.
+          if (closed || es !== source) return;
+          es = null;
+          const delay = Math.min(1000 * 2 ** attempt, 30000);
+          attempt += 1;
+          reconnectTimer = setTimeout(open, delay);
+        };
+      });
+    };
+    open();
     shared = {
       refCount: 0,
       handlers,
       close: () => {
         closed = true;
+        if (reconnectTimer) clearTimeout(reconnectTimer);
         es?.close();
       },
     };

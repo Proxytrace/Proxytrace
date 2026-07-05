@@ -9,6 +9,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Changed
+
+- **Tracey AI chat is easier on the eyes — and looks the part.** Chat messages, the composer, and
+  in-chat headings now render at a comfortable reading size instead of the app's compact data
+  scale, and the whole page picked up an identity: an animated gold-and-teal halo around Tracey's
+  avatar (it spins while she's thinking), a soft aurora across the top of the chat panel, a
+  gradient-lit wordmark and welcome screen, a shimmering *Thinking…* indicator, and larger
+  starter/follow-up chips. All motion respects your system's reduced-motion preference.
+
 ### Added
 
 - **Ask Tracey everywhere.** Context-aware ⚡ *Ask Tracey* buttons now appear throughout the
@@ -86,6 +95,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Clearer trace detail header.** The trace drawer's header now leads with the identity that
+  matters: the agent (entity-colored, click to open its page), the model, and the HTTP status
+  on the first line; the full trace ID (with copy) and the exact capture time — date and time
+  to the second — on the line below. *Promote to test case* is renamed to the shorter
+  **Add test** (the dialog it opens follows suit), and the redundant *Create suite →* link is
+  gone — the Add test tooltip now points to the Test Suites page when the agent has no suite
+  yet.
+
 - **Compact page layouts everywhere.** The remaining pages that still opened with a large
   title and subtitle — Proposals, Anomalies, Error Log, Audit Log, Users, and Account
   security — now start directly with their content (the top bar's breadcrumb already names
@@ -113,6 +130,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Live updates stop needing a page reload.** Real-time streams (new traces, notifications,
+  anomalies, run progress) no longer go silent after a dropped connection. The stream credential is
+  single-use, so the browser's automatic reconnect was replaying a consumed ticket and getting
+  rejected — permanently killing the stream after the first blip (a server restart, a proxy timeout,
+  a laptop waking from sleep) until you reloaded the page. The client now reconnects with a fresh
+  ticket and an exponential backoff, so the Traces list and other live views keep updating on their
+  own.
 - The redesigned dashboard's labels (activity band, live feed, queue and latency tiles) are now
   translated into German, Spanish, French, and Italian instead of falling back to English.
 

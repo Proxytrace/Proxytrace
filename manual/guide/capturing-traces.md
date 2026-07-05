@@ -123,8 +123,13 @@ while the time range, search, sort, and the System traces setting are shared acr
 
 ![The trace detail panel: latency, token and cost metrics above the Messages tab, which lays out the system, user, and assistant conversation.](/screenshots/traces/detail.png)
 
-Click a trace to open its detail panel. The header shows the trace ID with a **copy**
-button beside it that puts the full ID on your clipboard.
+Click a trace to open its detail panel. The header leads with the **agent** that made the
+call (click the name to jump to its [agent page](/guide/agents)), followed by the **model**
+and the call's **HTTP status**. The line below shows the full **trace ID** with a **copy**
+button that puts it on your clipboard, and the exact **capture time** (date and time, to the
+second). The header also holds the panel's actions: **Ask Tracey** hands the trace to the
+[AI assistant](/guide/tracey), and **Add test** promotes it into a
+[test case](/guide/test-suites-and-cases).
 
 If the call was [flagged as an outlier](/guide/outliers) or by a
 [custom anomaly detector](/guide/anomaly-dashboard#custom-anomaly-detectors), an **Anomalous

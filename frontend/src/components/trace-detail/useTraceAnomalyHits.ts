@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { anomaliesApi } from '../../../api/anomalies';
-import { QUERY_KEYS } from '../../../api/query-keys';
-import { OutlierFlag } from '../../../lib/outliers';
-import type { AgentCallDto, CustomAnomalyHitDto } from '../../../api/models';
+import { anomaliesApi } from '../../api/anomalies';
+import { QUERY_KEYS } from '../../api/query-keys';
+import { OutlierFlag } from '../../lib/outliers';
+import type { AgentCallDto, CustomAnomalyHitDto } from '../../api/models';
 
 /**
  * Custom-detector attributions for one trace — the detail drawer's anomaly banner. Fetched only

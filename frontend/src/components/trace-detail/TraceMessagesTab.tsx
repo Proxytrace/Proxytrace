@@ -1,7 +1,7 @@
-import type { AgentCallDto } from '../../../api/models';
-import { ConversationView } from '../../../components/conversation/ConversationView';
-import { fromAgentCall } from '../../../components/conversation/adapters';
-import { fmtLatency } from '../../../lib/format';
+import type { AgentCallDto } from '../../api/models';
+import { ConversationView } from '../conversation/ConversationView';
+import { fromAgentCall } from '../conversation/adapters';
+import { fmtLatency } from '../../lib/format';
 import { Trans } from '@lingui/react/macro';
 
 interface Props {
