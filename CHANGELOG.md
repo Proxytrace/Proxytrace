@@ -155,11 +155,23 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   own.
 - The redesigned dashboard's labels (activity band, live feed, queue and latency tiles) are now
   translated into German, Spanish, French, and Italian instead of falling back to English.
+- **The proxy no longer errors on a bare base URL.** Hitting the traced proxy surface with an empty
+  path — `GET /openai/v1` or `GET /{project}/openai/v1` with no trailing segment — used to throw a
+  `NullReferenceException` and return an opaque `500`. The empty path is now handled cleanly instead
+  of faulting.
 
 ### Removed
 
 - The dashboard API's live-telemetry payload no longer carries the unused `proxyVersion` field;
   its only consumer was the retired telemetry strip.
+
+### Security
+
+- **The proxy's path-traversal guard now resists URL-encoding.** The guard that rejects `..` in a
+  forwarded proxy path previously matched only a literal `..`, so a percent-encoded `%2e%2e` (or
+  double-encoded `%252e%252e`) slipped past it. The path is now fully decoded before the check, on
+  both the traced and pass-through proxy routes. This was not exploitable — the forward host stays
+  pinned to the configured provider origin (no cross-host SSRF) — so the change is defense-in-depth.
 
 ## [1.4.0] - 2026-07-02
 
