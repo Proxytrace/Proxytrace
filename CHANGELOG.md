@@ -173,6 +173,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   thing distinguishing one agent from another. The palette is now eight genuinely distinct,
   theme-legible hues (also used for project and provider colors), so stacked timelines, the
   most-flagged-agents ranking, agent badges, and the project/provider avatars stay readable.
+- **The kiosk demo no longer spews failed test-run errors on boot.** The showcase's seeded
+  incident run and its hidden A/B comparison runs were persisted in a not-yet-finished state and
+  then executed by the real test runner against the read-only demo model, which has no LLM
+  endpoint — so every case failed with a fail-level stack trace and raced the seeder. Those runs
+  are now seeded directly in their final state (a failed run stays failed, a completed run stays
+  completed), so nothing re-runs them and the boot logs stay clean.
+- **The kiosk demo's "Data Analytics — SQL Correctness" suite passes on a live re-run.** The
+  Data Analytics agent is told to answer from its `run_sql` tool rather than invent numbers, so
+  its first turn is a tool call. Each seeded case now includes the tool round-trip (the query and
+  its returned rows) in its input, so re-running the suite against a configured demo model scores
+  the final written answer instead of failing on the intermediate tool-call turn.
 
 ### Removed
 

@@ -6,11 +6,13 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Kiosk;
+using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestRun;
+using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Domain.Usage;
 using Proxytrace.Testing;
@@ -219,6 +221,92 @@ public class DemoSeedingTests : BaseTest<Module>
             suite.Evaluators.Should().NotBeEmpty();
             foreach (var ev in suite.Evaluators)
                 evaluatorIds.Should().Contain(ev.Id);
+        }
+    }
+
+    // ---- #290: seeded runs/groups are terminal by construction, so a live kiosk's runner can
+    //      never pick them up and execute their cases against the disabled ModelClient. ----
+
+    [TestMethod]
+    public async Task Seed_Leaves_No_TestRun_Or_Group_In_A_Non_Terminal_State()
+    {
+        // The TestRunnerService loop only ever executes Pending/Running work. Seeding every group
+        // and run directly in a terminal state (Completed/Failed) is what removes the race between
+        // the seeder and the runner — a single non-terminal row would reopen it.
+        var groups = await services.GetRequiredService<IRepository<ITestRunGroup>>()
+            .GetAllAsync(CancellationToken);
+        var runs = await services.GetRequiredService<IRepository<ITestRun>>()
+            .GetAllAsync(CancellationToken);
+
+        groups.Should().NotBeEmpty();
+        runs.Should().NotBeEmpty();
+
+        groups.Should().OnlyContain(g => g.Status.IsTerminal(),
+            "no seeded group may sit in Pending/Running where the runner would execute it");
+        runs.Should().OnlyContain(r => r.Status.IsTerminal(),
+            "no seeded run may sit in Pending/Running where the runner would execute it");
+    }
+
+    [TestMethod]
+    public async Task Seed_FailedToneGroup_And_Its_Run_Are_Failed_Without_Results()
+    {
+        var ctx = services.GetRequiredService<DemoSeedContext>();
+        var group = ctx.RequireFailedToneGroup();
+        group.Status.Should().Be(TestRunStatus.Failed);
+
+        var runs = await group.GetTestRuns(CancellationToken);
+        runs.Should().ContainSingle("the endpoint-down group has a single resultless run");
+        runs.Single().Status.Should().Be(TestRunStatus.Failed);
+        runs.Single().TestResults.Should().BeEmpty("the run never produced a result");
+    }
+
+    [TestMethod]
+    public async Task Seed_AB_Candidate_Runs_Are_Completed_With_Results()
+    {
+        var ctx = services.GetRequiredService<DemoSeedContext>();
+        ctx.AbCandidateRunsByAgent.Should().NotBeEmpty();
+
+        var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
+        foreach (var run in ctx.AbCandidateRunsByAgent.Values)
+        {
+            var stored = await runRepo.GetAsync(run.Id, CancellationToken);
+            stored.Status.Should().Be(TestRunStatus.Completed);
+            stored.CompletedAt.Should().NotBeNull();
+            stored.TestResults.Should().NotBeEmpty();
+        }
+    }
+
+    // ---- #292: the Data Analytics agent's prompt forbids inventing numbers, so its first turn is
+    //      a run_sql tool call. Each case embeds the round-trip so a live re-run (with a
+    //      Kiosk:Endpoint configured) scores the final text answer, not the tool-call turn. ----
+
+    [TestMethod]
+    public void Seed_Analytics_Cases_Embed_A_RunSql_Roundtrip_And_Expect_A_Text_Answer()
+    {
+        var ctx = services.GetRequiredService<DemoSeedContext>();
+        var suite = ctx.SuitesByKey["data-analytics-queries"];
+        suite.TestCases.Should().NotBeEmpty();
+
+        foreach (var testCase in suite.TestCases)
+        {
+            var messages = testCase.Input.Messages;
+
+            // The model's first turn is a run_sql tool call...
+            messages.OfType<AssistantMessage>()
+                .Any(m => m.ToolRequests.Any(t => t.Name == "run_sql"))
+                .Should().BeTrue(
+                    "every analytics case must embed the run_sql call so a live re-run lands on the text answer");
+
+            // ...answered by a tool-result turn in the same input conversation...
+            messages.OfType<ToolMessage>().Should().NotBeEmpty(
+                "the run_sql tool result must be present in the input conversation");
+
+            // ...and the scored turn is the final text answer, not another tool call.
+            testCase.ExpectedOutput.ToolRequests.Should().BeEmpty(
+                "the expected output must be the final text answer, not a tool-call turn");
+            testCase.ExpectedOutput.Contents.Should()
+                .Contain(c => !string.IsNullOrWhiteSpace(c.Text),
+                    "the expected answer must contain grounded text");
         }
     }
 }
