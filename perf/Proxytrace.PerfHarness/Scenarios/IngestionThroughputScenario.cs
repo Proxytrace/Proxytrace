@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using Autofac;
@@ -63,6 +64,10 @@ internal static class IngestionThroughputScenario
         long planned = perWorker * concurrency;
         Console.WriteLine($"[ingestion] inserting {planned:N0} calls across {concurrency} workers…");
 
+        // Capture the id of every row this probe inserts so it can delete exactly those rows once the
+        // measurement is recorded (issue #294). Concurrent because the workers insert in parallel.
+        var insertedIds = new ConcurrentBag<Guid>();
+
         var stopwatch = Stopwatch.StartNew();
         var workers = Enumerable.Range(0, concurrency).Select(workerIndex => Task.Run(async () =>
         {
@@ -89,6 +94,7 @@ internal static class IngestionThroughputScenario
                         conversationId: null);
 
                     await repository.AddAsync(call, cancellationToken);
+                    insertedIds.Add(call.Id);
                 });
             }
         }, cancellationToken));
@@ -100,7 +106,49 @@ internal static class IngestionThroughputScenario
         Console.WriteLine($"[ingestion] {planned:N0} calls in {stopwatch.Elapsed.TotalSeconds:N1}s = {callsPerSec:N0} calls/s");
 
         double? budget = budgets.Ingestion.CallsPerSecMin > 0 ? budgets.Ingestion.CallsPerSecMin : null;
-        return new MetricResult("ingestion", "ingestThroughput", callsPerSec, budget, "calls/s", BudgetDirection.HigherIsBetter);
+        var result = new MetricResult("ingestion", "ingestThroughput", callsPerSec, budget, "calls/s", BudgetDirection.HigherIsBetter);
+
+        // Remove exactly the rows this probe inserted, OUTSIDE the timed section — the throughput
+        // number is already captured in `callsPerSec`, so cleanup cannot distort it. Every probe row is
+        // stamped with a wall-clock `CreatedAt = now`, landing in the only measured window small enough
+        // to notice it: statsPulse's trailing 60 minutes. Left behind, the rows make the documented
+        // "seed once, iterate db-layer against a kept DB" workflow history-dependent — they accumulate
+        // and inflate statsPulse ~0.7ms per 1k rows until they age out after an hour (issue #294).
+        // Deleting them restores the post-seed state for the next iterate run; the AgentCall→tool FK
+        // cascades, so each parent's child tool rows go with it.
+        await CleanupProbeRowsAsync(container, insertedIds, concurrency, cancellationToken);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Hard-deletes the probe's inserted rows, fanned out across the same number of workers as the
+    /// insert loop so cleanup stays quick. Runs only after the throughput measurement is captured, so
+    /// it never affects the reported number.
+    /// </summary>
+    private static async Task CleanupProbeRowsAsync(
+        PerfContainer container,
+        IReadOnlyCollection<Guid> insertedIds,
+        int concurrency,
+        CancellationToken cancellationToken)
+    {
+        Console.WriteLine($"[ingestion] removing {insertedIds.Count:N0} probe rows (restoring post-seed state)…");
+
+        var ids = insertedIds.ToArray();
+        var workers = Enumerable.Range(0, concurrency).Select(workerIndex => Task.Run(async () =>
+        {
+            for (int i = workerIndex; i < ids.Length; i += concurrency)
+            {
+                Guid id = ids[i];
+                await container.InScopeAsync(async scope =>
+                {
+                    var repository = scope.Resolve<IAgentCallRepository>();
+                    await repository.RemoveAsync(id, cancellationToken);
+                });
+            }
+        }, cancellationToken));
+
+        await Task.WhenAll(workers);
     }
 
     private sealed record IngestGraph(
