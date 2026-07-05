@@ -1,16 +1,18 @@
 # Domain Modeling as a Repeatable Multi-File Pattern
 
-Domain models decay in two directions: either persistence concerns (ORM attributes, foreign-key ids, lazy-loading proxies) invade the business objects, or every entity is modeled slightly differently and no one can add concept N+1 without archaeology. The fix is a rigid, documented, per-entity file pattern with a hard domain/storage boundary — boring on purpose, so that adding an entity is mechanical and reviewing one is instant. This document distills that pattern.
+Domain models decay in two directions: either persistence concerns (ORM attributes, foreign-key ids, lazy-loading proxies) invade the business objects, or every entity is modeled slightly differently and no one can add concept N+1 without archaeology. The fix is a rigid, documented, per-entity file pattern with a hard domain/storage boundary — boring on purpose, so that adding an entity is mechanical and reviewing one is instant. The entities produced by this pattern form the core of the onion architecture (see `architecture.md`); two properties of that core are non-negotiable: entities are **immutable**, and they are **interface-abstracted**. This document distills the pattern.
 
 ## Principles
 
-1. **Every domain concept follows the same fixed file set.** One interface, one immutable implementation, one test-data generator, one persistence entity, one mapping/configuration — same names, same folders, every time. Uniformity is the feature: deviation is visible at a glance.
-2. **The domain/storage boundary is sharp and directional.** Domain objects hold *references to other domain objects*; storage rows hold *foreign-key ids*. Repositories accept and return domain interfaces only — a storage entity never crosses the boundary outward.
-3. **Distinguish entities from value objects explicitly.** An entity has identity and lifecycle (id, created/updated timestamps, its own table). A value object has neither — it is embedded or serialized inside its owner and never gets its own repository. Deciding which one a concept is *before* coding prevents both anemic entities and over-tabled values.
-4. **Construction goes through injectable factory delegates**, with exactly two paths: *create new* (mints identity and timestamps) and *rehydrate existing* (carries them over). Nothing else may fabricate identity.
-5. **Validation is a domain concern, enforced at construction and before persistence** — not a database constraint you discover as a cryptic driver exception.
-6. **Base abstractions carry the boilerplate.** Identity, timestamps, generic CRUD, change notification, common query filters live in shared base types; a concrete entity adds only what is unique to it.
-7. **The glossary is a living document.** A single page lists every entity and value object with a one-line meaning; it is updated in the same change that alters the model.
+1. **Domain entities are immutable.** Every property is read-only, set once in the constructor; collections are exposed as read-only views over defensive copies. There is no setter, no `Update(...)` mutator, no half-initialized state. "Changing" an entity means constructing a *successor instance* that carries the same identity (see the update-by-reconstruction pattern). Immutability is what makes the domain core safe: instances can be shared across threads, cached, and passed to outer rings without defensive copying, and every state an entity can ever be in has passed through constructor validation — an invalid intermediate state is unrepresentable.
+2. **Domain entities are interface-abstracted.** The only public type for a concept is its interface (`IThing`); the implementing record is `internal` to the domain package. All other rings — application services, controllers, storage mappers, tests — program against the interface and construct instances exclusively through the factory delegates it declares. No outer ring can `new` a concrete entity, downcast to one, or bind to implementation details. This keeps the domain free to change its internals, lets tests substitute entities trivially, and makes the interface the single, reviewable contract of the concept.
+3. **Every domain concept follows the same fixed file set.** One interface, one immutable implementation, one test-data generator, one persistence entity, one mapping/configuration — same names, same folders, every time. Uniformity is the feature: deviation is visible at a glance.
+4. **The domain/storage boundary is sharp and directional.** Domain objects hold *references to other domain objects*; storage rows hold *foreign-key ids*. Repositories accept and return domain interfaces only — a storage entity never crosses the boundary outward.
+5. **Distinguish entities from value objects explicitly.** An entity has identity and lifecycle (id, created/updated timestamps, its own table). A value object has neither — it is embedded or serialized inside its owner and never gets its own repository. Deciding which one a concept is *before* coding prevents both anemic entities and over-tabled values.
+6. **Construction goes through injectable factory delegates**, with exactly two paths: *create new* (mints identity and timestamps) and *rehydrate existing* (carries them over). Nothing else may fabricate identity.
+7. **Validation is a domain concern, enforced at construction and before persistence** — not a database constraint you discover as a cryptic driver exception.
+8. **Base abstractions carry the boilerplate.** Identity, timestamps, generic CRUD, change notification, common query filters live in shared base types; a concrete entity adds only what is unique to it.
+9. **The glossary is a living document.** A single page lists every entity and value object with a one-line meaning; it is updated in the same change that alters the model.
 
 ## Patterns
 
@@ -29,6 +31,98 @@ Domain models decay in two directions: either persistence concerns (ORM attribut
 
   A dedicated repository interface/implementation is added *only* when the entity needs non-trivial queries or N:M relation syncing; simple entities use the generic `IRepository<IThing>`.
 - **Rationale:** the pattern is copy-paste-refactor friendly, discoverable by convention-based DI, and reviewable by diff shape alone ("this PR adds five files in the right places"). Keeping mapper and schema config in one class means the person changing a column sees the mapping it feeds.
+
+### Immutable, interface-abstracted entities — a full worked example
+
+- **Problem:** mutable, publicly-constructible entity classes invite in-place mutation from any layer, allow invalid intermediate states, couple callers to concrete types, and make thread-safe sharing impossible without defensive copies.
+- **Solution:** the concept's *only* public type is an interface with read-only properties and two nested factory delegates; the implementation is an *internal immutable record* whose two constructors mirror the delegates. C# is the illustration; the shape ports to any language with interfaces and read-only fields.
+
+  **The public interface** (the whole surface other rings ever see):
+
+  ```csharp
+  /// <summary>A project that owns agents and their test suites.</summary>
+  public interface IProject : IDomainEntity          // IDomainEntity supplies Id, CreatedAt, UpdatedAt
+  {
+      /// <summary>Display name.</summary>
+      string Name { get; }                           // read-only: no setters anywhere on the interface
+
+      /// <summary>Endpoint used by system-level background agents.</summary>
+      IModelEndpoint SystemEndpoint { get; }         // reference to another domain interface — never a raw FK id
+
+      /// <summary>Users that are members of this project.</summary>
+      IReadOnlyCollection<IUser> Members { get; }    // read-only view; the record snapshots it defensively
+
+      /// <summary>Creates a brand-new instance (mints Id + timestamps).</summary>
+      delegate IProject CreateNew(
+          string name, IModelEndpoint systemEndpoint, IReadOnlyCollection<IUser> members);
+
+      /// <summary>Reconstitutes an existing instance (carries Id + timestamps over).</summary>
+      delegate IProject CreateExisting(
+          string name, IModelEndpoint systemEndpoint, IReadOnlyCollection<IUser> members,
+          IDomainEntityData existing);
+  }
+  ```
+
+  **The internal immutable implementation** (never leaves the domain package):
+
+  ```csharp
+  internal record Project : DomainEntity<IProject>, IProject
+  {
+      public string Name { get; }                         // get-only: assigned once, in the constructor
+      public IModelEndpoint SystemEndpoint { get; }
+      public IReadOnlyCollection<IUser> Members { get; }
+
+      // "New" path — base ctor mints fresh Id, CreatedAt, UpdatedAt.
+      public Project(string name, IModelEndpoint systemEndpoint, IReadOnlyCollection<IUser> members)
+      {
+          Name = name;
+          SystemEndpoint = systemEndpoint;
+          Members = members.ToArray();                    // defensive copy: caller's list can't mutate us later
+      }
+
+      // "Existing" path — base(existing) copies Id + timestamps from the persisted data.
+      public Project(string name, IModelEndpoint systemEndpoint, IReadOnlyCollection<IUser> members,
+                     IDomainEntityData existing) : base(existing)
+      {
+          Name = name;
+          SystemEndpoint = systemEndpoint;
+          Members = members.ToArray();
+      }
+
+      public override IEnumerable<ValidationResult> Validate(ValidationContext context)
+      {
+          foreach (var result in base.Validate(context))  // always yield base rules first
+              yield return result;
+
+          if (string.IsNullOrWhiteSpace(Name))
+              yield return Validation.NotNullOrWhiteSpace(Name);
+
+          foreach (var result in SystemEndpoint.Validate(context))   // cascade into references
+              yield return result;
+          foreach (var result in Members.SelectMany(m => m.Validate(context)))
+              yield return result;
+      }
+  }
+  ```
+
+  The DI container auto-registers both delegates against the internal record (convention scan), so consumers write `private readonly IProject.CreateNew createProject;` and never see the class. Because construction is the only way an instance comes to exist — and the container validates on activation — *every* `IProject` in the system is valid by construction.
+- **Rationale:** the interface is the contract, the record is a detail. Immutability turns aliasing bugs, torn reads, and "who changed this?" debugging into non-issues; interface abstraction keeps every consumer substitutable and the concrete type free to evolve. Together they make the domain core a set of values you can reason about locally — which is the entire point of having a domain core.
+
+### Update by reconstruction (no mutators)
+
+- **Problem:** an `entity.Name = newName; repo.Save(entity)` mutation path bypasses construction-time validation, mutates an instance other code may hold, and hides which fields a use case is allowed to change.
+- **Solution:** an update loads the current instance, then builds its *successor* through `CreateExisting`, passing the loaded instance as the identity carrier and mixing changed with carried-over values; the repository persists the successor.
+
+  ```csharp
+  var existing = await projects.GetAsync(id, ct);
+  var updated = createExisting(
+      request.Name,                    // changed value
+      existing.SystemEndpoint,         // carried over
+      existing.Members.ToArray(),      // carried over (snapshot — not mass-assignable here)
+      existing);                       // identity carrier: Id + CreatedAt survive, UpdatedAt refreshes
+  await projects.UpdateAsync(updated, ct);
+  ```
+- **Rationale:** every transition re-runs full validation (an update can no more produce an invalid entity than a create can), the diff of a use case shows *exactly* which fields it may change, and fields deliberately excluded from an endpoint (here: membership, which has its own add/remove endpoints) are carried over rather than silently mass-assigned.
 
 ### Base entity contract: id + audit timestamps, declared once
 
@@ -90,6 +184,9 @@ Domain models decay in two directions: either persistence concerns (ORM attribut
 
 ## Pitfalls
 
+- **Setters or mutator methods on entities** "for convenience". One mutable field reintroduces aliasing bugs and unvalidated states for the whole aggregate; the update-by-reconstruction path must stay the only write path.
+- **Public concrete entity classes.** The first `new Project(...)` outside the domain package couples a caller to the implementation and bypasses the factory delegates; keep implementations `internal` so the compiler enforces the abstraction.
+- **Exposing internal mutable collections.** Returning the constructor argument's list (instead of a defensive copy behind `IReadOnlyCollection`) lets callers mutate an "immutable" entity from outside.
 - **Leaking storage entities out of repositories** "just for this one query". The first leak normalizes the rest; return domain interfaces or purpose-built read DTOs.
 - **Putting ids on domain objects for convenience.** The moment domain code joins by id, the mapper's job has moved into business logic.
 - **Skipping the generator** because "this entity is trivial". The missing generator is discovered by the first test that needs it, written hastily, and wrong.
@@ -101,6 +198,8 @@ Domain models decay in two directions: either persistence concerns (ORM attribut
 
 ## Checklist for a new project
 
+- [ ] Make immutability and interface abstraction the first two rules of the model: read-only properties only, defensive collection copies, `internal` implementations, public interfaces as the sole surface.
+- [ ] Establish update-by-reconstruction as the only write path — no setters, no mutator methods; every transition goes through a validating constructor.
 - [ ] Define the entity base contract (id + audit timestamps, offset-aware) and the entity/value-object distinction before the first concept is modeled.
 - [ ] Write the N-file pattern down as a table (names, folders, purposes) and create one exemplary reference entity per relationship kind (standalone, 1:N, N:M, archivable).
 - [ ] Declare `CreateNew`/`CreateExisting` factory delegates on every entity interface; auto-register them; run validation on activation and pre-persist.

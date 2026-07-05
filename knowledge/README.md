@@ -12,8 +12,8 @@ ends with a checklist for applying it to a new project.
 
 | Guide | Topic |
 |-------|-------|
-| [architecture.md](architecture.md) | Layered architecture, one-way dependency graph, per-project DI modules, ports & adapters, lean deployables |
-| [domain-modeling.md](domain-modeling.md) | Repeatable multi-file entity pattern, factory delegates, FK conventions, domain validation, living glossary |
+| [architecture.md](architecture.md) | Onion architecture: concentric rings, inward-only dependencies, immutable interface-abstracted core, per-project DI modules, ports & adapters, lean deployables |
+| [domain-modeling.md](domain-modeling.md) | Immutable, interface-abstracted entities (with full worked example), update-by-reconstruction, factory delegates, FK conventions, domain validation, living glossary |
 | [persistence.md](persistence.md) | Provider abstraction over multiple DB engines, migration discipline, domain/ORM split, indexing, concurrency |
 | [coding-conventions.md](coding-conventions.md) | Codified style: nullable discipline, guard clauses, warnings-as-errors, lint as the only gate |
 

@@ -1,10 +1,40 @@
-# Layered Architecture with Module-Based Composition
+# Onion Architecture with Module-Based Composition
 
-Medium-to-large backends rot when any code can call any other code: business rules leak into HTTP handlers, storage details leak into domain logic, and eventually nothing can be tested or replaced in isolation. The cure is a small number of strictly layered projects/packages with a one-way dependency rule, composed at the edge by per-project DI modules. This document distills that shape into reusable patterns.
+Medium-to-large backends rot when any code can call any other code: business rules leak into HTTP handlers, storage details leak into domain logic, and eventually nothing can be tested or replaced in isolation. The cure is the **onion architecture**: concentric rings around a pure domain core, a one-way dependency rule pointing inward, physical (per-project) ring boundaries, and per-project DI modules composing the rings at the edge. This document distills that shape into reusable patterns.
+
+## The onion model
+
+The architecture is a set of concentric rings; every reference points **inward**, never outward, never sideways:
+
+```
+        ┌──────────────────────────────────────────────┐
+        │  Host / API  (composition root, controllers) │
+        │  ┌─────────────┐  ┌─────────┐  ┌──────────┐  │
+        │  │ Application │  │ Storage │  │ Infra-   │  │   outer ring:
+        │  │ (use cases) │  │ adapter │  │ structure│  │   adapters +
+        │  └──────┬──────┘  └────┬────┘  └────┬─────┘  │   orchestration
+        │         ▼              ▼            ▼        │
+        │  ┌──────────────────────────────────────┐    │
+        │  │            Domain core               │    │   inner ring:
+        │  │  immutable, interface-abstracted     │    │   entities, value
+        │  │  entities · ports · validation       │    │   objects, ports
+        │  └──────────────────┬───────────────────┘    │
+        │                     ▼                        │
+        │  ┌──────────────────────────────────────┐    │
+        │  │   Common (pure shared utilities)     │    │   center
+        │  └──────────────────────────────────────┘    │
+        └──────────────────────────────────────────────┘
+```
+
+- **Center — Common utilities:** validation guards, extensions; depends on nothing.
+- **Inner ring — Domain core:** entities, value objects, repository contracts, port interfaces, domain validation. Pure code, no I/O, no framework types. Its entities are **immutable** and exposed **only through interfaces** (see the dedicated principle below and `domain-modeling.md`).
+- **Outer ring — Application + adapters:** use-case orchestration (application services) and, as *siblings that never reference each other*, the adapters: storage (ORM, migrations), infrastructure (external service clients), messaging, serialization. All of them depend on the domain; none depends on another sibling.
+- **Edge — Hosts:** deployables/composition roots (API host, lean sidecar, test harness). The only place allowed to see every ring; contain wiring, transport DTOs, and nothing the inner rings would want back.
 
 ## Principles
 
 1. **Dependencies point inward, and only inward.** The domain core depends on nothing but shared utilities. Application logic depends on the domain. Adapters (storage, external services, transport) depend on the domain — never on each other, and never on the application layer. The host/API layer is the only place allowed to see everything.
+   1a. **The core of the onion is immutable and interface-abstracted.** Domain entities are exposed to every other ring exclusively as *public interfaces*; the implementing types are *internal, immutable* records constructed only through factory delegates. Outer rings can read and compose domain state but can never mutate it in place or bind to a concrete class. This single decision is what keeps the core pure: an entity that cannot change under you needs no defensive copies, is safe to cache and share across threads, and can only be "changed" by explicitly constructing a successor instance — which forces every state transition through construction-time validation. See `domain-modeling.md` for the full pattern and examples.
 2. **Enforce layering with physical boundaries, not convention.** Separate compilation units (projects/packages) make an illegal dependency a build error instead of a code-review argument. A layering rule that lives only in people's heads will be violated within a quarter.
 3. **Interfaces live where their *consumers* are; implementations live where their *dependencies* are.** A storage adapter implements interfaces declared in the domain (ports and adapters). This is what lets the adapter avoid referencing upper layers.
 4. **Every project owns its DI wiring.** Each project ships exactly one DI module that registers that project's services. Composition roots (hosts, test harnesses) assemble the app by stacking modules, not by re-listing individual services.
@@ -89,7 +119,8 @@ Medium-to-large backends rot when any code can call any other code: business rul
 
 ## Checklist for a new project
 
-- [ ] Draw the layer graph before writing code; encode it as separate projects/packages so violations fail the build.
+- [ ] Draw the onion (ring diagram + layer graph) before writing code; encode it as separate projects/packages so violations fail the build.
+- [ ] Make the domain core pure: no I/O, no framework types; entities immutable and exposed only via public interfaces with internal implementations (see `domain-modeling.md`).
 - [ ] Create a `Common`/utility package with zero inward dependencies; keep it small.
 - [ ] Put all port interfaces + their DTOs in the domain layer; keep the domain free of I/O and framework types.
 - [ ] Give every project exactly one DI module; hosts compose modules, never individual services from other projects.
