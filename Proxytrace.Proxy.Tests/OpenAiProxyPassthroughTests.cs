@@ -168,14 +168,14 @@ public sealed class OpenAiProxyPassthroughTests
         Encoding.UTF8.GetString(responseBody.ToArray()).Should().Be("""{"status":"degraded"}""");
     }
 
-    // The `..` guard is defence-in-depth; the REAL bound is that the forward target host is the
+    // The traversal guard is defence-in-depth; the REAL bound is that the forward target host is the
     // operator-configured provider origin and a hostile path can never redirect it to another host
-    // (no cross-host SSRF). These inputs all pass the `..` guard (no literal ".."), so they exercise
-    // exactly the vectors the encoded-dot bypass would use.
+    // (no cross-host SSRF). These host-spoofing inputs carry no `..` (encoded or otherwise), so they
+    // still reach the upstream and must stay on the provider origin. (An encoded `..` is now rejected
+    // outright — see Passthrough_EncodedPathTraversal_ReturnsBadRequest.)
     [TestMethod]
     [DataRow("//evil.com/x")]
     [DataRow("@evil.com/x")]
-    [DataRow("%2e%2e/%2e%2e/secret")]
     public async Task Passthrough_HostileRest_StaysOnProviderOrigin(string rest)
     {
         var capture = new CapturingHttpMessageHandler("""{"ok":true}""");
@@ -203,6 +203,29 @@ public sealed class OpenAiProxyPassthroughTests
         await controller.Passthrough("acme", "../../etc/passwd", CancellationToken.None);
 
         controller.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    // #304: the traversal guard must not be bypassable with a percent-encoded dot. The catch-all
+    // route value is decoded once by routing, so a literal-only "../" scan let `%2e%2e` (and
+    // double-encoded `%252e%252e`) slip through; the guard now fully decodes before the check. A
+    // rejected request must never reach the upstream.
+    [TestMethod]
+    [DataRow("%2e%2e/%2e%2e/secret")]
+    [DataRow("%252e%252e/secret")]
+    [DataRow("foo/%2e%2e/%2e%2e/secret")]
+    public async Task Passthrough_EncodedPathTraversal_ReturnsBadRequest(string rest)
+    {
+        var capture = new CapturingHttpMessageHandler("""{"ok":true}""");
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey(new Uri("http://upstream.test/v1"))),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid");
+
+        await controller.Passthrough("acme", rest, CancellationToken.None);
+
+        controller.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        capture.LastUri.Should().BeNull("a request rejected by the traversal guard must never reach the upstream");
     }
 
     [TestMethod]

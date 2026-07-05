@@ -289,8 +289,13 @@ public class OpenAiProxyController : ControllerBase
         }
 
         // Reject path traversal: a catch-all route value could otherwise contain "../" and reach
-        // arbitrary paths on the upstream host, escaping the intended forward target.
-        if (path.Contains("..", StringComparison.Ordinal))
+        // arbitrary paths on the upstream host, escaping the intended forward target. Routing decodes
+        // the route value only once, so a naive literal "../" scan is bypassable with a
+        // percent-encoded dot (`%2e%2e`, or double-encoded `%252e%252e`); fully decode before the
+        // check so no encoding layer can smuggle a `..` past it. The forward host is already pinned to
+        // the provider origin (no cross-host SSRF), so this is defense-in-depth against a future
+        // change that would rely on the guard actually holding.
+        if (ContainsPathTraversal(path))
         {
             Response.StatusCode = StatusCodes.Status400BadRequest;
             return null;
@@ -321,6 +326,33 @@ public class OpenAiProxyController : ControllerBase
         }
 
         return new BufferedProxyRequest(requestBodyBytes, resolved);
+    }
+
+    // Reports whether the (already once-decoded) catch-all route value hides a `..` traversal
+    // segment behind percent-encoding. Fully unescapes the value — iteratively, so a double-encoded
+    // `%252e%252e` is unwrapped too — and checks each decoded layer for a literal `..`. A value that
+    // still keeps changing after a sane number of rounds is pathological and treated as hostile
+    // rather than forwarded.
+    private static bool ContainsPathTraversal(string path)
+    {
+        var current = path;
+        for (var depth = 0; depth < 5; depth++)
+        {
+            if (current.Contains("..", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            var decoded = Uri.UnescapeDataString(current);
+            if (string.Equals(decoded, current, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            current = decoded;
+        }
+
+        return true;
     }
 
     // Copy upstream status + whitelisted response headers to our response.

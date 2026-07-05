@@ -38,6 +38,22 @@ public sealed class OpenAiProxyControllerTests
         controller.Response.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
 
+    // #304: the shared traversal guard protects the traced action too. A literal or percent-encoded
+    // (single- or double-encoded) `..` must be rejected with a 400 before any upstream contact.
+    [TestMethod]
+    [DataRow("../secret")]
+    [DataRow("%2e%2e/secret")]
+    [DataRow("%252e%252e/secret")]
+    public async Task Proxy_PathTraversal_ReturnsBadRequest(string path)
+    {
+        var controller = BuildController(Substitute.For<IIngestionStream>(), ResolverFor(ApiKey()));
+        controller.ControllerContext = BuildContext("Bearer valid");
+
+        await controller.Proxy(path, project: null, CancellationToken.None);
+
+        controller.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
     [TestMethod]
     public async Task Proxy_ValidKey_ForwardsUpstream_AndPublishesIngestion()
     {
