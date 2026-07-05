@@ -2,34 +2,28 @@
 
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
-import { type MessageDescriptor } from '@lingui/core';
 import { SegmentedGauge } from '../../../components/charts';
 import type { SummaryDto } from '../../../api/models';
 import { useCountUp } from '../../../hooks/useCountUp';
 import { cn } from '../../../lib/cn';
-import { COL_HEADER_CLS } from '../dashboardMeta';
+import { fmtPct100 } from '../../../lib/format';
+import { COL_HEADER_CLS, computePassRateGaugeStats, formatDeltaPt } from '../dashboardMeta';
 
 interface PassRateGaugeProps {
   summary: SummaryDto | undefined;
+  /** Recent test-run pass-rate cohorts (0–100, oldest → newest) — the honest source for the footer. */
+  passRateTrend: number[] | undefined;
 }
 
-const GAUGE_STATS: { l: MessageDescriptor; c: string }[] = [
-  { l: msg`last run`, c: cn('text-success') },
-  { l: msg`best`, c: cn('text-primary') },
-  { l: msg`target`, c: cn('text-muted') },
-];
-
-export function PassRateGauge({ summary }: PassRateGaugeProps) {
-  const { i18n, t } = useLingui();
+export function PassRateGauge({ summary, passRateTrend }: PassRateGaugeProps) {
+  const { i18n } = useLingui();
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
   // Sweep the gauge up on load — the arc fills as the number climbs to the real rate.
   const animatedPct = Math.round(useCountUp(passPct));
-
-  const statValues = [
-    t`+7pt`,
-    `${Math.max(passPct, 85)}%`,
-    '90%',
-  ];
+  // Footer stats derive from real run history; with no cohorts the footer is dropped entirely
+  // rather than showing a placeholder.
+  const stats = computePassRateGaugeStats(passRateTrend ?? []);
+  const lastRunDeltaPt = stats?.lastRunDeltaPt ?? null;
 
   return (
     <section data-testid="pass-rate-gauge" className="relative overflow-hidden rounded-lg bg-card px-3.5 pt-2.5 pb-3 flex flex-col gap-1 shadow-[var(--shadow-card)]">
@@ -41,16 +35,25 @@ export function PassRateGauge({ summary }: PassRateGaugeProps) {
       <div className="flex justify-center">
         <SegmentedGauge value={animatedPct} size={180} label={i18n._(msg`PASS RATE`)} />
       </div>
-      <div className="grid grid-cols-3 gap-2 mt-auto relative">
-        {GAUGE_STATS.map((s, idx) => (
-          <div key={idx} className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
-            <div className={COL_HEADER_CLS}>{i18n._(s.l)}</div>
-            <div className={cn('text-h1 font-bold mt-0.5 tabular-nums', s.c)}>
-              {statValues[idx]}
+      {stats && (
+        <div className="grid grid-cols-2 gap-2 mt-auto relative">
+          <div data-testid="gauge-last-run" className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
+            <div className={COL_HEADER_CLS}><Trans>last run</Trans></div>
+            <div
+              className={cn(
+                'text-h1 font-bold mt-0.5 tabular-nums',
+                lastRunDeltaPt === null ? 'text-muted' : lastRunDeltaPt >= 0 ? 'text-success' : 'text-danger',
+              )}
+            >
+              {lastRunDeltaPt === null ? '—' : formatDeltaPt(lastRunDeltaPt)}
             </div>
           </div>
-        ))}
-      </div>
+          <div data-testid="gauge-best" className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
+            <div className={COL_HEADER_CLS}><Trans>best</Trans></div>
+            <div className="text-h1 font-bold mt-0.5 tabular-nums text-primary">{fmtPct100(stats.best)}</div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -142,7 +142,7 @@ export default function Dashboard() {
           trends={trends}
           latencyStats={latencyStats}
         />
-        <PassRateGauge summary={summary} />
+        <PassRateGauge summary={summary} passRateTrend={trends?.passRate} />
       </div>
 
       {/* ⑤ Fleet roster + latency spectrum */}

@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro';
 import { ActivityIcon, ClockIcon, ZapIcon, TargetIcon, ServerIcon, SigmaIcon } from '../../../components/icons';
 import type { SummaryDto, LiveTelemetryDto, DashboardTrendsDto } from '../../../api/models';
 import { fmtLatency } from '../../../lib/format';
-import { teleFmt, type LatencyStats } from '../dashboardMeta';
+import { teleFmt, callSeriesDelta, passRateDelta, type LatencyStats } from '../dashboardMeta';
 import { StatTile } from './StatTile';
 
 interface StatTileGridProps {
@@ -17,6 +17,13 @@ interface StatTileGridProps {
 export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatTileGridProps) {
   const { t } = useLingui();
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
+  // Real deltas from the trend series that already feed the sparklines below — first vs last half
+  // of the window (percentage-point change for the pass rate). A series with too little data
+  // yields no chip rather than a fabricated one.
+  const tracesDelta = callSeriesDelta(trends?.traces ?? []);
+  const latencyDelta = callSeriesDelta(trends?.latencyMs ?? []);
+  const throughputDelta = callSeriesDelta(trends?.throughput ?? []);
+  const passDelta = passRateDelta(trends?.passRate ?? []);
 
   return (
     <div data-testid="dashboard-stat-tiles" className="grid grid-cols-2 lg:grid-cols-3 gap-2">
@@ -29,7 +36,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         countTo={summary?.totalCalls ?? 0}
         formatCount={v => Math.round(v).toLocaleString()}
         sub={t`LLM calls captured`}
-        delta="+24%"
+        delta={tracesDelta?.text}
+        deltaUp={tracesDelta?.up}
         trace={trends?.traces}
         traceColor="var(--accent-primary)"
         traceFormat={v => t`${Math.round(v)} traces`}
@@ -43,8 +51,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         formatCount={v => String(Math.round(v))}
         unit={t`ms`}
         sub={latencyStats ? t`p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'}
-        delta="-8%"
-        deltaUp={false}
+        delta={latencyDelta?.text}
+        deltaUp={latencyDelta?.up}
         trace={trends?.latencyMs}
         traceColor="var(--warn)"
         traceFormat={v => fmtLatency(v)}
@@ -58,7 +66,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         formatCount={v => String(Math.round(v))}
         unit={t`t/s`}
         sub={telemetry ? t`p95 ${fmtLatency(telemetry.p95Ms)}` : t`awaiting telemetry`}
-        delta="+18%"
+        delta={throughputDelta?.text}
+        deltaUp={throughputDelta?.up}
         trace={trends?.throughput}
         traceColor="var(--teal)"
         traceFormat={v => t`${Math.round(v)} t/s`}
@@ -72,7 +81,8 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         formatCount={v => String(Math.round(v))}
         unit="%"
         sub={t`latest suite run`}
-        delta={t`+7pt`}
+        delta={passDelta?.text}
+        deltaUp={passDelta?.up}
         trace={trends?.passRate}
         traceColor="var(--success)"
         traceFormat={v => t`${v.toFixed(0)}% pass`}
