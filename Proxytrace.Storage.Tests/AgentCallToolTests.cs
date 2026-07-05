@@ -103,6 +103,36 @@ public sealed class AgentCallToolTests : BaseTest<Module>
         rows.Should().OnlyContain(r => r.ProjectId == agent.Project.Id);
     }
 
+    [TestMethod]
+    public async Task RemoveOlderThanAsync_WithCoveringCutoff_AlsoDeletesChildToolRows()
+    {
+        IServiceProvider services = GetServices();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var repo = services.GetRequiredService<IAgentCallRepository>();
+
+        var call = await SeedCallWithToolsAsync(services, agent, ["web_search", "get_weather"]);
+
+        // Precondition: the child tool rows exist before retention runs, so an empty result
+        // afterwards is a real deletion and not a seeding failure.
+        var seededDb = services.GetRequiredService<Func<StorageDbContext>>()();
+        (await seededDb.Set<AgentCallToolEntity>().Where(t => t.AgentCallId == call.Id).ToListAsync(CancellationToken))
+            .Should().HaveCount(2);
+
+        // A future cutoff covers the just-created call.
+        var removed = await repo.RemoveOlderThanAsync(DateTimeOffset.UtcNow.AddDays(1), CancellationToken);
+        removed.Should().Be(1); // parent-row count, mirroring the relational ExecuteDelete path
+
+        // The regression (#307): the in-memory provider's client-side cascade only removes tracked
+        // entities, so unless the fallback loads Tools the child AgentCallToolEntity rows outlive
+        // their deleted parent — leaving the tool-name picker offering tools whose traces are gone.
+        var db = services.GetRequiredService<Func<StorageDbContext>>()();
+        (await db.Set<AgentCallToolEntity>().Where(t => t.AgentCallId == call.Id).ToListAsync(CancellationToken))
+            .Should().BeEmpty();
+
+        var names = await repo.GetToolNamesAsync(agent.Project.Id, cancellationToken: CancellationToken);
+        names.Should().BeEmpty();
+    }
+
     private async Task<IAgent> CreateAgentInNewProjectAsync(IServiceProvider services)
     {
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);

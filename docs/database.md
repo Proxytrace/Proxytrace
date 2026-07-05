@@ -138,7 +138,12 @@ Set the connection string in:
   (`CascadeDeleteBehaviorModelTests`), not a round-trip delete — like the other cascade-behavior
   gotchas below, `AbstractRepository.RemoveAsync` loads the parent by primary key only (no
   `Include(Tools)`), so the in-memory provider's client-side cascade (which only touches entities
-  already tracked in the change tracker) does not fire there.
+  already tracked in the change tracker) does not fire there. The retention bulk delete
+  (`AgentCallRepository.RemoveOlderThanAsync`) is the exception: its production path is a relational
+  `ExecuteDelete` that leans on the DB `ON DELETE CASCADE`, but its in-memory fallback (kiosk/tests)
+  explicitly `Include(e => e.Tools)` before `RemoveRange` so the client-side cascade removes the
+  child rows too — otherwise a long-running kiosk with retention active would leave orphaned tool
+  rows that keep the tool-name picker offering tools whose traces are gone (issue #307).
 
 > **Gotcha — keep planner statistics fresh on AgentCallEntity (issue #246).** The dashboard/statistics
 > aggregates (`AgentCallStatsQueries`) translate to server-side `GROUP BY` / `sum` / `percentile_cont` —

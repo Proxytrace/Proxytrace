@@ -458,9 +458,16 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         if (context.Database.IsRelational())
             return await query.ExecuteDeleteAsync(cancellationToken);
 
-        var toRemove = await query.ToListAsync(cancellationToken);
+        // Load the Tools navigation so the in-memory provider's client-side cascade also removes the
+        // child AgentCallToolEntity rows — it only cascades entities already tracked in the change
+        // tracker, and this fallback runs on kiosk/test datasets only, so the extra load is cheap.
+        // (Production's relational path above deletes them via the FK's ON DELETE CASCADE.) Return
+        // the parent-row count to match ExecuteDeleteAsync — SaveChangesAsync would otherwise also
+        // count the cascaded tool rows.
+        var toRemove = await query.Include(e => e.Tools).ToListAsync(cancellationToken);
         context.Set<AgentCallEntity>().RemoveRange(toRemove);
-        return await context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+        return toRemove.Count;
     }
 
     public async Task SetOutlierFlagAsync(Guid id, OutlierFlags flag, CancellationToken cancellationToken = default)

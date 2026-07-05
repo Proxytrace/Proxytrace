@@ -184,6 +184,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   its first turn is a tool call. Each seeded case now includes the tool round-trip (the query and
   its returned rows) in its input, so re-running the suite against a configured demo model scores
   the final written answer instead of failing on the intermediate tool-call turn.
+- **The kiosk demo's tool-name filter no longer lists tools whose traces have expired.** With trace
+  retention active, a long-running kiosk (or in-memory demo) deleted old traces but left their
+  per-call tool-name rows behind, so the Traces tool-name filter kept offering tools that then
+  matched no traces. Retention now removes those child rows together with the trace, matching the
+  cascade the persistent PostgreSQL deployments already enforced (they were never affected).
 
 ### Removed
 
