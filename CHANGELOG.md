@@ -159,6 +159,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   path — `GET /openai/v1` or `GET /{project}/openai/v1` with no trailing segment — used to throw a
   `NullReferenceException` and return an opaque `500`. The empty path is now handled cleanly instead
   of faulting.
+- **Dashboard metric tiles and the pass-rate gauge now show real numbers, not placeholders.** The
+  trend chips on the Traces, Avg Latency, Throughput, and Pass Rate tiles were hardcoded (`+24%`,
+  `-8%`, `+18%`, `+7pt`) and never moved with your traffic; they now compare the first and last half
+  of each tile's own trend series and show the true change — or nothing at all when there isn't
+  enough data. The pass-rate gauge's footer showed a fabricated *best* and a made-up *90% target*;
+  it now reports the real change since the previous run and the best pass rate across your recent
+  runs, and the fake target is gone.
 
 ### Removed
 

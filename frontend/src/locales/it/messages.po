@@ -623,9 +623,6 @@ msgstr "+{hidden} in più"
 msgid "+{legendOverflow} more"
 msgstr "+{legendOverflow} in più"
 
-msgid "+7pt"
-msgstr "+7pt"
-
 #. placeholder {0}: fmtLatency(stats.latencyStdDevMs)
 msgid "± {0}"
 msgstr "± {0}"
@@ -4775,9 +4772,6 @@ msgstr "t/s"
 
 msgid "Talk to {agentName}"
 msgstr "Parla con {agentName}"
-
-msgid "target"
-msgstr "obiettivo"
 
 msgid "Target"
 msgstr "Destinazione"

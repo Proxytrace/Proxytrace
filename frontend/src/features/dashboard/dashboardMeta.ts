@@ -18,6 +18,7 @@ export * from './latency';
 export * from './agentFleet';
 export * from './modelSplit';
 export * from './pulse';
+export * from './trendDeltas';
 
 export const RANGES: RangeKey[] = ['1h', '24h', '7d', '30d', 'all'];
 

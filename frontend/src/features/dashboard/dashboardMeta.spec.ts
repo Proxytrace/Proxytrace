@@ -14,6 +14,10 @@ import {
   normalizePulse,
   bumpPulse,
   shiftPulse,
+  callSeriesDelta,
+  passRateDelta,
+  formatDeltaPt,
+  computePassRateGaugeStats,
 } from './dashboardMeta';
 import type { LatencyStatDto, ModelBreakdownDto, AgentTokenUsageDto, AgentBreakdownDto, AgentListItemDto } from '../../api/models';
 
@@ -325,4 +329,65 @@ describe('shiftPulse', () => {
     expect(out[58]).toBe(5);
     expect(out[59]).toBe(0);
   });
+});
+
+// ── callSeriesDelta (traces / latency / throughput tile deltas) ───────────────
+
+describe('callSeriesDelta', () => {
+  it('returns null for an empty series', () => expect(callSeriesDelta([])).toBeNull());
+  it('returns null when every bucket is zero', () => expect(callSeriesDelta([0, 0, 0, 0])).toBeNull());
+  it('returns null when a half has no active bucket', () =>
+    expect(callSeriesDelta([0, 0, 10, 10])).toBeNull());
+
+  it('computes a percentage increase (first vs last half)', () =>
+    expect(callSeriesDelta([10, 10, 15, 15])).toEqual({ text: '+50%', up: true }));
+  it('computes a percentage decrease and marks it down', () =>
+    expect(callSeriesDelta([20, 20, 10, 10])).toEqual({ text: '-50%', up: false }));
+
+  it('ignores zero buckets when averaging each half (no-sample slots)', () =>
+    expect(callSeriesDelta([0, 10, 0, 20])).toEqual({ text: '+100%', up: true }));
+  it('rounds the percentage to an integer', () =>
+    expect(callSeriesDelta([3, 4])).toEqual({ text: '+33%', up: true }));
+});
+
+// ── passRateDelta (pass-rate tile delta, percentage points) ───────────────────
+
+describe('passRateDelta', () => {
+  it('returns null with fewer than two cohorts', () => {
+    expect(passRateDelta([])).toBeNull();
+    expect(passRateDelta([80])).toBeNull();
+  });
+
+  it('computes a point increase (first vs last half)', () =>
+    expect(passRateDelta([80, 90])).toEqual({ text: '+10pt', up: true }));
+  it('computes a point decrease and marks it down', () =>
+    expect(passRateDelta([90, 80])).toEqual({ text: '-10pt', up: false }));
+
+  it('keeps a real 0% run as a valid data point (not dropped)', () =>
+    expect(passRateDelta([0, 50])).toEqual({ text: '+50pt', up: true }));
+  it('splits an odd length with the extra point in the last half', () =>
+    expect(passRateDelta([60, 80, 100])).toEqual({ text: '+30pt', up: true }));
+  it('rounds the point change to an integer', () =>
+    expect(passRateDelta([70, 75, 78])).toEqual({ text: '+7pt', up: true }));
+});
+
+// ── formatDeltaPt ─────────────────────────────────────────────────────────────
+
+describe('formatDeltaPt', () => {
+  it('prefixes a positive value with +', () => expect(formatDeltaPt(7)).toBe('+7pt'));
+  it('keeps the native minus for a negative value', () => expect(formatDeltaPt(-3)).toBe('-3pt'));
+  it('treats zero as non-negative', () => expect(formatDeltaPt(0)).toBe('+0pt'));
+});
+
+// ── computePassRateGaugeStats (gauge footer) ──────────────────────────────────
+
+describe('computePassRateGaugeStats', () => {
+  it('returns null with no cohorts (footer dropped)', () =>
+    expect(computePassRateGaugeStats([])).toBeNull());
+  it('has no last-run delta with a single cohort', () =>
+    expect(computePassRateGaugeStats([88])).toEqual({ lastRunDeltaPt: null, best: 88 }));
+  it('takes the last-run delta from the two most recent cohorts and the best across all', () =>
+    expect(computePassRateGaugeStats([70, 90, 85])).toEqual({ lastRunDeltaPt: -5, best: 90 }));
+  it('rounds the last-run delta while leaving best raw for the formatter', () =>
+    expect(computePassRateGaugeStats([80.2, 85.6])).toEqual({ lastRunDeltaPt: 5, best: 85.6 }));
 });
