@@ -35,7 +35,7 @@ const res = (caseId: string, evals: EvaluationResultDto[], durationMs = 100): Te
 function run(over: Partial<TestRunDto>): TestRunDto {
   return {
     id: 'r', endpointId: 'ep', endpointName: 'ep', sampleIndex: 0, status: TestRunStatus.Completed,
-    totalCases: 1, passedCases: 0, failedCases: 0, durationMs: 100, costUsd: 0.1,
+    totalCases: 1, passedCases: 0, failedCases: 0, durationMs: 100, costEur: 0.1,
     tokensIn: 10, tokensOut: 5, cachedTokensIn: 0,
     results: [], testCases: [], evaluators: [{ id: 'ev', kind: EvaluatorKind.ExactMatch, name: 'Exact' }],
     ...over,

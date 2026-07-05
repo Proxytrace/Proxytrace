@@ -29,7 +29,7 @@ public record TestRunDto(
     int PassedCases,
     int FailedCases,
     double PassRate,
-    double? CostUsd,
+    double? CostEur,
     long? TokensIn,
     long? TokensOut,
     long? CachedTokensIn,
@@ -53,7 +53,7 @@ public record TestResultDto(
     string ActualResponse,
     IReadOnlyList<EvaluationResultDto> Evaluations,
     long DurationMs,
-    double? CostUsd,
+    double? CostEur,
     long? TokensIn,
     long? TokensOut,
     long? CachedTokensIn);

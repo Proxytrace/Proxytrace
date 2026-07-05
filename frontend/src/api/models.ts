@@ -549,7 +549,7 @@ export interface TestResultDto {
   /** Per-case cost/token usage, endpoint-priced. Null when the provider reported no usage; optional
    * because lightweight client-built results (Tracey, fixtures) may omit it. Summing these across a
    * run's results yields the run-level totals live. */
-  costUsd?: number | null;
+  costEur?: number | null;
   tokensIn?: number | null;
   tokensOut?: number | null;
   cachedTokensIn?: number | null;
@@ -573,7 +573,7 @@ export interface TestRunDto {
   failedCases: number;
   passRate: number;
   /** Run-level totals aggregated across every test result (null until completed). */
-  costUsd: number | null;
+  costEur: number | null;
   tokensIn: number | null;
   tokensOut: number | null;
   cachedTokensIn: number | null;
@@ -887,7 +887,7 @@ export interface EndpointUsageDto {
   cachedTokIn: number;
   calls: number;
   latency: number;
-  costUsd: number;
+  costEur: number;
 }
 export interface TestCaseFixtureDto {
   input: { messages: TestCaseMessageFixtureDto[] };
@@ -1129,7 +1129,7 @@ export interface AnomalyFlaggedEvent {
 export interface TestCaseStartedEvent { type: 'test-case-started'; runId: string; groupId: string; testCaseId: string; }
 export interface InferenceDoneEvent { type: 'inference-done'; runId: string; groupId: string; testCaseId: string; }
 export interface EvaluationArrivedEvent { type: 'evaluation-arrived'; runId: string; groupId: string; testCaseId: string; evaluation: EvaluationResultDto; }
-export interface TestResultArrivedEvent { type: 'test-result-arrived'; runId: string; groupId: string; testCaseId: string; overallScore: EvaluationScore | null; evaluations: EvaluationResultDto[]; durationMs: number; costUsd?: number | null; tokensIn?: number | null; tokensOut?: number | null; cachedTokensIn?: number | null; }
+export interface TestResultArrivedEvent { type: 'test-result-arrived'; runId: string; groupId: string; testCaseId: string; overallScore: EvaluationScore | null; evaluations: EvaluationResultDto[]; durationMs: number; costEur?: number | null; tokensIn?: number | null; tokensOut?: number | null; cachedTokensIn?: number | null; }
 export interface RunCompleteEvent { type: 'run-complete'; runId: string; groupId: string; status: TestRunStatus; completedAt: string | null; }
 export interface GroupRunCompleteEvent { type: 'group-run-complete'; runId: string; groupId: string; groupStatus: TestRunStatus; groupCompletedAt: string | null; }
 export type TestRunEvent =

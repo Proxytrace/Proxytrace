@@ -70,5 +70,5 @@ public record EndpointUsageDto(
     ulong? CachedTokIn,
     int Calls,
     long Latency,
-    double CostUsd
+    double CostEur
 );

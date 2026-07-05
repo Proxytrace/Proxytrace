@@ -184,7 +184,7 @@ describe('isDivergent', () => {
 });
 
 describe('fixtureSummary', () => {
-  function fixture(evals: boolean[], endpoints: { costUsd: number; tokIn: number; tokOut: number }[]): TestCaseFixtureDto {
+  function fixture(evals: boolean[], endpoints: { costEur: number; tokIn: number; tokOut: number }[]): TestCaseFixtureDto {
     return {
       evaluators: evals.map(pass => ({ pass })),
       endpoints,
@@ -204,8 +204,8 @@ describe('fixtureSummary', () => {
 
   it('computes a partial composite and sums cost and tokens', () => {
     const s = fixtureSummary(fixture([true, false], [
-      { costUsd: 0.01, tokIn: 10, tokOut: 5 },
-      { costUsd: 0.02, tokIn: 20, tokOut: 5 },
+      { costEur: 0.01, tokIn: 10, tokOut: 5 },
+      { costEur: 0.02, tokIn: 20, tokOut: 5 },
     ]));
     expect(s).toMatchObject({ passed: 1, total: 2, allPass: false, composite: 50 });
     expect(s.totalCost).toBeCloseTo(0.03);
@@ -280,7 +280,7 @@ describe('buildLeaderboard', () => {
       id: 'r', endpointId: 'ep', endpointName: 'm', sampleIndex: 0, status: TestRunStatus.Completed,
       totalCases: 10, passedCases: 8, failedCases: 2,
       results: new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}`, durationMs: perCaseLatencyMs })),
-      durationMs: perCaseLatencyMs, costUsd: 0.5, tokensIn: 100, tokensOut: 50, ...over,
+      durationMs: perCaseLatencyMs, costEur: 0.5, tokensIn: 100, tokensOut: 50, ...over,
     } as TestRunDto;
   }
 
@@ -290,8 +290,8 @@ describe('buildLeaderboard', () => {
     buildLeaderboard(buildCohorts(runs), complete, ep);
 
   it('flags best pass rate, fastest and cheapest among completed runs', () => {
-    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
-    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costEur: 0.9 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costEur: 0.1 });
     const [ea, eb] = lb([a, b], true);
     expect(ea.passRate).toBe(90);
     expect(ea.isBest).toBe(true);
@@ -314,8 +314,8 @@ describe('buildLeaderboard', () => {
   });
 
   it('without a deployed endpoint, the best performer is the baseline and others read against it', () => {
-    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
-    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costEur: 0.9 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costEur: 0.1 });
     const [ea, eb] = lb([a, b], true);
     expect(ea.isBaseline).toBe(true);
     expect(ea.isProduction).toBe(false); // fallback baseline, not a deployed model
@@ -327,8 +327,8 @@ describe('buildLeaderboard', () => {
   });
 
   it('makes the in-production endpoint the baseline even when it is not the best', () => {
-    const prod = lbRun({ id: 'p', endpointId: 'prod', endpointName: 'prod', passedCases: 8, failedCases: 2, durationMs: 2000, costUsd: 0.4 });
-    const cand = lbRun({ id: 'c', endpointId: 'cand', endpointName: 'cand', passedCases: 10, failedCases: 0, durationMs: 1000, costUsd: 0.2 });
+    const prod = lbRun({ id: 'p', endpointId: 'prod', endpointName: 'prod', passedCases: 8, failedCases: 2, durationMs: 2000, costEur: 0.4 });
+    const cand = lbRun({ id: 'c', endpointId: 'cand', endpointName: 'cand', passedCases: 10, failedCases: 0, durationMs: 1000, costEur: 0.2 });
     const entries = lb([prod, cand], true, 'prod');
     const ep = entries.find(e => e.run.id === 'p');
     const ec = entries.find(e => e.run.id === 'c');
@@ -365,8 +365,8 @@ describe('buildLeaderboard', () => {
   });
 
   it('reports no winners, no baseline and null deltas while a candidates-only group is not yet complete', () => {
-    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', status: TestRunStatus.Running, passedCases: 9, failedCases: 1, durationMs: 1000, costUsd: 0.1 });
-    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', status: TestRunStatus.Running, passedCases: 6, failedCases: 4, durationMs: 3000, costUsd: 0.9 });
+    const a = lbRun({ id: 'a', endpointId: 'a', endpointName: 'a', status: TestRunStatus.Running, passedCases: 9, failedCases: 1, durationMs: 1000, costEur: 0.1 });
+    const b = lbRun({ id: 'b', endpointId: 'b', endpointName: 'b', status: TestRunStatus.Running, passedCases: 6, failedCases: 4, durationMs: 3000, costEur: 0.9 });
     const entries = lb([a, b], false);
     expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest && !e.isBaseline)).toBe(true);
     expect(entries.every(e => e.delta === null)).toBe(true);
@@ -501,27 +501,27 @@ describe('patchGroupWithResult', () => {
   it('carries per-case cost/tokens onto the patched result and sums them into live run totals', () => {
     const run = patchGroupWithResult(
       group({}),
-      event({ costUsd: 0.012, tokensIn: 100, tokensOut: 40, cachedTokensIn: 10 }),
+      event({ costEur: 0.012, tokensIn: 100, tokensOut: 40, cachedTokensIn: 10 }),
     ).runs[0];
-    expect(run.results[0]).toMatchObject({ costUsd: 0.012, tokensIn: 100, tokensOut: 40, cachedTokensIn: 10 });
+    expect(run.results[0]).toMatchObject({ costEur: 0.012, tokensIn: 100, tokensOut: 40, cachedTokensIn: 10 });
     // Run-level totals are summed from the per-case usage so the cards tick up live mid-run.
-    expect(run.costUsd).toBeCloseTo(0.012);
+    expect(run.costEur).toBeCloseTo(0.012);
     expect(run.tokensIn).toBe(100);
     expect(run.tokensOut).toBe(40);
     expect(run.cachedTokensIn).toBe(10);
   });
 
   it('accumulates cost/tokens across multiple cases', () => {
-    const afterFirst = patchGroupWithResult(group({}), event({ testCaseId: 'c1', costUsd: 0.01, tokensIn: 100, tokensOut: 40 }));
-    const run = patchGroupWithResult(afterFirst, event({ testCaseId: 'c2', costUsd: 0.02, tokensIn: 50, tokensOut: 30 })).runs[0];
-    expect(run.costUsd).toBeCloseTo(0.03);
+    const afterFirst = patchGroupWithResult(group({}), event({ testCaseId: 'c1', costEur: 0.01, tokensIn: 100, tokensOut: 40 }));
+    const run = patchGroupWithResult(afterFirst, event({ testCaseId: 'c2', costEur: 0.02, tokensIn: 50, tokensOut: 30 })).runs[0];
+    expect(run.costEur).toBeCloseTo(0.03);
     expect(run.tokensIn).toBe(150);
     expect(run.tokensOut).toBe(70);
   });
 
   it('leaves run totals null when no case reported usage (so the cards read "—", not 0)', () => {
     const run = patchGroupWithResult(group({}), event({})).runs[0];
-    expect(run.costUsd).toBeNull();
+    expect(run.costEur).toBeNull();
     expect(run.tokensIn).toBeNull();
   });
 

@@ -21,7 +21,7 @@ export function MedalsRow({ entries }: { entries: LeaderboardEntry[] }) {
   const medals: Medal[] = [];
   if (best?.passRate != null) medals.push({ key: 'best', icon: <TargetIcon size={15} />, label: <Trans>Highest pass rate</Trans>, entry: best, value: `${best.passRate}%` });
   if (fastest) medals.push({ key: 'fast', icon: <ZapIcon size={15} />, label: <Trans>Fastest</Trans>, entry: fastest, value: fmtDuration(fastest.durationMs) });
-  if (cheapest) medals.push({ key: 'cheap', icon: <CoinsIcon size={15} />, label: <Trans>Cheapest</Trans>, entry: cheapest, value: fmtCost(cheapest.costUsd) });
+  if (cheapest) medals.push({ key: 'cheap', icon: <CoinsIcon size={15} />, label: <Trans>Cheapest</Trans>, entry: cheapest, value: fmtCost(cheapest.costEur) });
   if (medals.length === 0) return null;
 
   return (

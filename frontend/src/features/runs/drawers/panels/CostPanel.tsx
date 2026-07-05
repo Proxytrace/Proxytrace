@@ -4,7 +4,7 @@ import { CachedTokensHint } from '../../../../components/ui/CachedTokensHint';
 import type { EndpointUsageDto } from '../../../../api/models';
 
 export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
-  const totalCost = endpoints.reduce((s, ep) => s + ep.costUsd, 0);
+  const totalCost = endpoints.reduce((s, ep) => s + ep.costEur, 0);
   const totalTok = endpoints.reduce((s, ep) => s + ep.tokIn + ep.tokOut, 0);
   return (
     <div>
@@ -18,7 +18,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
           {endpoints.map(ep => (
             <div
               key={ep.id}
-              style={{ width: `${(ep.costUsd / totalCost * 100).toFixed(1)}%`, background: ep.color }}
+              style={{ width: `${(ep.costEur / totalCost * 100).toFixed(1)}%`, background: ep.color }}
               title={ep.label}
             />
           ))}
@@ -39,7 +39,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
               <CachedTokensHint cachedInput={ep.cachedTokIn} input={ep.tokIn} />
             </span>
             <span className="mono text-body-sm text-secondary text-right">{ep.calls}×</span>
-            <span className="mono text-body font-semibold text-primary text-right">{fmtCost(ep.costUsd)}</span>
+            <span className="mono text-body font-semibold text-primary text-right">{fmtCost(ep.costEur)}</span>
           </div>
         ))}
       </div>

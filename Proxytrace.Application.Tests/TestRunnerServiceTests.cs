@@ -412,7 +412,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         resultArrived.TokensOut.Should().Be(80);
         resultArrived.CachedTokensIn.Should().Be(20);
         var expectedCost = endpoint.CalculateCost(usage);
-        resultArrived.CostUsd.Should().Be(expectedCost is { } c ? (double)c : (double?)null);
+        resultArrived.CostEur.Should().Be(expectedCost is { } c ? (double)c : (double?)null);
     }
 
     [TestMethod]
