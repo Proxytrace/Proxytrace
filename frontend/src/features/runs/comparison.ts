@@ -79,7 +79,7 @@ export interface LeaderboardEntry {
   pending: number;
   passRate: number | null;
   durationMs: number | null;
-  costUsd: number | null;
+  costEur: number | null;
   tokensIn: number | null;
   tokensOut: number | null;
   cachedTokensIn: number | null;
@@ -124,7 +124,7 @@ function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
     // time, and parallel overlap). Pooling per-case durations also keeps the value live: the per-run
     // total stays null until the run settles, but per-case results stream in over SSE.
     durationMs: meanOf(runs.flatMap(r => r.results.map(res => res.durationMs))),
-    costUsd: meanOf(runs.map(r => r.costUsd)),
+    costEur: meanOf(runs.map(r => r.costEur)),
     tokensIn: meanOf(runs.map(r => r.tokensIn)),
     tokensOut: meanOf(runs.map(r => r.tokensOut)),
     cachedTokensIn: meanOf(runs.map(r => r.cachedTokensIn)),
@@ -135,7 +135,7 @@ function aggregateCohort(cohort: Cohort<TestRunDto>): LbBase {
 function deltaVsBaseline(e: LbBase, base: LbBase): MetricDeltas {
   const passPoints = e.passRate !== null && base.passRate !== null ? e.passRate - base.passRate : null;
   const durationMs = e.durationMs !== null && base.durationMs !== null ? base.durationMs - e.durationMs : null;
-  const costFraction = e.costUsd !== null && base.costUsd !== null && base.costUsd > 0 ? 1 - e.costUsd / base.costUsd : null;
+  const costFraction = e.costEur !== null && base.costEur !== null && base.costEur > 0 ? 1 - e.costEur / base.costEur : null;
   return {
     passPoints, passBetter: dir(passPoints),
     durationMs, durationBetter: dir(durationMs),
@@ -174,7 +174,7 @@ export function buildLeaderboard(
 
   const best = pick(pool, (a, b) => (a.passRate as number) > (b.passRate as number));
   const fastest = pick(pool.filter(e => e.durationMs !== null), (a, b) => (a.durationMs as number) < (b.durationMs as number));
-  const cheapest = pick(pool.filter(e => e.costUsd !== null), (a, b) => (a.costUsd as number) < (b.costUsd as number));
+  const cheapest = pick(pool.filter(e => e.costEur !== null), (a, b) => (a.costEur as number) < (b.costEur as number));
 
   // Baseline = the in-production model if it's in the group; otherwise the best performer (known
   // only once complete). Production is identified by endpoint id and so is known even mid-run.

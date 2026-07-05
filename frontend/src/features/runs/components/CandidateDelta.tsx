@@ -42,7 +42,7 @@ export function CandidateDelta({ entry, baselineIsProduction }: { entry: Leaderb
     },
     {
       label: t`Cost`,
-      value: fmtCost(entry.costUsd),
+      value: fmtCost(entry.costEur),
       badge: delta?.costFraction != null ? { better: delta.costBetter, text: costText(delta.costFraction) } : null,
     },
   ];

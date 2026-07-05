@@ -430,7 +430,7 @@ msgstr "{0}/{1} aprobados · {2}"
 
 #. placeholder {0}: run.passedCases
 #. placeholder {1}: run.totalCases
-#. placeholder {2}: fmtCost(run.costUsd)
+#. placeholder {2}: fmtCost(run.costEur)
 #. placeholder {3}: fmtTokens((run.tokensIn ?? 0) + (run.tokensOut ?? 0))
 msgid "{0}/{1} passed · {2} · {3} tok"
 msgstr "{0}/{1} aprobados · {2} · {3} tok"

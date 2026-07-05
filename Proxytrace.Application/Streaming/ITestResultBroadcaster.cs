@@ -40,7 +40,7 @@ public record TestResultArrivedEvent(
     EvaluationScore? OverallScore,
     IReadOnlyList<EvaluationEventData> Evaluations,
     long DurationMs,
-    double? CostUsd,
+    double? CostEur,
     long? TokensIn,
     long? TokensOut,
     long? CachedTokensIn) : TestRunEvent(RunId, GroupId)
@@ -64,7 +64,7 @@ public record TestResultArrivedEvent(
                 e.Reasoning,
                 e.ErrorMessage)).ToArray(),
             (long)result.Latency.TotalMilliseconds,
-            totals.CostUsd is { } cost ? (double)cost : null,
+            totals.CostEur is { } cost ? (double)cost : null,
             totals.TokensIn,
             totals.TokensOut,
             totals.CachedTokensIn);

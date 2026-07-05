@@ -44,7 +44,7 @@ public sealed class TestRunDtoMapper
             PassedCases: passed,
             FailedCases: completed - passed,
             PassRate: passRate,
-            CostUsd: (double?)totals.CostUsd,
+            CostEur: (double?)totals.CostEur,
             TokensIn: totals.TokensIn,
             TokensOut: totals.TokensOut,
             CachedTokensIn: totals.CachedTokensIn,
@@ -69,7 +69,7 @@ public sealed class TestRunDtoMapper
                         e.Reasoning,
                         e.ErrorMessage)).ToArray(),
                     (long)res.Latency.TotalMilliseconds,
-                    resultTotals.CostUsd is { } cost ? (double)cost : null,
+                    resultTotals.CostEur is { } cost ? (double)cost : null,
                     resultTotals.TokensIn,
                     resultTotals.TokensOut,
                     resultTotals.CachedTokensIn);
@@ -216,7 +216,7 @@ public sealed class TestRunDtoMapper
             CachedTokIn: result.Usage?.CachedInputTokenCount,
             Calls: 1,
             Latency: (long)result.Latency.TotalMilliseconds,
-            CostUsd: result.Usage is { } usage ? (double)(run.Endpoint.CalculateCost(usage) ?? 0m) : 0)
+            CostEur: result.Usage is { } usage ? (double)(run.Endpoint.CalculateCost(usage) ?? 0m) : 0)
     ];
 
     private string EndpointColor(string providerName)

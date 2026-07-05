@@ -37,7 +37,7 @@ export interface FixtureSummary {
 export function fixtureSummary(fixture: TestCaseFixtureDto | undefined): FixtureSummary {
   const passed = fixture?.evaluators.filter(e => e.pass).length ?? 0;
   const total = fixture?.evaluators.length ?? 0;
-  const totalCost = fixture?.endpoints.reduce((s, ep) => s + ep.costUsd, 0) ?? 0;
+  const totalCost = fixture?.endpoints.reduce((s, ep) => s + ep.costEur, 0) ?? 0;
   const totalTokens = fixture?.endpoints.reduce((s, ep) => s + ep.tokIn + ep.tokOut, 0) ?? 0;
   const tokensOut = fixture?.endpoints.reduce((s, ep) => s + ep.tokOut, 0) ?? 0;
   return { passed, total, allPass: total > 0 && passed === total, composite: compositePercent(passed, total), totalCost, totalTokens, tokensOut };
@@ -179,7 +179,7 @@ export function patchGroupWithResult(
       actualResponse: '',
       evaluations: e.evaluations,
       durationMs: e.durationMs,
-      costUsd: e.costUsd ?? null,
+      costEur: e.costEur ?? null,
       tokensIn: e.tokensIn ?? null,
       tokensOut: e.tokensOut ?? null,
       cachedTokensIn: e.cachedTokensIn ?? null,
@@ -233,7 +233,7 @@ function withCounts(run: TestRunDto, results: TestResultDto[]): TestRunDto {
     passedCases,
     failedCases,
     passRate: compositePercent(passedCases, passedCases + failedCases) ?? 0,
-    costUsd: sumOrNull(results.map(r => r.costUsd)),
+    costEur: sumOrNull(results.map(r => r.costEur)),
     tokensIn: sumOrNull(results.map(r => r.tokensIn)),
     tokensOut: sumOrNull(results.map(r => r.tokensOut)),
     cachedTokensIn: sumOrNull(results.map(r => r.cachedTokensIn)),

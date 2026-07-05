@@ -89,7 +89,7 @@ in `frontend/src/api/models.ts`.
   - `TestCaseStartedEvent` — `+ TestCaseId`
   - `InferenceDoneEvent` — `+ TestCaseId`
   - `EvaluationArrivedEvent` — `+ TestCaseId, Evaluation` (`EvaluationEventData`: evaluator id/kind/name, score, reasoning, error)
-  - `TestResultArrivedEvent` — `+ TestCaseId, OverallScore, Evaluations[], DurationMs, CostUsd?, TokensIn?, TokensOut?, CachedTokensIn?` (the per-case usage rides along so the live run cards can sum a running run's cost/tokens as each case lands — `CalculateCost` is linear, so the client sum equals the run-level `TestRunTotals`; `null` when the provider reported no usage)
+  - `TestResultArrivedEvent` — `+ TestCaseId, OverallScore, Evaluations[], DurationMs, CostEur?, TokensIn?, TokensOut?, CachedTokensIn?` (the per-case usage rides along so the live run cards can sum a running run's cost/tokens as each case lands — `CalculateCost` is linear, so the client sum equals the run-level `TestRunTotals`; `null` when the provider reported no usage)
   - `RunCompleteEvent` — `+ Status, CompletedAt?`
   - `GroupRunCompleteEvent` — `GroupId, GroupStatus, GroupCompletedAt?`; **`RunId` is `Guid.Empty`** for this group-level event.
 

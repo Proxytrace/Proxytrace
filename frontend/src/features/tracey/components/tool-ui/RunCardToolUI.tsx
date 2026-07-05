@@ -31,7 +31,7 @@ export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, is
           </div>
           <div className="font-mono text-body-sm tabular-nums text-muted">
             <Trans>
-              {run.passedCases}/{run.totalCases} passed · {fmtCost(run.costUsd)} · {fmtTokens((run.tokensIn ?? 0) + (run.tokensOut ?? 0))} tok
+              {run.passedCases}/{run.totalCases} passed · {fmtCost(run.costEur)} · {fmtTokens((run.tokensIn ?? 0) + (run.tokensOut ?? 0))} tok
             </Trans>
           </div>
         </div>

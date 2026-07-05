@@ -66,7 +66,7 @@ export function ChampionPanel({ entry }: { entry: LeaderboardEntry }) {
 
       <div className="grid grid-cols-3 gap-3 mt-4 pt-3.5 border-t border-hairline">
         <Stat label={t`Latency`} value={fmtDuration(entry.durationMs)} />
-        <Stat label={t`Cost`} value={fmtCost(entry.costUsd)} />
+        <Stat label={t`Cost`} value={fmtCost(entry.costEur)} />
         <Stat label={t`Tokens`} value={tokens} />
       </div>
     </Card>

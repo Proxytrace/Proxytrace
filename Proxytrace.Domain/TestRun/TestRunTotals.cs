@@ -6,7 +6,7 @@ namespace Proxytrace.Domain.TestRun;
 /// <summary>
 /// Aggregated token usage and cost across the test results of an <see cref="ITestRun"/>.
 /// </summary>
-public record TestRunTotals(decimal? CostUsd, long? TokensIn, long? TokensOut, long? CachedTokensIn)
+public record TestRunTotals(decimal? CostEur, long? TokensIn, long? TokensOut, long? CachedTokensIn)
 {
     public static TestRunTotals From(ITestRun run)
     {
