@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { useFeature, type LicenseFeature } from '../../api/license';
+import { useFeature } from '../../hooks/useLicense';
+import type { LicenseFeature } from '../../api/license';
 import { UpgradePlaceholder } from './UpgradePlaceholder';
 
 /**

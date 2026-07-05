@@ -86,7 +86,7 @@ test.describe('Dashboard', () => {
       .toBeGreaterThanOrEqual(seededCalls);
 
     // The dashboard has no dedicated "agents"/"runs" stat tile; the detected-agent
-    // count lives in the Agents section. Assert it reflects our seeded agents.
+    // count lives in the Agent fleet section header. Assert it reflects our seeded agents.
     const agentsCount = page.getByTestId('dashboard-agents-count');
     await expect(agentsCount).toBeVisible();
     await expect
@@ -116,16 +116,15 @@ test.describe('Dashboard', () => {
     await expect(page.getByTestId('pass-rate-gauge')).toBeVisible();
   });
 
-  test('token-by-agent section lists seeded agents', async ({ page }) => {
+  test('agent fleet section lists seeded agents with their token totals', async ({ page }) => {
     await page.goto('/dashboard', { waitUntil: 'load' });
 
-    const section = page.getByTestId('token-by-agent');
+    const section = page.getByTestId('agent-fleet');
     await expect(section).toBeVisible();
 
-    // The section's legend renders one entry per agent that has token usage in range.
-    // Each seeded agent should appear.
+    // The roster renders one row per (non-system) agent — each seeded agent appears.
     for (const id of agentIds) {
-      await expect(page.getByTestId(`token-by-agent-row-${id}`)).toBeVisible();
+      await expect(page.getByTestId(`agent-fleet-row-${id}`)).toBeVisible();
     }
   });
 
@@ -136,6 +135,8 @@ test.describe('Dashboard', () => {
     await expect(section).toBeVisible();
     // Seeded calls carry durationMs, so the "N samples" sub-header is non-zero.
     await expect(section).toContainText(/\d+ samples/);
+    // The spectrum draws a per-endpoint span row for the seeded endpoint.
+    await expect(section.getByTestId(/^latency-endpoint-/).first()).toBeVisible();
   });
 
   test('pulse band renders with live counters', async ({ page }) => {

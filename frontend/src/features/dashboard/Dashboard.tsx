@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
+import type { AgentListItemDto } from '../../api/models';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { bucketFor, rangeFromOpt, RANGE_KEYS, type RangeKey } from '../../lib/time-range';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
@@ -10,23 +11,25 @@ import {
   computeLatencyStats,
   computeTokenSeries,
   computeModelSplit,
-  computeLatencyHist,
-  computeTokenAgentShare,
+  computeEndpointLatency,
+  computeAgentFleet,
 } from './dashboardMeta';
 import { useDashboardView } from './hooks/useDashboardQueries';
 import { useLiveClock } from './hooks/useLiveClock';
 import { useFreshTraces } from './hooks/useFreshTraces';
 import { usePulse } from './hooks/usePulse';
+import { useDraftProposalCount } from '../../hooks/useProposals';
 import { PulseBand } from './components/PulseBand';
 import { HeroTokenCard } from './components/HeroTokenCard';
 import { StatTileGrid } from './components/StatTileGrid';
 import { LiveTraceStream } from './components/LiveTraceStream';
 import { PassRateGauge } from './components/PassRateGauge';
-import { TokenByAgentSection } from './components/TokenByAgentSection';
+import { AgentFleetSection } from './components/AgentFleetSection';
 import { LatencySection } from './components/LatencySection';
-import { AgentsSection } from './components/AgentsSection';
 import { AskTraceyButton } from '../../components/tracey/AskTraceyButton';
 import { projectHealthPrompt } from '../../components/tracey/askTraceyPrompts';
+
+const NO_AGENTS: AgentListItemDto[] = [];
 
 export default function Dashboard() {
   const { t } = useLingui();
@@ -54,6 +57,7 @@ export default function Dashboard() {
 
   const { data: dashboard, isLoading: dashboardLoading } = useDashboardView(queryOpts);
   const { pulse, lastBeat } = usePulse(dashboard?.pulse, projectId);
+  const proposalCount = useDraftProposalCount();
 
   // ── SSE: invalidate on new traces ───────────────────────────────────────────
 
@@ -68,15 +72,24 @@ export default function Dashboard() {
   const trends = dashboard?.trends;
   const agentBreakdown = dashboard?.agentBreakdown;
   const recentTraces = dashboard?.recentTraces ?? [];
-  const agents = dashboard?.agents ?? [];
+  // Referentially stable while loading (a `?? []` literal would re-allocate every render
+  // and defeat the fleet useMemo below).
+  const agents = dashboard?.agents ?? NO_AGENTS;
   const freshIds = useFreshTraces(recentTraces);
 
   const latencyStats = computeLatencyStats(dashboard?.latency ?? []);
   const tokenBucket = dashboard?.tokenBucket ?? bucketFor(range);
   const tokenSeries = computeTokenSeries(dashboard?.tokenUsage ?? [], range, tokenBucket);
   const modelSplit = computeModelSplit(dashboard?.modelBreakdown ?? []);
-  const latencyHist = computeLatencyHist(dashboard?.latency ?? []);
-  const tokenAgentShare = computeTokenAgentShare(dashboard?.tokenUsageByAgent ?? [], agents);
+  const endpointLatency = computeEndpointLatency(dashboard?.latency ?? [], agents);
+  // Memoized: the page re-renders every second (live clock tick), and the fleet derivation
+  // gap-fills a bucket grid per agent — the only per-render dashboard derivation heavy
+  // enough to be worth caching between data refreshes.
+  const tokenUsageByAgent = dashboard?.tokenUsageByAgent;
+  const fleet = useMemo(
+    () => computeAgentFleet(agents, agentBreakdown ?? [], tokenUsageByAgent ?? [], range, tokenBucket),
+    [agents, agentBreakdown, tokenUsageByAgent, range, tokenBucket],
+  );
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-2">
@@ -132,13 +145,11 @@ export default function Dashboard() {
         <PassRateGauge summary={summary} />
       </div>
 
+      {/* ⑤ Fleet roster + latency spectrum */}
       <div className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:160ms]">
-        <TokenByAgentSection share={tokenAgentShare} range={range} isLoading={dashboardLoading} />
-        <LatencySection latencyHist={latencyHist} latencyStats={latencyStats} isLoading={dashboardLoading} />
+        <AgentFleetSection fleet={fleet} isLoading={dashboardLoading} proposalCount={proposalCount} />
+        <LatencySection rows={endpointLatency} latencyStats={latencyStats} isLoading={dashboardLoading} />
       </div>
-
-      {/* ⑤ Agents */}
-      <AgentsSection agents={agents} agentBreakdown={agentBreakdown} />
 
     </div>
   );

@@ -5,9 +5,10 @@ import {
   computeTokenSeries,
   fillTokenGrid,
   computeModelSplit,
-  computeLatencyHist,
-  computeTokenAgentShare,
-  buildAgentNameMap,
+  computeEndpointLatency,
+  computeAgentFleet,
+  downsampleSum,
+  FLEET_SPARK_POINTS,
   agentCallCount,
   splitTokenStr,
   normalizePulse,
@@ -144,75 +145,117 @@ describe('computeModelSplit', () => {
   });
 });
 
-// ── computeLatencyHist ───────────────────────────────────────────────────────
+// ── computeEndpointLatency ───────────────────────────────────────────────────
 
-describe('computeLatencyHist', () => {
-  it('returns [] for empty data', () => expect(computeLatencyHist([])).toEqual([]));
-
-  it('places samples into correct buckets', () => {
-    const data: LatencyStatDto[] = [
-      { endpointId: 'e1', p50Ms: 0, p95Ms: 0, p99Ms: 0, minMs: 0, maxMs: 0, sampleCount: 3 },   // bucket 0
-      { endpointId: 'e2', p50Ms: 0, p95Ms: 500, p99Ms: 0, minMs: 0, maxMs: 0, sampleCount: 2 }, // bucket 1
-    ];
-    const hist = computeLatencyHist(data);
-    expect(hist[0]).toBe(3);
-    expect(hist[1]).toBe(2);
-    expect(hist.length).toBe(10);
-  });
-});
-
-// ── computeTokenAgentShare ───────────────────────────────────────────────────
-
-describe('computeTokenAgentShare', () => {
+describe('computeEndpointLatency', () => {
   const agents = [
-    { id: 'a1', name: 'AgentOne', isSystemAgent: false },
-    { id: 'a2', name: 'AgentTwo', isSystemAgent: false },
-    { id: 'sys', name: 'Optimizer', isSystemAgent: true },
+    { id: 'a1', name: 'AgentOne', endpointId: 'e1', endpointName: 'Azure', isSystemAgent: false },
+    { id: 'a2', name: 'AgentTwo', endpointId: 'e1', endpointName: 'Azure', isSystemAgent: false },
   ] as AgentListItemDto[];
 
-  it('returns empty for no data', () => {
-    const result = computeTokenAgentShare([], agents);
-    expect(result.agents).toEqual([]);
-    expect(result.total).toBe(0);
+  it('returns [] for empty data', () => expect(computeEndpointLatency([], agents)).toEqual([]));
+
+  it('resolves endpoint names from agents and falls back to a short id', () => {
+    const data: LatencyStatDto[] = [
+      { endpointId: 'e1', p50Ms: 100, p95Ms: 200, p99Ms: 300, minMs: 50, maxMs: 400, sampleCount: 5 },
+      { endpointId: 'unknown-endpoint-id', p50Ms: 10, p95Ms: 20, p99Ms: 30, minMs: 5, maxMs: 40, sampleCount: 1 },
+    ];
+    const rows = computeEndpointLatency(data, agents);
+    expect(rows[0].name).toBe('Azure');
+    expect(rows[1].name).toBe('unknown-'); // first 8 chars of the id
   });
 
-  it('totals per agent, sorts desc, and computes share', () => {
-    const raw: AgentTokenUsageDto[] = [
-      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 5, cachedInputTokens: 0 },
-      { agentId: 'a2', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 20, outputTokens: 10, cachedInputTokens: 0 },
-      { agentId: 'a1', bucketStart: '2024-01-01T01:00:00+00:00', inputTokens: 5, outputTokens: 0, cachedInputTokens: 0 },
+  it('sorts by sample count desc', () => {
+    const data: LatencyStatDto[] = [
+      { endpointId: 'e-small', p50Ms: 1, p95Ms: 2, p99Ms: 3, minMs: 1, maxMs: 4, sampleCount: 2 },
+      { endpointId: 'e-big', p50Ms: 1, p95Ms: 2, p99Ms: 3, minMs: 1, maxMs: 4, sampleCount: 9 },
     ];
-    const { agents: list, total } = computeTokenAgentShare(raw, agents);
-    expect(total).toBe(50);
-    expect(list.map(a => a.name)).toEqual(['AgentTwo', 'AgentOne']); // 30 before 20
-    expect(list[0].tokens).toBe(30);
-    expect(list[0].share).toBeCloseTo(0.6);
-    expect(list[1].inputTokens).toBe(15);
-    expect(list[1].outputTokens).toBe(5);
-  });
-
-  it('excludes system agents', () => {
-    const raw: AgentTokenUsageDto[] = [
-      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 0, cachedInputTokens: 0 },
-      { agentId: 'sys', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 99, outputTokens: 0, cachedInputTokens: 0 },
-    ];
-    const { agents: list, total } = computeTokenAgentShare(raw, agents);
-    expect(total).toBe(10);
-    expect(list.map(a => a.id)).toEqual(['a1']);
+    expect(computeEndpointLatency(data, []).map(r => r.endpointId)).toEqual(['e-big', 'e-small']);
   });
 });
 
-// ── buildAgentNameMap ────────────────────────────────────────────────────────
+// ── downsampleSum ────────────────────────────────────────────────────────────
 
-describe('buildAgentNameMap', () => {
-  it('maps id→name', () => {
-    const agents = [
-      { id: 'a1', name: 'Alpha' },
-      { id: 'a2', name: 'Beta' },
-    ] as AgentListItemDto[];
-    const map = buildAgentNameMap(agents);
-    expect(map.get('a1')).toBe('Alpha');
-    expect(map.get('a2')).toBe('Beta');
+describe('downsampleSum', () => {
+  it('passes through when already small enough', () => {
+    expect(downsampleSum([1, 2, 3], 5)).toEqual([1, 2, 3]);
+  });
+
+  it('sum-pools while preserving the grand total and order', () => {
+    const values = Array.from({ length: 100 }, (_, i) => i);
+    const out = downsampleSum(values, 10);
+    expect(out).toHaveLength(10);
+    expect(out.reduce((a, b) => a + b, 0)).toBe(values.reduce((a, b) => a + b, 0));
+    expect(out[0]).toBeLessThan(out[9]); // ascending input keeps its shape
+  });
+});
+
+// ── computeAgentFleet ────────────────────────────────────────────────────────
+
+describe('computeAgentFleet', () => {
+  const DAY_MS = 24 * 60 * 60_000;
+  const todayUtc = Date.now() - (Date.now() % DAY_MS);
+  const agents = [
+    { id: 'a1', name: 'AgentOne', endpointId: 'e1', endpointName: 'Azure', toolCount: 2, lastUsedAt: null, isSystemAgent: false },
+    { id: 'a2', name: 'AgentTwo', endpointId: 'e1', endpointName: 'Azure', toolCount: 0, lastUsedAt: null, isSystemAgent: false },
+    { id: 'sys', name: 'Optimizer', endpointId: 'e1', endpointName: 'Azure', toolCount: 0, lastUsedAt: null, isSystemAgent: true },
+  ] as AgentListItemDto[];
+  const breakdown = [
+    { agentId: 'a1', callCount: 3 },
+    { agentId: 'a2', callCount: 7 },
+    { agentId: 'sys', callCount: 99 },
+  ] as AgentBreakdownDto[];
+
+  it('excludes system agents but keeps zero-traffic agents', () => {
+    const fleet = computeAgentFleet(agents, breakdown, [], 'all', 'daily');
+    expect(fleet.map(e => e.id).sort()).toEqual(['a1', 'a2']);
+    expect(fleet.every(e => e.tokens === 0 && e.series.length === 0)).toBe(true);
+  });
+
+  it('totals tokens per agent, computes fleet share, and sorts by tokens desc', () => {
+    const iso = new Date(todayUtc).toISOString();
+    const raw: AgentTokenUsageDto[] = [
+      { agentId: 'a1', bucketStart: iso, inputTokens: 10, outputTokens: 5, cachedInputTokens: 0 },
+      { agentId: 'a2', bucketStart: iso, inputTokens: 20, outputTokens: 10, cachedInputTokens: 0 },
+      { agentId: 'sys', bucketStart: iso, inputTokens: 99, outputTokens: 0, cachedInputTokens: 0 },
+    ];
+    const fleet = computeAgentFleet(agents, breakdown, raw, 'all', 'daily');
+    expect(fleet.map(e => e.id)).toEqual(['a2', 'a1']);
+    expect(fleet[0].tokens).toBe(30);
+    expect(fleet[0].share).toBeCloseTo(2 / 3);
+    expect(fleet[0].traces).toBe(7);
+    expect(fleet[1].traces).toBe(3);
+  });
+
+  it('builds all sparklines on one shared grid, gap-filled and ≥2 points', () => {
+    const iso = new Date(todayUtc).toISOString();
+    const older = new Date(todayUtc - 2 * DAY_MS).toISOString();
+    const raw: AgentTokenUsageDto[] = [
+      { agentId: 'a1', bucketStart: older, inputTokens: 100, outputTokens: 0, cachedInputTokens: 0 },
+      { agentId: 'a2', bucketStart: iso, inputTokens: 50, outputTokens: 0, cachedInputTokens: 0 },
+    ];
+    const fleet = computeAgentFleet(agents, breakdown, raw, 'all', 'daily');
+    const a1 = fleet.find(e => e.id === 'a1');
+    const a2 = fleet.find(e => e.id === 'a2');
+    // Shared window spans both agents' buckets: 3 daily points each.
+    expect(a1?.series).toEqual([100, 0, 0]);
+    expect(a2?.series).toEqual([0, 0, 50]);
+  });
+
+  it('caps sparkline resolution at FLEET_SPARK_POINTS', () => {
+    const HOUR = 60 * 60_000;
+    const nowHour = Date.now() - (Date.now() % HOUR);
+    const raw: AgentTokenUsageDto[] = Array.from({ length: 100 }, (_, i) => ({
+      agentId: 'a1',
+      bucketStart: new Date(nowHour - i * HOUR).toISOString(),
+      inputTokens: 1,
+      outputTokens: 0,
+      cachedInputTokens: 0,
+    }));
+    const fleet = computeAgentFleet(agents, breakdown, raw, 'all', 'hourly');
+    const a1 = fleet.find(e => e.id === 'a1');
+    expect(a1?.series.length).toBeLessThanOrEqual(FLEET_SPARK_POINTS);
+    expect(a1?.series.reduce((a, b) => a + b, 0)).toBe(100); // total preserved
   });
 });
 

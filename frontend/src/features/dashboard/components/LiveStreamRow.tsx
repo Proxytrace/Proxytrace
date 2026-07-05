@@ -9,6 +9,7 @@ import { fmtLatency, fmtRelative, fmtTokens } from '../../../lib/format';
 import { tracePreview } from '../../../lib/trace';
 import type { TraceRow } from '../../../lib/trace';
 import { cn } from '../../../lib/cn';
+import { hoverAccentWashCls } from '../../../components/ui/classes';
 
 // Shared grid template — header row and every data row align to this. Columns are
 // fixed-width (not auto) so the header grid and each row's grid compute identical
@@ -48,7 +49,7 @@ interface Props {
 }
 
 export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
-  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]', isLast ? '' : 'border-b border-border-subtle');
+  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors', hoverAccentWashCls, isLast ? '' : 'border-b border-border-subtle');
 
   if (row.type === 'flat') {
     const t = row.trace;

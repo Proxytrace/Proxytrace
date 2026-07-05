@@ -11,7 +11,8 @@ import { fmtTokens } from '../../../lib/format';
 import { useCountUp } from '../../../hooks/useCountUp';
 import { CachedTokensHint } from '../../../components/ui/CachedTokensHint';
 import { bucketAxisLabel, rangeWindowLabel, type RangeKey, type StatisticsBucket } from '../../../lib/time-range';
-import { RANGES, splitTokenStr, type ModelSplit } from '../dashboardMeta';
+import { RANGES, splitTokenStr, EYEBROW_CLS, type ModelSplit } from '../dashboardMeta';
+import { cn } from '../../../lib/cn';
 
 interface HeroTokenCardProps {
   summary: SummaryDto | undefined;
@@ -48,7 +49,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       {/* Header: value + range picker */}
       <div className="relative flex items-start justify-between">
         <div>
-          <div className="text-caption text-muted tracking-[0.16em] uppercase font-bold font-mono mb-1">
+          <div className={cn(EYEBROW_CLS, 'mb-1')}>
             <Trans>Token Volume · {rangeWindowLabel(range)}</Trans>
           </div>
           <div className="flex items-baseline gap-2.5 flex-wrap">

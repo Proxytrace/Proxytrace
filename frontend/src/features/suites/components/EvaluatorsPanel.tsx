@@ -10,7 +10,7 @@ import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { RowButton } from '../../../components/ui/RowButton';
 import { SearchIcon, LockIcon } from '../../../components/icons';
-import { useLicense } from '../../../api/license';
+import { useLicense } from '../../../hooks/useLicense';
 import { FOCUS_RING } from '../../../lib/constants';
 
 interface Props {

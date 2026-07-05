@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
-import { useFeature } from '../../../api/license';
+import { useFeature } from '../../../hooks/useLicense';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SkeletonList } from '../../../components/ui/Skeleton';

@@ -11,6 +11,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **The dashboard's lower half got the mission-control treatment.** The old donut, one-bar
+  latency histogram, and agent-card grid are replaced by two denser, more honest sections:
+  an **Agent fleet** roster — one row per agent with its own activity sparkline (the top
+  pulse band, decomposed per agent), endpoint, token total and fleet share, trace count, and
+  last-active time — and a **Latency spectrum** showing each endpoint's min→max latency span
+  on a shared log scale with p50/p95/p99 markers, alongside the project-wide percentile
+  strip. The fleet header's proposals chip now shows the **real** count of pending
+  optimization proposals (it was previously a static placeholder) and links to the
+  Proposals view.
+
 - **The sidebar now follows your workflow.** Navigation is regrouped into **Monitor**
   (Dashboard, Traces, Anomalies), **Build** (Agents, Agent Playground), and **Improve** — the
   whole optimization loop in order (Test Suites, Evaluators, Evaluator Playground, Test Runs,

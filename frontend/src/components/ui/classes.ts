@@ -22,6 +22,9 @@ export const hoverRevealOverlayCls = cn(
 /** Canonical form-field label (uppercase eyebrow). Shared by `Label` + `FormField`. */
 export const fieldLabelCls = 'text-caption font-semibold text-muted uppercase tracking-[0.05em]';
 
+/** Faint accent wash on hover for interactive rows/cards (trace rows, fleet rows, list rows). */
+export const hoverAccentWashCls = 'hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]';
+
 /** Canonical `<kbd>` key cap for keyboard hints (slash menu, palettes, shortcut legends). */
 export const kbdCls = cn(
   'rounded-sm border border-hairline bg-card px-1 py-px font-mono text-caption text-secondary shadow-[var(--shadow-pill)]',

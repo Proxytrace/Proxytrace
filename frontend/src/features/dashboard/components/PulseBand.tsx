@@ -7,7 +7,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import type { LiveTelemetryDto } from '../../../api/models';
 import { sparklinePath } from '../../../lib/charts';
 import { useElementWidth } from '../../../hooks/useElementWidth';
-import { teleFmt } from '../dashboardMeta';
+import { teleFmt, EYEBROW_CLS } from '../dashboardMeta';
 import { cn } from '../../../lib/cn';
 
 const BAND_HEIGHT = 72;
@@ -42,7 +42,7 @@ export function PulseBand({ pulse, lastBeat, telemetry }: PulseBandProps) {
 
       {/* EKG line */}
       <div ref={ref} className="relative flex-1 min-w-0">
-        <div className="text-caption text-muted tracking-[0.16em] uppercase font-bold font-mono mb-1">
+        <div className={cn(EYEBROW_CLS, 'mb-1')}>
           <Trans>Activity · last 60 min</Trans>
         </div>
         <svg width="100%" height={BAND_HEIGHT} className="block overflow-visible" aria-hidden="true">

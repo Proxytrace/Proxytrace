@@ -3,13 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
 import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
-import type {
-  ChatTransport,
-  UIMessage,
-  UIMessageChunk,
-} from 'ai';
 import { traceyApi, type TraceySessionDto } from '../../api/tracey';
-import { useFeature } from '../../api/license';
+import { useFeature } from '../../hooks/useLicense';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useCurrentUser } from '../../auth/useCurrentUser';
@@ -22,70 +17,19 @@ import { useFollowUpSuggestions, type FollowUpState } from './useFollowUpSuggest
 import {
   loadConversationIndex,
   loadConversationSnapshot,
-  saveConversationSnapshot,
-  removeConversationSnapshot,
-  setActiveConversation,
-  upsertConversation,
-  removeConversation,
-  deriveConversationTitle,
   isRestorableSnapshot,
-  migrateLegacyThread,
   type ConversationMeta,
   type ConversationSnapshot,
 } from './tracey-storage';
-import { collectArtifactRefs, pruneArtifacts } from './tracey-artifact-store';
-
-/** Union of the artifact references across every stored conversation (shared artifact scope). */
-function unionArtifactRefs(userKey: string, projectKey: string, items: ConversationMeta[]): Set<string> {
-  const refs = new Set<string>();
-  for (const item of items) {
-    const snapshot = loadConversationSnapshot(userKey, projectKey, item.id);
-    if (snapshot) for (const ref of collectArtifactRefs(snapshot)) refs.add(ref);
-  }
-  return refs;
-}
-
-interface ConversationHistory {
-  items: ConversationMeta[];
-  activeId: string | null;
-}
-
-/**
- * Folds any legacy single-thread blob into the conversation model (idempotent) and loads the
- * stored history for a user+project. Titles are stored with an empty fallback; the rail localizes
- * an empty title at render, so this layer needs no i18n.
- */
-function loadHistory(userKey: string, projectKey: string): ConversationHistory {
-  migrateLegacyThread(userKey, projectKey, '');
-  const index = loadConversationIndex(userKey, projectKey);
-  return { items: index.items, activeId: index.activeId };
-}
-
-/**
- * A {@link ChatTransport} that forwards to a swappable inner transport. The runtime is created
- * once (hooks can't be conditional), but the real proxy-backed transport only exists after the
- * session resolves; until then sends reject.
- */
-class DelegatingTransport implements ChatTransport<UIMessage> {
-  private inner: ChatTransport<UIMessage> | null = null;
-
-  setInner(inner: ChatTransport<UIMessage> | null): void {
-    this.inner = inner;
-  }
-
-  sendMessages(
-    options: Parameters<ChatTransport<UIMessage>['sendMessages']>[0],
-  ): Promise<ReadableStream<UIMessageChunk>> {
-    if (!this.inner) return Promise.reject(new Error('Tracey session not ready'));
-    return this.inner.sendMessages(options);
-  }
-
-  reconnectToStream(
-    options: Parameters<ChatTransport<UIMessage>['reconnectToStream']>[0],
-  ): Promise<ReadableStream<UIMessageChunk> | null> {
-    return this.inner?.reconnectToStream(options) ?? Promise.resolve(null);
-  }
-}
+import { pruneArtifacts } from './tracey-artifact-store';
+import { DelegatingTransport } from './tracey-delegating-transport';
+import {
+  loadHistory,
+  unionArtifactRefs,
+  persistConversationSnapshot,
+  type ConversationHistory,
+} from './tracey-history';
+import { useConversationActions } from './useConversationActions';
 
 export interface TraceyChat {
   runtime: ReturnType<typeof useChatRuntime>;
@@ -278,91 +222,24 @@ export function useTraceyChat(): TraceyChat {
       const id = activeIdRef.current;
       if (id === null) return; // unreachable after the mint above; narrows the type without `!`
 
-      if (!saveConversationSnapshot(userKey, projectKey, id, snapshot)) {
-        // Quota: evict the oldest OTHER conversation, then retry the write once.
-        const oldest = loadConversationIndex(userKey, projectKey).items
-          .filter(i => i.id !== id)
-          .sort((a, b) => a.updatedAt - b.updatedAt)[0];
-        if (oldest) {
-          const after = removeConversation(userKey, projectKey, oldest.id);
-          setHistory(h => ({ items: after.items, activeId: h.activeId }));
-          void pruneArtifacts(artifactScope, unionArtifactRefs(userKey, projectKey, after.items)).catch(() => {});
-        }
-        saveConversationSnapshot(userKey, projectKey, id, snapshot);
-      }
-
-      const meta: ConversationMeta = {
-        id,
-        title: deriveConversationTitle(snapshot, ''),
-        createdAt: createdAtRef.current || Date.now(),
-        updatedAt: Date.now(),
-        messageCount: count,
-      };
-      const { index: nextIndex, evicted } = upsertConversation(userKey, projectKey, meta);
-      for (const evictedId of evicted) removeConversationSnapshot(userKey, projectKey, evictedId);
-      if (evicted.length) {
-        void pruneArtifacts(artifactScope, unionArtifactRefs(userKey, projectKey, nextIndex.items)).catch(() => {});
-      }
+      const { items, structural } = persistConversationSnapshot(
+        userKey, projectKey, artifactScope, id, snapshot, createdAtRef.current, count,
+        evictedItems => setHistory(h => ({ items: evictedItems, activeId: h.activeId })),
+      );
       // Re-render the rail only when the conversation set changed (new conversation / eviction) —
       // not on every token; title/updatedAt of the active row settle without live churn.
-      if (wasNew || evicted.length) {
-        setHistory({ items: nextIndex.items, activeId: id });
+      if (wasNew || structural) {
+        setHistory({ items, activeId: id });
       }
     };
     return thread.subscribe(persist);
   }, [runtime, userKey, projectKey, artifactScope]);
 
-  const startFreshThread = useCallback((): Promise<void> => {
-    // The current conversation is already persisted under its id, so it stays in history. Just
-    // detach the active pointer and switch to a fresh empty thread; the next message mints a new id.
-    restoringRef.current = true;
-    activeIdRef.current = null;
-    createdAtRef.current = 0;
-    setHistory(h => ({ items: h.items, activeId: null }));
-    setActiveConversation(userKey, projectKey, null);
-    return runtime.threads.switchToNewThread().finally(() => { restoringRef.current = false; });
-  }, [runtime, userKey, projectKey]);
-
-  const startNewConversation = useCallback(() => { void startFreshThread(); }, [startFreshThread]);
-
-  const selectConversation = useCallback((id: string) => {
-    if (id === activeIdRef.current) return;
-    const meta = loadConversationIndex(userKey, projectKey).items.find(c => c.id === id);
-    const snapshot = loadConversationSnapshot<ConversationSnapshot>(userKey, projectKey, id);
-    restoringRef.current = true;
-    activeIdRef.current = id;
-    createdAtRef.current = meta?.createdAt ?? Date.now();
-    setHistory(h => ({ items: h.items, activeId: id }));
-    setActiveConversation(userKey, projectKey, id);
-    // `await switchToNewThread()` BEFORE import — right after a switch the binding can transiently
-    // resolve to the empty core, whose import throws. (When the current thread is already the
-    // fresh "new" one, switchToNewThread resolves as a no-op and the import lands in it — fine.)
-    void runtime.threads
-      .switchToNewThread()
-      .then(() => {
-        if (snapshot && isRestorableSnapshot(snapshot)) {
-          try {
-            runtime.thread.importExternalState(snapshot);
-          } catch {
-            // Incompatible snapshot: leave the fresh empty thread.
-          }
-        }
-      })
-      .finally(() => { restoringRef.current = false; });
-  }, [runtime, userKey, projectKey]);
-
-  const deleteConversation = useCallback((id: string) => {
-    const after = removeConversation(userKey, projectKey, id);
-    const wasActive = activeIdRef.current === id;
-    setHistory(h => ({ items: after.items, activeId: wasActive ? null : h.activeId }));
-    // Sweep the deleted conversation's now-orphaned artifacts (its refs aren't in any survivor).
-    void pruneArtifacts(artifactScope, unionArtifactRefs(userKey, projectKey, after.items)).catch(() => {});
-    if (wasActive) {
-      const next = [...after.items].sort((a, b) => b.updatedAt - a.updatedAt)[0];
-      if (next) selectConversation(next.id);
-      else startNewConversation();
-    }
-  }, [userKey, projectKey, artifactScope, selectConversation, startNewConversation]);
+  const { startFreshThread, startNewConversation, selectConversation, deleteConversation } =
+    useConversationActions({
+      runtime, userKey, projectKey, artifactScope,
+      activeIdRef, createdAtRef, restoringRef, setHistory,
+    });
 
   const status: TraceyChat['status'] = !projectId || !interactive
     ? 'no-project'

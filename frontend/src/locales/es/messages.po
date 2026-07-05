@@ -111,6 +111,7 @@ msgid "{0, plural, one {# sample each} other {# samples each}}"
 msgstr "{0, plural, one {# muestra cada uno} other {# muestras cada uno}}"
 
 #. placeholder {0}: latencyStats.samples
+#. placeholder {0}: row.samples
 msgid "{0, plural, one {# sample} other {# samples}}"
 msgstr "{0, plural, one {# muestra} other {# muestras}}"
 
@@ -123,8 +124,8 @@ msgstr "{0, plural, one {# Suite para este agent} other {# Suites para este agen
 msgid "{0, plural, one {# suite} other {# suites}}"
 msgstr "{0, plural, one {# Suite} other {# Suites}}"
 
-#. placeholder {0}: a.toolCount
 #. placeholder {0}: agent.toolCount
+#. placeholder {0}: entry.toolCount
 #. placeholder {0}: v.tools.length
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# Tool} other {# Tools}}"
@@ -140,6 +141,10 @@ msgstr "{0, plural, one {# disparador} other {# disparadores}}"
 #. placeholder {0}: turns.length
 msgid "{0, plural, one {# turn} other {# turns}}"
 msgstr "{0, plural, one {# turno} other {# turnos}}"
+
+#. placeholder {0}: rows.length - visible.length
+msgid "{0, plural, one {+# more endpoint} other {+# more endpoints}}"
+msgstr "{0, plural, one {+# endpoint más} other {+# endpoints más}}"
 
 #. placeholder {0}: suite.testCaseCount
 msgid "{0, plural, one {case} other {cases}}"
@@ -443,10 +448,6 @@ msgstr "Tasa de aprobación: {0}% → {1}%"
 msgid "{0}% pass"
 msgstr "{0}% aprobados"
 
-#. placeholder {0}: a.toolCount
-msgid "{0}t"
-msgstr "{0}t"
-
 #. placeholder {0}: suiteSchedules.length
 msgid "{activeCount} active · {0} total"
 msgstr "{activeCount} activos · {0} en total"
@@ -543,6 +544,9 @@ msgstr "{pct}% más barato"
 msgid "{pct}% pricier"
 msgstr "{pct}% más caro"
 
+msgid "{proposalCount, plural, one {# proposal} other {# proposals}}"
+msgstr "{proposalCount, plural, one {# propuesta} other {# propuestas}}"
+
 msgid "{proposals, plural, one {# proposal ready} other {# proposals ready}}"
 msgstr "{proposals, plural, one {# Proposal lista} other {# Proposals listas}}"
 
@@ -550,9 +554,8 @@ msgstr "{proposals, plural, one {# Proposal lista} other {# Proposals listas}}"
 msgid "{range} · {0} runs"
 msgstr "{range} · {0} runs"
 
-#. placeholder {0}: fmtTokens(share.total)
-msgid "{range} · <0>{0}</0> total"
-msgstr "{range} · <0>{0}</0> en total"
+msgid "{restCount, plural, one {+# more agent →} other {+# more agents →}}"
+msgstr "{restCount, plural, one {+# agente más →} other {+# agentes más →}}"
 
 msgid "{resultBytes} B"
 msgstr "{resultBytes} B"
@@ -580,12 +583,6 @@ msgstr "{traces, plural, one {# Trace} other {# Traces}}"
 
 msgid "{unreadCount} new"
 msgstr "{unreadCount} nuevas"
-
-msgid "{v} sample"
-msgstr "{v} muestra"
-
-msgid "{v} samples"
-msgstr "{v} muestras"
 
 msgid "{value}% pass rate"
 msgstr "{value}% de aprobación"
@@ -617,10 +614,6 @@ msgstr "+ Añadido"
 msgid "+ Pending add"
 msgstr "+ Pendiente de añadir"
 
-#. placeholder {0}: rest.length
-msgid "+{0} more"
-msgstr "+{0} más"
-
 msgid "+{added} added"
 msgstr "+{added} añadido"
 
@@ -641,9 +634,9 @@ msgstr "± {0}"
 msgid "×{0} samples"
 msgstr "×{0} muestras"
 
-#. placeholder {0}: visibleAgents.length
-msgid "<0>{0}</0> detected · tap to inspect"
-msgstr "<0>Se detectaron {0}</0> · toca para inspeccionar"
+#. placeholder {0}: fleet.length
+msgid "<0>{0}</0> detected · ranked by activity · tap to inspect"
+msgstr "<0>{0}</0> detectado · ordenado por actividad · toca para inspeccionar"
 
 #. placeholder {0}: (summary?.totalInputTokens ?? 0).toLocaleString()
 msgid "<0>{0}</0> in"
@@ -705,9 +698,6 @@ msgstr "1 muestra"
 
 msgid "1 test suite"
 msgstr "1 Suite"
-
-msgid "2 proposals"
-msgstr "2 Proposals"
 
 msgid "5 min"
 msgstr "5 min"
@@ -784,6 +774,9 @@ msgstr "Activar licencia"
 
 msgid "Active"
 msgstr "Activo"
+
+msgid "Activity"
+msgstr "Actividad"
 
 msgid "Activity · last 60 min"
 msgstr "Actividad · últimos 60 min"
@@ -897,6 +890,9 @@ msgstr "Endpoint de Agent"
 
 msgid "Agent Endpoint Changed"
 msgstr "Endpoint de Agent cambiado"
+
+msgid "Agent fleet"
+msgstr "Flota de agents"
 
 msgid "Agent has no tools."
 msgstr "Agent no tiene Tools."
@@ -2527,6 +2523,9 @@ msgstr "Últimos 7 días"
 msgid "last 8"
 msgstr "últimos 8"
 
+msgid "Last active"
+msgstr "Última actividad"
+
 msgid "Last hour"
 msgstr "Última hora"
 
@@ -2556,8 +2555,8 @@ msgstr "Lat"
 msgid "Latency"
 msgstr "Latencia"
 
-msgid "Latency distribution"
-msgstr "Distribución de latencia"
+msgid "Latency spectrum"
+msgstr "Espectro de latencia"
 
 msgid "Latency stats appear after traces arrive."
 msgstr "Las estadísticas de latencia aparecerán después de que lleguen Traces."
@@ -2818,6 +2817,17 @@ msgstr "Mín."
 msgid "Min ({0})"
 msgstr "Mín ({0})"
 
+#. placeholder {0}: fmtLatency(row.minMs)
+#. placeholder {1}: fmtLatency(row.p50Ms)
+#. placeholder {2}: fmtLatency(row.p95Ms)
+#. placeholder {3}: fmtLatency(row.p99Ms)
+#. placeholder {4}: fmtLatency(row.maxMs)
+msgid "min {0} · p50 {1} · p95 {2} · p99 {3} · max {4}"
+msgstr "min {0} · p50 {1} · p95 {2} · p99 {3} · máx {4}"
+
+msgid "min→max per endpoint"
+msgstr "mín→máx por endpoint"
+
 msgid "Minimum samples"
 msgstr "Muestras mínimas"
 
@@ -3020,9 +3030,6 @@ msgstr "No hay detalles adicionales para este evento."
 
 msgid "No agent"
 msgstr "Sin Agent"
-
-msgid "No agent token data"
-msgstr "No hay datos de token de Agent"
 
 msgid "No agents available"
 msgstr "No hay Agents disponibles"
@@ -3475,9 +3482,6 @@ msgstr "O introduce esta clave manualmente"
 msgid "Order"
 msgstr "Orden"
 
-msgid "Other"
-msgstr "Otro"
-
 msgid "out"
 msgstr "salida"
 
@@ -3637,9 +3641,6 @@ msgstr "por evaluación"
 
 msgid "Per page:"
 msgstr "Por página:"
-
-msgid "Per-agent token usage appears once your agents handle traffic."
-msgstr "El uso de Tokens por Agent aparece cuando tus Agents empiezan a manejar tráfico."
 
 msgid "Per-model output"
 msgstr "Salida por modelo"
@@ -5063,9 +5064,6 @@ msgstr "A"
 
 msgid "Toggle sidebar"
 msgstr "Alternar barra lateral"
-
-msgid "Token usage by agent"
-msgstr "Uso de Tokens por agent"
 
 #. placeholder {0}: rangeWindowLabel(range)
 msgid "Token Volume · {0}"

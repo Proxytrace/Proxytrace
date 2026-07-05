@@ -3,7 +3,7 @@ import { cn } from '../../../lib/cn';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { XIcon } from '../../../components/icons';
 import { Modal } from '../../../components/overlays/Modal';
-import { useFeature } from '../../../api/license';
+import { useFeature } from '../../../hooks/useLicense';
 import { EvaluatorKind, type AgenticEvaluatorPresetDto } from '../../../api/models';
 import { EvaluatorForm } from '../EvaluatorForm';
 import { KIND_ORDER, META, KIND_CATEGORY, type EvaluatorFormState } from '../evaluatorMeta';

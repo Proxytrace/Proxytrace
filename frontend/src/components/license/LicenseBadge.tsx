@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLingui } from '@lingui/react/macro';
 import { CrownIcon, SparklesIcon } from '../icons';
 import { cn } from '../../lib/cn';
-import { useLicense } from '../../api/license';
+import { useLicense } from '../../hooks/useLicense';
 import { tierBadge, type TierTone } from './licenseUtils';
 
 // The tier chip sits next to the health ("Online") pill but must NOT read as its

@@ -11,6 +11,7 @@ import { buildRows } from '../../../lib/trace';
 import { useNowTick } from '../hooks/useNowTick';
 import { LiveStreamRow, LIVE_STREAM_GRID, LIVE_STREAM_GRID_WIDE, LIVE_STREAM_GRID_NARROW, NARROW_HIDDEN } from './LiveStreamRow';
 import { cn } from '../../../lib/cn';
+import { COL_HEADER_CLS } from '../dashboardMeta';
 
 interface LiveTraceStreamProps {
   traces: AgentCallListItemDto[];
@@ -45,7 +46,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         </Button>
       </header>
 
-      <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-caption font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
+      <div className={cn(LIVE_STREAM_GRID, COL_HEADER_CLS, 'px-1.5 pb-2.5 border-b border-border-subtle')}>
         <span /><span><Trans>Message</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Turns</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
       </div>
 

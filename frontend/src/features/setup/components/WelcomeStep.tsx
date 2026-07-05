@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
-import { useLicense } from '../../../api/license';
+import { useLicense } from '../../../hooks/useLicense';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import {
   ActivityIcon,

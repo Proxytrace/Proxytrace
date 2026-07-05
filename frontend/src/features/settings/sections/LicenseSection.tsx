@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useLicense, useRefreshLicense, useRemoveLicense } from '../../../api/license';
+import { useLicense, useRefreshLicense, useRemoveLicense } from '../../../hooks/useLicense';
 import { FEATURE_LABELS, STATUS_LABELS, licenseSourceNote } from '../../../components/license/licenseUtils';
 import { LicenseKeyForm } from '../../../components/license/LicenseKeyForm';
 import { Button } from '../../../components/ui/Button';

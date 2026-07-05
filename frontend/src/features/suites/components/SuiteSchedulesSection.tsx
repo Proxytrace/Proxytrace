@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
-import { useFeature } from '../../../api/license';
+import { useFeature } from '../../../hooks/useLicense';
 import { showUpgradeModal } from '../../../components/license/UpgradeModal';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';

@@ -4,7 +4,7 @@ import { LockedNavItem } from './LockedNavItem';
 import { isNavEntryLocked } from './navGating';
 import { ProjectSelector } from './ProjectSelector';
 import { navGroups, footerNavEntries, NAV_ICONS } from './shellNav';
-import { useLicense } from '../../api/license';
+import { useLicense } from '../../hooks/useLicense';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useKiosk } from '../../contexts/KioskContext';

@@ -31,7 +31,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: undefined, status: 'pending' }),
 }));
 vi.mock('../../api/tracey', () => ({ traceyApi: { getSession: vi.fn() } }));
-vi.mock('../../api/license', () => ({ useFeature: () => false }));
+vi.mock('../../hooks/useLicense', () => ({ useFeature: () => false }));
 vi.mock('../../hooks/useCurrentProject', () => ({
   default: () => ({ currentProject: { id: 'proj1' } }),
 }));

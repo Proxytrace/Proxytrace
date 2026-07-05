@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Trans, Plural } from '@lingui/react/macro';
-import { useLicense } from '../../api/license';
+import { useLicense } from '../../hooks/useLicense';
 import { LockIcon } from '../icons';
 import { daysLeft } from './licenseUtils';
 

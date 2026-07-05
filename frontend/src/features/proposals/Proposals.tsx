@@ -13,7 +13,7 @@ import type { FilterDropdownOption } from '../../components/ui/FilterDropdown';
 import { DossierPane } from './components/DossierPane';
 import { LoopStrip } from './components/LoopStrip';
 import { QueueRail } from './components/QueueRail';
-import { useProposals } from './hooks/useProposals';
+import { useProposals } from '../../hooks/useProposals';
 import { useTheories } from './hooks/useTheories';
 import { useSuiteNames } from './hooks/useSuiteNames';
 import { useSetProposalStatus } from './hooks/useSetProposalStatus';

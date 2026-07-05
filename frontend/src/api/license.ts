@@ -1,6 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
-import { QUERY_KEYS } from './query-keys';
 
 /** Licensing tier. Mirrors the backend `LicenseTier` enum (lowercased on the wire). */
 export type LicenseTier = 'free' | 'enterprise';
@@ -72,67 +70,3 @@ export const licenseApi = {
   set: (license: string) => api.put<LicenseDto>('/api/license', { license }),
   remove: () => api.del<LicenseDto>('/api/license'),
 };
-
-/**
- * The current license snapshot. License state changes rarely, so it is cached
- * for an hour and not refetched on window focus.
- */
-export function useLicense() {
-  return useQuery({
-    queryKey: QUERY_KEYS.license,
-    queryFn: licenseApi.get,
-    staleTime: 60 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-}
-
-/**
- * Whether a given feature is enabled by the current license. Defaults to false
- * while the license is still loading so gated UI stays hidden until confirmed.
- */
-export function useFeature(feature: LicenseFeature): boolean {
-  const { data } = useLicense();
-  return data?.features.includes(feature) ?? false;
-}
-
-/** Admin-only: force a re-check against the license server, then refresh the cache. */
-export function useRefreshLicense() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: licenseApi.refresh,
-    onSuccess: (dto) => {
-      queryClient.setQueryData(QUERY_KEYS.license, dto);
-    },
-  });
-}
-
-/** Dry-run validation of a license key — nothing is stored or applied. */
-export function useValidateLicense() {
-  return useMutation({ mutationFn: licenseApi.validate });
-}
-
-/**
- * Sets the installation's license key (stores + activates it without a restart).
- * Allowed for admins, and anonymously while setup is incomplete (the wizard's
- * Welcome step runs before the first admin exists).
- */
-export function useSetLicense() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: licenseApi.set,
-    onSuccess: (dto) => {
-      queryClient.setQueryData(QUERY_KEYS.license, dto);
-    },
-  });
-}
-
-/** Admin-only: removes the stored key; falls back to the environment license or Free. */
-export function useRemoveLicense() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: licenseApi.remove,
-    onSuccess: (dto) => {
-      queryClient.setQueryData(QUERY_KEYS.license, dto);
-    },
-  });
-}

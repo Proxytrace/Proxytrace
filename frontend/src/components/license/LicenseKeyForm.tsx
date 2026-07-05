@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useSetLicense, useValidateLicense } from '../../api/license';
+import { useSetLicense, useValidateLicense } from '../../hooks/useLicense';
 import type { ValidateLicenseResultDto } from '../../api/license';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';

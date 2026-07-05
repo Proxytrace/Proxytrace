@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
-import { useLicense } from '../../../api/license';
+import { useLicense } from '../../../hooks/useLicense';
 import { LicenseKeyForm } from '../../../components/license/LicenseKeyForm';
 import { Button } from '../../../components/ui/Button';
 import { AlertTriangleIcon, KeyIcon } from '../../../components/icons';

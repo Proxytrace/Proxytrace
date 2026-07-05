@@ -7,6 +7,7 @@ import { SegmentedGauge } from '../../../components/charts';
 import type { SummaryDto } from '../../../api/models';
 import { useCountUp } from '../../../hooks/useCountUp';
 import { cn } from '../../../lib/cn';
+import { COL_HEADER_CLS } from '../dashboardMeta';
 
 interface PassRateGaugeProps {
   summary: SummaryDto | undefined;
@@ -43,7 +44,7 @@ export function PassRateGauge({ summary }: PassRateGaugeProps) {
       <div className="grid grid-cols-3 gap-2 mt-auto relative">
         {GAUGE_STATS.map((s, idx) => (
           <div key={idx} className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
-            <div className="text-caption text-muted tracking-[0.12em] uppercase font-bold font-mono">{i18n._(s.l)}</div>
+            <div className={COL_HEADER_CLS}>{i18n._(s.l)}</div>
             <div className={cn('text-h1 font-bold mt-0.5 tabular-nums', s.c)}>
               {statValues[idx]}
             </div>
