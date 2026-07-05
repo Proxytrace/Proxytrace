@@ -13,10 +13,29 @@ const MODEL_COLORS: Record<string, string> = {
   'claude-3-haiku': '#46b97c',
 };
 
-// Entity palettes use only on-system tokens (accent, teal, success, warn, accent-hover).
-// Do not add new brand hexes — extend by repetition with hash mixing.
+// Fallback palette for models with no explicit MODEL_COLORS entry. Models are intentionally
+// grouped by family (all gpt gold, all mini teal, all claude green), so this stays inside the
+// warm/teal/green brand tokens and may repeat — distinctness between families is not the goal here.
 const MODEL_PALETTE = ['#d9a158', '#74a8b6', '#46b97c', '#dd9a64', '#ecbf83', '#74a8b6', '#46b97c', '#d9a158'];
-const AGENT_PALETTE = ['#d9a158', '#74a8b6', '#46b97c', '#dd9a64', '#ecbf83', '#46b97c', '#74a8b6', '#d9a158'];
+
+// Per-entity categorical palette — hash-assigned by agentColor/projectColor/providerColor to give
+// each agent/project/provider a stable, at-a-glance-distinct color in charts, legends, and badge
+// dots. Unlike the semantic tokens (which deliberately group: success/warn/danger), these must be
+// MUTUALLY DISTINCT, so they walk the hue wheel. They are derived from the brand anchors (accent
+// gold #d9a158, teal #74a8b6, success #46b97c) by holding a muted saturation/lightness band and
+// rotating hue to fill the gaps the ~5 semantic tokens can't cover — the set still reads as one
+// calm family (no neon), every entry clears AA (≥4.5:1) as text on the ink surfaces, and no two
+// collide. Data-encoding only; never use these for chrome/CTAs/semantics (DESIGN.md §2.1).
+const AGENT_PALETTE = [
+  '#d9a158', // gold   — brand accent
+  '#848ccd', // blue   — teal rotated to a muted periwinkle
+  '#46b97c', // green  — brand success
+  '#cb86bc', // orchid — muted magenta
+  '#97c365', // lime   — gold→green bridge
+  '#74a8b6', // teal   — brand teal
+  '#d3737f', // rose   — dusty crimson
+  '#ae8dc9', // violet — muted
+];
 
 const PROVIDER_COLORS: Record<string, string> = {
   Anthropic: '#46b97c',

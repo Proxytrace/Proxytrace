@@ -55,9 +55,9 @@ The page background carries a fixed, very-low-opacity atmosphere (gold aurora to
 
 **Subtle semantic backgrounds** (`bg-success-subtle`, `bg-warn-subtle`, `bg-danger-subtle`, `bg-accent-subtle`) — use these for status pills and tinted surfaces. Never put white text on a subtle background; pair the subtle bg with the matching solid text color.
 
-**Dynamic colors** (per-model, per-agent, per-evaluator) come from `frontend/src/lib/colors.ts`: `modelColor(name)`, `agentColor(id)`, `EVALUATOR_KIND_COLOR`, `statusColor(httpStatus)`. Hash-based assignment is stable — do not invent new palettes for new entity types; extend the existing helpers.
+**Dynamic colors** (per-model, per-agent, per-evaluator) come from `frontend/src/lib/colors.ts`: `modelColor(name)`, `agentColor(id)`, `EVALUATOR_KIND_COLOR`, `statusColor(httpStatus)`. Hash-based assignment is stable — do not invent new palettes for new entity types; extend the existing helpers. The per-entity **categorical** palette (`agentColor`/`projectColor`/`providerColor`, `AGENT_PALETTE` in that file) is the one sanctioned exception to "no new hexes": charts, legends, and badge dots need more *mutually distinct* hues than the ~5 semantic tokens supply, so it walks the hue wheel as **muted hue-rotations of the brand anchors** (gold/teal/green) held at a consistent low-saturation, AA-legible band. That is for data-encoding only — never reach into it for chrome, CTAs, or semantic status.
 
-**Never** introduce new brand hexes. If you think you need one, you don't — combine accent + a semantic + opacity.
+**Never** introduce new brand hexes for chrome or semantics. If you think you need one, you don't — combine accent + a semantic + opacity. (The categorical entity palette above is the single, scoped exception, and only for per-entity data encoding.)
 
 ### 2.2 Typography
 

@@ -166,6 +166,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   enough data. The pass-rate gauge's footer showed a fabricated *best* and a made-up *90% target*;
   it now reports the real change since the previous run and the best pass rate across your recent
   runs, and the fake target is gone.
+- **Agent colors are distinct again in charts, legends, and badges.** The per-agent color palette
+  had eight slots but only about three visibly different hues (three near-identical warm golds, plus
+  a repeated teal and green), so unrelated agents routinely drew the same color — on some seeds every
+  bar, dot, and legend entry on the Anomalies dashboard rendered the same amber, erasing the only
+  thing distinguishing one agent from another. The palette is now eight genuinely distinct,
+  theme-legible hues (also used for project and provider colors), so stacked timelines, the
+  most-flagged-agents ranking, agent badges, and the project/provider avatars stay readable.
 
 ### Removed
 
