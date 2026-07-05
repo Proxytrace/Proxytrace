@@ -1,6 +1,5 @@
 using JetBrains.Annotations;
 using Proxytrace.Domain;
-using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;
@@ -17,32 +16,23 @@ namespace Proxytrace.Application.Demo.Scenarios;
 internal sealed class TestRunSeedScenario : IDemoScenario
 {
     private readonly DemoSeedContext ctx;
-    private readonly ITestRunGroup.CreateNew createGroup;
-    private readonly ITestRun.CreateNew createRun;
-    private readonly ITestResult.CreateNew createResult;
-    private readonly ICompletion.Create createCompletion;
+    private readonly ITestRunGroup.CreateExisting groupExisting;
+    private readonly ITestRun.CreateExisting runExisting;
+    private readonly ITestResult.CreateExisting resultExisting;
     private readonly IEvaluation.Create createEvaluation;
-    private readonly IRepository<ITestRunGroup> groupRepo;
-    private readonly IRepository<ITestResult> resultRepo;
 
     public TestRunSeedScenario(
         DemoSeedContext ctx,
-        ITestRunGroup.CreateNew createGroup,
-        ITestRun.CreateNew createRun,
-        ITestResult.CreateNew createResult,
-        ICompletion.Create createCompletion,
-        IEvaluation.Create createEvaluation,
-        IRepository<ITestRunGroup> groupRepo,
-        IRepository<ITestResult> resultRepo)
+        ITestRunGroup.CreateExisting groupExisting,
+        ITestRun.CreateExisting runExisting,
+        ITestResult.CreateExisting resultExisting,
+        IEvaluation.Create createEvaluation)
     {
         this.ctx = ctx;
-        this.createGroup = createGroup;
-        this.createRun = createRun;
-        this.createResult = createResult;
-        this.createCompletion = createCompletion;
+        this.groupExisting = groupExisting;
+        this.runExisting = runExisting;
+        this.resultExisting = resultExisting;
         this.createEvaluation = createEvaluation;
-        this.groupRepo = groupRepo;
-        this.resultRepo = resultRepo;
     }
 
     public int Order => 30;
@@ -119,20 +109,21 @@ internal sealed class TestRunSeedScenario : IDemoScenario
         {
             var suite = RequireSuite(spec.SuiteKey);
 
-            var group = await createGroup(suite, isSystemRun: false, null, sampleCount: 1).AddAsync(cancellationToken);
-            await group.SetRunning(cancellationToken);
+            // Seed the group and its runs directly in their terminal Completed state — never through
+            // the Pending → Running live-run path. In a live kiosk (a Kiosk:Endpoint is configured)
+            // the TestRunnerService loop only ever picks up Pending/Running work; a group that is
+            // Completed from the moment it is persisted can never be executed against the model, so
+            // there is no race between the seeder and the runner and no need for any runtime guard.
+            var group = await SeedCompletedGroupAsync(suite, isSystemRun: false, cancellationToken);
 
             foreach (var pick in spec.Endpoints)
             {
-                var run = await SeedRunAsync(suite, group, pick, cancellationToken);
+                var run = await SeedCompletedRunAsync(suite, group, pick, cancellationToken);
                 ctx.AllRuns.Add(run);
             }
 
-            var reloadedGroup = await groupRepo.GetAsync(group.Id, cancellationToken);
-            reloadedGroup = await reloadedGroup.SetCompleted(cancellationToken);
-
             if (spec.IsRegressedTriageGroup)
-                ctx.RegressedTriageGroup = reloadedGroup;
+                ctx.RegressedTriageGroup = group;
         }
 
         await SeedFailedToneGroupAsync(cancellationToken);
@@ -145,64 +136,45 @@ internal sealed class TestRunSeedScenario : IDemoScenario
             : throw new InvalidOperationException($"Test suite '{suiteKey}' not seeded.");
 
     /// <summary>
-    /// The endpoint-down shape: a group that starts running, whose single run never produces a
-    /// result, and which is then marked failed — exactly what the anomaly detector's hard rule
-    /// looks for. Kept out of <see cref="DemoSeedContext.AllRuns"/> so it is neither backdated nor
-    /// cited as evidence: it is "today's" incident.
+    /// A group persisted straight into the terminal <see cref="TestRunStatus.Completed"/> state with
+    /// its completion time already set — no transient Pending/Running window a concurrent runner
+    /// could latch onto. Its runs are attached afterwards (they reference the group by FK); the
+    /// group's own validation never inspects run count, so a Completed group with no runs yet is
+    /// valid at the moment it is written.
     /// </summary>
-    private async Task SeedFailedToneGroupAsync(CancellationToken cancellationToken)
+    private Task<ITestRunGroup> SeedCompletedGroupAsync(
+        ITestSuite suite, bool isSystemRun, CancellationToken cancellationToken)
     {
-        var suite = RequireSuite("customer-support-tone");
-
-        var group = await createGroup(suite, isSystemRun: false, null, sampleCount: 1).AddAsync(cancellationToken);
-        await group.SetRunning(cancellationToken);
-        await createRun(group, ctx.RequireClaudeEndpoint(), sampleIndex: 0).AddAsync(cancellationToken);
-
-        var reloaded = await groupRepo.GetAsync(group.Id, cancellationToken);
-        ctx.FailedToneGroup = await reloaded.SetFailed(cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        return groupExisting(
+                suite,
+                status: TestRunStatus.Completed,
+                completedAt: now,
+                isSystemRun: isSystemRun,
+                scheduleId: null,
+                sampleCount: 1,
+                existing: new SeedData(Guid.NewGuid(), now, now))
+            .AddAsync(cancellationToken);
     }
 
     /// <summary>
-    /// Hidden system A/B candidate runs (one per agent that has a validated/invalidated theory), so
-    /// theories and proposals can point their A/B evidence at a real run entity.
+    /// Builds all of a run's results and then the run itself directly in the terminal
+    /// <see cref="TestRunStatus.Completed"/> state. Results are persisted before the run because the
+    /// run stores its results by id; the run is never left Pending, so it never enters the runner's
+    /// work queue.
     /// </summary>
-    private async Task SeedAbCandidateRunsAsync(CancellationToken cancellationToken)
-    {
-        var candidates = new (string SuiteKey, Func<DemoSeedContext, IModelEndpoint> SelectEndpoint, double PassRate)[]
-        {
-            ("customer-support-tone", c => c.RequireGpt54Endpoint(), 0.90),
-            ("data-analytics-queries", c => c.RequireGpt54MiniEndpoint(), 0.88),
-        };
-
-        foreach (var (suiteKey, selectEndpoint, passRate) in candidates)
-        {
-            var suite = RequireSuite(suiteKey);
-            var group = await createGroup(suite, isSystemRun: true, null, sampleCount: 1).AddAsync(cancellationToken);
-            await group.SetRunning(cancellationToken);
-
-            var run = await SeedRunAsync(
-                suite, group, new EndpointPick(selectEndpoint, passRate), cancellationToken);
-
-            var reloaded = await groupRepo.GetAsync(group.Id, cancellationToken);
-            await reloaded.SetCompleted(cancellationToken);
-
-            ctx.AbCandidateRunsByAgent[suite.Agent.Id] = run;
-        }
-    }
-
-    private async Task<ITestRun> SeedRunAsync(
+    private async Task<ITestRun> SeedCompletedRunAsync(
         ITestSuite suite,
         ITestRunGroup group,
         EndpointPick pick,
         CancellationToken cancellationToken)
     {
+        var now = DateTimeOffset.UtcNow;
         var endpoint = pick.SelectEndpoint(ctx);
-        var run = await createRun(group, endpoint, sampleIndex: 0).AddAsync(cancellationToken);
-
         var cases = suite.TestCases.ToArray();
         int passing = (int)Math.Round(pick.PassRate * cases.Length);
 
-        ITestRun current = run;
+        var results = new List<ITestResult>(cases.Length);
         for (int i = 0; i < cases.Length; i++)
         {
             var testCase = cases[i];
@@ -212,11 +184,6 @@ internal sealed class TestRunSeedScenario : IDemoScenario
                 : new AssistantMessage(
                     [Content.FromText("(simulated weaker response for demo)")],
                     []);
-
-            var completion = createCompletion(
-                actualResponse,
-                new TokenUsage(inputTokenCount: 240, outputTokenCount: 90),
-                TimeSpan.FromMilliseconds(pick.LatencyBaseMs + (i * 30)));
 
             var evaluations = suite.Evaluators
                 .Select(ev =>
@@ -240,12 +207,85 @@ internal sealed class TestRunSeedScenario : IDemoScenario
                 })
                 .ToArray();
 
-            var result = await resultRepo.AddAsync(
-                createResult(testCase, completion, evaluations),
-                cancellationToken);
-            current = await current.SetTestResult(result, cancellationToken);
+            var result = await resultExisting(
+                    testCase: testCase,
+                    actualResponse: actualResponse,
+                    evaluations: evaluations,
+                    latency: TimeSpan.FromMilliseconds(pick.LatencyBaseMs + (i * 30)),
+                    usage: new TokenUsage(inputTokenCount: 240, outputTokenCount: 90),
+                    existing: new SeedData(Guid.NewGuid(), now, now))
+                .AddAsync(cancellationToken);
+            results.Add(result);
         }
 
-        return current;
+        return await runExisting(
+                group: group,
+                endpoint: endpoint,
+                sampleIndex: 0,
+                status: TestRunStatus.Completed,
+                completedAt: now,
+                testResults: results,
+                existing: new SeedData(Guid.NewGuid(), now, now))
+            .AddAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// The endpoint-down shape: a group whose single run never produced a result, seeded directly in
+    /// the terminal <see cref="TestRunStatus.Failed"/> state — exactly what the anomaly detector's
+    /// hard rule looks for, with no Pending/Running window a live-kiosk runner could execute. Kept
+    /// out of <see cref="DemoSeedContext.AllRuns"/> so it is neither backdated nor cited as evidence:
+    /// it is "today's" incident.
+    /// </summary>
+    private async Task SeedFailedToneGroupAsync(CancellationToken cancellationToken)
+    {
+        var suite = RequireSuite("customer-support-tone");
+        var now = DateTimeOffset.UtcNow;
+
+        var group = await groupExisting(
+                suite,
+                status: TestRunStatus.Failed,
+                completedAt: now,
+                isSystemRun: false,
+                scheduleId: null,
+                sampleCount: 1,
+                existing: new SeedData(Guid.NewGuid(), now, now))
+            .AddAsync(cancellationToken);
+
+        await runExisting(
+                group: group,
+                endpoint: ctx.RequireClaudeEndpoint(),
+                sampleIndex: 0,
+                status: TestRunStatus.Failed,
+                completedAt: now,
+                testResults: [],
+                existing: new SeedData(Guid.NewGuid(), now, now))
+            .AddAsync(cancellationToken);
+
+        ctx.FailedToneGroup = group;
+    }
+
+    /// <summary>
+    /// Hidden system A/B candidate runs (one per agent that has a validated/invalidated theory), so
+    /// theories and proposals can point their A/B evidence at a real run entity. Seeded terminal, so
+    /// a live kiosk never re-executes them.
+    /// </summary>
+    private async Task SeedAbCandidateRunsAsync(CancellationToken cancellationToken)
+    {
+        var candidates = new (string SuiteKey, Func<DemoSeedContext, IModelEndpoint> SelectEndpoint, double PassRate)[]
+        {
+            ("customer-support-tone", c => c.RequireGpt54Endpoint(), 0.90),
+            ("data-analytics-queries", c => c.RequireGpt54MiniEndpoint(), 0.88),
+        };
+
+        foreach (var (suiteKey, selectEndpoint, passRate) in candidates)
+        {
+            var suite = RequireSuite(suiteKey);
+            var group = await SeedCompletedGroupAsync(suite, isSystemRun: true, cancellationToken);
+            var run = await SeedCompletedRunAsync(
+                suite, group, new EndpointPick(selectEndpoint, passRate), cancellationToken);
+            ctx.AbCandidateRunsByAgent[suite.Agent.Id] = run;
+        }
+    }
+
+    private sealed record SeedData(Guid Id, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt) : IDomainEntityData;
 }

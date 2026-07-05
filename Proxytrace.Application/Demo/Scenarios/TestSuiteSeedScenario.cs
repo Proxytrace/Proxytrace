@@ -133,6 +133,12 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
                     new("Review: someone removed your code without explanation.",
                         "I noticed the helper I added got removed in this change — could you share the reasoning? Happy to be wrong about it, just want to make sure we're not losing the edge case it handled."),
                 ]),
+            // The Data Analytics agent carries `run_sql`/`get_schema` tools and its prompt forbids
+            // inventing numbers — so the model's first turn on any of these questions is a tool call,
+            // not the answer. The test runner performs a single completion per case with no tool
+            // loop, so every case embeds the run_sql round-trip (assistant tool call + tool result)
+            // in its input conversation; a live re-run then lands on the final text answer instead of
+            // being scored on the tool-call turn. Expected answers are grounded in the returned rows.
             new(
                 Key: "data-analytics-queries",
                 Name: "Data Analytics — SQL Correctness",
@@ -141,21 +147,37 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
                 Cases:
                 [
                     new("Give me total revenue last month.",
-                        "Total revenue for the prior calendar month:\n```sql\nSELECT SUM(line_total) AS revenue\nFROM order_lines\nWHERE order_at >= date_trunc('month', now() - INTERVAL '1 month')\n  AND order_at <  date_trunc('month', now());\n```"),
+                        "Total revenue last month came to €184,920.\n```sql\nSELECT SUM(line_total) AS revenue\nFROM order_lines\nWHERE order_at >= date_trunc('month', now() - INTERVAL '1 month')\n  AND order_at <  date_trunc('month', now());\n```",
+                        new ToolRequest(id: "case_sql_revenue", name: "run_sql", arguments: """{"query":"SELECT SUM(line_total) AS revenue FROM order_lines WHERE order_at >= date_trunc('month', now() - INTERVAL '1 month') AND order_at < date_trunc('month', now());"}"""),
+                        """{"rows":[{"revenue":184920.00}],"row_count":1,"duration_ms":472}"""),
                     new("How many distinct customers ordered yesterday?",
-                        "```sql\nSELECT COUNT(DISTINCT customer_id) AS customers\nFROM orders\nWHERE order_at::date = (now() - INTERVAL '1 day')::date;\n```"),
+                        "1,284 distinct customers placed an order yesterday.\n```sql\nSELECT COUNT(DISTINCT customer_id) AS customers\nFROM orders\nWHERE order_at::date = (now() - INTERVAL '1 day')::date;\n```",
+                        new ToolRequest(id: "case_sql_distinct_customers", name: "run_sql", arguments: """{"query":"SELECT COUNT(DISTINCT customer_id) AS customers FROM orders WHERE order_at::date = (now() - INTERVAL '1 day')::date;"}"""),
+                        """{"rows":[{"customers":1284}],"row_count":1,"duration_ms":213}"""),
                     new("7-day rolling DAU for the past month.",
-                        "```sql\nSELECT day,\n       COUNT(DISTINCT user_id) FILTER (\n           WHERE event_at >= day - INTERVAL '6 days'\n             AND event_at <  day + INTERVAL '1 day') AS rolling_dau\nFROM generate_series(now() - INTERVAL '30 days', now(), '1 day') AS day\nJOIN events ON event_at < day + INTERVAL '1 day'\nGROUP BY day ORDER BY day;\n```"),
+                        "7-day rolling DAU has climbed steadily over the past month, from ~12,190 to 13,001 on the most recent day.\n```sql\nSELECT day,\n       COUNT(DISTINCT user_id) FILTER (\n           WHERE event_at >= day - INTERVAL '6 days'\n             AND event_at <  day + INTERVAL '1 day') AS rolling_dau\nFROM generate_series(now() - INTERVAL '30 days', now(), '1 day') AS day\nJOIN events ON event_at < day + INTERVAL '1 day'\nGROUP BY day ORDER BY day;\n```",
+                        new ToolRequest(id: "case_sql_rolling_dau", name: "run_sql", arguments: """{"query":"SELECT day, COUNT(DISTINCT user_id) FILTER (WHERE event_at >= day - INTERVAL '6 days' AND event_at < day + INTERVAL '1 day') AS rolling_dau FROM generate_series(now() - INTERVAL '30 days', now(), '1 day') AS day JOIN events ON event_at < day + INTERVAL '1 day' GROUP BY day ORDER BY day;"}"""),
+                        """{"rows":[{"day":"2026-06-05","rolling_dau":12190},{"day":"2026-06-19","rolling_dau":12640},{"day":"2026-07-04","rolling_dau":13001}],"row_count":31,"duration_ms":688}"""),
                     new("Top 10 referring domains in the last week.",
-                        "```sql\nSELECT referrer_domain, COUNT(*) AS visits\nFROM page_views\nWHERE viewed_at >= now() - INTERVAL '7 days'\nGROUP BY referrer_domain\nORDER BY visits DESC LIMIT 10;\n```"),
+                        "Top referrers last week: google.com led with 48,210 visits, then t.co (9,120) and news.ycombinator.com (6,340).\n```sql\nSELECT referrer_domain, COUNT(*) AS visits\nFROM page_views\nWHERE viewed_at >= now() - INTERVAL '7 days'\nGROUP BY referrer_domain\nORDER BY visits DESC LIMIT 10;\n```",
+                        new ToolRequest(id: "case_sql_referrers", name: "run_sql", arguments: """{"query":"SELECT referrer_domain, COUNT(*) AS visits FROM page_views WHERE viewed_at >= now() - INTERVAL '7 days' GROUP BY referrer_domain ORDER BY visits DESC LIMIT 10;"}"""),
+                        """{"rows":[{"referrer_domain":"google.com","visits":48210},{"referrer_domain":"t.co","visits":9120},{"referrer_domain":"news.ycombinator.com","visits":6340}],"row_count":10,"duration_ms":301}"""),
                     new("Average basket size per channel this quarter.",
-                        "```sql\nSELECT channel, AVG(item_count) AS avg_basket_size\nFROM orders\nWHERE order_at >= date_trunc('quarter', now())\nGROUP BY channel;\n```"),
+                        "Average basket size this quarter: web 3.4 items, iOS 2.9, Android 2.6.\n```sql\nSELECT channel, AVG(item_count) AS avg_basket_size\nFROM orders\nWHERE order_at >= date_trunc('quarter', now())\nGROUP BY channel;\n```",
+                        new ToolRequest(id: "case_sql_basket_size", name: "run_sql", arguments: """{"query":"SELECT channel, AVG(item_count) AS avg_basket_size FROM orders WHERE order_at >= date_trunc('quarter', now()) GROUP BY channel;"}"""),
+                        """{"rows":[{"channel":"web","avg_basket_size":3.4},{"channel":"ios","avg_basket_size":2.9},{"channel":"android","avg_basket_size":2.6}],"row_count":3,"duration_ms":264}"""),
                     new("Conversion rate from signup to first purchase.",
-                        "```sql\nSELECT 1.0 * COUNT(o.user_id) / NULLIF(COUNT(u.id), 0) AS conversion_rate\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\n             AND o.order_at = (\n                 SELECT MIN(order_at) FROM orders o2 WHERE o2.user_id = u.id\n             );\n```"),
+                        "Signup → first-purchase conversion is 18.4%.\n```sql\nSELECT 1.0 * COUNT(o.user_id) / NULLIF(COUNT(u.id), 0) AS conversion_rate\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\n             AND o.order_at = (\n                 SELECT MIN(order_at) FROM orders o2 WHERE o2.user_id = u.id\n             );\n```",
+                        new ToolRequest(id: "case_sql_conversion", name: "run_sql", arguments: """{"query":"SELECT 1.0 * COUNT(o.user_id) / NULLIF(COUNT(u.id), 0) AS conversion_rate FROM users u LEFT JOIN orders o ON o.user_id = u.id AND o.order_at = (SELECT MIN(order_at) FROM orders o2 WHERE o2.user_id = u.id);"}"""),
+                        """{"rows":[{"conversion_rate":0.184}],"row_count":1,"duration_ms":392}"""),
                     new("Median session duration today.",
-                        "```sql\nSELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY duration_seconds) AS median_seconds\nFROM sessions\nWHERE started_at::date = now()::date;\n```"),
+                        "Median session duration today is 312 seconds (about 5m 12s).\n```sql\nSELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY duration_seconds) AS median_seconds\nFROM sessions\nWHERE started_at::date = now()::date;\n```",
+                        new ToolRequest(id: "case_sql_median_session", name: "run_sql", arguments: """{"query":"SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY duration_seconds) AS median_seconds FROM sessions WHERE started_at::date = now()::date;"}"""),
+                        """{"rows":[{"median_seconds":312}],"row_count":1,"duration_ms":247}"""),
                     new("Churned users (no order in 60 days) who used to be weekly buyers.",
-                        "```sql\nSELECT user_id\nFROM orders\nGROUP BY user_id\nHAVING MAX(order_at) < now() - INTERVAL '60 days'\n   AND COUNT(*) FILTER (\n       WHERE order_at BETWEEN now() - INTERVAL '180 days' AND now() - INTERVAL '60 days'\n   ) >= 12;\n```"),
+                        "214 former weekly buyers have gone quiet — no order in the last 60 days (e.g. users 40125, 40388, 41922).\n```sql\nSELECT user_id\nFROM orders\nGROUP BY user_id\nHAVING MAX(order_at) < now() - INTERVAL '60 days'\n   AND COUNT(*) FILTER (\n       WHERE order_at BETWEEN now() - INTERVAL '180 days' AND now() - INTERVAL '60 days'\n   ) >= 12;\n```",
+                        new ToolRequest(id: "case_sql_churned_weekly", name: "run_sql", arguments: """{"query":"SELECT user_id FROM orders GROUP BY user_id HAVING MAX(order_at) < now() - INTERVAL '60 days' AND COUNT(*) FILTER (WHERE order_at BETWEEN now() - INTERVAL '180 days' AND now() - INTERVAL '60 days') >= 12;"}"""),
+                        """{"rows":[{"user_id":40125},{"user_id":40388},{"user_id":41922}],"row_count":214,"duration_ms":539}"""),
                 ]),
             // Exercises the deliberately defective Email Triage agent. Cases are ordered easiest
             // first: the run seeder passes a prefix of the list, so the two ambiguous cases at the
