@@ -123,11 +123,18 @@ stop credentials from leaking into prompts.
 
 <img src="docs/assets/readme/anomalies.png" alt="Anomaly dashboard: recent flagged calls, anomalies-over-time chart, and most-flagged-agents ranking" width="920" />
 
+### Tracey AI, your in-app analyst
+
+**Tracey** is the built-in assistant with tool access to your traces, stats,
+runs, and the manual. Ask it a question in plain language and it queries your
+project's live data, links the traces it found, and suggests follow-ups.
+Context-aware *Ask Tracey* buttons across the app start conversations
+pre-loaded with the entity you're looking at.
+
+<img src="docs/assets/readme/tracey.png" alt="Tracey AI answering which agent has the highest error rate: tool calls against live project data, a linked failing trace, and suggested follow-up questions" width="920" />
+
 ### And the rest of the cockpit
 
-- **Tracey AI** — the built-in assistant with access to your traces, runs, and
-  the manual. Context-aware *Ask Tracey* buttons across the app start
-  conversations pre-loaded with the entity you're looking at.
 - **MCP server** — every project doubles as a [Model Context
   Protocol](https://modelcontextprotocol.io) server at `/mcp`, so your own AI
   tools can query traces, curate suites, and start runs.
