@@ -44,6 +44,13 @@ export function TracesEmptyState() {
             keep your existing provider API key — and nothing else changes.
           </Trans>
         </span>
+        <span className="text-body-sm text-secondary max-w-prose">
+          <Trans>
+            Tip: also send an <span className="font-mono text-accent-text">x-proxytrace-agent</span> header
+            naming your agent — calls are then attributed to it deterministically instead of by
+            prompt similarity.
+          </Trans>
+        </span>
       </div>
 
       {baseUrl && (

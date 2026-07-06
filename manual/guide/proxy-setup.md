@@ -88,6 +88,8 @@ client = OpenAI(
     # Project slug + /openai/v1. Works with a Proxytrace key or your upstream provider key.
     base_url="https://your-proxytrace-host/showcase-project/openai/v1",
     api_key="pt-...",  # Proxytrace-issued key, or your upstream provider key
+    # Optional but recommended: name your agent for deterministic attribution.
+    default_headers={"x-proxytrace-agent": "my-agent"},
 )
 
 resp = client.chat.completions.create(
@@ -98,6 +100,16 @@ resp = client.chat.completions.create(
 
 The call runs exactly as before — but it is now captured. Open **Traces** to confirm it
 arrives. See [Capturing Traces](/guide/capturing-traces).
+
+### Name your agent with a header (recommended)
+
+By default Proxytrace [detects agents](/guide/agents#how-agents-are-detected) by comparing
+each call's system prompt and tool-set against known agents. For **deterministic** attribution,
+send the **`x-proxytrace-agent`** header with your agent's name on every call (e.g. via your
+SDK's default-headers option, as in the snippet above). The call then attaches directly to the
+named agent — created on first sight — and the similarity matcher is skipped entirely, so
+prompt or tool changes never split your traffic into a separate agent. See
+[Naming an agent explicitly](/guide/agents#naming-an-agent-explicitly).
 
 ::: warning Requests can be blocked in real time
 If the project has [blocking anomaly detectors](/guide/anomaly-dashboard#blocking-detectors)

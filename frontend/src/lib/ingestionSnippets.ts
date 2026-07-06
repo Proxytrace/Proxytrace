@@ -29,6 +29,8 @@ from openai import OpenAI
 client = OpenAI(
     base_url="${baseUrl}",  # ← only this changes
     api_key=os.environ["OPENAI_API_KEY"],  # your existing provider key
+    # optional: name your agent for deterministic attribution
+    default_headers={"x-proxytrace-agent": "my-agent"},
 )
 
 response = client.chat.completions.create(
@@ -45,6 +47,8 @@ response = client.chat.completions.create(
 const client = new OpenAI({
   baseURL: '${baseUrl}', // ← only this changes
   apiKey: process.env.OPENAI_API_KEY, // your existing provider key
+  // optional: name your agent for deterministic attribution
+  defaultHeaders: { 'x-proxytrace-agent': 'my-agent' },
 });
 
 const response = await client.chat.completions.create({
@@ -60,6 +64,9 @@ const response = await client.chat.completions.create({
 using OpenAI.Chat;
 
 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY"); // your existing provider key
+
+// Optional: send an "x-proxytrace-agent" header naming your agent for
+// deterministic attribution (see the proxy setup guide).
 
 var client = new ChatClient(
     model: "${model}",
@@ -78,6 +85,7 @@ ChatCompletion completion = client.CompleteChat("Hello from Proxytrace!");`,
       code: `curl ${baseUrl}/chat/completions \\
   -H "Authorization: Bearer $OPENAI_API_KEY" \\
   -H "Content-Type: application/json" \\
+  -H "x-proxytrace-agent: my-agent" \\
   -d '{
     "model": "${model}",
     "messages": [{"role": "user", "content": "Hello from Proxytrace!"}]

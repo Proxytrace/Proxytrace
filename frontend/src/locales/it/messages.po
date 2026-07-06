@@ -5053,6 +5053,9 @@ msgstr "Ora"
 msgid "Time waited"
 msgstr "Tempo di attesa"
 
+msgid "Tip: also send an <0>x-proxytrace-agent</0> header naming your agent — calls are then attributed to it deterministically instead of by prompt similarity."
+msgstr "Suggerimento: invia anche un header <0>x-proxytrace-agent</0> con il nome del tuo Agent — le chiamate vengono quindi attribuite a esso in modo deterministico invece che in base alla somiglianza del Prompt."
+
 msgid "To"
 msgstr "A"
 

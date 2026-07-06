@@ -92,6 +92,12 @@ describe('buildQuickStartSnippets', () => {
     }
   });
 
+  it('mentions the agent-attribution header in every snippet', () => {
+    for (const snippet of snippets) {
+      expect(snippet.code).toContain('x-proxytrace-agent');
+    }
+  });
+
   it('embeds the chosen model in every snippet', () => {
     for (const snippet of snippets) {
       expect(snippet.code).toContain('gpt-4o-mini');

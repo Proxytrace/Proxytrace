@@ -11,6 +11,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Quick-start now teaches deterministic agent naming.** The ingestion quick-start — the
+  Traces empty state and the setup wizard's final step — and the proxy setup guide now show
+  the optional `x-proxytrace-agent` header, which attributes calls to the named agent
+  directly instead of relying on prompt-similarity matching.
+
 - **The dashboard's lower half got the mission-control treatment.** The old donut, one-bar
   latency histogram, and agent-card grid are replaced by two denser, more honest sections:
   an **Agent fleet** roster — one row per agent with its own activity sparkline (the top
