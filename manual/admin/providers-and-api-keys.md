@@ -34,6 +34,10 @@ same automatically on a configurable interval (default hourly — see
 [Configuration](/admin/configuration)). Prices are managed entirely by Proxytrace — there is no
 manual price entry.
 
+The **Endpoint URL** accepts a plain host too — `https://` is assumed when you omit the
+scheme, so `api.openai.com/v1` and `https://api.openai.com/v1` are equivalent (use an
+explicit `http://` for a plain-HTTP endpoint, e.g. a local model server).
+
 The upstream **endpoint** is shown in the provider header only when it differs from the
 provider kind's default (for example, the canonical `https://api.openai.com/v1` is hidden; a
 custom or self-hosted endpoint is shown). The model

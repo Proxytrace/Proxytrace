@@ -9,6 +9,7 @@ using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Api.Dto.ModelProviders;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Pricing;
+using Proxytrace.Common.Net;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.User;
@@ -38,6 +39,35 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         dto.Should().NotBeNull();
         dto.Name.Should().Be("Acme");
         dto.Kind.Should().Be(ModelProviderKind.OpenAiCompatible);
+    }
+
+    [TestMethod]
+    public async Task Create_SchemelessEndpoint_DefaultsToHttps()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.Create(
+            new CreateModelProviderRequest("Acme", "api.acme.test/v1", "sk-test", ModelProviderKind.OpenAiCompatible),
+            CancellationToken);
+
+        var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
+        var dto = (ModelProviderDto?)created.Value;
+        dto.Should().NotBeNull();
+        dto.Endpoint.Should().Be("https://api.acme.test/v1");
+    }
+
+    [TestMethod]
+    public async Task Create_MalformedEndpoint_ThrowsMalformedEndpointUrl()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        await FluentActions
+            .Invoking(() => controller.Create(
+                new CreateModelProviderRequest("Acme", "://not a url", "sk-test", ModelProviderKind.OpenAiCompatible),
+                CancellationToken))
+            .Should().ThrowAsync<MalformedEndpointUrlException>();
     }
 
     [TestMethod]

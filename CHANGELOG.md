@@ -151,6 +151,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Provider endpoint URLs no longer need the `https://` prefix.** Entering an upstream
+  endpoint without a scheme (e.g. `api.openai.com/v1`) — in the setup wizard or in
+  Settings → Providers — previously failed with an unexpected-error toast. `https://` is now
+  assumed when no scheme is given, and a genuinely malformed URL returns a clear validation
+  message instead of a server error.
 - **Live updates stop needing a page reload.** Real-time streams (new traces, notifications,
   anomalies, run progress) no longer go silent after a dropped connection. The stream credential is
   single-use, so the browser's automatic reconnect was replaying a consumed ticket and getting
