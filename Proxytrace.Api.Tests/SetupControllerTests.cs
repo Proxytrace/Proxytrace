@@ -77,6 +77,25 @@ public sealed class SetupControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task TestConnection_SchemelessEndpoint_DefaultsToHttps()
+    {
+        IServiceProvider services = GetServices();
+        var setup = Substitute.For<ISetupService>();
+        setup.TestProviderConnectionAsync(Arg.Any<ProviderConnectionInput>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+        var controller = CreateController(services, setup: setup);
+
+        var result = await controller.TestConnection(
+            new TestConnectionRequest("p", "provider.example/v1", "key", ModelProviderKind.OpenAiCompatible),
+            CancellationToken);
+
+        result.Success.Should().BeTrue();
+        await setup.Received(1).TestProviderConnectionAsync(
+            Arg.Is<ProviderConnectionInput>(i => i.ProviderEndpoint == new Uri("https://provider.example/v1")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
     public async Task TestConnection_WhenSetupThrows_OutsideDevelopment_SuppressesRawMessage()
     {
         IServiceProvider services = GetServices();

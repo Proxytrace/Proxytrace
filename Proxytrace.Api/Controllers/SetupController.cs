@@ -5,6 +5,7 @@ using Proxytrace.Api.Dto.Setup;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Setup;
+using Proxytrace.Common.Net;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Project;
@@ -63,7 +64,7 @@ public class SetupController : ControllerBase
 
         var input = new SetupInput(
             request.ProviderName,
-            new Uri(request.ProviderEndpoint),
+            request.ProviderEndpoint.ToEndpointUri(),
             request.ProviderUpstreamApiKey,
             request.ProviderKind,
             request.ModelName,
@@ -86,7 +87,7 @@ public class SetupController : ControllerBase
         {
             var input = new ProviderConnectionInput(
                 request.ProviderName,
-                new Uri(request.ProviderEndpoint),
+                request.ProviderEndpoint.ToEndpointUri(),
                 request.ProviderUpstreamApiKey,
                 request.ProviderKind);
             var ok = await setup.TestProviderConnectionAsync(input, cancellationToken);
@@ -118,7 +119,7 @@ public class SetupController : ControllerBase
     {
         var input = new ProviderConnectionInput(
             request.ProviderName,
-            new Uri(request.ProviderEndpoint),
+            request.ProviderEndpoint.ToEndpointUri(),
             request.ProviderUpstreamApiKey,
             request.ProviderKind);
         var models = await setup.ListProviderModelsAsync(input, cancellationToken);

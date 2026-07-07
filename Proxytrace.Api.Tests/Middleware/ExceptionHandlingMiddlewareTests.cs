@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Middleware;
 using Proxytrace.Api.Middleware.Exceptions;
+using Proxytrace.Common.Net;
 using Proxytrace.Domain.Exceptions;
 using Proxytrace.Licensing;
 using Proxytrace.Licensing.Exceptions;
@@ -30,6 +31,7 @@ public sealed class ExceptionHandlingMiddlewareTests
             new FeatureNotLicensedExceptionMapper(),
             new LicenseLimitExceededExceptionMapper(),
             new DbUpdateExceptionMapper(),
+            new MalformedEndpointUrlExceptionMapper(),
         ];
 
         return new ExceptionHandlingMiddleware(
@@ -99,6 +101,19 @@ public sealed class ExceptionHandlingMiddlewareTests
         error.GetProperty("type").GetString().Should().Be("FeatureNotLicensed");
         error.GetProperty("feature").GetString().Should().Be(nameof(LicenseFeature.CustomEvaluators));
         error.GetProperty("tier").GetString().Should().Be(nameof(LicenseTier.Free));
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_MalformedEndpointUrl_Returns400_WithMessage()
+    {
+        var middleware = Create(_ => throw new MalformedEndpointUrlException("not a url"));
+
+        var (status, body) = await InvokeAsync(middleware);
+
+        status.Should().Be(StatusCodes.Status400BadRequest);
+        var error = Error(body);
+        error.GetProperty("type").GetString().Should().Be(nameof(MalformedEndpointUrlException));
+        error.GetProperty("message").GetString().Should().Contain("not a url");
     }
 
     [TestMethod]

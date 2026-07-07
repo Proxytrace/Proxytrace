@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
+using Proxytrace.Common.Net;
 using Proxytrace.Common.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -130,7 +131,7 @@ public class ModelProvidersController : ControllerBase
         [FromBody] CreateModelProviderRequest request,
         CancellationToken cancellationToken)
     {
-        var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind);
+        var provider = createProvider(request.Name, request.Endpoint.ToEndpointUri(), request.UpstreamApiKey, request.Kind);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
         await priceRefresher.RefreshProviderAsync(saved, cancellationToken);
         audit.LogAudit(AuditAction.ProviderConfigCreated, nameof(IModelProvider), saved.Id, saved.Name);
@@ -147,7 +148,7 @@ public class ModelProvidersController : ControllerBase
         var existing = await providerRepository.FindAsync(id, cancellationToken);
         if (existing is null)
             return NotFound();
-        var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing);
+        var updated = updateProvider(request.Name, request.Endpoint.ToEndpointUri(), request.UpstreamApiKey, request.Kind, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
         audit.LogAudit(AuditAction.ProviderConfigUpdated, nameof(IModelProvider), saved.Id, saved.Name);
         return mapper.ToDto(saved);
