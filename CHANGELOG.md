@@ -9,6 +9,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Security
+
+- **Role changes now take effect immediately.** Session tokens bake the user's role at
+  login, but the API trusted that baked role for the token's full 7-day lifetime — so a
+  demoted admin kept admin access until their token expired. The API now re-reads the live
+  role from the database on every request and ignores the stale token claim, so a demotion
+  (or promotion) applies on the user's very next request.
+
 ### Changed
 
 - **Quick-start now teaches deterministic agent naming.** The ingestion quick-start — the
