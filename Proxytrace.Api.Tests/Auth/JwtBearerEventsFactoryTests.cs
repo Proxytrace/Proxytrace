@@ -194,4 +194,36 @@ public sealed class JwtBearerEventsFactoryTests
         httpContext.Items[CurrentUserAccessor.UserIdItemKey].Should().Be(userId);
         identity.HasClaim(ClaimTypes.Role, nameof(UserRole.Admin)).Should().BeTrue();
     }
+
+    [TestMethod]
+    public async Task OnTokenValidated_TokenRoleDiffersFromLiveRole_UsesLiveRole()
+    {
+        // A demoted user still holds a 7-day token that bakes the old Admin role. The live DB
+        // role (Member) must win, and the stale Admin claim must not survive — otherwise the
+        // demotion has no effect until the token expires.
+        var userId = Guid.NewGuid();
+        var user = Substitute.For<IUser>();
+        user.Id.Returns(userId);
+        user.Role.Returns(UserRole.Member);
+
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<IAuthUserResolver>(new StubAuthUserResolver(user));
+        var httpContext = new DefaultHttpContext { RequestServices = serviceCollection.BuildServiceProvider() };
+
+        var identity = new ClaimsIdentity(
+            [new Claim("sub", userId.ToString()), new Claim(ClaimTypes.Role, nameof(UserRole.Admin))],
+            "Test");
+        var ctx = new TokenValidatedContext(httpContext, Scheme(), new JwtBearerOptions())
+        {
+            Principal = new ClaimsPrincipal(identity),
+        };
+
+        var events = JwtBearerEventsFactory.Create();
+
+        await events.OnTokenValidated(ctx);
+
+        identity.FindAll(ClaimTypes.Role).Should().ContainSingle()
+            .Which.Value.Should().Be(nameof(UserRole.Member));
+        identity.HasClaim(ClaimTypes.Role, nameof(UserRole.Admin)).Should().BeFalse();
+    }
 }

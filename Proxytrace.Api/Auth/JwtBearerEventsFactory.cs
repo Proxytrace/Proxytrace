@@ -70,8 +70,19 @@ internal static class JwtBearerEventsFactory
             context.HttpContext.Items[CurrentUserAccessor.UserIdItemKey] = user.Id;
 
             var identity = (ClaimsIdentity?)principal.Identity;
-            if (identity != null && !identity.HasClaim(c => c.Type == ClaimTypes.Role))
+            if (identity != null)
             {
+                // Authorization is role-claim based ([Authorize(Roles = …)]), but the JWT is a
+                // long-lived (7-day) stateless token that bakes the role at issue time. Trust the
+                // LIVE DB role resolved above, not the stale token claim: overwrite any role claim
+                // the token carries so a demoted user loses privileges on their next request rather
+                // than retaining them until the token expires. Deleted users are already rejected by
+                // the resolver; this closes the same gap for role changes.
+                foreach (var staleRole in identity.FindAll(ClaimTypes.Role).ToList())
+                {
+                    identity.RemoveClaim(staleRole);
+                }
+
                 identity.AddClaim(new Claim(ClaimTypes.Role, user.Role.ToString()));
             }
 
