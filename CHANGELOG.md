@@ -9,6 +9,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Container images on Docker Hub.** Released images are now mirrored to Docker Hub
+  (`proxytrace/proxytrace-{api,proxy,frontend}`) in addition to GHCR, so you can
+  `docker pull proxytrace/proxytrace-api` without the registry prefix. The images and tags are
+  identical; the shipped Docker Compose file still pins the GHCR copies.
+
 ### Changed
 
 - **Errored A/B validations no longer count as disproven theories.** When a theory's A/B

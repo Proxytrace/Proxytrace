@@ -1,7 +1,8 @@
 # Proxytrace — Docker Compose deployment
 
 Runs the full Proxytrace stack: web UI, API, ingestion proxy, Postgres, and Redis.
-Images are published to GHCR (`ghcr.io/proxytrace/...`); nothing is built locally.
+Images are published to GHCR (`ghcr.io/proxytrace/...`) and mirrored to Docker Hub
+(`proxytrace/...`); this compose file pins the GHCR copies. Nothing is built locally.
 
 ## Quickstart
 
