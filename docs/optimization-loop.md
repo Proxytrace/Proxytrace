@@ -14,9 +14,10 @@ Optimizers discover OptimizationTheory hypotheses   (also: external producers vi
       │  ITheoryValidationService.SubmitAsync  (dedup + per-project quota)
       ▼
 A/B validation ── baseline run vs candidate run, back to back, same suite ── two-proportion test
-      │  win (improvement beyond noise)            │  loss / inconclusive
-      ▼                                            ▼
-Draft OptimizationProposal (carries A/B evidence)   Theory marked Invalidated (metrics kept, dedup)
+      │  win (improvement beyond noise)   │  loss / no significant win   │  validation errored
+      ▼                                   ▼                              ▼
+Draft OptimizationProposal                Theory marked Invalidated      Theory marked Failed
+(carries A/B evidence)                    (metrics kept, dedup)          (retryable, not counted)
       │  human review on the Proposals review desk
       ▼
  Accepted (promoted → handoff package for the developer)  /  Rejected
@@ -179,8 +180,15 @@ and candidate run id **regardless of result**:
   ≤ `AbTestTheoryValidator.SignificanceLevel` = 0.05) → spawns a **Draft `OptimizationProposal`**
   carrying the A/B comparison as evidence. Model-switch theories instead require *no* pass-rate
   regression plus a genuine cost or latency win — equal-quality-but-pricier is not a win.
-- **Rejected / Inconclusive** — theory marked Invalidated; metrics still kept so the same idea
-  isn't retried (dedup).
+- **Rejected** — the A/B ran cleanly but showed no significant improvement → theory marked
+  Invalidated; metrics still kept so the same idea isn't retried (dedup).
+- **Could not test** — the comparison never happened: a run was incomplete (unreachable/unauthorized
+  provider, upstream outage, per-case inference errors) or the validation threw → theory marked
+  **Failed** (`TheoryStatus.Failed`, audit `TheoryValidationFailed`), with no metrics but any linked
+  A/B run preserved for diagnosis. A Failed theory is *unproven, not disproven*: it is **excluded
+  from the review desk's win rate**, surfaced in its own "Needs attention" queue group instead of
+  History, does **not** suppress an identical resubmission (dedup treats it like Invalidated), and
+  can be retried (reset) or dismissed (reject → Invalidated without metrics).
 
 ## Stage 4 — Proposal review
 
@@ -197,13 +205,15 @@ buttons for the proposed prompt / tools JSON / model name, a client-generated ma
 "apply this change" doc, and the machine-readable artifact endpoint
 `GET /api/proposals/{id}/artifact` (license-gated like the rest of the controller).
 
-`ITheoryValidationService` also supports **resetting** a terminal theory for re-validation
-(`TheoryResetOutcome`) — refused if the spawned proposal was already Accepted or Adopted
-(`BlockedByAcceptedProposal`).
+`ITheoryValidationService` also supports **resetting** a terminal theory (Validated, Invalidated,
+or Failed) for re-validation (`TheoryResetOutcome`) — refused if the spawned proposal was already
+Accepted or Adopted (`BlockedByAcceptedProposal`). For a Failed theory the review desk offers this
+as **Retry validation**.
 
-It also supports **rejecting** an active theory on user request (`RejectAsync` →
+It also supports **rejecting** a theory on user request (`RejectAsync` →
 `TheoryRejectOutcome`, `POST /api/theories/{id}/reject`): a `Proposed` theory is dismissed without
-ever running A/B validation; a `Validating` theory has its in-flight A/B run cancelled. Both land in
+ever running A/B validation; a `Validating` theory has its in-flight A/B run cancelled; a `Failed`
+theory is filed away without a retry. All land in
 `Invalidated` with no A/B metrics — the absence of metrics (`Reject()` on the entity) is what
 distinguishes a manual dismissal from an A/B-disproven invalidation (the review-desk copies adapt
 accordingly). Cancellation works because each validation registers a per-theory

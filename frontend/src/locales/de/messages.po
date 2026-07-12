@@ -1468,6 +1468,9 @@ msgstr "Kosten (LLM judge)"
 msgid "Cost over time"
 msgstr "Kosten im Zeitverlauf"
 
+msgid "Could not be tested"
+msgstr "Konnte nicht getestet werden"
+
 msgid "Could not claim account. Check the email matches your existing user."
 msgstr "Konto konnte nicht beansprucht werden. Prüfen Sie, ob die E-Mail mit Ihrem bestehenden User übereinstimmt."
 
@@ -1497,6 +1500,12 @@ msgstr "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es 
 
 msgid "Could not start setup. Please try again."
 msgstr "Setup konnte nicht gestartet werden. Bitte erneut versuchen."
+
+msgid "could not test"
+msgstr "nicht testbar"
+
+msgid "Could not test"
+msgstr "Nicht testbar"
 
 msgid "Could not verify the code. Please try again."
 msgstr "Der Code konnte nicht verifiziert werden. Bitte erneut versuchen."
@@ -4077,6 +4086,9 @@ msgstr "ERGEBNIS"
 msgid "Retry discovery"
 msgstr "Erkennung erneut versuchen"
 
+msgid "Retry validation"
+msgstr "Validierung wiederholen"
+
 msgid "Reveal"
 msgstr "Anzeigen"
 
@@ -4885,8 +4897,17 @@ msgstr "wird getestet"
 msgid "Text response"
 msgstr "Textantwort"
 
+msgid "The A/B test could not run — the theory was not tested."
+msgstr "Der A/B test konnte nicht ausgeführt werden — die Theory wurde nicht getestet."
+
 msgid "The A/B test found no improvement, so the theory was rejected automatically."
 msgstr "Der A/B test hat keine Verbesserung festgestellt, daher wurde die Theory automatisch abgelehnt."
+
+msgid "The A/B validation could not run — nothing was measured."
+msgstr "Die A/B-Validierung konnte nicht ausgeführt werden — es wurde nichts gemessen."
+
+msgid "The A/B validation could not run (e.g. the provider was unreachable) — the theory was never tested. Retry it or dismiss it."
+msgstr "Die A/B-Validierung konnte nicht ausgeführt werden (z. B. weil der Provider nicht erreichbar war) — die Theory wurde nie getestet. Wiederhole sie oder verwirf sie."
 
 msgid "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
 msgstr "Die Änderung übertrifft die Baseline. Promoviere sie, um das Übergabepaket zu erhalten, oder verwerfe sie."
@@ -4941,6 +4962,9 @@ msgstr "Theory eingereicht"
 
 msgid "Theory Validated"
 msgstr "Theory validiert"
+
+msgid "Theory Validation Failed"
+msgstr "Theory-Validierung fehlgeschlagen"
 
 msgid "Thinking…"
 msgstr "Denken…"
@@ -5369,6 +5393,9 @@ msgstr "Validiert die Agent-Antwort anhand einer JSON-Schema-Definition."
 msgid "Validating"
 msgstr "Wird validiert"
 
+msgid "Validation failed"
+msgstr "Validierung fehlgeschlagen"
+
 msgid "Value"
 msgstr "Wert"
 
@@ -5396,6 +5423,11 @@ msgstr "über {0} · validiert gegen {1}"
 #. placeholder {1}: suiteName ?? t`a suite`
 msgid "via {0} · validating against {1}"
 msgstr "über {0} · validiert gegen {1}"
+
+#. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validation errored against {1}"
+msgstr "über {0} · Validierung fehlgeschlagen gegen {1}"
 
 msgid "via Tracey AI"
 msgstr "über Tracey AI"

@@ -9,6 +9,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Changed
+
+- **Errored A/B validations no longer count as disproven theories.** When a theory's A/B
+  validation cannot run at all (unreachable or unauthorized provider, upstream timeout,
+  incomplete run), the theory now settles in a new **Failed** state instead of *Invalidated*.
+  Failed theories are excluded from the review desk's **win rate** (an outage is not a lost
+  experiment), surface in a new **Needs attention** queue group with a red *could not test*
+  node on the loop strip instead of disappearing into History, and can be **retried** from
+  their dossier once the underlying problem is fixed (or dismissed). Resubmitting the same
+  idea is no longer blocked by a failed prior attempt, and each failure is recorded in the
+  audit log (*Theory Validation Failed*).
+
 ## [1.5.0] - 2026-07-12
 
 ### Added

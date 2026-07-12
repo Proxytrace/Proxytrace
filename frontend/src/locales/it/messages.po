@@ -1468,6 +1468,9 @@ msgstr "Costo (LLM judge)"
 msgid "Cost over time"
 msgstr "Costo nel tempo"
 
+msgid "Could not be tested"
+msgstr "Non è stato possibile testarla"
+
 msgid "Could not claim account. Check the email matches your existing user."
 msgstr "Impossibile rivendicare l'account. Verifica che l'email corrisponda al tuo User esistente."
 
@@ -1497,6 +1500,12 @@ msgstr "Impossibile reimpostare la password. Riprova."
 
 msgid "Could not start setup. Please try again."
 msgstr "Impossibile avviare la configurazione. Riprova."
+
+msgid "could not test"
+msgstr "non testate"
+
+msgid "Could not test"
+msgstr "Non testata"
 
 msgid "Could not verify the code. Please try again."
 msgstr "Impossibile verificare il codice. Riprova."
@@ -4077,6 +4086,9 @@ msgstr "RISULTATO"
 msgid "Retry discovery"
 msgstr "Riprova rilevamento"
 
+msgid "Retry validation"
+msgstr "Riprova la validazione"
+
 msgid "Reveal"
 msgstr "Mostra"
 
@@ -4885,8 +4897,17 @@ msgstr "in test"
 msgid "Text response"
 msgstr "Risposta di testo"
 
+msgid "The A/B test could not run — the theory was not tested."
+msgstr "Il A/B test non ha potuto essere eseguito — la theory non è stata testata."
+
 msgid "The A/B test found no improvement, so the theory was rejected automatically."
 msgstr "Il A/B test non ha rilevato alcun miglioramento, quindi la theory è stata rifiutata automaticamente."
+
+msgid "The A/B validation could not run — nothing was measured."
+msgstr "La validazione A/B non ha potuto essere eseguita — non è stato misurato nulla."
+
+msgid "The A/B validation could not run (e.g. the provider was unreachable) — the theory was never tested. Retry it or dismiss it."
+msgstr "La validazione A/B non ha potuto essere eseguita (ad es. il Provider non era raggiungibile) — la theory non è mai stata testata. Riprovala o scartala."
 
 msgid "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
 msgstr "La modifica ha battuto la baseline. Promuovila per ottenere il pacchetto di handoff, oppure scartala."
@@ -4941,6 +4962,9 @@ msgstr "Theory inviata"
 
 msgid "Theory Validated"
 msgstr "Theory validata"
+
+msgid "Theory Validation Failed"
+msgstr "Validazione della theory fallita"
 
 msgid "Thinking…"
 msgstr "Elaborazione…"
@@ -5369,6 +5393,9 @@ msgstr "Valida la risposta dell'Agent rispetto a una definizione JSON Schema."
 msgid "Validating"
 msgstr "In validazione"
 
+msgid "Validation failed"
+msgstr "Validazione fallita"
+
 msgid "Value"
 msgstr "Valore"
 
@@ -5396,6 +5423,11 @@ msgstr "tramite {0} · validata su {1}"
 #. placeholder {1}: suiteName ?? t`a suite`
 msgid "via {0} · validating against {1}"
 msgstr "tramite {0} · in validazione su {1}"
+
+#. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validation errored against {1}"
+msgstr "tramite {0} · validazione fallita su {1}"
 
 msgid "via Tracey AI"
 msgstr "tramite Tracey AI"

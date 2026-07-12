@@ -46,7 +46,7 @@ in the pipeline so it still runs when authorization short-circuits the request.
 
 Several actions are recorded by background/system work with **no request context** ⇒ the System
 actor: the test-run scheduler (`TestRunStarted`), the theory A/B validation pipeline
-(`TheoryValidated` / `TheoryInvalidated` / `ProposalGenerated`), automatic proposal adoption
+(`TheoryValidated` / `TheoryInvalidated` / `TheoryValidationFailed` / `ProposalGenerated`), automatic proposal adoption
 (`ProposalAutoAdopted`), and the one-time secrets backfill (`SecretsBackfilled`).
 
 The **password-reset** actions follow the same shape: `PasswordResetRequested` is emitted for every

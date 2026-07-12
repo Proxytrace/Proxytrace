@@ -45,6 +45,7 @@ export const THEORY_STATUS_VARIANT: Record<TheoryStatus, BadgeVariant> = {
   [TheoryStatus.Validating]: 'accent',
   [TheoryStatus.Validated]: 'success',
   [TheoryStatus.Invalidated]: 'neutral',
+  [TheoryStatus.Failed]: 'danger',
 };
 
 export const THEORY_STATUS_LABEL: Record<TheoryStatus, MessageDescriptor> = {
@@ -52,4 +53,5 @@ export const THEORY_STATUS_LABEL: Record<TheoryStatus, MessageDescriptor> = {
   [TheoryStatus.Validating]: msg`A/B testing`,
   [TheoryStatus.Validated]: msg`Improved`,
   [TheoryStatus.Invalidated]: msg`Rejected`,
+  [TheoryStatus.Failed]: msg`Could not test`,
 };

@@ -73,6 +73,9 @@ export function LiveTheoryCard({ initial }: { initial: TheoryDto }) {
           {theory.status === TheoryStatus.Invalidated && (
             <span className="text-muted"><Trans>No improvement — theory rejected.</Trans></span>
           )}
+          {theory.status === TheoryStatus.Failed && (
+            <span className="text-danger"><Trans>The A/B test could not run — the theory was not tested.</Trans></span>
+          )}
         </div>
       </div>
     </ToolUIFrame>

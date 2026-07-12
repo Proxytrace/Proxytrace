@@ -1053,7 +1053,7 @@ export interface ProposalArtifactDto {
   };
 }
 
-export enum TheoryStatus { Proposed = 'Proposed', Validating = 'Validating', Validated = 'Validated', Invalidated = 'Invalidated' }
+export enum TheoryStatus { Proposed = 'Proposed', Validating = 'Validating', Validated = 'Validated', Invalidated = 'Invalidated', Failed = 'Failed' }
 export enum TheorySource { Optimizer = 'Optimizer', User = 'User', TraceyAi = 'TraceyAi', External = 'External' }
 
 export interface TheoryDto {
@@ -1264,6 +1264,7 @@ export enum AuditAction {
   TheoryRejected = 'TheoryRejected',
   TheoryValidated = 'TheoryValidated',
   TheoryInvalidated = 'TheoryInvalidated',
+  TheoryValidationFailed = 'TheoryValidationFailed',
   ProposalGenerated = 'ProposalGenerated',
   ProposalAutoAdopted = 'ProposalAutoAdopted',
   TestRunGroupOptimizeRequested = 'TestRunGroupOptimizeRequested',

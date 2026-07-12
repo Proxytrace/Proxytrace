@@ -117,10 +117,19 @@ public interface IOptimizationTheory : IDomainEntity
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Dismisses an active theory (<see cref="TheoryStatus.Proposed"/> or
-    /// <see cref="TheoryStatus.Validating"/>) to <see cref="TheoryStatus.Invalidated"/> on a user's
-    /// explicit request — skipping A/B validation for a Proposed theory, or cancelling it for a
-    /// Validating one. Unlike <see cref="SetInvalidated"/> (which the pipeline calls with the A/B
+    /// Transitions the theory to <see cref="TheoryStatus.Failed"/> when the A/B validation itself
+    /// could not be carried out (unreachable provider, upstream error, incomplete run). Records no
+    /// metrics — nothing was measured — but preserves any A/B run already linked while validating
+    /// for diagnosis. Unlike <see cref="SetInvalidated"/> this says nothing about the theory's
+    /// merit; the theory can be retried via <see cref="ResetToProposed"/>.
+    /// </summary>
+    Task<IOptimizationTheory> SetFailed(Guid? abTestRunId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Dismisses a theory to <see cref="TheoryStatus.Invalidated"/> on a user's explicit request:
+    /// an active theory (<see cref="TheoryStatus.Proposed"/> or <see cref="TheoryStatus.Validating"/>)
+    /// skips or cancels its A/B validation; a <see cref="TheoryStatus.Failed"/> theory is filed away
+    /// without a retry. Unlike <see cref="SetInvalidated"/> (which the pipeline calls with the A/B
     /// metrics that disproved the theory) this records no metrics; any A/B run already linked while
     /// validating is preserved for provenance. The absence of metrics is what distinguishes a manual
     /// dismissal from an A/B-disproven invalidation.
@@ -128,10 +137,11 @@ public interface IOptimizationTheory : IDomainEntity
     Task<IOptimizationTheory> Reject(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns a terminal theory (<see cref="TheoryStatus.Validated"/> or
-    /// <see cref="TheoryStatus.Invalidated"/>) to <see cref="TheoryStatus.Proposed"/>, clearing the
-    /// recorded proposal reference, A/B metrics, and run link so it can be validated afresh. Callers
-    /// are responsible for deleting any spawned proposal and re-queuing the theory.
+    /// Returns a terminal theory (<see cref="TheoryStatus.Validated"/>,
+    /// <see cref="TheoryStatus.Invalidated"/>, or <see cref="TheoryStatus.Failed"/>) to
+    /// <see cref="TheoryStatus.Proposed"/>, clearing the recorded proposal reference, A/B metrics,
+    /// and run link so it can be validated afresh. Callers are responsible for deleting any spawned
+    /// proposal and re-queuing the theory.
     /// </summary>
     Task<IOptimizationTheory> ResetToProposed(CancellationToken cancellationToken = default);
 }

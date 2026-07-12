@@ -9,7 +9,7 @@ import { ProposalStatus, TheoryStatus } from '../../api/models';
 import type { DisplayTone } from './shared';
 
 /** Urgency-ordered groups of the queue rail. */
-export type QueueGroupKey = 'decision' | 'adoption' | 'inflight' | 'history';
+export type QueueGroupKey = 'decision' | 'attention' | 'adoption' | 'inflight' | 'history';
 
 export interface QueueGroupMeta {
   key: QueueGroupKey;
@@ -20,6 +20,7 @@ export interface QueueGroupMeta {
 /** Rail order: what needs the user first, history last. */
 export const QUEUE_GROUPS: readonly QueueGroupMeta[] = [
   { key: 'decision', label: msg`Needs decision`, tone: 'accent' },
+  { key: 'attention', label: msg`Needs attention`, tone: 'danger' },
   { key: 'adoption', label: msg`Awaiting adoption`, tone: 'success' },
   { key: 'inflight', label: msg`In flight`, tone: 'teal' },
   { key: 'history', label: msg`History`, tone: 'muted' },
@@ -40,9 +41,12 @@ export function proposalFor(theory: TheoryDto, proposals: ProposalById): Optimiz
 /**
  * Where a theory sits in the queue. A validated theory's group follows its proposal's review
  * state; a proposal that hasn't loaded yet reads as Draft (same convention as REVIEW_META).
+ * A Failed theory (its A/B validation errored out) needs the user's attention — retry or
+ * dismiss — so it must not disappear into the collapsed History group.
  */
 export function queueGroupOf(theory: TheoryDto, proposal: OptimizationProposalDto | null): QueueGroupKey {
   if (theory.status === TheoryStatus.Proposed || theory.status === TheoryStatus.Validating) return 'inflight';
+  if (theory.status === TheoryStatus.Failed) return 'attention';
   if (theory.status === TheoryStatus.Invalidated) return 'history';
   switch (proposal?.status) {
     case ProposalStatus.Accepted: return 'adoption';
@@ -57,7 +61,7 @@ export function groupIntoQueue(
   theories: readonly TheoryDto[],
   proposals: ProposalById,
 ): Record<QueueGroupKey, TheoryDto[]> {
-  const groups: Record<QueueGroupKey, TheoryDto[]> = { decision: [], adoption: [], inflight: [], history: [] };
+  const groups: Record<QueueGroupKey, TheoryDto[]> = { decision: [], attention: [], adoption: [], inflight: [], history: [] };
   for (const theory of theories) {
     groups[queueGroupOf(theory, proposalFor(theory, proposals))].push(theory);
   }
@@ -73,6 +77,8 @@ export interface LoopStats {
   testing: number;
   /** Validated proposals awaiting a promote/dismiss decision. */
   decision: number;
+  /** Theories whose A/B validation errored out — retry or dismiss. */
+  failed: number;
   /** Promoted proposals waiting to be detected in live traffic. */
   adoption: number;
   /** Terminal outcomes (adopted, dismissed, disproven). */
@@ -87,6 +93,8 @@ export function loopStats(theories: readonly TheoryDto[], proposals: ProposalByI
   const groups = groupIntoQueue(theories, proposals);
   const validated = theories.filter(t => t.status === TheoryStatus.Validated);
   const invalidated = theories.filter(t => t.status === TheoryStatus.Invalidated);
+  // Failed theories were never A/B-tested, so they stay out of the win-rate denominator —
+  // an infrastructure outage must not read as a lost experiment.
   const tested = validated.length + invalidated.length;
 
   const provenGainPt = validated.reduce((sum, t) => {
@@ -97,6 +105,7 @@ export function loopStats(theories: readonly TheoryDto[], proposals: ProposalByI
   return {
     testing: groups.inflight.length,
     decision: groups.decision.length,
+    failed: groups.attention.length,
     adoption: groups.adoption.length,
     decided: groups.history.length,
     winRate: tested > 0 ? Math.round((validated.length / tested) * 100) : null,

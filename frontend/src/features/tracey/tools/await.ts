@@ -25,6 +25,7 @@ const TERMINAL_RUN: ReadonlySet<TestRunStatus> = new Set([
 const TERMINAL_THEORY: ReadonlySet<TheoryStatus> = new Set([
   TheoryStatus.Validated,
   TheoryStatus.Invalidated,
+  TheoryStatus.Failed,
 ]);
 
 export const isRunTerminal = (status: TestRunStatus): boolean => TERMINAL_RUN.has(status);

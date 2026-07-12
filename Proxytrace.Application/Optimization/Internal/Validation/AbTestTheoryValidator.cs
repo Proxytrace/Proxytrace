@@ -43,7 +43,7 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
         // suite has cases, which would make the A/B comparison unfair and the proposal unfounded.
         if (!IsRunComplete(baselineRun, theory.Suite) || !IsRunComplete(candidateRun, theory.Suite))
         {
-            return TheoryValidationOutcome.Inconclusive;
+            return TheoryValidationOutcome.CouldNotTest;
         }
 
         RunMetrics baseline = Metrics(baselineRun);
@@ -51,7 +51,7 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
 
         if (baseline.PassRate is not { } basePassRate || candidate.PassRate is not { } candidatePassRate)
         {
-            return TheoryValidationOutcome.Inconclusive;
+            return TheoryValidationOutcome.CouldNotTest;
         }
 
         (int basePasses, int baseTotal) = PassCounts(baselineRun);

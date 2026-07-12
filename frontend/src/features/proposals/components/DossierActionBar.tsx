@@ -31,6 +31,7 @@ export function DossierActionBar({ theory, proposal, onSetStatus, onReset, onRej
   const reviewable = validated && (proposal == null || proposal.status === ProposalStatus.Draft);
   const inFlight = theory.status === TheoryStatus.Proposed || theory.status === TheoryStatus.Validating;
   const isValidating = theory.status === TheoryStatus.Validating;
+  const failed = theory.status === TheoryStatus.Failed;
   // A reset re-runs validation from scratch; refused server-side once a proposal is promoted or
   // adopted, so hide it there.
   const canReset = !inFlight && proposal?.status !== ProposalStatus.Accepted && proposal?.status !== ProposalStatus.Adopted;
@@ -75,6 +76,18 @@ export function DossierActionBar({ theory, proposal, onSetStatus, onReset, onRej
         </Button>
       )}
 
+      {failed && (
+        <Button
+          variant="ghost" size="sm"
+          loading={rejectPending} disabled={resetPending}
+          leftIcon={<XIcon size={12} />}
+          onClick={onReject}
+          data-testid="theory-dismiss-btn"
+        >
+          <Trans>Dismiss</Trans>
+        </Button>
+      )}
+
       {!reviewable && !inFlight && (
         <span className="inline-flex items-center gap-1.5 text-body-sm text-secondary" data-testid="dossier-outcome">
           {proposal?.status === ProposalStatus.Adopted && <CheckIcon size={12} className="text-success" />}
@@ -85,12 +98,12 @@ export function DossierActionBar({ theory, proposal, onSetStatus, onReset, onRej
       {canReset && (
         <Button
           variant="ghost" size="sm" className="ml-auto"
-          loading={resetPending} disabled={actionPending}
+          loading={resetPending} disabled={actionPending || rejectPending}
           leftIcon={<ResetIcon size={12} />}
           onClick={onReset}
           data-testid="proposal-reset-btn"
         >
-          <Trans>Reset to Proposed</Trans>
+          {failed ? <Trans>Retry validation</Trans> : <Trans>Reset to Proposed</Trans>}
         </Button>
       )}
     </div>
@@ -98,6 +111,9 @@ export function DossierActionBar({ theory, proposal, onSetStatus, onReset, onRej
 }
 
 function outcomeText(theory: TheoryDto, proposal: OptimizationProposalDto | null, i18n: I18n): React.ReactNode {
+  if (theory.status === TheoryStatus.Failed) {
+    return <Trans>The A/B validation could not run (e.g. the provider was unreachable) — the theory was never tested. Retry it or dismiss it.</Trans>;
+  }
   if (theory.status === TheoryStatus.Invalidated) {
     const hadAbTest = theory.pValue != null || theory.baselinePassRate != null;
     return hadAbTest

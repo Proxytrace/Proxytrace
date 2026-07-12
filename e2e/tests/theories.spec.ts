@@ -128,10 +128,12 @@ test.describe('Optimization Theories', () => {
     await expect(page.getByTestId('review-desk')).toBeVisible();
 
     // The row carries a group-independent testid, but which group holds it depends on how far
-    // background A/B validation has got: In flight while it runs, History once it settles — and
-    // this stack has no real LLM behind the seeded endpoint, so validation settles within
-    // seconds. History is collapsed by default, so expand it when it is there; otherwise the
-    // assertion races the validator (it did: green locally, red on faster CI).
+    // background A/B validation has got: In flight while it runs, then a terminal group once it
+    // settles — and this stack has no real LLM behind the seeded endpoint, so validation errors
+    // out within seconds and the theory lands in the always-visible Needs attention group
+    // (Failed). Keep the History-expansion retry anyway: it is harmless when the row is already
+    // visible and guards the assertion against racing the validator (it did: green locally, red
+    // on faster CI).
     const row = page.getByTestId(`theory-row-${theory.id}`);
     const historyToggle = page.getByTestId('queue-history-toggle');
     await expect(async () => {

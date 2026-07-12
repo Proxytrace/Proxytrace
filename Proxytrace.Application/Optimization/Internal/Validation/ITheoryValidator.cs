@@ -6,17 +6,23 @@ namespace Proxytrace.Application.Optimization.Internal.Validation;
 /// <summary>
 /// Result of grounding a theory against a baseline and a candidate A/B run. The metrics are
 /// recorded on the theory regardless of outcome; <see cref="Proposal"/> is non-null only when
-/// the change improved the agent enough to spawn a Draft proposal.
+/// the change improved the agent enough to spawn a Draft proposal. <see cref="NotTested"/>
+/// marks a comparison that never happened — the theory ends up Failed, not Invalidated.
 /// </summary>
 internal readonly record struct TheoryValidationOutcome(
     IOptimizationProposal? Proposal,
     double? BaselinePassRate,
     double? ProjectedPassRate,
     double? PValue,
-    Guid? CandidateRunId)
+    Guid? CandidateRunId,
+    bool NotTested = false)
 {
-    /// <summary>Outcome carrying no measurements — e.g. a run produced no results.</summary>
-    public static readonly TheoryValidationOutcome Inconclusive = new(null, null, null, null, null);
+    /// <summary>
+    /// The A/B comparison could not be carried out — a run produced no (or incomplete) results,
+    /// typically an unreachable/unauthorized provider or an upstream outage. The theory was
+    /// neither proven nor disproven, so it must not settle as Invalidated.
+    /// </summary>
+    public static readonly TheoryValidationOutcome CouldNotTest = new(null, null, null, null, null, NotTested: true);
 
     /// <summary>A losing comparison: measurements recorded, but no proposal produced.</summary>
     public static TheoryValidationOutcome Rejected(double baseline, double projected, double? pValue, Guid candidateRunId)

@@ -16,6 +16,7 @@ export const THEORY_STATUS_META: Record<TheoryStatus, TheoryStatusMeta> = {
   [TheoryStatus.Validating]: { label: msg`Validating`, tone: 'teal', pulse: true },
   [TheoryStatus.Validated]: { label: msg`Validated`, tone: 'success', pulse: false },
   [TheoryStatus.Invalidated]: { label: msg`Invalidated`, tone: 'muted', pulse: false },
+  [TheoryStatus.Failed]: { label: msg`Validation failed`, tone: 'danger', pulse: false },
 };
 
 export const THEORY_SOURCE_LABEL: Record<TheorySource, MessageDescriptor> = {

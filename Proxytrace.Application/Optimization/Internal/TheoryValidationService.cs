@@ -122,7 +122,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         if (theory is null)
             return new TheoryResetResult(TheoryResetOutcome.NotFound, null);
 
-        if (theory.Status is not (TheoryStatus.Validated or TheoryStatus.Invalidated))
+        if (theory.Status is not (TheoryStatus.Validated or TheoryStatus.Invalidated or TheoryStatus.Failed))
             return new TheoryResetResult(TheoryResetOutcome.NotResettable, null);
 
         var proposalId = theory.ResultingProposalId;
@@ -155,7 +155,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         if (theory is null)
             return new TheoryRejectResult(TheoryRejectOutcome.NotFound, null);
 
-        if (theory.Status is not (TheoryStatus.Proposed or TheoryStatus.Validating))
+        if (theory.Status is not (TheoryStatus.Proposed or TheoryStatus.Validating or TheoryStatus.Failed))
             return new TheoryRejectResult(TheoryRejectOutcome.NotActive, null);
 
         // If this theory is the one currently validating, abort its in-flight A/B run. A Proposed
@@ -186,7 +186,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             theory.Agent.Id, theory.ContentHash, cancellationToken);
 
         // An identical theory is already pending, validating, or has already produced a proposal.
-        if (priorTheory is not null && priorTheory.Status != TheoryStatus.Invalidated)
+        // A Failed prior does not suppress: its validation never ran, so the idea remains untested.
+        if (priorTheory is not null && priorTheory.Status is not (TheoryStatus.Invalidated or TheoryStatus.Failed))
         {
             return true;
         }
@@ -265,7 +266,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         }
     }
 
-    private async Task ValidateAsync(Guid theoryId, CancellationToken cancellationToken)
+    internal async Task ValidateAsync(Guid theoryId, CancellationToken cancellationToken)
     {
         IOptimizationTheory? theory = await theories.FindAsync(theoryId, cancellationToken);
         if (theory is null)
@@ -274,7 +275,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             return;
         }
 
-        if (theory.Status is TheoryStatus.Validated or TheoryStatus.Invalidated)
+        if (theory.Status is TheoryStatus.Validated or TheoryStatus.Invalidated or TheoryStatus.Failed)
         {
             // Already settled — e.g. a theory submitted while restart recovery was re-queuing
             // the backlog can be enqueued twice.
@@ -306,7 +307,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
 
             var validator = validators.FirstOrDefault(v => v.CanValidate(theory));
             TheoryValidationOutcome outcome = validator is null
-                ? TheoryValidationOutcome.Inconclusive
+                ? TheoryValidationOutcome.CouldNotTest
                 : await validator.ValidateAsync(theory, cts.Token, OnCandidateRun);
 
             if (outcome.Proposal is { } proposal)
@@ -339,10 +340,22 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
                     projectId: validated.Agent.Project.Id);
                 logger.LogInformation("Theory {TheoryId} validated; produced proposal {ProposalId}", theoryId, persisted.Id);
             }
+            else if (outcome.NotTested)
+            {
+                // The A/B comparison never happened (unreachable provider, incomplete run, no
+                // validator) — the theory is unproven, not disproven. Settle it Failed so it stays
+                // out of the win-rate statistics and can be retried.
+                theory = await theory.SetFailed(outcome.CandidateRunId ?? theory.ABTestRunId, cancellationToken);
+                theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
+                audit.LogAudit(
+                    AuditAction.TheoryValidationFailed, nameof(IOptimizationTheory), theory.Id, theory.Agent.Name,
+                    projectId: theory.Agent.Project.Id);
+                logger.LogWarning("Theory {TheoryId} could not be validated — A/B run incomplete", theoryId);
+            }
             else
             {
-                // Inconclusive outcomes carry no run id, but the observer may already have linked the
-                // candidate run while validating — never downgrade a known link back to null.
+                // Rejected outcomes carry the candidate run id, but the observer may already have
+                // linked the run while validating — never downgrade a known link back to null.
                 theory = await theory.SetInvalidated(
                     outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue,
                     outcome.CandidateRunId ?? theory.ABTestRunId, cancellationToken);
@@ -370,8 +383,10 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         }
         catch (Exception ex)
         {
+            // An errored validation is not a disproven theory: settle it Failed (retryable,
+            // excluded from win-rate stats) instead of Invalidated.
             logger.LogWarning(ex, "Validation failed for theory {TheoryId}", theoryId);
-            await TryInvalidateAsync(theoryId, cancellationToken);
+            await TryFailAsync(theoryId, cancellationToken);
         }
         finally
         {
@@ -394,6 +409,27 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to mark theory {TheoryId} as invalidated after error", theoryId);
+        }
+    }
+
+    private async Task TryFailAsync(Guid theoryId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var theory = await theories.FindAsync(theoryId, cancellationToken);
+            if (theory is { Status: TheoryStatus.Validating })
+            {
+                // Preserve any A/B run already linked while validating so the failure can be diagnosed.
+                theory = await theory.SetFailed(theory.ABTestRunId, cancellationToken);
+                theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
+                audit.LogAudit(
+                    AuditAction.TheoryValidationFailed, nameof(IOptimizationTheory), theory.Id, theory.Agent.Name,
+                    projectId: theory.Agent.Project.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to mark theory {TheoryId} as failed after error", theoryId);
         }
     }
 }

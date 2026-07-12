@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { BeakerIcon, CheckIcon, CpuIcon, XIcon, ZapIcon } from '../../../components/icons';
+import { AlertTriangleIcon, BeakerIcon, CheckIcon, CpuIcon, XIcon, ZapIcon } from '../../../components/icons';
 import { RowButton } from '../../../components/ui/RowButton';
 import type { OptimizationProposalDto, TheoryDto } from '../../../api/models';
 import { ProposalKind, ProposalStatus, TheoryStatus } from '../../../api/models';
@@ -104,6 +104,13 @@ function RowStatus({ theory, proposal, group }: { theory: TheoryDto; proposal: O
         {formatPValue(theory.pValue)} · {isInsideNoise(theory.pValue) ? <Trans>inside noise</Trans> : <Trans>significant</Trans>}
       </span>
     ) : null;
+  }
+  if (group === 'attention') {
+    return (
+      <span className="inline-flex items-center gap-1 text-caption text-danger">
+        <AlertTriangleIcon size={10} /> <Trans>Could not be tested</Trans>
+      </span>
+    );
   }
   if (group === 'adoption') {
     return (

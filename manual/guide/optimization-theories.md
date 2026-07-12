@@ -36,7 +36,8 @@ whose queue groups theories by what they need from you (see
 
 ```
 Proposed → Validating → Validated   → becomes an Optimization Proposal
-                     └→ Invalidated  (no improvement; kept for the record)
+                     ├→ Invalidated  (no improvement; kept for the record)
+                     └→ Failed       (the A/B test could not run; retry or dismiss)
 ```
 
 1. **Proposed** — the theory has been accepted into the queue.
@@ -47,9 +48,14 @@ Proposed → Validating → Validated   → becomes an Optimization Proposal
    revealed with the **A/B runs** toggle.
 3. **Validated** — the change improved the agent beyond sampling noise (p-value ≤ 0.05).
    A Draft **proposal** is created automatically, carrying the comparison as evidence.
-4. **Invalidated** — the change did not improve the agent, or the improvement was within
-   the noise. The theory is kept so the same
-   idea is not tried again needlessly.
+4. **Invalidated** — the A/B test ran, and the change did not improve the agent (or the
+   improvement was within the noise). The theory is kept so the same idea is not tried
+   again needlessly.
+5. **Failed** — the A/B test itself **could not run**: the provider was unreachable or
+   unauthorized, the upstream timed out, or a run errored partway. A failed theory was
+   *never actually tested*, so it is treated very differently from an invalidated one — it
+   does **not** count against your win rate, it does not block resubmitting the same idea,
+   and you can **retry** it once the underlying problem is fixed (or dismiss it).
 
 You never lose work: every hypothesis — including the ones that did not pan out — is
 recorded, which is also what powers deduplication.
@@ -64,15 +70,20 @@ left, and the selected item's full **dossier** on the right.
 The queue groups theories by what they need from you, most urgent first:
 
 - **Needs decision** — validated theories whose proposal awaits your Promote/Dismiss call.
+- **Needs attention** — theories whose A/B validation **failed to run**. Each row offers a
+  retry (once the provider issue is fixed) or a dismissal; until you act, the row stays
+  visible instead of vanishing into History.
 - **Awaiting adoption** — promoted proposals Proxytrace is watching live traffic for.
 - **In flight** — theories that are queued (*Proposed*) or mid-A/B-test (*Validating*, with a
   live progress bar).
 - **History** — everything decided (adopted, dismissed, or disproven), collapsed by default,
-  with the **win rate** (share of tested theories that validated) in its header.
+  with the **win rate** (share of tested theories that validated) in its header. Failed
+  theories are excluded from the win rate — an outage is not a lost experiment.
 
 Above the queue, the **loop strip** shows the whole optimization pipeline at a glance —
 *testing → need decision → awaiting adoption → decided* — closing with the total **proven
-gain** in percentage points. Click any node to jump to its group.
+gain** in percentage points. Click any node to jump to its group. A red **could not test**
+node appears in the strip only when failed validations need your attention.
 
 Each queue row shows the kind, rationale, and target agent; rows in *Needs decision* add the
 measured pass-rate jump and the p-value verdict. Selecting a row opens its dossier:
@@ -86,6 +97,10 @@ measured pass-rate jump and the p-value verdict. Selecting a row opens its dossi
   **Promote** and **Dismiss** sit in the pinned decision bar at the bottom.
 - A **disproven or dismissed** theory keeps the same dossier with its (non-)improvement and
   verdict, so history stays inspectable.
+- A **failed** theory's dossier states that the A/B validation could not run and that nothing
+  was measured. Its decision bar offers **Retry validation** (re-queues the theory for a fresh
+  A/B run) and **Dismiss** (files it away in History). If a run was already started before the
+  failure, the **View A/B run** link stays available so you can diagnose what went wrong.
 
 The page updates itself as theories move through the pipeline — it polls live while any theory
 is still validating, so rows move between groups and recorded metrics appear without a manual
@@ -117,10 +132,12 @@ control.
 
 ## Re-validating a theory
 
-A validated or dismissed theory's dossier carries a **Reset to Proposed** button. It
+A validated, dismissed, or failed theory's dossier carries a **Reset to Proposed** button
+(labelled **Retry validation** on a failed theory). It
 returns the theory to the start of the lifecycle — deleting any draft/dismissed proposal it
 spawned, clearing the recorded A/B metrics, and re-queuing it for a fresh validation run. Use it
-to retry a theory after the agent, suite, or model has changed.
+to retry a theory after the agent, suite, or model has changed — or after fixing the provider
+problem that made a validation fail.
 
 Reset is **not** offered once a proposal has been **promoted** (accepted): the change is already
 applied to the agent, and resetting would not revert it. Dismiss-then-reset is fine; promoted
@@ -140,4 +157,5 @@ A theory that is byte-for-byte identical to one already **Proposed**, **Validati
 **Validated** for the same agent is suppressed rather than re-run. Theories identical to an
 already **Approved** or **Rejected** proposal are suppressed until **3 more completed
 test-run groups** have run against that agent — the same "fresh evidence" threshold used for
-proposals.
+proposals. A **Failed** prior does *not* suppress resubmission: its validation never ran, so
+the idea remains untested.
