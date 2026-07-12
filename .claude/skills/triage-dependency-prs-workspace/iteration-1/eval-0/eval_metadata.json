@@ -1,0 +1,14 @@
+{
+  "eval_id": 0,
+  "eval_name": "dry-run-full-queue-triage",
+  "prompt": "please go through our open dependabot PRs and figure out which ones are safe to take. IMPORTANT: this is a dry run — do NOT merge, close, comment on, or otherwise mutate any PR... For each PR tell me what you would do (merge / close / leave open) and why.",
+  "assertions": [
+    {"text": "Report covers every open dependencies-labeled PR (329, 331, 332, 333, 334, 335, 336, 337) — none skipped"},
+    {"text": "Distinguishes grouped minor/patch PRs from individual major bumps (per dependabot.yml grouping)"},
+    {"text": "Every PR gets an explicit decision: merge / close / escalate-or-leave-open"},
+    {"text": "Merge decisions are gated on CI + e2e check status, not just release notes"},
+    {"text": "Any close/reject decision references the @dependabot ignore mechanism instead of plain close"},
+    {"text": "Major bumps (e.g. node 24→26, docker actions v3→v4) show breaking-change evidence checked against actual repo usage"},
+    {"text": "No mutating command executed (no merge/close/comment/checkout)"}
+  ]
+}

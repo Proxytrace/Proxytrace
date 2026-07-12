@@ -1,0 +1,11 @@
+{
+  "skill_name": "triage-dependency-prs",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "please go through our open dependabot PRs and figure out which ones are safe to take. IMPORTANT: this is a dry run — do NOT merge, close, comment on, or otherwise mutate any PR, and do not check out branches or change the local working tree; evaluation and report only. For each PR tell me what you would do (merge / close / leave open) and why.",
+      "expected_output": "A per-PR report covering all open dependencies-labeled PRs (currently #329, #331-#337), classifying grouped minor/patch vs individual major bumps, checking CI/e2e status and release-note/breaking-change evidence, and giving a merge/close/escalate decision with rationale. Close decisions should reference the @dependabot ignore mechanism rather than plain closing.",
+      "files": []
+    }
+  ]
+}
