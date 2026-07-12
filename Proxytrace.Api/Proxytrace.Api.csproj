@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
     <!-- Direct pin: Swashbuckle pulls Microsoft.OpenApi 2.4.1, which trips the NU1903 audit
          (GHSA-v5pm-xwqc-g5wc); 2.7.5 is the patched 2.x release. Drop when Swashbuckle updates. -->
-    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Microsoft.OpenApi" Version="3.8.0" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
