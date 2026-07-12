@@ -10,6 +10,14 @@ namespace Proxytrace.Messaging.Internal;
 /// consumer group (<c>XREADGROUP</c>) and acknowledges (<c>XACK</c>) only after successful
 /// processing. Entries left pending by a crashed consumer are reclaimed via <c>XAUTOCLAIM</c>.
 /// </summary>
+/// <remarks>
+/// Every optional argument on the StackExchange.Redis calls below is passed explicitly, including
+/// the trailing <see cref="CommandFlags"/>. A release that appends a new optional parameter adds an
+/// overload rather than extending the existing one (2.12 added a blocking-read <c>TimeSpan?</c> to
+/// <c>StreamReadGroupAsync</c>, and a <c>StreamTrimMode</c> to <c>StreamAddAsync</c>), and an
+/// under-specified call silently re-binds to it on upgrade. Supplying every parameter keeps overload
+/// resolution pinned to the signature these calls were written against.
+/// </remarks>
 internal sealed class RedisIngestionStream : IIngestionStream
 {
     private const string PayloadField = "payload";
@@ -41,7 +49,8 @@ internal sealed class RedisIngestionStream : IIngestionStream
             payload,
             messageId: null,
             maxLength: configuration.MaxStreamLength,
-            useApproximateMaxLength: true);
+            useApproximateMaxLength: true,
+            flags: CommandFlags.None);
     }
 
     public async IAsyncEnumerable<IngestEnvelope> ConsumeAsync(
@@ -60,7 +69,8 @@ internal sealed class RedisIngestionStream : IIngestionStream
                 configuration.ConsumerName,
                 configuration.ReclaimIdleMs,
                 reclaimCursor,
-                count: configuration.BatchSize);
+                count: configuration.BatchSize,
+                flags: CommandFlags.None);
             reclaimCursor = claimed.NextStartId;
 
             var produced = false;
@@ -75,7 +85,9 @@ internal sealed class RedisIngestionStream : IIngestionStream
                 configuration.ConsumerGroup,
                 configuration.ConsumerName,
                 StreamPosition.NewMessages,
-                count: configuration.BatchSize);
+                count: configuration.BatchSize,
+                noAck: false,
+                flags: CommandFlags.None);
 
             await foreach (IngestEnvelope envelope in ToEnvelopesAsync(entries))
             {
@@ -91,7 +103,11 @@ internal sealed class RedisIngestionStream : IIngestionStream
     }
 
     public async Task AckAsync(string messageId, CancellationToken cancellationToken = default)
-        => await Database.StreamAcknowledgeAsync(configuration.Stream, configuration.ConsumerGroup, messageId);
+        => await Database.StreamAcknowledgeAsync(
+            configuration.Stream,
+            configuration.ConsumerGroup,
+            messageId,
+            flags: CommandFlags.None);
 
     // Pending entries are reclaimed via XAUTOCLAIM and redelivered, so an unacked envelope reappears.
     public bool RedeliversUnacknowledged => true;
@@ -109,7 +125,9 @@ internal sealed class RedisIngestionStream : IIngestionStream
 
         try
         {
-            StreamGroupInfo[] groups = await Database.StreamGroupInfoAsync(configuration.Stream);
+            StreamGroupInfo[] groups = await Database.StreamGroupInfoAsync(
+                configuration.Stream,
+                flags: CommandFlags.None);
             foreach (StreamGroupInfo group in groups)
             {
                 if (group.Name != configuration.ConsumerGroup)
@@ -165,7 +183,8 @@ internal sealed class RedisIngestionStream : IIngestionStream
             await Database.StreamAcknowledgeAsync(
                 configuration.Stream,
                 configuration.ConsumerGroup,
-                poisonIds.ToArray());
+                poisonIds.ToArray(),
+                flags: CommandFlags.None);
         }
         catch (RedisException ex)
         {
@@ -202,7 +221,8 @@ internal sealed class RedisIngestionStream : IIngestionStream
                 configuration.Stream,
                 configuration.ConsumerGroup,
                 StreamPosition.Beginning,
-                createStream: true);
+                createStream: true,
+                flags: CommandFlags.None);
         }
         catch (RedisServerException ex) when (ex.Message.Contains("BUSYGROUP"))
         {
