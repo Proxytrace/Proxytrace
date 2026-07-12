@@ -126,8 +126,19 @@ test.describe('Optimization Theories', () => {
 
     await page.goto('/proposals', { waitUntil: 'load' });
     await expect(page.getByTestId('review-desk')).toBeVisible();
-    // The row carries a group-independent testid; background A/B validation may move it between
-    // the In flight sub-states, but it stays in the queue.
-    await expect(page.getByTestId(`theory-row-${theory.id}`)).toBeVisible({ timeout: 10_000 });
+
+    // The row carries a group-independent testid, but which group holds it depends on how far
+    // background A/B validation has got: In flight while it runs, History once it settles — and
+    // this stack has no real LLM behind the seeded endpoint, so validation settles within
+    // seconds. History is collapsed by default, so expand it when it is there; otherwise the
+    // assertion races the validator (it did: green locally, red on faster CI).
+    const row = page.getByTestId(`theory-row-${theory.id}`);
+    const historyToggle = page.getByTestId('queue-history-toggle');
+    await expect(async () => {
+      if ((await historyToggle.count()) > 0 && (await historyToggle.getAttribute('aria-expanded')) === 'false') {
+        await historyToggle.click();
+      }
+      await expect(row).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
   });
 });
