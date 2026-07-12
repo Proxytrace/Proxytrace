@@ -4,6 +4,15 @@ Proxytrace ships with a built-in licensing subsystem that gates premium features
 enforces tier limits. **You do not need a license to run Proxytrace** — it runs on the
 **Free** tier out of the box.
 
+## Source availability
+
+Proxytrace's source code is public at
+[github.com/Proxytrace/Proxytrace](https://github.com/Proxytrace/Proxytrace) under the
+[Elastic License 2.0](https://github.com/Proxytrace/Proxytrace/blob/master/LICENSE) —
+you can audit exactly what your deployment runs. The license does not permit offering
+Proxytrace as a managed service to third parties or circumventing the license-key
+functionality described on this page.
+
 ## Free by default
 
 With no license configured, Proxytrace starts on the **Free** tier with no further

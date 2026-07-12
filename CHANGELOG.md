@@ -19,6 +19,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Proxytrace is now source-available.** The full source code is public at
+  [github.com/Proxytrace/Proxytrace](https://github.com/Proxytrace/Proxytrace) under the
+  Elastic License 2.0: read, build, run, and modify it freely. Providing Proxytrace as a
+  managed service to third parties and removing or circumventing the license-key
+  functionality are not permitted. Paid tiers keep working exactly as before — unlocked
+  with a license key.
+
 - **Quick-start now teaches deterministic agent naming.** The ingestion quick-start — the
   Traces empty state and the setup wizard's final step — and the proxy setup guide now show
   the optional `x-proxytrace-agent` header, which attributes calls to the named agent
