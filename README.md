@@ -14,7 +14,7 @@ running agents and improving them.
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-storage-336791?logo=postgresql&logoColor=white)](docs/database.md)
-[![License: Proprietary](https://img.shields.io/badge/license-proprietary-8b0000)](LICENSE)
+[![License: Elastic 2.0](https://img.shields.io/badge/license-Elastic%202.0-blue)](LICENSE)
 
 [Quick start](#quick-start) · [Feature tour](#feature-tour) · [How it works](#how-it-works) · [Development](#development) · [Documentation](#documentation)
 
@@ -223,6 +223,13 @@ style, entity patterns, testing, and every workflow are documented in
 
 ## License
 
-Proprietary. Copyright © 2026 Eberharter. All rights reserved. No use, copying,
-modification, or distribution is permitted without a written agreement. See
-[LICENSE](LICENSE). Licensing inquiries: <eberharter@proton.me>.
+Proxytrace is **source-available** under the [Elastic License 2.0](LICENSE).
+
+The source is public for transparency: you can read it, build it, run it, and modify it.
+The license has three limitations — you may not provide Proxytrace to third parties as a
+hosted or managed service, you may not remove or circumvent the license-key functionality,
+and you must preserve licensing/copyright notices.
+
+Proxytrace remains a commercial product: paid tiers are unlocked with license keys issued
+by us. Commercial licensing, managed-service arrangements, or anything beyond the ELv2
+grant: <eberharter@proton.me>.
