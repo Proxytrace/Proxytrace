@@ -356,7 +356,12 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var broadcaster = Substitute.For<ITestResultBroadcaster>();
         var published = new List<TestRunEvent>();
         broadcaster.When(b => b.Publish(Arg.Any<TestRunEvent>()))
-            .Do(ci => published.Add(ci.Arg<TestRunEvent>()));
+            .Do(ci =>
+            {
+                var testRunEvent = ci.Arg<TestRunEvent>();
+                ArgumentNullException.ThrowIfNull(testRunEvent);
+                published.Add(testRunEvent);
+            });
 
         var services = GetServices(config =>
         {
@@ -386,7 +391,12 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var broadcaster = Substitute.For<ITestResultBroadcaster>();
         var published = new List<TestRunEvent>();
         broadcaster.When(b => b.Publish(Arg.Any<TestRunEvent>()))
-            .Do(ci => published.Add(ci.Arg<TestRunEvent>()));
+            .Do(ci =>
+            {
+                var testRunEvent = ci.Arg<TestRunEvent>();
+                ArgumentNullException.ThrowIfNull(testRunEvent);
+                published.Add(testRunEvent);
+            });
 
         var services = GetServices(config =>
         {

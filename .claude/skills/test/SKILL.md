@@ -188,9 +188,28 @@ test failure handling or isolate the SUT from persistence:
 ```csharp
 var repo = Substitute.For<IRepository<IAgentCall>>();
 repo.AddAsync(Arg.Any<IAgentCall>(), Arg.Any<CancellationToken>())
-    .Returns(call => Task.FromResult(call.Arg<IAgentCall>()));
+    .Returns(call =>
+    {
+        var added = call.Arg<IAgentCall>();
+        ArgumentNullException.ThrowIfNull(added);   // see nullability note below
+        return Task.FromResult(added);
+    });
 builder.RegisterInstance(repo).As<IRepository<IAgentCall>>();
 ```
+
+### NSubstitute 6 nullability (no `!`)
+
+NSubstitute 6 annotates its API as nullable-aware, so under warnings-as-errors two idioms
+now need a genuine null check (the repo-wide ban on `!`-suppression applies here too):
+
+- **`CallInfo.Arg<T>()` returns `T?`.** When a `.Returns`/`.Do`/`.Throws` callback feeds the
+  captured argument somewhere non-null (echoing it back inside `Task<T>`, adding it to a
+  list, `TrySetResult`), assert it first with `ArgumentNullException.ThrowIfNull(arg)` and
+  use the narrowed local — as in the `AddAsync` echo above. (A bare `string?` echo through
+  `.Returns` is fine; only the nested-generic / non-`Returns` sinks need the guard.)
+- **`Arg.Is<T>(x => …)` gives a nullable `x`.** The predicate is an *expression tree*, so
+  `x is not null` is illegal (CS8122) — guard with `x != null && …` instead:
+  `Arg.Is<AnomalyFlaggedEvent>(e => e != null && e.Blocked)`.
 
 ### Local registration helpers (allowed)
 

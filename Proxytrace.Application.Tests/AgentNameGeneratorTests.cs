@@ -84,7 +84,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
 
         await agentRepo.Received(1).GetOrCreateAsync(
             systemPrompt: Arg.Any<IPromptTemplate>(),
-            tools: Arg.Is<IReadOnlyList<ToolSpecification>>(t => t.Count == 0),
+            tools: Arg.Is<IReadOnlyList<ToolSpecification>>(t => t != null && t.Count == 0),
             project: project,
             endpoint: project.SystemEndpoint,
             name: "agent_name_generator",

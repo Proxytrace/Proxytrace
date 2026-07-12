@@ -865,7 +865,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         processor.IngestAsync(Arg.Any<IngestJob>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
-                if (callInfo.Arg<IngestJob>().RequestBody == UnrelatedRequestBody)
+                if (callInfo.Arg<IngestJob>()?.RequestBody == UnrelatedRequestBody)
                 {
                     Interlocked.Increment(ref goodCalls);
                     return Task.CompletedTask;

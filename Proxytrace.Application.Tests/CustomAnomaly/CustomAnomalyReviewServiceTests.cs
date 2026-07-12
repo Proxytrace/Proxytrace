@@ -34,7 +34,9 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
         notifications.NotifyAsync(Arg.Any<NotificationRequest>(), Arg.Any<CancellationToken>())
             .Returns(ci =>
             {
-                notified.TrySetResult(ci.Arg<NotificationRequest>());
+                var request = ci.Arg<NotificationRequest>();
+                ArgumentNullException.ThrowIfNull(request);
+                notified.TrySetResult(request);
                 return Task.CompletedTask;
             });
 
@@ -72,7 +74,8 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
 
         // SSE event broadcast.
         broadcaster.Received(1).Publish(Arg.Is<AnomalyFlaggedEvent>(e =>
-            e.AgentCallId == call.Id
+            e != null
+            && e.AgentCallId == call.Id
             && e.AgentId == call.Agent.Id
             && e.ProjectId == call.Agent.Project.Id
             && e.DetectorId == detector.Id

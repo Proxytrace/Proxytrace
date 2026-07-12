@@ -43,7 +43,8 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
         responseBody.Should().Be(upstreamBody);
         await ingestion.Received(1).IngestAsync(
             Arg.Is<IngestMessage>(m =>
-                m.ProjectId == project.Id
+                m != null
+                && m.ProjectId == project.Id
                 && m.ProviderId == project.SystemEndpoint.Provider.Id
                 && m.HttpStatus == 200
                 && m.AgentName == "Tracey"),

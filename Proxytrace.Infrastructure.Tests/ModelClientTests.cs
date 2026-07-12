@@ -40,7 +40,12 @@ public sealed class ModelClientTests : BaseTest<Module>
 
         var agentCallRepo = Substitute.For<IRepository<IAgentCall>>();
         agentCallRepo.AddAsync(Arg.Any<IAgentCall>(), Arg.Any<CancellationToken>())
-            .Returns(call => Task.FromResult(call.Arg<IAgentCall>()));
+            .Returns(call =>
+            {
+                var addedCall = call.Arg<IAgentCall>();
+                ArgumentNullException.ThrowIfNull(addedCall);
+                return Task.FromResult(addedCall);
+            });
         builder.RegisterInstance(agentCallRepo).As<IRepository<IAgentCall>>();
     }
 

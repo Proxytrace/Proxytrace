@@ -126,7 +126,7 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
 
         await runStats.Received(1).GetPassTotalsAsync(
             Arg.Is<TestRunStats.Filter>(f =>
-                f.AgentIds != null && f.AgentIds.Count == 1 && f.AgentIds.Single() == matchingAgent.Id),
+                f != null && f.AgentIds != null && f.AgentIds.Count == 1 && f.AgentIds.Single() == matchingAgent.Id),
             Arg.Any<CancellationToken>());
     }
 

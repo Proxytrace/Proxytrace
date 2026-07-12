@@ -163,7 +163,7 @@ public sealed class OpenAiProxyBlockingTests
 
         controller.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
         await stream.Received(1).PublishAsync(
-            Arg.Is<IngestMessage>(m => m.BlockedByDetectorId == null), Arg.Any<CancellationToken>());
+            Arg.Is<IngestMessage>(m => m != null && m.BlockedByDetectorId == null), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
