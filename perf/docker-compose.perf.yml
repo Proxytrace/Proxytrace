@@ -51,6 +51,8 @@ services:
       - Self__BaseUrl=http://localhost:5230
       - Authentication__Mode=Local
       - Authentication__Local__SigningKey=perf-test-signing-key-32-chars-minimum!
-      # Throwaway Enterprise license (same token the e2e overlay uses) so analytics/statistics
-      # endpoints are unlocked. Grants nothing against production (different embedded public key).
+      # Throwaway Enterprise license (same TEST-key-signed token the e2e overlay uses) so
+      # analytics/statistics endpoints are unlocked. The overlay reuses the root compose build
+      # blocks, which bake the test public key via the LICENSE_PUBLIC_KEY build-arg (see
+      # docs/licensing.md). Official release images embed the production key and reject it.
       - PROXYTRACE_LICENSE=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjIwMjYtMDUifQ.eyJpc3MiOiJodHRwczovL2xpY2Vuc2UucHJveHl0cmFjZS5kZXYiLCJhdWQiOiJwcm94eXRyYWNlIiwic3ViIjoiZGFuaWVsQHByb3h5dHJhY2UuZGV2IiwianRpIjoiYmQzZDAxMzktMTgwNi00YTg2LTliNDAtOTI3ZjFlZjE5M2YzIiwiaWF0IjoxNzgwMTM5ODg0LCJleHAiOjE4NDMyMTE4ODQsInRpZXIiOiJlbnRlcnByaXNlIiwibGltIjp7InByb2plY3RzIjoxMDAsInVzZXJzIjoxMDB9LCJmZWF0IjpbIkJhc2ljQW5hbHl0aWNzIiwiQXVkaXRMb2ciLCJTU08iLCJQcmlvcml0eVN1cHBvcnQiXX0.u6J5NJhOP7EUA2tKbRKQcs7T8gmPqXuwGIXiAIUpujUs1zikc-QCbK0x0y2dJWzd_ZIE4GlZgH1aaEGG1EaH_w

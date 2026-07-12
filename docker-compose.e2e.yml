@@ -39,10 +39,10 @@ services:
       # E2e specs seed data and immediately assert it on the dashboard; the server-side dashboard
       # cache (default 10s) would serve a pre-seed payload and flake those assertions. Disable it.
       - Statistics__DashboardCacheTtlSeconds=0
-      # Throwaway Enterprise license signed (ES256, kid 2026-05) with the test private key whose
-      # public half is the embedded active key, so it validates in any build configuration with no
-      # PROXYTRACE_LICENSE_PUBLIC_KEY override. Enterprise tier unlocks the paid features the suite
-      # exercises. Grants nothing against production, which ships a different embedded public key.
+      # Throwaway Enterprise license signed (ES256, kid 2026-05) with the TEST private key.
+      # This stack's images are built with the LICENSE_PUBLIC_KEY build-arg baking in the
+      # matching test public key (see docs/licensing.md). Official release images embed the
+      # production key and reject this token, so committing it grants nothing.
       - PROXYTRACE_LICENSE=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjIwMjYtMDUifQ.eyJpc3MiOiJodHRwczovL2xpY2Vuc2UucHJveHl0cmFjZS5kZXYiLCJhdWQiOiJwcm94eXRyYWNlIiwic3ViIjoiZGFuaWVsQHByb3h5dHJhY2UuZGV2IiwianRpIjoiYmQzZDAxMzktMTgwNi00YTg2LTliNDAtOTI3ZjFlZjE5M2YzIiwiaWF0IjoxNzgwMTM5ODg0LCJleHAiOjE4NDMyMTE4ODQsInRpZXIiOiJlbnRlcnByaXNlIiwibGltIjp7InByb2plY3RzIjoxMDAsInVzZXJzIjoxMDB9LCJmZWF0IjpbIkJhc2ljQW5hbHl0aWNzIiwiQXVkaXRMb2ciLCJTU08iLCJQcmlvcml0eVN1cHBvcnQiXX0.u6J5NJhOP7EUA2tKbRKQcs7T8gmPqXuwGIXiAIUpujUs1zikc-QCbK0x0y2dJWzd_ZIE4GlZgH1aaEGG1EaH_w
 
   proxy:
