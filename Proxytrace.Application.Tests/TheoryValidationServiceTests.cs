@@ -436,7 +436,12 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
 
         var theories = Substitute.For<IOptimizationTheoryRepository>();
         theories.AddAsync(Arg.Any<IOptimizationTheory>(), Arg.Any<CancellationToken>())
-            .Returns(call => Task.FromResult(call.Arg<IOptimizationTheory>()));
+            .Returns(call =>
+            {
+                var addedTheory = call.Arg<IOptimizationTheory>();
+                ArgumentNullException.ThrowIfNull(addedTheory);
+                return Task.FromResult(addedTheory);
+            });
         // No prior theory by default (NSubstitute would otherwise auto-substitute a non-null match).
         theories.FindLatestByContentHashAsync(agentId, Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IOptimizationTheory?>(null));
@@ -451,7 +456,12 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
         // Run the transactional body inline so reset writes actually execute.
         var transaction = Substitute.For<Domain.ITransaction>();
         transaction.InvokeAsync(Arg.Any<Func<Task<IOptimizationTheory>>>())
-            .Returns(ci => ci.Arg<Func<Task<IOptimizationTheory>>>().Invoke());
+            .Returns(ci =>
+            {
+                var body = ci.Arg<Func<Task<IOptimizationTheory>>>();
+                ArgumentNullException.ThrowIfNull(body);
+                return body.Invoke();
+            });
 
         var service = new TheoryValidationService(
             theories,

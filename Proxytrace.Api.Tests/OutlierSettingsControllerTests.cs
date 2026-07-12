@@ -39,7 +39,7 @@ public sealed class OutlierSettingsControllerTests : BaseTest<Module>
         var result = await controller.Update(request, CancellationToken);
 
         await store.Received(1).SaveAsync(
-            Arg.Is<OutlierSettings>(s => s.SigmaMultiplier == 2.5 && s.MinSampleCount == 40 && s.SampleWindow == 500),
+            Arg.Is<OutlierSettings>(s => s != null && s.SigmaMultiplier == 2.5 && s.MinSampleCount == 40 && s.SampleWindow == 500),
             Arg.Any<CancellationToken>());
         result.Value.Should().NotBeNull().And.Match<OutlierSettingsDto>(d => d.SampleWindow == 500);
     }

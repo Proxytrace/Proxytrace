@@ -56,9 +56,9 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
 
         await channelFor(services).DeliverAsync(GlobalRequest(NotificationSeverity.Warning), CancellationToken);
 
-        await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m.To == "on@example.test"), CancellationToken);
-        await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m.To == "off@example.test"), Arg.Any<CancellationToken>());
-        await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m.To == "high@example.test"), Arg.Any<CancellationToken>());
+        await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "on@example.test"), CancellationToken);
+        await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "off@example.test"), Arg.Any<CancellationToken>());
+        await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "high@example.test"), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
@@ -79,8 +79,8 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
 
         await channelFor(services).DeliverAsync(request, CancellationToken);
 
-        await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m.To == "member@example.test"), CancellationToken);
-        await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m.To == "outsider@example.test"), Arg.Any<CancellationToken>());
+        await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "member@example.test"), CancellationToken);
+        await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "outsider@example.test"), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
@@ -89,7 +89,12 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
         var captured = new List<EmailMessage>();
         var sender = Substitute.For<IEmailSender>();
         sender.When(s => s.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()))
-              .Do(call => captured.Add(call.Arg<EmailMessage>()));
+              .Do(call =>
+              {
+                  var message = call.Arg<EmailMessage>();
+                  ArgumentNullException.ThrowIfNull(message);
+                  captured.Add(message);
+              });
 
         IServiceProvider services = Build(sender, Settings());
         var create = services.GetRequiredService<IUser.CreateNew>();

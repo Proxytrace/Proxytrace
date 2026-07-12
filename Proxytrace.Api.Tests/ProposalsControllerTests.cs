@@ -250,7 +250,7 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
             proposal.Id, new UpdateProposalStatusRequest(ProposalStatus.Accepted), CancellationToken);
 
         broadcaster.Received(1).Publish(
-            Arg.Is<ProposalEvent>(e => e.Id == proposal.Id && e is ProposalStatusChangedEvent));
+            Arg.Is<ProposalEvent>(e => e != null && e.Id == proposal.Id && e is ProposalStatusChangedEvent));
     }
 
     [TestMethod]

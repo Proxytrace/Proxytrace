@@ -23,6 +23,7 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
             .Returns(call =>
             {
                 var entity = call.Arg<ITestRunSchedule>();
+                ArgumentNullException.ThrowIfNull(entity);
                 store[entity.Id] = entity;
                 return Task.FromResult(entity);
             });
@@ -30,6 +31,7 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
             .Returns(call =>
             {
                 var entity = call.Arg<ITestRunSchedule>();
+                ArgumentNullException.ThrowIfNull(entity);
                 store[entity.Id] = entity;
                 return Task.FromResult(entity);
             });

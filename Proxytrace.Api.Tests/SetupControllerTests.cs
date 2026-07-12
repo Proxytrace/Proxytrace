@@ -91,7 +91,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
 
         result.Success.Should().BeTrue();
         await setup.Received(1).TestProviderConnectionAsync(
-            Arg.Is<ProviderConnectionInput>(i => i.ProviderEndpoint == new Uri("https://provider.example/v1")),
+            Arg.Is<ProviderConnectionInput>(i => i != null && i.ProviderEndpoint == new Uri("https://provider.example/v1")),
             Arg.Any<CancellationToken>());
     }
 

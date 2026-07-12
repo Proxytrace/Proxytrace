@@ -55,7 +55,7 @@ public sealed class ProviderClientTests
         // Pricing is resolved against the deployment's base model, not the deployment id.
         await pricing.Received(1).ResolveAsync(
             provider,
-            Arg.Is<DiscoveredModel>(d => d.Name == "my-deploy" && d.PricingModelName == "gpt-4o"),
+            Arg.Is<DiscoveredModel>(d => d != null && d.Name == "my-deploy" && d.PricingModelName == "gpt-4o"),
             Arg.Any<CancellationToken>());
     }
 

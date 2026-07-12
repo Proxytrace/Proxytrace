@@ -55,7 +55,7 @@ public sealed class PasswordResetServiceTests : BaseTest<Module>
 
         sentUrl.Should().NotBeNull();
         await sender.Received(1).SendAsync(
-            Arg.Is<EmailMessage>(m => m.To == "u@b.com" && m.HtmlBody.Contains(sentUrl) && m.TextBody.Contains(sentUrl)),
+            Arg.Is<EmailMessage>(m => m != null && m.To == "u@b.com" && m.HtmlBody.Contains(sentUrl) && m.TextBody.Contains(sentUrl)),
             CancellationToken);
     }
 

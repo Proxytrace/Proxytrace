@@ -121,9 +121,9 @@ public sealed class BlockedCallIngestionTests : BaseTest<Module>
         await executor.IngestAsync(BlockedMessage(provider, project, detector), CancellationToken);
 
         broadcaster.Received(1).Publish(Arg.Is<AnomalyFlaggedEvent>(e =>
-            e.Blocked && e.DetectorId == detector.Id && e.DetectorName == detector.Name));
+            e != null && e.Blocked && e.DetectorId == detector.Id && e.DetectorName == detector.Name));
         await notifications.Received(1).NotifyAsync(
-            Arg.Is<NotificationRequest>(r => r.Kind == NotificationKind.Anomaly),
+            Arg.Is<NotificationRequest>(r => r != null && r.Kind == NotificationKind.Anomaly),
             Arg.Any<CancellationToken>());
     }
 

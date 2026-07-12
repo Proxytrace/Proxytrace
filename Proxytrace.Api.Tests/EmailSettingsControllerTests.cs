@@ -42,7 +42,7 @@ public sealed class EmailSettingsControllerTests : BaseTest<Module>
         var result = await controller.Update(request, CancellationToken);
 
         await store.Received(1).SaveAsync(
-            Arg.Is<EmailSettings>(s => s.SmtpHost == "smtp.example" && s.Password == "secret"),
+            Arg.Is<EmailSettings>(s => s != null && s.SmtpHost == "smtp.example" && s.Password == "secret"),
             Arg.Any<CancellationToken>());
         result.Value.Should().NotBeNull().And.Match<EmailSettingsDto>(d => d.PasswordSet);
     }
@@ -61,7 +61,7 @@ public sealed class EmailSettingsControllerTests : BaseTest<Module>
         var result = await controller.SendTest(CancellationToken);
 
         result.Should().BeOfType<NoContentResult>();
-        await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m.To == me.Email), CancellationToken);
+        await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == me.Email), CancellationToken);
     }
 
     [TestMethod]

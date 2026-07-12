@@ -41,7 +41,7 @@ public sealed class BlockedCallRecorderTests : BaseTest<Module>
         result.DetectorId.Should().Be(detectorId);
         result.AgentCallId.Should().Be(call.Id);
         result.MatchedTrigger.Should().Be("hunter2");
-        broadcaster.Received(1).Publish(Arg.Is<AnomalyFlaggedEvent>(e => e.Blocked));
+        broadcaster.Received(1).Publish(Arg.Is<AnomalyFlaggedEvent>(e => e != null && e.Blocked));
     }
 
     [TestMethod]
@@ -66,9 +66,9 @@ public sealed class BlockedCallRecorderTests : BaseTest<Module>
 
         await recorder.RecordAsync(FakeCall(), Guid.NewGuid(), "Secret guard", "hunter2", CancellationToken);
 
-        broadcaster.Received(1).Publish(Arg.Is<AnomalyFlaggedEvent>(e => e.Blocked));
+        broadcaster.Received(1).Publish(Arg.Is<AnomalyFlaggedEvent>(e => e != null && e.Blocked));
         await notifications.Received(1).NotifyAsync(
-            Arg.Is<NotificationRequest>(r => r.Kind == NotificationKind.Anomaly),
+            Arg.Is<NotificationRequest>(r => r != null && r.Kind == NotificationKind.Anomaly),
             Arg.Any<CancellationToken>());
     }
 

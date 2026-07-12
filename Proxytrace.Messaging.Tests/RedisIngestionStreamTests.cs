@@ -111,7 +111,7 @@ public sealed class RedisIngestionStreamTests
         await database.Received(1).StreamAcknowledgeAsync(
             config.Stream,
             config.ConsumerGroup,
-            Arg.Is<RedisValue[]>(ids => ids.Length == 1 && ids[0] == "1-0"),
+            Arg.Is<RedisValue[]>(ids => ids != null && ids.Length == 1 && ids[0] == "1-0"),
             Arg.Any<CommandFlags>());
         // ...and never via the blocking synchronous overload.
         database.DidNotReceiveWithAnyArgs().StreamAcknowledge(

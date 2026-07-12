@@ -49,7 +49,7 @@ public sealed class AgentCallsControllerHistogramTests : BaseTest<Module>
         await controller.GetHistogram(agentId: agentId, buckets: 99999, cancellationToken: CancellationToken);
 
         await repo.Received(1).GetHistogramAsync(
-            Arg.Is<AgentCallFilter>(f => f.AgentId == agentId),
+            Arg.Is<AgentCallFilter>(f => f != null && f.AgentId == agentId),
             240,
             Arg.Any<CancellationToken>());
     }
@@ -75,6 +75,7 @@ public sealed class AgentCallsControllerHistogramTests : BaseTest<Module>
 
         await repo.Received(1).GetHistogramAsync(
             Arg.Is<AgentCallFilter>(f =>
+                f != null &&
                 f.OutlierOnly &&
                 f.AnomalyFlags == OutlierFlags.HighLatency &&
                 f.HttpStatusClass == 5 &&

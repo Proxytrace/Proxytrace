@@ -77,7 +77,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         await controller.GetDashboardView(from, null, projectId, recentTraceCount: 3, agentLimit: 4, cancellationToken: CancellationToken);
 
         await dashboard.Received(1).GetDashboardViewAsync(
-            Arg.Is<StatisticsFilter>(f => f.From == from && f.ProjectId == projectId),
+            Arg.Is<StatisticsFilter>(f => f != null && f.From == from && f.ProjectId == projectId),
             3, 4, Arg.Any<CancellationToken>());
     }
 
@@ -257,7 +257,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         dto.StaticCount.Should().Be(3);
         dto.CustomCount.Should().Be(1);
         await dashboard.Received(1).GetAnomalyCountsByAgentAsync(
-            Arg.Is<StatisticsFilter>(f => f.From == from && f.To == to),
+            Arg.Is<StatisticsFilter>(f => f != null && f.From == from && f.To == to),
             StatisticsBucket.Hourly, Arg.Any<CancellationToken>());
     }
 

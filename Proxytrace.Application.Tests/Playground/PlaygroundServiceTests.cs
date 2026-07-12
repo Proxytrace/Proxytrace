@@ -61,6 +61,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
                 .Returns(ci =>
                 {
                     var u = ci.Arg<TokenUsage>();
+                    ArgumentNullException.ThrowIfNull(u);
                     return u.InputTokenCount * inputCost.Value + u.OutputTokenCount * outputCost.Value;
                 });
         }
