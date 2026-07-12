@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Scan staged changes for secrets with gitleaks (config: .gitleaks.toml).
+# Installed via scripts/install-git-hooks.sh (sets core.hooksPath to scripts/git-hooks).
+# Bypass for a single commit: GITLEAKS_SKIP=1 git commit ...
+
+if [ "${GITLEAKS_SKIP:-0}" = "1" ]; then
+  echo "pre-commit: GITLEAKS_SKIP=1 — skipping secret scan" >&2
+  exit 0
+fi
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not installed — skipping secret scan." >&2
+  echo "            Install it so commits are scanned: https://github.com/gitleaks/gitleaks#installing" >&2
+  exit 0
+fi
+
+exec gitleaks git --pre-commit --staged --redact --verbose

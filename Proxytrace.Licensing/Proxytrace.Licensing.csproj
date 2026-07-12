@@ -19,6 +19,12 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
     </ItemGroup>
 
+    <!-- Compile-time license public-key override: bakes the value into assembly metadata so
+         Release images can trust a non-production key ONLY when built that way (e2e/perf). -->
+    <ItemGroup Condition="'$(LicensePublicKey)' != ''">
+        <AssemblyMetadata Include="LicensePublicKeyOverride" Value="$(LicensePublicKey)" />
+    </ItemGroup>
+
     <ItemGroup>
         <InternalsVisibleTo Include="Proxytrace.Licensing.Tests" />
         <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />

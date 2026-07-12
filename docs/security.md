@@ -151,6 +151,21 @@ require moving this state into the shared **Redis** the split deployment already
 broker), and is deliberately out of scope today. Do **not** silently add a second API replica behind a
 load balancer without that work.
 
+## Repository secret hygiene (gitleaks)
+
+The repo is scanned for committed credentials with [gitleaks](https://github.com/gitleaks/gitleaks);
+config lives in `.gitleaks.toml` (default rules + an allowlist of the fake fixture credentials that
+are committed on purpose — the test-signed e2e/perf license JWT, demo-data keys, test strings).
+
+- **Pre-commit hook** — `scripts/git-hooks/pre-commit` scans staged changes and blocks the commit on
+  a finding. Enable once per clone with `./scripts/install-git-hooks.sh` (sets `core.hooksPath`);
+  requires gitleaks on `PATH` (skips with a warning otherwise). One-off bypass:
+  `GITLEAKS_SKIP=1 git commit ...`.
+- **CI** — the `secrets` job in `.github/workflows/ci.yml` scans the full history on every push/PR
+  and at the release gate.
+- A finding is a real problem: remove the secret and rotate it. Only extend the `.gitleaks.toml`
+  allowlist for deliberately committed fakes, never to silence a real credential.
+
 ## Out of scope
 
 `StoredLicense` JWT is left plaintext: it is a signed license token, not a credential, so encrypting

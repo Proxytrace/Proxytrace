@@ -29,6 +29,15 @@ public interface ILicenseService
   key in the UI — so cached feature decisions must be invalidated.
 - License tokens are **JWT, verified against bundled public keys** (`LicensePublicKeys`). Never trust
   an unverified tier value; always go through the service.
+- The trusted keys are fixed at **compile time**: `LicensePublicKeys.GetActiveKeys()` returns the
+  embedded production key unless the build ran with `-p:LicensePublicKey=<base64-spki>[,<more>]`
+  (Docker build-arg `LICENSE_PUBLIC_KEY`), which bakes replacement keys into assembly metadata.
+  The dev/e2e composes use it to trust the committed test-signed license JWTs; official release
+  images pass no override. The `PROXYTRACE_LICENSE_PUBLIC_KEY` **runtime** env override exists only
+  in Debug builds — never extend it to Release, or official-image operators could self-sign.
+- The repo is public under the **Elastic License 2.0**, whose "may not remove or circumvent the
+  license key functionality" limitation is the legal backstop for these gates: building a
+  gate-stripped fork is a license violation even though the source is readable.
 - When adding a new gated capability, add a `LicenseFeature`/`LicenseLimit` member and assign it to
   the right `TierDefinition` rather than checking the tier enum directly at the call site.
 

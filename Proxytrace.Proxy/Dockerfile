@@ -14,6 +14,9 @@ ARG TARGETARCH
 ARG BUILD_CONFIGURATION=Release
 # Release version injected by the release workflow (-p:Version); see Directory.Build.props.
 ARG APP_VERSION=0.0.0-dev
+# Compile-time license public-key override (comma-separated base64 SPKI). Empty ⇒ embedded
+# production key. The dev/e2e/perf composes pass the test key; official images pass nothing.
+ARG LICENSE_PUBLIC_KEY=
 WORKDIR /src
 COPY ["Proxytrace.Proxy/Proxytrace.Proxy.csproj", "Proxytrace.Proxy/"]
 COPY ["Proxytrace.Application/Proxytrace.Application.csproj", "Proxytrace.Application/"]
@@ -25,16 +28,17 @@ COPY ["Proxytrace.Storage/Proxytrace.Storage.csproj", "Proxytrace.Storage/"]
 RUN dotnet restore "Proxytrace.Proxy/Proxytrace.Proxy.csproj" -a $TARGETARCH
 COPY . .
 WORKDIR "/src/Proxytrace.Proxy"
-RUN dotnet build "./Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/build -p:Version=$APP_VERSION
+RUN dotnet build "./Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/build -p:Version=$APP_VERSION "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
 
 FROM build AS publish
 ARG TARGETARCH
 ARG BUILD_CONFIGURATION=Release
 ARG APP_VERSION=0.0.0-dev
+ARG LICENSE_PUBLIC_KEY=
 # DebugType=none: ship no PDBs — they carry line-accurate symbols and a SourceLink map
-# pointing at the private repo + commit SHA. Trade-off: production stack traces lose
+# pointing at the source repo + commit SHA (needless bloat). Trade-off: production stack traces lose
 # file/line info (exception messages and frames remain).
-RUN dotnet publish "./Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:Version=$APP_VERSION -p:DebugType=none
+RUN dotnet publish "./Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:Version=$APP_VERSION -p:DebugType=none "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
 
 FROM base AS final
 WORKDIR /app
