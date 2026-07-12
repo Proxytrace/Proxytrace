@@ -291,6 +291,89 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
     }
 
     [TestMethod]
+    public async Task SetFailed_FromValidating_TransitionsToFailedWithoutMetricsPreservingAbRun()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var abTestRunId = Guid.NewGuid();
+        var attached = await validating.AttachAbTestRun(abTestRunId, CancellationToken);
+
+        var failed = await attached.SetFailed(abTestRunId, CancellationToken);
+
+        failed.Status.Should().Be(TheoryStatus.Failed);
+        failed.BaselinePassRate.Should().BeNull();
+        failed.ProjectedPassRate.Should().BeNull();
+        failed.PValue.Should().BeNull();
+        failed.ABTestRunId.Should().Be(abTestRunId);
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.Status.Should().Be(TheoryStatus.Failed);
+        reloaded.ABTestRunId.Should().Be(abTestRunId);
+    }
+
+    [TestMethod]
+    public async Task SetFailed_FromProposed_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+
+        await FluentActions
+            .Invoking(() => theory.SetFailed(null, CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task SetFailed_FromInvalidated_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var invalidated = await validating.SetInvalidated(0.6, 0.6, 0.41, Guid.NewGuid(), CancellationToken);
+
+        await FluentActions
+            .Invoking(() => invalidated.SetFailed(null, CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task ResetToProposed_FromFailed_ClearsRunLinkAndPersists()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var failed = await validating.SetFailed(Guid.NewGuid(), CancellationToken);
+
+        var reset = await failed.ResetToProposed(CancellationToken);
+
+        reset.Status.Should().Be(TheoryStatus.Proposed);
+        reset.ABTestRunId.Should().BeNull();
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.Status.Should().Be(TheoryStatus.Proposed);
+    }
+
+    [TestMethod]
+    public async Task Reject_FromFailed_TransitionsToInvalidatedWithoutMetrics()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var failed = await validating.SetFailed(Guid.NewGuid(), CancellationToken);
+
+        var rejected = await failed.Reject(CancellationToken);
+
+        rejected.Status.Should().Be(TheoryStatus.Invalidated);
+        rejected.PValue.Should().BeNull();
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.Status.Should().Be(TheoryStatus.Invalidated);
+    }
+
+    [TestMethod]
     public async Task SetValidated_WithProjectedPassRateAboveOne_Throws()
     {
         IServiceProvider services = GetServices();

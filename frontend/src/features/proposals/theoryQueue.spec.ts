@@ -71,6 +71,10 @@ describe('queueGroupOf', () => {
     expect(queueGroupOf(makeTheory({ status: TheoryStatus.Invalidated }), null)).toBe('history');
   });
 
+  it('puts failed theories in the needs-attention group, not history', () => {
+    expect(queueGroupOf(makeTheory({ status: TheoryStatus.Failed }), null)).toBe('attention');
+  });
+
   it('routes a validated theory by its proposal review state', () => {
     const validated = makeTheory({ status: TheoryStatus.Validated, resultingProposalId: 'prop-1' });
     expect(queueGroupOf(validated, makeProposal({ status: ProposalStatus.Draft }))).toBe('decision');
@@ -148,6 +152,28 @@ describe('loopStats', () => {
     const stats = loopStats([makeTheory({ status: TheoryStatus.Proposed })], indexProposals([]));
     expect(stats.winRate).toBeNull();
     expect(stats.provenGainPt).toBe(0);
+  });
+
+  it('excludes failed theories from the win rate and the decided count', () => {
+    const stats = loopStats(
+      [
+        makeTheory({ status: TheoryStatus.Validated, resultingProposalId: 'missing', baselinePassRate: 0.7, projectedPassRate: 0.8 }),
+        makeTheory({ status: TheoryStatus.Invalidated, baselinePassRate: 0.9, projectedPassRate: 0.9 }),
+        makeTheory({ status: TheoryStatus.Failed }),
+        makeTheory({ status: TheoryStatus.Failed }),
+      ],
+      indexProposals([]),
+    );
+
+    expect(stats.failed).toBe(2);
+    expect(stats.decided).toBe(1);
+    expect(stats.winRate).toBe(50); // 1 of 2 actually tested — failures don't count as losses
+  });
+
+  it('reports a null win rate when only failed theories exist', () => {
+    const stats = loopStats([makeTheory({ status: TheoryStatus.Failed })], indexProposals([]));
+    expect(stats.winRate).toBeNull();
+    expect(stats.failed).toBe(1);
   });
 
   it('ignores non-positive deltas in proven gain', () => {

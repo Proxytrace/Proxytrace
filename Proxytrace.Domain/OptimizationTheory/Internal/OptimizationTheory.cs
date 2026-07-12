@@ -144,9 +144,19 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
             cancellationToken);
     }
 
+    public Task<IOptimizationTheory> SetFailed(Guid? abTestRunId, CancellationToken cancellationToken = default)
+    {
+        if (Status != TheoryStatus.Validating)
+            throw new InvalidOperationException($"Cannot fail theory {Id} from status {Status}.");
+
+        // No metrics: the A/B comparison never completed, so nothing was measured. The run link is
+        // kept (when known) so the user can inspect what went wrong.
+        return ApplyAsync(this with { Status = TheoryStatus.Failed, ABTestRunId = abTestRunId }, cancellationToken);
+    }
+
     public Task<IOptimizationTheory> Reject(CancellationToken cancellationToken = default)
     {
-        if (Status is not (TheoryStatus.Proposed or TheoryStatus.Validating))
+        if (Status is not (TheoryStatus.Proposed or TheoryStatus.Validating or TheoryStatus.Failed))
             throw new InvalidOperationException($"Cannot reject theory {Id} from status {Status}.");
 
         // Keep any A/B run already linked while validating for provenance; record no metrics so a
@@ -156,7 +166,7 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
 
     public Task<IOptimizationTheory> ResetToProposed(CancellationToken cancellationToken = default)
     {
-        if (Status is not (TheoryStatus.Validated or TheoryStatus.Invalidated))
+        if (Status is not (TheoryStatus.Validated or TheoryStatus.Invalidated or TheoryStatus.Failed))
             throw new InvalidOperationException($"Cannot reset theory {Id} to Proposed from status {Status}.");
 
         return ApplyAsync(

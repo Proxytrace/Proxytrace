@@ -25,9 +25,10 @@ describe('terminal predicates', () => {
     expect(isRunTerminal(TestRunStatus.Pending)).toBe(false);
   });
 
-  it('treats Validated/Invalidated theories as terminal, Proposed/Validating as not', () => {
+  it('treats Validated/Invalidated/Failed theories as terminal, Proposed/Validating as not', () => {
     expect(isTheoryTerminal(TheoryStatus.Validated)).toBe(true);
     expect(isTheoryTerminal(TheoryStatus.Invalidated)).toBe(true);
+    expect(isTheoryTerminal(TheoryStatus.Failed)).toBe(true);
     expect(isTheoryTerminal(TheoryStatus.Proposed)).toBe(false);
     expect(isTheoryTerminal(TheoryStatus.Validating)).toBe(false);
   });

@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
-import { ActivityIcon, CheckIcon, ChevronRightIcon, FlaskIcon, ScaleIcon } from '../../../components/icons';
+import { ActivityIcon, AlertTriangleIcon, CheckIcon, ChevronRightIcon, FlaskIcon, ScaleIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import type { DisplayTone } from '../shared';
 import { TONE_SUBTLE_BG, TONE_TEXT } from '../shared';
@@ -32,6 +32,10 @@ export function LoopStrip({ stats, onJump }: Props) {
   const { i18n } = useLingui();
   const segments: Segment[] = [
     { group: 'inflight', count: stats.testing, icon: <FlaskIcon size={11} />, tone: 'teal', pulse: stats.testing > 0 },
+    // Failed validations sit outside the happy path — show the node only when something broke.
+    ...(stats.failed > 0
+      ? [{ group: 'attention', count: stats.failed, icon: <AlertTriangleIcon size={11} />, tone: 'danger' } satisfies Segment]
+      : []),
     { group: 'decision', count: stats.decision, icon: <ScaleIcon size={11} />, tone: 'accent' },
     { group: 'adoption', count: stats.adoption, icon: <ActivityIcon size={11} />, tone: 'success' },
     { group: 'history', count: stats.decided, icon: <CheckIcon size={11} />, tone: 'muted' },
@@ -60,6 +64,7 @@ export function LoopStrip({ stats, onJump }: Props) {
 
 const SEGMENT_LABEL: Record<QueueGroupKey, MessageDescriptor> = {
   inflight: msg`testing`,
+  attention: msg`could not test`,
   decision: msg`need decision`,
   adoption: msg`awaiting adoption`,
   history: msg`decided`,

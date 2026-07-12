@@ -1468,6 +1468,9 @@ msgstr "Cost (LLM judge)"
 msgid "Cost over time"
 msgstr "Cost over time"
 
+msgid "Could not be tested"
+msgstr "Could not be tested"
+
 msgid "Could not claim account. Check the email matches your existing user."
 msgstr "Could not claim account. Check the email matches your existing user."
 
@@ -1497,6 +1500,12 @@ msgstr "Could not reset your password. Please try again."
 
 msgid "Could not start setup. Please try again."
 msgstr "Could not start setup. Please try again."
+
+msgid "could not test"
+msgstr "could not test"
+
+msgid "Could not test"
+msgstr "Could not test"
 
 msgid "Could not verify the code. Please try again."
 msgstr "Could not verify the code. Please try again."
@@ -4077,6 +4086,9 @@ msgstr "RESULT"
 msgid "Retry discovery"
 msgstr "Retry discovery"
 
+msgid "Retry validation"
+msgstr "Retry validation"
+
 msgid "Reveal"
 msgstr "Reveal"
 
@@ -4885,8 +4897,17 @@ msgstr "testing"
 msgid "Text response"
 msgstr "Text response"
 
+msgid "The A/B test could not run — the theory was not tested."
+msgstr "The A/B test could not run — the theory was not tested."
+
 msgid "The A/B test found no improvement, so the theory was rejected automatically."
 msgstr "The A/B test found no improvement, so the theory was rejected automatically."
+
+msgid "The A/B validation could not run — nothing was measured."
+msgstr "The A/B validation could not run — nothing was measured."
+
+msgid "The A/B validation could not run (e.g. the provider was unreachable) — the theory was never tested. Retry it or dismiss it."
+msgstr "The A/B validation could not run (e.g. the provider was unreachable) — the theory was never tested. Retry it or dismiss it."
 
 msgid "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
 msgstr "The change beat the baseline. Promote it to get the handoff package, or dismiss it."
@@ -4941,6 +4962,9 @@ msgstr "Theory Submitted"
 
 msgid "Theory Validated"
 msgstr "Theory Validated"
+
+msgid "Theory Validation Failed"
+msgstr "Theory Validation Failed"
 
 msgid "Thinking…"
 msgstr "Thinking…"
@@ -5369,6 +5393,9 @@ msgstr "Validates the agent response against a JSON Schema definition."
 msgid "Validating"
 msgstr "Validating"
 
+msgid "Validation failed"
+msgstr "Validation failed"
+
 msgid "Value"
 msgstr "Value"
 
@@ -5396,6 +5423,11 @@ msgstr "via {0} · validated against {1}"
 #. placeholder {1}: suiteName ?? t`a suite`
 msgid "via {0} · validating against {1}"
 msgstr "via {0} · validating against {1}"
+
+#. placeholder {0}: i18n._(THEORY_SOURCE_LABEL[theory.source])
+#. placeholder {1}: suiteName ?? t`a suite`
+msgid "via {0} · validation errored against {1}"
+msgstr "via {0} · validation errored against {1}"
 
 msgid "via Tracey AI"
 msgstr "via Tracey AI"

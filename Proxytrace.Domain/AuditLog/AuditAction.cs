@@ -109,4 +109,8 @@ public enum AuditAction
     CustomAnomalyDetectorCreated = 66,
     CustomAnomalyDetectorUpdated = 67,
     CustomAnomalyDetectorDeleted = 68,
+
+    // A theory's A/B validation errored out (unreachable provider, incomplete run) — the theory
+    // settled Failed instead of Invalidated and can be retried (System actor).
+    TheoryValidationFailed = 69,
 }

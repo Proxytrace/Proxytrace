@@ -42,7 +42,7 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
         // Never score a partial run (a failed/cancelled case leaves fewer results than the suite).
         if (!IsRunComplete(baselineRun, theory.Suite) || !IsRunComplete(candidateRun, theory.Suite))
         {
-            return TheoryValidationOutcome.Inconclusive;
+            return TheoryValidationOutcome.CouldNotTest;
         }
 
         RunMetrics baseline = Metrics(baselineRun);
@@ -50,7 +50,7 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
 
         if (baseline.PassRate is not { } basePassRate || candidate.PassRate is not { } candidatePassRate)
         {
-            return TheoryValidationOutcome.Inconclusive;
+            return TheoryValidationOutcome.CouldNotTest;
         }
 
         (int basePasses, int baseTotal) = PassCounts(baselineRun);

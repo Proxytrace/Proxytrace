@@ -24,7 +24,11 @@ interface Props {
 export function DossierHeader({ theory, proposal, suiteName }: Props) {
   const { t, i18n } = useLingui();
   const aColor = agentColor(theory.agentId);
-  const terminal = theory.status === TheoryStatus.Validated || theory.status === TheoryStatus.Invalidated;
+  const terminal =
+    theory.status === TheoryStatus.Validated ||
+    theory.status === TheoryStatus.Invalidated ||
+    theory.status === TheoryStatus.Failed;
+  const failed = theory.status === TheoryStatus.Failed;
   const gain = terminal ? buildGainSummary(theory, proposal) : null;
   const validated = theory.status === TheoryStatus.Validated;
   const won = validated && gain?.deltaPt != null && gain.deltaPt > 0;
@@ -76,14 +80,20 @@ export function DossierHeader({ theory, proposal, suiteName }: Props) {
         </div>
       ) : (
         terminal && (
-          <div className="text-body-sm text-muted" data-testid="gain-hero"><Trans>No pass-rate metrics recorded.</Trans></div>
+          <div className="text-body-sm text-muted" data-testid="gain-hero">
+            {failed
+              ? <Trans>The A/B validation could not run — nothing was measured.</Trans>
+              : <Trans>No pass-rate metrics recorded.</Trans>}
+          </div>
         )
       )}
 
       <p className="m-0 text-caption text-muted">
-        {terminal
-          ? <Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])} · validated against {suiteName ?? t`a suite`}</Trans>
-          : <Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])} · validating against {suiteName ?? t`a suite`}</Trans>}
+        {failed
+          ? <Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])} · validation errored against {suiteName ?? t`a suite`}</Trans>
+          : terminal
+            ? <Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])} · validated against {suiteName ?? t`a suite`}</Trans>
+            : <Trans>via {i18n._(THEORY_SOURCE_LABEL[theory.source])} · validating against {suiteName ?? t`a suite`}</Trans>}
       </p>
     </header>
   );

@@ -211,8 +211,9 @@ public class TheoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Resets a Validated or Invalidated theory back to Proposed, deleting any proposal it spawned
-    /// and re-queuing it for fresh validation. Refused when the spawned proposal was already accepted.
+    /// Resets a Validated, Invalidated, or Failed theory back to Proposed, deleting any proposal it
+    /// spawned and re-queuing it for fresh validation. Refused when the spawned proposal was already
+    /// accepted.
     /// </summary>
     [HttpPost("{id:guid}/reset")]
     public async Task<ActionResult<TheoryDto>> Reset(Guid id, CancellationToken cancellationToken)
@@ -236,7 +237,7 @@ public class TheoriesController : ControllerBase
         {
             (TheoryResetOutcome.Reset, { } reset) => Ok(mapper.ToDto(reset)),
             (TheoryResetOutcome.NotFound, _) => NotFound($"Theory {id} does not exist."),
-            (TheoryResetOutcome.NotResettable, _) => Conflict("Only Validated or Invalidated theories can be reset."),
+            (TheoryResetOutcome.NotResettable, _) => Conflict("Only Validated, Invalidated, or Failed theories can be reset."),
             (TheoryResetOutcome.BlockedByAcceptedProposal, _) => Conflict(
                 "This proposal was already promoted; resetting would not revert the applied change."),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
@@ -244,9 +245,10 @@ public class TheoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Dismisses an active theory at the user's request. A Proposed theory is rejected without running
-    /// A/B validation; a Validating theory has its in-flight A/B run cancelled. Either way it lands in
-    /// Invalidated. Returns 409 when the theory is already terminal.
+    /// Dismisses a theory at the user's request. A Proposed theory is rejected without running A/B
+    /// validation; a Validating theory has its in-flight A/B run cancelled; a Failed theory is filed
+    /// away without a retry. Either way it lands in Invalidated. Returns 409 when the theory is
+    /// already Validated or Invalidated.
     /// </summary>
     [HttpPost("{id:guid}/reject")]
     public async Task<ActionResult<TheoryDto>> Reject(Guid id, CancellationToken cancellationToken)
@@ -270,7 +272,7 @@ public class TheoriesController : ControllerBase
         {
             (TheoryRejectOutcome.Rejected, { } rejected) => Ok(mapper.ToDto(rejected)),
             (TheoryRejectOutcome.NotFound, _) => NotFound($"Theory {id} does not exist."),
-            (TheoryRejectOutcome.NotActive, _) => Conflict("Only a Proposed or Validating theory can be rejected."),
+            (TheoryRejectOutcome.NotActive, _) => Conflict("Only a Proposed, Validating, or Failed theory can be rejected."),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
     }
@@ -372,6 +374,8 @@ public class TheoriesController : ControllerBase
                     else if (request.Status == TheoryStatus.Invalidated)
                         theory = await theory.SetInvalidated(
                             request.BaselinePassRate, request.ProjectedPassRate, request.PValue, abTestRunId: null, cancellationToken);
+                    else if (request.Status == TheoryStatus.Failed)
+                        theory = await theory.SetFailed(abTestRunId: null, cancellationToken);
                 }
 
                 return theory;

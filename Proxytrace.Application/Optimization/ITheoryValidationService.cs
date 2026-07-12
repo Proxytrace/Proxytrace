@@ -34,7 +34,7 @@ public enum TheoryResetOutcome
     /// <summary>No theory exists with the given id.</summary>
     NotFound,
 
-    /// <summary>The theory is not in a terminal state (Validated/Invalidated), so it cannot be reset.</summary>
+    /// <summary>The theory is not in a terminal state (Validated/Invalidated/Failed), so it cannot be reset.</summary>
     NotResettable,
 
     /// <summary>The spawned proposal was already accepted (applied to the agent); reset is refused.</summary>
@@ -58,7 +58,7 @@ public enum TheoryRejectOutcome
     /// <summary>No theory exists with the given id.</summary>
     NotFound,
 
-    /// <summary>The theory is already terminal (Validated/Invalidated); there is nothing to reject.</summary>
+    /// <summary>The theory is already settled (Validated/Invalidated); there is nothing to reject.</summary>
     NotActive,
 }
 
@@ -87,10 +87,10 @@ public interface ITheoryValidationService
     Task<TheoryResetResult> ResetToProposedAsync(Guid theoryId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Dismisses an active theory at the user's request: a Proposed theory is rejected without ever
-    /// running A/B validation; a Validating theory has its in-flight A/B run cancelled. Either way the
-    /// theory transitions to Invalidated. Returns <see cref="TheoryRejectOutcome.NotActive"/> for an
-    /// already-terminal theory.
+    /// Dismisses a theory at the user's request: a Proposed theory is rejected without ever running
+    /// A/B validation; a Validating theory has its in-flight A/B run cancelled; a Failed theory is
+    /// filed away without a retry. Either way the theory transitions to Invalidated. Returns
+    /// <see cref="TheoryRejectOutcome.NotActive"/> for a Validated or Invalidated theory.
     /// </summary>
     Task<TheoryRejectResult> RejectAsync(Guid theoryId, CancellationToken cancellationToken = default);
 }

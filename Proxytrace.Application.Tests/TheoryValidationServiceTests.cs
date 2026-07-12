@@ -61,6 +61,19 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task PriorTheoryFailed_AllowsResubmission()
+    {
+        Fixture f = Build();
+        var prior = StubTheory(TheoryStatus.Failed);
+        f.Theories.FindLatestByContentHashAsync(f.AgentId, Hash, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IOptimizationTheory?>(prior));
+
+        var result = await f.Service.SubmitAsync(f.Theory, CancellationToken);
+
+        result.Outcome.Should().Be(TheorySubmissionOutcome.Accepted);
+    }
+
+    [TestMethod]
     public async Task DraftProposalSameHash_Duplicate()
     {
         Fixture f = Build();
@@ -190,6 +203,19 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Reset_FailedTheory_ResetsTheory()
+    {
+        Fixture f = Build();
+        var theory = StubResettableTheory(TheoryStatus.Failed, resultingProposalId: null);
+        f.Theories.FindAsync(theory.Id, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationTheory?>(theory));
+
+        var result = await f.Service.ResetToProposedAsync(theory.Id, CancellationToken);
+
+        result.Outcome.Should().Be(TheoryResetOutcome.Reset);
+        await theory.Received(1).ResetToProposed(Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
     public async Task Reset_ProposedTheory_NotResettable()
     {
         Fixture f = Build();
@@ -241,6 +267,19 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Reject_FailedTheory_TransitionsToInvalidated()
+    {
+        Fixture f = Build();
+        var theory = StubRejectableTheory(TheoryStatus.Failed);
+        f.Theories.FindAsync(theory.Id, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationTheory?>(theory));
+
+        var result = await f.Service.RejectAsync(theory.Id, CancellationToken);
+
+        result.Outcome.Should().Be(TheoryRejectOutcome.Rejected);
+        await theory.Received(1).Reject(Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
     public async Task Reject_TerminalTheory_NotActive()
     {
         Fixture f = Build();
@@ -263,6 +302,59 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
         var result = await f.Service.RejectAsync(unknownId, CancellationToken);
 
         result.Outcome.Should().Be(TheoryRejectOutcome.NotFound);
+    }
+
+    [TestMethod]
+    public async Task Validate_ValidatorThrows_SetsTheoryFailedNotInvalidated()
+    {
+        var validator = Substitute.For<ITheoryValidator>();
+        validator.CanValidate(Arg.Any<IOptimizationTheory>()).Returns(true);
+        validator.ValidateAsync(Arg.Any<IOptimizationTheory>(), Arg.Any<CancellationToken>(), Arg.Any<CandidateRunObserver?>())
+            .Returns(Task.FromException<TheoryValidationOutcome>(new InvalidOperationException("provider unreachable")));
+        Fixture f = Build(validators: [validator]);
+        var theory = StubValidatingTheory();
+        f.Theories.FindAsync(theory.Id, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationTheory?>(theory));
+
+        await f.Service.ValidateAsync(theory.Id, CancellationToken);
+
+        await theory.Received(1).SetFailed(Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+        await theory.DidNotReceive().SetInvalidated(
+            Arg.Any<double?>(), Arg.Any<double?>(), Arg.Any<double?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Validate_OutcomeCouldNotTest_SetsTheoryFailedNotInvalidated()
+    {
+        var validator = Substitute.For<ITheoryValidator>();
+        validator.CanValidate(Arg.Any<IOptimizationTheory>()).Returns(true);
+        validator.ValidateAsync(Arg.Any<IOptimizationTheory>(), Arg.Any<CancellationToken>(), Arg.Any<CandidateRunObserver?>())
+            .Returns(Task.FromResult(TheoryValidationOutcome.CouldNotTest));
+        Fixture f = Build(validators: [validator]);
+        var theory = StubValidatingTheory();
+        f.Theories.FindAsync(theory.Id, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationTheory?>(theory));
+
+        await f.Service.ValidateAsync(theory.Id, CancellationToken);
+
+        await theory.Received(1).SetFailed(Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+        await theory.DidNotReceive().SetInvalidated(
+            Arg.Any<double?>(), Arg.Any<double?>(), Arg.Any<double?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Validate_RejectedOutcomeWithMetrics_SetsTheoryInvalidated()
+    {
+        var validator = Substitute.For<ITheoryValidator>();
+        validator.CanValidate(Arg.Any<IOptimizationTheory>()).Returns(true);
+        validator.ValidateAsync(Arg.Any<IOptimizationTheory>(), Arg.Any<CancellationToken>(), Arg.Any<CandidateRunObserver?>())
+            .Returns(Task.FromResult(TheoryValidationOutcome.Rejected(0.6, 0.6, 0.41, Guid.NewGuid())));
+        Fixture f = Build(validators: [validator]);
+        var theory = StubValidatingTheory();
+        f.Theories.FindAsync(theory.Id, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationTheory?>(theory));
+
+        await f.Service.ValidateAsync(theory.Id, CancellationToken);
+
+        await theory.Received(1).SetInvalidated(0.6, 0.6, 0.41, Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+        await theory.DidNotReceive().SetFailed(Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
@@ -310,7 +402,22 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
         return theory;
     }
 
-    private static Fixture Build(KioskOptions? kiosk = null)
+    private static IOptimizationTheory StubValidatingTheory()
+    {
+        var theory = Substitute.For<IOptimizationTheory>();
+        theory.Id.Returns(Guid.NewGuid());
+        theory.Status.Returns(TheoryStatus.Validating);
+        var failed = Substitute.For<IOptimizationTheory>();
+        failed.Status.Returns(TheoryStatus.Failed);
+        theory.SetFailed(Arg.Any<Guid?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(failed));
+        var invalidated = Substitute.For<IOptimizationTheory>();
+        invalidated.Status.Returns(TheoryStatus.Invalidated);
+        theory.SetInvalidated(Arg.Any<double?>(), Arg.Any<double?>(), Arg.Any<double?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(invalidated));
+        return theory;
+    }
+
+    private static Fixture Build(KioskOptions? kiosk = null, ITheoryValidator[]? validators = null)
     {
         var projectId = Guid.NewGuid();
         var agentId = Guid.NewGuid();
@@ -350,7 +457,7 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
             theories,
             proposals,
             groups,
-            [],
+            validators ?? [],
             Substitute.For<IProposalBroadcaster>(),
             Substitute.For<ITheoryBroadcaster>(),
             transaction,
