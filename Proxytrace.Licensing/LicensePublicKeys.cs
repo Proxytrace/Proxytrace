@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Proxytrace.Licensing;
 
 /// <summary>
@@ -16,7 +18,24 @@ public static class LicensePublicKeys
         "hS4ZBLV1nehbrIsUmSr7gW1qSqT3vBQdQFgwJdKt+Qol0+Ig+RwM29f6hQ==";
 
     /// <summary>
-    /// Returns the currently active set of base64 SPKI public keys.
+    /// Returns the license-signing public keys this build trusts. A build-time override
+    /// (MSBuild property <c>LicensePublicKey</c>, comma-separated base64 SPKI values,
+    /// surfaced as Docker build-arg <c>LICENSE_PUBLIC_KEY</c>) replaces the embedded
+    /// production key — the e2e/perf stacks use it to bake in the throwaway test key.
+    /// The override is compile-time only: a shipped image trusts exactly the keys it was
+    /// built with, never a runtime value (see the #if DEBUG guard in the host Modules).
     /// </summary>
-    public static IReadOnlyList<string> GetActiveKeys() => [ActivePublicKey];
+    public static IReadOnlyList<string> GetActiveKeys() =>
+        ParseOverride(typeof(LicensePublicKeys).Assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "LicensePublicKeyOverride")?.Value);
+
+    /// <summary>
+    /// Resolves an override value against the embedded key: null/blank means "no
+    /// override" (embedded production key); otherwise a comma-separated key list.
+    /// </summary>
+    public static IReadOnlyList<string> ParseOverride(string? overrideValue) =>
+        string.IsNullOrWhiteSpace(overrideValue)
+            ? [ActivePublicKey]
+            : overrideValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }

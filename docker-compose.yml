@@ -29,6 +29,11 @@ services:
     build:
       context: .
       dockerfile: Proxytrace.Api/Dockerfile
+      args:
+        # Bake the throwaway TEST license public key so local/e2e/perf stacks trust the
+        # committed test-signed license JWTs. Official release images pass no override and
+        # embed the production key (see docs/licensing.md).
+        LICENSE_PUBLIC_KEY: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEeyQtYEJ6RaUJisEAZsCkJ4zHpUS2hS4ZBLV1nehbrIsUmSr7gW1qSqT3vBQdQFgwJdKt+Qol0+Ig+RwM29f6hQ=="
     ports:
       - "5100:8080"
     depends_on:
@@ -55,6 +60,11 @@ services:
     build:
       context: .
       dockerfile: Proxytrace.Proxy/Dockerfile
+      args:
+        # Bake the throwaway TEST license public key so local/e2e/perf stacks trust the
+        # committed test-signed license JWTs. Official release images pass no override and
+        # embed the production key (see docs/licensing.md).
+        LICENSE_PUBLIC_KEY: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEeyQtYEJ6RaUJisEAZsCkJ4zHpUS2hS4ZBLV1nehbrIsUmSr7gW1qSqT3vBQdQFgwJdKt+Qol0+Ig+RwM29f6hQ=="
     ports:
       - "5102:8080"
     depends_on:

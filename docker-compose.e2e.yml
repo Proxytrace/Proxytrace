@@ -83,6 +83,10 @@ services:
       # build-config driven, so Release serves the Free tier just fine.
       args:
         BUILD_CONFIGURATION: Release
+        # Identical to the base `api`/`proxy` build arg: bakes in the throwaway TEST license
+        # public key. api-free runs Free tier (no PROXYTRACE_LICENSE) so it needs no key to
+        # function, but matching the arg keeps this image layer-cache-shared with `api`.
+        LICENSE_PUBLIC_KEY: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEeyQtYEJ6RaUJisEAZsCkJ4zHpUS2hS4ZBLV1nehbrIsUmSr7gW1qSqT3vBQdQFgwJdKt+Qol0+Ig+RwM29f6hQ=="
     depends_on:
       postgres:
         condition: service_healthy
