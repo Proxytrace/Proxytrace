@@ -8,6 +8,12 @@ on:
   # Reused as a release gate by release.yml (which passes secrets via `secrets: inherit`).
   workflow_call:
 
+# Supersede in-flight runs on PR force-push/amend only; master pushes and
+# release-gate (workflow_call) runs are never cancelled.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   e2e:
     runs-on: ubuntu-latest

@@ -1,0 +1,50 @@
+# Weekly dependency updates, minor+patch grouped into one PR per ecosystem
+# to keep noise down; majors arrive as individual PRs. Every PR runs the full
+# ci + e2e gates (free on the public repo).
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      nuget-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directories:
+      - /frontend
+      - /e2e
+      - /manual
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: docker
+    directories:
+      - /Proxytrace.Api
+      - /Proxytrace.Proxy
+      - /frontend
+    schedule:
+      interval: weekly
+    groups:
+      docker-minor-patch:
+        update-types:
+          - minor
+          - patch
