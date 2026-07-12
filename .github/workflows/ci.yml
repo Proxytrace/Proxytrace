@@ -17,6 +17,7 @@ concurrency:
 jobs:
   secrets:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout (full history)
@@ -33,6 +34,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -59,6 +61,9 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    # A wedged test (a mocked call that never matches leaves the consume loop spinning) otherwise
+    # runs to GitHub's 6h default. The suite finishes in a few minutes; 30 leaves ample headroom.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout

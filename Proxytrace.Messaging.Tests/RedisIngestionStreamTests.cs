@@ -83,12 +83,25 @@ public sealed class RedisIngestionStreamTests
         var stream = new RedisIngestionStream(
             connection, config, NullLogger<RedisIngestionStream>.Instance);
 
-        using var cts = new CancellationTokenSource();
+        // The consume loop only ends when the token is cancelled, which the body below does after the
+        // first envelope. Should the mocked XREADGROUP ever stop matching the call — a StackExchange.Redis
+        // release appends an optional parameter as a new overload, and an under-specified call re-binds
+        // to it — nothing is yielded, the cancel never runs and the loop spins forever. The deadline
+        // turns that into a failed assertion in seconds instead of a test run that hangs until CI is
+        // killed hours later.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var received = new List<IngestEnvelope>();
-        await foreach (IngestEnvelope envelope in stream.ConsumeAsync(cts.Token))
+        try
         {
-            received.Add(envelope);
-            cts.Cancel(); // one valid entry is enough; stop the otherwise-infinite consume loop
+            await foreach (IngestEnvelope envelope in stream.ConsumeAsync(cts.Token))
+            {
+                received.Add(envelope);
+                cts.Cancel(); // one valid entry is enough; stop the otherwise-infinite consume loop
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Deadline elapsed — fall through so the assertions below report what was actually missing.
         }
 
         received.Should().ContainSingle();
