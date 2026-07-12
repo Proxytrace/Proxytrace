@@ -166,6 +166,19 @@ are committed on purpose — the test-signed e2e/perf license JWT, demo-data key
 - A finding is a real problem: remove the secret and rotate it. Only extend the `.gitleaks.toml`
   allowlist for deliberately committed fakes, never to silence a real credential.
 
+## Code scanning & dependency updates
+
+- **CodeQL** — `.github/workflows/codeql.yml` runs GitHub code scanning on every PR, push to
+  master, and a weekly cron (so new query-pack releases surface findings without a commit).
+  Languages: C# (build-mode `none` — no compilation), JavaScript/TypeScript, and GitHub Actions
+  workflows. Alerts land in the repo's Security tab; a PR fails its CodeQL check when it
+  introduces new alerts.
+- **Dependabot** — `.github/dependabot.yml` opens weekly version-update PRs for nuget (`/`),
+  npm (`frontend/`, `e2e/`, `manual/`), github-actions, and the three Dockerfiles. Minor+patch
+  updates are grouped into one PR per ecosystem; majors arrive individually. Dependabot security
+  updates (vulnerability-driven PRs) are enabled in the repo settings. Every Dependabot PR runs
+  the normal ci + e2e gates.
+
 ## Out of scope
 
 `StoredLicense` JWT is left plaintext: it is a signed license token, not a credential, so encrypting

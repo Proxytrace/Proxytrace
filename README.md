@@ -11,6 +11,9 @@ evaluations, and data-backed optimization proposals — a closed loop between
 running agents and improving them.
 
 [![Release](https://img.shields.io/github/v/release/Proxytrace/Proxytrace?color=e8a33d&label=release)](https://github.com/Proxytrace/Proxytrace/releases)
+[![CI](https://github.com/Proxytrace/Proxytrace/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Proxytrace/Proxytrace/actions/workflows/ci.yml)
+[![E2E](https://github.com/Proxytrace/Proxytrace/actions/workflows/e2e.yml/badge.svg?branch=master)](https://github.com/Proxytrace/Proxytrace/actions/workflows/e2e.yml)
+[![CodeQL](https://github.com/Proxytrace/Proxytrace/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/Proxytrace/Proxytrace/actions/workflows/codeql.yml)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-storage-336791?logo=postgresql&logoColor=white)](docs/database.md)
