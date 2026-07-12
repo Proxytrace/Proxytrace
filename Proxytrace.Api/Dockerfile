@@ -44,7 +44,7 @@ ARG BUILD_CONFIGURATION=Release
 ARG APP_VERSION=0.0.0-dev
 ARG LICENSE_PUBLIC_KEY=
 # DebugType=none: ship no PDBs — they carry line-accurate symbols and a SourceLink map
-# pointing at the private repo + commit SHA. Trade-off: production stack traces lose
+# pointing at the source repo + commit SHA (needless bloat). Trade-off: production stack traces lose
 # file/line info (exception messages and frames remain).
 RUN dotnet publish "./Proxytrace.Api.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:SkipManualBuild=true -p:Version=$APP_VERSION -p:DebugType=none "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
 
