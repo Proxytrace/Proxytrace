@@ -9,50 +9,7 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
-### Security
-
-- **Role changes now take effect immediately.** Session tokens bake the user's role at
-  login, but the API trusted that baked role for the token's full 7-day lifetime — so a
-  demoted admin kept admin access until their token expired. The API now re-reads the live
-  role from the database on every request and ignores the stale token claim, so a demotion
-  (or promotion) applies on the user's very next request.
-
-### Changed
-
-- **Proxytrace is now source-available.** The full source code is public at
-  [github.com/Proxytrace/Proxytrace](https://github.com/Proxytrace/Proxytrace) under the
-  Elastic License 2.0: read, build, run, and modify it freely. Providing Proxytrace as a
-  managed service to third parties and removing or circumventing the license-key
-  functionality are not permitted. Paid tiers keep working exactly as before — unlocked
-  with a license key.
-
-- **Quick-start now teaches deterministic agent naming.** The ingestion quick-start — the
-  Traces empty state and the setup wizard's final step — and the proxy setup guide now show
-  the optional `x-proxytrace-agent` header, which attributes calls to the named agent
-  directly instead of relying on prompt-similarity matching.
-
-- **The dashboard's lower half got the mission-control treatment.** The old donut, one-bar
-  latency histogram, and agent-card grid are replaced by two denser, more honest sections:
-  an **Agent fleet** roster — one row per agent with its own activity sparkline (the top
-  pulse band, decomposed per agent), endpoint, token total and fleet share, trace count, and
-  last-active time — and a **Latency spectrum** showing each endpoint's min→max latency span
-  on a shared log scale with p50/p95/p99 markers, alongside the project-wide percentile
-  strip. The fleet header's proposals chip now shows the **real** count of pending
-  optimization proposals (it was previously a static placeholder) and links to the
-  Proposals view.
-
-- **The sidebar now follows your workflow.** Navigation is regrouped into **Monitor**
-  (Dashboard, Traces, Anomalies), **Build** (Agents, Agent Playground), and **Improve** — the
-  whole optimization loop in order (Test Suites, Evaluators, Evaluator Playground, Test Runs,
-  Proposals), so a proposal and the run that produced it finally live side by side. **Tracey AI**
-  moved to a dedicated slot at the top, and the **Audit Log**, an admin **Settings** shortcut,
-  and the Documentation link now sit together in a utility area above the project selector.
-- **Tracey AI chat is easier on the eyes — and looks the part.** Chat messages, the composer, and
-  in-chat headings now render at a comfortable reading size instead of the app's compact data
-  scale, and the whole page picked up an identity: an animated gold-and-teal halo around Tracey's
-  avatar (it spins while she's thinking), a soft aurora across the top of the chat panel, a
-  gradient-lit wordmark and welcome screen, a shimmering *Thinking…* indicator, and larger
-  starter/follow-up chips. All motion respects your system's reduced-motion preference.
+## [1.5.0] - 2026-07-12
 
 ### Added
 
@@ -131,18 +88,35 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
-- **Clearer trace detail header.** The trace drawer's header now leads with the identity that
-  matters: the agent (entity-colored, click to open its page), the model, and the HTTP status
-  on the first line; the full trace ID (with copy) and the exact capture time — date and time
-  to the second — on the line below. *Promote to test case* is renamed to the shorter
-  **Add test** (the dialog it opens follows suit), and the redundant *Create suite →* link is
-  gone — the Add test tooltip now points to the Test Suites page when the agent has no suite
-  yet.
+- **Proxytrace is now source-available.** The full source code is public at
+  [github.com/Proxytrace/Proxytrace](https://github.com/Proxytrace/Proxytrace) under the
+  Elastic License 2.0: read, build, run, and modify it freely. Providing Proxytrace as a
+  managed service to third parties and removing or circumventing the license-key
+  functionality are not permitted. Paid tiers keep working exactly as before — unlocked
+  with a license key.
 
-- **Compact page layouts everywhere.** The remaining pages that still opened with a large
-  title and subtitle — Proposals, Anomalies, Error Log, Audit Log, Users, and Account
-  security — now start directly with their content (the top bar's breadcrumb already names
-  the page). Filters and actions that lived in those headers moved into the pages' toolbars.
+- **Quick-start now teaches deterministic agent naming.** The ingestion quick-start — the
+  Traces empty state and the setup wizard's final step — and the proxy setup guide now show
+  the optional `x-proxytrace-agent` header, which attributes calls to the named agent
+  directly instead of relying on prompt-similarity matching.
+
+- **The dashboard is now a live mission control.** A new full-width pulse band charts
+  per-minute call activity over the last hour and beats in real time as traces arrive. The
+  live trace feed moved to center stage with richer rows (agent identity, live age, arrival
+  flash), the token headline grew into an animated gradient display, and queue depth and p95
+  latency joined the stat tiles. Charts draw in on load; all motion honors reduced-motion
+  preferences. The old telemetry strip's proxy-version label was retired along with the strip
+  itself.
+
+- **The dashboard's lower half got the mission-control treatment.** The old donut, one-bar
+  latency histogram, and agent-card grid are replaced by two denser, more honest sections:
+  an **Agent fleet** roster — one row per agent with its own activity sparkline (the top
+  pulse band, decomposed per agent), endpoint, token total and fleet share, trace count, and
+  last-active time — and a **Latency spectrum** showing each endpoint's min→max latency span
+  on a shared log scale with p50/p95/p99 markers, alongside the project-wide percentile
+  strip. The fleet header's proposals chip now shows the **real** count of pending
+  optimization proposals (it was previously a static placeholder) and links to the
+  Proposals view.
 
 - **The Proposals page is now a review desk.** The four-column theory kanban (whose first two
   columns sat empty most of the time) is replaced by a master/detail decision inbox. A queue
@@ -156,13 +130,32 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   their handoff package first; validated-but-promoted, adopted, and dismissed items no longer
   masquerade as reviewable.
 
-- **The dashboard is now a live mission control.** A new full-width pulse band charts
-  per-minute call activity over the last hour and beats in real time as traces arrive. The
-  live trace feed moved to center stage with richer rows (agent identity, live age, arrival
-  flash), the token headline grew into an animated gradient display, and queue depth and p95
-  latency joined the stat tiles. Charts draw in on load; all motion honors reduced-motion
-  preferences. The old telemetry strip's proxy-version label was retired along with the strip
-  itself.
+- **The sidebar now follows your workflow.** Navigation is regrouped into **Monitor**
+  (Dashboard, Traces, Anomalies), **Build** (Agents, Agent Playground), and **Improve** — the
+  whole optimization loop in order (Test Suites, Evaluators, Evaluator Playground, Test Runs,
+  Proposals), so a proposal and the run that produced it finally live side by side. **Tracey AI**
+  moved to a dedicated slot at the top, and the **Audit Log**, an admin **Settings** shortcut,
+  and the Documentation link now sit together in a utility area above the project selector.
+
+- **Tracey AI chat is easier on the eyes — and looks the part.** Chat messages, the composer, and
+  in-chat headings now render at a comfortable reading size instead of the app's compact data
+  scale, and the whole page picked up an identity: an animated gold-and-teal halo around Tracey's
+  avatar (it spins while she's thinking), a soft aurora across the top of the chat panel, a
+  gradient-lit wordmark and welcome screen, a shimmering *Thinking…* indicator, and larger
+  starter/follow-up chips. All motion respects your system's reduced-motion preference.
+
+- **Clearer trace detail header.** The trace drawer's header now leads with the identity that
+  matters: the agent (entity-colored, click to open its page), the model, and the HTTP status
+  on the first line; the full trace ID (with copy) and the exact capture time — date and time
+  to the second — on the line below. *Promote to test case* is renamed to the shorter
+  **Add test** (the dialog it opens follows suit), and the redundant *Create suite →* link is
+  gone — the Add test tooltip now points to the Test Suites page when the agent has no suite
+  yet.
+
+- **Compact page layouts everywhere.** The remaining pages that still opened with a large
+  title and subtitle — Proposals, Anomalies, Error Log, Audit Log, Users, and Account
+  security — now start directly with their content (the top bar's breadcrumb already names
+  the page). Filters and actions that lived in those headers moved into the pages' toolbars.
 
 ### Fixed
 
@@ -228,6 +221,21 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   its only consumer was the retired telemetry strip.
 
 ### Security
+
+- **Role changes now take effect immediately.** Session tokens bake the user's role at
+  login, but the API trusted that baked role for the token's full 7-day lifetime — so a
+  demoted admin kept admin access until their token expired. The API now re-reads the live
+  role from the database on every request and ignores the stale token claim, so a demotion
+  (or promotion) applies on the user's very next request.
+
+- **Official images now trust only the production license-signing key.** Images published before
+  this release embedded a throwaway test key whose private half is public knowledge, so a
+  self-signed license token could unlock paid tiers on a stock image. The embedded key is rotated
+  to the current production key, and the test key is now baked into the development, e2e, and perf
+  images only, through a compile-time build argument — a shipped image trusts exactly the keys it
+  was built with and never a runtime value. No customer licenses were issued against the retired
+  key, so existing installations are unaffected; license keys issued by Proxytrace continue to
+  validate as before.
 
 - **The proxy's path-traversal guard now resists URL-encoding.** The guard that rejects `..` in a
   forwarded proxy path previously matched only a literal `..`, so a percent-encoded `%2e%2e` (or
