@@ -1,0 +1,24 @@
+# Gitleaks configuration — repository secret scanning.
+#
+#   Full-history scan:  gitleaks git .
+#   Staged changes:     gitleaks git --pre-commit --staged   (what the pre-commit hook runs)
+#
+# The allowlist below covers known fake credentials committed on purpose (test fixtures,
+# demo data). Anything else that trips a rule is a real finding — do not widen these
+# entries to silence one; remove the secret instead.
+
+[extend]
+useDefault = true
+
+[allowlist]
+regexes = [
+  # Test-signed Enterprise license JWT used by the e2e/perf stacks. Signed with the
+  # throwaway test private key whose public half is the embedded key; grants nothing
+  # against production. Matched by its unique signature segment.
+  '''u6J5NJhOP7EUA2tKbRKQcs7T8gmPqXuwGIXiAIUpujUs1zikc-QCbK0x0y2dJWzd_ZIE4GlZgH1aaEGG1EaH_w''',
+  # Fabricated fixture credentials in demo data and tests.
+  '''sk_live_abc123xyz''',
+  '''sk-e2e-placeholder''',
+  '''(?:0123456789ABCDEF){2,}''',
+  '''dGVzdC1jcnlwdG9ncmFwaHkta2V5''',
+]
