@@ -64,6 +64,22 @@ advertises the right address — see [Configuration](/admin/configuration).
 Database schema migrations apply automatically when the `api` container starts — both on
 first install and on upgrades. See [Upgrading](/admin/upgrading).
 
+### Where the images live
+
+The three Proxytrace images are published to **two registries** on every release, from the
+same build — identical tags (`X.Y.Z`, `X.Y`, `X`, `latest`), identical digests, both
+`linux/amd64` and `linux/arm64`:
+
+| Registry | Image | Notes |
+|---|---|---|
+| GitHub Container Registry | `ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}` | **Default.** What the shipped compose file pins. No anonymous pull-rate limit. |
+| Docker Hub | `jabbakadabra/proxytrace-{api,proxy,frontend}` | Mirror. Note Docker Hub rate-limits anonymous pulls per IP. |
+
+If your environment mirrors or allow-lists only Docker Hub, replace the
+`ghcr.io/proxytrace/` prefix on the three `image:` lines in `docker-compose.yml` with
+`jabbakadabra/` — nothing else changes. Always run the three images on the **same version
+tag**; they are released together and are not supported in mixed versions.
+
 ### License
 
 Without a license, Proxytrace runs the Free tier. To activate a license key, enter it

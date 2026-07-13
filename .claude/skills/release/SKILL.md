@@ -113,9 +113,12 @@ when the `OPENAI_API_KEY` secret is absent — that is normal, not a failure.
   `git push origin :refs/tags/vX.Y.Z && git tag -d vX.Y.Z` → fix → re-tag.
 - **ci / e2e** — a real regression or a flaky e2e spec (consult the `run-e2e-tests` skill
   to triage). Fix forward on master, delete the tag, re-tag the fixed commit.
-- **publish-images** — usually GHCR permissions (org must allow `GITHUB_TOKEN` package
-  creation; packages must exist/be linked — see `docs/releasing.md` one-time setup).
-  Re-run the failed job after fixing: `gh run rerun <run-id> --failed`.
+- **publish-images** — usually registry permissions: GHCR (org must allow `GITHUB_TOKEN`
+  package creation; packages must exist/be linked) or Docker Hub (`DOCKER_HUB_PAT` expired /
+  lacks *Read & Write*) — see `docs/releasing.md` one-time setup. Re-run the failed job after
+  fixing: `gh run rerun <run-id> --failed` (re-pushing the same tags is idempotent). A red
+  **Sync Docker Hub repo description** step is `continue-on-error` cosmetic noise — the images
+  shipped; don't re-run the release for it.
 - **release** — images are already pushed at this point; prefer `gh run rerun --failed`
   over re-tagging.
 
@@ -127,8 +130,9 @@ API won't list it yet:
 
 ```bash
 gh release view vX.Y.Z                                        # Draft: true, notes + zip asset attached
-docker manifest inspect ghcr.io/proxytrace/proxytrace-api:X.Y.Z       # image exists
+docker manifest inspect ghcr.io/proxytrace/proxytrace-api:X.Y.Z        # image exists
 docker manifest inspect ghcr.io/proxytrace/proxytrace-api:latest       # rolling tag moved (not for rc)
+docker manifest inspect jabbakadabra/proxytrace-api:X.Y.Z              # Docker Hub mirror got it too
 ```
 
 Strongest check — run the customer artifact exactly as a customer would (use a throwaway

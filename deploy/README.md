@@ -1,7 +1,10 @@
 # Proxytrace — Docker Compose deployment
 
 Runs the full Proxytrace stack: web UI, API, ingestion proxy, Postgres, and Redis.
-Images are published to GHCR (`ghcr.io/proxytrace/...`); nothing is built locally.
+Images are published to GHCR (`ghcr.io/proxytrace/...`); nothing is built locally. The same
+images are mirrored on Docker Hub (`jabbakadabra/proxytrace-...`) — to pull from there
+instead, replace the `ghcr.io/proxytrace/` prefix in `docker-compose.yml` with
+`jabbakadabra/`.
 
 ## Quickstart
 

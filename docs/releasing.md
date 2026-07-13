@@ -53,12 +53,21 @@ Propagation:
    (`scripts/release/extract-changelog.sh`).
 2. **ci / e2e** — reuses the existing `ci.yml` and `e2e.yml` workflows as release gates
    (both expose `workflow_call`).
-3. **publish-images** — builds and pushes `ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`
-   (multi-arch: linux/amd64 + linux/arm64; build stages cross-compile natively via
-   `--platform=$BUILDPLATFORM` + `dotnet -a $TARGETARCH`, QEMU only runs the trivial
-   runtime-stage RUN commands) with
-   `APP_VERSION` injected, tagged `X.Y.Z`, `X.Y`, `X`, and `latest`
-   (rolling tags suppressed for prereleases).
+3. **publish-images** — builds `{api,proxy,frontend}` once each (multi-arch: linux/amd64 +
+   linux/arm64; build stages cross-compile natively via `--platform=$BUILDPLATFORM` +
+   `dotnet -a $TARGETARCH`, QEMU only runs the trivial runtime-stage RUN commands) with
+   `APP_VERSION` injected, and pushes each build to **both registries** with an identical
+   tag set — `X.Y.Z`, `X.Y`, `X`, and `latest` (rolling tags suppressed for prereleases):
+   - `ghcr.io/proxytrace/proxytrace-*` — **canonical**; what `deploy/docker-compose.yml`,
+     the README and the manual pin. No anonymous pull-rate limit.
+   - `docker.io/jabbakadabra/proxytrace-*` — **public mirror** for discoverability. Same
+     digests (one build, two push targets). A final `peter-evans/dockerhub-description` step
+     syncs `scripts/release/dockerhub-overview.md` onto each Hub repo page; it is
+     `continue-on-error` because the images are already pushed by then and a description
+     failure must never fail a release.
+
+   Adding a registry = add its image to the `images:` list of the `docker-meta` step; the
+   tag rules apply to every image in the list.
 4. **release** — pins the version into `deploy/docker-compose.yml` (replacing the
    `${PROXYTRACE_VERSION:-latest}` placeholder), zips it with `deploy/.env.example` +
    `deploy/README.md`, extracts the changelog section as release notes, and creates the
@@ -112,3 +121,11 @@ endpoint `GET /api/updates`. Disabled in kiosk mode and for `0.0.0-dev` builds. 
   (GitHub UI; not automatable from the workflow).
 - The org must allow `GITHUB_TOKEN` package creation (org settings → Packages).
 - E2E gates use `secrets: inherit` for `OPENAI_API_KEY` (LLM specs are skipped without it).
+- **Docker Hub** — the workflow logs in as the `jabbakadabra` account (hardcoded as the
+  `DOCKERHUB_USERNAME` env of the `publish-images` job) with the repo secret
+  `DOCKER_HUB_PAT`. The three `jabbakadabra/proxytrace-*` repos are **auto-created as
+  public** on first push, so nothing must be pre-created. PAT scopes: *Read & Write* is
+  enough to push; the description-sync step additionally wants *Delete* (Docker's API ties
+  the description endpoint to that scope) — without it that step just logs a failure and the
+  release proceeds. Changing the account/namespace = change `DOCKERHUB_USERNAME` + the
+  secret; also update the image table in `scripts/release/dockerhub-overview.md`.

@@ -60,7 +60,8 @@ response. From there, the platform takes over:
 
 Every [GitHub release](https://github.com/Proxytrace/Proxytrace/releases) ships a
 `proxytrace.zip` with a pinned Docker Compose file and `.env` template; images are
-published to GHCR (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`).
+published to GHCR (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`) and mirrored to
+Docker Hub (`jabbakadabra/proxytrace-{api,proxy,frontend}`, same tags and digests).
 
 ```bash
 curl -fLO https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip
