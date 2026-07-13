@@ -9,6 +9,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Container images are now also published to Docker Hub.** Every release pushes the same
+  three images — same version tags, same digests, `linux/amd64` + `linux/arm64` — to
+  `jabbakadabra/proxytrace-{api,proxy,frontend}` alongside the existing GHCR images. GHCR
+  stays the default the shipped Compose file pins; to pull from Docker Hub instead, swap the
+  `ghcr.io/proxytrace/` image prefix for `jabbakadabra/`.
+
 ### Changed
 
 - **Errored A/B validations no longer count as disproven theories.** When a theory's A/B
