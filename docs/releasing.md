@@ -53,18 +53,27 @@ Propagation:
    (`scripts/release/extract-changelog.sh`).
 2. **ci / e2e** — reuses the existing `ci.yml` and `e2e.yml` workflows as release gates
    (both expose `workflow_call`).
-3. **publish-images** — builds `{api,proxy,frontend}` once each (multi-arch: linux/amd64 +
-   linux/arm64; build stages cross-compile natively via `--platform=$BUILDPLATFORM` +
-   `dotnet -a $TARGETARCH`, QEMU only runs the trivial runtime-stage RUN commands) with
-   `APP_VERSION` injected, and pushes each build to **both registries** with an identical
-   tag set — `X.Y.Z`, `X.Y`, `X`, and `latest` (rolling tags suppressed for prereleases):
-   - `ghcr.io/proxytrace/proxytrace-*` — **canonical**; what `deploy/docker-compose.yml`,
-     the README and the manual pin. No anonymous pull-rate limit.
-   - `docker.io/jabbakadabra/proxytrace-*` — **public mirror** for discoverability. Same
-     digests (one build, two push targets). A final `peter-evans/dockerhub-description` step
-     syncs `scripts/release/dockerhub-overview.md` onto each Hub repo page; it is
-     `continue-on-error` because the images are already pushed by then and a description
-     failure must never fail a release.
+3. **publish-image** — builds the **all-in-one image** (`deploy/allinone/Dockerfile`) once,
+   multi-arch (linux/amd64 + linux/arm64; build stages cross-compile natively via
+   `--platform=$BUILDPLATFORM` + `dotnet -a $TARGETARCH`, QEMU only runs the runtime stage's
+   apt install) with `APP_VERSION` injected, and pushes that one build to **both registries**
+   with an identical tag set — `X.Y.Z`, `X.Y`, `X`, and `latest` (rolling tags suppressed for
+   prereleases):
+   - `ghcr.io/proxytrace/proxytrace` — **canonical**; what `deploy/docker-compose.yml`, the
+     README and the manual pin. No anonymous pull-rate limit.
+   - `docker.io/proxytrace/proxytrace` — Docker Hub, for discoverability. Same digests (one
+     build, two push targets). A final `peter-evans/dockerhub-description` step syncs
+     `scripts/release/dockerhub-overview.md` onto the Hub repo page; it is `continue-on-error`
+     because the image is already pushed by then and a description failure must never fail a
+     release.
+
+   This is the **only** released image — it contains nginx + the SPA + the manual, the API, the
+   ingestion proxy, and (started only when `ConnectionStrings__Default` / `Redis__ConnectionString`
+   are unset) PostgreSQL and Redis, supervised by supervisord (`deploy/allinone/entrypoint.sh`).
+   The per-service Dockerfiles (`Proxytrace.Api/`, `Proxytrace.Proxy/`, `frontend/`) still back
+   the source-built dev/e2e/perf composes; they are not published. `ci.yml`'s **image** job builds
+   the same Dockerfile and boots the container on a cold volume, so a broken release image fails
+   on the PR, not on the tag.
 
    Adding a registry = add its image to the `images:` list of the `docker-meta` step; the
    tag rules apply to every image in the list.
@@ -76,7 +85,7 @@ Propagation:
 A drafted release is hidden from the public Releases API, so the update banner (below) does
 not fire until a human publishes it. **The customer-facing go-live is the manual "Publish
 release" click** in the GitHub UI (or `gh release edit vX.Y.Z --draft=false`), not the tag
-push. Note the rolling image tags (`latest`/`X.Y`/`X`) still move at the publish-images step,
+push. Note the rolling image tags (`latest`/`X.Y`/`X`) still move at the publish-image step,
 before the release is published — customers pin versions and the banner is API-driven, so
 this is harmless, but `latest` advances ahead of the release going live.
 
@@ -94,12 +103,16 @@ without sourcemaps (Vite default — don't enable `build.sourcemap` for producti
 
 ## The deploy artifact (`deploy/`)
 
-`deploy/docker-compose.yml` is the customer-facing install: pinned GHCR images, postgres 16 +
-redis, healthchecks, restart policies, named volumes (`pgdata`, `searchindex`), and required
-secrets enforced via `${VAR:?}` (see `deploy/.env.example`). The in-repo copy tracks `latest`;
-the released zip is fully pinned. Keep it runnable from a bare directory containing only the
-three artifact files — it must never reference repo paths (which is why `frontend/nginx.conf`
-is baked into the frontend image).
+`deploy/docker-compose.yml` is the customer-facing **production** install: the pinned GHCR
+all-in-one image plus postgres 16 and redis as their own containers, healthchecks, restart
+policies, named volumes (`pgdata`, `appdata`). It sets `ConnectionStrings__Default` and
+`Redis__ConnectionString`, which is precisely what makes the image skip its embedded database
+and cache. The in-repo copy tracks `latest`; the released zip is fully pinned. Keep it runnable
+from a bare directory containing only the three artifact files — it must never reference repo
+paths (which is why `frontend/nginx.conf` is baked into the image).
+
+The simpler shape — `docker run … ghcr.io/proxytrace/proxytrace` with the embedded database —
+needs no artifact at all; it is what the README, the website and the Hub page lead with.
 
 ## Changelog discipline
 
@@ -121,11 +134,13 @@ endpoint `GET /api/updates`. Disabled in kiosk mode and for `0.0.0-dev` builds. 
   (GitHub UI; not automatable from the workflow).
 - The org must allow `GITHUB_TOKEN` package creation (org settings → Packages).
 - E2E gates use `secrets: inherit` for `OPENAI_API_KEY` (LLM specs are skipped without it).
-- **Docker Hub** — the workflow logs in as the `jabbakadabra` account (hardcoded as the
-  `DOCKERHUB_USERNAME` env of the `publish-images` job) with the repo secret
-  `DOCKER_HUB_PAT`. The three `jabbakadabra/proxytrace-*` repos are **auto-created as
-  public** on first push, so nothing must be pre-created. PAT scopes: *Read & Write* is
-  enough to push; the description-sync step additionally wants *Delete* (Docker's API ties
-  the description endpoint to that scope) — without it that step just logs a failure and the
-  release proceeds. Changing the account/namespace = change `DOCKERHUB_USERNAME` + the
-  secret; also update the image table in `scripts/release/dockerhub-overview.md`.
+- **Docker Hub** — the image is published under the plain `proxytrace` **account**
+  (`DOCKERHUB_USERNAME`, hardcoded in the `publish-image` job), authenticated with its PAT in
+  the repo secret `DOCKER_HUB_PAT`. Deliberately not an organisation: Hub orgs are a paid
+  feature and buy nothing here — a user account gives the same `proxytrace/proxytrace`
+  namespace, and Docker can convert it to an org later without losing the name. The repository
+  is **auto-created as public** on first push, so nothing must be pre-created. PAT scopes:
+  *Read & Write* is enough to push; the description-sync step additionally wants *Delete*
+  (Docker's API ties the description endpoint to that scope) — without it that step just logs
+  a failure and the release proceeds. Changing the namespace = change `DOCKERHUB_USERNAME` +
+  the secret; also update `scripts/release/dockerhub-overview.md`.

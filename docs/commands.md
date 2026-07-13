@@ -40,15 +40,18 @@ The `./dev.sh` flow does not auto-seed; use the `/setup` page (or `SetupControll
 # Cut a release (after moving CHANGELOG [Unreleased] under the new version heading):
 git tag -a v1.2.3 -m "Proxytrace 1.2.3" && git push origin v1.2.3
 
-# Build a release-shaped image locally with the version injected:
-docker build -f Proxytrace.Api/Dockerfile --build-arg APP_VERSION=1.2.3 -t proxytrace-api:1.2.3 .
+# Build the released image locally (the all-in-one container) with the version injected:
+docker build -f deploy/allinone/Dockerfile --build-arg APP_VERSION=1.2.3 -t proxytrace:1.2.3 .
 
-# Run the customer deployment artifact locally (needs a .env, see deploy/.env.example):
-cd deploy && cp .env.example .env && docker compose up -d
+# Run it exactly as a customer would — embedded Postgres/Redis, nothing to configure:
+docker run -d --name proxytrace -p 5101:80 -p 5102:8081 -v proxytrace:/data proxytrace:1.2.3
+
+# Run the customer deployment artifact locally (managed Postgres/Redis; .env optional):
+cd deploy && docker compose up -d
 ```
 
-See [`releasing.md`](releasing.md) for the full release pipeline (version SSOT, GHCR images,
-deploy artifact, changelog discipline).
+See [`releasing.md`](releasing.md) for the full release pipeline (version SSOT, the single
+released image, deploy artifact, changelog discipline).
 
 ## End-to-end tests (Playwright, inside `e2e/`)
 The e2e suite boots the full stack via Docker Compose (`docker-compose.e2e.yml`).

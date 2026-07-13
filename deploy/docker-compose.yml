@@ -4,17 +4,23 @@
 #   docker compose up -d
 #   open http://localhost:5101
 #
-# No .env is required: the database password defaults (postgres is never exposed),
-# the session signing key is generated and persisted on first start, and without a
-# license key Proxytrace runs the Free tier. Copy .env.example to .env to override
-# any of these — recommended for production: set your own POSTGRES_PASSWORD.
+# Same image as `docker run ghcr.io/proxytrace/proxytrace` — the difference is that this file
+# runs Postgres and Redis as their own containers and points the app at them. The app image
+# only starts its embedded Postgres/Redis when ConnectionStrings__Default / Redis__ConnectionString
+# are absent, so setting them here is what switches the database out. Prefer this shape for
+# anything you care about: the database can then be backed up, tuned and upgraded on its own.
 #
-# The release artifact attached to each GitHub release ships this file with
-# PROXYTRACE_VERSION pinned to that release. The in-repo copy tracks `latest`.
+# No .env is required: the database password defaults (postgres is never exposed), the session
+# signing key is generated and persisted on first start, and without a license key Proxytrace
+# runs the Free tier. Copy .env.example to .env to override any of these — recommended for
+# production: set your own POSTGRES_PASSWORD.
+#
+# The release artifact attached to each GitHub release ships this file with PROXYTRACE_VERSION
+# pinned to that release. The in-repo copy tracks `latest`.
 name: proxytrace
 
 services:
-  # Owns the schema (the api runs migrations on startup); the proxy connects read-only.
+  # Owns the schema; the app applies migrations on startup.
   # Not published to the host — uncomment the ports mapping for debugging only.
   postgres:
     image: postgres:16-alpine
@@ -35,7 +41,8 @@ services:
       retries: 10
       start_period: 5s
 
-  # Ingestion transport between the proxy (producer) and the api (consumer). Internal only.
+  # Ingestion transport between the proxy and the API (both live in the app container).
+  # Internal only.
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -45,87 +52,53 @@ services:
       timeout: 5s
       retries: 10
 
-  # Main application: REST API, SSE, test runner, optimizer, search, ingestion consumer.
-  # Not published to the host: the frontend's nginx proxies /api to it. Run a single
-  # replica — it applies database migrations on startup.
-  api:
-    image: ghcr.io/proxytrace/proxytrace-api:${PROXYTRACE_VERSION:-latest}
+  # The whole application: web UI + manual (nginx on :80), REST API, test runner, optimizer,
+  # ingestion consumer, and the OpenAI-compatible ingestion proxy (:8081).
+  proxytrace:
+    image: ghcr.io/proxytrace/proxytrace:${PROXYTRACE_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
-    environment:
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD:-proxytrace}
-      - Kiosk__Enabled=false
-      - Messaging__Provider=Redis
-      - Redis__ConnectionString=redis:6379
-      - Self__BaseUrl=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
-      - Frontend__AllowedOrigin=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
-      # Ingestion endpoint the UI advertises to clients (setup wizard, API-keys page). Must
-      # match how the proxy service is reachable from the outside — if you change PROXY_PORT
-      # or front the proxy with your own hostname, set PROXYTRACE_PROXY_PUBLIC_URL too.
-      - Proxy__PublicBaseUrl=${PROXYTRACE_PROXY_PUBLIC_URL:-http://localhost:5102}
-      - Authentication__Mode=Local
-      # Optional: when unset, a signing key is generated on first start and persisted in
-      # the appdata volume, so sessions survive restarts and upgrades.
-      - Authentication__Local__SigningKey=${PROXYTRACE_SIGNING_KEY:-}
-      # Optional license key (JWT). Leave empty for the Free tier; a license can also be
-      # set later in the setup wizard or under Settings → License.
-      - PROXYTRACE_LICENSE=${PROXYTRACE_LICENSE:-}
-      # Generated secrets + the license offline-grace cache live here (appdata volume).
-      - PROXYTRACE_DATA_DIR=/app/data
-    volumes:
-      - searchindex:/app/searchindex
-      - appdata:/app/data
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 15s
-
-  # Ingestion proxy: point your agents' OpenAI base URL here. Starts after the api so the
-  # database schema exists before its read-only API-key lookups.
-  proxy:
-    image: ghcr.io/proxytrace/proxytrace-proxy:${PROXYTRACE_VERSION:-latest}
-    restart: unless-stopped
     ports:
-      - "${PROXY_PORT:-5102}:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      api:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD:-proxytrace}
-      - Redis__ConnectionString=redis:6379
-      # Shares the api's Data Protection key ring (same appdata volume) so the proxy can decrypt the
-      # upstream provider key before replaying it. Must match the api's PROXYTRACE_DATA_DIR.
-      - PROXYTRACE_DATA_DIR=/app/data
-    volumes:
-      - appdata:/app/data
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q 200 <&3'"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 15s
-
-  # Web UI (nginx): serves the SPA at / and the manual at /docs, proxies /api to the api.
-  frontend:
-    image: ghcr.io/proxytrace/proxytrace-frontend:${PROXYTRACE_VERSION:-latest}
-    restart: unless-stopped
-    ports:
+      # Web UI (the browser opens this one).
       - "${FRONTEND_PORT:-5101}:80"
-    depends_on:
-      api:
-        condition: service_healthy
+      # Ingestion proxy — point your agents' OpenAI base URL at http://<host>:5102/openai/v1.
+      - "${PROXY_PORT:-5102}:8081"
+    environment:
+      # Set ⇒ the container's embedded Postgres/Redis stay down and these are used instead.
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD:-proxytrace}
+      - Redis__ConnectionString=redis:6379
+      # The URL users open in the browser: CORS origin and self-referencing links.
+      - PROXYTRACE_PUBLIC_URL=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
+      # Ingestion endpoint the UI advertises to clients (setup wizard, API-keys page). Must
+      # match how the proxy port is reachable from the outside — if you change PROXY_PORT or
+      # front the proxy with your own hostname, set this too.
+      - PROXYTRACE_PROXY_PUBLIC_URL=${PROXYTRACE_PROXY_PUBLIC_URL:-http://localhost:5102}
+      # Optional: when unset, a signing key is generated on first start and persisted in the
+      # data volume, so sessions survive restarts and upgrades.
+      - Authentication__Local__SigningKey=${PROXYTRACE_SIGNING_KEY:-}
+      # Optional license key (JWT). Leave empty for the Free tier; a license can also be set
+      # later in the setup wizard or under Settings → License.
+      - PROXYTRACE_LICENSE=${PROXYTRACE_LICENSE:-}
+    volumes:
+      # Generated secrets + the Data Protection key ring (it encrypts your stored provider
+      # keys), and the Lucene search index. Back these up together with the database.
+      # The mount points are the paths PROXYTRACE_DATA_DIR / Search__IndexPath default to, so
+      # an installation upgrading from the pre-1.x three-container stack keeps both volumes
+      # and their contents unchanged — the key ring keeps decrypting, the index stays warm.
+      - appdata:/data/appdata
+      - searchindex:/data/searchindex
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/api/health && curl -fsS http://127.0.0.1:8081/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
 volumes:
   pgdata:
-  searchindex:
   appdata:
+  searchindex:

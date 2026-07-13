@@ -58,10 +58,20 @@ response. From there, the platform takes over:
 
 ## Quick start
 
-Every [GitHub release](https://github.com/Proxytrace/Proxytrace/releases) ships a
-`proxytrace.zip` with a pinned Docker Compose file and `.env` template; images are
-published to GHCR (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`) and mirrored to
-Docker Hub (`jabbakadabra/proxytrace-{api,proxy,frontend}`, same tags and digests).
+Proxytrace ships as one image holding the whole product — web UI, API, ingestion proxy,
+PostgreSQL and Redis. It is published to GHCR (`ghcr.io/proxytrace/proxytrace`) and Docker
+Hub (`proxytrace/proxytrace`, same tags and digests), for `linux/amd64` and `linux/arm64`.
+
+```bash
+docker run -d --name proxytrace \
+  -p 5101:80 -p 5102:8081 \
+  -v proxytrace:/data \
+  ghcr.io/proxytrace/proxytrace
+```
+
+For production, run the same image against a database of your own: every
+[GitHub release](https://github.com/Proxytrace/Proxytrace/releases) ships a `proxytrace.zip`
+with a pinned Docker Compose file (app + Postgres + Redis) and an `.env` template.
 
 ```bash
 curl -fLO https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip

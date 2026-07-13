@@ -8,30 +8,31 @@ optimization proposals. Self-hosted, runs entirely on your own infrastructure.
 - Source & releases: <https://github.com/Proxytrace/Proxytrace>
 - Docs: served at `/docs` in every install
 
-## The images
+## Run it
 
-Proxytrace is a three-image stack; they are versioned and released together, so always run
-matching tags.
+The image is the whole product — web UI, API, ingestion proxy, PostgreSQL and Redis in one
+container. Nothing to configure:
 
-| Image | Role |
-|-------|------|
-| `jabbakadabra/proxytrace-api` | Application API, background jobs, MCP endpoint |
-| `jabbakadabra/proxytrace-proxy` | OpenAI-compatible ingestion proxy your agents point at |
-| `jabbakadabra/proxytrace-frontend` | Web UI (nginx) |
+```bash
+docker run -d --name proxytrace \
+  -p 5101:80 -p 5102:8081 \
+  -v proxytrace:/data \
+  proxytrace/proxytrace
+```
 
-These are mirrors of the canonical images on GitHub Container Registry
-(`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`) — identical digests, same tags.
+Open <http://localhost:5101> and follow the first-run setup. Point your agent's OpenAI base
+URL at `http://localhost:5102/openai/v1` and traces stream into the UI in real time.
 
-**Tags:** `X.Y.Z` (immutable, pin this in production), plus rolling `X.Y`, `X` and `latest`.
-Prereleases (`X.Y.Z-rc.N`) publish only their exact version.
+All state (database, secrets, search index) lives in the `/data` volume — back that up, and
+upgrade by pulling a newer tag and recreating the container. Schema migrations run on start.
 
-**Platforms:** `linux/amd64`, `linux/arm64`.
+## Bring your own Postgres
 
-## Running it
-
-Don't wire these up by hand — every [GitHub release](https://github.com/Proxytrace/Proxytrace/releases)
-ships a `proxytrace.zip` with a pinned Docker Compose file (app + Postgres + Redis) and an
-`.env` template:
+Set `ConnectionStrings__Default` (and optionally `Redis__ConnectionString`) and the container
+skips its embedded services and uses yours instead. That is the recommended production shape,
+and it's exactly what the Docker Compose deployment attached to every
+[GitHub release](https://github.com/Proxytrace/Proxytrace/releases) does — a `proxytrace.zip`
+with a pinned compose file (this image + Postgres + Redis) and an `.env` template:
 
 ```bash
 curl -fLO https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip
@@ -39,12 +40,15 @@ unzip proxytrace.zip && cd proxytrace-<version>
 docker compose up -d        # no .env required — see .env.example for overrides
 ```
 
-Then open <http://localhost:5101> and follow the first-run setup. To pull from Docker Hub
-instead of GHCR, replace the `ghcr.io/proxytrace/` image prefix in the compose file with
-`jabbakadabra/`.
+## Tags & platforms
 
-Point your agent's OpenAI base URL at `http://localhost:5102/openai/v1` and traces stream
-into the UI in real time.
+**Tags:** `X.Y.Z` (immutable, pin this in production), plus rolling `X.Y`, `X` and `latest`.
+Prereleases (`X.Y.Z-rc.N`) publish only their exact version.
+
+**Platforms:** `linux/amd64`, `linux/arm64`.
+
+The same image is published to GitHub Container Registry as `ghcr.io/proxytrace/proxytrace` —
+identical digests, same tags. GHCR has no anonymous pull-rate limit.
 
 ## License
 
