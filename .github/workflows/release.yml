@@ -1,9 +1,9 @@
 name: Release
 
 # Cutting a release = push an annotated tag vX.Y.Z (see docs/releasing.md).
-# This builds the container images with the version injected, pushes them to GHCR
-# (canonical) and Docker Hub (mirror), and creates a GitHub release with notes from
-# CHANGELOG.md and the pinned Docker Compose deployment artifact attached.
+# This builds the all-in-one container image with the version injected, pushes it to GHCR
+# and Docker Hub, and creates a GitHub release with notes from CHANGELOG.md and the pinned
+# Docker Compose deployment artifact attached.
 
 on:
   push:
@@ -49,30 +49,26 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
-  publish-images:
+  # One image per release: the all-in-one container (deploy/allinone/Dockerfile), published
+  # to both registries from a single build so tags and digests match. The per-service
+  # Dockerfiles still exist for the source-built dev/e2e/perf composes; they are not shipped.
+  publish-image:
     needs: [meta, ci, e2e]
     runs-on: ubuntu-latest
     env:
-      # Docker Hub namespace (personal account owning DOCKER_HUB_PAT). GHCR stays the
-      # canonical registry the compose artifact pins; Docker Hub is a public mirror.
-      DOCKERHUB_USERNAME: jabbakadabra
-    strategy:
-      matrix:
-        include:
-          - name: api
-            dockerfile: Proxytrace.Api/Dockerfile
-          - name: proxy
-            dockerfile: Proxytrace.Proxy/Dockerfile
-          - name: frontend
-            dockerfile: frontend/Dockerfile
+      # Docker Hub account the image is published under — it is both the login and the
+      # namespace, so the image reads `proxytrace/proxytrace`. A plain (free) account: Hub
+      # organisations are a paid feature and buy nothing we need. Auth is its PAT, in the
+      # DOCKER_HUB_PAT repo secret.
+      DOCKERHUB_USERNAME: proxytrace
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       # QEMU lets the amd64 runner emulate arm64 for the multi-arch build below.
-      # The heavy compile steps cross-compile natively (Dockerfiles pin their build
-      # stages to --platform=$BUILDPLATFORM); emulation only runs the trivial RUN
-      # commands in the arm64 runtime stages (mkdir/chown).
+      # The heavy compile steps cross-compile natively (the Dockerfile pins its build
+      # stages to --platform=$BUILDPLATFORM); emulation only runs the arm64 runtime
+      # stage's apt install.
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
@@ -86,8 +82,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Docker Hub mirror. The PAT needs Read & Write on public repos; the three
-      # repositories are auto-created (public) on first push.
+      # The PAT needs Read & Write; proxytrace/proxytrace is auto-created (public) on first push.
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
         with:
@@ -102,8 +97,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/proxytrace/proxytrace-${{ matrix.name }}
-            docker.io/${{ env.DOCKERHUB_USERNAME }}/proxytrace-${{ matrix.name }}
+            ghcr.io/proxytrace/proxytrace
+            docker.io/${{ env.DOCKERHUB_USERNAME }}/proxytrace
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -113,31 +108,31 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: deploy/allinone/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
             APP_VERSION=${{ needs.meta.outputs.version }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: type=gha,scope=release-${{ matrix.name }}
-          cache-to: type=gha,mode=max,scope=release-${{ matrix.name }}
+          cache-from: type=gha,scope=release-allinone
+          cache-to: type=gha,mode=max,scope=release-allinone
 
-      # Keeps each Docker Hub repo page from being an empty shell: pushes a short
-      # overview + the product's short description. Non-fatal — a failure here must
-      # not fail a release whose images are already published.
+      # Keeps the Docker Hub repo page from being an empty shell: pushes a short overview +
+      # the product's short description. Non-fatal — a failure here must not fail a release
+      # whose image is already published.
       - name: Sync Docker Hub repo description
         continue-on-error: true
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
-          repository: ${{ env.DOCKERHUB_USERNAME }}/proxytrace-${{ matrix.name }}
-          short-description: "Proxytrace ${{ matrix.name }} — trace, test and improve your AI agents."
+          repository: ${{ env.DOCKERHUB_USERNAME }}/proxytrace
+          short-description: "Proxytrace — trace, test and improve your AI agents. Self-hosted, one container."
           readme-filepath: scripts/release/dockerhub-overview.md
 
   release:
-    needs: [meta, publish-images]
+    needs: [meta, publish-image]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

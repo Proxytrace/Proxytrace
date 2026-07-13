@@ -85,3 +85,46 @@ jobs:
 
       - name: Test
         run: dotnet test Proxytrace.sln --nologo --verbosity minimal --no-restore
+
+  # Builds the released all-in-one image and boots it, so a container that fails to come up
+  # (initdb, supervisord, nginx upstream, migrations on a cold volume) is caught here rather
+  # than after a release tag is pushed. Single-arch: the release build adds arm64.
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build all-in-one image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/allinone/Dockerfile
+          load: true
+          tags: proxytrace:ci
+          cache-from: type=gha,scope=allinone
+          cache-to: type=gha,mode=max,scope=allinone
+
+      # A cold volume: initdb runs, migrations apply, then all five processes must answer.
+      - name: Smoke-test the container
+        run: |
+          docker run -d --name proxytrace -p 5101:80 -p 5102:8081 -v proxytrace-data:/data proxytrace:ci
+          for i in $(seq 1 60); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' proxytrace)
+            [[ "$status" == "healthy" ]] && break
+            [[ "$status" == "unhealthy" ]] && break
+            sleep 5
+          done
+          docker logs proxytrace
+          [[ "$(docker inspect -f '{{.State.Health.Status}}' proxytrace)" == "healthy" ]] \
+            || { echo "::error::container never became healthy"; exit 1; }
+          # The UI, the bundled manual, the API behind nginx, and the ingestion proxy.
+          curl -fsS -o /dev/null http://localhost:5101/
+          curl -fsS -o /dev/null http://localhost:5101/docs/
+          curl -fsS -o /dev/null http://localhost:5101/api/health
+          curl -fsS -o /dev/null http://localhost:5102/health

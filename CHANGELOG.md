@@ -11,13 +11,26 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
-- **Container images are now also published to Docker Hub.** Every release pushes the same
-  three images — same version tags, same digests, `linux/amd64` + `linux/arm64` — to
-  `jabbakadabra/proxytrace-{api,proxy,frontend}` alongside the existing GHCR images. GHCR
-  stays the default the shipped Compose file pins; to pull from Docker Hub instead, swap the
-  `ghcr.io/proxytrace/` image prefix for `jabbakadabra/`.
+- **Install with a single `docker run`.** Proxytrace now ships as one image containing the
+  whole product — web UI, API, ingestion proxy, PostgreSQL and Redis — so a complete install
+  is one command with nothing to download and nothing to configure:
+  `docker run -d -p 5101:80 -p 5102:8081 -v proxytrace:/data ghcr.io/proxytrace/proxytrace`.
+  All state lives in the `/data` volume; schema migrations still apply on start.
+- **Images are published to Docker Hub as well.** Each release pushes the image to
+  `proxytrace/proxytrace` on Docker Hub and `ghcr.io/proxytrace/proxytrace` on GHCR — one
+  build, identical tags and digests, `linux/amd64` + `linux/arm64`.
 
 ### Changed
+
+- **The release now ships one image instead of three.** The separate `proxytrace-api`,
+  `proxytrace-proxy` and `proxytrace-frontend` images are no longer published; the all-in-one
+  image replaces them. The Docker Compose deployment attached to every release still runs
+  PostgreSQL and Redis as their own containers — it points the app at them with
+  `ConnectionStrings__Default` / `Redis__ConnectionString`, which is what keeps the image's
+  embedded database and cache switched off. **Upgrading an existing Compose install:** take a
+  database backup, then swap in the new release's `docker-compose.yml` — it replaces the three
+  app services with one and keeps your `pgdata`, `appdata` and `searchindex` volumes exactly as
+  they are, so the database, the secret-encryption key ring and the search index all carry over.
 
 - **Errored A/B validations no longer count as disproven theories.** When a theory's A/B
   validation cannot run at all (unreachable or unauthorized provider, upstream timeout,
