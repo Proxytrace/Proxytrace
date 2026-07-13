@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-13
+
 ### Added
 
 - **Install with a single `docker run`.** Proxytrace now ships as one image containing the
