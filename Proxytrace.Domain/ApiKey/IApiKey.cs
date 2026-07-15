@@ -42,7 +42,8 @@ public interface IApiKey : IDomainEntity
     /// <summary>
     /// The capabilities this key grants. The ingestion proxy requires <see cref="ApiKeyScopes.Ingestion"/>;
     /// the MCP server requires <see cref="ApiKeyScopes.McpRead"/> (and <see cref="ApiKeyScopes.McpWrite"/>
-    /// for its write tools). Keys are scoped per least privilege.
+    /// for its write tools); the REST API requires <see cref="ApiKeyScopes.ApiRead"/> for reads (and
+    /// <see cref="ApiKeyScopes.ApiWrite"/> for mutations). Keys are scoped per least privilege.
     /// </summary>
     ApiKeyScopes Scopes { get; }
 

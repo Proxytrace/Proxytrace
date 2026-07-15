@@ -4,10 +4,12 @@ using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Kiosk;
 using Proxytrace.Api.Auth.Mcp;
+using Proxytrace.Api.Auth.Rest;
 using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Middleware;
 using Proxytrace.Api.Middleware.Exceptions;
@@ -316,7 +318,29 @@ internal sealed class Module : Autofac.Module
                     // Program.cs). The default scheme stays JwtBearer, so every existing [Authorize]
                     // controller is unaffected.
                     .AddScheme<AuthenticationSchemeOptions, McpApiKeyAuthenticationHandler>(
-                        McpApiKeyAuthenticationHandler.SchemeName, _ => { });
+                        McpApiKeyAuthenticationHandler.SchemeName, _ => { })
+                    // Scoped service credential for the REST API: a Proxytrace API key with an ApiRead/
+                    // ApiWrite scope authenticates /api/* alongside JwtBearer (added to the default
+                    // policy below). Lets a machine caller drive the API without a long-lived
+                    // service-user JWT.
+                    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+                        ApiKeyAuthenticationHandler.SchemeName, _ => { });
+
+                // Make every [Authorize] endpoint accept an API key alongside the interactive JWT, and
+                // hold API-key callers to their granted REST scope (read vs write, by HTTP method).
+                // A scoped key carries no role claim, so a role-gated endpoint ([Authorize(Roles =
+                // Admin)]) always denies it — 403 where the ApiKey scheme is in the combined policy (a
+                // class-level [Authorize] + method role), 401 where the role attribute stands alone.
+                services.AddAuthorization(options =>
+                {
+                    options.DefaultPolicy = new AuthorizationPolicyBuilder(
+                            JwtBearerDefaults.AuthenticationScheme,
+                            ApiKeyAuthenticationHandler.SchemeName)
+                        .RequireAuthenticatedUser()
+                        .AddRequirements(new ApiKeyScopeRequirement())
+                        .Build();
+                });
+                services.AddSingleton<IAuthorizationHandler, ApiKeyScopeHandler>();
 
                 if (authOptions.Mode == AuthMode.Local)
                 {

@@ -80,6 +80,13 @@ All tools operate within the connecting key's project.
 | Theories | `list_theories`, `get_theory`, `submit_theory` |
 | Statistics | `get_dashboard`, `get_agent_overview` |
 
+`add_trace_to_suite` takes an optional `expectedOutput`. Leave it off to promote the trace as-is (the
+expected output is the response the agent actually gave). Provide it to record a **correction** — the
+agent saw this input, and the right answer was *X* — which is what turns a rejected output into a
+regression test. Either way the new test case keeps a link back to the trace it came from. With this,
+an agent holding a single MCP write key can drive the whole optimization loop — capture, correct,
+propose a fix, validate — without a separate REST credential.
+
 ## Workflows
 
 The server also ships **workflows** — guided playbooks the MCP protocol calls *prompts*. Most clients

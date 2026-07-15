@@ -76,7 +76,9 @@ public class TestCasesController : ControllerBase
         if (!await CanAccessTestCaseAsync(id, cancellationToken)) return NotFound();
 
         var expected = mapper.BuildAssistantMessage(request.ExpectedOutput);
-        var updated = createExisting(existing.Input, expected, existing);
+        // Editing the expected answer must not sever the provenance link — carry the source trace id
+        // through the reconstitution.
+        var updated = createExisting(existing.Input, expected, existing.SourceAgentCallId, existing);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
 
         // A test case has no FK to a project; resolve the owning project via the suite->agent reverse
@@ -90,7 +92,8 @@ public class TestCasesController : ControllerBase
     private TestCaseDto ToDto(ITestCase tc) => new(
         tc.Id,
         tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-        mapper.ToExpectedOutputDto(tc.ExpectedOutput));
+        mapper.ToExpectedOutputDto(tc.ExpectedOutput),
+        tc.SourceAgentCallId);
 
     private static string GetText(Message m) => m switch
     {

@@ -7,6 +7,8 @@ const GRANTED: Record<ApiKeyScope, string> = {
   Ingestion: cn('border-transparent bg-[color-mix(in_srgb,var(--text-secondary)_16%,transparent)] text-primary'),
   McpRead: cn('border-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)] bg-[var(--accent-subtle)] text-[var(--accent-hover)]'),
   McpWrite: cn('border-[color-mix(in_srgb,var(--warn)_30%,transparent)] bg-[var(--warn-subtle)] text-[var(--warn)]'),
+  ApiRead: cn('border-[color-mix(in_srgb,var(--teal)_30%,transparent)] bg-[color-mix(in_srgb,var(--teal)_14%,transparent)] text-[var(--teal)]'),
+  ApiWrite: cn('border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[var(--success-subtle)] text-[var(--success)]'),
 };
 
 const GHOST = cn('border-hairline bg-transparent text-muted opacity-55');
@@ -22,6 +24,8 @@ export function KeyCapabilities({ scopes }: { scopes: ApiKeyScope[] }) {
     Ingestion: t`Ingestion proxy`,
     McpRead: t`MCP read`,
     McpWrite: t`MCP write`,
+    ApiRead: t`REST API read`,
+    ApiWrite: t`REST API write`,
   };
   return (
     <div className="inline-flex items-center gap-1" data-testid="key-capabilities">

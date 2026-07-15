@@ -61,7 +61,10 @@ public record SuiteRunStatsDto(
 public record TestCaseDto(
     Guid Id,
     IReadOnlyList<TestSuiteMessageDto> Input,
-    TestSuiteMessageDto ExpectedOutput);
+    TestSuiteMessageDto ExpectedOutput,
+    // The trace this case was promoted or corrected from, if any. Null for synthetic cases. Lets a
+    // consumer walk the chain trace → case without keeping a side-table of its own.
+    Guid? SourceAgentCallId = null);
 
 public record TestSuiteMessageDto(
     string Role,

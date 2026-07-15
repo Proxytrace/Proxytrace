@@ -339,7 +339,7 @@ internal sealed class PerfDataSeeder
 
             IEvaluator evaluator = await evaluatorRepository.AddAsync(createEvaluator(project), cancellationToken);
             ITestCase testCase = await testCaseRepository.AddAsync(
-                createTestCase(graph.Conversations[0], graph.AssistantMessages[0]), cancellationToken);
+                createTestCase(graph.Conversations[0], graph.AssistantMessages[0], sourceAgentCallId: null), cancellationToken);
             ITestSuite suite = await suiteRepository.AddAsync(
                 createSuite("Perf Run-Stats Suite", agent, [evaluator], [testCase]), cancellationToken);
             ITestRunGroup group = await groupRepository.AddAsync(

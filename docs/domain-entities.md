@@ -53,11 +53,14 @@ The boundary is sharp: **domain layer references the full entity, storage layer 
 - **1:N** — domain holds the parent as `IModelEndpoint SystemEndpoint { get; }`; storage holds `Guid SystemEndpoint`; mapper resolves the parent via the parent's repository in `Map(stored, ct)`. Configure with `HasOne<ModelEndpointEntity>().WithMany().HasForeignKey(e => e.SystemEndpoint).OnDelete(DeleteBehavior.Restrict)`.
 - **N:M** — domain holds `IReadOnlyCollection<IEvaluator> Evaluators { get; }`; storage uses a junction entity (e.g. `TestSuiteEvaluatorEntity` with `TestSuiteId`/`EvaluatorId`) and a navigation collection on the parent storage entity. Junction entities have **no domain counterpart** and are registered explicitly in `Proxytrace.Storage.Module`. The custom repository overrides `UpdateRelationsAsync` to sync the junction rows during `Update` (see `TestSuiteRepository`).
 - **Delete behavior** — `Restrict` for optional references, `Cascade` for owned children.
-- **FK-free (denormalized snapshot)** — an *append-only audit/history* entity deliberately holds
-  **no** FKs: it stores referenced ids as plain `Guid?` columns plus snapshot labels, so the row
-  survives deletion of what it refers to. `AuditLogEntry` is the reference example (`ActorUserId`,
-  `ProjectId`, `TargetId` are plain columns — no `HasOne`/`HasForeignKey`); see
-  [`audit-log.md`](audit-log.md).
+- **FK-free (denormalized snapshot)** — an entity that must **survive deletion of what it points at**
+  deliberately holds **no** FK: it stores the referenced id as a plain `Guid?` column, so the row
+  outlives its referent. `AuditLogEntry` is the reference example (`ActorUserId`, `ProjectId`,
+  `TargetId` are plain columns — no `HasOne`/`HasForeignKey`); see [`audit-log.md`](audit-log.md).
+  `TestCase.SourceAgentCallId` is the same pattern for provenance: it links a promoted/corrected case
+  back to its source trace (`AgentCall`), but as a plain `Guid?` — the high-volume trace can be pruned
+  and the regression test it produced still stands (a real FK would either block the prune or cascade
+  the case away). Synthetic cases (raw input + expected output) carry `null`.
 
 ## Soft-delete (archive)
 

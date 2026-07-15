@@ -70,6 +70,53 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task PromoteFromTraces_SetsSourceAgentCallIdOnEachCase()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+
+        var result = await controller.PromoteFromTraces(
+            new PromoteTracesRequest(Name: "Provenance suite", AgentId: call.Agent.Id, AgentCallIds: [call.Id]),
+            CancellationToken);
+
+        var actionResult = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException("Expected non-null Result."));
+        var dto = actionResult.Value as TestSuiteDto
+            ?? throw new InvalidOperationException("Expected TestSuiteDto value.");
+        // The promoted case keeps a link back to the trace it came from (the endpoint's doc-comment
+        // promises this).
+        dto.TestCases.Should().ContainSingle().Which.SourceAgentCallId.Should().Be(call.Id);
+    }
+
+    [TestMethod]
+    public async Task AddTestCase_CorrectionFromTrace_PreservesSourceAndUsesCorrectedOutput()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+        var promote = await controller.PromoteFromTraces(
+            new PromoteTracesRequest(Name: "Correction suite", AgentId: call.Agent.Id, AgentCallIds: [call.Id]),
+            CancellationToken);
+        var promoteAction = (CreatedAtActionResult)(promote.Result ?? throw new InvalidOperationException("Expected non-null Result."));
+        var suiteId = (Guid)((promoteAction.RouteValues ?? throw new InvalidOperationException("Expected route values."))["id"]
+            ?? throw new InvalidOperationException("Expected 'id' route value."));
+
+        // Record a correction against the same trace: input from the trace, a corrected expected answer.
+        var correction = new TestSuiteMessageDto("assistant", "The corrected answer");
+        var addResult = await controller.AddTestCase(
+            suiteId,
+            new AddTestCaseRequest(FromAgentCallId: call.Id, Input: null, ExpectedOutput: correction),
+            CancellationToken);
+
+        var dto = addResult.Value ?? throw new InvalidOperationException("Expected non-null Value.");
+        var corrected = dto.TestCases.Should().HaveCount(2).And.Subject.Last();
+        corrected.SourceAgentCallId.Should().Be(call.Id);
+        corrected.ExpectedOutput.Content.Should().Be("The corrected answer");
+    }
+
+    [TestMethod]
     public async Task AddTestCase_AfterPromote_DoesNotDuplicateEvaluatorJunctionRows()
     {
         IServiceProvider services = GetServices();
@@ -583,6 +630,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<IEvaluatorRepository>(),
             services.GetRequiredService<ITestCase.CreateNew>(),
             services.GetRequiredService<ITestCase.CreateNewFromCall>(),
+            services.GetRequiredService<ITestCase.CreateCorrection>(),
             services.GetRequiredService<IExactMatchEvaluator.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateExisting>(),

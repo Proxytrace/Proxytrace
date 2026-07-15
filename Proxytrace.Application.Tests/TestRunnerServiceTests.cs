@@ -48,7 +48,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var input = Conversation.Create()
             .With(new UserMessage([Content.FromText("What is the capital of France?")]));
 
-        var testCase = createTestCase(input, expectedOutput);
+        var testCase = createTestCase(input, expectedOutput, sourceAgentCallId: null);
         await testCaseRepo.AddAsync(testCase, ct);
 
         var suite = createTestSuite("Test Suite", agent, [evaluator], [testCase]);
@@ -78,7 +78,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var input = Conversation.Create()
             .With(new UserMessage([Content.FromText("What is the capital of France?")]));
 
-        var testCase = createTestCase(input, expectedOutput);
+        var testCase = createTestCase(input, expectedOutput, sourceAgentCallId: null);
         await testCaseRepo.AddAsync(testCase, ct);
 
         var evaluators = new IEvaluator[] { exactMatch, agentic };

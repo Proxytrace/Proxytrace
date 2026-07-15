@@ -68,6 +68,6 @@ public sealed class TestCaseGetSummaryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestCase.CreateNew>();
         var input = new Conversation(messages);
         var expectedOutput = new AssistantMessage([Content.FromText("ok")], []);
-        return factory(input, expectedOutput);
+        return factory(input, expectedOutput, sourceAgentCallId: null);
     }
 }

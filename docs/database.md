@@ -214,7 +214,14 @@ English — see [`i18n.md`](i18n.md).
 
 The `AddApiKeyScopes` migration adds a non-nullable `ApiKeyEntity.Scopes` column (an `ApiKeyScopes`
 flags enum stored as `int`) with a SQL default of `1` (`Ingestion`), backfilling existing keys to
-ingestion-only so no legacy key silently gains MCP capabilities — see [`mcp.md`](mcp.md).
+ingestion-only so no legacy key silently gains MCP capabilities — see [`mcp.md`](mcp.md). Adding new
+flag values to that enum (e.g. the `ApiRead`/`ApiWrite` REST scopes) needs **no** migration — the column
+already stores the `int`, and unset flags stay off.
+
+The `AddTestCaseSourceAgentCallId` migration adds the **nullable** `TestCaseEntity.SourceAgentCallId`
+(`uuid`) column — a denormalized snapshot of the trace a test case was promoted or corrected from, with
+**no** FK so the case survives deletion of the high-volume trace it came from (the same FK-free pattern
+as the audit log; see [`domain-entities.md`](domain-entities.md)). Synthetic cases leave it `null`.
 
 The `AddOutlierDetection` migration adds the non-nullable `AgentCallEntity.OutlierFlags` byte column
 (default `0`) plus its partial index, and the single-row `OutlierSettingsEntity` table (the

@@ -102,7 +102,7 @@ public sealed class TestRunDtoMapperTests : BaseTest<Module>
         var cases = new List<ITestCase>();
         for (var i = 0; i < Math.Max(1, latencies.Count); i++)
         {
-            var testCase = createTestCase(input, expected);
+            var testCase = createTestCase(input, expected, sourceAgentCallId: null);
             await testCaseRepo.AddAsync(testCase, cancellationToken);
             cases.Add(testCase);
         }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Mcp;
+using Proxytrace.Api.Auth.Rest;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.AuditLog;
 
@@ -67,6 +68,24 @@ public sealed class HttpContextAuditActorAccessorTests
         actor.UserId.Should().Be(ownerId);
         actor.ApiKeyId.Should().Be(keyId);
         actor.Email.Should().BeNull();
+    }
+
+    [TestMethod]
+    public void GetCurrentActor_WithRestApiKeyScheme_ReturnsApiKeyActor()
+    {
+        var ownerId = Guid.NewGuid();
+        var keyId = Guid.NewGuid();
+        var ctx = new DefaultHttpContext();
+        ctx.Items[CurrentUserAccessor.UserIdItemKey] = ownerId;
+        ctx.Items[McpApiKeyAuthenticationHandler.ApiKeyIdItemKey] = keyId;
+        // The REST API-key scheme is attributed to the ApiKey actor type just like the MCP scheme.
+        ctx.User = new ClaimsPrincipal(new ClaimsIdentity(ApiKeyAuthenticationHandler.SchemeName));
+
+        var actor = Resolve(ctx);
+
+        actor.Type.Should().Be(AuditActorType.ApiKey);
+        actor.UserId.Should().Be(ownerId);
+        actor.ApiKeyId.Should().Be(keyId);
     }
 
     [TestMethod]

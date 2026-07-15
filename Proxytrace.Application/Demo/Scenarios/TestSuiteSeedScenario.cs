@@ -251,7 +251,7 @@ internal sealed class TestSuiteSeedScenario : IDemoScenario
                 var expected = new AssistantMessage(
                     [Content.FromText(caseSpec.ExpectedAssistantReply)],
                     []);
-                var testCase = createTestCase(input, expected);
+                var testCase = createTestCase(input, expected, sourceAgentCallId: null);
                 cases.Add(await caseRepo.AddAsync(testCase, cancellationToken));
             }
 
