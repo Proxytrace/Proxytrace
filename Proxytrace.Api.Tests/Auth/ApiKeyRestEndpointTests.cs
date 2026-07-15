@@ -145,7 +145,7 @@ public sealed class ApiKeyRestEndpointTests
 
     private static async Task<HttpResponseMessage> Send(WebApplication app, HttpMethod method, string path, string? apiKey)
     {
-        var request = new HttpRequestMessage(method, path);
+        using var request = new HttpRequestMessage(method, path);
         if (apiKey is not null)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         return await app.GetTestClient().SendAsync(request, CancellationToken.None);
