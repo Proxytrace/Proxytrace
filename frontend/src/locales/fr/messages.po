@@ -4080,6 +4080,21 @@ msgstr "Réinitialisez votre mot de passe"
 msgid "Response time"
 msgstr "Temps de réponse"
 
+msgid "REST API base"
+msgstr "Base REST API"
+
+msgid "REST API read"
+msgstr "Lecture REST API"
+
+msgid "REST API read — let a service read this project over the REST API"
+msgstr "Lecture REST API — permettre à un service de lire ce projet via la REST API"
+
+msgid "REST API write"
+msgstr "Écriture REST API"
+
+msgid "REST API write — let a service create and change data over the REST API"
+msgstr "Écriture REST API — permettre à un service de créer et modifier des données via la REST API"
+
 msgid "RESULT"
 msgstr "RÉSULTAT"
 

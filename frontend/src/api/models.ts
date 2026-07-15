@@ -436,6 +436,8 @@ export interface TestCaseDto {
   id: string;
   input: TestSuiteMessageDto[];
   expectedOutput: TestSuiteMessageDto;
+  /** The trace this case was promoted or corrected from, if any. Null for synthetic cases. */
+  sourceAgentCallId?: string | null;
 }
 export interface SuiteEvaluatorDto { id: string; kind: EvaluatorKind; }
 export interface TestSuiteDto {
@@ -752,7 +754,7 @@ export interface ModelEndpointDto {
   createdAt: string;
   updatedAt: string;
 }
-export type ApiKeyScope = 'Ingestion' | 'McpRead' | 'McpWrite';
+export type ApiKeyScope = 'Ingestion' | 'McpRead' | 'McpWrite' | 'ApiRead' | 'ApiWrite';
 export interface ApiKeyDto {
   id: string;
   name: string;

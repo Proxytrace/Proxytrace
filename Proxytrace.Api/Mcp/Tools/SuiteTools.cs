@@ -27,6 +27,7 @@ internal sealed class SuiteTools
     private readonly ITestCaseRepository testCases;
     private readonly IEvaluatorRepository evaluators;
     private readonly ITestCase.CreateNewFromCall createTestCaseFromCall;
+    private readonly ITestCase.CreateCorrection createTestCaseCorrection;
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
@@ -42,6 +43,7 @@ internal sealed class SuiteTools
         ITestCaseRepository testCases,
         IEvaluatorRepository evaluators,
         ITestCase.CreateNewFromCall createTestCaseFromCall,
+        ITestCase.CreateCorrection createTestCaseCorrection,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting,
@@ -56,6 +58,7 @@ internal sealed class SuiteTools
         this.testCases = testCases;
         this.evaluators = evaluators;
         this.createTestCaseFromCall = createTestCaseFromCall;
+        this.createTestCaseCorrection = createTestCaseCorrection;
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
@@ -131,12 +134,19 @@ internal sealed class SuiteTools
     }
 
     [McpServerTool(Name = "add_trace_to_suite")]
-    [Description("Add a captured trace to an existing test suite as a new test case (its expected output " +
-                 "is the response recorded during that call). The suite and trace must belong to the project.")]
+    [Description("Add a captured trace to an existing test suite as a new test case. By default the " +
+                 "expected output is the response recorded during that call (a straight promotion). " +
+                 "Pass expectedOutput to instead record a human correction — 'the agent saw this input, " +
+                 "and the right answer was X' — which is what turns a rejected output into a regression " +
+                 "test. Either way the case keeps a link back to the source trace. The suite and trace " +
+                 "must belong to the project.")]
     public async Task<TestSuiteDto> AddTraceToSuite(
         [Description("The suite id (GUID), from list_suites.")] Guid suiteId,
         [Description("The trace id (GUID) to add, from list_traces.")] Guid traceId,
-        CancellationToken cancellationToken)
+        [Description("Optional corrected assistant answer. When provided, the trace's request becomes the " +
+                     "input and this text becomes the expected output (a correction). When omitted, the " +
+                     "trace is promoted as-is.")] string? expectedOutput = null,
+        CancellationToken cancellationToken = default)
     {
         project.RequireWriteScope();
         var p = await project.GetProjectAsync(cancellationToken);
@@ -145,10 +155,15 @@ internal sealed class SuiteTools
         var call = await calls.FindAsync(traceId, cancellationToken);
         if (call is null || call.Agent.Project.Id != p.Id)
             throw new McpException($"Trace '{traceId}' was not found in this project.");
-        if (call.Response is null)
+        // A straight promotion needs the recorded response; a correction supplies its own expected output,
+        // so only the promote-as-is path requires a response to exist.
+        if (expectedOutput is null && call.Response is null)
             throw new McpException($"Trace '{traceId}' has no response and cannot be added as a test case.");
 
-        var saved = await testCases.AddAsync(createTestCaseFromCall(call), cancellationToken);
+        var testCase = expectedOutput is not null
+            ? createTestCaseCorrection(call, mapper.BuildAssistantMessage(new TestSuiteMessageDto("assistant", expectedOutput)))
+            : createTestCaseFromCall(call);
+        var saved = await testCases.AddAsync(testCase, cancellationToken);
         var updatedCases = suite.TestCases.Append(saved).ToArray();
         var updated = createSuiteExisting(suite.Name, suite.Agent, suite.Evaluators, updatedCases, suite);
         var savedSuite = await suites.UpdateAsync(updated, cancellationToken);

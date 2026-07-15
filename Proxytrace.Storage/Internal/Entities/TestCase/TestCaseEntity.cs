@@ -15,4 +15,11 @@ internal record TestCaseEntity : Entity
     /// <see cref="Proxytrace.Domain.TestCase.ITestCase.ExpectedOutput"/> - stored as JSON in the database
     /// </summary>
     public required AssistantMessage ExpectedOutput { get; init; }
+
+    /// <summary>
+    /// <see cref="Proxytrace.Domain.TestCase.ITestCase.SourceAgentCallId"/> — a denormalized snapshot of
+    /// the source trace id (no FK): the case must survive deletion of the high-volume trace it came from,
+    /// so this deliberately holds a plain nullable <see cref="System.Guid"/> rather than a foreign key.
+    /// </summary>
+    public Guid? SourceAgentCallId { get; init; }
 }

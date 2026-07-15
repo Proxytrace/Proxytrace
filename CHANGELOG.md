@@ -9,6 +9,27 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
+  external service no longer needs a long-lived user login (with MFA disabled and a token-refresh loop)
+  to call the API. Mint a key with the new **REST API read** and/or **REST API write** capabilities:
+  read keys may issue `GET` requests, write keys may also create and change data. The key acts as its
+  owner and, like an MCP key, can never reach admin-only endpoints. Capabilities stay least-privilege
+  and are not interchangeable across surfaces — a REST key cannot drive MCP or proxy LLM traffic, and
+  existing keys are unaffected. (#365)
+- **Record corrections over MCP.** The `add_trace_to_suite` tool now takes an optional `expectedOutput`.
+  Provide it to log a *correction* — "the agent saw this input, and the right answer was X" — turning a
+  captured trace into a regression test, instead of only promoting the trace as-is. An external agent
+  can now drive the entire capture → correct → propose → validate loop with a single scoped MCP key. (#366)
+
+### Changed
+
+- **Test cases now remember which trace they came from.** Promoting or correcting a trace into a test
+  suite records a link back to the source trace, so "which trace produced this case?" is answerable from
+  Proxytrace's own data. (Previously the link was silently dropped, despite the API documenting
+  otherwise.) Synthetic cases built from raw input and expected output have no source and are unaffected. (#367)
+
 ## [1.6.0] - 2026-07-13
 
 ### Added

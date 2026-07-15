@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Proxytrace.Api.Auth.Mcp;
+using Proxytrace.Api.Auth.Rest;
 using Proxytrace.Application.AuditLog;
 using Proxytrace.Domain.AuditLog;
 
@@ -33,10 +34,10 @@ internal sealed class HttpContextAuditActorAccessor : IAuditActorAccessor
             ? id
             : null;
 
-        var isApiKey = string.Equals(
-            http.User.Identity?.AuthenticationType,
-            McpApiKeyAuthenticationHandler.SchemeName,
-            StringComparison.Ordinal);
+        // Both API-key schemes (MCP and REST) attribute to AuditActorType.ApiKey.
+        var authType = http.User.Identity?.AuthenticationType;
+        var isApiKey = string.Equals(authType, McpApiKeyAuthenticationHandler.SchemeName, StringComparison.Ordinal)
+            || string.Equals(authType, ApiKeyAuthenticationHandler.SchemeName, StringComparison.Ordinal);
 
         // No resolved user and not an API-key caller (anonymous or pre-auth) — attribute to the System.
         if (userId is null && !isApiKey)

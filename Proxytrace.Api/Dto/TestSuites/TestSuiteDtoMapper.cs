@@ -32,7 +32,8 @@ public sealed class TestSuiteDtoMapper
             s.TestCases.Select(tc => new TestCaseDto(
                 tc.Id,
                 tc.Input.Messages.Select(ToInputMessageDto).ToArray(),
-                ToExpectedOutputDto(tc.ExpectedOutput)
+                ToExpectedOutputDto(tc.ExpectedOutput),
+                tc.SourceAgentCallId
             )).ToArray(),
             Description: null,
             Tags: [],

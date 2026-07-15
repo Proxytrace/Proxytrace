@@ -37,8 +37,15 @@ sync when the loop changes.
 
 ## Stage 1 — Run a suite
 
-A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEvaluator`**s.
-`ITestRunnerService` executes it:
+A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEvaluator`**s. A `TestCase`
+is created three ways, all preserving provenance where one exists: **promoted** from a trace as-is
+(expected output = the response the agent recorded), **corrected** from a trace (the agent's input, but
+a human-supplied expected output — "the right answer was X", which turns a rejected output into a
+regression test), or **synthetic** (raw input + expected output, no source). Promoted and corrected
+cases carry `ITestCase.SourceAgentCallId` — a denormalized link back to the source `AgentCall` — so the
+chain `trace → case` stays answerable; synthetic cases carry `null`. Both the REST seam
+(`POST /api/test-suites/{id}/test-cases`) and the MCP `add_trace_to_suite` tool expose the correction
+path (see [`mcp.md`](mcp.md)). `ITestRunnerService` executes the suite:
 
 - `RunInBackgroundAsync(suite, endpoints, scheduleId, sampleCount)` — creates a **`TestRunGroup`**
   with **`sampleCount` `TestRun`s per endpoint** (model comparison × sampling), queues them, returns

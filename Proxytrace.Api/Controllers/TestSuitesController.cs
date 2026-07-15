@@ -29,6 +29,7 @@ public class TestSuitesController : ControllerBase
     private readonly IEvaluatorRepository evaluatorRepository;
     private readonly ITestCase.CreateNew createTestCase;
     private readonly ITestCase.CreateNewFromCall createTestCaseFromCall;
+    private readonly ITestCase.CreateCorrection createTestCaseCorrection;
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
@@ -46,6 +47,7 @@ public class TestSuitesController : ControllerBase
         IEvaluatorRepository evaluatorRepository,
         ITestCase.CreateNew createTestCase,
         ITestCase.CreateNewFromCall createTestCaseFromCall,
+        ITestCase.CreateCorrection createTestCaseCorrection,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting,
@@ -64,6 +66,7 @@ public class TestSuitesController : ControllerBase
         this.evaluatorRepository = evaluatorRepository;
         this.createTestCase = createTestCase;
         this.createTestCaseFromCall = createTestCaseFromCall;
+        this.createTestCaseCorrection = createTestCaseCorrection;
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
@@ -392,8 +395,11 @@ public class TestSuitesController : ControllerBase
             var call = await agentCallRepository.FindAsync(fromAgentCallId.Value, cancellationToken);
             if (call is null || !await accessGuard.CanAccessProjectAsync(call.Agent.Project.Id, cancellationToken))
                 return null;
+            // A correction ("the agent saw this input, and the right answer was X") keeps the link back
+            // to the source trace, exactly like a straight promotion — otherwise the provenance the
+            // caller most needs (which trace this regression test corrects) would be dropped.
             return expectedOutput is not null
-                ? createTestCase(call.Request, mapper.BuildAssistantMessage(expectedOutput))
+                ? createTestCaseCorrection(call, mapper.BuildAssistantMessage(expectedOutput))
                 : createTestCaseFromCall(call);
         }
 
@@ -401,7 +407,8 @@ public class TestSuitesController : ControllerBase
         {
             var conversation = mapper.BuildConversation(inputMessages);
             var expected = mapper.BuildAssistantMessage(expectedOutput);
-            return createTestCase(conversation, expected);
+            // A synthetic case (raw input + expected output) has no source trace.
+            return createTestCase(conversation, expected, sourceAgentCallId: null);
         }
 
         return null;

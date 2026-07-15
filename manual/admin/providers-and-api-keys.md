@@ -84,16 +84,22 @@ Each key also carries explicit **capabilities** (least privilege), chosen when y
 - **Ingestion proxy** — authenticate clients at the OpenAI-compatible proxy (the classic use).
 - **MCP read** — read the key's project over the [MCP server](/guide/mcp-server) (`list_*`/`get_*` tools).
 - **MCP write** — additionally curate suites, start/cancel runs and change proposals over MCP.
+- **REST API read** — read the key's project over the REST API (`/api/*` `GET` requests), so a service
+  can call the API directly with a scoped key instead of a long-lived user login.
+- **REST API write** — additionally create and change data over the REST API (`POST`/`PUT`/`PATCH`/
+  `DELETE`). A REST key acts as its owner and, like an MCP key, can never reach admin-only endpoints.
 
-A key works only on the surfaces it was granted: an ingestion-only key cannot drive MCP, and an
-MCP-only key cannot proxy LLM traffic. Keys issued before this feature are **ingestion-only**.
+A key works only on the surfaces it was granted: an ingestion-only key cannot drive MCP or the REST API,
+an MCP-only key cannot proxy LLM traffic or drive REST, and a REST key cannot drive MCP. Keys issued
+before these capabilities existed are **ingestion-only**.
 
 ### Issuing a key
 
 1. Open **Providers**.
 2. Select the provider the key should route to.
 3. Tick the **capabilities** the key needs (Ingestion proxy is on by default; add MCP read/write to let
-   an external agent use the [MCP server](/guide/mcp-server)).
+   an external agent use the [MCP server](/guide/mcp-server), or REST API read/write to let a service
+   drive `/api/*` directly).
 4. Choose the **owner** — the user every MCP call made with the key is attributed to. Leave it as
    *Yourself (creator)* or assign the key to a specific teammate.
 5. Generate the key. The **full key is shown once, right after creation** — copy it then and

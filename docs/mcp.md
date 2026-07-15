@@ -13,11 +13,14 @@ This page covers the backend design; the user/integrator guide is `manual/guide/
   (minted on the Providers page) — there is no separate MCP token. The key's `Project` is the request
   context.
 - **Scopes (`ApiKeyScopes`, least privilege).** A key carries a flags set: `Ingestion`, `McpRead`,
-  `McpWrite`. The ingestion proxy requires `Ingestion`; the MCP server requires `McpRead`, and its
-  write tools additionally require `McpWrite`. Keys are **not** interchangeable across surfaces unless
-  explicitly granted both — an ingestion key cannot drive MCP, and an MCP key cannot proxy LLM traffic.
-  Existing/legacy keys default to `Ingestion` only (the `AddApiKeyScopes` migration backfills them), so
-  no key silently gains MCP power.
+  `McpWrite`, `ApiRead`, `ApiWrite`. The ingestion proxy requires `Ingestion`; the MCP server requires
+  `McpRead`, and its write tools additionally require `McpWrite`; the REST API (`/api/*`) accepts a key
+  with `ApiRead` for safe requests and additionally requires `ApiWrite` for mutations (see
+  [REST API keys](#rest-api-keys-api)). Keys are **not** interchangeable across surfaces unless
+  explicitly granted the matching scope — an ingestion key cannot drive MCP or REST, an MCP key cannot
+  proxy LLM traffic or drive REST, and a REST key cannot drive MCP. Existing/legacy keys default to
+  `Ingestion` only (the `AddApiKeyScopes` migration backfills them); the REST scopes add no schema
+  change (new flag values on the existing `int` column), and no key silently gains any new power.
 - **Per-project *and* per-user.** The key carries a required `IUser Owner` and an `IProject Project`.
   A call is scoped to the project (its tools see only that project) and **attributed to the owner**:
   the auth handler stashes the owner as the current user, so `ICurrentUserAccessor` resolves them inside
@@ -73,16 +76,47 @@ clients connect there with a key as the bearer token.
   for the request from the stashed id. Every tool begins with `await project.GetProjectAsync(ct)` and
   scopes its work to `project.Id`, rejecting cross-project ids with `McpException`.
 
+## REST API keys (`/api`)
+
+The same `IApiKey` credential can also drive the **REST API**, so a machine caller no longer needs a
+long-lived service-user JWT (with MFA disabled and a refresh loop) to hit `/api/*`. This is a separate
+scope pair from MCP, kept least-privilege:
+
+- `ApiKeyAuthenticationHandler` (`Proxytrace.Api/Auth/Rest/`, scheme `"ApiKey"`): reads
+  `Authorization: Bearer <key>`, short-circuits any non-`proxytrace-` bearer straight back to JwtBearer
+  **before any DB lookup** (so browser/OIDC JWT traffic pays nothing), resolves the key via
+  `IApiKeyRepository.FindByKeyAsync`, and **rejects keys without a REST scope** (`ApiRead`/`ApiWrite`).
+  Like the MCP handler it stashes the owner id so `ICurrentUserAccessor` attributes the call to the
+  owner, and the key id under the same item key the audit actor accessor reads — attribution comes for
+  free (`AuditActorType.ApiKey`).
+- The **default** authorization policy (`Module.ConfigureAuth`, non-kiosk) accepts the `ApiKey` scheme
+  **alongside** JwtBearer and carries an `ApiKeyScopeRequirement`. `ApiKeyScopeHandler` enforces the
+  read/write split **by HTTP method** for API-key callers only: safe methods (`GET`/`HEAD`/`OPTIONS`)
+  require `ApiRead`, mutations (`POST`/`PUT`/`PATCH`/`DELETE`) require `ApiWrite`. Interactive JWT/cookie
+  callers are governed by roles exactly as before — the requirement never constrains them.
+- **Admin endpoints stay JWT-only.** `[Authorize(Roles = Admin)]` requires a role claim an API key never
+  carries, so a scoped key is denied (403/401) on every admin action — a strictly better posture than a
+  full-permission service-user JWT.
+- Kiosk builds don't register the scheme (kiosk is read-only and login-free), so this is a non-kiosk
+  affordance only.
+
 ## Tools
 
 Tool classes live in `Proxytrace.Api/Mcp/Tools/`, each `[McpServerToolType]`, injecting the same
 Application services/repositories/DTO mappers the controllers use and returning full JSON (no artifact
 store, no digests). Adding a tool: add a `[McpServerTool]`-attributed method on a `[McpServerToolType]`
 class in that folder — `WithToolsFromAssembly` discovers it; the type is registered in Autofac by the
-reflection scan in `Module.cs`. Current surface: agents, traces, suites (+curation), runs (+start/
-cancel, **`get_run_failures`**, **`compare_runs`**), proposals (+status, gated), theories (gated, read
-**+ `submit_theory`**), statistics (**+ `get_agent_overview`**). See `manual/guide/mcp-server.md` for the
-full tool list.
+reflection scan in `Module.cs`. Current surface: agents, traces, suites (+curation — **`add_trace_to_suite`
+takes an optional `expectedOutput` to record a human *correction*, not just promote a trace as-is**),
+runs (+start/cancel, **`get_run_failures`**, **`compare_runs`**), proposals (+status, gated), theories
+(gated, read **+ `submit_theory`**), statistics (**+ `get_agent_overview`**). See
+`manual/guide/mcp-server.md` for the full tool list.
+
+The correction seam (`add_trace_to_suite` with `expectedOutput`) maps onto the same `ITestCase`
+correction factory the REST `POST /api/test-suites/{id}/test-cases` endpoint uses, so an MCP client can
+now record "the agent saw this input, and the right answer was X" — turning a rejected output into a
+regression test — and drive the whole optimization loop with a single scoped MCP key. Every promoted or
+corrected case keeps a `SourceAgentCallId` link back to the trace it came from.
 
 ## Prompts (workflows)
 

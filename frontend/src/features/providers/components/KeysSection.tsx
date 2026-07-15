@@ -15,7 +15,7 @@ import { KeyCapabilities } from './KeyCapabilities';
 import { ingestionUrl } from '../../../lib/ingestion';
 import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import useToast from '../../../hooks/useToast';
-import { hasIngestion, hasMcp, mcpEndpointUrl } from '../keyScopes';
+import { apiBaseUrl, hasApi, hasIngestion, hasMcp, mcpEndpointUrl } from '../keyScopes';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
 import { useUsersList } from '../hooks/useProviderQueries';
 
@@ -46,12 +46,15 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
   const userOptions = users ?? [];
 
   const mcpEndpoint = mcpEndpointUrl(window.location.origin);
+  const apiBase = apiBaseUrl(window.location.origin);
   const anyMcp = keys.some(k => hasMcp(k.scopes));
 
   const scopeDescriptions: Record<ApiKeyScope, ReactNode> = {
     Ingestion: <Trans>Ingestion proxy — authenticate clients at the Proxytrace proxy</Trans>,
     McpRead: <Trans>MCP read — let external agents read this project over the MCP server</Trans>,
     McpWrite: <Trans>MCP write — let agents curate suites, start runs and change proposals</Trans>,
+    ApiRead: <Trans>REST API read — let a service read this project over the REST API</Trans>,
+    ApiWrite: <Trans>REST API write — let a service create and change data over the REST API</Trans>,
   };
 
   const toggleScope = (scope: ApiKeyScope, on: boolean) =>
@@ -135,6 +138,12 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
               <div className="flex items-baseline gap-1.5 mt-2 min-w-0">
                 <span className="text-body-sm text-muted whitespace-nowrap"><Trans>MCP endpoint</Trans></span>
                 <code className="font-mono text-body-sm text-secondary break-all">{mcpEndpoint}</code>
+              </div>
+            )}
+            {hasApi(created.scopes) && (
+              <div className="flex items-baseline gap-1.5 mt-2 min-w-0">
+                <span className="text-body-sm text-muted whitespace-nowrap"><Trans>REST API base</Trans></span>
+                <code className="font-mono text-body-sm text-secondary break-all">{apiBase}</code>
               </div>
             )}
           </div>
