@@ -1,0 +1,46 @@
+{
+  "skill_name": "test-coverage-advisor",
+  "evals": [
+    {
+      "id": 1,
+      "name": "direct-coverage-request",
+      "prompt": "Take a look at our test coverage for this .NET solution and tell me where I should be adding tests next. I've got maybe a day of testing work I can budget this sprint and want to know what to spend it on.",
+      "expected_output": "Skill runs coverage (or uses fresh TestResults), emits ranked report with per-layer table, names top 1-3 specific files with reasoning tied to actual signals (line cov, churn, public API, complexity).",
+      "files": [],
+      "assertions": [
+        "Report names at least 3 specific files, not just layer-level guidance",
+        "Includes a numeric overall coverage percentage",
+        "Includes a per-layer coverage breakdown",
+        "Top recommendations cite a concrete signal (churn / complexity / untested public API / coverage %)",
+        "Closes with a clear next step (offer to draft tests for a specific file)",
+        "Does not write any artifact files into the repo"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "indirect-quality-audit",
+      "prompt": "We're prepping for a release next week. Can you audit the backend and tell me what's risky from a testing standpoint? I'm worried we have hot spots that aren't well-tested.",
+      "expected_output": "Skill triggers (no 'coverage' keyword) and emphasizes churn-weighted recommendations. Top picks should combine high churn with low coverage.",
+      "files": [],
+      "assertions": [
+        "Skill triggers despite no 'coverage' keyword — uses actual coverage data",
+        "Output is risk/release framed, ties low-coverage files to recent churn",
+        "Names at least 2 specific high-churn low-coverage files",
+        "Cites concrete coverage % from cobertura, not speculation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "narrow-layer-question",
+      "prompt": "How well is Proxytrace.Application tested? Anything in there that's totally untouched by tests?",
+      "expected_output": "Full analysis runs but interpretation focuses on Proxytrace.Application. Provides layer coverage %, calls out zero-coverage files in that layer.",
+      "files": [],
+      "assertions": [
+        "Provides a coverage % specifically for Proxytrace.Application",
+        "Lists at least one Proxytrace.Application file with zero or near-zero coverage",
+        "Interpretation focuses on Proxytrace.Application, not other layers",
+        "Mentions specific public types/services in Proxytrace.Application by name"
+      ]
+    }
+  ]
+}

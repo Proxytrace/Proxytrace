@@ -10,7 +10,7 @@
 //
 //   docker compose -f docker-compose.kiosk.yml up --build -d
 //
-// See the `manual-screenshots` skill (local Claude Code tooling) for the full workflow.
+// See .claude/skills/manual-screenshots/SKILL.md for the full workflow.
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

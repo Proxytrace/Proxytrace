@@ -28,7 +28,7 @@ Propagation:
 
 ## Cutting a release
 
-> Agent-assisted releases: invoke the `release` skill (local Claude Code tooling, untracked) —
+> Agent-assisted releases: invoke the `release` skill (`.claude/skills/release/SKILL.md`) —
 > it walks pre-flight checks, the changelog roll, tag push, workflow monitoring, and
 > post-release verification, including failure recovery.
 

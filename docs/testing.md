@@ -1,7 +1,7 @@
 # Testing Conventions
 
 **Before writing or modifying any backend test, you MUST invoke the `test` skill
-(local Claude Code tooling, untracked) and follow it.** It is the source of truth for the test
+(`.claude/skills/test/SKILL.md`) and follow it.** It is the source of truth for the test
 harness: per-test `BaseTest<TModule>` containers, the `ConfigureContainer` / `GetServices`
 DI hooks, NSubstitute substitution patterns, and the hard rules against shared
 state/fields and `[TestFixture]`-style helper classes. The summary below is orientation

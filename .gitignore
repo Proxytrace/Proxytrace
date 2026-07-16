@@ -13,7 +13,6 @@ node_modules/
 .idea/
 .vs/
 .vscode/
-.claude/
 .devcontainer/
 .superpowers/
 docs/superpowers/
@@ -26,6 +25,10 @@ riderModule.iml
 REFACTORING-TODO.md
 *-PLAN.md
 *-TODO.md
+
+# Claude Code: skills, hooks, and settings.json are tracked; local state is not
+.claude/worktrees/
+.claude/skills/*-workspace/
 
 # Development configuration files
 **/appsettings.development.json
