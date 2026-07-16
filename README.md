@@ -4,11 +4,11 @@
 
 # Proxytrace
 
-### Mission control for your production AI agents
+### The debugger, unit test framework, and mission control for AI agents
 
-**One base-URL change** turns your live LLM traffic into traces, benchmarks,
-evaluations, and data-backed optimization proposals — a closed loop between
-running agents and improving them.
+**One base-URL change** and every LLM call your agent makes — on your laptop or
+in production — becomes an inspectable trace, a reproducible test case, and
+fuel for data-backed optimization.
 
 [![Release](https://img.shields.io/github/v/release/Proxytrace/Proxytrace?color=e8a33d&label=release)](https://github.com/Proxytrace/Proxytrace/releases)
 [![CI](https://github.com/Proxytrace/Proxytrace/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Proxytrace/Proxytrace/actions/workflows/ci.yml)
@@ -19,7 +19,7 @@ running agents and improving them.
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-storage-336791?logo=postgresql&logoColor=white)](docs/database.md)
 [![License: Elastic 2.0](https://img.shields.io/badge/license-Elastic%202.0-blue)](LICENSE)
 
-[Quick start](#quick-start) · [Feature tour](#feature-tour) · [How it works](#how-it-works) · [Development](#development) · [Documentation](#documentation)
+[Quick start](#quick-start) · [Feature tour](#feature-tour) · [How it works](#how-it-works) · [Documentation](#documentation) · [License](#license)
 
 <img src="docs/assets/readme/dashboard.png" alt="The Proxytrace dashboard: live activity feed, token volume, per-model split, latency and pass-rate tiles" width="920" />
 
@@ -29,10 +29,12 @@ running agents and improving them.
 
 ## Why Proxytrace?
 
-Production agents are black boxes: prompts change, models get swapped, tools get
-renamed — and nobody can prove whether any of it helped. Proxytrace applies the
-disciplines of software engineering to agent development: **instrumentation,
-regression testing, and measured iteration.**
+Agent development is stuck in the printf era. You tweak a prompt, rerun the
+script, and squint at console output or a provider dashboard to guess what
+changed. Regressions ship silently, "it feels better" passes for evidence, and
+production behavior is a black box. Every other kind of software gets a
+debugger, a unit test framework, CI, and monitoring — agents deserve the same
+toolchain. Proxytrace is that toolchain.
 
 It starts with a single line. Point any OpenAI-compatible client at the
 Proxytrace proxy:
@@ -44,17 +46,24 @@ client = OpenAI(
 )
 ```
 
-No SDK swap, no instrumentation library, no code changes. Requests are forwarded
-to your real provider while Proxytrace captures every call in full — messages,
-tool definitions and calls, model parameters, token usage, cost, latency,
-response. From there, the platform takes over:
+No SDK swap, no instrumentation library, no code changes — and it works
+identically whether the agent runs on your dev machine or in production.
+Requests are forwarded to your real provider while Proxytrace captures every
+call in full: messages, tool definitions and calls, model parameters, token
+usage, cost, latency, response. From there, one tool covers the whole
+lifecycle:
 
-- **Agents are detected automatically** from traffic and versioned as their
-  prompts and tools evolve.
-- **Real traces become reproducible benchmarks** you run against any agent
-  version or candidate model.
-- **Failing results spawn optimization theories**, validated by A/B runs and
-  promoted into concrete, evidence-backed proposals.
+- **While you build, it's your debugger.** Every call your agent makes is
+  fully inspectable the moment it happens — the exact prompt that went out,
+  every tool invocation with arguments and results, the raw JSON on the wire.
+- **Before you ship, it's your unit test framework.** Real traces and
+  hand-written cases become test suites; evaluators are the assertions; runs
+  execute them against any agent version or candidate model.
+- **In production, it's your observability and QA layer.** Agents are detected
+  and versioned automatically from traffic, dashboards stream live, anomalies
+  are flagged — or blocked at the proxy before they reach the provider.
+- **And the loop closes.** Failing results spawn optimization theories,
+  validated by A/B runs and promoted into concrete, evidence-backed proposals.
 
 ## Quick start
 
@@ -69,9 +78,11 @@ docker run -d --name proxytrace \
   ghcr.io/proxytrace/proxytrace
 ```
 
-For production, run the same image against a database of your own: every
-[GitHub release](https://github.com/Proxytrace/Proxytrace/releases) ships a `proxytrace.zip`
-with a pinned Docker Compose file (app + Postgres + Redis) and an `.env` template.
+That one command is a complete dev setup: run it next to your agent code and
+start iterating. For production, run the same image against a database of your
+own: every [GitHub release](https://github.com/Proxytrace/Proxytrace/releases) ships a
+`proxytrace.zip` with a pinned Docker Compose file (app + Postgres + Redis) and an
+`.env` template.
 
 ```bash
 curl -fLO https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip
@@ -89,33 +100,54 @@ The bundled user & operator manual is served at **http://localhost:5101/docs**
 
 ## Feature tour
 
-### Every call, captured
+### The debugger: every call, fully inspectable
 
-The trace table shows your traffic as it happens: multi-turn conversations
-grouped per session, with tokens, cache hits, tool calls, cost, and latency at a
-glance. Sort by any metric — server-side, across all matching traces — and stack
-composable filter chips for agent, anomaly type, tool name, model, status class,
-and token/latency ranges.
+Run your agent and watch every call land in the trace table as it happens:
+multi-turn conversations grouped per session, with tokens, cache hits, tool
+calls, cost, and latency at a glance. Sort by any metric — server-side, across
+all matching traces — and stack composable filter chips for agent, anomaly
+type, tool name, model, status class, and token/latency ranges.
 
 <img src="docs/assets/readme/traces.png" alt="The traces table: grouped multi-turn conversations with tokens, latency, status, and a live timeline" width="920" />
 
-Opening a trace reveals the full story: the complete message history, tool
-invocations with their arguments and results, raw JSON, cost breakdowns — and a
-one-click **Promote to test case** button that turns a real production moment
-into a permanent benchmark.
+Opening a trace is like hitting a breakpoint on the conversation: the complete
+message history, the system prompt exactly as the model received it, tool
+invocations with their arguments and results, raw JSON, cost breakdowns.
+Instead of println-ing completion objects, you step through what actually
+happened — and when a call captures a behavior worth keeping, one click
+**promotes it to a test case**, turning a debugging session into a permanent
+regression test.
 
 <img src="docs/assets/readme/trace-detail.png" alt="Trace detail: full conversation with system prompt, tool calls, latency/cost metrics, and a promote-to-test-case action" width="920" />
 
-### Benchmarks that come from reality
+### The unit test framework: suites, evaluators, runs
 
-Curated traces become **test suites**: durable, reproducible benchmarks that pin
-your agent's critical behaviors. Run a suite against any agent version — or
-race your production model against a candidate — and watch results stream in
-live. Configurable evaluators (exact match, numeric, JSON schema, tool usage,
-safety, LLM-judged) score every case, with per-evaluator breakdowns and a
-case-by-case matrix.
+Test cases come from where they should: reality. Promote a good trace as-is,
+record a *correction* ("the agent saw this input — the right answer was X"),
+or write synthetic cases from scratch. Cases collect into **test suites** —
+durable, reproducible benchmarks that pin your agent's critical behaviors.
+
+Evaluators are the assertions: exact match, numeric, JSON schema, tool usage,
+safety, LLM-judged. Runs are the test executions — run a suite against any
+agent version after every prompt change, or race your production model against
+a candidate in an A/B run — with results streaming in live, per-evaluator
+breakdowns, and a case-by-case matrix. It's the red/green cycle you already
+know, applied to agent behavior.
 
 <img src="docs/assets/readme/runs.png" alt="A/B test run: production model vs. candidate with pass rates, speed and cost deltas, evaluator breakdown, and test case matrix" width="920" />
+
+### Production QA: anomalies flagged and blocked
+
+The same base URL that powers your dev loop is your production observability.
+Agents are detected automatically from traffic and versioned as their prompts
+and tools evolve. Statistical outlier detection flags unusual calls (latency
+spikes, token blowups, error bursts) as they happen. Custom LLM-based
+detectors (Enterprise) review trigger-matched calls against your own
+plain-language rules — and can even **block matching requests at the proxy**
+before they reach the provider, e.g. to stop credentials from leaking into
+prompts.
+
+<img src="docs/assets/readme/anomalies.png" alt="Anomaly dashboard: recent flagged calls, anomalies-over-time chart, and most-flagged-agents ranking" width="920" />
 
 ### The optimization loop
 
@@ -127,21 +159,13 @@ agent version; the loop closes.
 
 <img src="docs/assets/readme/proposals.png" alt="Optimization theories board: hypotheses moving through proposed, validating, validated, and rejected columns with measured gains" width="920" />
 
-### Anomalies, flagged and blocked
-
-Statistical outlier detection flags unusual calls (latency spikes, token blowups,
-error bursts) as they happen. Custom LLM-based detectors (Enterprise) review
-trigger-matched calls against your own plain-language rules — and can even
-**block matching requests at the proxy** before they reach the provider, e.g. to
-stop credentials from leaking into prompts.
-
-<img src="docs/assets/readme/anomalies.png" alt="Anomaly dashboard: recent flagged calls, anomalies-over-time chart, and most-flagged-agents ranking" width="920" />
-
 ### And the rest of the cockpit
 
 - **MCP server** — every project doubles as a [Model Context
-  Protocol](https://modelcontextprotocol.io) server at `/mcp`, so your own AI
-  tools can query traces, curate suites, and start runs.
+  Protocol](https://modelcontextprotocol.io) server at `/mcp`. Point your
+  coding agent (Claude Code, Cursor, …) at it and it can inspect the traces
+  your dev runs just produced, record corrections, curate suites, and start
+  runs — the debugger and test framework, scriptable from inside your editor.
 - **Playgrounds** — exercise an agent version or an evaluator interactively
   before committing to a full run.
 - **Real-time everything** — traces, run progress, and proposals stream to the
