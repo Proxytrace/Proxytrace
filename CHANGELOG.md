@@ -11,6 +11,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Separate session and conversation grouping headers on the proxy.** A new
+  `x-proxytrace-conversation-id` request header now carries the conversation/thread key (all calls
+  sharing it group into one thread), while `x-proxytrace-session-id` becomes a broader *session* key —
+  one app run or user session that may span several conversations and agents. Send both to model an
+  outer session containing multiple threads. Existing clients that only send `x-proxytrace-session-id`
+  are unaffected: it still falls back to grouping their calls into a conversation exactly as before.
+  Neither header is forwarded upstream.
 - **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
   external service no longer needs a long-lived user login (with MFA disabled and a token-refresh loop)
   to call the API. Mint a key with the new **REST API read** and/or **REST API write** capabilities:

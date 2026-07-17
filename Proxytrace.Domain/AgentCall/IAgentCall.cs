@@ -45,15 +45,17 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
     IModelParameters ModelParameters { get; }
 
     /// <summary>
-    /// Groups this call with other calls from the same conversation thread.
-    /// Set from the <c>X-Proxytrace-Session-Id</c> header or detected via message-history matching.
+    /// Groups this call with other calls from the same conversation thread. Derived from the
+    /// <c>x-proxytrace-conversation-id</c> header, falling back to the <c>x-proxytrace-session-id</c>
+    /// header when no conversation id is sent (so pre-split clients keep byte-identical grouping);
+    /// otherwise detected via message-history matching.
     /// </summary>
     Guid? ConversationId { get; }
 
     /// <summary>
     /// Groups this call with all calls of the same debugging session (one app run / user
     /// session, possibly spanning multiple agents and conversations). Derived from the
-    /// x-proxytrace-session-id header; null when the client sent none. FK-free correlation id —
+    /// <c>x-proxytrace-session-id</c> header; null when the client sent none. FK-free correlation id —
     /// see ISession.
     /// </summary>
     Guid? SessionId { get; }
