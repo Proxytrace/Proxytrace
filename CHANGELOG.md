@@ -11,23 +11,20 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
-- **Browse and filter traces by session.** A new `GET /api/sessions?projectId=…` lists a project's
-  recent debugging sessions (most recently active first, with per-session trace and token counters),
-  and `GET /api/sessions/{id}` returns one. The traces list now also accepts a `sessionId` filter, so
-  you can narrow the trace table (and its timeline) to a single session — add a **Session** filter from
-  the traces page filter bar (pick from recent sessions), and open a trace to jump straight to its
-  session via the new **Session** link in the trace detail. Sessions are scoped to the
-  projects you can access, exactly like traces. A dedicated **session page** (`/sessions/:id`) shows
-  one session's traces as a live, chronological timeline — header counters (trace and token totals,
-  first-seen/last-activity) and the trace list update in real time as new calls arrive, with a "Live"
-  indicator while the session is still active.
-- **Separate session and conversation grouping headers on the proxy.** A new
-  `x-proxytrace-conversation-id` request header now carries the conversation/thread key (all calls
-  sharing it group into one thread), while `x-proxytrace-session-id` becomes a broader *session* key —
-  one app run or user session that may span several conversations and agents. Send both to model an
-  outer session containing multiple threads. Existing clients that only send `x-proxytrace-session-id`
-  are unaffected: it still falls back to grouping their calls into a conversation exactly as before.
-  Neither header is forwarded upstream.
+- **Debugging sessions: group live traces across agents and conversations.** Tag your calls with the
+  `x-proxytrace-session-id` header and Proxytrace collects every trace sharing that key — spanning
+  multiple agents and conversations — into one **session**, the bigger picture around a single app run
+  or user session. Sessions are auto-created on the first trace with an unseen key, work on every
+  license tier, and need no setup. A dedicated **session page** (`/sessions/:id`) shows one session's
+  traces as a live, chronological timeline: header counters (trace and token totals,
+  first-seen/last-activity) and the trace list update in real time as new calls arrive, with a **Live**
+  indicator while the session saw activity in the last five minutes. On the **Traces** page, a new
+  **Session** filter narrows the table (and its timeline) to a single session — pick from the project's
+  recent sessions — and every trace row and the trace detail panel carry a **Session** link to jump
+  straight to the whole session. For the API, `GET /api/sessions?projectId=…` lists a project's recent
+  sessions (most recently active first, with per-session trace and token counters) and
+  `GET /api/sessions/{id}` returns one; sessions are scoped to the projects you can access, exactly
+  like traces.
 - **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
   external service no longer needs a long-lived user login (with MFA disabled and a token-refresh loop)
   to call the API. Mint a key with the new **REST API read** and/or **REST API write** capabilities:
@@ -42,6 +39,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **`x-proxytrace-session-id` now names a debugging session, not a conversation.** The header that
+  used to set the conversation/thread key now identifies the broader *session* (see Added), and
+  thread-level grouping moves to the new `x-proxytrace-conversation-id` header. Existing clients need
+  no change: when no `x-proxytrace-conversation-id` is sent, the session key still drives conversation
+  grouping, so calls keep grouping into threads byte-for-byte as before — and now gain a session view
+  on top. Send `x-proxytrace-conversation-id` only when you want one session to hold several distinct
+  conversations. Neither header is forwarded upstream.
 - **The proxy now forwards client headers transparently.** LLM requests through the ingestion proxy
   previously only passed a small fixed set of headers to the upstream provider; everything else was
   dropped. Now every header travels upstream unchanged — `OpenAI-Beta`, `openai-organization`,
