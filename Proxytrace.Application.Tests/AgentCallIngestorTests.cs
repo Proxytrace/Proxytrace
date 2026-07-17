@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Ingestion.Internal;
+using Proxytrace.Application.Streaming;
 using Proxytrace.Messaging;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -1093,5 +1094,30 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
 
         var session = await services.GetRequiredService<ISessionRepository>().FindAsync(expectedSessionId, CancellationToken);
         session.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task TraceCreatedEvent_Create_IncludesSessionIdFromCall()
+    {
+        // Verify the TraceCreatedEvent.Create factory includes SessionId from the IAgentCall
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+        var expectedSessionId = SessionIdDerivation.Derive(project.Id, "test-session");
+
+        await ingestion.IngestAsync(
+            NewJob(provider, project, sessionId: "test-session"),
+            CancellationToken);
+
+        var call = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items.Single();
+
+        // Create the event from the call using the factory
+        var evt = TraceCreatedEvent.Create(call);
+
+        evt.SessionId.Should().Be(expectedSessionId);
+        evt.Id.Should().Be(call.Id);
+        evt.ConversationId.Should().Be(call.ConversationId);
     }
 }
