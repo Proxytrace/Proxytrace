@@ -118,6 +118,21 @@ request **before it reaches the provider** with HTTP `403` and an OpenAI-style e
 is `proxytrace_blocked`. The blocked call still appears as a flagged trace.
 :::
 
+## Header forwarding
+
+The proxy is a transparent swap-in for your provider: **every header your client sends is
+forwarded upstream unchanged** — `OpenAI-Beta`, `openai-organization`, idempotency keys, custom
+tracing headers, anything your provider expects. Response headers come back the same way. Only
+three groups never cross the proxy:
+
+- **Proxytrace control headers** (`x-proxytrace-*`, e.g. `x-proxytrace-agent`) — these steer
+  Proxytrace itself and are never sent to the provider.
+- **Credentials** — your Proxytrace key (in `Authorization` or `api-key`) is replaced with the
+  provider's real key. For Azure OpenAI upstreams the provider key is sent both as a bearer and
+  in the `api-key` header, so either Azure auth style works.
+- **Hop-by-hop and transport headers** (`Connection`, `Transfer-Encoding`, `Accept-Encoding`,
+  `Host`, …) — these describe a single connection and are managed by the proxy on each hop.
+
 ## Listing models
 
 `client.models.list()` (`GET /openai/v1/models`) is forwarded to your upstream provider, so

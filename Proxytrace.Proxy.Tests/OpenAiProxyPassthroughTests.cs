@@ -113,8 +113,8 @@ public sealed class OpenAiProxyPassthroughTests
     [TestMethod]
     public async Task Passthrough_UpstreamRedirect_RelaysLocationAndRetryAfter()
     {
-        // Redirect + throttle headers are on the pass-through whitelist (unlike the OpenAI-tuned
-        // traced whitelist) so a relayed 3xx/429 stays actionable for the client.
+        // Response headers are relayed transparently (minus hop-by-hop), so a relayed 3xx/429 keeps
+        // its Location and Retry-After and stays actionable for the client.
         var controller = BuildController(
             Substitute.For<IIngestionStream>(),
             ResolverFor(ApiKey(new Uri("http://upstream.test/v1"))),

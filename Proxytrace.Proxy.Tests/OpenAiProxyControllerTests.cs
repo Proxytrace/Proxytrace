@@ -155,6 +155,137 @@ public sealed class OpenAiProxyControllerTests
         capture.LastContentType.Should().Be("garbage;;", "an unparseable Content-Type is forwarded raw, not dropped or fatal");
     }
 
+    // The proxy is a transparent swap-in for the upstream: any header the client sends that is not
+    // Proxytrace-specific, a credential, or hop-by-hop must reach the provider unchanged.
+    [TestMethod]
+    public async Task Proxy_ArbitraryClientHeaders_AreForwardedUpstream()
+    {
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Request.Headers["OpenAI-Beta"] = "assistants=v2";
+        controller.ControllerContext.HttpContext.Request.Headers["openai-organization"] = "org-123";
+        controller.ControllerContext.HttpContext.Request.Headers["Idempotency-Key"] = "idem-42";
+        controller.ControllerContext.HttpContext.Request.Headers["x-custom-trace"] = "abc";
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        capture.LastHeaders.Should().Contain("openai-beta", "assistants=v2");
+        capture.LastHeaders.Should().Contain("openai-organization", "org-123");
+        capture.LastHeaders.Should().Contain("idempotency-key", "idem-42");
+        capture.LastHeaders.Should().Contain("x-custom-trace", "abc");
+    }
+
+    [TestMethod]
+    public async Task Proxy_ProxytraceControlHeaders_AreNotForwardedUpstream()
+    {
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Request.Headers["x-proxytrace-agent"] = "billing agent";
+        controller.ControllerContext.HttpContext.Request.Headers["x-proxytrace-session-id"] = "sess-1";
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        capture.LastHeaders.Keys.Should().NotContain(
+            key => key.StartsWith("x-proxytrace-"),
+            "Proxytrace's own control headers must never leak to the provider");
+    }
+
+    [TestMethod]
+    public async Task Proxy_HopByHopAndConnectionHeaders_AreNotForwardedUpstream()
+    {
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        var headers = controller.ControllerContext.HttpContext.Request.Headers;
+        headers["Host"] = "proxytrace.example";
+        headers["Accept-Encoding"] = "gzip";
+        headers["Connection"] = "keep-alive, x-hop-extension";
+        headers["x-hop-extension"] = "per-connection";
+        headers["Transfer-Encoding"] = "chunked";
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        capture.LastHeaders.Keys.Should().NotContain("host", "the upstream host is set by the forward URI");
+        capture.LastHeaders.Keys.Should().NotContain("accept-encoding", "the capture pipeline needs an uncompressed body");
+        capture.LastHeaders.Keys.Should().NotContain("connection");
+        capture.LastHeaders.Keys.Should().NotContain("transfer-encoding");
+        capture.LastHeaders.Keys.Should().NotContain("x-hop-extension",
+            "headers named by Connection are per-hop (RFC 9110 §7.6.1) and must not travel upstream");
+    }
+
+    [TestMethod]
+    public async Task Proxy_ClientApiKeyHeader_IsNotForwarded_AndAzureGetsProviderApiKey()
+    {
+        // Azure's classic data-plane auth reads `api-key`; the client's value (their Proxytrace key)
+        // must be replaced by the provider's real key, exactly like the Authorization bearer.
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey(new Uri("https://my-resource.openai.azure.com/openai/v1"))),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Request.Headers["api-key"] = "proxytrace-minted-token";
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        capture.LastHeaders.Should().Contain("api-key", "sk-upstream");
+        capture.LastAuthorization.Should().Be("Bearer sk-upstream");
+    }
+
+    [TestMethod]
+    public async Task Proxy_NonAzureUpstream_DoesNotGetApiKeyHeader()
+    {
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+        controller.ControllerContext.HttpContext.Request.Headers["api-key"] = "proxytrace-minted-token";
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        capture.LastHeaders.Keys.Should().NotContain("api-key",
+            "the client's api-key may carry their Proxytrace key and must never leak upstream");
+    }
+
+    [TestMethod]
+    public async Task Proxy_ArbitraryUpstreamResponseHeaders_AreRelayedToClient()
+    {
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(new FakeHttpMessageHandler(
+                FakeHttpMessageHandler.BuildOpenAiResponse("ok"),
+                HttpStatusCode.OK,
+                new Dictionary<string, string>
+                {
+                    ["x-request-id"] = "req-1",
+                    ["x-upstream-custom"] = "value",
+                    ["Connection"] = "keep-alive",
+                })));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        controller.Response.Headers["x-request-id"].ToString().Should().Be("req-1");
+        controller.Response.Headers["x-upstream-custom"].ToString().Should().Be("value");
+        controller.Response.Headers.Keys.Should().NotContain(
+            k => k.Equals("Connection", StringComparison.OrdinalIgnoreCase),
+            "hop-by-hop response headers are owned by each connection, not relayed");
+    }
+
     [TestMethod]
     public async Task Proxy_BufferedCapture_PublishesWithIndependentToken_NotRequestToken()
     {
@@ -310,13 +441,13 @@ public sealed class OpenAiProxyControllerTests
         return resolver;
     }
 
-    private static ResolvedApiKey ApiKey()
+    private static ResolvedApiKey ApiKey(Uri? endpoint = null)
     {
         var provider = Substitute.For<IModelProvider>();
         provider.Id.Returns(Guid.NewGuid());
         provider.Name.Returns("test-provider");
         provider.ApiKey.Returns("sk-upstream");
-        provider.Endpoint.Returns(new Uri("http://upstream.test/"));
+        provider.Endpoint.Returns(endpoint ?? new Uri("http://upstream.test/"));
 
         var project = Substitute.For<IProject>();
         project.Id.Returns(Guid.NewGuid());
