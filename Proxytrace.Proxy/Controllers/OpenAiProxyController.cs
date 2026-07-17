@@ -32,36 +32,55 @@ public class OpenAiProxyController : ControllerBase
     // call to that named agent directly, skipping the prompt/tool similarity matcher.
     private const string AgentNameHeader = "x-proxytrace-agent";
 
-    private static readonly IReadOnlyCollection<string> ForwardedRequestHeaders = new HashSet<string>(
+    // Headers owned by Proxytrace itself, prefixed so the strip rule below catches future additions
+    // (x-proxytrace-session-id, x-proxytrace-agent, …) — they steer ingestion and never travel
+    // upstream.
+    private const string ProxytraceHeaderPrefix = "x-proxytrace-";
+
+    // The proxy forwards the request transparently: every client header travels upstream EXCEPT the
+    // ones below, so an existing client can swap its base URL to Proxytrace without losing headers
+    // its provider needs (OpenAI-Beta, openai-organization, idempotency keys, custom tracing, …).
+    // Stripped are only: credentials (replaced with the provider's real key), hop-by-hop headers
+    // (owned per-connection, RFC 9110 §7.6.1), and framing/negotiation headers the proxy's own
+    // upstream connection must control — Content-Length is recomputed from the buffered (possibly
+    // rewritten) body, and Accept-Encoding stays off because the capture pipeline reads the upstream
+    // body as plain UTF-8 text and must never receive a compressed stream.
+    private static readonly IReadOnlyCollection<string> StrippedRequestHeaders = new HashSet<string>(
     [
+        // credentials — replaced with the provider's real key
         "authorization",
-        "content-type",
-        "openai-organization",
-        "openai-project"
+        "api-key",
+        // hop-by-hop
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+        // owned by the proxy's own upstream connection
+        "host",
+        "content-length",
+        "expect",
+        "accept-encoding"
     ]);
 
-    private static readonly IReadOnlyCollection<string> ForwardedResponseHeaders = new HashSet<string>(
+    // Response side of the same transparency rule: every upstream header is relayed to the client
+    // EXCEPT hop-by-hop headers and the framing headers Kestrel must own. Content-Length is dropped
+    // because the streaming path normalizes CRLF line endings to LF, so the relayed byte count can
+    // legitimately differ from upstream's.
+    private static readonly IReadOnlyCollection<string> StrippedResponseHeaders = new HashSet<string>(
     [
-        "content-type",
-        "openai-model",
-        "openai-processing-ms",
-        "openai-version",
-        "x-request-id",
-        "x-ratelimit-limit-requests",
-        "x-ratelimit-remaining-requests",
-        "x-ratelimit-reset-requests"
-    ]);
-
-    // Pass-through responses are generic HTTP, not OpenAI API replies: additionally forward the
-    // headers that make redirects, throttling, caching, and method discovery work. Still a
-    // whitelist — hop-by-hop and cookie headers stay stripped.
-    private static readonly IReadOnlyCollection<string> PassthroughResponseHeaders = new HashSet<string>(
-    [
-        .. ForwardedResponseHeaders,
-        "location",
-        "retry-after",
-        "allow",
-        "cache-control"
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+        "content-length"
     ]);
 
     private readonly IHttpClientFactory httpClientFactory;
@@ -174,7 +193,7 @@ public class OpenAiProxyController : ControllerBase
         // the streaming path) once the body has been fully copied/captured.
         using (upstreamResponse)
         {
-            CopyUpstreamStatusAndHeaders(upstreamResponse, ForwardedResponseHeaders);
+            CopyUpstreamStatusAndHeaders(upstreamResponse);
 
             if (isStreaming)
             {
@@ -236,13 +255,13 @@ public class OpenAiProxyController : ControllerBase
         }
     }
 
-    // Copy an upstream response straight back to the client — status, whitelisted headers, and the
-    // body byte-for-byte — without capturing or ingesting anything. A raw byte pump with a per-chunk
+    // Copy an upstream response straight back to the client — status, headers, and the body
+    // byte-for-byte — without capturing or ingesting anything. A raw byte pump with a per-chunk
     // flush transparently handles both plain and event-stream bodies; pass-through is not an OpenAI
     // request, so it skips the streaming detection / stream_options injection the traced path does.
     private async Task ForwardResponseAsync(HttpResponseMessage upstreamResponse, CancellationToken cancellationToken)
     {
-        CopyUpstreamStatusAndHeaders(upstreamResponse, PassthroughResponseHeaders);
+        CopyUpstreamStatusAndHeaders(upstreamResponse);
 
         var buffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
         try
@@ -355,17 +374,17 @@ public class OpenAiProxyController : ControllerBase
         return true;
     }
 
-    // Copy upstream status + whitelisted response headers to our response.
-    private void CopyUpstreamStatusAndHeaders(
-        HttpResponseMessage upstreamResponse,
-        IReadOnlyCollection<string> whitelist)
+    // Copy upstream status + response headers to our response, minus the stripped set (hop-by-hop
+    // and framing headers Kestrel owns). Multi-valued headers are relayed as separate values, not
+    // joined — a joined Set-Cookie would corrupt the cookies.
+    private void CopyUpstreamStatusAndHeaders(HttpResponseMessage upstreamResponse)
     {
         Response.StatusCode = (int)upstreamResponse.StatusCode;
         foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
         {
-            if (whitelist.Contains(header.Key.ToLowerInvariant()))
+            if (!StrippedResponseHeaders.Contains(header.Key.ToLowerInvariant()))
             {
-                Response.Headers[header.Key] = string.Join(", ", header.Value);
+                Response.Headers[header.Key] = header.Value.ToArray();
             }
         }
     }
@@ -704,40 +723,42 @@ public class OpenAiProxyController : ControllerBase
             Content = bodyBytes.Length > 0 ? new ByteArrayContent(bodyBytes) : null,
         };
 
+        // The client's Connection header may name additional per-connection headers beyond the
+        // fixed hop-by-hop set (RFC 9110 §7.6.1); those belong to the client↔proxy hop only.
+        var connectionOwned = Request.Headers.Connection
+            .SelectMany(value => (value ?? string.Empty).Split(
+                ',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            .Select(token => token.ToLowerInvariant())
+            .ToHashSet();
+
         foreach (var header in Request.Headers)
         {
-            if (!ForwardedRequestHeaders.Contains(header.Key.ToLowerInvariant()))
+            var key = header.Key.ToLowerInvariant();
+            if (StrippedRequestHeaders.Contains(key)
+                || connectionOwned.Contains(key)
+                || key.StartsWith(ProxytraceHeaderPrefix, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            if (header.Key.Equals("content-type", StringComparison.OrdinalIgnoreCase))
+            // Client-supplied values may be malformed; TryAddWithoutValidation forwards them raw
+            // instead of letting a bad header crash the proxy with an opaque 500. Content headers
+            // (Content-Type, …) are rejected by the request-header collection and attach to the
+            // content instead; on a bodyless request they have no content to describe and are
+            // dropped with it.
+            if (!upstreamRequest.Headers.TryAddWithoutValidation(header.Key, (IEnumerable<string?>)header.Value))
             {
-                if (upstreamRequest.Content is not null)
-                {
-                    // The Content-Type is client-supplied and may be malformed; never let a bad
-                    // header crash the proxy with an unhandled FormatException → opaque 500. Parse
-                    // leniently and fall back to forwarding the raw value without validation.
-                    var rawContentType = header.Value.ToString();
-                    if (MediaTypeHeaderValue.TryParse(rawContentType, out var contentType))
-                    {
-                        upstreamRequest.Content.Headers.ContentType = contentType;
-                    }
-                    else
-                    {
-                        upstreamRequest.Content.Headers.TryAddWithoutValidation("Content-Type", rawContentType);
-                    }
-                }
+                upstreamRequest.Content?.Headers.TryAddWithoutValidation(header.Key, (IEnumerable<string?>)header.Value);
             }
-            else if (header.Key.Equals("authorization", StringComparison.OrdinalIgnoreCase))
-            {
-                // Replace the Proxytrace API key with the model provider's actual API key
-                upstreamRequest.Headers.TryAddWithoutValidation("Authorization", $"Bearer {providerApiKey}");
-            }
-            else
-            {
-                upstreamRequest.Headers.TryAddWithoutValidation(header.Key, (IEnumerable<string?>)header.Value);
-            }
+        }
+
+        // Replace the client's Proxytrace API key with the model provider's actual key. Azure's
+        // classic data-plane auth reads `api-key` rather than the bearer — send both, matching
+        // ServeAzureModelsAsync and ProviderClient.
+        upstreamRequest.Headers.TryAddWithoutValidation("Authorization", $"Bearer {providerApiKey}");
+        if (ProviderEndpoints.IsAzure(providerEndpoint))
+        {
+            upstreamRequest.Headers.TryAddWithoutValidation("api-key", providerApiKey);
         }
 
         return upstreamRequest;

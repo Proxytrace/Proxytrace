@@ -89,6 +89,10 @@ internal sealed class CapturingHttpMessageHandler : HttpMessageHandler
     public Uri? LastUri { get; private set; }
     public string? LastAuthorization { get; private set; }
 
+    /// <summary>Every header of the forwarded request (request + content headers), lowercase keys.</summary>
+    public IReadOnlyDictionary<string, string> LastHeaders { get; private set; } =
+        new Dictionary<string, string>();
+
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
@@ -98,6 +102,17 @@ internal sealed class CapturingHttpMessageHandler : HttpMessageHandler
         LastAuthorization = request.Headers.TryGetValues("Authorization", out var auth)
             ? string.Join(",", auth)
             : null;
+
+        var headers = request.Headers.AsEnumerable();
+        if (request.Content is not null)
+        {
+            headers = headers.Concat(request.Content.Headers);
+        }
+
+        LastHeaders = headers.ToDictionary(
+            h => h.Key.ToLowerInvariant(),
+            h => string.Join(",", h.Value));
+
         LastHadContent = request.Content is not null;
         if (request.Content is not null)
         {

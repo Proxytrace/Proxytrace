@@ -25,6 +25,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **The proxy now forwards client headers transparently.** LLM requests through the ingestion proxy
+  previously only passed a small fixed set of headers to the upstream provider; everything else was
+  dropped. Now every header travels upstream unchanged — `OpenAI-Beta`, `openai-organization`,
+  idempotency keys, custom tracing headers, and anything else your provider expects — so an existing
+  client can swap its base URL to Proxytrace with no behavior change. Only Proxytrace's own
+  `x-proxytrace-*` control headers, credentials (replaced with the provider's real key), and
+  hop-by-hop/connection headers are stripped. Upstream response headers are relayed the same way, and
+  Azure OpenAI upstreams now also receive the provider key in the `api-key` header that Azure's
+  classic data-plane auth expects.
 - **Test cases now remember which trace they came from.** Promoting or correcting a trace into a test
   suite records a link back to the source trace, so "which trace produced this case?" is answerable from
   Proxytrace's own data. (Previously the link was silently dropped, despite the API documenting
