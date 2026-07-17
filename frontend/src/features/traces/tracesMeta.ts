@@ -31,6 +31,18 @@ export function autoTimeRange(newestTraceIso: string | null, now: number = Date.
 export { buildRows } from '../../lib/trace';
 export type { ConversationGroup, FlatTrace, TraceRow } from '../../lib/trace';
 
+import type { AgentCallListItemDto as _AgentCallListItemDto } from '../../api/models';
+import type { TraceRow as _TraceRow } from '../../lib/trace';
+
+/**
+ * Ungrouped rows: every trace becomes its own flat row, order preserved. Used wherever conversation
+ * grouping is intentionally disabled (a metric sort on the Traces tab, the session timeline) so the
+ * "flat row" shape isn't re-inlined per call site.
+ */
+export function flatRows(traces: _AgentCallListItemDto[]): _TraceRow[] {
+  return traces.map(trace => ({ type: 'flat', trace }));
+}
+
 /**
  * Tool-request count for a trace — the backend precomputes it into the light row
  * ({@link AgentCallListItemDto.toolCount}; 0 when the call produced no response).
