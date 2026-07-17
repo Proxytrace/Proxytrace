@@ -14,7 +14,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - **Browse and filter traces by session.** A new `GET /api/sessions?projectId=…` lists a project's
   recent debugging sessions (most recently active first, with per-session trace and token counters),
   and `GET /api/sessions/{id}` returns one. The traces list now also accepts a `sessionId` filter, so
-  you can narrow the trace table (and its timeline) to a single session. Sessions are scoped to the
+  you can narrow the trace table (and its timeline) to a single session — add a **Session** filter from
+  the traces page filter bar (pick from recent sessions), and open a trace to jump straight to its
+  session via the new **Session** link in the trace detail. Sessions are scoped to the
   projects you can access, exactly like traces. A dedicated **session page** (`/sessions/:id`) shows
   one session's traces as a live, chronological timeline — header counters (trace and token totals,
   first-seen/last-activity) and the trace list update in real time as new calls arrive, with a "Live"
