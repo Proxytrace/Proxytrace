@@ -57,12 +57,13 @@ internal class SessionRepository
         }
         else
         {
-            // Modify in place; don't set UpdatedAt to avoid concurrency token conflicts in in-memory provider
+            // Modify in place, mirroring the relational ExecuteUpdate path (including UpdatedAt).
             context.Entry(existing).CurrentValues.SetValues(new
             {
                 LastActivityAt = lastActivityAt,
                 TraceCount = existing.TraceCount + 1,
                 TotalTokens = existing.TotalTokens + totalTokens,
+                UpdatedAt = lastActivityAt,
             });
         }
         await context.SaveChangesAsync(cancellationToken);

@@ -34,7 +34,7 @@ public sealed class SessionRepositoryTests : BaseTest<Module>
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
         var repo = services.GetRequiredService<ISessionRepository>();
         var id = SessionIdDerivation.Derive(project.Id, "run-1");
-        var t1 = DateTimeOffset.UtcNow;
+        var t1 = DateTimeOffset.UtcNow.AddMinutes(-2);
         var t2 = t1.AddMinutes(1);
 
         await repo.RecordActivityAsync(id, "run-1", project.Id, 50, t1, CancellationToken);

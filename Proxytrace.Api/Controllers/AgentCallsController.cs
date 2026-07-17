@@ -322,7 +322,7 @@ public class AgentCallsController : ControllerBase
         // id, stamp it on the call, and bump the denormalized session counters — so e2e/dev can create
         // sessioned traces (and exercise the session list / filter) without the ingestion proxy.
         Guid projectId = agent.Project.Id;
-        string? sessionKey = string.IsNullOrEmpty(request.SessionKey)
+        string? sessionKey = string.IsNullOrWhiteSpace(request.SessionKey)
             ? null
             : SessionIdDerivation.TruncateKey(request.SessionKey);
         Guid? sessionId = sessionKey is null ? null : SessionIdDerivation.Derive(projectId, sessionKey);

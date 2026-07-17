@@ -2533,7 +2533,7 @@ msgid "last 8"
 msgstr "últimos 8"
 
 msgid "Last active"
-msgstr "Última actividad"
+msgstr "Activo por última vez"
 
 msgid "Last activity"
 msgstr "Última actividad"

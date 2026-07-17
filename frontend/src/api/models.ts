@@ -1130,8 +1130,8 @@ export interface TraceCreatedEvent {
   model: string;
   provider: string;
   createdAt: string;
-  conversationId?: string;
-  sessionId?: string;
+  conversationId: string | null;
+  sessionId: string | null;
 }
 /** Emitted on `GET /api/anomalies/stream` when a custom detector flags a call (event `anomaly-flagged`). */
 export interface AnomalyFlaggedEvent {

@@ -15,7 +15,7 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   `x-proxytrace-session-id` header and Proxytrace collects every trace sharing that key — spanning
   multiple agents and conversations — into one **session**, the bigger picture around a single app run
   or user session. Sessions are auto-created on the first trace with an unseen key, work on every
-  license tier, and need no setup. A dedicated **session page** (`/sessions/:id`) shows one session's
+  license tier, and need no setup. A dedicated **session page** (`/sessions/:sessionId`) shows one session's
   traces as a live, chronological timeline: header counters (trace and token totals,
   first-seen/last-activity) and the trace list update in real time as new calls arrive, with a **Live**
   indicator while the session saw activity in the last five minutes. On the **Traces** page, a new
