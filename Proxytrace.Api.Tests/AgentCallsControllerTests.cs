@@ -226,6 +226,44 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         names.Should().BeEmpty();
     }
 
+    // ── seed endpoint: session stamping ────────────────────────────────────────
+
+    [TestMethod]
+    public async Task Seed_WithSessionKey_StampsSessionIdAndRecordsSession()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var expectedSessionId = Proxytrace.Domain.Session.SessionIdDerivation.Derive(agent.Project.Id, "run-42");
+
+        var result = await controller.Seed(
+            new SeedAgentCallRequest(
+                AgentId: agent.Id,
+                Model: "gpt-4o",
+                UserContent: "hi",
+                AssistantContent: "hello",
+                SystemContent: null,
+                InputTokens: 30,
+                OutputTokens: 10,
+                DurationMs: 100,
+                ConversationId: null,
+                SessionKey: "run-42"),
+            CancellationToken);
+
+        // The seeded trace carries the derived session id …
+        var dto = (result.Result as OkObjectResult)?.Value as AgentCallDto;
+        dto.Should().NotBeNull();
+        dto.SessionId.Should().Be(expectedSessionId);
+
+        // … and the session's denormalized counters were bumped via RecordActivityAsync.
+        var (sessions, _) = await services.GetRequiredService<Proxytrace.Domain.Session.ISessionRepository>()
+            .GetRecentAsync(agent.Project.Id, 1, 50, CancellationToken);
+        var session = sessions.Should().ContainSingle(s => s.Id == expectedSessionId).Subject;
+        session.ExternalKey.Should().Be("run-42");
+        session.TraceCount.Should().Be(1);
+        session.TotalTokens.Should().Be(40);
+    }
+
     private async Task<IAgentCall> SeedCallWithToolsAsync(
         IServiceProvider services,
         IAgent agent,
@@ -270,6 +308,7 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         IServiceProvider services, Proxytrace.Api.Auth.IProjectAccessGuard guard) => new(
         services.GetRequiredService<IAgentCallRepository>(),
         services.GetRequiredService<IAgentRepository>(),
+        services.GetRequiredService<Proxytrace.Domain.Session.ISessionRepository>(),
         services.GetRequiredService<IDashboardStatistics>(),
         services.GetRequiredService<ITraceBroadcaster>(),
         services.GetRequiredService<AgentCallDtoMapper>(),

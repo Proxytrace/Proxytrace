@@ -11,6 +11,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Browse and filter traces by session.** A new `GET /api/sessions?projectId=…` lists a project's
+  recent debugging sessions (most recently active first, with per-session trace and token counters),
+  and `GET /api/sessions/{id}` returns one. The traces list now also accepts a `sessionId` filter, so
+  you can narrow the trace table (and its timeline) to a single session. Sessions are scoped to the
+  projects you can access, exactly like traces.
 - **Separate session and conversation grouping headers on the proxy.** A new
   `x-proxytrace-conversation-id` request header now carries the conversation/thread key (all calls
   sharing it group into one thread), while `x-proxytrace-session-id` becomes a broader *session* key —
