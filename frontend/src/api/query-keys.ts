@@ -99,6 +99,9 @@ export const QUERY_KEYS = {
 
   traceySession: (projectId?: string) => ['tracey-session', projectId ?? null] as const,
 
+  sessions: (projectId: string) => ['sessions', projectId] as const,
+  session: (id: string) => ['session', id] as const,
+
   errorLog: (filter: object) => ['error-log', filter] as const,
   /** A single captured error by id (deep-link target from an error toast). */
   errorLogEntry: (id: string) => ['error-log', 'entry', id] as const,
