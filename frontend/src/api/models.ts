@@ -94,7 +94,7 @@ export interface AgentCallDto {
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
-  sessionId?: string;
+  sessionId: string | null;
   /** Outlier characteristics flagged at ingestion (bitmask; 0 = not an outlier). See {@link lib/outliers}. */
   outlierFlags: number;
 }
@@ -125,7 +125,7 @@ export interface AgentCallListItemDto {
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
-  sessionId?: string;
+  sessionId: string | null;
   /** Outlier characteristics flagged at ingestion (bitmask; 0 = not an outlier). See {@link lib/outliers}. */
   outlierFlags: number;
 }
