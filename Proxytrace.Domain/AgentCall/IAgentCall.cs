@@ -51,6 +51,14 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
     Guid? ConversationId { get; }
 
     /// <summary>
+    /// Groups this call with all calls of the same debugging session (one app run / user
+    /// session, possibly spanning multiple agents and conversations). Derived from the
+    /// x-proxytrace-session-id header; null when the client sent none. FK-free correlation id —
+    /// see ISession.
+    /// </summary>
+    Guid? SessionId { get; }
+
+    /// <summary>
     /// Which per-call characteristics flagged this call as an outlier relative to its agent's recent
     /// baseline, computed once at ingestion. <see cref="OutlierFlags.None"/> means not an outlier.
     /// </summary>
@@ -69,6 +77,7 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
         string? errorMessage = null,
         IModelParameters? modelParameters = null,
         Guid? conversationId = null,
+        Guid? sessionId = null,
         OutlierFlags outlierFlags = OutlierFlags.None);
 
     public delegate IAgentCall CreateExisting(
@@ -83,5 +92,6 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
         IModelParameters modelParameters,
         IDomainEntityData existing,
         Guid? conversationId = null,
+        Guid? sessionId = null,
         OutlierFlags outlierFlags = OutlierFlags.None);
 }
