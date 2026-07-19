@@ -123,7 +123,7 @@ jobs:
       # whose image is already published.
       - name: Sync Docker Hub repo description
         continue-on-error: true
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
