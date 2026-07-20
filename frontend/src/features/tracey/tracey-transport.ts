@@ -155,7 +155,7 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
                 traceConversationId: turnId,
                 usage: {
                   inputTokens: part.totalUsage.inputTokens ?? 0,
-                  cachedInputTokens: part.totalUsage.cachedInputTokens ?? 0,
+                  cachedInputTokens: part.totalUsage.inputTokenDetails.cacheReadTokens ?? 0,
                   outputTokens: part.totalUsage.outputTokens ?? 0,
                   totalTokens: part.totalUsage.totalTokens ?? 0,
                 },
