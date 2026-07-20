@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-20
+
 ### Added
 
 - **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
