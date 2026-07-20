@@ -94,7 +94,7 @@ jobs:
       # Both registries get the identical tag set from this one build.
       - name: Compute image tags
         id: docker-meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/proxytrace/proxytrace
