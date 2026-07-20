@@ -26,7 +26,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Extract version from tag
         id: version
@@ -63,7 +63,7 @@ jobs:
       DOCKERHUB_USERNAME: proxytrace
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # QEMU lets the amd64 runner emulate arm64 for the multi-arch build below.
       # The heavy compile steps cross-compile natively (the Dockerfile pins its build
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Extract release notes
         run: scripts/release/extract-changelog.sh "${{ needs.meta.outputs.version }}" > release-notes.md
