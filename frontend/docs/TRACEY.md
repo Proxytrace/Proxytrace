@@ -30,7 +30,7 @@ returning only a compact digest to the model while the full payload is rendered 
 
 Tracey runs on two independent request paths. Keep them separate in your head:
 
-1. **Reasoning plane (LLM).** The Vercel **AI SDK v6** drives the chat. It POSTs OpenAI-shape
+1. **Reasoning plane (LLM).** The Vercel **AI SDK v7** drives the chat. It POSTs OpenAI-shape
    `/chat/completions` requests to the **same-origin** endpoint
    `/api/tracey/{projectId}/openai/v1` with the app's own JWT. The backend forwards to the
    project's provider and ingests the call. Tools are sent on the wire as JSON Schema (the SDK
