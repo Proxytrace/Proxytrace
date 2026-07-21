@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { cn } from '../../lib/cn';
 
 interface NavItemProps {
   label: string;
@@ -27,9 +28,10 @@ export function NavItem({ label, icon, to, badge, badgeAccent, collapsed }: NavI
               <span className="flex-1 text-left">{label}</span>
               {badge && (
                 <span
-                  className={`text-caption font-semibold px-1.5 py-0.5 rounded-none min-w-[18px] text-center ${
-                    badgeAccent ? 'bg-accent text-accent-ink' : 'bg-card-2 text-secondary'
-                  }`}
+                  className={cn(
+                    'text-caption font-semibold px-1.5 py-0.5 rounded-none min-w-[18px] text-center',
+                    badgeAccent ? 'bg-accent text-accent-ink' : 'bg-card-2 text-secondary',
+                  )}
                 >
                   {badge}
                 </span>

@@ -65,7 +65,7 @@ export function SwitchPill({
       >
         <span
           className={cn(
-            'absolute top-[2px] w-3 h-3 rounded-none bg-white transition-[left] duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
+            'absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
             checked ? 'left-[14px]' : 'left-[2px]',
           )}
         />

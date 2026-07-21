@@ -38,7 +38,7 @@ export function Switch({
     >
       <span
         className={cn(
-          'absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-none bg-white shadow-[var(--shadow-pill)]',
+          'absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-[var(--shadow-pill)]',
           'transition-transform duration-[var(--motion-base)] ease-[var(--ease-standard)]',
           checked ? 'translate-x-[16px]' : 'translate-x-0',
         )}
