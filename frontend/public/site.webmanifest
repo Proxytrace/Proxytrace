@@ -6,7 +6,7 @@
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ],
-  "theme_color": "#1b1b1f",
-  "background_color": "#1b1b1f",
+  "theme_color": "#0a0f14",
+  "background_color": "#0a0f14",
   "display": "standalone"
 }

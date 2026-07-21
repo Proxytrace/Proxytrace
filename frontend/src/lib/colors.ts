@@ -6,10 +6,10 @@ const MODEL_COLORS: Record<string, string> = {
   'gpt-5.4': '#57c4d3',
   'gpt-5.4-mini': '#d9a23f',
   'gpt-4.1': '#57c4d3',
-  'gpt-3.5-turbo': '#c98a4a',
+  'gpt-3.5-turbo': '#57c4d3',
   'claude-3.5-sonnet': '#5aba80',
   'claude-sonnet-4-5': '#5aba80',
-  'claude-3-opus': '#57b393',
+  'claude-3-opus': '#5aba80',
   'claude-3-haiku': '#5aba80',
 };
 
@@ -96,10 +96,15 @@ export const EVALUATOR_KIND_CATEGORY: Record<EvaluatorKind, 'llm' | 'rule'> = {
   [EvaluatorKind.JsonSchemaMatch]: 'rule',
 };
 
+/**
+ * Semantic color for an HTTP status, returned as a token reference (not a literal) so the
+ * value tracks `--success`/`--warn`/`--danger` instead of drifting from them. The result is only
+ * ever consumed as a CSS value (inline `color`/`background`), where `var()` resolves normally.
+ */
 export function statusColor(httpStatus: number): string {
-  if (httpStatus >= 200 && httpStatus < 300) return '#5aba80';
-  if (httpStatus >= 400 && httpStatus < 500) return '#d9a23f';
-  return '#dd5959';
+  if (httpStatus >= 200 && httpStatus < 300) return 'var(--success)';
+  if (httpStatus >= 400 && httpStatus < 500) return 'var(--warn)';
+  return 'var(--danger)';
 }
 
 /**

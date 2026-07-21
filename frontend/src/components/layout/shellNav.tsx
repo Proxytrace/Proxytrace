@@ -78,7 +78,7 @@ export const navItems: NavEntry[] = [...navGroups.flatMap(g => g.items), ...foot
 
 export type HealthStatus = 'online' | 'offline' | 'connecting';
 
-export const HEALTH_PILL: Record<HealthStatus, string> = {
+export const HEALTH_CHIP: Record<HealthStatus, string> = {
   online: cn('bg-success-subtle border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success'),
   offline: cn('bg-danger-subtle border-[color-mix(in_srgb,var(--danger)_25%,transparent)] text-danger'),
   connecting: cn('bg-warn-subtle border-[color-mix(in_srgb,var(--warn)_25%,transparent)] text-warn'),

@@ -21,7 +21,7 @@ export function NavItem({ label, code, to, badge, badgeAccent, collapsed }: NavI
       {({ isActive }) => (
         <>
           {isActive && (
-            <span className="absolute left-0 top-2 bottom-2 w-[2px] bg-accent rounded-[0_2px_2px_0]" />
+            <span className="absolute left-0 top-2 bottom-2 w-[2px] bg-accent" />
           )}
           {/* Hidden from a11y: the visible label (or the `title` when collapsed) is the name. */}
           <span
