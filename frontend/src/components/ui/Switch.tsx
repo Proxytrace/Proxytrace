@@ -29,7 +29,7 @@ export function Switch({
     <span
       aria-hidden
       className={cn(
-        'relative block shrink-0 w-10 h-6 rounded-full',
+        'relative block shrink-0 w-10 h-6 rounded-none',
         'transition-[background-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
         checked
           ? 'bg-[image:var(--grad-accent)]'
@@ -38,7 +38,7 @@ export function Switch({
     >
       <span
         className={cn(
-          'absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-[var(--shadow-pill)]',
+          'absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-none bg-white shadow-[var(--shadow-pill)]',
           'transition-transform duration-[var(--motion-base)] ease-[var(--ease-standard)]',
           checked ? 'translate-x-[16px]' : 'translate-x-0',
         )}
@@ -56,7 +56,7 @@ export function Switch({
       data-testid={testId}
       onClick={() => onChange(!checked)}
       className={cn(
-        'group inline-flex items-center gap-2.5 rounded-full cursor-pointer bg-transparent border-none p-0',
+        'group inline-flex items-center gap-2.5 rounded-none cursor-pointer bg-transparent border-none p-0',
         FOCUS_RING,
         'disabled:opacity-50 disabled:cursor-not-allowed',
       )}

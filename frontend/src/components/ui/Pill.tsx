@@ -14,7 +14,6 @@ export function Pill({ label, color, size = 'md', onClick, selected }: PillProps
       label={label}
       variant="tinted"
       color={color}
-      shape="pill"
       size={size}
       onClick={onClick}
       selected={selected}

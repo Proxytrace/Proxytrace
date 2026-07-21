@@ -51,7 +51,7 @@ export function FollowUpSuggestions() {
           style={{ animationDelay: `${index * 45}ms` }}
           data-testid={`tracey-follow-up-btn-${index}`}
         >
-          <Badge label={item} variant="accent" shape="pill" size="md" className={CHIP_BADGE} />
+          <Badge label={item} variant="accent" size="md" className={CHIP_BADGE} />
         </button>
       ))}
     </div>

@@ -28,7 +28,7 @@ export function FilterTabs({ options, value, onChange }: FilterTabsProps) {
             {opt.label}
             {opt.count != null && (
               <span
-                className={`text-caption font-semibold px-1.25 py-0.25 rounded-full ${active ? 'text-accent bg-[color-mix(in_srgb,_var(--accent-primary)_20%,_transparent)]' : 'text-muted bg-card-2'}`}
+                className={`text-caption font-semibold px-1.25 py-0.25 rounded-none ${active ? 'text-accent bg-[color-mix(in_srgb,_var(--accent-primary)_20%,_transparent)]' : 'text-muted bg-card-2'}`}
               >
                 {opt.count}
               </span>

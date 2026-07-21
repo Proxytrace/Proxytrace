@@ -2,14 +2,12 @@ import React from 'react';
 import { cn } from '../../lib/cn';
 
 export type BadgeVariant = 'neutral' | 'success' | 'warn' | 'danger' | 'accent' | 'tinted';
-export type BadgeShape = 'pill' | 'rounded';
 export type BadgeSize = 'sm' | 'md';
 
 interface BadgeProps {
   label: React.ReactNode;
   variant?: BadgeVariant;
   color?: string;
-  shape?: BadgeShape;
   size?: BadgeSize;
   dot?: boolean;
   selected?: boolean;
@@ -35,7 +33,6 @@ export function Badge({
   label,
   variant = 'neutral',
   color,
-  shape = 'pill',
   size = 'sm',
   dot = false,
   selected,
@@ -73,7 +70,7 @@ export function Badge({
       className={cn(
         'inline-flex items-center font-semibold whitespace-nowrap transition-opacity',
         SIZE_CLS[size],
-        shape === 'pill' ? 'rounded-full' : 'rounded-sm',
+        'rounded-none', // Signal Desk: chips are square tags
         className,
       )}
       style={style}

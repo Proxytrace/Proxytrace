@@ -58,14 +58,14 @@ export function SwitchPill({
     >
       <span
         className={cn(
-          'w-7 h-4 rounded-full relative transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
+          'w-7 h-4 rounded-none relative transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
           checked ? 'bg-accent' : 'bg-white/[0.12]',
         )}
         aria-hidden="true"
       >
         <span
           className={cn(
-            'absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
+            'absolute top-[2px] w-3 h-3 rounded-none bg-white transition-[left] duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
             checked ? 'left-[14px]' : 'left-[2px]',
           )}
         />
