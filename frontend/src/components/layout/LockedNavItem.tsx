@@ -7,9 +7,10 @@ import { LockIcon } from '../icons';
  * Enterprise feature) but is dimmed, shows a lock, and routes to /upgrade
  * instead of the gated page.
  */
-export function LockedNavItem({ label, icon, collapsed }: {
+export function LockedNavItem({ label, code, collapsed }: {
   label: string;
-  icon: React.ReactNode;
+  /** Mono two-letter page code rendered in place of an icon glyph (terminal-style rail). */
+  code: string;
   collapsed: boolean;
 }) {
   const { t } = useLingui();
@@ -20,7 +21,10 @@ export function LockedNavItem({ label, icon, collapsed }: {
       data-testid={`nav-locked-${label.toLowerCase().replace(/\s+/g, '-')}`}
       className={`nav-item opacity-60${collapsed ? ' justify-center' : ''}`}
     >
-      <span className="flex shrink-0">{icon}</span>
+      {/* Hidden from a11y: the visible label (or the `title` when collapsed) is the name. */}
+      <span aria-hidden="true" className="font-mono text-caption w-[18px] shrink-0 text-center text-muted">
+        {code}
+      </span>
       {!collapsed && (
         <>
           <span className="flex-1 text-left">{label}</span>
