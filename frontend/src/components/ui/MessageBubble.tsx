@@ -90,7 +90,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
 
   return (
     <div
-      className={cn('relative group rounded-lg overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border, streaming && 'streaming-border')}
+      className={cn('relative group rounded-lg overflow-hidden bg-card-2 border', role.border, streaming && 'streaming-border')}
     >
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
@@ -136,7 +136,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
                 <span
                   aria-hidden
                   className={cn(
-                    'inline-block w-[8px] h-[15px] align-text-bottom ml-0.25 rounded-[1px]',
+                    'inline-block w-[8px] h-[15px] align-text-bottom ml-0.25',
                     'animate-[pulse-dot_0.9s_ease-in-out_infinite] motion-reduce:animate-none',
                     role.accentBg,
                   )}

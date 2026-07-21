@@ -107,7 +107,7 @@ export function TraceTimeline({ buckets, from, to, onZoom, onZoomOut, canZoomOut
     <div
       ref={ref}
       data-testid="traces-timeline"
-      className="relative w-full shrink-0 select-none cursor-crosshair rounded-md border border-border bg-card shadow-[var(--shadow-pill)]"
+      className="relative w-full shrink-0 select-none cursor-crosshair border border-border bg-card"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -127,10 +127,10 @@ export function TraceTimeline({ buckets, from, to, onZoom, onZoomOut, canZoomOut
         {geo.bars.map((b, i) => (
           <g key={i}>
             {b.totalH > 0 && (
-              <rect x={b.x} y={b.totalY} width={b.w} height={b.totalH} fill="var(--accent-primary)" opacity={hoverIdx === i ? 0.95 : 0.7} rx={1} />
+              <rect x={b.x} y={b.totalY} width={b.w} height={b.totalH} fill="var(--accent-primary)" opacity={hoverIdx === i ? 0.95 : 0.7} />
             )}
             {b.errorH > 0 && (
-              <rect x={b.x} y={b.errorY} width={b.w} height={b.errorH} fill="var(--danger)" rx={1} />
+              <rect x={b.x} y={b.errorY} width={b.w} height={b.errorH} fill="var(--danger)" />
             )}
           </g>
         ))}

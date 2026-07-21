@@ -8,6 +8,7 @@ import {
   UsersIcon, CheckboxIcon, ActivityIcon, ScaleIcon,
 } from '../icons';
 import { cn } from '../../lib/cn';
+import { kbdCls } from '../ui/classes';
 
 // Icon lookup (presentation-layer concern, kept here beside usage)
 const KIND_ICON: Record<SearchKind, (s: number) => React.ReactNode> = {
@@ -44,7 +45,7 @@ export function SearchResultList({
   return (
     <>
       {isRecentMode && (
-        <div className="px-3 pt-1 pb-1.5 text-caption uppercase tracking-wider text-white/40 font-semibold">
+        <div className="px-3 pt-1 pb-1.5 text-caption uppercase tracking-wider text-muted font-semibold">
           <Trans>Recent</Trans>
         </div>
       )}
@@ -57,10 +58,10 @@ export function SearchResultList({
         return (
           <div key={g.kind} className="mb-2">
             {!isRecentMode && (
-              <div className="px-3 py-1 text-caption uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+              <div className="px-3 py-1 text-caption uppercase tracking-wider text-muted flex items-center gap-1.5">
                 <span style={{ color: meta.accent }}>{icon(11)}</span>
                 {g.label}
-                <span className="text-white/25">· {groupHitsForKind.length}</span>
+                <span className="text-muted">· {groupHitsForKind.length}</span>
               </div>
             )}
             <div className="flex flex-col px-1.5">
@@ -69,7 +70,7 @@ export function SearchResultList({
                 const active = globalIndex === activeIndex;
                 const itemCls = cn(
                   'flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer text-left',
-                  active ? 'bg-white/[.08]' : 'hover:bg-white/[.04]',
+                  active ? 'bg-card-2' : 'hover:bg-[var(--bg-wash-hover)]',
                 );
                 const itemContent = (
                   <>
@@ -79,9 +80,9 @@ export function SearchResultList({
                     >
                       {icon(12)}
                     </span>
-                    <span className="text-title text-white truncate flex-1 min-w-0">{hit.title}</span>
+                    <span className="text-title text-primary truncate flex-1 min-w-0">{hit.title}</span>
                     {active && (
-                      <kbd className="px-1.25 py-0.25 bg-white/10 rounded text-caption font-mono text-white/60">↵</kbd>
+                      <kbd className={kbdCls}>↵</kbd>
                     )}
                   </>
                 );

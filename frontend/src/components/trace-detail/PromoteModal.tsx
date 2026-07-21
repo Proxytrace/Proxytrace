@@ -143,7 +143,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                     data-testid={`promote-suite-option-${s.id}`}
                     onClick={() => setSuiteId(s.id)}
                     className={cn(
-                      'rounded-md px-3 py-2.5 transition-all duration-150 flex items-start gap-2',
+                      'px-3 py-2.5 transition-all duration-150 flex items-start gap-2',
                       isSel
                         ? 'bg-accent-subtle shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--accent-primary)_67%,transparent)]'
                         : 'bg-card-2 shadow-[inset_0_0_0_1px_var(--border-color)]',
@@ -151,13 +151,13 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                   >
                     <span
                       className={cn(
-                        'w-[14px] h-[14px] rounded-full mt-0.5 shrink-0 flex items-center justify-center transition-all duration-150',
+                        'w-[14px] h-[14px] mt-0.5 shrink-0 flex items-center justify-center transition-all duration-150',
                         isSel
-                          ? 'bg-accent border border-accent shadow-[0_0_8px_var(--accent-glow)]'
+                          ? 'bg-accent border border-accent'
                           : 'bg-transparent border border-border shadow-none',
                       )}
                     >
-                      {isSel && <span className="text-white inline-flex"><CheckIcon size={9} strokeWidth={3} /></span>}
+                      {isSel && <span className="text-accent-ink inline-flex"><CheckIcon size={9} strokeWidth={3} /></span>}
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className={cn('block text-body font-semibold truncate', isSel ? 'text-primary' : 'text-secondary')}>
@@ -173,7 +173,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             </div>
 
             {/* Stats panel */}
-            <div className="px-5 py-4 border-t border-hairline shrink-0 bg-black/[0.18]">
+            <div className="px-5 py-4 border-t border-hairline shrink-0 bg-surface">
               {selectedSuite ? (
                 <SuiteStats suite={selectedSuite} />
               ) : (

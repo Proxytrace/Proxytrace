@@ -6,7 +6,7 @@ import { Trans } from '@lingui/react/macro';
 
 export function PreviewLoading() {
   return (
-    <div className="flex items-center gap-2 text-body-sm text-white/40">
+    <div className="flex items-center gap-2 text-body-sm text-muted">
       <span className="size-[6px] rounded-full bg-accent pulse-dot" />
       <Trans>Loading preview…</Trans>
     </div>
@@ -27,8 +27,8 @@ export function MetaGrid({ entries }: MetaGridProps) {
     <div className="flex flex-col gap-1">
       {entries.map(([k, v]) => (
         <div key={k} className="flex items-baseline gap-3 text-body-sm">
-          <span className="text-white/40 min-w-[80px] uppercase tracking-wider text-caption">{k}</span>
-          <span className="text-white/80 truncate min-w-0">{v}</span>
+          <span className="text-muted min-w-[80px] uppercase tracking-wider text-caption">{k}</span>
+          <span className="text-primary truncate min-w-0">{v}</span>
         </div>
       ))}
     </div>

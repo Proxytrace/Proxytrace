@@ -18,7 +18,7 @@ export const ALL_GROUPS: { kind: SearchKind; label: string }[] = [
 
 export type KindMeta = {
   label: string;
-  /** CSS variable string, e.g. "var(--teal)" */
+  /** CSS variable string, e.g. "var(--teal)" (the steel-blue info token) */
   accent: string;
 };
 

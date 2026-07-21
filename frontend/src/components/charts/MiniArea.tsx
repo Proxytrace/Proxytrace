@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChartTooltip } from './ChartTooltip';
 import { useElementWidth } from '../../hooks/useElementWidth';
 
@@ -12,11 +12,10 @@ interface MiniAreaProps {
   tooltipLabel?: (i: number) => string;
 }
 
-/** Compact area sparkline with gradient fill, end-point dot, and hover tooltip. No axes. */
+/** Compact area sparkline with a flat tinted fill, end-point dot, and hover tooltip. No axes. */
 export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 0.18, formatValue, tooltipLabel }: MiniAreaProps) {
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(width);
   const w = measuredWidth || width;
-  const gid = useId();
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const geom = useMemo(() => {
@@ -49,13 +48,7 @@ export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 
     <div ref={ref} className="relative w-full" onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
       {geom && (
         <svg width="100%" height={height} viewBox={`0 0 ${w} ${height}`} className="block overflow-visible">
-          <defs>
-            <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={fillOpacity} />
-              <stop offset="100%" stopColor={color} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={geom.area} fill={`url(#${gid})`} />
+          <path d={geom.area} fill={color} fillOpacity={fillOpacity} />
           <path d={geom.line} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           {end && hoverIdx === null && (
             <>

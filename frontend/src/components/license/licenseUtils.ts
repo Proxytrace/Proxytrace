@@ -59,7 +59,7 @@ export function licenseSourceNote(source: LicenseSource): MessageDescriptor | nu
 
 /**
  * Visual treatment of the tier chip. Deliberately distinct from the health
- * ("Online") pill so the two don't read as twins: `premium` is the gold,
+ * ("Online") chip so the two don't read as twins: `premium` is the cyan,
  * crowned Enterprise marque; `pending` flags a re-validation in progress;
  * `free` is a muted upgrade affordance.
  */
@@ -76,7 +76,7 @@ export interface TierBadge {
 /**
  * Maps the license status/tier to the topbar tier chip's label, visual tone,
  * and whether it doubles as an upgrade affordance. Free is always shown (muted,
- * links to upgrade); a licensed install is the gold "premium" marque when
+ * links to upgrade); a licensed install is the cyan "premium" marque when
  * active, or "pending" (amber) while grace/expired re-validation is in flight.
  */
 export function tierBadge(status: LicenseStatus, tier: LicenseTier): TierBadge {

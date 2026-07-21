@@ -13,7 +13,7 @@ interface SwitchProps {
 /**
  * Token-styled on/off switch (ARIA `role="switch"`). A `label` renders as visible text beside the
  * track (and doubles as the accessible name); pass `aria-label` instead for a switch whose label
- * lives elsewhere (e.g. a settings row). On = the gold accent gradient; off = a recessed card-2
+ * lives elsewhere (e.g. a settings row). On = the flat cyan accent fill; off = a recessed card-2
  * track. The off-state outline is an inset hairline ring (a box-shadow, not a `border`) so the knob
  * sits at the exact same offset in both states — toggling slides it cleanly with no 1px jump.
  */
@@ -38,7 +38,7 @@ export function Switch({
     >
       <span
         className={cn(
-          'absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-[var(--shadow-pill)]',
+          'absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-full bg-white',
           'transition-transform duration-[var(--motion-base)] ease-[var(--ease-standard)]',
           checked ? 'translate-x-[16px]' : 'translate-x-0',
         )}

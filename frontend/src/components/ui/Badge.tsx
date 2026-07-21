@@ -54,7 +54,6 @@ export function Badge({
     background: palette.bg,
     color: palette.fg,
     border: `1px solid ${palette.border}`,
-    boxShadow: 'var(--shadow-pill)',
   };
 
   if (selected) {

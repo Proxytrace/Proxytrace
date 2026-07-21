@@ -52,7 +52,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
 
   return (
     <div
-      className="relative group rounded-lg overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+      className="relative group rounded-lg overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)]"
     >
       <CopyButton text={copyText} label={t`Copy tool call`} className={hoverRevealOverlayCls} />
       {/* Header. The toggle and the Definition action are siblings so we never nest one
@@ -81,7 +81,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
           )}
           <span
             title={statusTitle}
-            className="ml-auto inline-flex items-center gap-1.25 px-1.75 py-0.5 rounded-full text-caption font-semibold font-mono shrink-0"
+            className="ml-auto inline-flex items-center gap-1.25 px-1.75 py-0.5 rounded-none text-caption font-semibold font-mono shrink-0"
             style={{ background: statusBg, color: statusFg }}
           >
             <span aria-hidden className="w-[5px] h-[5px] rounded-full" style={{ background: statusFg }} />

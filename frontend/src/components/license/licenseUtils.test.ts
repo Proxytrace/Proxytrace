@@ -39,7 +39,7 @@ describe('tierBadge', () => {
     expect(badge.linkToUpgrade).toBe(true);
   });
 
-  it('shows the gold premium Enterprise chip when active', () => {
+  it('shows the cyan premium Enterprise chip when active', () => {
     const badge = tierBadge('active', 'enterprise');
     expect(i18n._(badge.label)).toBe('Enterprise');
     expect(badge.tone).toBe('premium');

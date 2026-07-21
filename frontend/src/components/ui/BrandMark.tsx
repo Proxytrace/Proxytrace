@@ -4,13 +4,13 @@ interface BrandMarkProps {
 }
 
 /**
- * Proxytrace "Scope" brand mark — a gold trace pulse over a faint graticule
- * line with a teal live cursor, on a tinted chip. Mirrors public/icon.svg.
+ * Proxytrace "Scope" brand mark — a cyan trace pulse over a faint graticule
+ * line with a steel-blue live cursor, on a flat ruled chip. Mirrors public/icon.svg.
  */
 export function BrandMark({ size = 30 }: BrandMarkProps) {
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-[27%] bg-card-2 shadow-[0_3px_12px_-3px_var(--accent-glow),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+      className="inline-flex shrink-0 items-center justify-center bg-card-2 shadow-[inset_0_0_0_1px_var(--border-color)]"
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} viewBox="0 0 30 30" fill="none" className="block">

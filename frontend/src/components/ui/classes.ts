@@ -30,5 +30,5 @@ export const hoverAccentWashCls = 'hover:bg-[color-mix(in_srgb,var(--accent-prim
 
 /** Canonical `<kbd>` key cap for keyboard hints (slash menu, palettes, shortcut legends). */
 export const kbdCls = cn(
-  'rounded-sm border border-hairline bg-card px-1 py-px font-mono text-caption text-secondary shadow-[var(--shadow-pill)]',
+  'rounded-sm border border-hairline bg-card px-1 py-px font-mono text-caption text-secondary',
 );

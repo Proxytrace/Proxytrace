@@ -1,4 +1,4 @@
-export interface GaugeSegment { x1: number; y1: number; x2: number; y2: number; color: string; active: boolean; glow: boolean; }
+export interface GaugeSegment { x1: number; y1: number; x2: number; y2: number; color: string; active: boolean; }
 export interface SegmentedGaugeData { segments: GaugeSegment[]; cx: number; cy: number; }
 
 export function computeSegmentedGauge(value: number, size: number): SegmentedGaugeData {
@@ -18,7 +18,7 @@ export function computeSegmentedGauge(value: number, size: number): SegmentedGau
     return {
       x1: cx + Math.cos(ang) * (r - armLen), y1: cy + Math.sin(ang) * (r - armLen),
       x2: cx + Math.cos(ang) * (r + armLen), y2: cy + Math.sin(ang) * (r + armLen),
-      color, active, glow: active && i > filled - 4,
+      color, active,
     };
   });
   return { segments, cx, cy };

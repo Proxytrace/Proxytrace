@@ -28,7 +28,7 @@ export function TestSuitePreview({ id, hit }: Props) {
       ]} />
       {s.description && (
         <PreviewSection title={t`Description`}>
-          <div className="text-body text-white/75 leading-relaxed whitespace-pre-wrap break-words">
+          <div className="text-body text-secondary leading-relaxed whitespace-pre-wrap break-words">
             {truncate(s.description, 400)}
           </div>
         </PreviewSection>
@@ -39,7 +39,7 @@ export function TestSuitePreview({ id, hit }: Props) {
             {s.evaluators.map(e => (
               <span
                 key={e.id}
-                className="px-2 py-0.5 rounded-full text-caption font-mono bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn border border-[color-mix(in_srgb,var(--warn)_28%,transparent)]"
+                className="px-2 py-0.5 rounded-none text-caption font-mono bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn border border-[color-mix(in_srgb,var(--warn)_28%,transparent)]"
               >
                 {e.kind}
               </span>

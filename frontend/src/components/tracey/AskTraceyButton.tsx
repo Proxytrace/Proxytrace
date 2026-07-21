@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * The app-wide context-aware "Ask Tracey" pill: gold accent chip with a glinting bolt. Clicking
+ * The app-wide context-aware "Ask Tracey" chip: cyan accent tag with a glinting bolt. Clicking
  * it jumps to the Tracey AI page and sends the given prompt as a fresh conversation
  * (`TraceyChat.askTracey`). Renders nothing when Tracey is unavailable here (Free license,
  * non-interactive kiosk, or no project) — same gating as the sidebar nav entry.
@@ -32,7 +32,7 @@ export function AskTraceyButton({ prompt, className, children, 'data-testid': te
       onClick={() => askTracey(typeof prompt === 'function' ? prompt() : prompt)}
       leftIcon={<ZapFilledIcon size={12} className="tracey-bolt" />}
       className={cn(
-        'rounded-full text-accent-text bg-accent-subtle hover:text-accent-hover shadow-[var(--shadow-pill)] shrink-0',
+        'rounded-none text-accent-text bg-accent-subtle hover:text-accent-hover shrink-0',
         className,
       )}
     >

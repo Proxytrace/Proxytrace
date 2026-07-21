@@ -1,6 +1,11 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
 
+/**
+ * Rule weight, not depth. Under the Wire system nothing is elevated: `flat` is a hairline-ruled
+ * pane, `raised` is the 1px card ring (`--shadow-card`), and `floating` is that ring plus one
+ * neutral black drop — reserved for genuinely floating overlays. The names are historical.
+ */
 export type CardElevation = 'flat' | 'raised' | 'floating';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
@@ -8,6 +13,10 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   elevation?: CardElevation;
   padding?: CardPadding;
   accentBar?: string;
+  /**
+   * Color for the hover ring. Despite the name this renders a hard 1px ring in that color — no
+   * glow, no blur. (Name kept because call sites live outside this component's directory.)
+   */
   hoverGlow?: string;
   selected?: boolean;
   interactive?: boolean;
@@ -38,6 +47,7 @@ export function Card({
   children,
   ...rest
 }: CardProps) {
+  // `--card-hover-glow` names a *ring* color, not a glow — see the `hoverGlow` prop doc.
   const hoverStyle = hoverGlow
     ? ({
         '--card-hover-glow': `color-mix(in srgb, ${hoverGlow} 32%, transparent)`,
