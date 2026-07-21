@@ -38,14 +38,15 @@ export const categoryTint18: Record<TypeCategory, string> = {
 
 /**
  * Canonical selected-row treatment — the class-based twin of `lib/selectionRow.ts`
- * (which the runtime-hex rails use): a category-colored gradient wash + inset ring +
- * soft drop shadow. Token color ⇒ static classes per DESIGN.md §6. Locked in the
- * "List rail" pattern so evaluator rows match agents/suites/runs.
+ * (which the runtime-hex rails use): a flat category-colored tint (13%) over the card
+ * background + a 1px inset ring at 45% opacity. No gradients, no glows. Token color ⇒
+ * static classes per DESIGN.md §6. Locked in the "List rail" pattern so evaluator rows
+ * match agents/suites/runs (Wire direction).
  */
 export const categorySelectedRow: Record<TypeCategory, string> = {
-  llm: 'bg-[linear-gradient(120deg,color-mix(in_srgb,var(--accent-primary)_10%,transparent),transparent_70%),var(--bg-card)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_45%,transparent),0_6px_22px_-10px_color-mix(in_srgb,var(--accent-primary)_32%,transparent)]',
-  rule: 'bg-[linear-gradient(120deg,color-mix(in_srgb,var(--teal)_10%,transparent),transparent_70%),var(--bg-card)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent),0_6px_22px_-10px_color-mix(in_srgb,var(--teal)_32%,transparent)]',
-  numeric: 'bg-[linear-gradient(120deg,color-mix(in_srgb,var(--teal)_10%,transparent),transparent_70%),var(--bg-card)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent),0_6px_22px_-10px_color-mix(in_srgb,var(--teal)_32%,transparent)]',
+  llm: 'bg-[color-mix(in_srgb,var(--accent-primary)_13%,var(--bg-card))] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_45%,transparent)]',
+  rule: 'bg-[color-mix(in_srgb,var(--teal)_13%,var(--bg-card))] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent)]',
+  numeric: 'bg-[color-mix(in_srgb,var(--teal)_13%,var(--bg-card))] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent)]',
 };
 
 /** Header gradient wash (12% in top-left corner). */
