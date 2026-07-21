@@ -32,15 +32,15 @@ describe('projectColor / providerColor', () => {
   });
 
   it('map known providers to their fixed brand color', () => {
-    expect(providerColor('OpenAI')).toBe('#d9a158');
-    expect(providerColor('Anthropic')).toBe('#46b97c');
+    expect(providerColor('OpenAI')).toBe('#57c4d3');
+    expect(providerColor('Anthropic')).toBe('#5aba80');
   });
 });
 
 describe('modelColor', () => {
   it('returns the explicit color for a known model', () => {
-    expect(modelColor('gpt-4o')).toBe('#d9a158');
-    expect(modelColor('claude-3.5-sonnet')).toBe('#46b97c');
+    expect(modelColor('gpt-4o')).toBe('#57c4d3');
+    expect(modelColor('claude-3.5-sonnet')).toBe('#5aba80');
   });
 
   it('falls back to a valid hex for an unknown model', () => {
