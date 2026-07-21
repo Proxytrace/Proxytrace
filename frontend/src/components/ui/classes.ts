@@ -23,7 +23,7 @@ export const hoverRevealOverlayCls = cn(
 export const fieldLabelCls = 'text-caption font-semibold text-muted uppercase tracking-[0.05em]';
 
 /** Signal Desk eyebrow: mono, uppercase, tracked — table headers, KPI labels, rail counts. */
-export const EYEBROW_CLS = cn('font-mono text-caption uppercase tracking-[0.14em] text-muted');
+export const EYEBROW_CLS = cn('font-mono text-caption uppercase tracking-[0.14em] text-secondary');
 
 /** Faint accent wash on hover for interactive rows/cards (trace rows, fleet rows, list rows). */
 export const hoverAccentWashCls = 'hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)]';
