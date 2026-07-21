@@ -1,6 +1,7 @@
 import { Sparkline } from '../charts';
 import { ArrowUpIcon, ArrowDownIcon } from '../icons';
 import { cn } from '../../lib/cn';
+import { EYEBROW_CLS } from './classes';
 
 interface KpiCardProps {
   icon?: React.ReactNode;
@@ -73,7 +74,7 @@ export function KpiCard({
               }`}
             >{icon}</div>
           )}
-          <span className="text-body-sm text-secondary font-medium">{displayLabel}</span>
+          <span className={cn(EYEBROW_CLS)}>{displayLabel}</span>
         </div>
         {trendText && (
           <div

@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn';
+import { EYEBROW_CLS } from './classes';
 
 export interface DataColumn<T> {
   key: string;
@@ -29,7 +30,7 @@ export function DataTable<T>({
     <div className={className}>
       {/* Header */}
       <div
-        className="grid px-4 py-2.5 text-caption font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline"
+        className={cn(EYEBROW_CLS, 'grid px-4 py-2.5 border-b border-hairline')}
         style={{ gridTemplateColumns: gridCols }}
       >
         {columns.map(c => <span key={c.key} className={`min-w-0 ${c.className ?? ''}`}>{c.label}</span>)}

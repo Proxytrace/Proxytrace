@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../lib/cn';
+import { EYEBROW_CLS } from './classes';
 import { Button, IconButton } from './Button';
 import { Input } from './Input';
 import { SkeletonList } from './Skeleton';
@@ -52,7 +53,7 @@ export function RailHeader({ title, count, subtitle, leading, create, search }: 
           <div className="text-h2 font-semibold tracking-[-0.01em] truncate">{title}</div>
           {subtitle && <div className="text-body-sm text-muted truncate">{subtitle}</div>}
         </div>
-        {count !== undefined && <span className="text-body-sm text-muted font-mono shrink-0">{count}</span>}
+        {count !== undefined && <span className={cn(EYEBROW_CLS, 'shrink-0')}>{count}</span>}
       </div>
 
       {create && (
