@@ -575,7 +575,14 @@ html, body, #root {
   background: var(--text-primary);
   border: 2px solid var(--accent-primary);
   cursor: grab;
+  transition: box-shadow 0.15s, transform 0.1s;
 }
+/* Gecko needs its own copies of the three rules above — the thumb pseudo-elements are not
+   interchangeable, and without these Firefox has no focus indicator at all (the outline is
+   removed for every engine below). */
+.param-slider::-moz-range-thumb:hover { box-shadow: 0 0 0 4px var(--accent-subtle); }
+.param-slider:active::-moz-range-thumb { cursor: grabbing; transform: scale(1.06); }
+.param-slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--accent-border); }
 .param-slider:focus { outline: none; }
 .param-slider:focus-visible { outline: none; }
 

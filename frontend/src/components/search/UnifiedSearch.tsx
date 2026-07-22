@@ -5,8 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { Trans, Plural, useLingui } from '@lingui/react/macro';
 import type { SearchHit, SearchKind } from '../../api/search';
 import { searchHitToHref } from '../../lib/search-routes';
-import { SearchIcon } from '../icons';
+import { SearchIcon, XIcon } from '../icons';
 import { cn } from '../../lib/cn';
+import { FOCUS_RING } from '../../lib/constants';
 import { kbdCls } from '../ui/classes';
 import { useSearchQuery } from './hooks/useSearchQuery';
 import { useSearchInteraction } from './hooks/useSearchInteraction';
@@ -136,11 +137,15 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
         {raw ? (
           <button
             type="button"
-            onMouseDown={e => { e.preventDefault(); setRaw(''); inputRef.current?.focus(); }}
-            className="text-muted hover:text-primary text-body-sm cursor-pointer"
+            // Clearing lives on onClick so Enter/Space work; onMouseDown only stops the input
+            // from blurring before the click lands (which is why it was here in the first place).
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => { setRaw(''); inputRef.current?.focus(); }}
+            data-testid="search-clear-btn"
+            className={cn('cursor-pointer p-0.5 text-muted hover:text-primary', FOCUS_RING)}
             aria-label={t`Clear search`}
           >
-            ✕
+            <XIcon size={12} />
           </button>
         ) : showShortcut ? (
           <span className="flex gap-0.75">
