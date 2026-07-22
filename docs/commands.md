@@ -9,7 +9,11 @@ dotnet test Proxytrace.Domain.Tests    # Run a single test project
 cd Proxytrace.Api && dotnet run        # Start API on http://localhost:5001
 ```
 
-Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
+Swagger UI is available at `http://localhost:5001/swagger` in Development mode.
+
+The dev backend port is **5001** everywhere: `launchSettings.json`, `dev.sh`, the `Self:BaseUrl`
+default, and the `/api` + `/mcp` proxy targets in `frontend/vite.config.ts`. Change one and you must
+change all of them, or `npm run dev` proxies to a dead port.
 
 ## EF Core Migrations (PostgreSQL-only; supply a Postgres connection string at design time)
 ```bash

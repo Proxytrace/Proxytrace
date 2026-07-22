@@ -24,6 +24,20 @@ export const FOCUS_RING =
 export const FOCUS_RING_FIELD =
   'has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]';
 
+/**
+ * `FOCUS_RING` for a clickable **row** (`RowButton`, listbox options) — the same 2px accent
+ * indicator drawn as an *inward* `outline` instead of a `ring`. Two reasons a ring cannot work
+ * here, both verified:
+ *  - a selected row carries an inline `box-shadow` from `selectionRowStyle()` (`lib/selectionRow.ts`),
+ *    and an inline style beats the class rule Tailwind's `ring-*` writes — so the ring vanishes on
+ *    exactly the row that keyboard focus lands on first;
+ *  - rows are full-bleed inside scroll containers, so an outset band is clipped by the container's
+ *    `overflow`. An inward outline is drawn inside the row's own box and always survives.
+ * Radii are 0px throughout, so it renders identically to the ring.
+ */
+export const FOCUS_RING_ROW =
+  'focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]';
+
 /** Short prefix length for displaying truncated entity IDs. */
 export const ID_SHORT_LEN = 8;
 

@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using AwesomeAssertions;
 using Proxytrace.Api.Controllers;
+using Proxytrace.Application.Setup;
 
 namespace Proxytrace.Api.Tests;
 
@@ -22,6 +23,18 @@ public sealed class ReleaseBackdoorClosedTests
 {
     // Anchor on a public type so we introspect the real, compiled Proxytrace.Api assembly under test.
     private static Assembly ApiAssembly => typeof(TraceyChatController).Assembly;
+
+    // The back-door identity is shared with the Application layer (SetupService excludes it from the
+    // first-run check), so that assembly must be free of it in Release too.
+    private static Assembly ApplicationAssembly => typeof(ISetupService).Assembly;
+
+    [TestMethod]
+    public void DebugBackDoorAccount_IsCompiledOutOfReleaseBuild()
+    {
+        ApplicationAssembly
+            .GetType("Proxytrace.Application.Setup.DebugBackDoorAccount", throwOnError: false)
+            .Should().BeNull("the back-door account identity must be excluded from Release builds (#if DEBUG)");
+    }
 
     [TestMethod]
     public void DebugLoginSeeder_IsCompiledOutOfReleaseBuild()
@@ -44,12 +57,15 @@ public sealed class ReleaseBackdoorClosedTests
     {
         // .NET stores string literals as UTF-16 in the assembly's metadata; scan the raw bytes so the
         // guard does not depend on any type still existing to reference them.
-        byte[] assemblyBytes = File.ReadAllBytes(ApiAssembly.Location);
-
-        foreach (var secret in new[] { "debug@proxytrace.dev", "#Proxy420!" })
+        foreach (var assembly in new[] { ApiAssembly, ApplicationAssembly })
         {
-            IndexOf(assemblyBytes, Encoding.Unicode.GetBytes(secret))
-                .Should().BeLessThan(0, $"the back-door secret '{secret}' must not be present in the shipped Release assembly");
+            byte[] assemblyBytes = File.ReadAllBytes(assembly.Location);
+
+            foreach (var secret in new[] { "debug@proxytrace.dev", "#Proxy420!" })
+            {
+                IndexOf(assemblyBytes, Encoding.Unicode.GetBytes(secret))
+                    .Should().BeLessThan(0, $"the back-door secret '{secret}' must not be present in the shipped Release assembly {assembly.GetName().Name}");
+            }
         }
     }
 

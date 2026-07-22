@@ -8,7 +8,7 @@ exclusion), not merely by an `ASPNETCORE_ENVIRONMENT=Development` runtime check.
 ## Always-available debug login
 
 A local **DEBUG build** seeds a fixed admin account on startup so you can always sign in through the
-normal login form — without going through first-run setup or knowing the real admin password.
+normal login form, without knowing the real admin password.
 
 | | |
 |---|---|
@@ -24,15 +24,19 @@ normal login form — without going through first-run setup or knowing the real 
   `LoginService` — there is **no** password-verification bypass; the credential is a real, hashed
   user row.
 - It is **idempotent**: if the account already exists it does nothing.
+- It does **not** count as a completed first-run setup. `SetupService.AnyUsersExistAsync()` ignores
+  this one account (`Proxytrace.Application/Setup/DebugBackDoorAccount.cs` holds the shared identity,
+  also `#if DEBUG`), so a fresh debug database still reports `setupRequired: true` from
+  `GET /api/auth/mode` and the onboarding wizard runs as it does for a real install.
 - The **entire seeder type and its registration in `Program.cs` are wrapped in `#if DEBUG`**, so the
-  credential and the code do not exist in a Release build.
+  credential and the code do not exist in a Release build. The same applies to `DebugBackDoorAccount`.
 
 ### Caveats
 
-- On a **fresh database**, seeding this admin means `AnyUsersExistAsync()` is already true, so the
-  first-run **setup wizard is skipped**. You log in as the debug admin into an app with no provider
-  or project yet — create them from the UI (Providers / project switcher) if you need them. On an
-  existing dev database it simply adds the debug admin alongside your real users.
+- On a **fresh database** the login form redirects to `/setup` (first-run onboarding), so the debug
+  credential is only *usable* once you have created the real first admin — after that it is available
+  on every subsequent sign-in. On an existing dev database it simply adds the debug admin alongside
+  your real users.
 - Because the account is `Admin`, it can read and mutate every project's data — appropriate for
   local debugging only. **Never** enable this path in a build that is exposed to anyone else.
 
@@ -54,7 +58,9 @@ present in Debug). It asserts, against the compiled Release assembly, that:
 
 - the `Proxytrace.Api.Debug.DebugLoginSeederHostedService` type does not exist,
 - no type ships under the `Proxytrace.Api.Debug` namespace, and
-- neither credential literal (`debug@proxytrace.dev`, `#Proxy420!`) appears in the assembly bytes.
+- neither credential literal (`debug@proxytrace.dev`, `#Proxy420!`) appears in the assembly bytes of
+  **either** `Proxytrace.Api` or `Proxytrace.Application`, and
+- `Proxytrace.Application.Setup.DebugBackDoorAccount` does not exist.
 
 If anyone drops the `#if DEBUG` guard, these fail under `-c Release`. Run the guard with
 `dotnet test Proxytrace.Api.Tests -c Release`.

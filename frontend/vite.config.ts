@@ -44,13 +44,13 @@ export default defineConfig({
     port: 4201,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
       },
       // The MCP server is hosted by the API; proxy it so the app's own origin serves /mcp in dev
       // exactly as nginx does in production (the UI advertises `${origin}/mcp`).
       '/mcp': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
       },
       // Mirror production: the VitePress manual is reachable at /docs. In dev it

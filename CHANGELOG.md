@@ -70,6 +70,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   then adjusted a value with no indication of which one. Firefox now gets the same ring — plus the
   hover and drag states it was also missing. (#395)
 
+- **`./dev.sh` now actually serves the UI.** The dev frontend proxied `/api` and `/mcp` to port 5000
+  while `dev.sh` started the backend on 5001, so every request from http://localhost:4201 failed with
+  `http proxy error … ECONNREFUSED` and the app never loaded. The dev backend port is now 5001
+  consistently — `launchSettings.json`, the `Self:BaseUrl` default, `vite.config.ts`, and the docs —
+  so both `./dev.sh` and `cd Proxytrace.Api && dotnet run` work with `npm run dev`.
+
+- **The sample client pointed at a port that serves nothing.** `sample-client/.env.example` set
+  `PROXYTRACE_BASE_URL` to `localhost:5000/openai/v1`, but `/openai/v1` is served by the standalone
+  ingestion proxy, never by the API — it is `localhost:5002` under `SPLIT=1 ./dev.sh` and
+  `localhost:5102` under Docker Compose. The example now points at 5002.
+
 ## [1.6.0] - 2026-07-13
 
 ### Added

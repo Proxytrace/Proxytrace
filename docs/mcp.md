@@ -54,7 +54,7 @@ not), so `McpServerEndpointTests` exercises the same stack production maps.
 **Reverse proxy.** `/mcp` is served by the API but reached at the app's public origin, so it must be
 proxied through alongside `/api`. The bundled `frontend/nginx.conf` forwards `/mcp` → `api:8080` with
 `proxy_buffering off` (Streamable HTTP may stream), and `frontend/vite.config.ts` proxies `/mcp` →
-`localhost:5000` in dev. A custom reverse proxy in front of Proxytrace must forward `/mcp` the same
+`localhost:5001` in dev. A custom reverse proxy in front of Proxytrace must forward `/mcp` the same
 way. The UI therefore advertises `${window.location.origin}/mcp` (same-origin), and external MCP
 clients connect there with a key as the bearer token.
 

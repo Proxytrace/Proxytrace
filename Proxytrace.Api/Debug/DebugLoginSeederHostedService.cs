@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Auth.Local;
+using Proxytrace.Application.Setup;
 using Proxytrace.Domain.Demo;
 using Proxytrace.Domain.User;
 
@@ -11,7 +12,12 @@ namespace Proxytrace.Api.Debug;
 /// <summary>
 /// DEBUG-ONLY developer back-door. On startup, seeds a fixed admin account
 /// (<see cref="Email"/>) so a developer can always sign in to a local debug build through the
-/// normal login form, without going through first-run setup or knowing the real admin password.
+/// normal login form, without knowing the real admin password.
+/// <para>
+/// It deliberately does <em>not</em> short-circuit onboarding: <c>SetupService.AnyUsersExistAsync</c>
+/// ignores this account (see <see cref="DebugBackDoorAccount"/>), so a fresh debug database still
+/// reports <c>setupRequired</c> and shows the first-run wizard.
+/// </para>
 /// <para>
 /// The entire type is compiled out of Release builds (<c>#if DEBUG</c>) and is registered only under
 /// the same guard in <c>Program.cs</c>, so this credential never exists in a published/production
@@ -23,10 +29,10 @@ namespace Proxytrace.Api.Debug;
 internal sealed class DebugLoginSeederHostedService : IHostedService
 {
     /// <summary>The fixed debug admin email. See <c>docs/debug_api.md</c>.</summary>
-    internal const string Email = "debug@proxytrace.dev";
+    internal const string Email = DebugBackDoorAccount.Email;
 
     /// <summary>The fixed debug admin password (hashed before storage, like any other user).</summary>
-    internal const string Password = "#Proxy420!";
+    internal const string Password = DebugBackDoorAccount.Password;
 
     private readonly IServiceProvider rootServices;
     private readonly ILogger<DebugLoginSeederHostedService> logger;

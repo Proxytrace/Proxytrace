@@ -7,6 +7,7 @@ import type { SearchHit, SearchKind } from '../../api/search';
 import { searchHitToHref } from '../../lib/search-routes';
 import { SearchIcon, XIcon } from '../icons';
 import { cn } from '../../lib/cn';
+import { fieldFocusWithinCls, kbdCls } from '../ui/classes';
 import { FOCUS_RING } from '../../lib/constants';
 import { kbdCls } from '../ui/classes';
 import { useSearchQuery } from './hooks/useSearchQuery';
@@ -116,11 +117,14 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
 
   return (
     <div ref={wrapperRef} className={cn('relative', wrapperWidthCls, className)}>
+      {/* A real 1px border rather than the inset shadow this used to draw: an ad-hoc shadow is a
+          DESIGN §2.5 anti-pattern, and it was the only reason the search bar needed a focus recipe
+          of its own. It now wears the same one every other framed field does. */}
       <div className={cn(
-        'flex items-center gap-2 px-3 py-1.75 text-title transition-shadow',
+        'flex items-center gap-2 px-3 py-1.75 text-title border border-border-subtle rounded-md',
+        'transition-[border-color,box-shadow] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
         inputBgCls,
-        'shadow-[inset_0_0_0_1px_var(--border-subtle)]',
-        'focus-within:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+        fieldFocusWithinCls,
       )}>
         <SearchIcon size={14} />
         <input
