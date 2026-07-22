@@ -48,16 +48,19 @@ Dark-only — blue-petrol ink panes divided by opaque steel rules, with a single
 | Accent ink | `text-accent-ink` | `#062229` | Dark text/icon **on** a cyan fill (primary button) — 8:1 on accent |
 | Accent text | `text-accent-text` | `#a8e2ec` | Cyan text on dark (active filter chip / status) |
 | Accent subtle | `bg-accent-subtle` | `rgba(87,196,211,0.13)` | Tinted accent surface |
-| Accent glow | `var(--accent-glow)` | `rgba(87,196,211,0.22)` | Data/chart tints; **not** an elevation effect |
 | Accent border | `var(--accent-border)` | `rgba(87,196,211,0.45)` | Cyan hairline (active chip / status) |
 | Success | `text-success`, `bg-success` | `#5aba80` | Pass, healthy, run-green |
+| Success ink | `text-success-ink` | `#05220f` | Dark text/icon **on** a green fill — 7.06:1 on success |
 | Warn | `text-warn` | `#d9a23f` | Throttle, slow, 4xx — amber lives **here only**, never as chrome |
 | Danger | `text-danger` | `#dd5959` | Fail, error, destructive |
+| Danger ink | `text-danger-ink` | `#290606` | Dark text/icon **on** a red fill — 5.03:1 on danger |
 | Teal | `text-teal` | `#7d95c9` | Steel-blue: rule-based evaluators, info chips *(the token name is historical — the value is steel-blue, not teal)* |
 
 **No background atmosphere.** The surface is a flat instrument pane: there are no `body::before` / `body::after` aurora or film-grain layers, no page-level radial washes, no per-page background effects. `Shell` and its `<main>` are `bg-transparent` and sit directly on the body color.
 
 **Subtle semantic backgrounds** (`bg-success-subtle`, `bg-warn-subtle`, `bg-danger-subtle`, `bg-accent-subtle`) — use these for status tags and tinted surfaces. Never put white text on a subtle background; pair the subtle bg with the matching solid text color.
+
+**On-fill foregrounds use the `-ink` family.** Text or icons sitting *on* a solid semantic fill take `text-accent-ink` (on `bg-accent`), `text-danger-ink` (on `bg-danger`), or `text-success-ink` (on `bg-success`). **Never `text-white` on a colored fill** — the ink tokens are the AA-verified pairings and exist precisely so nobody has to reach for white. There is deliberately no amber ink token, because nothing solid-fills `--warn`; if that ever changes, add one to `index.css` and `@theme` rather than improvising a foreground.
 
 **Dynamic colors** (per-model, per-agent, per-provider, per-evaluator) come from `frontend/src/lib/colors.ts`: `modelColor(name)`, `agentColor(id)`, `providerColor(name)`, `projectColor(id)`, `detectorColor(id)`, `evaluatorColor(kind)` / `EVALUATOR_KIND_COLOR`, `statusColor(httpStatus)`. Hash-based assignment is stable — do not invent new palettes for new entity types; extend the existing helpers. The per-entity **categorical** palette (`AGENT_PALETTE` in that file) is the one sanctioned exception to "no new hexes": charts, legends, and badge dots need more *mutually distinct* hues than the ~5 semantic tokens supply, so it is derived from the Wire anchors (accent cyan `#57c4d3`, warn amber `#d9a23f`, success green `#5aba80`) by holding a muted saturation/lightness band and rotating hue to fill the gaps. Every entry clears AA (≥ 4.5:1) as text on the ink surfaces. That is for data-encoding only — never reach into it for chrome, CTAs, or semantic status. `MODEL_PALETTE` deliberately *groups* instead (all gpt cyan, all mini amber, all claude green) and may repeat.
 
@@ -103,7 +106,9 @@ Two rules about it, both load-bearing:
 - **It is `text-secondary`, not `text-muted`.** `text-muted` measures ~3.6:1 on `bg-card` and fails WCAG AA for this size; `text-secondary` measures ~6.5:1. Do not "tone it down".
 - **Import it, don't copy it.** It is `SCREAMING_CASE` where its neighbours in `classes.ts` are `camelCase` (`fieldLabelCls`, `kbdCls`) — that is the name the system uses; don't rename it. And don't add a third copy: the dashboard tier already carries its own local `EYEBROW_CLS` / `COL_HEADER_CLS` in `features/dashboard/dashboardMeta.ts`. New and shared code imports the one from `components/ui/classes.ts`.
 
-`fieldLabelCls` (also in `classes.ts`) stays the **form-field** label — Inter, uppercase, `text-muted`, applied by `Label`/`FormField`. Eyebrow ≠ field label; don't swap them.
+`fieldLabelCls` (also in `classes.ts`) stays the **form-field** label — Inter, uppercase, semibold, `text-secondary`, applied by `Label`/`FormField`. It lands on `text-secondary` for the same contrast reason as the eyebrow; don't tone it to `text-muted` either. Eyebrow ≠ field label; don't swap them.
+
+`text-muted` is still correct — but only for genuinely de-emphasized **body** text: placeholders, disabled states, timestamps, counts and unit suffixes, inactive glyphs, empty-state copy. Never for a label, an eyebrow, a column header, or any value the user has to read.
 
 ### 2.3 Radii
 
@@ -118,7 +123,7 @@ Square corners, everywhere. All four tokens are `0px`:
 
 Keep writing against the scale (`rounded-md` on a button, `rounded-lg` on a card) so components stay correct if the scale ever moves; use `rounded-none` where squareness is the *point* and a reader might otherwise assume a radius (chips, switch tracks — both already do). **Don't use Tailwind's default `rounded-2xl`/`rounded-3xl`** or arbitrary radii (`rounded-[6px]`) — they don't exist in our scale.
 
-**`rounded-full` is reserved for genuine circles only:** status dots, avatars, spinners, and **switch knobs** (the knob is a circle; the switch *track* is square). Everything else is square — chips, badges, tags, tabs, progress tracks, switch tracks, cards, panels, buttons. A status chip is a **square tag**, never a pill.
+**`rounded-full` is reserved for genuine circles only:** status dots, avatars, spinners, radio markers, and **switch knobs** (the knob is a circle; the switch *track* is square — `Switch`/`SwitchPill` pair `rounded-none` on the track with `rounded-full` on the knob, and that is the ruling). Everything else is square — chips, badges, tags, tabs, progress tracks, switch tracks, cards, panels, buttons. A status chip is a **square tag**, never a pill.
 
 ### 2.4 Spacing
 
@@ -154,11 +159,10 @@ Animations defined globally in `index.css` — reuse these rather than writing n
 - `fade-up` — entrance for new rows.
 - `slide-in` — lateral entrance.
 - `pulse-dot` — live indicator (`.typing-dots` phase-shifts three of them into a thinking wave).
-- `shimmer` — skeleton loader.
-- `streaming-border` — a conic accent sweep on a card/row whose contents are mid-stream.
+- `pulse-fade` — the generic loading breathe: a flat opacity pulse. It is what `.skeleton` and `.tracey-thinking-text` run on, and it is the Wire replacement for a gradient shimmer. **Loading states keep their motion but have no gradient sweep** — there is no `shimmer` keyframe, and adding one back is a regression.
+- `streaming-border` — a solid accent arc travelling around the 1px rule of a card/row whose contents are mid-stream. It is a `conic-gradient` with **hard stops** (no soft fade), masked to the border — the one place a conic gradient is legitimate.
 - `indeterminate-bar` — a sliding sliver for work with no countable progress.
-- `btn-sheen` — a periodic light sweep across a **cyan-filled** CTA, reserved for one-off milestone actions (the setup wizard's "Get started"); never on routine UI.
-- `tracey-bolt` — a periodic glow glint on the Ask-Tracey button's bolt icon, scoped to `AskTraceyButton`; never on other idle UI.
+- `tracey-bolt` — a periodic opacity blink on the Ask-Tracey button's bolt icon (the icon dips every ~3s), scoped to `AskTraceyButton`; never on other idle UI. It is not a glow.
 
 Always honor `prefers-reduced-motion` — every animation above already does; new ones must too.
 
@@ -174,7 +178,7 @@ Always honor `prefers-reduced-motion` — every animation above already does; ne
 
 **Surfaces:** `Card` (with `Card.Header`/`Body`/`Footer`), `KpiCard`, `EmptyState`, `Skeleton`, `Spinner`, `ListRail` (with `RailHeader` — the locked master/detail left column, see §4).
 
-**Data display:** `DataTable`, `Badge`, `Pill`, `ColoredBadge`, `StatusDot`, `ProgressBar`, `Avatar`, `CodeBlock`, `JsonBlock`, `MessageBubble`, `ToolMessageBubble`, `ModelParametersGrid`, `Collapsible`, `Toast`.
+**Data display:** `DataTable`, `Badge`, `Pill`, `ColoredBadge`, `StatusDot`, `ProgressBar`, `Avatar`, `CodeBlock`, `JsonBlock`, `MessageBubble`, `ToolMessageBubble`, `ModelParametersGrid`, `Collapsible`, `Toast`, `CopyButton`, `CachedTokensHint`, `BrandMark`.
 
 **Overlays:** `Modal`, `Drawer`, `ConfirmDialog`, `DetailPanel`, `StepWizard` (`components/overlays/`), `Popover` (Radix-backed floating panel for rich filter/picker content — for a flat action list use `Menu`).
 
@@ -221,7 +225,7 @@ Use `DataTable` for any tabular dataset > 5 rows; its header row already carries
 ### 3.5 Empty + loading states
 
 - **Empty:** `EmptyState` with a one-line headline + one-line hint + optional CTA. No clipart.
-- **Loading:** `Skeleton` for shaped placeholders (always reserve the final layout's height to prevent jump). `Spinner` only for inline button loading and indeterminate small areas. `streaming-border` class on a card whose contents are mid-stream.
+- **Loading:** `Skeleton` for shaped placeholders (always reserve the final layout's height to prevent jump) — it is a flat `bg-card-2` block that breathes via `pulse-fade`, **not** a gradient sweep. `SkeletonList` for a rows placeholder. `Spinner` only for inline button loading and indeterminate small areas. `streaming-border` class on a card whose contents are mid-stream.
 - **Error:** Inline `text-danger` message near the failing control. For full-page failures, `EmptyState` variant with the danger color.
 
 ### 3.6 Form controls, toggles, and menus
@@ -310,62 +314,95 @@ Inline `style={{ ... }}` is acceptable **only** for genuinely runtime-computed v
 - New rows entering a list animate with `fade-up` (already in CSS). Don't reorder existing rows on insert — only prepend or append per the list's stated sort.
 - Never block interaction during background updates. SSE updates are partial — patch the cached query, don't refetch the page.
 
-## 8.1 Dashboard exception — showpiece tier
+**There is no showpiece exception.** Earlier revisions of this guide granted the Dashboard and
+Tracey a scoped licence to exceed the flat-instrument baseline. **That licence was revoked and the
+code was flattened to match** — the radial/aurora washes, the gradient-clipped display type, the SVG
+glow filters, and the gradient shimmer are all gone from the codebase. Every route obeys §1–§7. The
+two subsections below survive only to record what is *distinctive* about those routes (motion and
+type tokens) — not what is exempt from the rules.
+
+## 8.1 Dashboard tier — motion, not atmosphere
 
 The dashboard (`features/dashboard/`, route `/dashboard`) is the product's stakeholder-facing
-showpiece and is deliberately allowed to exceed the flat-instrument baseline — a scoped,
-user-approved exception (spec: 2026-07-02 dashboard showpiece). What the exception covers:
+surface. What is scoped to it is **motion and density**, nothing atmospheric:
 
-- **Showpiece keyframes** (`index.css`, "Dashboard showpiece tier" block): `pulse-sweep`,
-  `pulse-idle-sweep`, `arrival-flash`, `chart-draw-in`, `digit-tick`. Dashboard-only — do not
+- **Dashboard keyframes** (`index.css`, "Dashboard showpiece tier" block): `pulse-sweep` (a solid
+  2px playhead crossing the pulse band on arrival — a rule, not a beam), `pulse-idle-sweep` (a slow
+  7%-tint segment across an idle band, so a flatline reads as intentional), `arrival-flash` (a
+  one-shot cyan wash on a fresh feed row), `chart-draw-in` (a stroke-dashoffset line draw), and
+  `digit-tick` (a one-frame odometer nudge when a live counter changes). Dashboard-only — do not
   use them on other routes.
-- **Display-tier type**: the hero token number (68px, gradient-clipped) and pulse counters
-  (`text-display` mono) sit outside the type scale intentionally.
-- **Glow**: SVG glow filters on the pulse EKG line and gauge; a semantic `drop-shadow` on a
-  non-zero error counter. Glow is a *data* signal here, never chrome.
+- **Display-tier type**: the hero token number is `text-[68px]` and the pulse counters are mono
+  `text-display`. The 68px hero figure is the single sanctioned size outside the type scale;
+  don't read it as permission to invent others.
 
-Everything else still binds on the dashboard: token palette only (no new hexes), square corners,
-the flat shadow tier, `prefers-reduced-motion` guards on every keyframe, accessibility rules (§7).
-The anti-patterns in §9 remain in force outside this scoped list — in particular, no animated
-gradients on idle UI anywhere else, and no glassmorphism even here.
+Everything else binds exactly as elsewhere: **no glow, no gradient, no atmosphere.** The SVG glow
+filters that once sat on the pulse line and the gauge, and the `drop-shadow` on the error counter,
+were deleted — there is no "glow as a data signal" carve-out any more. Charts use flat
+semi-transparent fills (§8.3). `prefers-reduced-motion` guards every keyframe above.
 
-## 8.2 Tracey exception — assistant tier
+## 8.2 Tracey tier — reading surface
 
-Tracey AI (`features/tracey/`, route `/tracey-ai`) is the product's hero feature and, like the
-dashboard, is a scoped, user-approved exception to the flat-instrument baseline
-(2026-07-05 Tracey showpiece). What the exception covers:
+Tracey AI (`features/tracey/`, route `/tracey-ai`) is a prose-reading surface rather than a data
+grid, which earns it two type tokens and one identity treatment — and nothing else:
 
-- **Reading-tier type**: chat is a prose-reading surface, not a data grid, so message text,
-  the composer, and the user bubble sit at `text-chat` (15px) with in-chat markdown headings
-  at `text-chat-title` (16px) / `text-h1` — see `chat-markdown.tsx`. The empty-thread hero
-  line uses `text-display` (outside its KPI-only role, intentionally). These two tokens are
+- **Reading-tier type**: message text, the composer, and the user bubble sit at `text-chat` (15px)
+  with in-chat markdown headings at `text-chat-title` (16px) / `text-h1` — see `chat-markdown.tsx`.
+  The empty-thread hero line uses `text-display`. `text-chat` / `text-chat-title` are
   **Tracey-only**; do not use them on data-dense views.
-- **Tracey tier CSS** (`index.css`, "Tracey assistant tier" block): `tracey-halo` /
-  `tracey-halo-active` (the conic cyan→steel identity ring on her avatar — slow idle rotation,
-  fast spin while a turn runs), `tracey-aurora` (a faint drifting cyan/steel glow at the top of
-  the chat panel), `tracey-gradient-text` (gradient-clipped wordmark/hero line), and
-  `tracey-thinking-text` (shimmering "Thinking…"). The idle halo/aurora motion is allowed
-  **here only** — everywhere else the "no animated gradients on idle UI" rule stands, and the
-  aurora is the single place a background wash is permitted at all (§2.1).
+- **Tracey tier CSS** (`index.css`, "Tracey assistant tier" block), all flat:
+  - `tracey-halo` / `tracey-halo-active` — a **static 1px accent rule** around Tracey's avatar that
+    brightens to `--accent-hover` while a turn runs. It does not rotate, spin, or blur; the class
+    name is historical.
+  - `tracey-gradient-text` — despite the name, plain `color: var(--accent-hover)` on the "Tracey AI"
+    wordmark and the empty-thread hero line. There is no gradient clip. Don't add one back.
+  - `tracey-thinking-text` — the "Thinking…" label: `text-secondary` running the shared `pulse-fade`
+    opacity pulse. Not a shimmer wash.
+  - There is **no** `tracey-aurora`. The drifting background glow was deleted along with every other
+    background wash (§2.1); the chat panel sits flat on the surface like any other pane.
 - **User bubble finish**: the flat cyan fill with `text-accent-ink` (normally the primary
   button's alone) also dresses the user's chat bubble.
 
-Everything else still binds: token palette only (no new hexes), square corners, the flat shadow
-tier, `prefers-reduced-motion` guards on every keyframe (the halo degrades to a static gradient
-ring, the shimmer to plain secondary text), accessibility rules (§7), and no glassmorphism.
+Everything else binds: token palette only, square corners, the flat shadow tier,
+`prefers-reduced-motion` guards (the thinking pulse degrades to plain secondary text; the halo is
+static either way), accessibility rules (§7), and no glassmorphism.
+
+## 8.3 Sanctioned effects — the complete list
+
+Flat is the rule; this is the whole set of exceptions, and it is closed. Anything not on this list
+is an anti-pattern (§9).
+
+- **`shadow-[var(--shadow-float)]` on a genuinely floating overlay** — modal, drawer, dropdown,
+  popover. The only legitimate drop shadow in the product. Everything else uses `--shadow-card`,
+  which is a 1px ring.
+- **`backdrop-filter: blur(4px)` on the modal overlay** (`.modal-overlay`) — the one sanctioned
+  blur. Not on panels, not on the topbar, not "for depth".
+- **Flat semi-transparent chart area fills** — `fill={color} fillOpacity={0.18}` on the area path
+  (`AreaChart`, `DensityCurve`, `MiniArea`). A constant-alpha fill, not a fade-to-transparent ramp:
+  the `<defs>` / `<linearGradient>` blocks were deleted. Don't reintroduce a gradient to "soften"
+  a chart.
+- **Motion without gradient** — the keyframes listed in §2.6 and §8.1. Skeletons and thinking
+  labels keep their *motion* (`pulse-fade`) but have no gradient sweep; `streaming-border` is a
+  conic gradient with hard stops, masked to a 1px rule, and is the sole conic in the system.
+- **The 3px accent bars** — `Card accentBar`, the selection leading bar (§4), the active nav bar.
+  Solid entity/accent color, no blur.
 
 ---
 
 ## 9. Anti-patterns — do not introduce these
 
 - **Pill-shaped chips.** `rounded-full` on anything that is not a genuine circle — chips, badges, tags, tabs, switch tracks, progress tracks, buttons. Circles are dots, avatars, spinners, and switch knobs; everything else is a square tag (§2.3).
-- **Dimensional gradients on fills.** A fill is one flat color. No top-to-bottom lightening ramp, no bevel highlight, no inner sheen, no under-glow, no "raised" edge on buttons, chips, cards, or tracks.
-- **Background atmosphere.** Aurora washes, film grain, page-level radial glows, per-page background effects. They were deleted from `body`; do not reintroduce them (Tracey's scoped aurora, §8.2, is the only exception).
+- **Dimensional gradients on fills.** A fill is one flat color (or one flat alpha — see the chart fills in §8.3). No top-to-bottom lightening ramp, no fade-to-transparent, no bevel highlight, no inner sheen, no under-glow, no "raised" edge on buttons, chips, cards, tracks, or chart areas.
+- **Gradient-clipped text.** No `background-clip: text` wordmarks, hero numbers, or headings. They were all removed; identity text is a solid token color (§8.2).
+- **Background atmosphere.** Aurora washes, film grain, page-level radial glows, per-page background effects. They were deleted from `body` **and from every route including the dashboard and Tracey**; there is no exception left. Do not reintroduce them.
 - **Floating-panel shell.** Margins, gutters, radii, or shadows on the rail, the masthead, or the main pane. Panes are flush and divided by 1px rules.
-- **Glow as an affordance.** A colored blur to signal hover, selection, or liveness. Selection is tint + inset ring + bar (§4); hover is a wash or a ring-color change. Glow is allowed only as a *data* signal in the dashboard tier (§8.1).
+- **Glow as an affordance — or as data.** A colored blur to signal hover, selection, liveness, or a metric. Selection is tint + inset ring + bar (§4); hover is a wash or a ring-color change; a live signal is a dot, a rule, or motion. The dashboard's SVG glow filters and `drop-shadow` counters were deleted — the old "glow as a data signal" carve-out is revoked.
+- **Gradient shimmer on loading state.** Skeletons breathe with `pulse-fade`; they do not sweep a highlight across themselves. Keep the motion, drop the gradient.
 - **Gold / amber as accent or chrome.** The accent is cyan; amber exists only as `--warn`.
-- Glassmorphism, frosted blur on regular surfaces — the modal overlay's `backdrop-filter: blur(4px)` is the one sanctioned use — no exception, including the dashboard (see §8.1).
-- Vibrant rainbow gradients, neon glows, or animated gradients on idle UI — the dashboard's showpiece keyframes (§8.1) and Tracey's assistant tier (§8.2) are the only scoped exceptions; they stay on their routes.
+- **`text-white` on a colored fill.** Use the matching `-ink` token (§2.1).
+- Glassmorphism, frosted blur on regular surfaces — the modal overlay's `backdrop-filter: blur(4px)` is the one sanctioned use (§8.3), with no per-route exception.
+- Vibrant rainbow gradients, neon glows, or animated gradients on idle UI — no scoped exceptions; the dashboard and Tracey obey this like every other route.
+- **Keeping dead API as a no-op "for compat".** When a prop, token, class, or variant is removed, remove it outright — no accepted-and-ignored props, no aliases that resolve to nothing. `Badge`'s `shape` prop and the nav `icon` mechanism were deleted, not stubbed.
 - Light-mode styles. Proxytrace is dark-only; do not add light-mode classes "just in case." If/when light mode happens, it'll be a tracked initiative with new tokens.
 - Custom shadows / radii / type sizes outside the scale — including `rounded-2xl`, `rounded-3xl`, and arbitrary `rounded-[Npx]`.
 - `border-2` or thicker borders on UI chrome — our borders are 1px rules. Thicker only on focus rings (2px) and explicit dividers.
@@ -388,7 +425,8 @@ Before opening a frontend PR, verify:
 - [ ] All static styles are Tailwind utilities; inline `style` only for runtime-computed values. Complex statics use arbitrary-value syntax (`shadow-[var(--shadow-card)]`), never inline `style`.
 - [ ] Tokens used via `bg-card` / `text-primary` / `rounded-lg` / `shadow-[var(--shadow-…)]`, not raw hex or px.
 - [ ] Corners are square: no `rounded-full` except on a genuine circle (dot, avatar, spinner, switch knob); no `rounded-2xl`/`rounded-3xl`/`rounded-[Npx]`.
-- [ ] Fills are flat: no gradient ramp, bevel, sheen, or glow on a button, chip, card, or track.
+- [ ] Fills are flat: no gradient ramp, bevel, sheen, or glow on a button, chip, card, track, or chart area — and no gradient-clipped text. No background wash on any route (§8).
+- [ ] Text on a colored fill uses the matching `-ink` token (`text-accent-ink` / `text-danger-ink` / `text-success-ink`), never `text-white`.
 - [ ] Reused existing component (`Button`, `Card`, `Badge`, `Modal`, `Drawer`, `ListRail`, etc.) — no duplicate primitives.
 - [ ] Small uppercase labels use `EYEBROW_CLS`, not a hand-rolled `text-caption uppercase` string, and land on `text-secondary`.
 - [ ] Cursor, hover, focus-visible (`FOCUS_RING`) all present on interactive elements.
