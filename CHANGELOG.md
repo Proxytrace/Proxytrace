@@ -60,6 +60,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   and the one input in the app that opted out of the standard focus ring. The composer frame now
   carries the same accent ring every other control uses, and it lights only while the message field
   itself holds focus, so the New conversation and Send/Stop buttons still show focus on themselves. (#388)
+- **The global search box can be cleared with the keyboard.** The **✕** button beside the search
+  field sat in the tab order but responded only to a mouse click — pressing Enter or Space on it did
+  nothing, so keyboard users had to select-all and delete instead. It now activates on Enter and
+  Space like any other button, shows a focus ring, and uses the standard close icon. (#396)
+- **Firefox shows which parameter slider has keyboard focus.** The Agent Playground's temperature and
+  top-p sliders suppressed the browser's own focus outline but only drew a replacement ring on
+  Chrome and Safari, so on Firefox tabbing to a slider changed nothing on screen and the arrow keys
+  then adjusted a value with no indication of which one. Firefox now gets the same ring — plus the
+  hover and drag states it was also missing. (#395)
 
 - **`./dev.sh` now actually serves the UI.** The dev frontend proxied `/api` and `/mcp` to port 5000
   while `dev.sh` started the backend on 5001, so every request from http://localhost:4201 failed with
