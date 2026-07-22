@@ -66,7 +66,7 @@ export function StatTile({
       </div>
       <div className="relative">
         <div className="flex items-baseline gap-1">
-          <span data-testid={testId ? `${testId}-value` : undefined} className="text-h1 font-extrabold tracking-[-0.03em] leading-[0.92] tabular-nums text-primary">{displayValue}</span>
+          <span data-testid={testId ? `${testId}-value` : undefined} className="text-h1 font-bold tracking-[-0.03em] leading-[0.92] tabular-nums text-primary">{displayValue}</span>
           {unit && <span className="text-body-sm font-semibold text-muted">{unit}</span>}
         </div>
         <div className="text-caption text-muted mt-0.5 font-mono">{sub}</div>

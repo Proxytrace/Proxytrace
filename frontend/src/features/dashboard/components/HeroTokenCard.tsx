@@ -54,7 +54,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             <span
               data-testid="hero-token-total"
               data-token-total={totalTokens}
-              className="text-[68px] font-extrabold tracking-[-0.045em] leading-[0.92] tabular-nums text-primary"
+              className="text-[68px] font-bold tracking-[-0.045em] leading-[0.92] tabular-nums text-primary"
             >
               {tokenNum}<span>{tokenSuffix}</span>
             </span>

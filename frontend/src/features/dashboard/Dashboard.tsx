@@ -102,7 +102,7 @@ export default function Dashboard() {
             <Trans>LIVE</Trans>
           </span>
           {/* display-tier: intentional, outside type scale */}
-          <h1 className="text-[20px] font-extrabold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
+          <h1 className="text-[20px] font-bold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
           <p className="text-body-sm text-muted">{currentProject?.name ?? t`All projects`}</p>
         </div>
         <div className="flex items-center gap-3">
