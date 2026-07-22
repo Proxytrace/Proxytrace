@@ -9,7 +9,6 @@ import { SearchIcon, XIcon } from '../icons';
 import { cn } from '../../lib/cn';
 import { fieldFocusWithinCls, kbdCls } from '../ui/classes';
 import { FOCUS_RING } from '../../lib/constants';
-import { kbdCls } from '../ui/classes';
 import { useSearchQuery } from './hooks/useSearchQuery';
 import { useSearchInteraction } from './hooks/useSearchInteraction';
 import { useGroupedHits } from './searchGrouping';
