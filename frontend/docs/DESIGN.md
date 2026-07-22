@@ -285,7 +285,7 @@ The default is **no inline styles**. Use Tailwind utilities, including arbitrary
 ```tsx
 // good
 <div className="bg-card rounded-lg shadow-[var(--shadow-card)] p-4">
-<button className="bg-accent hover:bg-[var(--accent-hover)]">
+<button className="bg-accent hover:bg-accent-hover">
 
 // bad — static value as inline style
 <div style={{ background: '#101a23', borderRadius: 0 }}>
@@ -377,7 +377,8 @@ is an anti-pattern (§9).
   which is a 1px ring.
 - **`backdrop-filter: blur(4px)` on the modal overlay** (`.modal-overlay`) — the one sanctioned
   blur. Not on panels, not on the topbar, not "for depth".
-- **Flat semi-transparent chart area fills** — `fill={color} fillOpacity={0.18}` on the area path
+- **Flat semi-transparent chart area fills** — `fill={color} fillOpacity={…}` on the area path
+  (`MiniArea` defaults to `0.18`; callers may tune it within roughly 0.14–0.22 — `StatTile` does)
   (`AreaChart`, `DensityCurve`, `MiniArea`). A constant-alpha fill, not a fade-to-transparent ramp:
   the `<defs>` / `<linearGradient>` blocks were deleted. Don't reintroduce a gradient to "soften"
   a chart.
