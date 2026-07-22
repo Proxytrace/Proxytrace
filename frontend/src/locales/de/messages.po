@@ -3855,6 +3855,9 @@ msgstr "Provider-Konfiguration gelöscht"
 msgid "Provider Config Updated"
 msgstr "Provider-Config aktualisiert"
 
+msgid "Provider Key Rotated"
+msgstr "Provider-Schlüssel rotiert"
+
 msgid "Provider kind"
 msgstr "Provider-Typ"
 

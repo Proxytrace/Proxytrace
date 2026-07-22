@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Completion;
@@ -6,6 +7,8 @@ using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Storage.Internal;
+using Proxytrace.Storage.Internal.Entities.TestResult;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Storage.Tests;
@@ -96,6 +99,43 @@ public sealed class TestResultRepositoryTests : BaseTest<Module>
         results.Should().ContainSingle();
         results.Single().Evaluations.Should().Contain(e => e.Evaluator.Id == evaluator.Id);
     }
+
+    [TestMethod]
+    public async Task UpdateAsync_BackdatedCreatedAt_RewritesEvaluationStatRows()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestResultRepository>();
+        var createExisting = services.GetRequiredService<ITestResult.CreateExisting>();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IEvaluator>>().GetOrCreateAsync(CancellationToken);
+
+        await PersistResult(services, evaluator, EvaluationScore.Good);
+        var result = (await repo.GetRecentByEvaluatorAsync(evaluator.Id, 1, cancellationToken: CancellationToken)).Single();
+
+        // The demo seed's statistics backdating rewrites a persisted result's CreatedAt via
+        // CreateExisting + UpdateAsync; the EvaluationStat projection rows must follow, or the
+        // evaluator-stats queries keep bucketing the evaluation at the original write time.
+        var backdated = DateTimeOffset.UtcNow.AddDays(-14);
+        var updated = createExisting(
+            testCase: result.TestCase,
+            actualResponse: result.ActualResponse,
+            evaluations: result.Evaluations,
+            latency: result.Latency,
+            usage: result.Usage,
+            existing: new BackdatedData(result.Id, backdated, result.UpdatedAt));
+        await repo.UpdateAsync(updated, CancellationToken);
+
+        var rows = await services.GetRequiredService<Func<StorageDbContext>>()()
+            .Set<EvaluationStatEntity>()
+            .AsNoTracking()
+            .Where(e => e.TestResultId == result.Id)
+            .ToListAsync(CancellationToken);
+        var row = rows.Should().ContainSingle().Subject;
+        row.CreatedAt.Should().Be(backdated);
+        row.EvaluatorId.Should().Be(evaluator.Id);
+        row.Score.Should().Be(EvaluationScore.Good);
+    }
+
+    private sealed record BackdatedData(Guid Id, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt) : IDomainEntityData;
 
     private async Task<ITestCase> PersistResult(
         IServiceProvider services, IEvaluator evaluator, EvaluationScore score, string? reasoning = null)

@@ -9,6 +9,21 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Upstream provider key rotations are audited distinctly.** Replacing a provider's upstream API
+  key now records a dedicated *Provider Key Rotated* audit event instead of the generic provider
+  config update, so credential rotations stand out in incident review and compliance reporting.
+  The key value itself is never recorded.
+
+### Fixed
+
+- **The demo seed now backdates evaluation history along with its runs.** Evaluation statistics
+  previously kept the seed time even when their runs were spread across the past 30 days, so the
+  evaluator workspace's pass-rate trend showed "Not enough data" in the demo/kiosk stack. Updated
+  test results now rewrite their evaluation-statistics timestamps, and the trend chart renders
+  real history.
+
 ## [1.8.0] - 2026-07-22
 
 ### Added
