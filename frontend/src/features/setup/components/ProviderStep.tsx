@@ -14,7 +14,7 @@ interface ProviderStepProps {
   providerApiKey: string;
   providerFilled: boolean;
   testing: boolean;
-  testResult: { ok: boolean; message: string } | null;
+  testResult: { tone: 'success' | 'warning' | 'error'; message: string } | null;
   error: string | null;
   onPresetChange: (id: ProviderPresetId) => void;
   onNameChange: (v: string) => void;
@@ -113,7 +113,12 @@ export function ProviderStep({
           <Trans>Test connection</Trans>
         </Button>
         {testResult && (
-          <span className={cn('text-body', testResult.ok ? 'text-success' : 'text-danger')}>
+          <span className={cn(
+            'text-body',
+            testResult.tone === 'success' && 'text-success',
+            testResult.tone === 'warning' && 'text-warn',
+            testResult.tone === 'error' && 'text-danger',
+          )} role={testResult.tone === 'error' ? 'alert' : 'status'} aria-live={testResult.tone === 'error' ? 'assertive' : 'polite'}>
             {testResult.message}
           </span>
         )}

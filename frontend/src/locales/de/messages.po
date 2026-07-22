@@ -1389,6 +1389,9 @@ msgstr "Konfigurieren Sie Ihren Evaluator."
 msgid "Connect your model provider"
 msgstr "Verbinde deinen model provider"
 
+msgid "Connected, but the provider reported no models."
+msgstr "Verbunden, aber der Anbieter hat keine Modelle gemeldet."
+
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt…"
 
@@ -1495,6 +1498,9 @@ msgstr "Die Anfrage für diesen Fall konnte nicht geladen werden."
 msgid "Could not open the trace for this response."
 msgstr "Die Trace für diese Antwort konnte nicht geöffnet werden."
 
+msgid "Could not reach the provider."
+msgstr "Der Anbieter konnte nicht erreicht werden."
+
 msgid "Could not reset your password. Please try again."
 msgstr "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es erneut."
 
@@ -1507,8 +1513,18 @@ msgstr "nicht testbar"
 msgid "Could not test"
 msgstr "Nicht testbar"
 
+msgid "Could not update the upstream API key."
+msgstr "Der Upstream-API-Schlüssel konnte nicht aktualisiert werden."
+
 msgid "Could not verify the code. Please try again."
 msgstr "Der Code konnte nicht verifiziert werden. Bitte erneut versuchen."
+
+msgid "Could not verify the provider connection."
+msgstr "Die Verbindung zum Anbieter konnte nicht überprüft werden."
+
+#. placeholder {0}: details.errorId
+msgid "Could not verify the provider connection. Error ID: {0}"
+msgstr "Die Verbindung zum Anbieter konnte nicht überprüft werden. Fehler-ID: {0}"
 
 msgid "Couldn't load detectors."
 msgstr "Detectoren konnten nicht geladen werden."
@@ -2483,6 +2499,9 @@ msgstr "Schlüssel"
 #. placeholder {0}: created.name
 msgid "Key \"{0}\" created — copy it now, it won't be shown again"
 msgstr "Schlüssel \"{0}\" erstellt — jetzt kopieren, er wird nicht erneut angezeigt"
+
+msgid "Key accepted, but the provider reported no models."
+msgstr "Schlüssel akzeptiert, aber der Anbieter hat keine Modelle gemeldet."
 
 msgid "Key name"
 msgstr "Schlüsselname"
@@ -4912,6 +4931,9 @@ msgstr "wird getestet"
 msgid "Text response"
 msgstr "Textantwort"
 
+msgid "That key was rejected by the provider."
+msgstr "Dieser Schlüssel wurde vom Anbieter abgelehnt."
+
 msgid "The A/B test could not run — the theory was not tested."
 msgstr "Der A/B test konnte nicht ausgeführt werden — die Theory wurde nicht getestet."
 
@@ -5047,6 +5069,9 @@ msgstr "Dieser Passwort-Reset-Link fehlt oder ist fehlerhaft. Fordern Sie einen 
 
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Dadurch werden der Run und seine Ergebnisse dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "This provider kind does not support connection testing."
+msgstr "Dieser Anbietertyp unterstützt keine Verbindungsprüfung."
 
 msgid "This removes the detector and its review history. This can't be undone."
 msgstr "Dadurch werden der Detector und sein Prüfverlauf entfernt. Dies kann nicht rückgängig gemacht werden."
@@ -5347,6 +5372,9 @@ msgstr "Zum Planen upgraden"
 msgid "Upstream API key"
 msgstr "Upstream-API-Schlüssel"
 
+msgid "Upstream API key updated."
+msgstr "Upstream-API-Schlüssel aktualisiert."
+
 msgid "Upstream key copied"
 msgstr "Upstream-Schlüssel kopiert"
 
@@ -5425,6 +5453,9 @@ msgstr "Verifizieren"
 
 msgid "Verify & enable"
 msgstr "Verifizieren & aktivieren"
+
+msgid "Verifying key…"
+msgstr "Schlüssel wird überprüft…"
 
 msgid "Version history"
 msgstr "Versionsverlauf"

@@ -76,6 +76,34 @@ describe('setupApi', () => {
       );
     });
   });
+
+  describe('testConnection', () => {
+    it('posts provider credentials and returns the classified result', async () => {
+      const response = {
+        success: false,
+        errorCode: 'Unauthorized',
+        modelCount: 0,
+        error: null,
+        errorId: null,
+      };
+      const fetch = mockFetch(response);
+      vi.stubGlobal('fetch', fetch);
+      const req = {
+        providerName: 'OpenAI',
+        providerEndpoint: 'https://api.openai.com/v1',
+        providerUpstreamApiKey: 'wrong-key',
+        providerKind: ModelProviderKind.OpenAi,
+      };
+
+      const result = await setupApi.testConnection(req);
+
+      expect(result).toEqual(response);
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/setup/test-connection',
+        expect.objectContaining({ method: 'POST', body: JSON.stringify(req) }),
+      );
+    });
+  });
 });
 
 describe('buildQuickStartSnippets', () => {

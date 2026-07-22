@@ -136,7 +136,7 @@ internal class SetupService : ISetupService
         return result;
     }
 
-    public Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default)
+    public Task<ProviderConnectionResult> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default)
         => CreateProvider(input)
             .CreateClient()
             .VerifyConnectionAsync(cancellationToken);

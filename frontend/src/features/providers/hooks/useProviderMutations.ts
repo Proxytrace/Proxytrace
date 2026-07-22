@@ -1,10 +1,15 @@
+import { useState } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
+import { setupApi } from '../../../api/setup';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import type {
   CreateApiKeyRequest, CreateProviderRequest,
-  ModelProviderKind,
+  ModelProviderKind, ProviderDto,
 } from '../../../api/models';
+import useToast from '../../../hooks/useToast';
+import { normalizeProviderConnectionError, ProviderConnectionTestError } from '../../../lib/providerConnection';
 
 /** Creates a provider; invalidates the list. Caller selects the new provider via `mutate`'s onSuccess. */
 export function useCreateProvider() {
@@ -28,6 +33,48 @@ export function useUpdateProviderKind() {
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
+}
+
+/** Verifies a replacement upstream key before persisting it. */
+export function useRotateUpstreamKey(provider: ProviderDto) {
+  const { t } = useLingui();
+  const { show: toast } = useToast();
+  const qc = useQueryClient();
+  const [phase, setPhase] = useState<'verifying' | 'saving' | null>(null);
+  const mutation = useMutation({
+    mutationFn: async (newKey: string) => {
+      setPhase('verifying');
+      const verification = await setupApi.testConnection({
+        providerName: provider.name,
+        providerEndpoint: provider.endpoint,
+        providerUpstreamApiKey: newKey,
+        providerKind: provider.kind,
+      });
+      if (!verification.success) {
+        throw new ProviderConnectionTestError(
+          normalizeProviderConnectionError(verification.errorCode),
+          verification.error,
+          verification.errorId,
+        );
+      }
+
+      setPhase('saving');
+      const saved = await providersApi.update(provider.id, {
+        name: provider.name,
+        endpoint: provider.endpoint,
+        upstreamApiKey: newKey,
+        kind: provider.kind,
+      });
+      return { provider: saved, modelCount: verification.modelCount };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview });
+      toast(t`Upstream API key updated.`, 'success');
+    },
+    onSettled: () => setPhase(null),
+  });
+
+  return { ...mutation, phase };
 }
 
 /** Deletes a provider; invalidates the list. Caller resets selection via `mutate`'s onSuccess. */

@@ -1,8 +1,9 @@
-import { useCallback, useState, type KeyboardEvent } from 'react';
+import { useCallback, useRef, useState, type KeyboardEvent } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { setupApi } from '../../../api/setup';
 import { QUERY_KEYS } from '../../../api/query-keys';
+import { providerConnectionErrorMessage } from '../../../lib/providerConnection';
 import { presetById, type ProviderPresetId } from '../setupMeta';
 import { useModelLoader } from './useModelLoader';
 
@@ -17,7 +18,7 @@ export const SETUP_STEPS = {
 const LAST_STEP = SETUP_STEPS.getStarted;
 
 export function useSetupWizard() {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const qc = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState<number>(SETUP_STEPS.welcome);
@@ -30,7 +31,11 @@ export function useSetupWizard() {
   const [providerEndpoint, setProviderEndpoint] = useState('https://api.openai.com/v1');
   const [providerApiKey, setProviderApiKey] = useState('');
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{
+    tone: 'success' | 'warning' | 'error';
+    message: string;
+  } | null>(null);
+  const testAttempt = useRef(0);
 
   const providerKind = presetById(presetId).kind;
 
@@ -84,11 +89,17 @@ export function useSetupWizard() {
     if (providerName.trim() === '' || providerName === prev.defaultName) {
       setProviderName(next.defaultName);
     }
-    setTestResult(null);
+    clearTestResult();
     modelLoader.reset();
   }
 
+  function clearTestResult() {
+    testAttempt.current += 1;
+    setTestResult(null);
+  }
+
   async function handleTestConnection() {
+    const attempt = ++testAttempt.current;
     setTesting(true);
     setTestResult(null);
     try {
@@ -98,12 +109,17 @@ export function useSetupWizard() {
         providerUpstreamApiKey: providerApiKey.trim(),
         providerKind,
       });
-      setTestResult({
-        ok: res.success,
-        message: res.success ? t`Connection successful.` : (res.error ?? t`Connection failed.`),
-      });
+      if (attempt !== testAttempt.current) return;
+      if (res.success) {
+        setTestResult(res.modelCount === 0
+          ? { tone: 'warning', message: t`Connected, but the provider reported no models.` }
+          : { tone: 'success', message: t`Connection successful.` });
+      } else {
+        setTestResult({ tone: 'error', message: providerConnectionErrorMessage(i18n, res) });
+      }
     } catch (e) {
-      setTestResult({ ok: false, message: e instanceof Error ? e.message : t`Connection failed.` });
+      if (attempt !== testAttempt.current) return;
+      setTestResult({ tone: 'error', message: e instanceof Error ? e.message : t`Connection failed.` });
     } finally {
       setTesting(false);
     }
@@ -168,7 +184,7 @@ export function useSetupWizard() {
     setProviderApiKey,
     setModelName,
     setProjectName,
-    setTestResult,
+    clearTestResult,
     // handlers
     handleNext,
     handleBack,
