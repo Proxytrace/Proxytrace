@@ -83,7 +83,7 @@ lists, tables, and code blocks).
 ## Ask Tracey from anywhere
 
 You don't have to start on the Tracey page. Wherever the app shows something worth
-investigating, a gold **⚡ Ask Tracey** button appears next to it. Clicking it opens Tracey AI
+investigating, a cyan **⚡ Ask Tracey** button appears next to it. Clicking it opens Tracey AI
 in a fresh conversation and immediately asks her about the thing you were looking at — with all
 the context (ids, anomaly reasons, pass rates) already filled in:
 

@@ -7,7 +7,7 @@
 1. **[`../frontend/docs/DESIGN.md`](../frontend/docs/DESIGN.md)** — source of truth for the **visual system**: tokens, colors, type scale, spacing, shadows, which UI primitive to render, interaction/accessibility visuals.
 2. **[`../frontend/docs/BEST_PRACTICES.md`](../frontend/docs/BEST_PRACTICES.md)** — source of truth for **code architecture**: file/component size limits, feature-folder layout, TanStack Query data layer, `useEffect` discipline, state placement, props/typing, icons, performance, testing.
 
-The split is sharp: DESIGN.md = what it looks like; BEST_PRACTICES.md = how it's built. Both apply to every frontend change. Every PR must satisfy both checklists (DESIGN.md §10 + BEST_PRACTICES.md §14). Do not copy an existing anti-pattern just because a neighbor file does it — large debt files (e.g. `frontend/src/features/evaluators/Evaluators.tsx`) violate BEST_PRACTICES.md and are debt, not precedent.
+The split is sharp: DESIGN.md = what it looks like; BEST_PRACTICES.md = how it's built. Both apply to every frontend change. Every PR must satisfy both checklists (DESIGN.md §10 + BEST_PRACTICES.md §16). Do not copy an existing anti-pattern just because a neighbor file does it — large debt files (e.g. `frontend/src/features/evaluators/Evaluators.tsx`) violate BEST_PRACTICES.md and are debt, not precedent.
 
 ## UI primitives are mandatory
 
@@ -24,7 +24,7 @@ React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code live
 - `src/features/` — one folder per route: `dashboard`, `traces`, `agents`, `suites`, `evaluators`, `runs`, `providers`, `proposals`, `setup`. Each is a lazy-loaded page component via `React.lazy()` in `App.tsx`
 - `src/lib/` — pure utilities: `format.ts` (number/date formatters), `colors.ts` (model/status color maps), `charts.ts` (SVG path math), `constants.ts`
 - `src/hooks/` — custom React hooks
-- Tailwind CSS 4 via `@tailwindcss/vite`; use Tailwind utility classes for all static styles. Inline `style={{}}` is only acceptable for genuinely dynamic values (e.g. runtime-computed colors, percentage widths from data, a numeric `borderRadius` prop). Complex static values — gradients, shadows, CSS-variable references — must use Tailwind's arbitrary-value syntax: `bg-[linear-gradient(...)]`, `shadow-[var(--shadow-card)]`, `shadow-[0_4px_16px_...]`, etc.
+- Tailwind CSS 4 via `@tailwindcss/vite`; use Tailwind utility classes for all static styles. Inline `style={{}}` is only acceptable for genuinely dynamic values (e.g. runtime-computed colors, percentage widths from data, a numeric `borderRadius` prop). Complex static values — shadows, `color-mix` tints, CSS-variable references — must use Tailwind's arbitrary-value syntax: `shadow-[var(--shadow-card)]`, `bg-[color-mix(in_srgb,var(--accent-primary)_14%,transparent)]`, etc. (Gradients are not a case that comes up: the Wire system has none — see DESIGN.md §9.)
 - Tests use Vitest (`*.spec.ts`)
 
 Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
