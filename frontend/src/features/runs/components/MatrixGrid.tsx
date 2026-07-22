@@ -40,8 +40,8 @@ export function MatrixGrid({ cohorts, rows, allRows, active, selectedCaseId, onS
     <div className="overflow-x-auto">
       <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
         {/* Header */}
-        <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]"><Trans>Test case</Trans></div>
-        <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right"><Trans>Lat</Trans></div>
+        <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-secondary uppercase tracking-[0.06em]"><Trans>Test case</Trans></div>
+        <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-secondary uppercase tracking-[0.06em] text-right"><Trans>Lat</Trans></div>
         {cohorts.map(cohort => (
           <div key={cohort.endpointId} data-testid={`matrix-col-${cohort.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center gap-1.5">
             <ModelTag name={cohort.endpointName} size="xs" />

@@ -115,7 +115,7 @@ export function ComposeBox({
             >
               <div role="listbox">
                 <div className="px-2.5 pt-0.5 pb-1.5 flex items-center justify-between">
-                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
+                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary"><Trans>Endpoint</Trans></span>
                   {defaultEndpointId && endpointId !== defaultEndpointId && (
                     <Button
                       variant="link"

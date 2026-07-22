@@ -27,7 +27,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
   return (
     <div className="flex flex-col gap-1.5">
       {heading && (
-        <div className="flex items-center justify-between text-body-sm font-semibold tracking-[0.06em] uppercase text-muted">
+        <div className="flex items-center justify-between text-body-sm font-semibold tracking-[0.06em] uppercase text-secondary">
           <span>{heading}</span>
           <button
             onClick={copy}

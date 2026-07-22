@@ -104,7 +104,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       {/* Model split */}
       <div className="relative flex flex-col gap-1.5 pt-2 border-t border-border-subtle">
         <div className="flex items-center justify-between">
-          <div className="text-caption text-muted tracking-[0.14em] uppercase font-mono font-bold"><Trans>Split by model</Trans></div>
+          <div className={EYEBROW_CLS}><Trans>Split by model</Trans></div>
           <div className="text-caption text-muted font-mono"><Trans>{modelSplit.models.length} active</Trans></div>
         </div>
         {modelSplit.models.length > 0 ? (

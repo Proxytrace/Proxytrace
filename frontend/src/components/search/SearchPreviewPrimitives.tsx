@@ -27,7 +27,7 @@ export function MetaGrid({ entries }: MetaGridProps) {
     <div className="flex flex-col gap-1">
       {entries.map(([k, v]) => (
         <div key={k} className="flex items-baseline gap-3 text-body-sm">
-          <span className="text-muted min-w-[80px] uppercase tracking-wider text-caption">{k}</span>
+          <span className="text-secondary min-w-[80px] uppercase tracking-wider text-caption">{k}</span>
           <span className="text-primary truncate min-w-0">{v}</span>
         </div>
       ))}

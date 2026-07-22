@@ -53,7 +53,7 @@ export function PastEvaluationList({ evaluatorId, evaluatorName, items, selected
         />
       </Popover>
 
-      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted px-1 pt-1 shrink-0"><Trans>Recent</Trans></span>
+      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary px-1 pt-1 shrink-0"><Trans>Recent</Trans></span>
 
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {isLoading ? (

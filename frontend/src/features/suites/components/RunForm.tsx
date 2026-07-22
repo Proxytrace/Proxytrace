@@ -42,7 +42,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loa
       </p>
 
       <div className="mb-5">
-        <div className="text-caption text-muted font-semibold uppercase tracking-[0.08em] mb-2 flex items-center gap-2">
+        <div className="text-caption text-secondary font-semibold uppercase tracking-[0.08em] mb-2 flex items-center gap-2">
           <Trans>Model endpoints to evaluate</Trans>
           {isMulti && (
             <span
@@ -71,7 +71,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loa
       </div>
 
       <div className="mb-5">
-        <div className="text-caption text-muted font-semibold uppercase tracking-[0.08em] mb-2">
+        <div className="text-caption text-secondary font-semibold uppercase tracking-[0.08em] mb-2">
           <Trans>Samples per endpoint</Trans>
         </div>
         <div className="flex items-center gap-3 flex-wrap">

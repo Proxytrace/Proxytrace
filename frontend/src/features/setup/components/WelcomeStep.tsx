@@ -103,7 +103,7 @@ function TierPanel({ tier }: { tier: ReturnType<typeof buildTierSummary> }) {
             <LockIcon size={13} className="mt-0.5 shrink-0" />
             <span>
               {i18n._(line)}
-              <span className="text-caption text-muted ml-1.5 uppercase"><Trans>Enterprise</Trans></span>
+              <span className="text-caption text-secondary ml-1.5 uppercase"><Trans>Enterprise</Trans></span>
             </span>
           </li>
         ))}

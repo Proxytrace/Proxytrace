@@ -63,7 +63,7 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }:
 function Metric({ label, value, valueClass, big = false }: { label: string; value: string; valueClass: string; big?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-caption text-muted uppercase tracking-[0.07em] font-semibold">{label}</span>
+      <span className="text-caption text-secondary uppercase tracking-[0.07em] font-semibold">{label}</span>
       <span className={cn('font-mono font-semibold tracking-[-0.02em] leading-none', big ? 'text-h1' : 'text-h2', valueClass)}>
         {value}
       </span>

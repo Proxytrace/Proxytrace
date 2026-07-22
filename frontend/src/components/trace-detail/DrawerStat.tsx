@@ -39,7 +39,7 @@ export function DrawerStat({ label, value, sub, icon, tone, valueTone, children,
           {icon}
         </div>
         <div className="min-w-0 leading-tight">
-          <div className="text-caption text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
+          <div className="text-caption text-secondary font-medium tracking-[0.05em] uppercase">{label}</div>
           {value !== undefined && (
             <div data-testid={valueTestId} className={cn('text-h1 font-bold mt-0.5 font-mono', valueTone ? TONE_VALUE_TEXT[valueTone] : 'text-primary')}>
               {value}

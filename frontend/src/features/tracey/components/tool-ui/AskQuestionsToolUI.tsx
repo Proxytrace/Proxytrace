@@ -160,7 +160,7 @@ export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result,
           <div className={cn('flex flex-col gap-3', step > 0 && 'border-t border-border-subtle pt-3')}>
             <div className="flex flex-col gap-0.5">
               {total > 1 && (
-                <div className="text-caption font-medium uppercase tracking-wide text-muted">
+                <div className="text-caption font-medium uppercase tracking-wide text-secondary">
                   <Trans>Step {step + 1} of {total}</Trans>
                 </div>
               )}

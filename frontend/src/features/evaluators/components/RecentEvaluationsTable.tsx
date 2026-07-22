@@ -26,7 +26,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)] overflow-hidden">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
         <ActivityIcon size={13} />
-        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Recent evaluations</Trans></span>
+        <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold"><Trans>Recent evaluations</Trans></span>
         {!scoreFilter && <span className="text-body-sm text-muted"><Trans>last 8</Trans></span>}
         {scoreFilter && (
           // eslint-disable-next-line no-restricted-syntax -- bespoke removable filter pill
@@ -56,7 +56,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
         </div>
       ) : (
         <div>
-          <div className={cn(GRID, 'px-4 py-2 gap-3 items-center text-caption text-muted uppercase tracking-[0.08em] border-b border-hairline font-semibold')}>
+          <div className={cn(GRID, 'px-4 py-2 gap-3 items-center text-caption text-secondary uppercase tracking-[0.08em] border-b border-hairline font-semibold')}>
             <span><Trans>Time</Trans></span>
             <span><Trans>Case · reason</Trans></span>
             <span className="text-right"><Trans>Latency</Trans></span>

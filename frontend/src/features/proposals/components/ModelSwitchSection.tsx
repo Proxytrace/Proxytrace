@@ -40,7 +40,7 @@ export function ModelSwitchSection({ details }: Props) {
   return (
     <div className="bg-black/40 rounded-md overflow-hidden border border-border-subtle" data-testid="model-switch-section">
       <div className="px-3.5 py-2 border-b border-hairline bg-card-2/30">
-        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]"><Trans>Model change</Trans></span>
+        <span className="text-caption text-secondary font-semibold uppercase tracking-[0.07em]"><Trans>Model change</Trans></span>
       </div>
       <div className="flex items-center gap-3.5 justify-center px-3.5 py-4">
         <ModelBox

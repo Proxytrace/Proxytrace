@@ -33,7 +33,7 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
       <div className="overflow-x-auto">
         <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
           {/* Header */}
-          <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] flex items-center"><Trans>Evaluator</Trans></div>
+          <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-secondary uppercase tracking-[0.06em] flex items-center"><Trans>Evaluator</Trans></div>
           {cohorts.map(cohort => (
             <div key={cohort.endpointId} className="px-3 py-2 border-b border-hairline flex items-center gap-1.5">
               <ModelTag name={cohort.endpointName} size="xs" />

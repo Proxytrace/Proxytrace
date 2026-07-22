@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind v4 auto-detects sources from the project root, which pulls in the AI design docs.
+   Class names that appear only inside DESIGN.md / BEST_PRACTICES.md code samples would otherwise
+   be compiled into the production stylesheet (and can reference tokens that no longer exist).
+   Documentation is never a class-name source. */
+@source not "../docs";
+
 @theme {
   /* Surface colors */
   --color-surface: var(--bg-primary);
@@ -28,10 +34,12 @@
   /* Semantic */
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
+  --color-success-ink: var(--success-ink);
   --color-warn: var(--warn);
   --color-warn-subtle: var(--warn-subtle);
   --color-danger: var(--danger);
   --color-danger-subtle: var(--danger-subtle);
+  --color-danger-ink: var(--danger-ink);
   --color-teal: var(--teal);
 
   /* Radii (Signal Desk: square corners everywhere; rounded-full only for dots/avatars) */
@@ -91,16 +99,17 @@
   /* Semantic */
   --success: #5aba80;
   --success-subtle: rgba(90, 186, 128, 0.11);
+  --success-ink: #05220f;            /* text/icon ON success fills (7.06:1 — AA) */
   --warn: #d9a23f;
   --warn-subtle: rgba(217, 162, 63, 0.12);
   --danger: #dd5959;
   --danger-subtle: rgba(221, 89, 89, 0.12);
+  --danger-ink: #290606;             /* text/icon ON danger fills (5.03:1 — AA) */
   --teal: #7d95c9; /* steel-blue — rule-based evaluators / info (token name kept for churn-free migration) */
 
   /* Shadows — flat tier: a 1px rule ring only; overlays get one soft drop for layering */
   --shadow-card: 0 0 0 1px var(--border-subtle);
   --shadow-float: 0 0 0 1px var(--border-color), 0 16px 40px -12px rgba(0, 0, 0, 0.6);
-  --shadow-topbar: none;
 
   /* Radii (Signal Desk: square) */
   --radius-sm: 0px;
@@ -137,9 +146,6 @@
   /* Neutral wash (hover/active backgrounds) */
   --bg-wash-hover: rgba(255,255,255,0.04);
   --bg-wash-active: rgba(255,255,255,0.07);
-
-  /* Branded fills — flat (Signal Desk has no dimensional gradients) */
-  --grad-success: linear-gradient(180deg, #4fae74, #4fae74);
 
   /* Motion */
   --motion-fast: 120ms;

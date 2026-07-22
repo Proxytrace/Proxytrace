@@ -72,7 +72,7 @@ export function TraceMetadataTab({ trace }: MetadataProps) {
       <div className="grid grid-cols-2 gap-2.5">
         {rows.map(([k, v]) => (
           <div key={k} className="px-3 py-2.5 bg-card-2 rounded-md">
-            <div className="text-caption text-muted uppercase tracking-[0.06em] mb-0.5">{k}</div>
+            <div className="text-caption text-secondary uppercase tracking-[0.06em] mb-0.5">{k}</div>
             <div
               data-testid={k === 'cost_eur' ? 'trace-metadata-cost' : undefined}
               className="text-body font-mono text-primary break-all"
@@ -82,7 +82,7 @@ export function TraceMetadataTab({ trace }: MetadataProps) {
           </div>
         ))}
       </div>
-      <div className="text-caption text-muted uppercase tracking-[0.08em] font-semibold mt-1.5">
+      <div className="text-caption text-secondary uppercase tracking-[0.08em] font-semibold mt-1.5">
         <Trans>Model parameters</Trans>
       </div>
       <ModelParametersGrid params={trace.modelParameters} />

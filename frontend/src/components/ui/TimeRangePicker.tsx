@@ -102,7 +102,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
       <Popover open={open} onOpenChange={handleOpenChange} align="end" trigger={trigger}>
         <div className="flex flex-col sm:flex-row" data-testid={`${testId}-popover`}>
           <div className="flex flex-col gap-0.5 p-1.5 sm:w-[176px] border-b sm:border-b-0 sm:border-r border-hairline">
-            <span className="px-2 pt-1 pb-1 text-caption font-medium uppercase tracking-wide text-muted">
+            <span className="px-2 pt-1 pb-1 text-caption font-medium uppercase tracking-wide text-secondary">
               <Trans>Quick ranges</Trans>
             </span>
             {TIME_PRESETS.map(p => {
@@ -125,7 +125,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
           </div>
 
           <div className="flex flex-col gap-3 p-3 sm:w-[272px]">
-            <span className="text-caption font-medium uppercase tracking-wide text-muted"><Trans>Custom range</Trans></span>
+            <span className="text-caption font-medium uppercase tracking-wide text-secondary"><Trans>Custom range</Trans></span>
             <FormField label={t`From`} htmlFor={`${testId}-from`}>
               <Input
                 id={`${testId}-from`}

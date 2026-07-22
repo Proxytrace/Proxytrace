@@ -102,7 +102,7 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div role="presentation" className="px-3 pb-1 pt-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-muted">
+    <div role="presentation" className="px-3 pb-1 pt-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-secondary">
       {children}
     </div>
   );

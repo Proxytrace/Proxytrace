@@ -90,7 +90,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
           />
           {argCount > 0 && (
             <div className="flex flex-col gap-1.5">
-              <div className="text-caption font-semibold uppercase tracking-[0.06em] text-muted"><Trans>Arguments</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.06em] text-secondary"><Trans>Arguments</Trans></div>
               {tool.arguments.map((arg, ai) => {
                 return (
                   <div

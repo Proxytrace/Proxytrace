@@ -45,7 +45,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         <CheckIcon
           size={11}
           strokeWidth={3}
-          className="pointer-events-none absolute inset-0 m-auto text-white opacity-0 transition-opacity duration-[var(--motion-fast)] peer-checked:opacity-100"
+          className="pointer-events-none absolute inset-0 m-auto text-accent-ink opacity-0 transition-opacity duration-[var(--motion-fast)] peer-checked:opacity-100"
         />
       </span>
       {label != null && <span className="text-title text-secondary">{label}</span>}

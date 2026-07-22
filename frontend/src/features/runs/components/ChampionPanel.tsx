@@ -76,7 +76,7 @@ export function ChampionPanel({ entry }: { entry: LeaderboardEntry }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-caption font-semibold text-muted tracking-[0.06em] uppercase mb-0.5">{label}</div>
+      <div className="text-caption font-semibold text-secondary tracking-[0.06em] uppercase mb-0.5">{label}</div>
       <div className="mono text-body-sm font-semibold text-secondary truncate" title={value}>{value}</div>
     </div>
   );

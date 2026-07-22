@@ -66,7 +66,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
           </span>
         ) : (
           <div className="flex-1 min-w-0">
-            <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted">{subtitle}</div>
+            <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary">{subtitle}</div>
             <div className="text-title font-semibold text-primary truncate">
               {current?.name ?? t`Pick an agent`}
             </div>

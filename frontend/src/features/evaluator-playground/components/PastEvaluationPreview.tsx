@@ -58,7 +58,7 @@ export function PastEvaluationPreview({ evaluatorId, evaluatorName, caseId }: Pr
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-1.5 text-caption font-semibold uppercase tracking-[0.09em] text-muted">{children}</div>
+    <div className="mb-1.5 text-caption font-semibold uppercase tracking-[0.09em] text-secondary">{children}</div>
   );
 }
 
@@ -66,7 +66,7 @@ function Field({ label, value }: { label: string; value: string }) {
   if (!value.trim()) return null;
   return (
     <div className="mt-2.5">
-      <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted">{label}</div>
+      <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary">{label}</div>
       <pre className="mt-1 max-h-[120px] overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-card-2 px-2.5 py-2 text-body-sm leading-relaxed text-secondary font-mono m-0">
         {value}
       </pre>

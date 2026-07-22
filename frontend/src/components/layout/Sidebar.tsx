@@ -97,7 +97,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
                 <div className={`my-1.5 border-t border-hairline ${navCollapsed ? 'mx-1' : 'mx-2'}`} />
               )}
               {!navCollapsed && group.label && (
-                <div className="px-1.5 pt-1 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
+                <div className="px-1.5 pt-1 pb-1 text-caption font-semibold tracking-[0.08em] text-secondary uppercase">
                   {i18n._(group.label)}
                 </div>
               )}

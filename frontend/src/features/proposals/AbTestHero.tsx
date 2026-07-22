@@ -85,7 +85,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Hero numbers */}
       <div className="flex items-stretch gap-6 px-4 py-4">
         <div className="flex-1 min-w-0">
-          <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1"><Trans>Pass rate</Trans></div>
+          <div className="text-caption text-secondary font-semibold uppercase tracking-[0.07em] mb-1"><Trans>Pass rate</Trans></div>
           <div className="flex items-baseline gap-2.5">
             <span
               className={cn('text-display font-bold tracking-[-0.02em] mono leading-none', TONE_TEXT[passTone])}
@@ -142,7 +142,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: DisplayTone }) {
   return (
     <>
-      <span className="text-caption text-muted font-medium uppercase tracking-[0.07em]">{label}</span>
+      <span className="text-caption text-secondary font-medium uppercase tracking-[0.07em]">{label}</span>
       <span className={cn('mono text-body font-semibold', tone ? TONE_TEXT[tone] : 'text-primary')}>
         {value}
       </span>

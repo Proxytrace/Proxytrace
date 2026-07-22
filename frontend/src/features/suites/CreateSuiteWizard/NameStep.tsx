@@ -41,7 +41,7 @@ export function NameStep({ value, onChange }: Props) {
   return (
     <div data-testid="wizard-step-name" className="max-w-[640px] mx-auto flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <label className="text-body-sm font-semibold text-muted uppercase tracking-[0.05em]"><Trans>Quick presets</Trans></label>
+        <label className="text-body-sm font-semibold text-secondary uppercase tracking-[0.05em]"><Trans>Quick presets</Trans></label>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map(p => {
             const selected = active === p.key;

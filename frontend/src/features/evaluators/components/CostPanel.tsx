@@ -20,7 +20,7 @@ export function CostPanel({ overview, category, modelName, range }: Props) {
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>LLM judge cost</Trans></span>
+        <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold"><Trans>LLM judge cost</Trans></span>
         {modelName && <span className="text-body-sm text-muted font-mono">· {modelName}</span>}
       </header>
       <div className="px-4.5 py-4 flex flex-col gap-3.5 flex-1">
@@ -35,7 +35,7 @@ export function CostPanel({ overview, category, modelName, range }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           <div className="px-3 py-2.5 bg-card-2 rounded-md">
-            <div className="text-caption text-muted uppercase tracking-[0.07em] mb-1"><Trans>Input tokens</Trans></div>
+            <div className="text-caption text-secondary uppercase tracking-[0.07em] mb-1"><Trans>Input tokens</Trans></div>
             <div className="text-h2 font-mono text-primary font-semibold">
               {s?.inputTokens != null ? fmtTokens(s.inputTokens) : '—'}
               {s?.inputTokens != null && s.cachedInputTokens != null && (
@@ -44,7 +44,7 @@ export function CostPanel({ overview, category, modelName, range }: Props) {
             </div>
           </div>
           <div className="px-3 py-2.5 bg-card-2 rounded-md">
-            <div className="text-caption text-muted uppercase tracking-[0.07em] mb-1"><Trans>Output tokens</Trans></div>
+            <div className="text-caption text-secondary uppercase tracking-[0.07em] mb-1"><Trans>Output tokens</Trans></div>
             <div className="text-h2 font-mono text-primary font-semibold">
               {s?.outputTokens != null ? fmtTokens(s.outputTokens) : '—'}
             </div>

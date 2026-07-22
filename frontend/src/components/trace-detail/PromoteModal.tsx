@@ -92,7 +92,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
           <div className="flex-1 min-w-0 border-r border-hairline overflow-y-auto px-6 py-5 flex flex-col gap-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
+                <span className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">
                   <Trans>Input · <Plural value={inputMessages.length} one="# message" other="# messages" /></Trans>
                 </span>
                 {hasSystem && (
@@ -114,7 +114,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
+                <span className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">
                   <Trans>Expected output</Trans>
                 </span>
                 <span className="text-caption text-muted italic"><Trans>Editable</Trans></span>
@@ -126,7 +126,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
           {/* Right: suite picker + stats */}
           <div className="w-[360px] shrink-0 flex flex-col min-h-0">
             <div className="px-5 pt-5 pb-3 shrink-0">
-              <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
+              <div className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">
                 <Trans>Destination suite</Trans>
               </div>
               <div className="text-body-sm text-muted mt-0.5">
@@ -200,7 +200,7 @@ function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
         <Stat label={t`Total runs`} value={String(suite.totalRuns)} accent="var(--teal)" />
       </div>
       <div>
-        <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em] mb-1.5">
+        <div className="text-caption font-semibold text-secondary uppercase tracking-[0.08em] mb-1.5">
           <Trans>Evaluators</Trans>
         </div>
         {suite.evaluators.length === 0 ? (
@@ -225,7 +225,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent: 
   return (
     <div className="bg-card rounded-md px-2 py-2 text-center shadow-[inset_0_0_0_1px_var(--border-color)]">
       <div className="text-h1 font-bold font-mono" style={{ color: accent }}>{value}</div>
-      <div className="text-caption text-muted uppercase tracking-[0.06em] mt-0.5">{label}</div>
+      <div className="text-caption text-secondary uppercase tracking-[0.06em] mt-0.5">{label}</div>
     </div>
   );
 }

@@ -100,13 +100,13 @@ export function ConversationView({
             <div
               className="rounded-md text-left p-3 text-body leading-[1.55] text-secondary bg-white/[0.02] border border-border"
             >
-              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted mb-1"><Trans>System prompt</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary mb-1"><Trans>System prompt</Trans></div>
               <div className="whitespace-pre-wrap">{trimmed.length > 380 ? trimmed.slice(0, 377) + '…' : trimmed}</div>
             </div>
           )}
           {tools && tools.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted text-left"><Trans>Tools available</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary text-left"><Trans>Tools available</Trans></div>
               <div className="flex flex-wrap gap-1.5 justify-start">
                 {tools.map(t => (
                   <span

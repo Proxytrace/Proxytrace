@@ -26,7 +26,7 @@ interface Props {
 }
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS utility classes, not UI copy
-const HEADER_TEXT_CLS = 'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]';
+const HEADER_TEXT_CLS = 'text-body-sm font-semibold text-secondary uppercase tracking-[0.06em]';
 
 function SortableHeader({ label, field, sort, onSortChange, alignRight }: {
   label: string;

@@ -20,7 +20,7 @@ export const hoverRevealOverlayCls = cn(
 );
 
 /** Canonical form-field label (uppercase eyebrow). Shared by `Label` + `FormField`. */
-export const fieldLabelCls = 'text-caption font-semibold text-muted uppercase tracking-[0.05em]';
+export const fieldLabelCls = 'text-caption font-semibold text-secondary uppercase tracking-[0.05em]';
 
 /** Signal Desk eyebrow: mono, uppercase, tracked — table headers, KPI labels, rail counts. */
 export const EYEBROW_CLS = cn('font-mono text-caption uppercase tracking-[0.14em] text-secondary');

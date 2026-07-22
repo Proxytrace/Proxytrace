@@ -35,13 +35,13 @@ const VARIANT_CLS: Record<ButtonVariant, string> = {
     'text-secondary hover:text-primary hover:bg-[var(--bg-wash-hover)] border border-transparent disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   danger: cn(
-    'bg-danger text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
+    'bg-danger text-danger-ink hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   dangerOutline: cn(
     'bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   success: cn(
-    'bg-[image:var(--grad-success)] text-white hover:opacity-92 disabled:opacity-40 disabled:cursor-not-allowed',
+    'bg-success text-success-ink hover:opacity-92 disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   link: cn(
     'bg-transparent text-accent hover:text-accent-hover hover:underline shadow-none gap-1 disabled:opacity-40 disabled:cursor-not-allowed',

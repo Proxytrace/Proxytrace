@@ -31,13 +31,13 @@ function definitionBody(e: EvaluatorDetailDto): { body: ReactNode; vars: string[
         <div className="grid grid-cols-2 gap-2.5">
           {e.extractionPattern && (
             <div className="px-3.5 py-3 bg-card-2 rounded-md col-span-2">
-              <div className="text-caption text-muted uppercase tracking-[0.07em] mb-1"><Trans>extract pattern</Trans></div>
+              <div className="text-caption text-secondary uppercase tracking-[0.07em] mb-1"><Trans>extract pattern</Trans></div>
               <code className="font-mono text-body text-teal">/{e.extractionPattern}/</code>
             </div>
           )}
           {e.tolerance != null && (
             <div className="px-3.5 py-3 bg-card-2 rounded-md">
-              <div className="text-caption text-muted uppercase tracking-[0.07em] mb-1"><Trans>tolerance</Trans></div>
+              <div className="text-caption text-secondary uppercase tracking-[0.07em] mb-1"><Trans>tolerance</Trans></div>
               <div className="text-body font-mono text-primary">± {e.tolerance}</div>
             </div>
           )}
@@ -64,7 +64,7 @@ export function DefinitionPanel({ evaluator: e }: Props) {
   return (
     <section data-testid="evaluator-definition-panel" className="flex flex-col min-w-0 bg-card rounded-lg shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Definition</Trans></span>
+        <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold"><Trans>Definition</Trans></span>
         <span className={cn('px-2 py-0.5 rounded-sm text-caption font-semibold', categoryTint14[cat], categoryText[cat])}>
           {e.kind}
         </span>

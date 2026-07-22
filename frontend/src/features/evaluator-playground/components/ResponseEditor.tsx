@@ -7,7 +7,7 @@ import { EditPencilIcon, ResetIcon } from '../../../components/icons';
 export function ExpectedResponse({ text }: { text: string }) {
   return (
     <section className="flex flex-col gap-1.5 min-w-0 shrink-0">
-      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Expected · reference</Trans></span>
+      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary"><Trans>Expected · reference</Trans></span>
       <pre className="m-0 px-3.5 py-3 rounded-lg bg-card-2 border border-border-subtle text-body leading-relaxed text-secondary font-mono whitespace-pre-wrap break-words max-h-[200px] overflow-auto">
         {text || '—'}
       </pre>

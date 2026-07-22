@@ -3,6 +3,7 @@
 import { MiniArea } from '../../../components/charts';
 import { cn } from '../../../lib/cn';
 import { useCountUp } from '../../../hooks/useCountUp';
+import { COL_HEADER_CLS } from '../dashboardMeta';
 
 interface StatTileProps {
   icon: React.ReactNode;
@@ -55,7 +56,7 @@ export function StatTile({
           <div className={cn('w-5 h-5 rounded-sm flex items-center justify-center', accent ? 'bg-accent-subtle text-accent-hover' : 'bg-card-2 text-secondary')}>
             {icon}
           </div>
-          <span className="text-caption text-muted font-bold tracking-[0.10em] uppercase font-mono">{label}</span>
+          <span className={COL_HEADER_CLS}>{label}</span>
         </div>
         {delta && (
           <span className={cn('text-caption font-bold font-mono inline-flex items-center gap-0.5 px-1.5 py-px rounded-sm', deltaUp ? 'text-success bg-success-subtle' : 'text-danger bg-danger-subtle')}>

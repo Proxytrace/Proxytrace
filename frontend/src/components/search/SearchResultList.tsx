@@ -45,7 +45,7 @@ export function SearchResultList({
   return (
     <>
       {isRecentMode && (
-        <div className="px-3 pt-1 pb-1.5 text-caption uppercase tracking-wider text-muted font-semibold">
+        <div className="px-3 pt-1 pb-1.5 text-caption uppercase tracking-wider text-secondary font-semibold">
           <Trans>Recent</Trans>
         </div>
       )}
@@ -58,7 +58,7 @@ export function SearchResultList({
         return (
           <div key={g.kind} className="mb-2">
             {!isRecentMode && (
-              <div className="px-3 py-1 text-caption uppercase tracking-wider text-muted flex items-center gap-1.5">
+              <div className="px-3 py-1 text-caption uppercase tracking-wider text-secondary flex items-center gap-1.5">
                 <span style={{ color: meta.accent }}>{icon(11)}</span>
                 {g.label}
                 <span className="text-muted">· {groupHitsForKind.length}</span>

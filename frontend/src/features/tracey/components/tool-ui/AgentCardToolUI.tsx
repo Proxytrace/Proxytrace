@@ -21,7 +21,7 @@ function initialsOf(name: string): string {
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="text-caption uppercase tracking-[0.06em] text-muted">{label}</span>
+      <span className="text-caption uppercase tracking-[0.06em] text-secondary">{label}</span>
       <span className="truncate font-mono text-body-sm tabular-nums text-primary">{value}</span>
     </div>
   );
@@ -65,7 +65,7 @@ export const AgentCardToolUI: ToolCallMessagePartComponent = ({ result, status, 
           </div>
           {promptPreview && (
             <div className="border-l-2 border-border pl-2.5">
-              <div className="text-caption uppercase tracking-[0.06em] text-muted"><Trans>System prompt</Trans></div>
+              <div className="text-caption uppercase tracking-[0.06em] text-secondary"><Trans>System prompt</Trans></div>
               <p className="mt-0.5 line-clamp-2 text-body-sm leading-relaxed text-secondary">
                 {promptPreview}
               </p>

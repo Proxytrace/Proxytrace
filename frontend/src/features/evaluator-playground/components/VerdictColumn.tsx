@@ -51,7 +51,7 @@ export function VerdictColumn({ session, evaluator }: { session: PlaygroundSessi
             {runs.length > 0 && (
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-caption font-bold uppercase tracking-[0.09em] text-muted"><Trans>Run history</Trans></span>
+                  <span className="text-caption font-bold uppercase tracking-[0.09em] text-secondary"><Trans>Run history</Trans></span>
                   <span className="text-caption text-muted font-mono">{runs.length}</span>
                 </div>
                 <RunHistoryTimeline runs={runs} currentId={currentRun.id} onSelect={session.selectRun} />

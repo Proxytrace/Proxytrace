@@ -12,7 +12,7 @@ function fmtScore(v: number | null | undefined): string {
 }
 
 const sectionCls = cn('bg-card rounded-lg shadow-[var(--shadow-card)] px-4.5 py-4');
-const sectionLabelCls = cn('text-body text-muted uppercase tracking-[0.06em] font-semibold mb-3');
+const sectionLabelCls = cn('text-body text-secondary uppercase tracking-[0.06em] font-semibold mb-3');
 
 /** Renders the loaded stats block: KPI strip, trend + distribution charts, and (for LLM judges) cost. */
 export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kind: EvaluatorKind; color: string }) {
@@ -84,7 +84,7 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
             <StatsBlockKpi label={t`Total cost`} value={fmtEur(summary.totalCost)} color={color} />
           </div>
           <div className="mt-3.5">
-            <div className="text-body-sm text-muted uppercase tracking-[0.06em] font-semibold mb-2"><Trans>Cost over time</Trans></div>
+            <div className="text-body-sm text-secondary uppercase tracking-[0.06em] font-semibold mb-2"><Trans>Cost over time</Trans></div>
             {hasCostTrend ? (
               <AreaChart
                 data={costSeries}

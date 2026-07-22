@@ -32,8 +32,8 @@ export function EvaluatorPreview({ evaluator, attached }: Props) {
           <div className="text-h2 font-bold text-primary truncate">{evaluator.name}</div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <ColoredBadge color={c} label={evaluator.kind} />
-            <span className="text-caption font-mono text-muted uppercase tracking-[0.06em]"><Trans>{cat}-based</Trans></span>
-            <span className={cn('text-caption font-semibold uppercase tracking-[0.08em]', attached ? 'text-accent' : 'text-muted')}>
+            <span className="text-caption font-mono text-secondary uppercase tracking-[0.06em]"><Trans>{cat}-based</Trans></span>
+            <span className={cn('text-caption font-semibold uppercase tracking-[0.08em]', attached ? 'text-accent' : 'text-secondary')}>
               {attached ? <Trans>● Attached</Trans> : <Trans>○ Not attached</Trans>}
             </span>
           </div>
@@ -84,7 +84,7 @@ export function EvaluatorPreview({ evaluator, attached }: Props) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">{label}</span>
+      <span className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">{label}</span>
       {children}
     </div>
   );

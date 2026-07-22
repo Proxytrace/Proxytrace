@@ -87,7 +87,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
             <span aria-hidden className="w-[5px] h-[5px] rounded-full" style={{ background: statusFg }} />
             {statusLabel}
           </span>
-          <span className="font-mono text-caption uppercase tracking-[0.08em] shrink-0 text-muted">
+          <span className="font-mono text-caption uppercase tracking-[0.08em] shrink-0 text-secondary">
             {request.id.slice(0, 16)}
           </span>
         </button>

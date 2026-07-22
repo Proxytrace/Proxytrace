@@ -76,7 +76,7 @@ function PulseCounter({ label, value, accent, danger }: PulseCounterProps) {
       >
         {value}
       </span>
-      <span className="text-caption text-muted font-mono uppercase tracking-[0.14em]">{label}</span>
+      <span className={EYEBROW_CLS}>{label}</span>
     </div>
   );
 }

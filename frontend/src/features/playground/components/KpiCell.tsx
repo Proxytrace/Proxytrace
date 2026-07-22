@@ -30,7 +30,7 @@ export function KpiCell({ icon, label, value, tone = 'neutral', tooltip }: Props
     >
       <span className="shrink-0 inline-flex" style={{ color: t.color }}>{icon}</span>
       <div className="flex flex-col leading-tight min-w-0">
-        <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted">{label}</span>
+        <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary">{label}</span>
         <span
           className="mono text-body tabular-nums truncate"
           style={{ color: t.color }}
