@@ -11,8 +11,6 @@ function fmtScore(v: number | null | undefined): string {
   return `${v.toFixed(1)} / 5`;
 }
 
-const sanitize = (color: string) => color.replace(/[^a-zA-Z0-9]/g, '');
-
 const sectionCls = cn('bg-card rounded-lg shadow-[var(--shadow-card)] px-4.5 py-4');
 const sectionLabelCls = cn('text-body text-muted uppercase tracking-[0.06em] font-semibold mb-3');
 
@@ -53,8 +51,6 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
               width={420}
               height={140}
               color={color}
-              // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
-              gradientId={`evalTrend-${sanitize(color)}`}
               showAxis={false}
               showEndMarker
               formatValue={v => fmtPct(v)}
@@ -95,8 +91,6 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
                 width={860}
                 height={140}
                 color={color}
-                // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
-                gradientId={`evalCost-${sanitize(color)}`}
                 showAxis={false}
                 showEndMarker
                 formatValue={v => fmtEur(v)}

@@ -54,7 +54,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
                 <span
                   aria-hidden
                   className={cn(
-                    'inline-flex items-center justify-center size-[24px] rounded-full text-body-sm font-bold shrink-0 border bg-[var(--bg-wash-hover)]',
+                    'inline-flex items-center justify-center size-[24px] rounded-none text-body-sm font-bold shrink-0 border bg-[var(--bg-wash-hover)]',
                     opt.accentClass,
                   )}
                 >
@@ -77,7 +77,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               icon={
                 <span
                   aria-hidden
-                  className="inline-flex items-center justify-center size-[24px] rounded-full shrink-0 bg-[var(--bg-wash-hover)] text-secondary border border-border"
+                  className="inline-flex items-center justify-center size-[24px] rounded-none shrink-0 bg-[var(--bg-wash-hover)] text-secondary border border-border"
                 >
                   <SearchIcon size={12} strokeWidth={2.2} />
                 </span>

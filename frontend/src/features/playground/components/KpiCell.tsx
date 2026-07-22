@@ -15,7 +15,7 @@ const TONE: Record<Tone, { color: string; bg: string; border: string }> = {
   good: { color: 'var(--success)', bg: 'var(--success-subtle)', border: 'color-mix(in srgb, var(--success) 28%, transparent)' },
   warn: { color: 'var(--warn)', bg: 'var(--warn-subtle)', border: 'color-mix(in srgb, var(--warn) 28%, transparent)' },
   danger: { color: 'var(--danger)', bg: 'var(--danger-subtle)', border: 'color-mix(in srgb, var(--danger) 28%, transparent)' },
-  live: { color: 'var(--accent-hover)', bg: 'var(--accent-subtle)', border: 'var(--accent-glow)' },
+  live: { color: 'var(--accent-hover)', bg: 'var(--accent-subtle)', border: 'var(--accent-border)' },
 };
 
 export function KpiCell({ icon, label, value, tone = 'neutral', tooltip }: Props) {
@@ -23,7 +23,7 @@ export function KpiCell({ icon, label, value, tone = 'neutral', tooltip }: Props
   return (
     <div
       title={tooltip}
-      className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border min-w-0 shadow-[var(--shadow-pill)]"
+      className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border min-w-0"
       style={{ background: t.bg, borderColor: t.border }}
       role="status"
       aria-label={`${label}: ${value}`}

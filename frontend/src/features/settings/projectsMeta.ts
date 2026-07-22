@@ -13,7 +13,7 @@ export function initials(name: string): string {
  * categorical avatar palette in `lib/colors.ts` (`agentColor` / `AGENT_PALETTE`) — the single
  * source of truth for per-entity hues (8 mutually-distinct, DESIGN.md §2.1 brand-derived
  * colors) — so unrelated projects and members no longer collapse onto a near-identical hue.
- * Returns a raw hex color (the palette's contract); `Avatar` mixes it into its gradient fill.
+ * Returns a raw hex color (the palette's contract); `Avatar` mixes it into its flat fill.
  */
 export function colorFor(id: string): string {
   return agentColor(id);

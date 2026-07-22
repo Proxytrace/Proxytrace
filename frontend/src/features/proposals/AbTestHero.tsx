@@ -66,7 +66,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
         <span
-          className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-body-sm font-semibold', TONE_SUBTLE_BG[meta.tone], TONE_TEXT[meta.tone])}
+          className={cn('inline-flex items-center gap-1.5 rounded-none px-2 py-0.5 text-body-sm font-semibold', TONE_SUBTLE_BG[meta.tone], TONE_TEXT[meta.tone])}
         >
           <span
             className={cn('inline-block size-1.5 rounded-full', TONE_BG[meta.tone], meta.pulse && 'pulse-dot')}
@@ -117,7 +117,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
 
       {/* Segmented progress bar */}
       <div className="px-4 pb-4">
-        <div className="flex h-1.5 rounded-full overflow-hidden bg-card-2">
+        <div className="flex h-1.5 overflow-hidden bg-card-2">
           {passPct > 0    && <div className="bg-success"                                                           style={{ width: `${passPct}%` }}/>}
           {failPct > 0    && <div className="bg-danger"                                                            style={{ width: `${failPct}%` }}/>}
           {pendingPct > 0 && <div className="bg-[color-mix(in_srgb,var(--text-muted)_30%,transparent)]"           style={{ width: `${pendingPct}%` }}/>}

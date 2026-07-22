@@ -15,7 +15,7 @@ interface Props {
   toggling: boolean;
 }
 
-/** Detail-pane header: identity, status pill, quick enable toggle, and edit/delete actions. */
+/** Detail-pane header: identity, status chip, quick enable toggle, and edit/delete actions. */
 export function DetectorDetailHeader({ detector: d, onEdit, onDelete, onToggleEnabled, toggling }: Props) {
   const { t } = useLingui();
   const color = detectorColor(d.id);
@@ -35,18 +35,18 @@ export function DetectorDetailHeader({ detector: d, onEdit, onDelete, onToggleEn
               {d.name}
             </h1>
             {d.isEnabled ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success-subtle text-success text-caption font-semibold">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none bg-success-subtle text-success text-caption font-semibold">
                 <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-success" />
                 <Trans>Active</Trans>
               </span>
             ) : (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-card-2 text-muted text-caption font-semibold">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-none bg-card-2 text-muted text-caption font-semibold">
                 <Trans>Disabled</Trans>
               </span>
             )}
             {d.blockUpstream && (
               <span
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-danger-subtle text-danger text-caption font-semibold"
+                className="inline-flex items-center px-2.5 py-0.5 rounded-none bg-danger-subtle text-danger text-caption font-semibold"
                 title={t`Matching requests are rejected at the proxy before reaching the provider`}
                 data-testid="detector-blocking-badge"
               >

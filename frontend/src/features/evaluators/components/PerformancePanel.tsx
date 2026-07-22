@@ -66,8 +66,6 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
             width={860}
             height={130}
             color={categoryColorVar[cat]}
-            // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
-            gradientId={`evalTrend-${e.id.slice(0, 8)}`}
             showAxis={false}
             showEndMarker
             formatValue={v => fmtPct(v)}

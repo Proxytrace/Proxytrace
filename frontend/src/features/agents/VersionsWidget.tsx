@@ -51,7 +51,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
               >
                 {!isLast && <span className="absolute left-[5px] top-[21px] -bottom-0.5 border-l border-hairline" />}
                 <span
-                  className="absolute left-0 top-[10px] w-[11px] h-[11px] rounded-full border bg-card"
+                  className="absolute left-0 top-[10px] w-[11px] h-[11px] border bg-card"
                   style={isCurrent ? { background: c, borderColor: c } : { borderColor: 'var(--border)' }}
                 />
                 <div

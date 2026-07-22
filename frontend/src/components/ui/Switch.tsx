@@ -32,7 +32,7 @@ export function Switch({
         'relative block shrink-0 w-10 h-6 rounded-none',
         'transition-[background-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
         checked
-          ? 'bg-[image:var(--grad-accent)]'
+          ? 'bg-accent'
           : 'bg-card-2 shadow-[inset_0_0_0_1px_var(--hairline)] group-hover:shadow-[inset_0_0_0_1px_var(--border-color)]',
       )}
     >

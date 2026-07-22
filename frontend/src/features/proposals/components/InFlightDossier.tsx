@@ -22,7 +22,7 @@ export function InFlightDossier({ theory }: Props) {
         {validating ? (
           <>
             <p className="m-0 text-body-sm text-secondary"><Trans>Benchmarking the change against the current agent…</Trans></p>
-            <div className="indeterminate-bar h-[3px] overflow-hidden rounded-full bg-card" />
+            <div className="indeterminate-bar h-[3px] overflow-hidden bg-card" />
             {theory.abTestRunId && (
               <Link
                 to={`/runs?run=${theory.abTestRunId}`}

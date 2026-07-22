@@ -81,7 +81,7 @@ function ScoreRamp() {
   return (
     <div className="flex items-center gap-2 text-caption text-muted">
       <span className="text-success"><Trans>pass</Trans></span>
-      <div className="flex h-2 w-24 rounded-full overflow-hidden">
+      <div className="flex h-2 w-24 overflow-hidden">
         {SCORE_LEVELS.map(level => (
           <span key={level} title={level} className="flex-1" style={{ background: scoreBucketColor(level) }} />
         ))}

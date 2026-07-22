@@ -30,7 +30,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Pro
       {/* Accent bar — runtime colour. Modal padding is 28px (7 × 4px Tailwind units). */}
       <div
         className="h-[3px] -mx-7 -mt-7 mb-5 rounded-t-xl"
-        style={{ background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 38%, transparent))` }}
+        style={{ background: c }}
       />
 
       {done ? (

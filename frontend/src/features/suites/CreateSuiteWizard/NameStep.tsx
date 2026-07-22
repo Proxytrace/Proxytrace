@@ -46,13 +46,13 @@ export function NameStep({ value, onChange }: Props) {
           {PRESETS.map(p => {
             const selected = active === p.key;
             return (
-              // eslint-disable-next-line no-restricted-syntax -- single-select preset toggle pill
+              // eslint-disable-next-line no-restricted-syntax -- single-select preset toggle chip
               <button
                 key={p.key}
                 type="button"
                 onClick={() => { setActive(p.key); onChange(i18n._(p.name)); inputRef.current?.focus(); }}
                 className={cn(
-                  'cursor-pointer rounded-full text-body font-semibold transition-colors duration-150 px-3 py-1.5 border',
+                  'cursor-pointer rounded-none text-body font-semibold transition-colors duration-150 px-3 py-1.5 border',
                   selected
                     ? 'border-accent bg-accent-subtle text-accent-hover'
                     : 'border-border bg-card text-secondary',
@@ -62,12 +62,12 @@ export function NameStep({ value, onChange }: Props) {
               </button>
             );
           })}
-          {/* eslint-disable-next-line no-restricted-syntax -- "custom name" toggle pill */}
+          {/* eslint-disable-next-line no-restricted-syntax -- "custom name" toggle chip */}
           <button
             type="button"
             onClick={() => { setActive(null); onChange(''); inputRef.current?.focus(); }}
             className={cn(
-              'cursor-pointer rounded-full text-body font-semibold transition-colors duration-150 px-3 py-1.5 border border-dashed bg-transparent text-muted',
+              'cursor-pointer rounded-none text-body font-semibold transition-colors duration-150 px-3 py-1.5 border border-dashed bg-transparent text-muted',
               active === null && !value ? 'border-accent' : 'border-border',
             )}
           >

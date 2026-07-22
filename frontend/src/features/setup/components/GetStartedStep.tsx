@@ -55,7 +55,6 @@ export function GetStartedStep({ projectName, modelName, error, loading, onGetSt
         fullWidth
         loading={loading}
         leftIcon={<ZapIcon size={16} />}
-        className="btn-sheen"
         onClick={onGetStarted}
       >
         <Trans>Get started</Trans>

@@ -13,12 +13,10 @@ function hash(input: string): number {
   return h >>> 0;
 }
 
-function gradientFor(seed: string): string {
-  const h = hash(seed);
-  const hue1 = h % 360;
-  const hue2 = (hue1 + 40 + ((h >> 8) % 60)) % 360;
-  // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS gradient value, not UI copy
-  return `linear-gradient(135deg, hsl(${hue1} 65% 52%), hsl(${hue2} 70% 38%))`;
+function fillFor(seed: string): string {
+  const hue = hash(seed) % 360;
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS color value, not UI copy
+  return `hsl(${hue} 55% 45%)`;
 }
 
 export function AgentAvatar({ seed, label, size = 32 }: Props) {
@@ -31,11 +29,11 @@ export function AgentAvatar({ seed, label, size = 32 }: Props) {
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center rounded-full font-semibold text-white shrink-0 select-none tracking-[0.02em] shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_2px_6px_rgba(0,0,0,0.35)]"
+      className="inline-flex items-center justify-center rounded-full font-semibold text-white shrink-0 select-none tracking-[0.02em]"
       style={{
         width: size,
         height: size,
-        background: gradientFor(seed),
+        background: fillFor(seed),
         fontSize: Math.max(10, Math.round(size * 0.38)),
       }}
     >

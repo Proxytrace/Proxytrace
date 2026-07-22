@@ -22,12 +22,8 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface p-6 sm:p-10">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,color-mix(in srgb, var(--accent-primary) 10%, transparent),transparent_55%),radial-gradient(circle_at_80%_110%,color-mix(in srgb, var(--teal) 8%, transparent),transparent_55%)]"
-      />
       <form
-        className="relative w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-8 shadow-[var(--shadow-float)]"
+        className="relative w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-8"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!passwordIsValid(password)) return;

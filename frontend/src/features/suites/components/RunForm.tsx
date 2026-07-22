@@ -46,7 +46,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, sampleCount, loa
           <Trans>Model endpoints to evaluate</Trans>
           {isMulti && (
             <span
-              className="px-2 py-0.5 bg-accent-subtle text-[color:var(--accent-hover)] rounded-full text-caption font-semibold normal-case tracking-normal border border-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]"
+              className="px-2 py-0.5 bg-accent-subtle text-[color:var(--accent-hover)] rounded-none text-caption font-semibold normal-case tracking-normal border border-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]"
             >
               <Trans>Parallel · {count} selected</Trans>
             </span>

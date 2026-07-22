@@ -83,7 +83,7 @@ export function ConversationView({
         <div className="max-w-[560px] w-full flex flex-col gap-4 text-center">
           <div className="flex justify-center">
             <span
-              className="inline-flex items-center justify-center size-[44px] rounded-full bg-accent-subtle text-accent-hover"
+              className="inline-flex items-center justify-center size-[44px] rounded-none bg-accent-subtle text-accent-hover"
             >
               <SparklesIcon size={20} strokeWidth={1.8} />
             </span>
@@ -111,7 +111,7 @@ export function ConversationView({
                 {tools.map(t => (
                   <span
                     key={t.name}
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-body-sm mono bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)] text-success"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-body-sm mono bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)] text-success"
                     title={t.description}
                   >
                     {t.name}
@@ -132,7 +132,7 @@ export function ConversationView({
   const dropIndicator = (
     <div
       aria-hidden
-      className="h-[2px] rounded-full mx-0.5 bg-[linear-gradient(90deg,transparent,var(--accent-primary),transparent)] shadow-[0_0_12px_var(--accent-glow)]"
+      className="h-[2px] mx-0.5 bg-accent"
     />
   );
 

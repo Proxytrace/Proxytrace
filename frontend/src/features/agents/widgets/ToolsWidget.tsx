@@ -24,7 +24,7 @@ export function ToolsWidget({ tools, highlightTool, className }: Props) {
     <Widget
       title={t`Tools`}
       right={
-        <span className="px-1.5 py-px rounded-full text-body-sm font-semibold bg-teal/15 text-teal">
+        <span className="px-1.5 py-px rounded-none text-body-sm font-semibold bg-teal/15 text-teal">
           {tools.length}
         </span>
       }

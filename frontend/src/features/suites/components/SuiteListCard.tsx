@@ -20,7 +20,7 @@ interface Props {
 
 /** Card in the left-hand suite list — mirrors the Agents list row for a compact, scannable look: an
  * avatar-led `RowButton` with the suite name + its agent on the subline, and a one-line meta row
- * (cases · pass rate · last run). Active state uses the agent-colored gradient wash + inset ring +
+ * (cases · pass rate · last run). Active state uses the agent-colored flat wash + inset ring +
  * left bar; the delete control is a hover-revealed sibling button (valid HTML, not nested). */
 export function SuiteListCard({ suite, selected, highlight = false, onSelect, onDelete }: Props) {
   const { t } = useLingui();

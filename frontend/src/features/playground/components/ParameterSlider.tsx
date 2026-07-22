@@ -49,14 +49,14 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
       </div>
       <div className="relative h-[20px] flex items-center">
         <div
-          className="absolute left-0 right-0 h-[4px] rounded-full bg-card-2"
+          className="absolute left-0 right-0 h-[4px] bg-card-2"
         />
         <div
           className={cn(
-            'absolute left-0 h-[4px] rounded-full pointer-events-none',
+            'absolute left-0 h-[4px] pointer-events-none',
             value == null
               ? 'bg-white/[0.10]'
-              : 'bg-[linear-gradient(90deg,var(--accent-primary),var(--accent-hover))]',
+              : 'bg-accent',
           )}
           style={{ width: `${fillPct}%` }}
         />
