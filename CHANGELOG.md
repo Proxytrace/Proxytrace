@@ -53,6 +53,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   Proxytrace's own data. (Previously the link was silently dropped, despite the API documenting
   otherwise.) Synthetic cases built from raw input and expected output have no source and are unaffected. (#367)
 
+### Fixed
+
+- **The Tracey message box now shows a focus ring.** Clicking or tabbing into the "Ask Tracey…" box
+  previously changed nothing but a faint 1px tint on its border — easy to miss against the dark panel,
+  and the one input in the app that opted out of the standard focus ring. The composer frame now
+  carries the same accent ring every other control uses, and it lights only while the message field
+  itself holds focus, so the New conversation and Send/Stop buttons still show focus on themselves. (#388)
+
 ## [1.6.0] - 2026-07-13
 
 ### Added
