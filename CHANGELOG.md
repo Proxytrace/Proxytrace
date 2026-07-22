@@ -9,6 +9,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-07-22
+
+### Added
+
+- **Upstream provider keys can be rotated from Settings.** Admins can edit a provider's upstream
+  API key inline; Proxytrace verifies the replacement against the provider before saving it and
+  keeps the existing credential when verification fails.
+
 ### Changed
 
 - **The interface has been redesigned.** Proxytrace now wears *Signal Desk* — a flat, ruled
@@ -23,11 +31,40 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   states now fill their full row, and chart end-point markers no longer overhang the card edge.
   The bundled manual at `/docs` was rethemed to match.
 
+### Fixed
+
+- **Provider connection tests no longer report invalid credentials as successful.** Upstream
+  authentication and network failures are now surfaced in the setup wizard instead of being
+  mistaken for a successful connection with an empty model list. A successful provider response
+  with no models remains valid and is shown as a warning.
+- **The Tracey message box now shows a focus ring.** Clicking or tabbing into the "Ask Tracey…" box
+  previously changed nothing but a faint 1px tint on its border — easy to miss against the dark panel,
+  and the one input in the app that opted out of the standard focus ring. The composer frame now
+  carries the same accent ring every other control uses, and it lights only while the message field
+  itself holds focus, so the New conversation and Send/Stop buttons still show focus on themselves. (#388)
+- **The global search box can be cleared with the keyboard.** The **✕** button beside the search
+  field sat in the tab order but responded only to a mouse click — pressing Enter or Space on it did
+  nothing, so keyboard users had to select-all and delete instead. It now activates on Enter and
+  Space like any other button, shows a focus ring, and uses the standard close icon. (#396)
+- **Firefox shows which parameter slider has keyboard focus.** The Agent Playground's temperature and
+  top-p sliders suppressed the browser's own focus outline but only drew a replacement ring on
+  Chrome and Safari, so on Firefox tabbing to a slider changed nothing on screen and the arrow keys
+  then adjusted a value with no indication of which one. Firefox now gets the same ring — plus the
+  hover and drag states it was also missing. (#395)
+- **`./dev.sh` now actually serves the UI.** The dev frontend proxied `/api` and `/mcp` to port 5000
+  while `dev.sh` started the backend on 5001, so every request from http://localhost:4201 failed with
+  `http proxy error … ECONNREFUSED` and the app never loaded. The dev backend port is now 5001
+  consistently — `launchSettings.json`, the `Self:BaseUrl` default, `vite.config.ts`, and the docs —
+  so both `./dev.sh` and `cd Proxytrace.Api && dotnet run` work with `npm run dev`.
+- **The sample client pointed at a port that serves nothing.** `sample-client/.env.example` set
+  `PROXYTRACE_BASE_URL` to `localhost:5000/openai/v1`, but `/openai/v1` is served by the standalone
+  ingestion proxy, never by the API — it is `localhost:5002` under `SPLIT=1 ./dev.sh` and
+  `localhost:5102` under Docker Compose. The example now points at 5002.
+
+## [1.7.0] - 2026-07-20
+
 ### Added
 
-- **Upstream provider keys can be rotated from Settings.** Admins can edit a provider's upstream
-  API key inline; Proxytrace verifies the replacement against the provider before saving it and
-  keeps the existing credential when verification fails.
 - **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
   external service no longer needs a long-lived user login (with MFA disabled and a token-refresh loop)
   to call the API. Mint a key with the new **REST API read** and/or **REST API write** capabilities:
@@ -55,38 +92,6 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   suite records a link back to the source trace, so "which trace produced this case?" is answerable from
   Proxytrace's own data. (Previously the link was silently dropped, despite the API documenting
   otherwise.) Synthetic cases built from raw input and expected output have no source and are unaffected. (#367)
-
-### Fixed
-
-- **Provider connection tests no longer report invalid credentials as successful.** Upstream
-  authentication and network failures are now surfaced in the setup wizard instead of being
-  mistaken for a successful connection with an empty model list. A successful provider response
-  with no models remains valid and is shown as a warning.
-- **The Tracey message box now shows a focus ring.** Clicking or tabbing into the "Ask Tracey…" box
-  previously changed nothing but a faint 1px tint on its border — easy to miss against the dark panel,
-  and the one input in the app that opted out of the standard focus ring. The composer frame now
-  carries the same accent ring every other control uses, and it lights only while the message field
-  itself holds focus, so the New conversation and Send/Stop buttons still show focus on themselves. (#388)
-- **The global search box can be cleared with the keyboard.** The **✕** button beside the search
-  field sat in the tab order but responded only to a mouse click — pressing Enter or Space on it did
-  nothing, so keyboard users had to select-all and delete instead. It now activates on Enter and
-  Space like any other button, shows a focus ring, and uses the standard close icon. (#396)
-- **Firefox shows which parameter slider has keyboard focus.** The Agent Playground's temperature and
-  top-p sliders suppressed the browser's own focus outline but only drew a replacement ring on
-  Chrome and Safari, so on Firefox tabbing to a slider changed nothing on screen and the arrow keys
-  then adjusted a value with no indication of which one. Firefox now gets the same ring — plus the
-  hover and drag states it was also missing. (#395)
-
-- **`./dev.sh` now actually serves the UI.** The dev frontend proxied `/api` and `/mcp` to port 5000
-  while `dev.sh` started the backend on 5001, so every request from http://localhost:4201 failed with
-  `http proxy error … ECONNREFUSED` and the app never loaded. The dev backend port is now 5001
-  consistently — `launchSettings.json`, the `Self:BaseUrl` default, `vite.config.ts`, and the docs —
-  so both `./dev.sh` and `cd Proxytrace.Api && dotnet run` work with `npm run dev`.
-
-- **The sample client pointed at a port that serves nothing.** `sample-client/.env.example` set
-  `PROXYTRACE_BASE_URL` to `localhost:5000/openai/v1`, but `/openai/v1` is served by the standalone
-  ingestion proxy, never by the API — it is `localhost:5002` under `SPLIT=1 ./dev.sh` and
-  `localhost:5102` under Docker Compose. The example now points at 5002.
 
 ## [1.6.0] - 2026-07-13
 
