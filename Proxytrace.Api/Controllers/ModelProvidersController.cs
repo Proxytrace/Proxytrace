@@ -148,9 +148,19 @@ public class ModelProvidersController : ControllerBase
         var existing = await providerRepository.FindAsync(id, cancellationToken);
         if (existing is null)
             return NotFound();
+        // Credential rotation is a security-relevant action of its own; compare against the stored
+        // key before it is overwritten so the audit trail distinguishes a rotation from an
+        // endpoint/name/kind edit. Only the fact of the change is recorded — never the key value.
+        bool keyRotated = existing.ApiKey != request.UpstreamApiKey;
+        bool configChanged = existing.Name != request.Name
+            || existing.Endpoint != request.Endpoint.ToEndpointUri()
+            || existing.Kind != request.Kind;
         var updated = updateProvider(request.Name, request.Endpoint.ToEndpointUri(), request.UpstreamApiKey, request.Kind, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
-        audit.LogAudit(AuditAction.ProviderConfigUpdated, nameof(IModelProvider), saved.Id, saved.Name);
+        if (keyRotated)
+            audit.LogAudit(AuditAction.ProviderUpstreamKeyRotated, nameof(IModelProvider), saved.Id, saved.Name);
+        if (configChanged || !keyRotated)
+            audit.LogAudit(AuditAction.ProviderConfigUpdated, nameof(IModelProvider), saved.Id, saved.Name);
         return mapper.ToDto(saved);
     }
 

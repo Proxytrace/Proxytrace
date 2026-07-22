@@ -128,7 +128,9 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             UpdatedAt = domain.UpdatedAt,
             // Queryable projection of the evaluations above; CreatedAt copied from the parent so the
             // evaluator-stats queries range/bucket on the child row without joining back. See
-            // EvaluationStatEntity. Written on insert; test results are append-only.
+            // EvaluationStatEntity. Written on insert; on update the repository rebuilds the rows
+            // from this mapping (TestResultRepository.UpdateRelationsAsync) so they follow a
+            // rewritten CreatedAt (the demo seed's statistics backdating).
             EvaluationStats = domain.Evaluations
                 .Select(e => new EvaluationStatEntity
                 {

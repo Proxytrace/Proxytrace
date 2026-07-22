@@ -19,6 +19,23 @@ internal class TestResultRepository : AbstractRepository<ITestResult, TestResult
     {
     }
 
+    // The EvaluationStat projection rows copy the parent's CreatedAt at write time, but the base
+    // update only copies scalar columns onto the tracked row — the projection children were left
+    // untouched, so an update that rewrites CreatedAt (the demo seed's statistics backdating) kept
+    // the stat rows at their original timestamps and the evaluator-stats queries bucketed on stale
+    // times. Rebuild the projection from the freshly mapped entity so it always mirrors the parent.
+    protected override async Task UpdateRelationsAsync(
+        StorageDbContext context,
+        TestResultEntity storedEntity,
+        CancellationToken cancellationToken)
+    {
+        var stale = await context.Set<EvaluationStatEntity>()
+            .Where(e => e.TestResultId == storedEntity.Id)
+            .ToListAsync(cancellationToken);
+        context.Set<EvaluationStatEntity>().RemoveRange(stale);
+        context.Set<EvaluationStatEntity>().AddRange(storedEntity.EvaluationStats);
+    }
+
     public async Task<ITestResult?> GetLatestByTestCaseAsync(Guid testCaseId, CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
