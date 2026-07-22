@@ -192,7 +192,7 @@ Always honor `prefers-reduced-motion` — every animation above already does; ne
 
 **Layout:** `Shell`, `Sidebar`, `Topbar`, `NavItem`, `LockedNavItem`, `ProjectSelector` (`components/layout/`).
 
-Shared class recipes live in `components/ui/classes.ts` (`formInputCls`, `fieldLabelCls`, `EYEBROW_CLS`, `kbdCls`, `hoverAccentWashCls`, `hoverRevealOverlayCls`) and `lib/constants.ts` (`FOCUS_RING`). Import them instead of retyping the strings.
+Shared class recipes live in `components/ui/classes.ts` (`formInputCls`, `fieldLabelCls`, `EYEBROW_CLS`, `kbdCls`, `hoverAccentWashCls`, `hoverRevealOverlayCls`) and `lib/constants.ts` (`FOCUS_RING`, `FOCUS_RING_FIELD`). Import them instead of retyping the strings.
 
 ### 3.1 Button rules
 
@@ -308,6 +308,8 @@ Inline `style={{ ... }}` is acceptable **only** for genuinely runtime-computed v
 - **Cursor:** `cursor-pointer` on every clickable surface, including cards. Already encoded in `Button` and in `Card` when `interactive` or `hoverGlow`.
 - **Hover:** color/background change only. Never a `scale()` transform on elements that share layout flow — it shifts neighbors. A bg wash (`--bg-wash-hover`, `hoverAccentWashCls`) or a ring-color change is the pattern; a blurred halo is not.
 - **Focus:** every interactive element gets a visible focus ring. The canonical string is `FOCUS_RING` in `lib/constants.ts` — `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]`. `Button` already applies it — import it in custom controls instead of retyping it.
+  - **Composite text fields ring their frame, not their input.** When the wrapper draws the frame and the input inside it is deliberately borderless (the Tracey composer; `Input`'s addon branch frames the same way with its own recipe, below), the ring goes on the wrapper — a second rectangle floating inside the frame reads as a rendering bug. Use `FOCUS_RING_FIELD` (`lib/constants.ts`): the same 2px/60% ring, scoped with `has-[textarea:focus]:` rather than bare `focus-within:`, because `focus-within:` also fires for focusable *siblings* inside the frame (a Send button) — and a lit frame must keep meaning "typing lands here", not "focus is somewhere in this box". A wrapper ring needs `transition-[border-color,box-shadow]`: a ring is a box-shadow, and `transition-colors` does not animate it.
+  - The input family's own treatment (`formInputCls`, `Input`'s addon branch — `border-accent` + `ring-1` at 45%) is **not** a second canonical ring; the contrast there is carried by the solid border, with the 1px ring as a halo around it. Don't copy the 45% ring onto a surface that has no `border-accent` to sit against, and don't "harmonize" a `FOCUS_RING` control down to it.
 - **Keyboard:** Tab order = visual order. Modal/drawer trap focus and close on Esc (the existing components do; new ones must).
 - **Labels:** every form input pairs with a `<label>` (use `FormField`). Icon-only buttons get `aria-label`. Decorative glyphs (nav page codes, status dots) are `aria-hidden` and must have a real text label or `title` beside them.
 - **Contrast:** on `bg-card`, `text-primary` measures ~13:1, `text-secondary` ~6.5:1, `text-muted` ~3.6:1. So: `text-primary` anywhere; `text-secondary` for any label or prose, **including every eyebrow**; `text-muted` for captions/placeholders/inactive glyphs only — never for body content, never for an eyebrow, never for a value the user has to read. Pair a `*-subtle` background only with its matching solid text color.
@@ -438,7 +440,7 @@ Before opening a frontend PR, verify:
 - [ ] Text on a colored fill uses the matching `-ink` token (`text-accent-ink` / `text-danger-ink` / `text-success-ink`), never `text-white`.
 - [ ] Reused existing component (`Button`, `Card`, `Badge`, `Modal`, `Drawer`, `ListRail`, etc.) — no duplicate primitives.
 - [ ] Small uppercase labels use `EYEBROW_CLS`, not a hand-rolled `text-caption uppercase` string, and land on `text-secondary`.
-- [ ] Cursor, hover, focus-visible (`FOCUS_RING`) all present on interactive elements.
+- [ ] Cursor, hover, focus-visible (`FOCUS_RING`, or `FOCUS_RING_FIELD` on a composite text field's frame) all present on interactive elements.
 - [ ] Icon-only buttons have `aria-label`.
 - [ ] Form inputs use `FormField` (label + control).
 - [ ] Empty / loading / error states exist for any async-driven view.

@@ -7,6 +7,7 @@ import { TRACEY_TOOLS_META } from '../tracey-tools';
 import { ArrowUpIcon, MessagePlusIcon, SparklesIcon, StopIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING_FIELD } from '../../../lib/constants';
 import { SlashMenu, type SlashItem } from './SlashMenu';
 import { ToolChips } from './ToolChips';
 
@@ -130,7 +131,13 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
         )}
         <ComposerPrimitive.Root
           className={cn(
-            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[var(--shadow-card)] transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+            // The frame is the field — the textarea is deliberately borderless — so the composer's
+            // focus ring lives here rather than on the textarea (DESIGN §7). It is scoped to the
+            // text control: plain `focus-within:` would also light the whole frame when the Send /
+            // Stop button is focused, and those ring themselves. The 40% border tint stays as the
+            // softer "a control in the composer has focus" cue.
+            FOCUS_RING_FIELD,
             isRunning && 'streaming-border',
           )}
         >
