@@ -1,12 +1,46 @@
 import { cn } from '../../lib/cn';
 
+/*
+ * Focused-field recipes (DESIGN §7). One paint — a solid 1px accent rule plus the canonical
+ * 2px accent ring at 60% — in the two scopes a class string cannot abstract over: the control
+ * itself, and a wrapper that frames a borderless control.
+ *
+ * The 60%/2px numbers are not taste. `color-mix(… accent X%, transparent)` is premultiplied, so
+ * the ring composites straight onto the surface behind it: at 45% it measures 2.70–2.77:1 on our
+ * four surfaces and at 40% only 2.41–2.44:1, both under WCAG 2.2's 3:1 floor for a focus
+ * indicator; 60% measures 3.73–4.01:1. And 1px of ring beside the 1px rule leaves the indicator
+ * area a hair under a 2px perimeter, so the ring is 2px. Pair with
+ * `transition-[border-color,box-shadow]` — a ring is a box-shadow, and `transition-colors`
+ * does not animate it.
+ */
+
+/** Focus treatment for a control that *is* the field — a real `input` / `textarea` / trigger. */
+export const fieldFocusCls = cn(
+  'focus:border-accent focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
+);
+
+/** The same, on a wrapper that draws the frame around a borderless control (`Input`'s addons). */
+export const fieldFocusWithinCls = cn(
+  'focus-within:border-accent focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
+);
+
+/**
+ * Invalid field. The danger border is already solid at rest, so the ring is the only pixel that
+ * changes on focus and has to carry the indicator alone — hence solid `--danger` rather than a
+ * mix: `#dd5959` needs ~76% alpha before it clears 3:1 on `bg-card-2` (45% measures 1.82:1).
+ */
+export const fieldInvalidCls = cn(
+  'data-[invalid=true]:border-danger data-[invalid=true]:focus:border-danger',
+  'data-[invalid=true]:focus:ring-danger',
+);
+
 export const formInputCls = cn(
   'w-full px-3 py-2 bg-card-2 border border-border rounded-md',
   'text-title text-primary font-[inherit] outline-none',
   'transition-[border-color,box-shadow] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
-  'focus:border-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--accent-primary)_45%,transparent)]',
+  fieldFocusCls,
   'disabled:opacity-50 disabled:cursor-not-allowed',
-  'data-[invalid=true]:border-danger data-[invalid=true]:focus:ring-[color-mix(in_srgb,var(--danger)_45%,transparent)]',
+  fieldInvalidCls,
 );
 
 /**

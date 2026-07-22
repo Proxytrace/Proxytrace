@@ -131,7 +131,7 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
         )}
         <ComposerPrimitive.Root
           className={cn(
-            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 transition-[border-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
             // The frame is the field — the textarea is deliberately borderless — so the composer's
             // focus ring lives here rather than on the textarea (DESIGN §7). It is scoped to the
             // text control: plain `focus-within:` would also light the whole frame when the Send /

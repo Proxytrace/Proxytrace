@@ -7,6 +7,7 @@ import { Popover } from '../../../components/ui/Popover';
 import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { useAutosizeTextarea } from '../../../hooks/useAutosizeTextarea';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING_FIELD } from '../../../lib/constants';
 
 interface Props {
   disabled: boolean;
@@ -57,12 +58,19 @@ export function ComposeBox({
 
   return (
     <div className="border-t border-border p-3 flex flex-col gap-2 bg-black/[0.12]">
+      {/* The frame is the field — the textarea below is deliberately borderless — so the focus ring
+          lives here, scoped to the text control so the endpoint chip and Send button below ring
+          themselves instead (DESIGN §7, same treatment as the Tracey composer).
+          The border used to tint on `canSend`, i.e. on *having text*, which read as a focus signal
+          while being the opposite of one: lit when unfocused-but-typed-in, dark when focused-and-
+          empty. It now tracks focus like every other field; the Send button's disabled state is
+          what conveys "nothing to send". */}
       <div
         className={cn(
-          'rounded-lg flex flex-col bg-card border transition-[border-color,box-shadow] duration-150 ease-[ease]',
-          canSend
-            ? 'border-[color-mix(in_srgb,var(--accent-primary)_55%,transparent)]'
-            : 'border-border',
+          'rounded-lg flex flex-col bg-card border border-border',
+          'transition-[border-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
+          'focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+          FOCUS_RING_FIELD,
         )}
       >
         {/* eslint-disable-next-line no-restricted-syntax -- bespoke auto-resizing borderless composer textarea */}
