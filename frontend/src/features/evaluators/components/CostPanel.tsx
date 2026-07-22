@@ -26,8 +26,7 @@ export function CostPanel({ overview, category, modelName, range }: Props) {
       <div className="px-4.5 py-4 flex flex-col gap-3.5 flex-1">
         <div className="flex-1 flex items-center">
           <div className="flex items-baseline gap-2">
-            {/* display-tier: intentional, outside type scale */}
-            <span className={cn('text-[48px] leading-none font-bold font-mono tracking-[-0.03em]', categoryText[category])}>
+            <span className={cn('text-display leading-none font-bold font-mono tracking-[-0.03em]', categoryText[category])}>
               {fmtEur(s?.totalCost ?? null)}
             </span>
             <span className="text-body-sm text-muted"><Trans>past {range}</Trans></span>

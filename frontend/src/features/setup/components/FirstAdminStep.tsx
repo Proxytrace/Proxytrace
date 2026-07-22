@@ -45,8 +45,7 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
           <div className="mb-2 text-body-sm font-semibold uppercase tracking-[0.08em] text-accent">
             <Trans>Step 0</Trans>
           </div>
-          {/* display-tier: intentional, outside type scale */}
-          <h1 className="text-[20px] font-bold text-primary tracking-[-0.01em]"><Trans>Create the first admin</Trans></h1>
+          <h1 className="text-display-sm font-bold text-primary tracking-[-0.01em]"><Trans>Create the first admin</Trans></h1>
           <p className="mt-1.5 text-title text-secondary">
             <Trans>Local install needs an administrator account before you can configure providers.</Trans>
           </p>

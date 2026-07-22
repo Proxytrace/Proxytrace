@@ -102,8 +102,7 @@ export function SetupWizard() {
               <div className="text-body-sm font-semibold uppercase tracking-[0.08em] text-accent mb-2">
                 <Trans>Step {wiz.currentStep + 1}</Trans>
               </div>
-              {/* display-tier: intentional, outside type scale */}
-              <h1 className="text-[20px] font-bold text-primary leading-snug tracking-[-0.01em]">
+              <h1 className="text-display-sm font-bold text-primary leading-snug tracking-[-0.01em]">
                 {i18n._(heading.title)}
               </h1>
               <p className="text-title text-secondary mt-1.5 leading-relaxed">

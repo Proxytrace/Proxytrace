@@ -5,6 +5,7 @@ import { usePlaygroundAgents } from '../hooks/usePlaygroundAgents';
 import { ChevronDownIcon, CheckIcon } from '../../../components/icons';
 import { RowButton } from '../../../components/ui/RowButton';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING } from '../../../lib/constants';
 import { AgentAvatar } from './AgentAvatar';
 
 interface Props {
@@ -51,6 +52,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         data-testid="agent-picker"
         className={cn(
           'border border-border',
+          FOCUS_RING,
           compact
             ? 'inline-flex items-center gap-2 cursor-pointer transition-colors rounded-md pl-1.5 pr-2.5 py-1.5 bg-white/[0.03]'
             : 'w-full text-left rounded-lg p-3 flex items-center gap-2.5 cursor-pointer transition-colors group bg-card',

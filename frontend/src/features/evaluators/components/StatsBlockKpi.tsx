@@ -6,8 +6,7 @@ export function StatsBlockKpi({ label, value, color }: { label: string; value: s
       style={{ borderLeftColor: `color-mix(in srgb, ${color} 38%, transparent)` }}
     >
       <div className="text-caption text-secondary uppercase tracking-[0.06em] font-semibold mb-1.5">{label}</div>
-      {/* display-tier: intentional, outside type scale */}
-      <div className="text-[22px] font-bold font-mono tracking-[-0.02em] text-primary">{value}</div>
+      <div className="text-display-sm font-bold font-mono tracking-[-0.02em] text-primary">{value}</div>
     </div>
   );
 }

@@ -55,6 +55,7 @@
   --text-title: 13px;
   --text-h2: 14px;
   --text-h1: 18px;
+  --text-display-sm: 22px;
   --text-display: 28px;
   /* Reading tier — Tracey chat prose only (see DESIGN.md "Tracey exception") */
   --text-chat: 15px;
@@ -134,6 +135,7 @@
   --text-title: 13px;
   --text-h2: 14px;
   --text-h1: 18px;
+  --text-display-sm: 22px;
   --text-display: 28px;
   /* Reading tier — Tracey chat prose only (see DESIGN.md "Tracey exception") */
   --text-chat: 15px;

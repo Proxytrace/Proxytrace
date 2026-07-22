@@ -18,6 +18,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Keyboard focus is now visible on the remaining bespoke controls.** The playground settings
+  rail, agent picker, endpoint chip, tool result/error tabs, suite-wizard preset chips, search
+  indexing kind toggles, the evaluator recent-evaluations filter chip, and the move-version target
+  list now show the standard focus indicator when reached with the keyboard, completing the
+  focus-ring sweep started with the shared button and row primitives.
+- **All text sizes now come from the design type scale.** Seven components (evaluator cost and
+  stat panels, the setup wizard headings, and the evaluator playground score chip) used one-off
+  pixel sizes; they now use scale tokens, including a new intermediate 22px display size, and the
+  score chip's "/5" suffix no longer renders below the 10px legibility floor.
+
 - **The demo seed now backdates evaluation history along with its runs.** Evaluation statistics
   previously kept the seed time even when their runs were spread across the past 30 days, so the
   evaluator workspace's pass-rate trend showed "Not enough data" in the demo/kiosk stack. Updated

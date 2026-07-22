@@ -8,6 +8,7 @@ import { useState, type ReactNode } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { CpuIcon, ResetIcon, SigmaIcon, SparklesIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING } from '../../../lib/constants';
 import type { ModelParametersDto } from '../../../api/models';
 import type { PlaygroundOverrides } from '../state/types';
 import type { SectionKey } from '../playgroundMeta';
@@ -53,6 +54,7 @@ const RAIL_BUTTON_ACTIVE =
 function railButtonClass(active: boolean, inactiveText: string): string {
   return cn(
     RAIL_BUTTON_BASE,
+    FOCUS_RING,
     active ? RAIL_BUTTON_ACTIVE : cn('bg-transparent border-transparent', inactiveText),
   );
 }
