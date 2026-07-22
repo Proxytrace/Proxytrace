@@ -94,13 +94,6 @@ export function computeHistogram(
   return { rects, barsPath, baselineY: padT + h };
 }
 
-/** Path for a rect with only its top two corners rounded. */
-export function roundedTopRectPath(x: number, y: number, w: number, h: number, r: number): string {
-  if (h <= 0) return '';
-  const rr = Math.min(r, h, w / 2);
-  return `M ${x.toFixed(1)} ${(y + h).toFixed(1)} L ${x.toFixed(1)} ${(y + rr).toFixed(1)} Q ${x.toFixed(1)} ${y.toFixed(1)} ${(x + rr).toFixed(1)} ${y.toFixed(1)} L ${(x + w - rr).toFixed(1)} ${y.toFixed(1)} Q ${(x + w).toFixed(1)} ${y.toFixed(1)} ${(x + w).toFixed(1)} ${(y + rr).toFixed(1)} L ${(x + w).toFixed(1)} ${(y + h).toFixed(1)} Z`;
-}
-
 export function computeModelBars(
   data: { label: string; value: number }[],
   width: number,

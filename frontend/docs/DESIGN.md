@@ -23,7 +23,7 @@ Anti-personas: marketing landing page, e-commerce product, consumer app. Do not 
 
 ## 2. Theme system — design tokens
 
-All tokens are declared in `frontend/src/index.css` and exposed to Tailwind 4 via `@theme`. **Never hardcode hex values, pixel sizes, or shadow strings in components.** Reference tokens through Tailwind utilities (`bg-card`, `text-secondary`, `rounded-lg`, `text-body-sm`) or arbitrary-value syntax against the CSS variable (`shadow-[var(--shadow-card)]`, `bg-[image:var(--grad-accent)]`).
+All tokens are declared in `frontend/src/index.css` and exposed to Tailwind 4 via `@theme`. **Never hardcode hex values, pixel sizes, or shadow strings in components.** Reference tokens through Tailwind utilities (`bg-card`, `text-secondary`, `rounded-lg`, `text-body-sm`) or arbitrary-value syntax against the CSS variable (`shadow-[var(--shadow-card)]`, `bg-accent`).
 
 ### 2.1 Colors
 
@@ -134,9 +134,8 @@ For runtime-computed values only, `var(--space-N)` exists (4/8/12/16/20/24/32/48
 |-------|-------|-----|
 | `shadow-[var(--shadow-card)]` | `0 0 0 1px var(--border-subtle)` | Default card / pane — a 1px ring, nothing else |
 | `shadow-[var(--shadow-float)]` | `0 0 0 1px var(--border-color)` + one neutral drop | **Overlays only** — modal, drawer, dropdown, popover |
-| `shadow-[var(--shadow-pill)]` | `none` | Kept as the single shadow slot on chips/kbd; expect no elevation |
 
-`--shadow-btn`, `--shadow-btn-success`, `--shadow-btn-danger` are all `none` — buttons are flat. `--shadow-sidebar` / `--shadow-topbar` are `none` and unreferenced; the rail and masthead carry a `border` instead.
+Buttons carry no shadow — flat. The rail and masthead carry a `border` instead of any shadow token.
 
 Because `--shadow-card` *is* the 1px ring, don't add a `border` on top of it — pick the ring or the border, not both. A drop shadow is only ever legitimate on a genuinely floating overlay.
 
@@ -187,7 +186,7 @@ Shared class recipes live in `components/ui/classes.ts` (`formInputCls`, `fieldL
 
 `<Button variant="primary|secondary|ghost|danger|dangerOutline|success|link" size="sm|md|lg">`. Defaults: `primary`, `md`. Use:
 
-- **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite. **Flat cyan fill with dark ink** (`bg-[image:var(--grad-accent)]` + `text-accent-ink`; `--grad-accent` is a single flat cyan, the `image:` form is kept so the class stays stable). Hover swaps to `--grad-accent-hover`; active drops to the solid `--accent-press`. No gradient ramp, no bevel highlight, no under-glow. This filled treatment is the primary action's alone; never cyan-fill a label, tab, chip, or input. One per toolbar/region.
+- **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite. **Flat cyan fill with dark ink** (`bg-accent text-accent-ink`). Hover swaps to `--accent-hover`; active drops to `--accent-press`. No gradient ramp, no bevel highlight, no under-glow. This filled treatment is the primary action's alone; never cyan-fill a label, tab, chip, or input. One per toolbar/region.
 - **secondary** — neutral siblings. Cancel, Close, Edit. `bg-card-2` + `border-border`.
 - **ghost** — tertiary in toolbars and inline rows.
 - **danger** — irreversible, solid red. Always paired with `ConfirmDialog`.
@@ -282,7 +281,7 @@ The default is **no inline styles**. Use Tailwind utilities, including arbitrary
 ```tsx
 // good
 <div className="bg-card rounded-lg shadow-[var(--shadow-card)] p-4">
-<button className="bg-[image:var(--grad-accent)] hover:bg-[image:var(--grad-accent-hover)]">
+<button className="bg-accent hover:bg-[var(--accent-hover)]">
 
 // bad — static value as inline style
 <div style={{ background: '#101a23', borderRadius: 0 }}>
@@ -360,7 +359,7 @@ ring, the shimmer to plain secondary text), accessibility rules (§7), and no gl
 ## 9. Anti-patterns — do not introduce these
 
 - **Pill-shaped chips.** `rounded-full` on anything that is not a genuine circle — chips, badges, tags, tabs, switch tracks, progress tracks, buttons. Circles are dots, avatars, spinners, and switch knobs; everything else is a square tag (§2.3).
-- **Dimensional gradients on fills.** A fill is one flat color. No top-to-bottom lightening ramp, no bevel highlight, no inner sheen, no under-glow, no "raised" edge on buttons, chips, cards, or tracks. (`--grad-accent` is a gradient in name only — both stops are the same cyan.)
+- **Dimensional gradients on fills.** A fill is one flat color. No top-to-bottom lightening ramp, no bevel highlight, no inner sheen, no under-glow, no "raised" edge on buttons, chips, cards, or tracks.
 - **Background atmosphere.** Aurora washes, film grain, page-level radial glows, per-page background effects. They were deleted from `body`; do not reintroduce them (Tracey's scoped aurora, §8.2, is the only exception).
 - **Floating-panel shell.** Margins, gutters, radii, or shadows on the rail, the masthead, or the main pane. Panes are flush and divided by 1px rules.
 - **Glow as an affordance.** A colored blur to signal hover, selection, or liveness. Selection is tint + inset ring + bar (§4); hover is a wash or a ring-color change. Glow is allowed only as a *data* signal in the dashboard tier (§8.1).

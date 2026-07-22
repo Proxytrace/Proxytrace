@@ -22,7 +22,6 @@
   --color-accent: var(--accent-primary);
   --color-accent-hover: var(--accent-hover);
   --color-accent-subtle: var(--accent-subtle);
-  --color-accent-glow: var(--accent-glow);
   --color-accent-ink: var(--accent-ink);
   --color-accent-text: var(--accent-text);
 
@@ -60,10 +59,6 @@
   /* Shadow utilities */
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
-  --shadow-pill: var(--shadow-pill);
-  --shadow-btn: var(--shadow-btn);
-  --shadow-btn-success: var(--shadow-btn-success);
-  --shadow-btn-danger: var(--shadow-btn-danger);
 }
 
 :root {
@@ -92,7 +87,6 @@
   --accent-text: #a8e2ec;            /* cyan text on dark — active chip / status */
   --accent-border: rgba(87, 196, 211, 0.45); /* cyan hairline — active chip / status */
   --accent-subtle: rgba(87, 196, 211, 0.13);
-  --accent-glow: rgba(87, 196, 211, 0.22);
 
   /* Semantic */
   --success: #5aba80;
@@ -106,14 +100,7 @@
   /* Shadows — flat tier: a 1px rule ring only; overlays get one soft drop for layering */
   --shadow-card: 0 0 0 1px var(--border-subtle);
   --shadow-float: 0 0 0 1px var(--border-color), 0 16px 40px -12px rgba(0, 0, 0, 0.6);
-  --shadow-pill: none;
-  --shadow-sidebar: none;
   --shadow-topbar: none;
-
-  /* Button shadows — flat (no bevel, no under-glow) */
-  --shadow-btn: none;
-  --shadow-btn-success: none;
-  --shadow-btn-danger: none;
 
   /* Radii (Signal Desk: square) */
   --radius-sm: 0px;
@@ -152,8 +139,6 @@
   --bg-wash-active: rgba(255,255,255,0.07);
 
   /* Branded fills — flat (Signal Desk has no dimensional gradients) */
-  --grad-accent: linear-gradient(180deg, #57c4d3, #57c4d3);
-  --grad-accent-hover: linear-gradient(180deg, #7dd3e0, #7dd3e0);
   --grad-success: linear-gradient(180deg, #4fae74, #4fae74);
 
   /* Motion */
@@ -377,10 +362,10 @@ html, body, #root {
   .digit-tick { animation: none; }
 }
 
-/* ── Tracey assistant tier (Tracey AI chat only — see DESIGN.md "Tracey exception") ── */
+/* ── Tracey assistant tier (Tracey AI chat only) ── */
 
 /* Identity ring — a static 1px accent rule around Tracey's avatar; it brightens while a turn is
-   running (.tracey-halo-active). Flat: no rotating conic, no halo. */
+   running (.tracey-halo-active). */
 .tracey-halo { position: relative; }
 .tracey-halo::before {
   content: '';

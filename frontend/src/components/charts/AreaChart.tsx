@@ -8,11 +8,6 @@ interface AreaChartProps {
   width?: number;
   height?: number;
   color: string;
-  /**
-   * @deprecated Unused. The area is a flat semi-transparent fill of `color`, so there is no
-   * `<linearGradient>` left to reference. Drop it from call sites; the prop then goes away.
-   */
-  gradientId?: string;
   padding?: { l?: number; r?: number; t?: number; b?: number };
   showAxis?: boolean;
   showEndMarker?: boolean;
