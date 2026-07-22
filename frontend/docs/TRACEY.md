@@ -133,9 +133,9 @@ clickable chips under the last assistant message. Clicking one sends it as a use
 
 ## Stopping a turn (the cancel chain)
 
-While a turn is running, `TraceyComposer`'s gold **Send** button is replaced by a neutral **Stop**
-button (`ComposerPrimitive.Cancel`, gated by `ThreadPrimitive.If running` — the same `running`
-signal that drives the "Thinking…" indicator). Pressing it cancels the run, and that one action
+While a turn is running, `TraceyComposer`'s cyan **Send** button (`bg-accent` / `text-accent-ink`)
+is replaced by a neutral **Stop** button (`ComposerPrimitive.Cancel`, gated by
+`ThreadPrimitive.If running` — the same `running` signal that drives the "Thinking…" indicator). Pressing it cancels the run, and that one action
 propagates the whole way down both planes:
 
 - assistant-ui `cancel()` aborts the AI SDK run's `AbortController`. That signal arrives as
@@ -531,7 +531,8 @@ is unavailable in non-interactive kiosk mode.
 ## Ask Tracey entry points (context-aware buttons)
 
 Pages deep-link *into* Tracey via `TraceyChat.askTracey(prompt)`:
-`components/tracey/AskTraceyButton.tsx` (gold pill, glinting `ZapFilledIcon`, hidden when
+`components/tracey/AskTraceyButton.tsx` (square cyan-subtle chip — `bg-accent-subtle` /
+`text-accent-text` / `rounded-none` — with a blinking `ZapFilledIcon`, hidden when
 `TraceyChat.available` is false — Free license / non-interactive kiosk / no project) calls it with
 a prompt built by the pure builders in `components/tracey/askTraceyPrompts.ts` (unit-tested).
 `askTracey` archives the current conversation (`startFreshThread`), navigates to `/tracey-ai`,
@@ -701,8 +702,10 @@ a `.tsx` that also exports a component, or you break the fast-refresh lint rule)
   presentational. Data fetching goes through TanStack Query — no raw `useEffect`/`fetch`.
 - Styling follows DESIGN.md tokens, including the restyled assistant-ui primitives. The chat is
   the scoped **Tracey assistant tier** (DESIGN.md §8.2): prose renders at the reading tier
-  (`text-chat`, via `components/chat-markdown.tsx`), and the halo / aurora / gradient-text /
-  thinking-shimmer classes are Tracey-only. File-size and
+  (`text-chat`, via `components/chat-markdown.tsx`), and the `tracey-halo` /
+  `tracey-halo-active` / `tracey-gradient-text` / `tracey-thinking-text` / `tracey-bolt` classes
+  are Tracey-only. All five are flat — there is no `tracey-aurora` and no shimmer wash; see
+  DESIGN.md §8.2 for what each one actually draws. File-size and
   component rules from BEST_PRACTICES.md apply — split tool UIs into `components/` if a file
   approaches the cap.
 
