@@ -35,7 +35,6 @@ function Bars({ values, scale, hover }: { values: number[]; scale: Scale; hover:
             y={Math.min(top, scale.baselineY)}
             width={barW}
             height={h}
-            rx={3}
             fill={ACCENT}
             className="transition-opacity duration-[var(--motion-fast)]"
             opacity={hover === null || active ? 0.9 : 0.4}

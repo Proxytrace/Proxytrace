@@ -1,60 +1,114 @@
 /*
- * Proxytrace brand for VitePress. Values mirror frontend/DESIGN.md tokens —
- * dark-only surface with a single warm-amber accent. Do not introduce new hexes.
- * Vars set on both :root and .dark so force-dark renders identically regardless
+ * Proxytrace brand for VitePress — the Signal Desk ("Wire") system.
+ *
+ * Values mirror the app tokens in frontend/src/index.css and the rules in
+ * frontend/docs/DESIGN.md: a flat blue-petrol instrument surface, opaque steel rules
+ * instead of shadows, square corners, and a single signal-cyan accent. Do not
+ * introduce new hexes — if a value isn't in DESIGN.md's token table, it doesn't
+ * belong here either.
+ *
+ * Vars are set on both :root and .dark so force-dark renders identically regardless
  * of which scope VitePress reads.
  */
 
 :root,
 :root.dark {
-  /* Surfaces */
-  --vp-c-bg: #121317;
-  --vp-c-bg-alt: #15161b;
-  --vp-c-bg-elv: #17181d;
-  --vp-c-bg-soft: #1c1d24;
+  /* Surfaces — bg-surface / surface-2 / card / card-2 */
+  --vp-c-bg: #0a0f14;
+  --vp-c-bg-alt: #0d141b;
+  --vp-c-bg-elv: #101a23;
+  --vp-c-bg-soft: #152230;
 
   /* Text */
-  --vp-c-text-1: #edeef2;
-  --vp-c-text-2: #9da1ac;
-  --vp-c-text-3: #686d7a;
+  --vp-c-text-1: #d5e1ea;
+  --vp-c-text-2: #8ba0b2;
+  --vp-c-text-3: #5d7488;
 
-  /* Dividers / borders — hairline */
-  --vp-c-divider: #26272f;
-  --vp-c-border: #26272f;
-  --vp-c-gutter: #121317;
+  /* Dividers / borders — the structure comes from these rules, not from shadows */
+  --vp-c-divider: #1e2b38;
+  --vp-c-border: #1e2b38;
+  --vp-c-gutter: #0a0f14;
 
-  /* Brand ramp → warm amber. brand-1 is link/active text (lighter for contrast),
-     brand-2/3 are hover/solid surfaces. */
-  --vp-c-brand-1: #ecbf83;
-  --vp-c-brand-2: #d9a158;
-  --vp-c-brand-3: #d9a158;
-  --vp-c-brand-soft: color-mix(in srgb, #d9a158 14%, transparent);
+  /* Brand ramp → signal cyan. brand-1 is link/active text (the lighter hover tone,
+     for contrast on dark); brand-2/3 are hover/solid surfaces. */
+  --vp-c-brand-1: #7dd3e0;
+  --vp-c-brand-2: #57c4d3;
+  --vp-c-brand-3: #45aebc;
+  --vp-c-brand-soft: color-mix(in srgb, #57c4d3 13%, transparent);
 
-  /* Solid amber buttons get dark text for contrast */
-  --vp-button-brand-bg: #d9a158;
-  --vp-button-brand-hover-bg: #ecbf83;
-  --vp-button-brand-active-bg: #d9a158;
-  --vp-button-brand-text: #121317;
+  /* Solid cyan buttons take the dark accent ink, per DESIGN.md's -ink rule */
+  --vp-button-brand-bg: #57c4d3;
+  --vp-button-brand-hover-bg: #7dd3e0;
+  --vp-button-brand-active-bg: #45aebc;
+  --vp-button-brand-text: #062229;
   --vp-button-brand-border: transparent;
-  --vp-button-brand-hover-text: #121317;
+  --vp-button-brand-hover-text: #062229;
 
   /* Semantic colors */
-  --vp-c-success-1: #46b97c;
-  --vp-c-success-2: #46b97c;
-  --vp-c-success-3: #46b97c;
-  --vp-c-warning-1: #dd9a64;
-  --vp-c-warning-2: #dd9a64;
-  --vp-c-warning-3: #dd9a64;
-  --vp-c-danger-1: #e25d5d;
-  --vp-c-danger-2: #e25d5d;
-  --vp-c-danger-3: #e25d5d;
+  --vp-c-success-1: #5aba80;
+  --vp-c-success-2: #5aba80;
+  --vp-c-success-3: #5aba80;
+  --vp-c-warning-1: #d9a23f;
+  --vp-c-warning-2: #d9a23f;
+  --vp-c-warning-3: #d9a23f;
+  --vp-c-danger-1: #dd5959;
+  --vp-c-danger-2: #dd5959;
+  --vp-c-danger-3: #dd5959;
 
   /* Home hero brand tint */
-  --vp-home-hero-name-color: #ecbf83;
+  --vp-home-hero-name-color: #7dd3e0;
+
+  /* Type — the same two faces the app uses */
+  --vp-font-family-base: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* Inline code uses the soft surface, amber-tinted text */
+/* Inline code uses the soft surface with cyan-tinted text */
 :root {
-  --vp-code-color: #ecbf83;
-  --vp-code-bg: color-mix(in srgb, #d9a158 12%, transparent);
+  --vp-code-color: #a8e2ec;
+  --vp-code-bg: color-mix(in srgb, #57c4d3 12%, transparent);
+}
+
+/*
+ * Square the chrome. VitePress hardcodes pill and rounded-card radii in its default
+ * theme; the Wire system is square everywhere except genuine circles, so flatten the
+ * radius on the chrome a reader actually sees. Kept as one grouped rule rather than
+ * scattered overrides so the next person can find all of it at once.
+ */
+/* Doubled class names raise specificity above the default theme's own
+   `.VPButton.medium` / `.VPFeature` rules without reaching for !important. */
+.VPButton.VPButton.VPButton,
+.DocSearch-Button.DocSearch-Button.DocSearch-Button,
+.vp-doc div[class*='language-'],
+.custom-block.custom-block,
+.VPSidebarItem .link,
+.VPNavBarMenuLink,
+.VPFeature.VPFeature,
+.VPTeamMembersItem.VPTeamMembersItem,
+.vp-doc table,
+.vp-doc img,
+.VPLocalSearchBox .search-bar,
+.VPLocalSearchBox .result,
+.VPNavBarSearch .search-input,
+.VPHero .image-bg,
+.VPBadge.VPBadge {
+  border-radius: 0;
+}
+
+/* Rules, not shadows: the instrument surface has no floating panels. */
+.VPFeature.VPFeature.VPFeature,
+.custom-block.custom-block,
+.VPLocalSearchBox .shell {
+  box-shadow: none;
+  border: 1px solid var(--vp-c-divider);
+}
+
+/* Mono is structural here too — page eyebrows and table headers read as labels. */
+.vp-doc th {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+  font-weight: 600;
 }

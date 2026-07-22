@@ -35,11 +35,11 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
             <div key={i} className={`flex items-center ${i < steps.length - 1 ? 'flex-1' : ''}`}>
               <div className="flex items-center gap-2 shrink-0">
                 <div
-                  className={`relative w-7 h-7 rounded-full flex items-center justify-center text-body-sm font-bold shrink-0 transition-all duration-200 ${
+                  className={`relative w-7 h-7 rounded-none flex items-center justify-center text-body-sm font-bold shrink-0 transition-all duration-200 ${
                     isActive
-                      ? 'bg-accent text-white shadow-[0_0_0_4px_var(--accent-subtle)]'
+                      ? 'bg-accent text-accent-ink shadow-[0_0_0_1px_var(--accent-primary)]'
                       : isDone
-                      ? 'bg-success text-white'
+                      ? 'bg-success text-surface'
                       : 'bg-card-2 text-muted border border-border'
                   }`}
                 >

@@ -62,7 +62,7 @@ export function TestCasesPanel({
   return (
     <div className="flex flex-col gap-3 min-h-0 h-full">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
+        <span className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">
           <Plural value={cases.length} one="# case" other="# cases" />
           {pendingAddTraces.length > 0 && <span className="text-accent"> <Trans>· +{pendingAddTraces.length} pending</Trans></span>}
         </span>

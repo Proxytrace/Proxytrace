@@ -7,7 +7,7 @@ import { EditPencilIcon, ResetIcon } from '../../../components/icons';
 export function ExpectedResponse({ text }: { text: string }) {
   return (
     <section className="flex flex-col gap-1.5 min-w-0 shrink-0">
-      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Expected · reference</Trans></span>
+      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary"><Trans>Expected · reference</Trans></span>
       <pre className="m-0 px-3.5 py-3 rounded-lg bg-card-2 border border-border-subtle text-body leading-relaxed text-secondary font-mono whitespace-pre-wrap break-words max-h-[200px] overflow-auto">
         {text || '—'}
       </pre>
@@ -32,7 +32,7 @@ export function EditableResponse({ value, original, onChange, onReset }: {
           <EditPencilIcon size={10} /> <Trans>editable</Trans>
         </span>
         {edited && (
-          <span className="inline-flex items-center gap-1 text-caption text-accent-text px-1.5 py-0.5 rounded-full bg-accent-subtle font-semibold">
+          <span className="inline-flex items-center gap-1 text-caption text-accent-text px-1.5 py-0.5 rounded-none bg-accent-subtle font-semibold">
             <span className="w-[5px] h-[5px] rounded-full bg-accent" /> <Trans>edited</Trans>
           </span>
         )}

@@ -20,14 +20,14 @@ export const markdownComponents: Components = {
   li: (props) => <li className="leading-relaxed" {...clean(props)} />,
   a: (props) => {
     const cleaned = clean(props);
-    // Manual citations (/docs/...) get a distinct amber pill so sourced answers stand out
+    // Manual citations (/docs/...) get a distinct cyan-tinted tag so sourced answers stand out
     // from ordinary inline links.
     const isCitation = typeof cleaned.href === 'string' && cleaned.href.startsWith('/docs/');
     return (
       <a
         className={
           isCitation
-            ? 'mx-0.5 inline rounded-sm bg-accent-subtle px-1.5 py-0.5 font-medium text-accent no-underline transition-colors hover:bg-accent hover:text-surface'
+            ? 'mx-0.5 inline rounded-sm bg-accent-subtle px-1.5 py-0.5 font-medium text-accent no-underline transition-colors hover:bg-accent hover:text-accent-ink'
             : 'text-accent underline underline-offset-2 hover:opacity-80'
         }
         target="_blank"

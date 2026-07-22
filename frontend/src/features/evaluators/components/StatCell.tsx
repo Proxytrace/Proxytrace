@@ -14,7 +14,7 @@ interface Props {
 export function StatCell({ label, value, sub, valueClass, big = false, last = false }: Props) {
   return (
     <div className={cn('flex flex-col gap-1 px-4.5 py-4', !last && 'border-r border-hairline')}>
-      <div className="text-caption text-muted uppercase tracking-[0.08em] font-semibold">{label}</div>
+      <div className="text-caption text-secondary uppercase tracking-[0.08em] font-semibold">{label}</div>
       {/* display-tier: intentional, outside type scale */}
       <div className={cn('font-bold font-mono tracking-[-0.03em] leading-[1.1]', big ? 'text-[26px]' : 'text-[20px]', valueClass)}>
         {value}

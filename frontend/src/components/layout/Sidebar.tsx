@@ -3,7 +3,7 @@ import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
 import { isNavEntryLocked } from './navGating';
 import { ProjectSelector } from './ProjectSelector';
-import { navGroups, footerNavEntries, NAV_ICONS } from './shellNav';
+import { navGroups, footerNavEntries, DOCS_NAV_CODE } from './shellNav';
 import { useLicense } from '../../hooks/useLicense';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useIsMobile } from '../../hooks/useMediaQuery';
@@ -62,10 +62,10 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
       {/* Sidebar — inline rail on md+, off-canvas drawer below */}
       <aside
         className={cn(
-          'bg-sidebar flex flex-col shrink-0 overflow-hidden shadow-[var(--shadow-sidebar)]',
-          'md:relative md:z-[2] md:m-[10px_0_10px_10px] md:rounded-xl md:transition-[width] md:duration-200 md:h-[calc(100vh-20px)]',
-          collapsed ? 'md:w-16' : 'md:w-[232px]',
-          'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[60] max-md:w-[264px] max-md:rounded-r-xl max-md:transition-transform max-md:duration-200',
+          'bg-sidebar flex flex-col shrink-0 overflow-hidden border-r border-border',
+          'md:relative md:z-[2] md:transition-[width] md:duration-200 md:h-screen',
+          collapsed ? 'md:w-16' : 'md:w-[216px]',
+          'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[60] max-md:w-[264px] max-md:transition-transform max-md:duration-200',
           mobileNavOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
         )}
       >
@@ -97,7 +97,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
                 <div className={`my-1.5 border-t border-hairline ${navCollapsed ? 'mx-1' : 'mx-2'}`} />
               )}
               {!navCollapsed && group.label && (
-                <div className="px-1.5 pt-1 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
+                <div className="px-1.5 pt-1 pb-1 text-caption font-semibold tracking-[0.08em] text-secondary uppercase">
                   {i18n._(group.label)}
                 </div>
               )}
@@ -106,14 +106,14 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
                   <LockedNavItem
                     key={item.to}
                     label={i18n._(item.label)}
-                    icon={NAV_ICONS[item.icon]}
+                    code={item.code}
                     collapsed={navCollapsed}
                   />
                 ) : (
                   <NavItem
                     key={item.to}
                     label={i18n._(item.label)}
-                    icon={NAV_ICONS[item.icon]}
+                    code={item.code}
                     to={item.to}
                     collapsed={navCollapsed}
                   />
@@ -132,7 +132,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
             <NavItem
               key={item.to}
               label={i18n._(item.label)}
-              icon={NAV_ICONS[item.icon]}
+              code={item.code}
               to={item.to}
               collapsed={navCollapsed}
             />
@@ -145,8 +145,17 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
             title={navCollapsed ? t`Documentation` : undefined}
             className={`nav-item${navCollapsed ? ' justify-center' : ''}`}
           >
-            <span className="flex shrink-0"><ExternalLinkIcon size={16} /></span>
-            {!navCollapsed && <span className="flex-1 text-left"><Trans>Documentation</Trans></span>}
+            {/* Hidden from a11y: the visible label (or the `title` when collapsed) is the name. */}
+            <span aria-hidden="true" className="font-mono text-caption w-[18px] shrink-0 text-center text-muted">
+              {DOCS_NAV_CODE}
+            </span>
+            {!navCollapsed && (
+              <>
+                <span className="flex-1 text-left"><Trans>Documentation</Trans></span>
+                {/* Kept on the right (like the lock on a gated row) — it opens a new tab. */}
+                <ExternalLinkIcon size={13} className="shrink-0 text-muted" />
+              </>
+            )}
           </a>
         </div>
 

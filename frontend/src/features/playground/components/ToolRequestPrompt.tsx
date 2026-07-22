@@ -51,7 +51,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       </div>
 
       <div>
-        <div className="text-caption font-semibold text-muted uppercase tracking-[0.05em] mb-1"><Trans>Arguments</Trans></div>
+        <div className="text-caption font-semibold text-secondary uppercase tracking-[0.05em] mb-1"><Trans>Arguments</Trans></div>
         <JsonBlock value={parsedArgs} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
       </div>
 

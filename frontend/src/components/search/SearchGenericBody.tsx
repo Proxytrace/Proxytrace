@@ -15,7 +15,7 @@ export function GenericBody({ hit }: GenericBodyProps) {
     <>
       {safeSnippet && (
         <div
-          className="text-body text-white/70 leading-relaxed break-words [&_mark]:bg-accent/30 [&_mark]:text-accent-hover [&_mark]:rounded [&_mark]:px-0.75 [&_mark]:py-0.25 [&_mark]:font-medium"
+          className="text-body text-secondary leading-relaxed break-words [&_mark]:bg-accent/30 [&_mark]:text-accent-hover [&_mark]:rounded-none [&_mark]:px-0.75 [&_mark]:py-0.25 [&_mark]:font-medium"
           dangerouslySetInnerHTML={{ __html: safeSnippet }}
         />
       )}

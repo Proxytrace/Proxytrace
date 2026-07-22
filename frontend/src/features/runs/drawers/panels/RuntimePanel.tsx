@@ -11,7 +11,7 @@ export function RuntimePanel({ runtime }: { runtime: RuntimeBreakdownDto }) {
   return (
     <div>
       <div className={SECTION_LABEL}><Trans>Runtime</Trans></div>
-      <div className="flex h-[5px] rounded-full overflow-hidden mb-2.5 bg-white/[0.04]">
+      <div className="flex h-[5px] overflow-hidden mb-2.5 bg-white/[0.04]">
         {segments.map(s => (
           <div
             key={s.key}

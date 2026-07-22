@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { agentsApi } from '../../../api/agents';
 import { QUERY_KEYS } from '../../../api/query-keys';
 
-/** Version history for an agent (shared cache across the header pill and VersionsWidget). */
+/** Version history for an agent (shared cache across the header chip and VersionsWidget). */
 export function useAgentVersions(agentId: string) {
   const query = useQuery({
     queryKey: QUERY_KEYS.agentVersions(agentId),

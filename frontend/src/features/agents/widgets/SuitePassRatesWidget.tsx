@@ -53,7 +53,7 @@ export function SuitePassRatesWidget({ suitePassRates, agentId, className }: Pro
                   <span className="font-semibold" style={{ color: clr }}>{Math.round(pct)}%</span>
                 </span>
               </div>
-              <div className="h-[6px] rounded-full bg-card-2 overflow-hidden w-full">
+              <div className="h-[6px] bg-card-2 overflow-hidden w-full">
                 <div className="h-full transition-[width] duration-300" style={{ width: `${pct}%`, background: clr }} />
               </div>
               <span className="text-caption text-muted">{fmtRelative(s.latestRunAt)}</span>

@@ -15,7 +15,7 @@ export function EndpointPicker({ value, onChange, defaultEndpointId }: Props) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <label className="text-body-sm font-semibold text-muted uppercase tracking-[0.05em]"><Trans>Endpoint</Trans></label>
+        <label className="text-body-sm font-semibold text-secondary uppercase tracking-[0.05em]"><Trans>Endpoint</Trans></label>
         {defaultEndpointId && value !== defaultEndpointId && (
           <Button variant="link" className="text-caption" onClick={() => onChange(defaultEndpointId)}>
             <Trans>Reset</Trans>

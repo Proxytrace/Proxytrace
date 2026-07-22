@@ -24,7 +24,7 @@ export function FilterChip({ label, value, active, onClick, accent }: FilterChip
           : 'bg-card text-secondary border-border hover:bg-card-2',
       )}
     >
-      {accent && <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: accent }} />}
+      {accent && <span className="w-[7px] h-[7px] shrink-0" style={{ background: accent }} />}
       <span className={cn('font-medium', active ? 'text-accent' : 'text-muted')}>{label}</span>
       <span>{value}</span>
       <ChevronDownIcon

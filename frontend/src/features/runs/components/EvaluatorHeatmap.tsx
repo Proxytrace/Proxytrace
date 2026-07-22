@@ -33,7 +33,7 @@ export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live
       <div className="overflow-x-auto">
         <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
           {/* Header */}
-          <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] flex items-center"><Trans>Evaluator</Trans></div>
+          <div className="px-3 py-2 border-b border-hairline text-caption font-semibold text-secondary uppercase tracking-[0.06em] flex items-center"><Trans>Evaluator</Trans></div>
           {cohorts.map(cohort => (
             <div key={cohort.endpointId} className="px-3 py-2 border-b border-hairline flex items-center gap-1.5">
               <ModelTag name={cohort.endpointName} size="xs" />
@@ -81,7 +81,7 @@ function ScoreRamp() {
   return (
     <div className="flex items-center gap-2 text-caption text-muted">
       <span className="text-success"><Trans>pass</Trans></span>
-      <div className="flex h-2 w-24 rounded-full overflow-hidden">
+      <div className="flex h-2 w-24 overflow-hidden">
         {SCORE_LEVELS.map(level => (
           <span key={level} title={level} className="flex-1" style={{ background: scoreBucketColor(level) }} />
         ))}

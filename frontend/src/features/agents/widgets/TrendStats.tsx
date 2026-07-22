@@ -29,7 +29,7 @@ function KpiCell({ kpi }: { kpi: Kpi }) {
   const deltaColor = kpi.delta == null ? '' : kpi.delta >= 0 ? cn('text-success') : cn('text-danger');
   return (
     <div className={STAT_CELL_CLS}>
-      <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">{kpi.label}</span>
+      <span className="text-caption text-secondary font-semibold uppercase tracking-[0.07em]">{kpi.label}</span>
       <div className="flex items-end justify-between gap-2">
         <span
           className="text-display font-semibold tracking-[-0.02em] leading-none"

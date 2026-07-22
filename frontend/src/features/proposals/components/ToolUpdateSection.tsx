@@ -40,7 +40,7 @@ export function ToolUpdateSection({ details }: Props) {
   return (
     <div className="bg-black/40 rounded-md overflow-hidden border border-border-subtle" data-testid="tool-update-section">
       <div className="px-3.5 py-2 border-b border-hairline bg-card-2/30">
-        <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]"><Trans>Tool definition diff</Trans></span>
+        <span className="text-caption text-secondary font-semibold uppercase tracking-[0.07em]"><Trans>Tool definition diff</Trans></span>
       </div>
       {added.map(t => <ToolRow key={`a-${t.name}`} kind="add" tool={t}/>)}
       {removed.map(t => <ToolRow key={`r-${t.name}`} kind="del" tool={t}/>)}

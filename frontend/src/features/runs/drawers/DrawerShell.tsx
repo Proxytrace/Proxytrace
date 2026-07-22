@@ -29,7 +29,7 @@ interface Props {
   nav: DrawerNav;
   /** Left-of-title slot (e.g. pass/fail dot or a "N models" badge). */
   leading?: ReactNode;
-  /** Right-of-title slot before the index counter (e.g. a PASS/FAIL pill). */
+  /** Right-of-title slot before the index counter (e.g. a PASS/FAIL tag). */
   trailing?: ReactNode;
   /** Content below the sticky header — owns its own scroll/shrink layout. */
   children: ReactNode;

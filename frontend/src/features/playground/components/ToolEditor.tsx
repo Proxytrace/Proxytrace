@@ -13,7 +13,7 @@ interface Props {
   onChange: (next: PlaygroundToolOverride[]) => void;
 }
 
-// JSON-schema type → tinted pill classes (semantic tokens; see BEST_PRACTICES §5.1).
+// JSON-schema type → tinted tag classes (semantic tokens; see BEST_PRACTICES §5.1).
 const TYPE_CLASSES: Record<string, string> = {
   string: cn('bg-[color-mix(in_srgb,var(--teal)_12%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_28%,transparent)]'),
   number: cn('bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]'),
@@ -63,7 +63,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
             {tool.name || t`(unnamed)`}
           </span>
           <span
-            className="text-caption mono px-1.5 py-px rounded-full bg-[var(--bg-wash-hover)] text-muted shrink-0"
+            className="text-caption mono px-1.5 py-px rounded-none bg-[var(--bg-wash-hover)] text-muted shrink-0"
           >
             <Plural value={argCount} one="# arg" other="# args" />
           </span>
@@ -90,7 +90,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
           />
           {argCount > 0 && (
             <div className="flex flex-col gap-1.5">
-              <div className="text-caption font-semibold uppercase tracking-[0.06em] text-muted"><Trans>Arguments</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.06em] text-secondary"><Trans>Arguments</Trans></div>
               {tool.arguments.map((arg, ai) => {
                 return (
                   <div
@@ -102,7 +102,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
                       {arg.isRequired && (
                         <span className="text-danger text-body" title={t`Required`} aria-label={t`required`}>*</span>
                       )}
-                      <span className={cn('mono text-caption px-1.5 py-px rounded-full border', typeClass(arg.type))}>
+                      <span className={cn('mono text-caption px-1.5 py-px rounded-none border', typeClass(arg.type))}>
                         {arg.type}
                       </span>
                     </div>

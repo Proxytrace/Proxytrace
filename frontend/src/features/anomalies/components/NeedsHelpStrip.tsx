@@ -44,9 +44,9 @@ export function NeedsHelpStrip({ rows, agentName, onSelectAgent }: Props) {
               <span className="min-w-0 overflow-hidden">
                 <ColoredBadge color={agentColor(r.agentId)} label={agentName(r.agentId)} dot />
               </span>
-              <span className="h-1 rounded-full bg-card-2 overflow-hidden" aria-hidden>
+              <span className="h-1 bg-card-2 overflow-hidden" aria-hidden>
                 <span
-                  className="block h-full rounded-full"
+                  className="block h-full"
                   style={{ width: `${maxTotal > 0 ? (r.total / maxTotal) * 100 : 0}%`, background: agentColor(r.agentId) }}
                 />
               </span>

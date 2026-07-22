@@ -2,15 +2,16 @@ import type { CSSProperties } from 'react';
 
 /**
  * Canonical selected-row treatment for the master-detail list rails (agents, suites,
- * runs, playground evaluators): an entity-colored gradient wash + inset ring + soft
- * drop shadow. `color` is a runtime value resolved from `lib/colors.ts` (a hex or
- * `rgba(...)`), so it must be an inline `style` per DESIGN.md §6 — pair it with the
- * 3px left bar (`selectionBarStyle`). Locked in DESIGN.md "List rail" pattern.
+ * runs, playground evaluators): a flat entity-colored tint (13%) over the card
+ * background + a 1px inset ring at 45% opacity. `color` is a runtime value resolved
+ * from `lib/colors.ts` (a hex or `rgba(...)`), so it must be an inline `style` per
+ * DESIGN.md §6 — pair it with the 3px left bar (`selectionBarStyle`). No gradients,
+ * no glows. Locked in DESIGN.md "List rail" pattern (Wire direction).
  */
 export function selectionRowStyle(color: string): CSSProperties {
   return {
-    background: `linear-gradient(120deg, color-mix(in srgb, ${color} 10%, transparent), transparent 70%), var(--bg-card)`,
-    boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${color} 45%, transparent), 0 6px 22px -10px color-mix(in srgb, ${color} 32%, transparent)`,
+    background: `color-mix(in srgb, ${color} 13%, var(--bg-card))`,
+    boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${color} 45%, transparent)`,
   };
 }
 

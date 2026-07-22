@@ -4,15 +4,9 @@ import { Badge } from '../../../components/ui/Badge';
 import { cn } from '../../../lib/cn';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 
-// Chips stagger in one by one (fade-up on the button) and lift a pixel on hover. The lift lives
-// on the inner Badge, not the animated button: fade-up's fill mode retains its end-keyframe
-// transform, which would permanently override a hover transform on the same element. A translate
-// inside the chip's own box never shifts neighbors (DESIGN.md bans scale, not translate).
+// Chips stagger in one by one (fade-up on the button); hover is a color change only.
 const CHIP = cn(
-  'group fade-up rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
-);
-const CHIP_BADGE = cn(
-  'transition-transform duration-[var(--motion-fast)] ease-[var(--ease-standard)] group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
+  'group fade-up rounded-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
 );
 
 /** Starter chips above the composer that surface available quick-actions; clicking one sends its prompt. */
@@ -37,7 +31,7 @@ export function ToolChips() {
           className={CHIP}
           style={{ animationDelay: `${index * 45}ms` }}
         >
-          <Badge label={i18n._(action.label)} variant="accent" shape="pill" size="md" className={CHIP_BADGE} />
+          <Badge label={i18n._(action.label)} variant="accent" size="md" />
         </button>
       ))}
     </div>

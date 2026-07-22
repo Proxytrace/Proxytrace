@@ -117,8 +117,8 @@ function ModelStack({ cohorts }: { cohorts: Cohort<TestRunSummaryDto>[] }) {
               <span className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ background: mc }} />
               <span className="truncate">{cohort.endpointName}</span>
             </span>
-            <span className="h-[5px] rounded-full bg-white/[0.06] overflow-hidden">
-              <span className="block h-full rounded-full" style={{ width: `${pr ?? 0}%`, background: prc }} />
+            <span className="h-[5px] bg-white/[0.06] overflow-hidden">
+              <span className="block h-full" style={{ width: `${pr ?? 0}%`, background: prc }} />
             </span>
             <span className="mono text-caption font-bold flex items-center gap-1 justify-end min-w-[34px]" style={{ color: prc }}>
               {pr === null ? '—' : `${pr}%`}

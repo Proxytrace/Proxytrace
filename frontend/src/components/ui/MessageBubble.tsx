@@ -90,14 +90,18 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
 
   return (
     <div
-      className={cn('relative group rounded-lg overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border, streaming && 'streaming-border')}
+      className={cn('relative group rounded-lg overflow-hidden bg-card-2 border', role.border, streaming && 'streaming-border')}
     >
-      <div className="flex items-center gap-2 px-3 py-2.5">
+      {/* The hover wash sits on the header row, not on the toggle button: the button is only the
+          left `flex-1` slice, so washing it alone lit a narrow strip inside the header instead of
+          the header itself. `pointer-events-none` is not needed — the row is the hover target and
+          the button stays the click target. */}
+      <div className={cn('flex items-center gap-2 px-3 py-2.5 transition-colors duration-100', role.hover)}>
         <button
           type="button"
           aria-expanded={isOpen}
           onClick={() => setOpen(o => !o)}
-          className={cn('flex flex-1 min-w-0 items-center gap-2 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]', role.hover)}
+          className="flex flex-1 min-w-0 items-center gap-2 text-left bg-transparent border-0 cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
         >
           <span
             aria-hidden
@@ -136,7 +140,7 @@ export function MessageBubble({ msg, defaultOpen = true, label, actions, streami
                 <span
                   aria-hidden
                   className={cn(
-                    'inline-block w-[8px] h-[15px] align-text-bottom ml-0.25 rounded-[1px]',
+                    'inline-block w-[8px] h-[15px] align-text-bottom ml-0.25',
                     'animate-[pulse-dot_0.9s_ease-in-out_infinite] motion-reduce:animate-none',
                     role.accentBg,
                   )}

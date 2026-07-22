@@ -25,13 +25,11 @@ const ALL_ITEMS: SlashItem[] = [
 const COMPOSER_BTN_CLS = cn(
   'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md transition-[background,color,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40',
 );
-// Send: the gold primary CTA (dark accent-ink on the gold fill per DESIGN.md). Stop: neutral halt
-// control (gold fill is reserved for the one primary action, and a halt reads better as a calm
-// neutral square). The arrow nudges up on hover — a transform inside the fixed-size button, so it
-// never shifts layout.
-const SEND_BTN_CLS = cn(
-  'group bg-[image:var(--grad-accent)] text-accent-ink shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]',
-);
+// Send: the cyan primary CTA (dark accent-ink on the flat cyan fill). Stop: neutral halt control
+// (the cyan fill is reserved for the one primary action, and a halt reads better as a calm neutral
+// square). The arrow nudges up on hover — a transform inside the fixed-size button, so it never
+// shifts layout.
+const SEND_BTN_CLS = cn('group bg-accent text-accent-ink hover:bg-accent-hover');
 const STOP_BTN_CLS = cn('border border-border bg-card-2 text-primary hover:bg-card');
 
 function matches(item: SlashItem, query: string, i18n: I18n): boolean {

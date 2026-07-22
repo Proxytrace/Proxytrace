@@ -14,7 +14,7 @@ interface ErrorLogDetailProps {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-body-sm font-semibold uppercase tracking-[0.06em] text-muted">{label}</div>
+      <div className="text-body-sm font-semibold uppercase tracking-[0.06em] text-secondary">{label}</div>
       <div className="text-title text-primary font-mono break-words">{value}</div>
     </div>
   );

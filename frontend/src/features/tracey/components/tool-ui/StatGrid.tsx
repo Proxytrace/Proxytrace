@@ -32,7 +32,7 @@ export function StatGrid({ items }: { items: StatItem[] }) {
           className="fade-up flex flex-col gap-0.5 rounded-md bg-card-2 px-2.5 py-2"
           style={{ animationDelay: `${index * 30}ms` }}
         >
-          <span className="truncate text-caption uppercase tracking-[0.06em] text-muted" title={item.label}>
+          <span className="truncate text-caption uppercase tracking-[0.06em] text-secondary" title={item.label}>
             {item.label}
           </span>
           <span

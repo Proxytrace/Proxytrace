@@ -80,7 +80,7 @@ function MenuGroup({ children, 'data-testid': testId }: MenuGroupProps) {
 /** Eyebrow heading for a `Menu.Group`. Not focusable; labels the group for assistive tech. */
 function MenuLabel({ children }: { children: ReactNode }) {
   return (
-    <DropdownMenu.Label className="select-none px-3.5 pt-1.5 pb-1 text-caption font-semibold uppercase tracking-[0.08em] text-muted">
+    <DropdownMenu.Label className="select-none px-3.5 pt-1.5 pb-1 text-caption font-semibold uppercase tracking-[0.08em] text-secondary">
       {children}
     </DropdownMenu.Label>
   );

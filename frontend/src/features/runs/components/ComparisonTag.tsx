@@ -10,14 +10,14 @@ const TAG_CLS: Record<TagVariant, string> = {
 };
 
 /**
- * Role pill on a comparison card: the in-production baseline (green, with a live pulse dot), a
+ * Role tag on a comparison card: the in-production baseline (success green, with a live pulse dot), a
  * fallback baseline (when the group has no deployed model), or a candidate being measured against it.
  */
 export function ComparisonTag({ variant }: { variant: TagVariant }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-caption font-bold uppercase tracking-[0.08em] whitespace-nowrap',
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none border text-caption font-bold uppercase tracking-[0.08em] whitespace-nowrap',
         TAG_CLS[variant],
       )}
     >

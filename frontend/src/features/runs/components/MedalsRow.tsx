@@ -38,7 +38,7 @@ export function MedalsRow({ entries }: { entries: LeaderboardEntry[] }) {
               {m.icon}
             </span>
             <div className="min-w-0">
-              <div className="text-caption font-bold uppercase tracking-[0.06em] text-muted">{m.label}</div>
+              <div className="text-caption font-bold uppercase tracking-[0.06em] text-secondary">{m.label}</div>
               <div className="flex items-baseline gap-2 mt-0.5 min-w-0">
                 <span className="mono text-body-sm font-bold truncate" style={{ color: c }}>{m.entry.run.endpointName}</span>
                 <span className="mono text-body-sm text-secondary shrink-0">{m.value}</span>

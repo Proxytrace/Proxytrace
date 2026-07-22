@@ -53,12 +53,12 @@ interface LocaleFlagProps {
   className?: string;
 }
 
-/** Small rounded flag chip for `locale`, decorative by design (the language name labels it). */
+/** Small square flag chip for `locale`, decorative by design (the language name labels it). */
 export function LocaleFlag({ locale, className }: LocaleFlagProps) {
   return (
     <span
       aria-hidden="true"
-      className={cn('inline-flex h-3.5 w-5 shrink-0 overflow-hidden rounded-sm ring-1 ring-black/25', className)}
+      className={cn('inline-flex h-3.5 w-5 shrink-0 overflow-hidden ring-1 ring-[var(--border-color)]', className)}
     >
       <svg viewBox="0 0 24 16" className="h-full w-full" preserveAspectRatio="none">
         {FLAGS[locale]}

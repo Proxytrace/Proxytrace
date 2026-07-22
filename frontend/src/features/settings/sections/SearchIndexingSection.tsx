@@ -155,14 +155,14 @@ export function SearchIndexingSection() {
                   {KIND_OPTIONS.map(opt => {
                     const checked = draft.indexedKinds.includes(opt.value);
                     return (
-                      // eslint-disable-next-line no-restricted-syntax -- multi-select toggle pill; no Button variant fits this shape
+                      // eslint-disable-next-line no-restricted-syntax -- multi-select toggle chip; no Button variant fits this shape
                       <button
                         key={opt.value}
                         type="button"
                         aria-pressed={checked}
                         onClick={() => toggleKind(opt.value)}
                         className={cn(
-                          'px-3 py-1.5 rounded-full text-body font-semibold cursor-pointer border transition-colors',
+                          'px-3 py-1.5 rounded-none text-body font-semibold cursor-pointer border transition-colors',
                           checked
                             ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_15%,_transparent)] border-[color-mix(in_srgb,_var(--accent-primary)_45%,_transparent)] text-primary'
                             : 'bg-card-2 border-hairline text-muted hover:text-primary',

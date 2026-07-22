@@ -79,7 +79,7 @@ export function DistributionStats({ agentId, range }: Props) {
           className={STAT_CELL_CLS}
           title={r.dist.sampleCount === 1 ? t`1 sample` : t`${r.dist.sampleCount} samples`}
         >
-          <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em] truncate">
+          <span className="text-caption text-secondary font-semibold uppercase tracking-[0.07em] truncate">
             {r.label}
             <span className="text-muted/70"> {r.unit === 'call' ? <Trans>/ call</Trans> : <Trans>/ conv</Trans>}</span>
           </span>

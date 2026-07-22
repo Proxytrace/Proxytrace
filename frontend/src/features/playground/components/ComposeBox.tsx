@@ -61,8 +61,8 @@ export function ComposeBox({
         className={cn(
           'rounded-lg flex flex-col bg-card border transition-[border-color,box-shadow] duration-150 ease-[ease]',
           canSend
-            ? 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-primary)_12%,transparent)]'
-            : 'border-border shadow-[var(--shadow-pill)]',
+            ? 'border-[color-mix(in_srgb,var(--accent-primary)_55%,transparent)]'
+            : 'border-border',
         )}
       >
         {/* eslint-disable-next-line no-restricted-syntax -- bespoke auto-resizing borderless composer textarea */}
@@ -89,12 +89,12 @@ export function ComposeBox({
               align="start"
               className="w-[280px] py-1.5 max-h-[320px] overflow-y-auto"
               trigger={
-                // eslint-disable-next-line no-restricted-syntax -- bespoke endpoint pill trigger (ZapIcon + modified dot); Popover asChild target
+                // eslint-disable-next-line no-restricted-syntax -- bespoke endpoint chip trigger (ZapIcon + modified dot); Popover asChild target
                 <button
                   type="button"
                   data-testid="endpoint-picker"
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-caption mono cursor-pointer transition-colors hover:text-primary border',
+                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-caption mono cursor-pointer transition-colors hover:text-primary border',
                     pickerOpen
                       ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
                       : 'bg-[var(--bg-wash-hover)] border-border text-secondary',
@@ -115,7 +115,7 @@ export function ComposeBox({
             >
               <div role="listbox">
                 <div className="px-2.5 pt-0.5 pb-1.5 flex items-center justify-between">
-                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
+                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary"><Trans>Endpoint</Trans></span>
                   {defaultEndpointId && endpointId !== defaultEndpointId && (
                     <Button
                       variant="link"

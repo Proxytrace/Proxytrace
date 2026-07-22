@@ -130,7 +130,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
         </Button>
         <span
           className={cn(
-            'px-3 py-1.5 rounded-full text-body font-semibold border',
+            'px-3 py-1.5 rounded-none text-body font-semibold border',
             selected.size > 0
               ? 'bg-accent-subtle text-accent-hover border-accent'
               : 'bg-card text-muted border-border',

@@ -27,7 +27,7 @@ export function Shell() {
   const toggleSidebar = () => (isMobile ? setMobileNavOpen(v => !v) : setCollapsed(c => !c));
 
   return (
-    // Transparent so the body's aurora/grain atmosphere shows through the page gutters.
+    // Transparent — the flat body surface is the app background; the panes sit directly on it.
     <div className="flex w-full h-screen overflow-hidden bg-transparent relative z-[1]">
       <Sidebar
         collapsed={collapsed}
@@ -44,12 +44,15 @@ export function Shell() {
         <Topbar onToggleSidebar={toggleSidebar} />
 
         {/* Page content — single vertical scroll container for the app */}
-        {/* Flush the scroll container to the window's right edge and inset the content with
-            right padding instead of a margin. Firefox/Linux uses overlay scrollbars, so
+        {/* The rail and the masthead are flat, full-bleed panes now, so this pane carries no
+            margin — the rail's `border-r` and the topbar's `border-b` are the only dividers, with
+            no gutter between them. The 10px breathing room moved from margin to padding, so the
+            scroll container itself stays flush on every edge. That also keeps the reason the right
+            inset was padding in the first place: Firefox/Linux uses overlay scrollbars, so
             `scrollbar-gutter: stable` does NOT reserve space — the thumb would paint over the
-            content. With the container flush + `pr-[10px]`, the overlay thumb floats in the
-            padding strip and never overlaps cards, while staying glued to the screen edge. */}
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_0_10px_10px] pr-[10px] bg-transparent relative z-0 flex flex-col">
+            content. Flush container + `p-[10px]` lets the overlay thumb float in the padding strip
+            without overlapping cards, while staying glued to the screen edge. */}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[10px] bg-transparent relative z-0 flex flex-col">
           {/* TraceyHost mounts the chat runtime here — above the router `Outlet`, not on the
               Tracey page — so the conversation survives navigation. It is lazy: while its chunk
               loads (in parallel with the route chunk) the page area shows the same loader the

@@ -54,7 +54,7 @@ export function SettingsNav() {
     >
       {SECTIONS.map(section => (
         <div key={section.items[0].testId} className="flex flex-col gap-0.5">
-          <div className="px-2 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
+          <div className="px-2 pb-1 text-caption font-semibold tracking-[0.08em] text-secondary uppercase">
             {i18n._(section.heading)}
           </div>
           {section.items.map(item => (

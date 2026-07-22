@@ -17,7 +17,7 @@ of your agents at a glance and links out to the detailed views.
 - **Agent fleet** — a roster of every detected agent, ranked by activity: each row shows the
   agent's endpoint, its own activity sparkline over the selected time range, token total and
   share of the project, trace count, and when it was last active. Click a row to open the
-  agent, or use the gold chip in the header — it shows how many optimization
+  agent, or use the cyan chip in the header — it shows how many optimization
   [proposals](/guide/optimization-proposals) are waiting for review.
 - **Latency spectrum** — each endpoint's latency spread drawn as a min→max span with p50,
   p95, and p99 markers on a shared scale, so a slow endpoint stands out at a glance.

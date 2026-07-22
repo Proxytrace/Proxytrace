@@ -15,7 +15,7 @@ interface Props {
   onTestBench: () => void;
 }
 
-/** Sticky detail header: identity, status pill, kind tag, and action buttons. */
+/** Sticky detail header: identity, status tag, kind tag, and action buttons. */
 export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }: Props) {
   const { i18n } = useLingui();
   const cat = KIND_CATEGORY[e.kind];
@@ -27,7 +27,7 @@ export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }:
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-h1 font-semibold leading-tight tracking-[-0.02em] m-0">{e.name}</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success-subtle text-success text-caption font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none bg-success-subtle text-success text-caption font-semibold">
               <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-success" />
               <Trans>Active</Trans>
             </span>

@@ -42,7 +42,7 @@ export function ComparisonDrawer({ runs, sampleCount = 1, caseInfo, focusEndpoin
       caseInfo={caseInfo}
       nav={nav}
       leading={
-        <span className="px-2 py-0.5 rounded-full text-caption font-semibold shrink-0 bg-accent-subtle text-accent">
+        <span className="px-2 py-0.5 rounded-none text-caption font-semibold shrink-0 bg-accent-subtle text-accent">
           <Trans>{cohorts.length} models</Trans>{sampleCount > 1 && <> · ×{sampleCount}</>}
         </span>
       }

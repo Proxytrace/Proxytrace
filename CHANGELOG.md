@@ -9,7 +9,19 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
-## [1.7.0] - 2026-07-20
+### Changed
+
+- **The interface has been redesigned.** Proxytrace now wears *Signal Desk* — a flat, ruled
+  instrument surface in blue-petrol ink with a single signal-cyan accent, in place of the previous
+  rounded, gold-accented, softly-shadowed look. Structure comes from 1px rules rather than from
+  shadows and floating panels: corners are square, fills are one flat colour, and the gradients,
+  glows, and background atmosphere are gone. Mono type now carries the structural labels — table
+  headers, KPI eyebrows, nav page codes, the breadcrumb — so the data reads as instrument
+  readout rather than prose. Nothing moved: every screen keeps its layout, and no workflow
+  changed. Alongside the reskin, label and on-fill text contrast was corrected across the app so
+  small text meets WCAG AA, and a few visual defects were fixed — row and message-header hover
+  states now fill their full row, and chart end-point markers no longer overhang the card edge.
+  The bundled manual at `/docs` was rethemed to match.
 
 ### Added
 

@@ -82,7 +82,7 @@ interface SelectProps {
 function VersionSelect({ label, value, onChange, options, testid }: SelectProps) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-caption font-medium uppercase tracking-wide text-muted">{label}</span>
+      <span className="text-caption font-medium uppercase tracking-wide text-secondary">{label}</span>
       <Select
         inputSize="sm"
         value={String(value)}

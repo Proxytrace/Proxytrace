@@ -27,7 +27,7 @@ export function AgentPreview({ id, hit }: Props) {
       ]} />
       {a.systemMessage && (
         <PreviewSection title={t`System prompt`}>
-          <pre className="text-body-sm text-white/75 leading-relaxed whitespace-pre-wrap break-words m-0 font-sans">
+          <pre className="text-body-sm text-secondary leading-relaxed whitespace-pre-wrap break-words m-0 font-sans">
             {truncate(a.systemMessage, 600)}
           </pre>
         </PreviewSection>
@@ -38,7 +38,7 @@ export function AgentPreview({ id, hit }: Props) {
             {a.tools.map(t => (
               <span
                 key={t.name}
-                className="px-2 py-0.5 rounded-full text-caption font-mono bg-success-subtle text-success border border-[color-mix(in_srgb,var(--success)_28%,transparent)]"
+                className="px-2 py-0.5 rounded-none text-caption font-mono bg-success-subtle text-success border border-[color-mix(in_srgb,var(--success)_28%,transparent)]"
                 title={t.description}
               >
                 {t.name}

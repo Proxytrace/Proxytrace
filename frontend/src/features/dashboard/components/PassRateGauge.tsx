@@ -26,8 +26,7 @@ export function PassRateGauge({ summary, passRateTrend }: PassRateGaugeProps) {
   const lastRunDeltaPt = stats?.lastRunDeltaPt ?? null;
 
   return (
-    <section data-testid="pass-rate-gauge" className="relative overflow-hidden rounded-lg bg-card px-3.5 pt-2.5 pb-3 flex flex-col gap-1 shadow-[var(--shadow-card)]">
-      <div className="absolute top-5 -right-8 w-[220px] h-[220px] pointer-events-none bg-[radial-gradient(circle,color-mix(in_srgb,var(--success)_6%,transparent),transparent_65%)]" />
+    <section data-testid="pass-rate-gauge" className="rounded-lg bg-card px-3.5 pt-2.5 pb-3 flex flex-col gap-1 shadow-[var(--shadow-card)]">
       <header>
         <h3 className="text-h2 font-semibold"><Trans>Evaluation pass rate</Trans></h3>
         <p className="text-body-sm text-muted mt-0.5 font-mono"><Trans>latest suite run · project-wide</Trans></p>
@@ -36,8 +35,8 @@ export function PassRateGauge({ summary, passRateTrend }: PassRateGaugeProps) {
         <SegmentedGauge value={animatedPct} size={180} label={i18n._(msg`PASS RATE`)} />
       </div>
       {stats && (
-        <div className="grid grid-cols-2 gap-2 mt-auto relative">
-          <div data-testid="gauge-last-run" className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
+        <div className="grid grid-cols-2 gap-2 mt-auto">
+          <div data-testid="gauge-last-run" className="px-3 py-2.5 bg-card-2 rounded-md">
             <div className={COL_HEADER_CLS}><Trans>last run</Trans></div>
             <div
               className={cn(
@@ -48,7 +47,7 @@ export function PassRateGauge({ summary, passRateTrend }: PassRateGaugeProps) {
               {lastRunDeltaPt === null ? '—' : formatDeltaPt(lastRunDeltaPt)}
             </div>
           </div>
-          <div data-testid="gauge-best" className="px-3 py-2.5 bg-card-2 rounded-md shadow-[var(--shadow-pill)]">
+          <div data-testid="gauge-best" className="px-3 py-2.5 bg-card-2 rounded-md">
             <div className={COL_HEADER_CLS}><Trans>best</Trans></div>
             <div className="text-h1 font-bold mt-0.5 tabular-nums text-primary">{fmtPct100(stats.best)}</div>
           </div>

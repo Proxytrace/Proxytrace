@@ -38,18 +38,18 @@ export function SearchPreview({ hit }: { hit: SearchHit }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <span
-          className="text-caption uppercase tracking-wider font-semibold px-2 py-0.75 rounded-full inline-flex items-center gap-1.5"
+          className="text-caption uppercase tracking-wider font-semibold px-2 py-0.75 inline-flex items-center gap-1.5"
           style={{ background: `${meta.accent}1f`, color: meta.accent }}
         >
           {icon(11)}
           {meta.label}
         </span>
         {hit.score > 0 && (
-          <span className="text-caption text-white/30"><Trans>score {hit.score.toFixed(2)}</Trans></span>
+          <span className="text-caption text-muted"><Trans>score {hit.score.toFixed(2)}</Trans></span>
         )}
       </div>
 
-      <div className="text-h2 font-semibold text-white leading-snug break-words">
+      <div className="text-h2 font-semibold text-primary leading-snug break-words">
         {hit.title}
       </div>
 

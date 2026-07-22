@@ -116,7 +116,7 @@ export function MultiCombobox<T>({
                 return (
                   <span
                     key={itemKey(item)}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.25 text-body-sm font-medium mono"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.25 text-body-sm font-medium mono"
                     style={
                       color
                         ? { color, background: `color-mix(in srgb, ${color} 14%, transparent)` }
@@ -124,7 +124,7 @@ export function MultiCombobox<T>({
                     }
                   >
                     {color && (
-                      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                      <span aria-hidden className="h-1.5 w-1.5" style={{ background: color }} />
                     )}
                     {itemLabel(item)}
                   </span>

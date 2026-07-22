@@ -5,21 +5,21 @@ import { cn } from '../../lib/cn';
 import { useLicense } from '../../hooks/useLicense';
 import { tierBadge, type TierTone } from './licenseUtils';
 
-// The tier chip sits next to the health ("Online") pill but must NOT read as its
-// twin. The health pill owns the "tinted pill + live status dot" language; the
+// The tier chip sits next to the health ("Online") chip but must NOT read as its
+// twin. The health chip owns the "tinted fill + live status dot" language; the
 // tier chip instead leads with a tier icon (crown for Enterprise, sparkles for
-// Free) and carries no status dot. Geometry matches the health pill so the two
+// Free) and carries no status dot. Geometry matches the health chip so the two
 // align, but fill + icon set them apart.
 const CHIP_BASE = cn(
-  'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-body-sm font-semibold whitespace-nowrap shrink-0',
+  'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-none border text-body-sm font-semibold whitespace-nowrap shrink-0',
 );
 
 const TONE_CLS: Record<TierTone, string> = {
-  // Enterprise, active — the gold premium marque: a warm accent gradient,
-  // clearly richer than the flat-green health pill.
+  // Enterprise, active — the premium marque: a flat cyan-tinted fill,
+  // set apart from the health chip by fill and icon.
   premium: cn(
     'text-accent-hover',
-    'bg-[image:linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_22%,transparent),color-mix(in_srgb,var(--accent-primary)_7%,transparent))]',
+    'bg-accent-subtle',
     'border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
   ),
   // Enterprise, grace/expired — amber, flags a re-validation in flight.
@@ -38,8 +38,8 @@ const TONE_CLS: Record<TierTone, string> = {
 };
 
 /**
- * Tier chip shown beside the health pill in the top bar. Always visible: a
- * licensed install shows its crowned tier (gold when active, amber while a
+ * Tier chip shown beside the health chip in the top bar. Always visible: a
+ * licensed install shows its crowned tier (cyan when active, amber while a
  * re-check is pending), and a Free install shows a muted, sparkle-marked chip
  * that links to the upgrade page so the current tier is always communicated.
  */

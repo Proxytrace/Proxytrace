@@ -31,7 +31,7 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Performance</Trans></span>
+        <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold"><Trans>Performance</Trans></span>
         <span className="text-body-sm text-muted font-mono">
           <Trans>{(summary?.totalEvaluations ?? 0).toLocaleString()} runs · {range}</Trans>
         </span>
@@ -59,17 +59,14 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
       </div>
 
       <div className="px-4.5 py-3.5">
-        <div className="text-caption text-muted uppercase tracking-[0.08em] font-semibold mb-2"><Trans>Pass rate trend</Trans></div>
+        <div className="text-caption text-secondary uppercase tracking-[0.08em] font-semibold mb-2"><Trans>Pass rate trend</Trans></div>
         {hasTrend ? (
           <AreaChart
             data={passSeries}
             width={860}
             height={130}
             color={categoryColorVar[cat]}
-            // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
-            gradientId={`evalTrend-${e.id.slice(0, 8)}`}
             showAxis={false}
-            showEndMarker
             formatValue={v => fmtPct(v)}
             tooltipLabelFn={i => new Date((overview?.passRateTrend ?? [])[i]?.bucketStart ?? '').toLocaleDateString()}
           />

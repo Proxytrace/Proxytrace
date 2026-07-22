@@ -10,7 +10,7 @@ const KIND_ICON: Record<ProposalKind, React.ReactNode> = {
   [ProposalKind.ModelSwitch]: <CpuIcon size={10} />,
 };
 
-// Kind → tinted pill classes (DESIGN tokens); mirrors KIND_META colors as leaf classes.
+// Kind → tinted tag classes (DESIGN tokens); mirrors KIND_META colors as leaf classes.
 const KIND_PILL: Record<ProposalKind, string> = {
   [ProposalKind.SystemPrompt]:
     cn('bg-[color-mix(in_srgb,var(--accent-primary)_9%,transparent)] text-accent border-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)]'),
@@ -20,7 +20,7 @@ const KIND_PILL: Record<ProposalKind, string> = {
     cn('bg-[color-mix(in_srgb,var(--teal)_9%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_20%,transparent)]'),
 };
 
-/** Tinted pill naming a proposal's kind (prompt rewrite / tool update / model swap). */
+/** Tinted tag naming a proposal's kind (prompt rewrite / tool update / model swap). */
 export function KindPill({ kind }: { kind: ProposalKind }) {
   const { i18n } = useLingui();
   return (

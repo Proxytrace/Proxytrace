@@ -53,7 +53,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
           'border border-border',
           compact
             ? 'inline-flex items-center gap-2 cursor-pointer transition-colors rounded-md pl-1.5 pr-2.5 py-1.5 bg-white/[0.03]'
-            : 'w-full text-left rounded-lg p-3 flex items-center gap-2.5 cursor-pointer transition-colors group bg-card shadow-[var(--shadow-pill)]',
+            : 'w-full text-left rounded-lg p-3 flex items-center gap-2.5 cursor-pointer transition-colors group bg-card',
         )}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -66,7 +66,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
           </span>
         ) : (
           <div className="flex-1 min-w-0">
-            <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted">{subtitle}</div>
+            <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary">{subtitle}</div>
             <div className="text-title font-semibold text-primary truncate">
               {current?.name ?? t`Pick an agent`}
             </div>

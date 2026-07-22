@@ -21,7 +21,7 @@ interface Props<T extends string> {
 }
 
 /**
- * Pill-style segmented control for view toggles and compact filter switches.
+ * Square segmented control for view toggles and compact filter switches.
  * Supports text segments with optional counts and icon-only segments.
  */
 export function SegmentedControl<T extends string>({ value, onChange, segments, className }: Props<T>) {
@@ -31,7 +31,7 @@ export function SegmentedControl<T extends string>({ value, onChange, segments, 
         const active = seg.value === value;
         const iconOnly = seg.label === undefined;
         const stateCls = active
-          ? cn('bg-card text-primary shadow-[var(--shadow-pill)]')
+          ? cn('bg-card text-primary shadow-[inset_0_0_0_1px_var(--border-color)]')
           : cn('text-muted hover:text-secondary');
         return (
           <button

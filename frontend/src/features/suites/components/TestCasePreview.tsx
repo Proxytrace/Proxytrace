@@ -7,7 +7,7 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 function PreviewShell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="h-full min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-2.5">
-      <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">{label}</div>
+      <div className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">{label}</div>
       {children}
     </div>
   );

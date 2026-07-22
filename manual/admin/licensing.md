@@ -160,7 +160,7 @@ API responds with HTTP **402** as well and the same dialog appears framed as a f
 
 The current tier is always visible as a chip in the top bar — a muted, sparkle-marked **Free**
 chip (which links to the upgrade page) on an unlicensed install, or a crowned tier chip on a
-licensed one: gold when the license is active, amber while a re-check is pending. When the
+licensed one: cyan when the license is active, amber while a re-check is pending. When the
 monthly trace quota is exhausted, a banner appears above the top bar warning
 that new traces are being dropped until the quota resets.
 

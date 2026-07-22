@@ -57,7 +57,7 @@ export function ModelParametersGrid({ params }: { params: ModelParametersDto }) 
     <div className="grid grid-cols-2 gap-2.5">
       {setFields.map(k => (
         <div key={k} className="px-3 py-2.5 bg-card-2 rounded-md">
-          <div className="text-caption text-muted uppercase tracking-[0.06em] mb-0.75">{FIELD_LABELS[k]}</div>
+          <div className="text-caption text-secondary uppercase tracking-[0.06em] mb-0.75">{FIELD_LABELS[k]}</div>
           <div className="text-body font-mono text-primary break-all">{formatValue(k, params[k])}</div>
         </div>
       ))}

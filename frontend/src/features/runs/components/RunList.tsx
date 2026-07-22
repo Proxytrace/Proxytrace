@@ -44,7 +44,7 @@ export function RunList({ groups, isLoading, selectedId, onSelect, onDelete, age
             size="sm"
             width={240}
           />
-          {/* eslint-disable-next-line no-restricted-syntax -- single bespoke filter toggle pill */}
+          {/* eslint-disable-next-line no-restricted-syntax -- single bespoke filter toggle chip */}
           <button
             type="button"
             onClick={onToggleSystem}
