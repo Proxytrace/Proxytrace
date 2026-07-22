@@ -1,6 +1,6 @@
 import { evaluatorColor, tint } from '../../../lib/colors';
 
-/** Rounded-square initial tile for an evaluator, tinted by its kind color. */
+/** Square initial tile for an evaluator, tinted by its kind color. */
 export function RailMonogram({ name, kind, size = 28 }: { name: string; kind: string; size?: number }) {
   const color = evaluatorColor(kind);
   const initial = name.trim()[0]?.toUpperCase() ?? '?';
@@ -11,7 +11,6 @@ export function RailMonogram({ name, kind, size = 28 }: { name: string; kind: st
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.3,
         fontSize: size * 0.42,
         background: tint(color, 12),
         color,

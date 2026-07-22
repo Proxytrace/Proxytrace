@@ -1,6 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
-import { tint } from '../../../lib/colors';
 import { RowButton } from '../../../components/ui/RowButton';
 import { scoreColor } from '../testBenchMeta';
 import { ScoreChip } from './ScorePills';
@@ -33,7 +32,7 @@ export function RunHistoryTimeline({ runs, currentId, onSelect }: {
             <div className="flex flex-col items-center w-[22px] shrink-0">
               <span
                 className="w-2.5 h-2.5 rounded-full mt-1"
-                style={{ background: color, boxShadow: `0 0 0 3px ${tint(color, 13)}` }}
+                style={{ background: color }}
               />
               {i < runs.length - 1 && <span className="flex-1 w-0.5 bg-border my-0.5" />}
             </div>

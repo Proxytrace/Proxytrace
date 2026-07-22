@@ -2,7 +2,6 @@
 // call-rate line over the trailing hour, beating in real time via SSE, flanked
 // by the live telemetry counters.
 
-import { useId } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { LiveTelemetryDto } from '../../../api/models';
 import { sparklinePath } from '../../../lib/charts';
@@ -20,8 +19,6 @@ interface PulseBandProps {
 
 export function PulseBand({ pulse, lastBeat, telemetry }: PulseBandProps) {
   const { t } = useLingui();
-  const gradId = useId();
-  const glowId = useId();
   const [ref, width] = useElementWidth<HTMLDivElement>(600);
   const idle = pulse.every(v => v === 0);
   const line = idle
@@ -38,26 +35,13 @@ export function PulseBand({ pulse, lastBeat, telemetry }: PulseBandProps) {
         idle && 'pulse-idle-sweep',
       )}
     >
-      <div className="absolute -top-16 left-1/4 w-[480px] h-[200px] pointer-events-none bg-[radial-gradient(ellipse,var(--accent-subtle),transparent_70%)]" />
-
       {/* EKG line */}
       <div ref={ref} className="relative flex-1 min-w-0">
         <div className={cn(EYEBROW_CLS, 'mb-1')}>
           <Trans>Activity · last 60 min</Trans>
         </div>
         <svg width="100%" height={BAND_HEIGHT} className="block overflow-visible" aria-hidden="true">
-          <defs>
-            <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.35" />
-              <stop offset="75%" stopColor="var(--accent-primary)" />
-              <stop offset="100%" stopColor="var(--accent-hover)" />
-            </linearGradient>
-            <filter id={glowId} x="-20%" y="-50%" width="140%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="b" />
-              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
-          <path d={line} fill="none" stroke={`url(#${gradId})`} strokeWidth={2} filter={`url(#${glowId})`} />
+          <path d={line} fill="none" stroke="var(--accent-primary)" strokeWidth={2} />
         </svg>
         {lastBeat > 0 && <span key={lastBeat} className="pulse-sweep" />}
       </div>
@@ -87,7 +71,7 @@ function PulseCounter({ label, value, accent, danger }: PulseCounterProps) {
         key={value}
         className={cn(
           'digit-tick font-mono text-display font-semibold tabular-nums leading-none',
-          danger ? 'text-danger drop-shadow-[0_0_8px_var(--danger)]' : accent ? 'text-accent-hover' : 'text-primary',
+          danger ? 'text-danger' : accent ? 'text-accent-hover' : 'text-primary',
         )}
       >
         {value}

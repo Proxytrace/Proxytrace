@@ -19,7 +19,7 @@ export function CaseHeader({ payload, evaluator }: {
           {payload.testCaseSummary || t`Test case`}
         </h2>
         <span
-          className="px-2.5 py-0.5 rounded-full text-caption font-semibold whitespace-nowrap"
+          className="px-2.5 py-0.5 rounded-none text-caption font-semibold whitespace-nowrap"
           style={{ background: tint(color, 16), color }}
         >
           {evaluator.name} · {i18n._(KIND_LABEL[evaluator.kind])}

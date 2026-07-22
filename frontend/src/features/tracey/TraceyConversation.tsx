@@ -46,7 +46,7 @@ export function TraceyConversation() {
         <button
           type="button"
           aria-label={t`Scroll to latest`}
-          className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-card p-1.5 text-muted shadow-[var(--shadow-float)] transition-colors hover:text-primary disabled:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] cursor-pointer"
+          className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-none border border-border bg-card p-1.5 text-muted shadow-[var(--shadow-float)] transition-colors hover:text-primary disabled:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] cursor-pointer"
         >
           <ArrowDownIcon size={16} />
         </button>

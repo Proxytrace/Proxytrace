@@ -2,10 +2,10 @@ import type { TypeCategory } from './evaluatorMeta';
 
 /**
  * Per-category Tailwind class recipes. Category color is a design token
- * (llm → accent, rule/numeric → teal); we express it as static arbitrary-value
- * classes rather than threading a CSS-variable string through props (§5.1).
+ * (llm → accent, rule/numeric → steel-blue `--teal` token); we express it as static
+ * arbitrary-value classes rather than threading a CSS-variable string through props (§5.1).
  *
- * `rule` and `numeric` share the teal token — identical recipes.
+ * `rule` and `numeric` share the `--teal` token — identical recipes.
  */
 
 /** Foreground text in the category's token color. */
@@ -22,7 +22,7 @@ export const categoryBg: Record<TypeCategory, string> = {
   numeric: 'bg-teal',
 };
 
-/** Tinted (14%) surface used for icon boxes / kind pills. */
+/** Tinted (14%) surface used for icon boxes / kind tags. */
 export const categoryTint14: Record<TypeCategory, string> = {
   llm: 'bg-[color-mix(in_srgb,var(--accent-primary)_14%,transparent)]',
   rule: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)]',
@@ -49,11 +49,11 @@ export const categorySelectedRow: Record<TypeCategory, string> = {
   numeric: 'bg-[color-mix(in_srgb,var(--teal)_13%,var(--bg-card))] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent)]',
 };
 
-/** Header gradient wash (12% in top-left corner). */
+/** Flat header wash — a 10% category tint over the card surface. */
 export const categoryHeaderWash: Record<TypeCategory, string> = {
-  llm: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent-primary)_12%,transparent),transparent_60%),var(--bg-card)]',
-  rule: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--teal)_12%,transparent),transparent_60%),var(--bg-card)]',
-  numeric: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--teal)_12%,transparent),transparent_60%),var(--bg-card)]',
+  llm: 'bg-[color-mix(in_srgb,var(--accent-primary)_10%,var(--bg-card))]',
+  rule: 'bg-[color-mix(in_srgb,var(--teal)_10%,var(--bg-card))]',
+  numeric: 'bg-[color-mix(in_srgb,var(--teal)_10%,var(--bg-card))]',
 };
 
 /** Variable-highlight wash (22%) for rubric placeholders. */

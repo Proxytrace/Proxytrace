@@ -58,7 +58,7 @@ export function AgentFleetRow({ entry, isLast, now, onSelect }: AgentFleetRowPro
         !isLast && 'border-b border-border-subtle',
       )}
     >
-      <span className="self-stretch my-1 rounded-full opacity-80" style={{ background: c }} />
+      <span className="self-stretch my-1 rounded-none opacity-80" style={{ background: c }} />
 
       <span className="min-w-0 flex flex-col gap-1">
         <span data-testid={`agent-fleet-name-${entry.id}`} className="text-title font-semibold leading-tight truncate">

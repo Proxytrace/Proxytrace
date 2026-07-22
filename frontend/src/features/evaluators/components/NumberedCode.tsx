@@ -23,7 +23,7 @@ export function NumberedCode({ text, category, highlightVars = false }: Props) {
               ? ln.split(/(\{\{[a-z_]+\}\})/gi).map((part, j) =>
                   VAR_RE.test(part)
                     ? (
-                      <span key={j} className={cn('px-1 rounded-[3px]', categoryVarHighlight[category], categoryText[category])}>
+                      <span key={j} className={cn('px-1 rounded-none', categoryVarHighlight[category], categoryText[category])}>
                         {part}
                       </span>
                     )

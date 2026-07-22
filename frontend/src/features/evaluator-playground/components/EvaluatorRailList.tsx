@@ -34,7 +34,7 @@ export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
             style={on ? selectionRowStyle(color) : undefined}
           >
             {on && (
-              <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-full" style={selectionBarStyle(color)} />
+              <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-none" style={selectionBarStyle(color)} />
             )}
             <RailMonogram name={ev.name} kind={ev.kind} size={28} />
             <span className="flex-1 min-w-0">
@@ -45,7 +45,7 @@ export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
             </span>
             <span
               className="w-[7px] h-[7px] rounded-full shrink-0"
-              style={on ? { background: color, boxShadow: `0 0 8px ${color}` } : undefined}
+              style={on ? { background: color } : undefined}
             />
           </RowButton>
         );

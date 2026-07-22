@@ -10,7 +10,7 @@ interface EntityCardLinkProps {
   to: string;
   title: string;
   icon: ReactNode;
-  /** Per-entity color for the accent bar + hover glow. */
+  /** Per-entity color for the accent bar + hover ring. */
   color: string;
   testId: string;
   pendingLabel: string;

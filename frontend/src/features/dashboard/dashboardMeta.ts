@@ -25,10 +25,10 @@ export const RANGES: RangeKey[] = ['1h', '24h', '7d', '30d', 'all'];
 // ── Shared dashboard class recipes ───────────────────────────────────────────
 
 /** Section eyebrow label — the dashboard cards' shared mono-uppercase header treatment. */
-export const EYEBROW_CLS = 'text-caption text-muted font-mono tracking-[0.16em] uppercase font-bold';
+export const EYEBROW_CLS = 'text-caption text-secondary font-mono tracking-[0.16em] uppercase font-bold';
 
 /** Column-header label for the dashboard's aligned data grids and stat strips. */
-export const COL_HEADER_CLS = 'text-caption font-bold text-muted tracking-[0.12em] uppercase font-mono';
+export const COL_HEADER_CLS = 'text-caption font-bold text-secondary tracking-[0.12em] uppercase font-mono';
 
 // ── Telemetry formatter ──────────────────────────────────────────────────────
 

@@ -34,7 +34,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
             type="button"
             onClick={onClearFilter}
             data-testid="evaluator-recent-filter-clear"
-            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent-subtle text-accent-text text-caption font-semibold cursor-pointer transition-colors hover:bg-card-2"
+            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-accent-subtle text-accent-text text-caption font-semibold cursor-pointer transition-colors hover:bg-card-2"
           >
             {i18n._(SCORE_LABEL[scoreFilter])}
             <XIcon size={10} />
@@ -93,7 +93,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
                 <span className="text-right font-mono font-semibold text-primary">{s.score ?? '—'}</span>
                 <span className="text-right">
                   <span className={cn(
-                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-bold tracking-[0.04em]',
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-caption font-bold tracking-[0.04em]',
                     s.passed ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
                   )}>{s.passed ? t`PASS` : t`FAIL`}</span>
                 </span>

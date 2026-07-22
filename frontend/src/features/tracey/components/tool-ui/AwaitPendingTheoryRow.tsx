@@ -34,7 +34,7 @@ export function AwaitPendingTheoryRow({ id }: { id: string }) {
         {theory?.agentName ? t`Theory · ${theory.agentName}` : <span className="font-mono text-muted">{id}</span>}
       </span>
       {!terminal && (
-        <span aria-hidden className="indeterminate-bar h-1 w-32 shrink-0 overflow-hidden rounded-full bg-card-2" />
+        <span aria-hidden className="indeterminate-bar h-1 w-32 shrink-0 overflow-hidden rounded-none bg-card-2" />
       )}
       <Badge
         label={theory ? i18n._(THEORY_STATUS_LABEL[theory.status]) : t`Waiting…`}

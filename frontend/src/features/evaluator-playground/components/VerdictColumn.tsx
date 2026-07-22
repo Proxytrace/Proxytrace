@@ -23,10 +23,10 @@ export function VerdictColumn({ session, evaluator }: { session: PlaygroundSessi
         <span className="text-caption font-bold uppercase tracking-[0.09em] text-secondary"><Trans>Verdict</Trans></span>
         {scored && currentRun && (
           currentRun.kind === 'logged' ? (
-            <span className="text-caption px-2 py-0.5 rounded-full font-semibold bg-card-2 text-muted"><Trans>logged baseline</Trans></span>
+            <span className="text-caption px-2 py-0.5 rounded-none font-semibold bg-card-2 text-muted"><Trans>logged baseline</Trans></span>
           ) : (
             <span
-              className="text-caption px-2 py-0.5 rounded-full font-bold"
+              className="text-caption px-2 py-0.5 rounded-none font-bold"
               style={{ color: scoreColor(currentRun.result.score), background: tint(scoreColor(currentRun.result.score), 16) }}
             >
               <Trans>live re-score</Trans>

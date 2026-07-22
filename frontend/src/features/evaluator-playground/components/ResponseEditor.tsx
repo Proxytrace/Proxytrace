@@ -32,7 +32,7 @@ export function EditableResponse({ value, original, onChange, onReset }: {
           <EditPencilIcon size={10} /> <Trans>editable</Trans>
         </span>
         {edited && (
-          <span className="inline-flex items-center gap-1 text-caption text-accent-text px-1.5 py-0.5 rounded-full bg-accent-subtle font-semibold">
+          <span className="inline-flex items-center gap-1 text-caption text-accent-text px-1.5 py-0.5 rounded-none bg-accent-subtle font-semibold">
             <span className="w-[5px] h-[5px] rounded-full bg-accent" /> <Trans>edited</Trans>
           </span>
         )}

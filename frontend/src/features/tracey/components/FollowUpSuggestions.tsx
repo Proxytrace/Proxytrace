@@ -4,14 +4,10 @@ import { Badge } from '../../../components/ui/Badge';
 import { cn } from '../../../lib/cn';
 import { useTraceyChatContext } from '../tracey-chat-context';
 
-// Same chip anatomy as the starter ToolChips: fade-up on the button (staggered per chip), hover
-// lift on the inner Badge — fade-up's fill mode retains its end-keyframe transform, so the lift
-// must live on a child element.
+// Same chip anatomy as the starter ToolChips: fade-up on the button (staggered per chip); hover is
+// a color change only.
 const CHIP = cn(
-  'group fade-up rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
-);
-const CHIP_BADGE = cn(
-  'transition-transform duration-[var(--motion-fast)] ease-[var(--ease-standard)] group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
+  'group fade-up rounded-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
 );
 
 /**
@@ -51,7 +47,7 @@ export function FollowUpSuggestions() {
           style={{ animationDelay: `${index * 45}ms` }}
           data-testid={`tracey-follow-up-btn-${index}`}
         >
-          <Badge label={item} variant="accent" size="md" className={CHIP_BADGE} />
+          <Badge label={item} variant="accent" size="md" />
         </button>
       ))}
     </div>

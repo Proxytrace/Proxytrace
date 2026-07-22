@@ -37,8 +37,6 @@ export function LatencySection({ rows, latencyStats, isLoading }: LatencySection
 
   return (
     <section data-testid="latency-section" className="relative overflow-hidden rounded-lg bg-card px-3.5 pt-2.5 pb-3 flex flex-col shadow-[var(--shadow-card)]">
-      <div className="absolute -top-16 -right-12 w-[300px] h-[220px] pointer-events-none bg-[radial-gradient(ellipse,color-mix(in_srgb,var(--teal)_7%,transparent),transparent_70%)]" />
-
       <header className="relative flex items-end justify-between mb-2.5">
         <div>
           <span className={EYEBROW_CLS}>
@@ -124,7 +122,7 @@ function LatencySpanRow({ row, lo, hi }: LatencySpanRowProps) {
       <div className="relative h-3 mt-1">
         <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-border-subtle" />
         <span
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-[color-mix(in_srgb,var(--teal)_32%,transparent)]"
+          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-none bg-[color-mix(in_srgb,var(--teal)_32%,transparent)]"
           style={{ left: `${left}%`, width: `${Math.max(right - left, 1)}%` }}
         />
         {SPECTRUM_MARKERS.map(m => (
@@ -134,7 +132,6 @@ function LatencySpanRow({ row, lo, hi }: LatencySpanRowProps) {
             style={{
               left: `${logSpanPos(row[m.rowKey], lo, hi) * 100}%`,
               background: m.color,
-              boxShadow: `0 0 8px ${m.color}`,
             }}
           />
         ))}

@@ -26,7 +26,7 @@ export function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, av
         isSelected ? categorySelectedRow[cat] : 'bg-transparent hover:bg-card-2',
       )}
     >
-      <span className={cn('w-[3px] self-stretch rounded-full shrink-0', isSelected ? categoryBg[cat] : 'bg-transparent')} />
+      <span className={cn('w-[3px] self-stretch rounded-none shrink-0', isSelected ? categoryBg[cat] : 'bg-transparent')} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-body font-semibold text-primary overflow-hidden text-ellipsis whitespace-nowrap">{e.name}</span>

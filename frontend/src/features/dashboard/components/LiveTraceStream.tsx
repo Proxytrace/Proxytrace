@@ -34,7 +34,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
       <header className="flex items-end justify-between mb-3">
         <div>
           <span className="text-caption text-accent-hover font-mono tracking-[0.18em] uppercase font-bold flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-success pulse-dot shadow-[0_0_10px_var(--success)]" />
+            <span className="size-1.5 rounded-full bg-success pulse-dot" />
             <Trans>Live feed</Trans>
           </span>
           <p className="text-body-sm text-muted mt-0.5 font-mono">

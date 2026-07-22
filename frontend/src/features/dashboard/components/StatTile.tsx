@@ -46,14 +46,11 @@ export function StatTile({
     <div
       data-testid={testId}
       className={cn(
-        'relative overflow-hidden rounded-xl px-3 pt-2.5 flex flex-col gap-1.5 min-h-[88px] bg-card shadow-[var(--shadow-card)]',
-        accent && 'bg-[image:linear-gradient(155deg,var(--accent-subtle),transparent_55%)]',
+        'rounded-xl px-3 pt-2.5 flex flex-col gap-1.5 min-h-[88px] bg-card shadow-[var(--shadow-card)]',
+        accent && 'bg-[color-mix(in_srgb,var(--accent-primary)_8%,var(--bg-card))]',
       )}
     >
-      {accent && (
-        <div className="absolute -top-10 -right-10 w-[140px] h-[140px] rounded-full pointer-events-none bg-[radial-gradient(circle,var(--accent-subtle),transparent_65%)]" />
-      )}
-      <div className="relative flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <div className={cn('w-5 h-5 rounded-sm flex items-center justify-center', accent ? 'bg-accent-subtle text-accent-hover' : 'bg-card-2 text-secondary')}>
             {icon}
