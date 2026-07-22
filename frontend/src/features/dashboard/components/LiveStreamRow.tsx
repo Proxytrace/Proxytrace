@@ -49,7 +49,9 @@ interface Props {
 }
 
 export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
-  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors', hoverAccentWashCls, isLast ? '' : 'border-b border-border-subtle');
+  // `px-5` (not `px-1.5`) because the row is full-bleed — the list cancels the card's `px-3.5`
+  // so the hover wash and the divider reach the card edge; see LiveTraceStream.
+  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-5 font-mono text-body-sm cursor-pointer transition-colors', hoverAccentWashCls, isLast ? '' : 'border-b border-border-subtle');
 
   if (row.type === 'flat') {
     const t = row.trace;

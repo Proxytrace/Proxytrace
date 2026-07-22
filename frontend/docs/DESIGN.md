@@ -62,6 +62,12 @@ Dark-only — blue-petrol ink panes divided by opaque steel rules, with a single
 
 **On-fill foregrounds use the `-ink` family.** Text or icons sitting *on* a solid semantic fill take `text-accent-ink` (on `bg-accent`), `text-danger-ink` (on `bg-danger`), or `text-success-ink` (on `bg-success`). **Never `text-white` on a colored fill** — the ink tokens are the AA-verified pairings and exist precisely so nobody has to reach for white. There is deliberately no amber ink token, because nothing solid-fills `--warn`; if that ever changes, add one to `index.css` and `@theme` rather than improvising a foreground.
 
+The same rule covers **categorical entity fills** — an `Avatar`/`AgentAvatar` filled with a runtime
+`agentColor()` / `modelColor()` / `providerColor()`. `text-accent-ink` is the sanctioned foreground
+there too: it clears AA against every entry in the entity palette (worst case, rose `#d3737f`, at
+5.15:1), which no light foreground does. Any colour added to the palette in `lib/colors.ts` must
+hold that pairing.
+
 **Dynamic colors** (per-model, per-agent, per-provider, per-evaluator) come from `frontend/src/lib/colors.ts`: `modelColor(name)`, `agentColor(id)`, `providerColor(name)`, `projectColor(id)`, `detectorColor(id)`, `evaluatorColor(kind)` / `EVALUATOR_KIND_COLOR`, `statusColor(httpStatus)`. Hash-based assignment is stable — do not invent new palettes for new entity types; extend the existing helpers. The per-entity **categorical** palette (`AGENT_PALETTE` in that file) is the one sanctioned exception to "no new hexes": charts, legends, and badge dots need more *mutually distinct* hues than the ~5 semantic tokens supply, so it is derived from the Wire anchors (accent cyan `#57c4d3`, warn amber `#d9a23f`, success green `#5aba80`) by holding a muted saturation/lightness band and rotating hue to fill the gaps. Every entry clears AA (≥ 4.5:1) as text on the ink surfaces. That is for data-encoding only — never reach into it for chrome, CTAs, or semantic status. `MODEL_PALETTE` deliberately *groups* instead (all gpt cyan, all mini amber, all claude green) and may repeat.
 
 `tint(color, pct)` (same file) mixes a **runtime** color toward transparent. For a static token base, use a Tailwind arbitrary class (`bg-[color-mix(in_srgb,var(--accent-primary)_14%,transparent)]`) instead.
@@ -121,9 +127,11 @@ Square corners, everywhere. All four tokens are `0px`:
 | `rounded-lg` | 0 |
 | `rounded-xl` | 0 |
 
-Keep writing against the scale (`rounded-md` on a button, `rounded-lg` on a card) so components stay correct if the scale ever moves; use `rounded-none` where squareness is the *point* and a reader might otherwise assume a radius (chips, switch tracks — both already do). **Don't use Tailwind's default `rounded-2xl`/`rounded-3xl`** or arbitrary radii (`rounded-[6px]`) — they don't exist in our scale.
+Keep writing against the scale (`rounded-md` on a button, `rounded-lg` on a card) so components stay correct if the scale ever moves; use `rounded-none` where squareness is the *point* and a reader might otherwise assume a radius (chips already do). **Don't use Tailwind's default `rounded-2xl`/`rounded-3xl`** or arbitrary radii (`rounded-[6px]`) — they don't exist in our scale.
 
-**`rounded-full` is reserved for genuine circles only:** status dots, avatars, spinners, radio markers, and **switch knobs** (the knob is a circle; the switch *track* is square — `Switch`/`SwitchPill` pair `rounded-none` on the track with `rounded-full` on the knob, and that is the ruling). Everything else is square — chips, badges, tags, tabs, progress tracks, switch tracks, cards, panels, buttons. A status chip is a **square tag**, never a pill.
+**`rounded-full` is reserved for genuine circles only:** status dots, avatars, spinners, radio markers, and **switches** — knob *and* track. The switch is the single sanctioned pill in the system: a square track hugging a round knob read as a mismatch, so `Switch`/`SwitchPill` pair `rounded-full` on both (that is the ruling — it supersedes the earlier square-track rule). Everything else is square — chips, badges, tags, tabs, progress tracks, cards, panels, buttons. A status chip is a **square tag**, never a pill.
+
+**Avatars follow what they depict.** An avatar for a *person* (`Topbar`'s user chip, the members list, the add-member picker) is a genuine circle — `rounded-full`. A monogram tile standing for an *entity* — project, provider, agent — is square (`rounded-md`), like every other entity tile.
 
 ### 2.4 Spacing
 
@@ -231,7 +239,7 @@ Use `DataTable` for any tabular dataset > 5 rows; its header row already carries
 ### 3.6 Form controls, toggles, and menus
 
 - **Text/number/password** → `Input` (`leftAddon`/`rightAddon` for icons/affordances); **long text** → `Textarea`; **short option list** → `Select` (Radix-backed styled dropdown, `<option>` children + `onValueChange`); **searchable/entity list** → `Combobox`; **searchable multi-select** (pick several from a long list, optional cap) → `MultiCombobox`. Wrap each in `FormField` (or pair with `Label`). Inline (flex-row) fields need a width wrapper — `Input`/`Select` are `w-full`.
-- **Boolean** → `Switch` (on/off) or `Checkbox`; **one-of-N** → `Radio`/`RadioGroup`, or `SegmentedControl` for a compact toggle bar. On a `Switch`/`SwitchPill` the **track is square** (`rounded-none`) and the **knob is round** (`rounded-full`) — that contrast is what reads as a toggle without a pill silhouette. Don't square the knob and don't round the track.
+- **Boolean** → `Switch` (on/off) or `Checkbox`; **one-of-N** → `Radio`/`RadioGroup`, or `SegmentedControl` for a compact toggle bar. On a `Switch`/`SwitchPill` both the **track and the knob are round** (`rounded-full`) — the switch is the system's one sanctioned pill silhouette (§2.3). Don't square either half.
 - **Tabs** → `Tabs` (pass `data-testid` per item where e2e needs it). **Dropdown menu** → `Menu` + `Menu.Item`/`Menu.Separator`. **Tooltip** → `Tooltip` (the single `TooltipProvider` is already mounted in `App.tsx`).
 
 ---
@@ -392,7 +400,7 @@ is an anti-pattern (§9).
 
 ## 9. Anti-patterns — do not introduce these
 
-- **Pill-shaped chips.** `rounded-full` on anything that is not a genuine circle — chips, badges, tags, tabs, switch tracks, progress tracks, buttons. Circles are dots, avatars, spinners, and switch knobs; everything else is a square tag (§2.3).
+- **Pill-shaped chips.** `rounded-full` on anything that is not a genuine circle or a switch — chips, badges, tags, tabs, progress tracks, buttons. Circles are dots, avatars and spinners; switches are the one sanctioned pill; everything else is a square tag (§2.3).
 - **Dimensional gradients on fills.** A fill is one flat color (or one flat alpha — see the chart fills in §8.3). No top-to-bottom lightening ramp, no fade-to-transparent, no bevel highlight, no inner sheen, no under-glow, no "raised" edge on buttons, chips, cards, tracks, or chart areas.
 - **Gradient-clipped text.** No `background-clip: text` wordmarks, hero numbers, or headings. They were all removed; identity text is a solid token color (§8.2).
 - **Background atmosphere.** Aurora washes, film grain, page-level radial glows, per-page background effects. They were deleted from `body` **and from every route including the dashboard and Tracey**; there is no exception left. Do not reintroduce them.
@@ -425,7 +433,7 @@ Before opening a frontend PR, verify:
 - [ ] No new hex values, no new px sizes outside the scale, no ad-hoc shadows.
 - [ ] All static styles are Tailwind utilities; inline `style` only for runtime-computed values. Complex statics use arbitrary-value syntax (`shadow-[var(--shadow-card)]`), never inline `style`.
 - [ ] Tokens used via `bg-card` / `text-primary` / `rounded-lg` / `shadow-[var(--shadow-…)]`, not raw hex or px.
-- [ ] Corners are square: no `rounded-full` except on a genuine circle (dot, avatar, spinner, switch knob); no `rounded-2xl`/`rounded-3xl`/`rounded-[Npx]`.
+- [ ] Corners are square: no `rounded-full` except on a genuine circle (dot, person avatar, spinner) or a switch (knob and track); no `rounded-2xl`/`rounded-3xl`/`rounded-[Npx]`.
 - [ ] Fills are flat: no gradient ramp, bevel, sheen, or glow on a button, chip, card, track, or chart area — and no gradient-clipped text. No background wash on any route (§8).
 - [ ] Text on a colored fill uses the matching `-ink` token (`text-accent-ink` / `text-danger-ink` / `text-success-ink`), never `text-white`.
 - [ ] Reused existing component (`Button`, `Card`, `Badge`, `Modal`, `Drawer`, `ListRail`, etc.) — no duplicate primitives.

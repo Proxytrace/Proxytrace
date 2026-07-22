@@ -10,7 +10,6 @@ interface AreaChartProps {
   color: string;
   padding?: { l?: number; r?: number; t?: number; b?: number };
   showAxis?: boolean;
-  showEndMarker?: boolean;
   xLabelFn?: (i: number, n: number) => string | null;
   formatValue?: (v: number) => string;
   tooltipLabelFn?: (i: number) => string;
@@ -25,7 +24,6 @@ export function AreaChart({
   color,
   padding,
   showAxis = true,
-  showEndMarker = true,
   xLabelFn,
   formatValue,
   tooltipLabelFn,
@@ -94,13 +92,6 @@ export function AreaChart({
           strokeLinejoin="round"
           className={drawIn ? 'chart-draw-in' : undefined}
         />
-        {showEndMarker && hoverIdx === null && (
-          <>
-            <circle cx={chart.endX} cy={chart.endY} r="8" fill={color} opacity="0.15" />
-            <circle cx={chart.endX} cy={chart.endY} r="4" fill={color} />
-            <circle cx={chart.endX} cy={chart.endY} r="2" fill="var(--bg-card)" />
-          </>
-        )}
         {hoverPt && (
           <>
             <line

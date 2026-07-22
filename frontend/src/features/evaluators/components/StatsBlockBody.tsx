@@ -52,7 +52,6 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
               height={140}
               color={color}
               showAxis={false}
-              showEndMarker
               formatValue={v => fmtPct(v)}
               tooltipLabelFn={i => new Date(passRateTrend[i].bucketStart).toLocaleDateString()}
             />
@@ -92,7 +91,6 @@ export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewD
                 height={140}
                 color={color}
                 showAxis={false}
-                showEndMarker
                 formatValue={v => fmtEur(v)}
                 tooltipLabelFn={i => new Date(costTrend[i].bucketStart).toLocaleDateString()}
               />

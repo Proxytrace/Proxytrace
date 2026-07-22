@@ -12,7 +12,13 @@ interface MiniAreaProps {
   tooltipLabel?: (i: number) => string;
 }
 
-/** Compact area sparkline with a flat tinted fill, end-point dot, and hover tooltip. No axes. */
+/**
+ * Compact area sparkline with a flat tinted fill and a hover tooltip. No axes.
+ *
+ * There is deliberately no end-of-series dot: the last point sits exactly on the right edge of
+ * the viewBox, and the SVG is `overflow-visible` (so the stroke's round cap isn't clipped), which
+ * left the dot hanging over the card edge.
+ */
 export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 0.18, formatValue, tooltipLabel }: MiniAreaProps) {
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(width);
   const w = measuredWidth || width;
@@ -41,7 +47,6 @@ export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 
   };
 
   const hoverPt = hoverIdx !== null && geom ? geom.pts[hoverIdx] : null;
-  const end = geom ? geom.pts[geom.pts.length - 1] : null;
   const fmt = formatValue ?? ((v: number) => String(Math.round(v)));
 
   return (
@@ -50,12 +55,6 @@ export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 
         <svg width="100%" height={height} viewBox={`0 0 ${w} ${height}`} className="block overflow-visible">
           <path d={geom.area} fill={color} fillOpacity={fillOpacity} />
           <path d={geom.line} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          {end && hoverIdx === null && (
-            <>
-              <circle cx={end.x} cy={end.y} r="5" fill={color} opacity="0.18" />
-              <circle cx={end.x} cy={end.y} r="2.3" fill={color} />
-            </>
-          )}
           {hoverPt && (
             <>
               <line x1={hoverPt.x} x2={hoverPt.x} y1={0} y2={height} stroke={color} strokeOpacity="0.4" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />

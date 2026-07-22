@@ -67,7 +67,6 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
             height={130}
             color={categoryColorVar[cat]}
             showAxis={false}
-            showEndMarker
             formatValue={v => fmtPct(v)}
             tooltipLabelFn={i => new Date((overview?.passRateTrend ?? [])[i]?.bucketStart ?? '').toLocaleDateString()}
           />

@@ -7,7 +7,6 @@ export interface AreaChartData {
   solidGridPath: string; dashedGridPath: string;
   grid: GridLine[];
   xLabels: { x: number; label: string }[];
-  endX: number; endY: number;
   pts: AreaPoint[];
   plotL: number; plotR: number; plotT: number; plotB: number;
 }
@@ -35,7 +34,7 @@ export function computeAreaChart(
     return {
       linePath: '', areaPath: '',
       solidGridPath: '', dashedGridPath: '',
-      grid: [], xLabels: [], endX: 0, endY: 0,
+      grid: [], xLabels: [],
       pts: [], plotL: padL, plotR: width - padR, plotT: padT, plotB: height - padB,
     };
   }
@@ -66,7 +65,6 @@ export function computeAreaChart(
   const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
   return {
     linePath: linePts, areaPath, solidGridPath, dashedGridPath, grid, xLabels,
-    endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1],
     pts: ptsTyped,
     plotL: padL, plotR: padL + w, plotT: padT, plotB: padT + h,
   };

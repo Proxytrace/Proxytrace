@@ -16,6 +16,10 @@ interface SwitchProps {
  * lives elsewhere (e.g. a settings row). On = the flat cyan accent fill; off = a recessed card-2
  * track. The off-state outline is an inset hairline ring (a box-shadow, not a `border`) so the knob
  * sits at the exact same offset in both states — toggling slides it cleanly with no 1px jump.
+ *
+ * The track is `rounded-full` to match the round knob: a square outline hugging a circle read as a
+ * mismatch. Switches are the one control the Wire system's square-corner rule exempts (DESIGN.md
+ * §2.3) — everything else, chips and tags included, stays square.
  */
 export function Switch({
   checked,
@@ -29,7 +33,7 @@ export function Switch({
     <span
       aria-hidden
       className={cn(
-        'relative block shrink-0 w-10 h-6 rounded-none',
+        'relative block shrink-0 w-10 h-6 rounded-full',
         'transition-[background-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
         checked
           ? 'bg-accent'

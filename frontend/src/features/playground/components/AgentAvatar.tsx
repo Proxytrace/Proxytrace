@@ -16,7 +16,7 @@ export function AgentAvatar({ seed, label, size = 32 }: Props) {
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center rounded-full font-semibold text-[var(--accent-ink)] shrink-0 select-none tracking-[0.02em]"
+      className="inline-flex items-center justify-center rounded-full font-semibold text-accent-ink shrink-0 select-none tracking-[0.02em]"
       style={{
         width: size,
         height: size,

@@ -57,12 +57,14 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
       <CopyButton text={copyText} label={t`Copy tool call`} className={hoverRevealOverlayCls} />
       {/* Header. The toggle and the Definition action are siblings so we never nest one
           interactive control inside another (invalid HTML + broken a11y). */}
-      <div className="flex items-center pr-9">
+      {/* The hover wash sits on the header row so it fills the whole header — on the toggle
+          button alone it stopped short of the Definition action and the right padding. */}
+      <div className="flex items-center pr-9 transition-colors duration-100 hover:bg-success-subtle">
         <button
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(o => !o)}
-          className="flex-1 min-w-0 flex items-center gap-2 pl-3 py-2.5 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 hover:bg-success-subtle"
+          className="flex-1 min-w-0 flex items-center gap-2 pl-3 py-2.5 text-left bg-transparent border-0 cursor-pointer"
         >
           <span
             aria-hidden

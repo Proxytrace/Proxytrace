@@ -58,7 +58,8 @@ export function SwitchPill({
     >
       <span
         className={cn(
-          'w-7 h-4 rounded-none relative transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
+          // Round track to match the round knob — see Switch.tsx.
+          'w-7 h-4 rounded-full relative transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
           checked ? 'bg-accent' : 'bg-[var(--border-color)]',
         )}
         aria-hidden="true"
