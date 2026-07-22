@@ -44,6 +44,23 @@ custom or self-hosted endpoint is shown). The model
 list is **pulled from the provider** — there is no manual "add model" control; use reload (or wait
 for the periodic refresh) to pick up newly deployed models.
 
+### Rotating an upstream API key
+
+To replace the credential Proxytrace uses when forwarding requests to a provider:
+
+1. Open **Settings**, choose **Providers**, and select the provider.
+2. In the **Upstream API key** row, choose **Edit**.
+3. Enter the replacement key. The field starts empty so the existing secret is never copied into
+   an editable form control.
+4. Choose **Save**. Proxytrace tests the replacement against the provider's configured endpoint
+   before storing it.
+
+If the provider rejects the key or cannot be reached, Proxytrace leaves the existing key unchanged
+and shows the reason. A successful provider response that reports no models is shown as a warning,
+but the replacement is saved because a zero-model response can be valid. Proxies refresh cached
+provider credentials within the configured API-key cache interval (30 seconds by default), after
+which new requests use the replacement key.
+
 ### Azure OpenAI
 
 A provider whose endpoint host contains `azure.com` is treated as **Azure OpenAI**. For Azure

@@ -6,7 +6,7 @@ public interface ISetupService
 {
     Task<SetupResult> CompleteAsync(SetupInput input, CancellationToken cancellationToken = default);
 
-    Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default);
+    Task<ProviderConnectionResult> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> ListProviderModelsAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default);
 

@@ -8,6 +8,7 @@ using Proxytrace.Application.Setup;
 using Proxytrace.Common.Net;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AuditLog;
+using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
 
@@ -90,8 +91,15 @@ public class SetupController : ControllerBase
                 request.ProviderEndpoint.ToEndpointUri(),
                 request.ProviderUpstreamApiKey,
                 request.ProviderKind);
-            var ok = await setup.TestProviderConnectionAsync(input, cancellationToken);
-            return new TestConnectionResponse(ok, ok ? null : "Connection failed.");
+            ProviderConnectionResult result = await setup.TestProviderConnectionAsync(input, cancellationToken);
+            return new TestConnectionResponse(
+                result.Success,
+                result.Error?.ToString(),
+                result.ModelCount);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -104,10 +112,13 @@ public class SetupController : ControllerBase
                 logger.LogError(ex, "Provider connection test failed");
             }
 
-            var message = env.IsDevelopment()
-                ? ex.Message
-                : $"An unexpected error occurred. (Error ID: {errorId})";
-            return new TestConnectionResponse(false, message);
+            string? message = env.IsDevelopment() ? ex.Message : null;
+            return new TestConnectionResponse(
+                false,
+                ProviderConnectionError.Unknown.ToString(),
+                0,
+                message,
+                errorId);
         }
     }
 

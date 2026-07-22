@@ -4,7 +4,7 @@ public interface IProviderClient
 {
     public delegate IProviderClient Factory(IModelProvider provider);
 
-    Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default);
+    Task<ProviderConnectionResult> VerifyConnectionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Discovers the provider's models and resolves each one's price. For Azure providers only the

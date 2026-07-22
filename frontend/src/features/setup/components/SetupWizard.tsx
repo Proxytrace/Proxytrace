@@ -31,9 +31,9 @@ export function SetupWizard() {
           testResult={wiz.testResult}
           error={wiz.currentStep === SETUP_STEPS.provider ? wiz.error : null}
           onPresetChange={wiz.handlePresetChange}
-          onNameChange={(v) => { wiz.setProviderName(v); wiz.setTestResult(null); wiz.resetModels(); }}
-          onEndpointChange={(v) => { wiz.setProviderEndpoint(v); wiz.setTestResult(null); wiz.resetModels(); }}
-          onApiKeyChange={(v) => { wiz.setProviderApiKey(v); wiz.setTestResult(null); wiz.resetModels(); }}
+          onNameChange={(v) => { wiz.setProviderName(v); wiz.clearTestResult(); wiz.resetModels(); }}
+          onEndpointChange={(v) => { wiz.setProviderEndpoint(v); wiz.clearTestResult(); wiz.resetModels(); }}
+          onApiKeyChange={(v) => { wiz.setProviderApiKey(v); wiz.clearTestResult(); wiz.resetModels(); }}
           onTestConnection={wiz.handleTestConnection}
           onKeyDown={wiz.handleEnter}
         />

@@ -380,6 +380,25 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
+    [TestMethod]
+    public async Task GetAvailableModels_WhenProviderRejectsKey_ReturnsBadRequest()
+    {
+        var providerClient = Substitute.For<IProviderClient>();
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns<IReadOnlyList<PricedModel>>(_ => throw new ProviderConnectionException(
+                ProviderConnectionError.Unauthorized,
+                new HttpRequestException("Unauthorized")));
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient));
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var controller = ResolveController(services);
+
+        var result = await controller.GetAvailableModels(provider.Id, CancellationToken);
+
+        var badRequest = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequest.Value.Should().Be(nameof(ProviderConnectionError.Unauthorized));
+    }
+
     private static ModelProvidersController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<IModelProviderRepository>(),
         services.GetRequiredService<IApiKeyRepository>(),

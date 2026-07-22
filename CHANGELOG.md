@@ -25,6 +25,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Upstream provider keys can be rotated from Settings.** Admins can edit a provider's upstream
+  API key inline; Proxytrace verifies the replacement against the provider before saving it and
+  keeps the existing credential when verification fails.
 - **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
   external service no longer needs a long-lived user login (with MFA disabled and a token-refresh loop)
   to call the API. Mint a key with the new **REST API read** and/or **REST API write** capabilities:
@@ -55,6 +58,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Provider connection tests no longer report invalid credentials as successful.** Upstream
+  authentication and network failures are now surfaced in the setup wizard instead of being
+  mistaken for a successful connection with an empty model list. A successful provider response
+  with no models remains valid and is shown as a warning.
 - **The Tracey message box now shows a focus ring.** Clicking or tabbing into the "Ask Tracey…" box
   previously changed nothing but a faint 1px tint on its border — easy to miss against the dark panel,
   and the one input in the app that opted out of the standard focus ring. The composer frame now

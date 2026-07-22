@@ -1,16 +1,16 @@
 using AwesomeAssertions;
 using NSubstitute;
+using Proxytrace.Testing;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Infrastructure.Internal;
+using System.Net;
 
 namespace Proxytrace.Infrastructure.Tests;
 
 [TestClass]
-public sealed class ProviderClientTests
+public sealed class ProviderClientTests : BaseTest<Module>
 {
-    public required TestContext TestContext { get; init; }
-
     [TestMethod]
     public async Task GetModels_UnsupportedKind_Throws()
     {
@@ -18,20 +18,89 @@ public sealed class ProviderClientTests
         var client = new ProviderClient(provider, Substitute.For<IModelRepository>(), new HttpClient(), Substitute.For<IPricingService>());
 
         await FluentActions
-            .Invoking(() => client.GetModelsAsync(TestContext.CancellationToken))
+            .Invoking(() => client.GetModelsAsync(CancellationToken))
             .Should()
             .ThrowAsync<NotSupportedException>();
     }
 
     [TestMethod]
-    public async Task VerifyConnection_UnsupportedKind_ReturnsFalse()
+    public async Task VerifyConnection_UnsupportedKind_ReturnsClassifiedFailure()
     {
         var provider = StubProvider(ModelProviderKind.Unknown);
         var client = new ProviderClient(provider, Substitute.For<IModelRepository>(), new HttpClient(), Substitute.For<IPricingService>());
 
-        var result = await client.VerifyConnectionAsync(TestContext.CancellationToken);
+        var result = await client.VerifyConnectionAsync(CancellationToken);
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
+        result.Error.Should().Be(ProviderConnectionError.UnsupportedKind);
+        result.ModelCount.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task VerifyConnection_OpenAiUnauthorized_ReturnsClassifiedFailure()
+    {
+        var handler = new RoutingHandler(modelsStatus: HttpStatusCode.Unauthorized);
+        var client = new ProviderClient(
+            StubProvider(ModelProviderKind.OpenAi),
+            EchoingModelRepository(),
+            new HttpClient(handler),
+            Substitute.For<IPricingService>());
+
+        var result = await client.VerifyConnectionAsync(CancellationToken);
+
+        result.Success.Should().BeFalse();
+        result.Error.Should().Be(ProviderConnectionError.Unauthorized);
+        result.ModelCount.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task VerifyConnection_TransportFailure_ReturnsNetworkError()
+    {
+        var handler = new RoutingHandler(transportException: new HttpRequestException("Network unavailable"));
+        var client = new ProviderClient(
+            StubAzureProvider(),
+            EchoingModelRepository(),
+            new HttpClient(handler),
+            Substitute.For<IPricingService>());
+
+        var result = await client.VerifyConnectionAsync(CancellationToken);
+
+        result.Success.Should().BeFalse();
+        result.Error.Should().Be(ProviderConnectionError.NetworkError);
+    }
+
+    [TestMethod]
+    public async Task VerifyConnection_WhenCallerCancels_PropagatesCancellation()
+    {
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        var client = new ProviderClient(
+            StubAzureProvider(),
+            EchoingModelRepository(),
+            new HttpClient(new RoutingHandler()),
+            Substitute.For<IPricingService>());
+
+        await FluentActions
+            .Invoking(() => client.VerifyConnectionAsync(cancellation.Token))
+            .Should()
+            .ThrowAsync<OperationCanceledException>();
+    }
+
+    [TestMethod]
+    public async Task VerifyConnection_OpenAiReturnsNoModels_ReturnsSuccessWithZeroCount()
+    {
+        var handler = new RoutingHandler(modelsJson: """{"data":[]}""");
+        var client = new ProviderClient(
+            StubProvider(ModelProviderKind.OpenAi),
+            EchoingModelRepository(),
+            new HttpClient(handler),
+            Substitute.For<IPricingService>());
+
+        var result = await client.VerifyConnectionAsync(CancellationToken);
+
+        result.Success.Should().BeTrue();
+        result.Error.Should().BeNull();
+        result.ModelCount.Should().Be(0);
     }
 
     [TestMethod]
@@ -47,7 +116,7 @@ public sealed class ProviderClientTests
             .Returns(ModelPrice.Unknown);
         var client = new ProviderClient(provider, modelRepo, new HttpClient(handler), pricing);
 
-        var result = await client.GetModelsAsync(TestContext.CancellationToken);
+        var result = await client.GetModelsAsync(CancellationToken);
 
         // The deployment id is the endpoint's model name; "should-not-appear" from /models never surfaces.
         result.Should().ContainSingle();
@@ -60,17 +129,38 @@ public sealed class ProviderClientTests
     }
 
     [TestMethod]
-    public async Task GetModels_Azure_DeploymentsFail_ReturnsEmpty_NoModelsFallback()
+    public async Task GetModels_AzureUnauthorized_ThrowsClassifiedError_NoModelsFallback()
     {
         var handler = new RoutingHandler(
-            deploymentsJson: null,
+            deploymentsStatus: HttpStatusCode.Unauthorized,
             modelsJson: """{"data":[{"id":"should-not-appear"}]}""");
         var provider = StubAzureProvider();
         var client = new ProviderClient(provider, EchoingModelRepository(), new HttpClient(handler), Substitute.For<IPricingService>());
 
-        var result = await client.GetModelsAsync(TestContext.CancellationToken);
+        var exception = await FluentActions
+            .Invoking(() => client.GetModelsAsync(CancellationToken))
+            .Should()
+            .ThrowAsync<ProviderConnectionException>();
 
-        result.Should().BeEmpty();
+        exception.Which.Error.Should().Be(ProviderConnectionError.Unauthorized);
+        handler.ModelsRequestCount.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task VerifyConnection_AzureUnauthorized_ReturnsClassifiedFailure()
+    {
+        var handler = new RoutingHandler(deploymentsStatus: HttpStatusCode.Unauthorized);
+        var client = new ProviderClient(
+            StubAzureProvider(),
+            EchoingModelRepository(),
+            new HttpClient(handler),
+            Substitute.For<IPricingService>());
+
+        var result = await client.VerifyConnectionAsync(CancellationToken);
+
+        result.Success.Should().BeFalse();
+        result.Error.Should().Be(ProviderConnectionError.Unauthorized);
+        handler.ModelsRequestCount.Should().Be(0);
     }
 
     private static IModelRepository EchoingModelRepository()
@@ -105,20 +195,34 @@ public sealed class ProviderClientTests
         return provider;
     }
 
-    private sealed class RoutingHandler(string? deploymentsJson, string modelsJson) : HttpMessageHandler
+    private sealed class RoutingHandler(
+        string deploymentsJson = """{"data":[]}""",
+        string modelsJson = """{"data":[]}""",
+        HttpStatusCode deploymentsStatus = HttpStatusCode.OK,
+        HttpStatusCode modelsStatus = HttpStatusCode.OK,
+        Exception? transportException = null) : HttpMessageHandler
     {
+        public int ModelsRequestCount { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
+            if (transportException is not null)
+                return Task.FromException<HttpResponseMessage>(transportException);
+
             string path = request.RequestUri?.AbsolutePath ?? string.Empty;
             if (path.Contains("/deployments"))
             {
-                return Task.FromResult(deploymentsJson is null
-                    ? new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
-                    : new HttpResponseMessage(System.Net.HttpStatusCode.OK)
-                      { Content = new StringContent(deploymentsJson, System.Text.Encoding.UTF8, "application/json") });
+                return Task.FromResult(new HttpResponseMessage(deploymentsStatus)
+                {
+                    Content = new StringContent(deploymentsJson, System.Text.Encoding.UTF8, "application/json"),
+                });
             }
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
-                { Content = new StringContent(modelsJson, System.Text.Encoding.UTF8, "application/json") });
+
+            ModelsRequestCount++;
+            return Task.FromResult(new HttpResponseMessage(modelsStatus)
+            {
+                Content = new StringContent(modelsJson, System.Text.Encoding.UTF8, "application/json"),
+            });
         }
     }
 }

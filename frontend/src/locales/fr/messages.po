@@ -1389,6 +1389,9 @@ msgstr "Configurez votre Evaluator."
 msgid "Connect your model provider"
 msgstr "Connectez votre fournisseur de modèle"
 
+msgid "Connected, but the provider reported no models."
+msgstr "Connexion établie, mais le fournisseur n'a signalé aucun modèle."
+
 msgid "Connecting…"
 msgstr "Connexion…"
 
@@ -1495,6 +1498,9 @@ msgstr "Impossible de charger la requête pour ce cas."
 msgid "Could not open the trace for this response."
 msgstr "Impossible d’ouvrir le Trace pour cette réponse."
 
+msgid "Could not reach the provider."
+msgstr "Impossible de joindre le fournisseur."
+
 msgid "Could not reset your password. Please try again."
 msgstr "Impossible de réinitialiser votre mot de passe. Veuillez réessayer."
 
@@ -1507,8 +1513,18 @@ msgstr "non testées"
 msgid "Could not test"
 msgstr "Non testée"
 
+msgid "Could not update the upstream API key."
+msgstr "Impossible de mettre à jour l'API key amont."
+
 msgid "Could not verify the code. Please try again."
 msgstr "Impossible de vérifier le code. Veuillez réessayer."
+
+msgid "Could not verify the provider connection."
+msgstr "Impossible de vérifier la connexion au fournisseur."
+
+#. placeholder {0}: details.errorId
+msgid "Could not verify the provider connection. Error ID: {0}"
+msgstr "Impossible de vérifier la connexion au fournisseur. ID d'erreur : {0}"
 
 msgid "Couldn't load detectors."
 msgstr "Impossible de charger les détecteurs."
@@ -2483,6 +2499,9 @@ msgstr "Clé"
 #. placeholder {0}: created.name
 msgid "Key \"{0}\" created — copy it now, it won't be shown again"
 msgstr "Clé \"{0}\" créée — copiez-la maintenant, elle ne sera plus affichée"
+
+msgid "Key accepted, but the provider reported no models."
+msgstr "API key acceptée, mais le fournisseur n'a signalé aucun modèle."
 
 msgid "Key name"
 msgstr "Nom de la clé"
@@ -4912,6 +4931,9 @@ msgstr "en test"
 msgid "Text response"
 msgstr "Réponse textuelle"
 
+msgid "That key was rejected by the provider."
+msgstr "Cette API key a été rejetée par le fournisseur."
+
 msgid "The A/B test could not run — the theory was not tested."
 msgstr "Le A/B test n’a pas pu s’exécuter — la Theory n’a pas été testée."
 
@@ -5047,6 +5069,9 @@ msgstr "Ce lien de réinitialisation du mot de passe est manquant ou mal formé.
 
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Cela supprime définitivement le Run et ses résultats. Cette action est irréversible."
+
+msgid "This provider kind does not support connection testing."
+msgstr "Ce type de fournisseur ne prend pas en charge le test de connexion."
 
 msgid "This removes the detector and its review history. This can't be undone."
 msgstr "Cela supprime le détecteur et son historique de revue. Cette action est irréversible."
@@ -5347,6 +5372,9 @@ msgstr "Passer à la planification"
 msgid "Upstream API key"
 msgstr "API key amont"
 
+msgid "Upstream API key updated."
+msgstr "API key amont mise à jour."
+
 msgid "Upstream key copied"
 msgstr "API key amont copiée"
 
@@ -5425,6 +5453,9 @@ msgstr "Vérifier"
 
 msgid "Verify & enable"
 msgstr "Vérifier et activer"
+
+msgid "Verifying key…"
+msgstr "Vérification de l'API key…"
 
 msgid "Version history"
 msgstr "Historique des versions"

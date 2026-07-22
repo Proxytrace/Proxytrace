@@ -205,8 +205,19 @@ public class ModelProvidersController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<string>>> GetAvailableModels(Guid providerId, CancellationToken cancellationToken)
     {
         var provider = await providerRepository.GetAsync(providerId, cancellationToken);
-        var discovered = await provider.CreateClient().GetModelsAsync(cancellationToken);
-        return discovered.Select(m => m.Model.Name).OrderBy(n => n).ToArray();
+        try
+        {
+            var discovered = await provider.CreateClient().GetModelsAsync(cancellationToken);
+            return discovered.Select(m => m.Model.Name).OrderBy(n => n).ToArray();
+        }
+        catch (ProviderConnectionException ex)
+        {
+            return BadRequest(ex.Error.ToString());
+        }
+        catch (NotSupportedException)
+        {
+            return BadRequest(ProviderConnectionError.UnsupportedKind.ToString());
+        }
     }
 
     [HttpGet("{providerId:guid}/models")]
