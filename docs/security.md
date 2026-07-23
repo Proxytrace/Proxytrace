@@ -101,6 +101,19 @@ so the hashed/encrypted lookup cannot match it — the affected existing API key
 pending invites **do not authenticate until a restart re-runs the backfill to completion**.
 Credentials created after the upgrade are unaffected.
 
+## Credential freshness at the ingestion proxy (no positive credential cache)
+
+The proxy resolves inbound credentials (`Proxytrace.Proxy/Internal/ApiKeyResolver.cs`) **from
+storage on every request** — deliberately uncached. A cached `ResolvedApiKey` carries the decrypted
+upstream provider key, so any TTL becomes a window in which a rotated key keeps being forwarded and
+a revoked inbound credential keeps authenticating, independently per proxy replica (#407; a
+cross-process invalidation broadcast was rejected because a disconnected/restarting replica can miss
+it). Rotation and revocation therefore take effect on the **next request**; when the database is
+unreachable the proxy **fails closed** (the request errors) rather than serving stale credentials.
+The per-request cost is a few indexed point lookups plus one Data Protection decrypt, guarded by the
+`proxyResolve*` budgets in `perf/perf-budgets.json`. Do not reintroduce positive caching on this
+path; the freshness guarantee is pinned by `ApiKeyResolverRotationTests`.
+
 ## Threat model
 
 Protects **database dumps and backups**: the encryption key ring lives outside the database (in

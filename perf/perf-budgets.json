@@ -33,8 +33,12 @@
     "testRunStatsBySuite": 60,
     "testRunStatsBySuitePage": 90,
     "testRunStatsPassTotals": 150,
-    "testRunStatsRecentCohorts": 200
+    "testRunStatsRecentCohorts": 200,
+    "proxyResolveProxytraceKey": 50,
+    "proxyResolveUpstreamKey": 75
   },
+
+  "_comment_proxyResolve": "proxyResolveProxytraceKey/proxyResolveUpstreamKey guard the proxy's per-request credential resolution (issue #407). The proxy deliberately resolves credentials from storage on EVERY proxied request — no positive cache, so key rotation/revocation takes effect on the next request — which makes this a hot per-request path that must stay flat as data grows: a handful of indexed point lookups (ApiKey.KeyHash unique index / ModelProvider.ApiKeyLookupHash blind index / PK hydrations + one Data Protection decrypt), independent of AgentCall volume. Each iteration runs in a fresh lifetime scope because per-request scope/DbContext construction is part of the cost the proxy pays. Both budgets are UNCALIBRATED PLACEHOLDERS (set conservatively; expected single-digit ms) — RECALIBRATE ~20-30% above observed p95 on a full 1M run. A breach signals a regression that made resolution scale with table size (a lost index, an accidental join to a high-volume table) or a per-request storage path that got heavier.",
 
   "_comment_anomaly": "anomalyTimeline guards the anomaly-dashboard timeline aggregate (GetAnomalyCountsByAgentAsync): a GROUP BY (bucket, agent) with bitmask split counts over WHERE OutlierFlags <> 0, which rides the partial outlier index — the seeder flags ~3% of calls, so at 1M rows the scan touches ~30k rows, far cheaper than the full-window stats aggregates. Recalibrated 2026-07-03 after the traces-sorting columns widened the row (TotalTokens/CacheHitRate): observed p95 54.8ms warm, 64.8ms on the first cold pass after a fresh seed — the budget covers the cold pass.",
 

@@ -65,7 +65,7 @@ clients connect there with a key as the bearer token.
   without the `McpRead` scope**, then stashes `apiKey.Project.Id` and `apiKey.Scopes` on
   `HttpContext.Items` (`ProjectIdItemKey` / `ScopesItemKey`), **and the owner id under
   `CurrentUserAccessor.UserIdItemKey`** so `ICurrentUserAccessor` attributes the call to the owner. The
-  ingestion proxy enforces the mirror image — `CachedApiKeyResolver` rejects keys without `Ingestion`.
+  ingestion proxy enforces the mirror image — `ApiKeyResolver` rejects keys without `Ingestion`.
 - **Write tools call `IMcpProjectAccessor.RequireWriteScope()`** first, which throws `McpException`
   unless the key was granted `McpWrite`. So a read-only (`McpRead`-only) key can list/get everything
   but cannot curate suites, start/cancel runs, or change proposal status.
@@ -137,5 +137,5 @@ two distinct project contexts**), the project accessor, and a representative too
 storage, the `McpApiKey` scheme, the `"Mcp"` policy, stateless Streamable HTTP) driven by the real MCP
 client — it proves that a tool, run in the SDK's stateless request scope, sees the project the API key
 resolved to on that request (and that an unknown key is rejected by the policy). Scope coverage:
-`CachedApiKeyResolverTests` rejects a non-`Ingestion` key at the proxy; the auth-handler tests reject an
+`ApiKeyResolverTests` rejects a non-`Ingestion` key at the proxy; the auth-handler tests reject an
 `Ingestion`-only key at `/mcp`; the accessor tests cover `RequireWriteScope` with and without `McpWrite`.
