@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative, fmtLatency } from '../../../lib/format';
 import { ActivityIcon, XIcon, ExternalLinkIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
@@ -34,7 +35,7 @@ export function RecentEvaluationsTable({ rows, isLoading, scoreFilter, onClearFi
             type="button"
             onClick={onClearFilter}
             data-testid="evaluator-recent-filter-clear"
-            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-accent-subtle text-accent-text text-caption font-semibold cursor-pointer transition-colors hover:bg-card-2"
+            className={cn('ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-accent-subtle text-accent-text text-caption font-semibold cursor-pointer transition-colors hover:bg-card-2', FOCUS_RING)}
           >
             {i18n._(SCORE_LABEL[scoreFilter])}
             <XIcon size={10} />

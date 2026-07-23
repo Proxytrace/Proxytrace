@@ -7,7 +7,7 @@ import { Popover } from '../../../components/ui/Popover';
 import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { useAutosizeTextarea } from '../../../hooks/useAutosizeTextarea';
 import { cn } from '../../../lib/cn';
-import { FOCUS_RING_FIELD } from '../../../lib/constants';
+import { FOCUS_RING, FOCUS_RING_FIELD } from '../../../lib/constants';
 
 interface Props {
   disabled: boolean;
@@ -103,6 +103,7 @@ export function ComposeBox({
                   data-testid="endpoint-picker"
                   className={cn(
                     'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-caption mono cursor-pointer transition-colors hover:text-primary border',
+                    FOCUS_RING,
                     pickerOpen
                       ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
                       : 'bg-[var(--bg-wash-hover)] border-border text-secondary',

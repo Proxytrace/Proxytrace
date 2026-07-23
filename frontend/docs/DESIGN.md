@@ -91,7 +91,8 @@ Type scale (data-dense — do not enlarge without a strong reason):
 | `text-title` | 13px | Card section labels, button labels, nav items, breadcrumb |
 | `text-h2` | 14px | Card titles, rail titles |
 | `text-h1` | 18px | Page titles, drawer headers |
-| `text-display` | 28px | KPI numbers only |
+| `text-display-sm` | 22px | Secondary KPI figures (stat cells/tiles), setup wizard step headings |
+| `text-display` | 28px | Hero KPI numbers |
 | `text-chat` | 15px | **Tracey chat prose only** (§8.2) — messages, composer, in-chat h3 |
 | `text-chat-title` | 16px | **Tracey chat only** (§8.2) — in-chat markdown h2 |
 

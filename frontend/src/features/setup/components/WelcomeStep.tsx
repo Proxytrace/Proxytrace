@@ -41,8 +41,7 @@ export function WelcomeStep() {
   return (
     <div className="flex flex-col gap-6" data-testid="setup-welcome">
       <div>
-        {/* display-tier: intentional, outside type scale */}
-        <h1 className="text-[22px] font-bold text-primary leading-snug tracking-[-0.01em]">
+        <h1 className="text-display-sm font-bold text-primary leading-snug tracking-[-0.01em]">
           <Trans>Welcome to <span className="text-accent-text">Proxytrace</span></Trans>
         </h1>
         <p className="text-title text-secondary mt-1.5 leading-relaxed">

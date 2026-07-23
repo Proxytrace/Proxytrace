@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING } from '../../../lib/constants';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 
@@ -53,6 +54,7 @@ export function NameStep({ value, onChange }: Props) {
                 onClick={() => { setActive(p.key); onChange(i18n._(p.name)); inputRef.current?.focus(); }}
                 className={cn(
                   'cursor-pointer rounded-none text-body font-semibold transition-colors duration-150 px-3 py-1.5 border',
+                  FOCUS_RING,
                   selected
                     ? 'border-accent bg-accent-subtle text-accent-hover'
                     : 'border-border bg-card text-secondary',
@@ -68,6 +70,7 @@ export function NameStep({ value, onChange }: Props) {
             onClick={() => { setActive(null); onChange(''); inputRef.current?.focus(); }}
             className={cn(
               'cursor-pointer rounded-none text-body font-semibold transition-colors duration-150 px-3 py-1.5 border border-dashed bg-transparent text-muted',
+              FOCUS_RING,
               active === null && !value ? 'border-accent' : 'border-border',
             )}
           >

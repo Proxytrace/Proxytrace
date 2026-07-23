@@ -5,6 +5,7 @@ import { Button, IconButton } from '../../../components/ui/Button';
 import { Textarea } from '../../../components/ui/Textarea';
 import { XIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING } from '../../../lib/constants';
 import type { PlaygroundToolRequest } from '../state/types';
 
 interface Props {
@@ -58,14 +59,14 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       <div className="flex items-center gap-1 border-b border-border">
         {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
-          className={cn('px-3 py-1.5 text-body-sm font-semibold border-b-2', tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted')}
+          className={cn('px-3 py-1.5 text-body-sm font-semibold border-b-2 cursor-pointer', FOCUS_RING, tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted')}
           onClick={() => { setTab('result'); setValidationError(null); }}
         >
           <Trans>Provide result</Trans>
         </button>
         {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
-          className={cn('px-3 py-1.5 text-body-sm font-semibold border-b-2', tab === 'error' ? 'border-danger text-primary' : 'border-transparent text-muted')}
+          className={cn('px-3 py-1.5 text-body-sm font-semibold border-b-2 cursor-pointer', FOCUS_RING, tab === 'error' ? 'border-danger text-primary' : 'border-transparent text-muted')}
           onClick={() => { setTab('error'); setValidationError(null); }}
         >
           <Trans>Reject (error)</Trans>
