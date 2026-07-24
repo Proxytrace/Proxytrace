@@ -49,6 +49,36 @@ header {
   min-width: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#prompt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px 10px;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+#prompt-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
 #settings-btn {
   background: none;
   border: 1px solid var(--border);
@@ -573,3 +603,67 @@ footer {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── System-prompt panel ──────────────────────────────────────────────────── */
+
+.prompt-modal {
+  max-width: 640px;
+  gap: 16px;
+}
+
+.prompt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prompt-section-label {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* Read-only display of the default (base) prompt */
+.prompt-display {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* Editable override textarea */
+.prompt-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  padding: 10px 12px;
+  outline: none;
+  resize: vertical;
+  min-height: 140px;
+  transition: border-color 0.15s;
+}
+
+.prompt-textarea:focus {
+  border-color: var(--accent);
+}
+
+/* Brief flash when the textarea is empty on Apply */
+.prompt-textarea--error {
+  border-color: #c0392b;
+}

@@ -17,12 +17,21 @@
         Routed through Proxytrace proxy &mdash; every message is captured in your traces
       </span>
     </div>
-    <button id="settings-btn" title="Model parameters" aria-label="Model parameters">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    </button>
+    <div class="header-actions">
+      <button id="prompt-btn" title="System prompt" aria-label="System prompt">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+        </svg>
+        <span>Prompt</span>
+      </button>
+      <button id="settings-btn" title="Model parameters" aria-label="Model parameters">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
   </div>
   <nav id="agent-tabs" aria-label="Select agent">
     <!-- Agent tabs are injected here by script.js -->
@@ -130,6 +139,42 @@
     <div class="modal-footer">
       <button id="settings-reset" class="btn-secondary">Reset to defaults</button>
       <button id="settings-done" class="btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── System Prompt Panel ──────────────────────────────────────────────── -->
+<div id="prompt-modal" class="modal-backdrop" hidden>
+  <div class="modal prompt-modal" role="dialog" aria-labelledby="prompt-title" aria-modal="true">
+    <div class="modal-header">
+      <h2 id="prompt-title">System Prompt</h2>
+      <button id="prompt-close" class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-hint">
+      The <strong>default prompt</strong> is always shown below (read-only). Paste an improved
+      prompt in the <strong>Override</strong> textarea and click Apply — the next message will
+      use it. Reset restores the default and starts a fresh session.
+    </p>
+
+    <div class="prompt-section">
+      <div class="prompt-section-label">Default prompt</div>
+      <pre id="prompt-default" class="prompt-display"></pre>
+    </div>
+
+    <div class="prompt-section">
+      <label class="prompt-section-label" for="prompt-override-input">Override</label>
+      <textarea
+        id="prompt-override-input"
+        class="prompt-textarea"
+        rows="10"
+        placeholder="Paste the optimizer's improved prompt here…"
+        spellcheck="false"
+      ></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button id="prompt-reset" class="btn-secondary">Reset to default</button>
+      <button id="prompt-apply" class="btn-primary">Apply</button>
     </div>
   </div>
 </div>

@@ -14,11 +14,21 @@ const settingsModal = document.getElementById("settings-modal");
 const settingsCloseBtn = document.getElementById("settings-close");
 const settingsDoneBtn = document.getElementById("settings-done");
 const settingsResetBtn = document.getElementById("settings-reset");
+const promptBtn = document.getElementById("prompt-btn");
+const promptModal = document.getElementById("prompt-modal");
+const promptCloseBtn = document.getElementById("prompt-close");
+const promptDefaultEl = document.getElementById("prompt-default");
+const promptOverrideInput = document.getElementById("prompt-override-input");
+const promptApplyBtn = document.getElementById("prompt-apply");
+const promptResetBtn = document.getElementById("prompt-reset");
 
 // Per-agent conversation history: agentId → message[]
 const histories = {};
 // Per-agent session ID sent as X-Proxytrace-Session-Id; null until the first message is sent
 const sessionIds = {};
+// Per-agent current effective system prompt override (null = using default)
+// Mirrors the server's in-memory overrides so the panel can display without a round-trip.
+const systemPromptOverrides = {};
 let agents = [];
 let activeAgentId = null;
 let streaming = false;
@@ -98,6 +108,84 @@ function resetSettings() {
   syncParamInputs();
 }
 
+// ─── System-prompt panel ───────────────────────────────────────────────────
+
+function openPromptPanel() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+
+  // Always show the built-in default (read-only)
+  promptDefaultEl.textContent = agent.baseSystemPrompt ?? "";
+
+  // Pre-fill the textarea with the current override (empty if none is set)
+  promptOverrideInput.value = systemPromptOverrides[activeAgentId] ?? "";
+
+  // Update dialog title to show which agent we're editing
+  document.getElementById("prompt-title").textContent = `System Prompt — ${agent.name}`;
+
+  promptModal.hidden = false;
+  promptOverrideInput.focus();
+}
+
+function closePromptPanel() {
+  promptModal.hidden = true;
+}
+
+async function applyPromptOverride() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+
+  // Trim only trailing whitespace/newlines — no other normalisation
+  const raw = promptOverrideInput.value.replace(/\s+$/, "");
+  if (!raw) {
+    promptOverrideInput.classList.add("prompt-textarea--error");
+    setTimeout(() => promptOverrideInput.classList.remove("prompt-textarea--error"), 1000);
+    return;
+  }
+
+  try {
+    const res = await fetch(`/agents/${agent.id}/system-prompt`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ systemPrompt: raw }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? `HTTP ${res.status}`);
+    }
+    const { systemPrompt } = await res.json();
+    systemPromptOverrides[agent.id] = systemPrompt;
+    agent.systemPrompt = systemPrompt; // keep local cache in sync
+    closePromptPanel();
+  } catch (err) {
+    alert(`Could not apply prompt: ${err.message}`);
+  }
+}
+
+async function resetPromptOverride() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+
+  try {
+    const res = await fetch(`/agents/${agent.id}/system-prompt`, { method: "DELETE" });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? `HTTP ${res.status}`);
+    }
+    const { systemPrompt } = await res.json();
+    delete systemPromptOverrides[agent.id];
+    agent.systemPrompt = systemPrompt; // restore to default
+    // Reset also clears the conversation and starts a new session so back-to-back
+    // demos compare clean before/after runs.
+    histories[agent.id] = [];
+    sessionIds[agent.id] = null;
+    if (activeAgentId === agent.id) renderHistory();
+    closePromptPanel();
+  } catch (err) {
+    alert(`Could not reset prompt: ${err.message}`);
+  }
+}
+
 function buildParamPayload() {
   const out = {};
   for (const p of PARAM_INPUTS) {
@@ -114,7 +202,13 @@ async function loadAgents() {
   try {
     const res = await fetch("/agents");
     agents = await res.json();
-    agents.forEach((a) => { histories[a.id] = []; sessionIds[a.id] = null; });
+    agents.forEach((a) => {
+      histories[a.id] = [];
+      sessionIds[a.id] = null;
+      // baseSystemPrompt: the agent's built-in default (server starts clean, no overrides).
+      // Always shown read-only in the prompt panel regardless of what override is active.
+      a.baseSystemPrompt = a.systemPrompt;
+    });
     renderAgentTabs();
     selectAgent(agents[0].id);
   } catch {
@@ -476,8 +570,18 @@ settingsCloseBtn.addEventListener("click", closeSettings);
 settingsDoneBtn.addEventListener("click", closeSettings);
 settingsResetBtn.addEventListener("click", resetSettings);
 settingsModal.addEventListener("click", (e) => { if (e.target === settingsModal) closeSettings(); });
+
+promptBtn.addEventListener("click", openPromptPanel);
+promptCloseBtn.addEventListener("click", closePromptPanel);
+promptApplyBtn.addEventListener("click", applyPromptOverride);
+promptResetBtn.addEventListener("click", resetPromptOverride);
+promptModal.addEventListener("click", (e) => { if (e.target === promptModal) closePromptPanel(); });
+
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !settingsModal.hidden) closeSettings();
+  if (e.key === "Escape") {
+    if (!settingsModal.hidden) closeSettings();
+    if (!promptModal.hidden) closePromptPanel();
+  }
 });
 
 // ─── Boot ──────────────────────────────────────────────────────────────────

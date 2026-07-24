@@ -14,6 +14,72 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // by `loadAgents()` so the prompt catalogue can grow without bloating this
 // file.
 export const AGENTS = {
+  support: {
+    id: "support",
+    name: "Customer Support Agent",
+    icon: "🛟",
+    description: "Order status, returns & refunds",
+    // Sends this name in X-Proxytrace-Agent so ingestion attributes calls to the seeded agent.
+    proxytraceName: "Customer Support Agent",
+    // Temperature must match the seeded agent's ModelParameters (0.3) — a mismatch would fire
+    // an agent-update event on first contact and create a spurious new version on stage.
+    defaultParams: { temperature: 0.3 },
+    // ── VERBATIM from CoreSeedScenario.cs promptFactory("support-system", …) ──────────────
+    systemPrompt:
+      "You are a friendly, concise customer-support agent for an e-commerce store. "
+      + "Always acknowledge the issue, propose a clear next step, and close politely. "
+      + "Use the `lookup_order` and `start_return` tools when a customer references an order id, "
+      + "and `issue_refund` to process approved refunds.",
+    // ── Tools: match ToolSpecification names, descriptions and JSON-schema parameters ──────
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "lookup_order",
+          description: "Look up the status of a customer order by its numeric id.",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string", description: "The order id, e.g. 12831" },
+            },
+            required: ["order_id"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "start_return",
+          description: "Open a return for a previously delivered order.",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string" },
+              reason: { type: "string", enum: ["damaged", "wrong_item", "no_longer_needed"] },
+            },
+            required: ["order_id", "reason"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "issue_refund",
+          description: "Issue a full or partial refund for an order to the customer's original payment method.",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string" },
+              percent: { type: "integer", minimum: 1, maximum: 100 },
+              reason: { type: "string" },
+            },
+            required: ["order_id", "percent"],
+          },
+        },
+      },
+    ],
+  },
+
   travel: {
     id: "travel",
     name: "Travel Planner",
@@ -255,6 +321,63 @@ export function executeTool(name, argsJson) {
   try {
     const args = JSON.parse(argsJson);
     switch (name) {
+      // ── Support tools ──
+      case "lookup_order": {
+        // Order 20114: VortexBlend 700 blender, delivered 45 days ago, price €89.90, no damage report.
+        // The delivered_date is computed at call time so it always reads as "~45 days ago".
+        const deliveredDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
+        if (args.order_id === "20114") {
+          return JSON.stringify({
+            order_id: "20114",
+            product: "VortexBlend 700",
+            category: "Kitchen Blender",
+            status: "delivered",
+            delivered_date: deliveredDate,
+            delivered_days_ago: 45,
+            price: "€89.90",
+            damage_report: null,
+          });
+        }
+        // Generic canned response for any other order id
+        const genericStatuses = { "18342": "in_transit", "12831": "processing", "14021": "preparing", "19120": "delivered" };
+        const genericStatus = genericStatuses[args.order_id] ?? "processing";
+        return JSON.stringify({
+          order_id: args.order_id,
+          status: genericStatus,
+          ...(genericStatus === "in_transit" ? { carrier: "UPS", eta_days: 2 } : {}),
+          ...(genericStatus === "delivered" ? { delivered_days_ago: 3, carrier: "DHL" } : {}),
+        });
+      }
+      case "start_return": {
+        const rmaNum = Math.floor(1000 + Math.random() * 9000);
+        const rmaId = `RMA-${rmaNum}`;
+        return JSON.stringify({
+          return_id: rmaId,
+          order_id: args.order_id,
+          reason: args.reason,
+          label_url: `https://shop.example.com/labels/${rmaId}`,
+          refund_estimate_days: 3,
+        });
+      }
+      case "issue_refund": {
+        const refundId = `REF-${Math.floor(10000 + Math.random() * 90000)}`;
+        // Known price for order 20114; null for others (no lookup was done)
+        const knownPrices = { "20114": 89.90 };
+        const basePrice = knownPrices[args.order_id];
+        const amount = basePrice != null
+          ? `€${(basePrice * (args.percent / 100)).toFixed(2)}`
+          : null;
+        return JSON.stringify({
+          refund_id: refundId,
+          order_id: args.order_id,
+          percent: args.percent,
+          amount,
+          posted_to: "original payment method",
+        });
+      }
+
       // ── Travel tools ──
       case "get_current_weather": {
         const unit = args.unit ?? "celsius";
