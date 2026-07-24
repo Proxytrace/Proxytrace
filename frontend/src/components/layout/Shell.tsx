@@ -40,7 +40,7 @@ export function Shell() {
           the whole React root and the page goes blank with no recovery but a reload. Per-region
           rather than one boundary at the root, so a failure degrades that region and the rest of
           the app stays navigable. */}
-      <ErrorBoundary resetKeys={[location.key]} fallback={<ChromeErrorFallback className="shrink-0 w-16 border-r border-border" />}>
+      <ErrorBoundary resetKeys={[location.key]} fallback={<ChromeErrorFallback className="shrink-0 w-16 border-r border-border max-md:hidden" />}>
         <Sidebar
           collapsed={collapsed}
           mobileNavOpen={mobileNavOpen}
