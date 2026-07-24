@@ -94,7 +94,7 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "messages array is required" });
   }
 
-  const agent = AGENTS[agentId] ?? AGENTS.support;
+  const agent = AGENTS[agentId] ?? AGENTS.travel;
 
   // Apply an in-memory system-prompt override when set (e.g. via the prompt panel)
   const effectiveAgent = systemPromptOverrides[agentId]

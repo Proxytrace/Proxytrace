@@ -232,6 +232,9 @@ function renderAgentTabs() {
 function selectAgent(id) {
   if (playing || activeAgentId === id) return;
   activeAgentId = id;
+  // Close the prompt panel so it can never silently target a different agent than
+  // the one it was opened for.
+  if (!promptModal.hidden) closePromptPanel();
 
   // Update tab active state
   agentTabsEl.querySelectorAll(".agent-tab").forEach((btn) => {
