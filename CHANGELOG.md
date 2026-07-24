@@ -11,6 +11,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **German language selection for the sample client.** The sample chat client in the kiosk showcase now has an EN/DE toggle in the header. UI chrome, agent display names, and example shortcuts (including a stage-ready German version of the trick message) switch to German instantly; the agent system prompt, tool definitions, and `X-Proxytrace-Agent` attribution header remain byte-identical English so ingestion attribution and the optimizer loop are unaffected.
+
 - **One-command live showcase stack.** The kiosk now serves an OpenAI-compatible proxy in-process
   when a live LLM endpoint is configured, so a sample client pointed at the demo can generate calls
   that appear as traces in real time. Copy `kiosk.env.example` to `.env`, fill in your credentials,

@@ -28,7 +28,9 @@ const AGENTS = loadAgents();
 // Cleared on server restart so every demo starts clean.
 const systemPromptOverrides = {};
 
-// GET /agents — returns agent list with shortcuts and effective system prompt (used by the UI on load)
+// GET /agents — returns agent list with shortcuts and effective system prompt (used by the UI on load).
+// shortcutsDE is the German locale variant of the shortcut set; falls back to shortcuts when absent.
+// Language selection is a pure client concern — the server serves both sets and does not know the locale.
 app.get("/agents", (_req, res) => {
   const agents = Object.values(AGENTS).map((a) => ({
     id: a.id,
@@ -36,6 +38,7 @@ app.get("/agents", (_req, res) => {
     icon: a.icon,
     description: a.description,
     shortcuts: a.shortcuts,
+    shortcutsDE: a.shortcutsDE ?? a.shortcuts,
     // Effective prompt: the in-memory override if set, otherwise the agent's default
     systemPrompt: systemPromptOverrides[a.id] ?? a.systemPrompt,
   }));

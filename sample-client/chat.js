@@ -303,6 +303,7 @@ export const AGENTS = {
 // (name preserved for backwards compatibility with the existing UI). Throws
 // loudly if a file is missing or malformed — callers depend on every agent
 // having a populated playlist.
+// Also loads examples/<id>.de.json when present and attaches them as `shortcutsDE`.
 export function loadAgents() {
   for (const agent of Object.values(AGENTS)) {
     const file = path.join(__dirname, "examples", `${agent.id}.json`);
@@ -312,6 +313,18 @@ export function loadAgents() {
       throw new Error(`examples/${agent.id}.json must be a non-empty array`);
     }
     agent.shortcuts = parsed;
+
+    // German shortcuts are optional; fall back to EN if the file is absent.
+    try {
+      const deFile = path.join(__dirname, "examples", `${agent.id}.de.json`);
+      const deRaw = fs.readFileSync(deFile, "utf8");
+      const deParsed = JSON.parse(deRaw);
+      if (Array.isArray(deParsed) && deParsed.length > 0) {
+        agent.shortcutsDE = deParsed;
+      }
+    } catch {
+      // no .de.json — shortcutsDE remains undefined
+    }
   }
   return AGENTS;
 }

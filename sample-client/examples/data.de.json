@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Vertriebsleistung Q1 2024",
+    "prompt": "Geben Sie mir eine Übersicht der Vertriebsleistung für Q1 2024 — Gesamtumsatz, Top-Produkte und monatliches Wachstum."
+  },
+  {
+    "label": "Umsatzanomalien erkennen",
+    "prompt": "Gibt es Anomalien oder unerwartete Spitzen bzw. Einbrüche in den täglichen Umsatzdaten des letzten Monats?"
+  },
+  {
+    "label": "Nächstes Quartal prognostizieren",
+    "prompt": "Erstellen Sie auf Basis der letzten 4 Quartale eine Umsatzprognose für das nächste Quartal und heben Sie saisonale Trends hervor."
+  },
+  {
+    "label": "Top-Verkaufstage im April",
+    "prompt": "Rufen Sie den täglichen Umsatz für April 2024 ab — ich möchte sehen, an welchen Tagen die meisten Verkäufe erzielt wurden."
+  },
+  {
+    "label": "Umsatz-Statistik-Zusammenfassung",
+    "prompt": "Geben Sie mir deskriptive Statistiken für den Umsatz des letzten Quartals: Mittelwert, Median, Standardabweichung sowie das 25.- und 75.-Perzentil."
+  },
+  {
+    "label": "Q1 vs. Q2 Umsatzvergleich",
+    "prompt": "Vergleichen Sie den Quartalsumsatz Q1 2024 mit Q2 2024 — wie hoch ist die prozentuale Veränderung und liegt Q2 im normalen Schwankungsbereich?"
+  },
+  {
+    "label": "Saisonalitätsscan – hohe Sensitivität",
+    "prompt": "Führen Sie einen Anomaliescan mit hoher Sensitivität für tägliche Bestellungen der letzten 30 Tage durch. Ich suche nach Wochentag-/Wochenend-Mustern."
+  },
+  {
+    "label": "Einzeltag-Einbruch untersuchen",
+    "prompt": "Am 28. März ist der Umsatz eingebrochen. Rufen Sie die Anomaliedaten für diesen Zeitraum ab und erklären Sie mir die wahrscheinliche Ursache."
+  },
+  {
+    "label": "90-Tage-Prognose mit ARIMA",
+    "prompt": "Erstellen Sie eine Umsatzprognose für die nächsten 90 Tage mit dem ARIMA-Modell. Ich möchte wöchentliche Granularität und ein Konfidenzband."
+  },
+  {
+    "label": "Rückgabequoten-Ausreißer letzte 30 Tage",
+    "prompt": "Analysieren Sie die Rückgabequote (refund_rate) der letzten 30 Tage mit mittlerer Sensitivität. Gibt es Ausreißer, die ich eskalieren sollte?"
+  }
+]
