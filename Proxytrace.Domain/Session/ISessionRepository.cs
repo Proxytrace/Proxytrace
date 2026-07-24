@@ -5,6 +5,9 @@ public interface ISessionRepository : IRepository<ISession>
     /// <summary>
     /// Ingestion-hot-path upsert: creates the session on first sight, otherwise bumps
     /// LastActivityAt / TraceCount / TotalTokens. Safe under concurrent ingestion.
+    /// Must NOT be called inside an ambient transaction (ITransaction.InvokeAsync): its
+    /// lost-first-insert recovery relies on a fresh context per attempt, and inside an aborted
+    /// Postgres transaction the recovery bump can never succeed.
     /// </summary>
     Task RecordActivityAsync(
         Guid sessionId,

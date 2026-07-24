@@ -179,8 +179,12 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
                     await sessionRepository.RecordActivityAsync(
                         s.Id, s.Key, job.Project.Id, totalTokens, call.CreatedAt, cancellationToken);
                 }
-                catch (Exception e) when (e is not OperationCanceledException)
+                catch (Exception e)
                 {
+                    // Deliberately also swallows OperationCanceledException: the call row is already
+                    // committed, so letting a shutdown-time cancellation escape here would fail the
+                    // ingest post-persist and make a redelivering transport ingest the trace a second
+                    // time. The session counters are best-effort; the trace is not.
                     logger.LogWarning(e, "Session activity upsert failed for session {SessionId}", s.Id);
                 }
             }
