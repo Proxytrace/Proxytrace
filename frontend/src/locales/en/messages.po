@@ -125,8 +125,8 @@ msgid "{0, plural, one {# suite} other {# suites}}"
 msgstr "{0, plural, one {# suite} other {# suites}}"
 
 #. placeholder {0}: agent.toolCount
+#. placeholder {0}: agent.tools.length
 #. placeholder {0}: entry.toolCount
-#. placeholder {0}: v.tools.length
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# tool} other {# tools}}"
 
@@ -744,6 +744,9 @@ msgstr "A/B testing"
 msgid "Acceptable"
 msgstr "Acceptable"
 
+msgid "Accepted"
+msgstr "Accepted"
+
 msgid "Access Denied"
 msgstr "Access Denied"
 
@@ -1253,6 +1256,9 @@ msgstr "Capabilities"
 
 msgid "Capture everything"
 msgstr "Capture everything"
+
+msgid "Captured"
+msgstr "Captured"
 
 msgid "Captured failing trace cluster"
 msgstr "Captured failing trace cluster"
@@ -1857,6 +1863,9 @@ msgstr "Download"
 msgid "Download .md"
 msgstr "Download .md"
 
+msgid "Draft"
+msgstr "Draft"
+
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
@@ -2340,6 +2349,9 @@ msgstr "How can I help?"
 
 msgid "How many of the agent's most recent successful calls form the baseline."
 msgstr "How many of the agent's most recent successful calls form the baseline."
+
+msgid "HTTP status"
+msgstr "HTTP status"
 
 msgid "https://api.openai.com/v1"
 msgstr "https://api.openai.com/v1"
@@ -3467,6 +3479,12 @@ msgstr "Open agent \"{0}\""
 msgid "Open in playground"
 msgstr "Open in playground"
 
+msgid "Open notification: {title}"
+msgstr "Open notification: {title}"
+
+msgid "Open proposal"
+msgstr "Open proposal"
+
 msgid "Open proposals"
 msgstr "Open proposals"
 
@@ -3479,6 +3497,9 @@ msgstr "Open session"
 #. placeholder {0}: s.name
 msgid "Open suite \"{0}\""
 msgstr "Open suite \"{0}\""
+
+msgid "Open test run"
+msgstr "Open test run"
 
 msgid "Open this result in the run matrix"
 msgstr "Open this result in the run matrix"
@@ -3772,6 +3793,9 @@ msgstr "Previous case"
 msgid "Previous trace"
 msgstr "Previous trace"
 
+msgid "Priority"
+msgstr "Priority"
+
 msgid "Project"
 msgstr "Project"
 
@@ -3815,6 +3839,9 @@ msgstr "Promoted — awaiting adoption in your agent."
 msgid "Prompt rewrite"
 msgstr "Prompt rewrite"
 
+msgid "Proposal"
+msgstr "Proposal"
+
 msgid "Proposal Auto-Adopted"
 msgstr "Proposal Auto-Adopted"
 
@@ -3826,6 +3853,9 @@ msgstr "Proposal has not been benchmarked against a test suite yet."
 
 msgid "Proposal not found."
 msgstr "Proposal not found."
+
+msgid "Proposal ready"
+msgstr "Proposal ready"
 
 msgid "Proposal Status Changed"
 msgstr "Proposal Status Changed"
@@ -3920,6 +3950,9 @@ msgstr "Quick presets"
 msgid "Quick ranges"
 msgstr "Quick ranges"
 
+msgid "Raised"
+msgstr "Raised"
+
 msgid "Range"
 msgstr "Range"
 
@@ -3944,6 +3977,9 @@ msgstr "Re-scored"
 
 msgid "Re-scored · edited"
 msgstr "Re-scored · edited"
+
+msgid "Read"
+msgstr "Read"
 
 msgid "Reasoning"
 msgstr "Reasoning"
@@ -5073,6 +5109,9 @@ msgstr "This is an Enterprise feature"
 msgid "This is an offline license. It is never re-validated against the license server, so it keeps working with no outbound connection — only its expiry ends it."
 msgstr "This is an offline license. It is never re-validated against the license server, so it keeps working with no outbound connection — only its expiry ends it."
 
+msgid "This item could not be loaded — it may have been deleted since the notification was raised."
+msgstr "This item could not be loaded — it may have been deleted since the notification was raised."
+
 msgid "This license key is not valid."
 msgstr "This license key is not valid."
 
@@ -5247,6 +5286,9 @@ msgstr "Total runs"
 msgid "Total tokens"
 msgstr "Total tokens"
 
+msgid "Trace"
+msgstr "Trace"
+
 msgid "Trace Deleted"
 msgstr "Trace Deleted"
 
@@ -5366,6 +5408,9 @@ msgstr "unknown agent"
 msgid "Unknown agent"
 msgstr "Unknown agent"
 
+msgid "Unknown project"
+msgstr "Unknown project"
+
 msgid "Unlimited agents"
 msgstr "Unlimited agents"
 
@@ -5381,6 +5426,9 @@ msgstr "Unlimited test suites"
 msgid "Unlock everything with Enterprise — proxytrace.dev"
 msgstr "Unlock everything with Enterprise — proxytrace.dev"
 
+msgid "Unread"
+msgstr "Unread"
+
 msgid "Unsaved changes."
 msgstr "Unsaved changes."
 
@@ -5389,6 +5437,9 @@ msgstr "Update the index automatically when entities are created, updated, or de
 
 msgid "updated"
 msgstr "updated"
+
+msgid "Updated"
+msgstr "Updated"
 
 msgid "Upgrade to Enterprise"
 msgstr "Upgrade to Enterprise"
@@ -5516,9 +5567,6 @@ msgstr "View all ›"
 
 msgid "View all →"
 msgstr "View all →"
-
-msgid "View details"
-msgstr "View details"
 
 msgid "View Enterprise plans"
 msgstr "View Enterprise plans"

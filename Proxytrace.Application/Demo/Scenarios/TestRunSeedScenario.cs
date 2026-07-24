@@ -64,11 +64,15 @@ internal sealed class TestRunSeedScenario : IDemoScenario
                     new(c => c.RequireClaudeEndpoint(), PassRate: 1.00),
                 ]),
 
-            // Customer Support refunds: small steady improvement
+            // Customer Support refunds: all-green history — no policy evaluator is seeded, so the
+            // suite passes 10/10 in every historical run. The showcase punchline is that the
+            // presenter creates a Policy Compliance evaluator live and the suite immediately fails
+            // the new social-engineering cases. The triage suite carries the "failing long tail"
+            // storyline; this one stays entirely green until the evaluator is added on stage.
             new("customer-support-refunds", "refunds-week-1",
-                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.60)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 1.00)]),
             new("customer-support-refunds", "refunds-week-2",
-                [new(c => c.RequireGpt54Endpoint(), PassRate: 0.80)]),
+                [new(c => c.RequireGpt54Endpoint(), PassRate: 1.00)]),
 
             // Code review bugs: high pass rate from the start
             new("code-review-bugs", "bugs-initial",

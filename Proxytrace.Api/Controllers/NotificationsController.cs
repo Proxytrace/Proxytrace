@@ -17,17 +17,20 @@ public class NotificationsController : ControllerBase
     private readonly INotificationBroadcaster broadcaster;
     private readonly NotificationDtoMapper mapper;
     private readonly IProjectAccessGuard accessGuard;
+    private readonly INotification.CreateNew createNotification;
 
     public NotificationsController(
         INotificationRepository repository,
         INotificationBroadcaster broadcaster,
         NotificationDtoMapper mapper,
-        IProjectAccessGuard accessGuard)
+        IProjectAccessGuard accessGuard,
+        INotification.CreateNew createNotification)
     {
         this.repository = repository;
         this.broadcaster = broadcaster;
         this.mapper = mapper;
         this.accessGuard = accessGuard;
+        this.createNotification = createNotification;
     }
 
     // A project notification is visible to that project's members (and admins); a global
@@ -56,6 +59,21 @@ public class NotificationsController : ControllerBase
                 .ToList();
 
         return notifications.Select(mapper.ToDto).ToList();
+    }
+
+    // A deep link (`/notifications/{id}`, e.g. from a notification email) cannot always be resolved
+    // from the list: GetAll hard-excludes dismissed rows and hides global rows from non-admins.
+    // Out-of-scope and missing both return 404 — never 403, which would confirm the id exists.
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<NotificationDto>> Get(Guid id, CancellationToken cancellationToken)
+    {
+        var notification = await repository.FindAsync(id, cancellationToken);
+        if (notification is null)
+            return NotFound();
+        if (!await CanAccessNotificationAsync(notification.ProjectId, cancellationToken))
+            return NotFound();
+
+        return mapper.ToDto(notification);
     }
 
     [HttpPatch("{id:guid}/read")]
@@ -89,6 +107,32 @@ public class NotificationsController : ControllerBase
         if (updated.Status != existing.Status)
             broadcaster.Publish(NotificationStatusChangedEvent.Create(updated));
         return Ok(mapper.ToDto(updated));
+    }
+
+    /// <summary>
+    /// Test-only: writes a notification directly, bypassing <c>INotificationService</c>'s
+    /// de-duplication so a spec can seed several rows for one target, and can seed one whose
+    /// target does not exist (the dangling-target case the detail drawer has to handle).
+    /// </summary>
+    [HttpPost("seed")]
+    [TestOnlyEndpoint]
+    public async Task<ActionResult<NotificationDto>> Seed(
+        [FromBody] SeedNotificationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var notification = await repository.AddAsync(
+            createNotification(
+                request.Kind,
+                request.Severity,
+                request.Title,
+                request.Message,
+                request.ProjectId,
+                request.TargetKind,
+                request.TargetId),
+            cancellationToken);
+
+        broadcaster.Publish(NotificationCreatedEvent.Create(notification));
+        return mapper.ToDto(notification);
     }
 
     [HttpGet("stream")]

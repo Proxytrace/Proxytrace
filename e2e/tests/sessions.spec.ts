@@ -65,7 +65,7 @@ test.describe('Trace sessions', () => {
     const { items } = await api.listSessions(projectId);
     const session = items.find(s => s.id === sessionId);
     expect(session).toBeTruthy();
-    expect(session!.traceCount).toBe(3);
+    expect(session?.traceCount).toBe(3);
   });
 
   test('trace detail links to the session page, which shows the header and its traces', async ({ page }) => {

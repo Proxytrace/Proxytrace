@@ -1,3 +1,143 @@
+// ─── Locale / i18n ─────────────────────────────────────────────────────────
+// Small inline dictionary — two locales, no library, no build step.
+// Only display-layer strings live here; system prompts, tool definitions, and
+// X-Proxytrace-Agent headers are never translated (see binding constraints).
+
+const STRINGS = {
+  en: {
+    appTitle: "Proxytrace Sample Chatbot",
+    badgeText: "Routed through Proxytrace proxy — every message is captured in your traces",
+    promptBtnLabel: "Prompt",
+    emptyDefault: "Select an agent above and start chatting. All interactions will appear as traces in your Proxytrace dashboard.",
+    emptyAgentSuffix: "Start chatting; all interactions will appear as traces in your Proxytrace dashboard.",
+    inputPlaceholder: "Type a message… (Enter to send, Shift+Enter for new line)",
+    inputPlaceholderAsk: "Ask the ",
+    inputPlaceholderSuffix: "… (Enter to send, Shift+Enter for new line)",
+    demoLabel: "Try a shortcut",
+    playAll: "Play all",
+    stop: "Stop",
+    stopping: "Stopping…",
+    playingProgress: (i, n) => `Playing ${i} / ${n}…`,
+    settingsTitle: "Model Parameters",
+    settingsHint: "Applied to every request. Saved in your browser.",
+    tempHint: "0 = deterministic, 2 = creative",
+    topPHint: "Nucleus sampling (0–1)",
+    maxTokensPlaceholder: "default",
+    maxTokensHint: "Leave blank for model default",
+    freqPenHint: "Penalize repeated tokens (-2 to 2)",
+    presPenHint: "Encourage new topics (-2 to 2)",
+    resetToDefaults: "Reset to defaults",
+    done: "Done",
+    promptModalHint:
+      "The <strong>default prompt</strong> is always shown below (read-only). Paste an improved "
+      + "prompt in the <strong>Override</strong> textarea and click Apply — the next message will "
+      + "use it. Reset restores the default and starts a fresh session.",
+    defaultPromptLabel: "Default prompt",
+    overrideLabel: "Override",
+    overridePlaceholder: "Paste the optimizer’s improved prompt here…",
+    resetToDefault: "Reset to default",
+    apply: "Apply",
+    you: "You",
+    assistant: "Assistant",
+    error: "Error",
+    agentsLoadError: "Could not load agents",
+    promptApplyError: "Could not apply prompt:",
+    promptResetError: "Could not reset prompt:",
+    promptDialogTitle: (name) => `System Prompt — ${name}`,
+  },
+  de: {
+    appTitle: "Proxytrace Sample-Chatbot",
+    badgeText: "Über den Proxytrace-Proxy geleitet — jede Nachricht wird in Ihren Traces erfasst",
+    promptBtnLabel: "System-Prompt",
+    emptyDefault: "Wählen Sie oben einen Agenten aus und starten Sie das Gespräch. Alle Interaktionen erscheinen als Traces in Ihrem Proxytrace-Dashboard.",
+    emptyAgentSuffix: "Starten Sie das Gespräch – alle Interaktionen erscheinen als Traces in Ihrem Proxytrace-Dashboard.",
+    inputPlaceholder: "Nachricht eingeben… (Enter zum Senden, Shift+Enter für neue Zeile)",
+    inputPlaceholderAsk: "Fragen Sie den ",
+    inputPlaceholderSuffix: "… (Enter zum Senden, Shift+Enter für neue Zeile)",
+    demoLabel: "Shortcut ausprobieren",
+    playAll: "Alle abspielen",
+    stop: "Anhalten",
+    stopping: "Wird angehalten…",
+    playingProgress: (i, n) => `Spielt ${i} / ${n}…`,
+    settingsTitle: "Modellparameter",
+    settingsHint: "Gilt für jede Anfrage. Wird in Ihrem Browser gespeichert.",
+    tempHint: "0 = deterministisch, 2 = kreativ",
+    topPHint: "Nucleus-Sampling (0–1)",
+    maxTokensPlaceholder: "Standard",
+    maxTokensHint: "Leer lassen für den Modell-Standard",
+    freqPenHint: "Wiederholungen bestrafen (−2 bis 2)",
+    presPenHint: "Neue Themen fördern (−2 bis 2)",
+    resetToDefaults: "Auf Standard zurücksetzen",
+    done: "Fertig",
+    promptModalHint:
+      'Der <strong>Standard-Prompt</strong> wird unten immer angezeigt (schreibgeschützt). '
+      + 'Fügen Sie einen verbesserten Prompt in das Feld <strong>Überschreiben</strong> ein '
+      + 'und klicken Sie auf „Übernehmen“ — die nächste Nachricht verwendet ihn. '
+      + '„Zurücksetzen“ stellt den Standard wieder her und startet eine neue Sitzung.',
+    defaultPromptLabel: "Standard-Prompt",
+    overrideLabel: "Überschreiben",
+    overridePlaceholder: "Verbesserten Prompt des Optimierers hier einfügen…",
+    resetToDefault: "Auf Standard zurücksetzen",
+    apply: "Übernehmen",
+    you: "Sie",
+    assistant: "Assistent",
+    error: "Fehler",
+    agentsLoadError: "Agenten konnten nicht geladen werden",
+    promptApplyError: "Prompt konnte nicht übernommen werden:",
+    promptResetError: "Prompt konnte nicht zurückgesetzt werden:",
+    promptDialogTitle: (name) => `System-Prompt — ${name}`,
+  },
+};
+
+// Display names / descriptions for each agent, keyed by locale then agent id.
+// Only used in the UI — proxytraceName and everything sent to the API is unchanged.
+const AGENT_DISPLAY = {
+  en: {
+    support: { name: "Customer Support Agent", description: "Order status, returns & refunds" },
+    travel:  { name: "Travel Planner",         description: "Weather, attractions, flights & currency" },
+    code:    { name: "Code Assistant",         description: "Bug detection, packages, errors & test generation" },
+    data:    { name: "Data Analyst",           description: "Sales data, statistics, anomalies & forecasting" },
+  },
+  de: {
+    // accusative: used in "Fragen Sie den <accusative>…" placeholder (weak-noun inflection).
+    // "Reiseplaner" is strong and stays identical; the others take the -en ending.
+    support: { name: "Kundensupport-Agent",  accusative: "Kundensupport-Agenten",  description: "Bestellstatus, Rücksendungen & Erstattungen" },
+    travel:  { name: "Reiseplaner",          accusative: "Reiseplaner",             description: "Wetter, Sehenswürdigkeiten, Flüge & Währung" },
+    code:    { name: "Code-Assistent",       accusative: "Code-Assistenten",        description: "Fehlersuche, Pakete, Fehlermeldungen & Testgenerierung" },
+    data:    { name: "Datenanalyst",         accusative: "Datenanalysten",          description: "Verkaufsdaten, Statistiken, Anomalien & Prognosen" },
+  },
+};
+
+const LANG_STORAGE_KEY = "proxytrace-sample-lang";
+
+let currentLocale = (() => {
+  try {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY);
+    if (saved === "en" || saved === "de") return saved;
+  } catch { /* ignore */ }
+  return (navigator.language ?? "").startsWith("de") ? "de" : "en";
+})();
+
+function getAgentDisplay(agent) {
+  const map = AGENT_DISPLAY[currentLocale] ?? AGENT_DISPLAY.en;
+  const entry = map[agent.id];
+  if (entry) return entry;
+  return { name: agent.name, accusative: agent.name, description: agent.description };
+}
+
+// Returns the accusative display form for use in "Fragen Sie den <X>…" placeholders.
+// Falls back to the nominative display name when no accusative is defined (EN, unknown agents).
+function getAgentAccusative(agent) {
+  const d = getAgentDisplay(agent);
+  return d.accusative ?? d.name;
+}
+
+function getShortcuts(agent) {
+  return currentLocale === "de" && agent.shortcutsDE ? agent.shortcutsDE : agent.shortcuts;
+}
+
+// ─── DOM refs ──────────────────────────────────────────────────────────────
+
 const messagesEl = document.getElementById("messages");
 const emptyEl = document.getElementById("empty");
 const emptyTextEl = document.getElementById("empty-text");
@@ -14,11 +154,21 @@ const settingsModal = document.getElementById("settings-modal");
 const settingsCloseBtn = document.getElementById("settings-close");
 const settingsDoneBtn = document.getElementById("settings-done");
 const settingsResetBtn = document.getElementById("settings-reset");
+const promptBtn = document.getElementById("prompt-btn");
+const promptModal = document.getElementById("prompt-modal");
+const promptCloseBtn = document.getElementById("prompt-close");
+const promptDefaultEl = document.getElementById("prompt-default");
+const promptOverrideInput = document.getElementById("prompt-override-input");
+const promptApplyBtn = document.getElementById("prompt-apply");
+const promptResetBtn = document.getElementById("prompt-reset");
 
 // Per-agent conversation history: agentId → message[]
 const histories = {};
 // Per-agent session ID sent as X-Proxytrace-Session-Id; null until the first message is sent
 const sessionIds = {};
+// Per-agent current effective system prompt override (null = using default)
+// Mirrors the server's in-memory overrides so the panel can display without a round-trip.
+const systemPromptOverrides = {};
 let agents = [];
 let activeAgentId = null;
 let streaming = false;
@@ -98,6 +248,85 @@ function resetSettings() {
   syncParamInputs();
 }
 
+// ─── System-prompt panel ───────────────────────────────────────────────────
+
+function openPromptPanel() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+
+  // Always show the built-in default (read-only)
+  promptDefaultEl.textContent = agent.baseSystemPrompt ?? "";
+
+  // Pre-fill the textarea with the current override (empty if none is set)
+  promptOverrideInput.value = systemPromptOverrides[activeAgentId] ?? "";
+
+  // Update dialog title to show which agent we're editing (localized display name)
+  const s = STRINGS[currentLocale];
+  document.getElementById("prompt-title").textContent = s.promptDialogTitle(getAgentDisplay(agent).name);
+
+  promptModal.hidden = false;
+  promptOverrideInput.focus();
+}
+
+function closePromptPanel() {
+  promptModal.hidden = true;
+}
+
+async function applyPromptOverride() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+
+  // Trim only trailing whitespace/newlines — no other normalisation
+  const raw = promptOverrideInput.value.replace(/\s+$/, "");
+  if (!raw) {
+    promptOverrideInput.classList.add("prompt-textarea--error");
+    setTimeout(() => promptOverrideInput.classList.remove("prompt-textarea--error"), 1000);
+    return;
+  }
+
+  try {
+    const res = await fetch(`/agents/${agent.id}/system-prompt`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ systemPrompt: raw }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? `HTTP ${res.status}`);
+    }
+    const { systemPrompt } = await res.json();
+    systemPromptOverrides[agent.id] = systemPrompt;
+    agent.systemPrompt = systemPrompt; // keep local cache in sync
+    closePromptPanel();
+  } catch (err) {
+    alert(`${STRINGS[currentLocale].promptApplyError} ${err.message}`);
+  }
+}
+
+async function resetPromptOverride() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+
+  try {
+    const res = await fetch(`/agents/${agent.id}/system-prompt`, { method: "DELETE" });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? `HTTP ${res.status}`);
+    }
+    const { systemPrompt } = await res.json();
+    delete systemPromptOverrides[agent.id];
+    agent.systemPrompt = systemPrompt; // restore to default
+    // Reset also clears the conversation and starts a new session so back-to-back
+    // demos compare clean before/after runs.
+    histories[agent.id] = [];
+    sessionIds[agent.id] = null;
+    if (activeAgentId === agent.id) renderHistory();
+    closePromptPanel();
+  } catch (err) {
+    alert(`${STRINGS[currentLocale].promptResetError} ${err.message}`);
+  }
+}
+
 function buildParamPayload() {
   const out = {};
   for (const p of PARAM_INPUTS) {
@@ -108,28 +337,98 @@ function buildParamPayload() {
   return out;
 }
 
+// ─── Apply locale (updates all translatable DOM elements) ──────────────────
+
+function applyLocale() {
+  const s = STRINGS[currentLocale];
+
+  // Header
+  document.getElementById("app-title").textContent = s.appTitle;
+  document.getElementById("badge-text").textContent = s.badgeText;
+  document.getElementById("lang-label").textContent = currentLocale.toUpperCase();
+  document.getElementById("prompt-btn-label").textContent = s.promptBtnLabel;
+
+  // Empty state (no-agent state)
+  if (!activeAgentId) {
+    emptyTextEl.textContent = s.emptyDefault;
+    inputEl.placeholder = s.inputPlaceholder;
+  }
+
+  // Shortcuts row
+  document.querySelector(".demo-label").textContent = s.demoLabel;
+
+  // Play button — only update text when not mid-play
+  if (!playing) playLabel.textContent = s.playAll;
+
+  // Settings modal
+  document.getElementById("settings-title").textContent = s.settingsTitle;
+  document.getElementById("settings-modal-hint").textContent = s.settingsHint;
+  document.getElementById("param-temp-hint").textContent = s.tempHint;
+  document.getElementById("param-top-p-hint").textContent = s.topPHint;
+  document.getElementById("param-max-tokens").placeholder = s.maxTokensPlaceholder;
+  document.getElementById("param-max-tokens-hint").textContent = s.maxTokensHint;
+  document.getElementById("param-freq-pen-hint").textContent = s.freqPenHint;
+  document.getElementById("param-pres-pen-hint").textContent = s.presPenHint;
+  settingsResetBtn.textContent = s.resetToDefaults;
+  settingsDoneBtn.textContent = s.done;
+
+  // Prompt modal (static parts; title set dynamically in openPromptPanel)
+  document.getElementById("prompt-modal-hint").innerHTML = s.promptModalHint;
+  document.getElementById("prompt-default-label").textContent = s.defaultPromptLabel;
+  document.getElementById("prompt-override-label").textContent = s.overrideLabel;
+  promptOverrideInput.placeholder = s.overridePlaceholder;
+  promptResetBtn.textContent = s.resetToDefault;
+  promptApplyBtn.textContent = s.apply;
+
+  // Re-render agent tabs and shortcuts when agents are available
+  if (agents.length > 0) {
+    renderAgentTabs();
+    if (activeAgentId) {
+      // Restore active highlight after re-render
+      agentTabsEl.querySelectorAll(".agent-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.agentId === activeAgentId);
+      });
+      // Update empty-state text and input placeholder for the current agent
+      const agent = agents.find((a) => a.id === activeAgentId);
+      if (agent) {
+        const display = getAgentDisplay(agent);
+        emptyTextEl.textContent = `${agent.icon} ${display.name} — ${display.description}. ${s.emptyAgentSuffix}`;
+        inputEl.placeholder = `${s.inputPlaceholderAsk}${getAgentAccusative(agent)}${s.inputPlaceholderSuffix}`;
+      }
+      renderShortcuts();
+    }
+  }
+}
+
 // ─── Agent management ──────────────────────────────────────────────────────
 
 async function loadAgents() {
   try {
     const res = await fetch("/agents");
     agents = await res.json();
-    agents.forEach((a) => { histories[a.id] = []; sessionIds[a.id] = null; });
+    agents.forEach((a) => {
+      histories[a.id] = [];
+      sessionIds[a.id] = null;
+      // baseSystemPrompt: the agent's built-in default (server starts clean, no overrides).
+      // Always shown read-only in the prompt panel regardless of what override is active.
+      a.baseSystemPrompt = a.systemPrompt;
+    });
     renderAgentTabs();
     selectAgent(agents[0].id);
   } catch {
-    agentTabsEl.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">Could not load agents</span>`;
+    agentTabsEl.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">${STRINGS[currentLocale].agentsLoadError}</span>`;
   }
 }
 
 function renderAgentTabs() {
   agentTabsEl.innerHTML = "";
   for (const agent of agents) {
+    const display = getAgentDisplay(agent);
     const btn = document.createElement("button");
     btn.className = "agent-tab";
     btn.dataset.agentId = agent.id;
-    btn.title = agent.description;
-    btn.innerHTML = `<span class="agent-icon">${agent.icon}</span><span class="agent-name">${agent.name}</span>`;
+    btn.title = display.description;
+    btn.innerHTML = `<span class="agent-icon">${agent.icon}</span><span class="agent-name">${display.name}</span>`;
     btn.addEventListener("click", () => selectAgent(agent.id));
     agentTabsEl.appendChild(btn);
   }
@@ -138,6 +437,9 @@ function renderAgentTabs() {
 function selectAgent(id) {
   if (playing || activeAgentId === id) return;
   activeAgentId = id;
+  // Close the prompt panel so it can never silently target a different agent than
+  // the one it was opened for.
+  if (!promptModal.hidden) closePromptPanel();
 
   // Update tab active state
   agentTabsEl.querySelectorAll(".agent-tab").forEach((btn) => {
@@ -150,8 +452,10 @@ function selectAgent(id) {
 
   const agent = agents.find((a) => a.id === id);
   if (agent) {
-    emptyTextEl.textContent = `${agent.icon} ${agent.name} — ${agent.description}. Start chatting; all interactions will appear as traces in your Proxytrace dashboard.`;
-    inputEl.placeholder = `Ask the ${agent.name}… (Enter to send, Shift+Enter for new line)`;
+    const display = getAgentDisplay(agent);
+    const s = STRINGS[currentLocale];
+    emptyTextEl.textContent = `${agent.icon} ${display.name} — ${display.description}. ${s.emptyAgentSuffix}`;
+    inputEl.placeholder = `${s.inputPlaceholderAsk}${getAgentAccusative(agent)}${s.inputPlaceholderSuffix}`;
   }
   inputEl.focus();
 }
@@ -162,7 +466,7 @@ function renderShortcuts() {
   shortcutsListEl.innerHTML = "";
   const agent = agents.find((a) => a.id === activeAgentId);
   if (!agent) return;
-  for (const shortcut of agent.shortcuts) {
+  for (const shortcut of getShortcuts(agent)) {
     const chip = document.createElement("button");
     chip.className = "demo-chip";
     chip.textContent = shortcut.label;
@@ -208,7 +512,8 @@ function addMessage(role, text = "") {
 
   const label = document.createElement("div");
   label.className = "message-label";
-  label.textContent = role === "user" ? "You" : "Assistant";
+  const s = STRINGS[currentLocale];
+  label.textContent = role === "user" ? s.you : s.assistant;
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
@@ -228,7 +533,7 @@ function addError(text) {
 
   const label = document.createElement("div");
   label.className = "message-label";
-  label.textContent = "Error";
+  label.textContent = STRINGS[currentLocale].error;
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
@@ -402,7 +707,8 @@ function setPlayingState(isPlaying, progress = "") {
   sendBtn.disabled = isPlaying || streaming;
   playIcon.hidden = isPlaying;
   stopIcon.hidden = !isPlaying;
-  playLabel.textContent = isPlaying ? (progress || "Stop") : "Play all";
+  const s = STRINGS[currentLocale];
+  playLabel.textContent = isPlaying ? (progress || s.stop) : s.playAll;
   playBtn.classList.toggle("playing", isPlaying);
   agentTabsEl.querySelectorAll(".agent-tab").forEach((btn) => {
     btn.disabled = isPlaying;
@@ -420,27 +726,32 @@ function resetActiveAgent() {
 
 async function playPlaylist() {
   const agent = agents.find((a) => a.id === activeAgentId);
-  if (!agent || !agent.shortcuts?.length) return;
+  if (!agent) return;
+
+  // Use the locale-appropriate shortcut set for the entire playlist run.
+  const shortcuts = getShortcuts(agent);
+  if (!shortcuts?.length) return;
 
   stopRequested = false;
-  setPlayingState(true, `Playing 0 / ${agent.shortcuts.length}…`);
+  const s = STRINGS[currentLocale];
+  setPlayingState(true, s.playingProgress(0, shortcuts.length));
 
   try {
-    for (let i = 0; i < agent.shortcuts.length; i++) {
+    for (let i = 0; i < shortcuts.length; i++) {
       if (stopRequested) break;
-      setPlayingState(true, `Playing ${i + 1} / ${agent.shortcuts.length}…`);
+      setPlayingState(true, s.playingProgress(i + 1, shortcuts.length));
       // Each example starts with a clean transcript + fresh session so traces
       // appear as distinct conversations in the Proxytrace dashboard. sendPrompt
       // assigns a new sessionId on the first turn after the reset.
       resetActiveAgent();
       try {
-        await sendPrompt(agent.shortcuts[i].prompt);
+        await sendPrompt(shortcuts[i].prompt);
       } catch {
         // sendPrompt already rendered the error inline; keep going so a
         // single failure doesn't abort the whole playlist.
       }
       if (stopRequested) break;
-      if (i < agent.shortcuts.length - 1) await sleep(PLAYLIST_DELAY_MS);
+      if (i < shortcuts.length - 1) await sleep(PLAYLIST_DELAY_MS);
     }
   } finally {
     setPlayingState(false);
@@ -452,7 +763,7 @@ async function playPlaylist() {
 function togglePlay() {
   if (playing) {
     stopRequested = true;
-    playLabel.textContent = "Stopping…";
+    playLabel.textContent = STRINGS[currentLocale].stopping;
   } else {
     playPlaylist();
   }
@@ -476,12 +787,29 @@ settingsCloseBtn.addEventListener("click", closeSettings);
 settingsDoneBtn.addEventListener("click", closeSettings);
 settingsResetBtn.addEventListener("click", resetSettings);
 settingsModal.addEventListener("click", (e) => { if (e.target === settingsModal) closeSettings(); });
+
+promptBtn.addEventListener("click", openPromptPanel);
+promptCloseBtn.addEventListener("click", closePromptPanel);
+promptApplyBtn.addEventListener("click", applyPromptOverride);
+promptResetBtn.addEventListener("click", resetPromptOverride);
+promptModal.addEventListener("click", (e) => { if (e.target === promptModal) closePromptPanel(); });
+
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !settingsModal.hidden) closeSettings();
+  if (e.key === "Escape") {
+    if (!settingsModal.hidden) closeSettings();
+    if (!promptModal.hidden) closePromptPanel();
+  }
+});
+
+document.getElementById("lang-btn").addEventListener("click", () => {
+  currentLocale = currentLocale === "en" ? "de" : "en";
+  try { localStorage.setItem(LANG_STORAGE_KEY, currentLocale); } catch {}
+  applyLocale();
 });
 
 // ─── Boot ──────────────────────────────────────────────────────────────────
 
 syncParamInputs();
 bindParamInputs();
-loadAgents();
+applyLocale();   // apply locale before agents load (updates static strings)
+loadAgents();    // renderAgentTabs / selectAgent inside already use currentLocale

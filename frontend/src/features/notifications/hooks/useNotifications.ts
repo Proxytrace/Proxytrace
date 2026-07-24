@@ -11,13 +11,33 @@ export function useNotifications(projectId?: string, enabled = true) {
   });
 }
 
+/**
+ * A single notification by id, for the `?notification=` deep link. The list can't always resolve
+ * it — dismissed rows are excluded and a member never sees global rows — so the drawer falls back
+ * to this by-id fetch. A stale id (deleted project) 404s silently and simply yields no drawer.
+ */
+export function useNotification(id: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEYS.notification(id ?? undefined),
+    queryFn: () => {
+      if (!id) throw new Error('no notification id');
+      return notificationsApi.get(id, { silentStatuses: [404] });
+    },
+    enabled: !!id,
+    throwOnError: false,
+    retry: false,
+  });
+}
+
 /** Mark-read / dismiss mutations. Both invalidate the notifications cache on success. */
 export function useNotificationMutations() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: QUERY_KEYS.notificationsRoot });
 
   const markRead = useMutation({
-    mutationFn: (id: string) => notificationsApi.markRead(id),
+    // A 409 means the row was dismissed meanwhile (opening a notification marks it read, so this
+    // races with a concurrent dismiss). That's an expected outcome, not an error toast.
+    mutationFn: (id: string) => notificationsApi.markRead(id, { silentStatuses: [409] }),
     onSuccess: invalidate,
   });
 

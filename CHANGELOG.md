@@ -25,6 +25,32 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   sessions (most recently active first, with per-session trace and token counters) and
   `GET /api/sessions/{id}` returns one; sessions are scoped to the projects you can access, exactly
   like traces.
+
+- **Notification details view.** Clicking a notification in the bell inbox now opens a detail drawer
+  instead of navigating away: the full, untruncated message, its kind, status, project and
+  timestamps, and a live summary of whatever the notification is about (test run, agent, proposal
+  or trace) with a link to it. If that item has since been deleted the drawer says so rather than
+  linking nowhere — a notification is often the only record an anomaly ever had. The drawer steps
+  through the inbox with prev/next, is deep-linkable on any page via `?notification=<id>`, and
+  notification emails now link straight to it (`/notifications/<id>`) instead of to the target's
+  list page.
+
+- **German language selection for the sample client.** The sample chat client in the kiosk showcase now has an EN/DE toggle in the header. UI chrome, agent display names, and example shortcuts (including a stage-ready German version of the trick message) switch to German instantly; the agent system prompt, tool definitions, and `X-Proxytrace-Agent` attribution header remain byte-identical English so ingestion attribution and the optimizer loop are unaffected.
+
+- **One-command live showcase stack.** The kiosk now serves an OpenAI-compatible proxy in-process
+  when a live LLM endpoint is configured, so a sample client pointed at the demo can generate calls
+  that appear as traces in real time. Copy `kiosk.env.example` to `.env`, fill in your credentials,
+  and run `docker compose -f docker-compose.kiosk.yml up --build` to bring up the full three-service
+  stack — Proxytrace API (`:5200`), web UI (`:5201`), and the bundled sample chat client (`:5202`).
+  Without credentials the stack still boots in read-only demo mode; the demo API key defaults to
+  `pk-kiosk-demo`. The full presenter runbook is in `sample-client/README.md`.
+
+- **The demo "Customer Support" agent can now showcase social-engineering resistance.** The kiosk seed
+  arms the support agent with an `issue_refund` tool and a ten-case refund test suite — five of
+  which are social-engineering attempts to extract unauthorized refunds — pre-seeded with a 100%
+  pass-rate history, so a presenter can trigger the trick in the sample chat client and watch the
+  pass-rate drop on screen.
+
 - **Upstream provider key rotations are audited distinctly.** Replacing a provider's upstream API
   key now records a dedicated *Provider Key Rotated* audit event instead of the generic provider
   config update, so credential rotations stand out in incident review and compliance reporting.
@@ -41,6 +67,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   conversations. Neither header is forwarded upstream.
 
 ### Fixed
+
+- **A notification about a trace no longer blanks the whole app.** Notifications raised for a
+  captured call (a blocked call, or a custom anomaly detector's review) carried a target kind the
+  web UI did not know, and rendering one threw while drawing the top bar — which sits outside every
+  page's error boundary, so the entire app went blank until a reload. Unknown target kinds now
+  degrade to a notification with no link.
+- **Opening a notification marks it read**, including when it is opened from a deep link or an
+  emailed link; previously the unread badge stayed until you clicked the tick explicitly.
+- **The notification panel no longer closes over the page you navigated to**, and marking one
+  notification read or dismissing it no longer freezes the buttons on every other row while the
+  request is in flight.
 
 - **Provider key rotation and revocation now take effect on the very next proxied request.** The
   ingestion proxy previously cached resolved credentials — including the decrypted upstream provider

@@ -64,6 +64,49 @@ will fail without one. Check first (e.g. `docker --version` and `docker info`); 
 unavailable, skip the e2e suite and say so. See the `run-e2e-tests` skill for how to execute and
 triage them.
 
+## Kiosk showcase demo (one-command boot)
+
+Start the full demo stack — kiosk API, frontend, and sample chat client — with a single command:
+
+```bash
+docker compose -f docker-compose.kiosk.yml up --build
+```
+
+Ports:
+| Service         | Host port | URL                        |
+|-----------------|-----------|----------------------------|
+| Kiosk API       | 5200      | http://localhost:5200      |
+| Frontend        | 5201      | http://localhost:5201      |
+| Sample client   | 5202      | http://localhost:5202      |
+
+**Read-only mode (no `.env`):** the stack boots with in-memory storage and no real LLM endpoint.
+The frontend is fully browsable; the OpenAI proxy route is not mounted (`/openai/v1/*` returns 404)
+and the sample client idles.
+
+**Live demo mode:** copy `kiosk.env.example` to `.env` and fill in your LLM credentials:
+
+```bash
+cp kiosk.env.example .env
+# Edit .env — set KIOSK_LLM_BASE_URL, KIOSK_LLM_API_KEY, KIOSK_LLM_MODEL
+docker compose -f docker-compose.kiosk.yml up --build
+```
+
+`.env` variables (all optional — omit for read-only mode):
+
+| Variable | Description |
+|---|---|
+| `KIOSK_LLM_BASE_URL` | Provider base URL, e.g. `https://api.openai.com/v1` |
+| `KIOSK_LLM_API_KEY` | Provider API key |
+| `KIOSK_LLM_MODEL` | Model name, e.g. `gpt-4o-mini` — feeds **both** the api service and the sample client |
+| `KIOSK_LLM_KIND` | Provider kind: `OpenAi` \| `OpenAiCompatible` (default `OpenAi`) |
+| `KIOSK_DEMO_API_KEY` | Proxytrace demo key shared by api and sample-client (default `pk-kiosk-demo`). Override only if you need a custom key — change here and nowhere else; both sides derive from this variable |
+
+`KIOSK_LLM_MODEL` is deliberately shared between both services to prevent the registered endpoint
+and the chat client from drifting to different models (which would cause ingestion to flip the demo
+agent's endpoint mid-demo).
+
+See `sample-client/README.md` for the demo script and walk-through.
+
 ## Manual screenshots (Playwright + kiosk stack)
 Add or refresh screenshots in the VitePress manual with the `manual-screenshots` skill
 (`.claude/skills/manual-screenshots/SKILL.md`). It boots the self-seeded, login-free kiosk stack

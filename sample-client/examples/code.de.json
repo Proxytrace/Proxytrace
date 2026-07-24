@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Rekursive Funktion prüfen",
+    "prompt": "Prüfen Sie diese Python-Funktion auf Fehler und Leistungsprobleme:\n\ndef fib(n):\n    return fib(n-1) + fib(n-2)"
+  },
+  {
+    "label": "Häufigen JS-Fehler erklären",
+    "prompt": "Was bedeutet dieser JavaScript-Fehler und wie behebe ich ihn?\n\nTypeError: Cannot read properties of undefined (reading 'map')"
+  },
+  {
+    "label": "lodash vs. ramda im Vergleich",
+    "prompt": "Vergleichen Sie die npm-Pakete 'lodash' und 'ramda' — Downloads, Bundle-Größe und welches für ein React-Projekt besser geeignet ist."
+  },
+  {
+    "label": "Teststubs für eine sum-Funktion",
+    "prompt": "Generieren Sie Vitest-Teststubs für diese Funktionssignatur: `sum(numbers: number[]): number`. Bitte Randfälle einbeziehen."
+  },
+  {
+    "label": "await in forEach – Bug erklären",
+    "prompt": "Finden Sie den Fehler in diesem Code und erklären Sie, warum die awaits nicht funktionieren:\n\nasync function saveAll(users) {\n  users.forEach(async (u) => {\n    await db.save(u);\n  });\n  console.log('done');\n}"
+  },
+  {
+    "label": "Speicherleck mit setInterval",
+    "prompt": "Dieser Node-Dienst verliert langsam Speicher. Fällt Ihnen etwas auf?\n\nfunction startPolling() {\n  setInterval(() => fetch('/health').then(r => r.json()), 1000);\n}"
+  },
+  {
+    "label": "Datumsbibliothek auswählen",
+    "prompt": "Ich benötige Datumsarithmetik und Zeitzonensupport in einem kleinen Next.js-Bundle. Vergleichen Sie dayjs, date-fns, luxon und moment und empfehlen Sie mir eine Bibliothek mit Begründung."
+  },
+  {
+    "label": "Stack-Overflow-Fehler debuggen",
+    "prompt": "Was bedeutet dieser Node-Fehler und wie sollte ich ihn debuggen?\n\nRangeError: Maximum call stack size exceeded\n    at walkTree (tree.js:14:18)\n    at walkTree (tree.js:16:7)"
+  },
+  {
+    "label": "Loose-Equality – Code-Review",
+    "prompt": "Prüfen Sie diesen JS-Code auf Stilprobleme:\n\nvar count = 0;\nif (input == null) { console.log('skip'); return; }\ncount++;"
+  },
+  {
+    "label": "Pytest-Stubs für Klassenmethode",
+    "prompt": "Generieren Sie Pytest-Stubs für `Cart.add(item, quantity=1)`. Ich möchte einen Happy-Path-Test und einen Test, der bei negativer Menge einen ValueError auslöst."
+  }
+]

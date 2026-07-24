@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Session;
@@ -11,13 +12,17 @@ internal class SessionRepository
     : AbstractRepository<ISession, SessionEntity>,
       ISessionRepository
 {
+    private readonly ILogger<SessionRepository> logger;
+
     public SessionRepository(
         IMapper<ISession, SessionEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
-        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
+        AmbientDbContext ambient,
+        ILogger<SessionRepository> logger) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
+        this.logger = logger;
     }
 
     public async Task RecordActivityAsync(
@@ -41,8 +46,18 @@ internal class SessionRepository
             catch (DbUpdateException)
             {
                 // Lost the first-insert race to a concurrent ingester (unique PK / (ProjectId,
-                // ExternalKey) index): the row exists now, so the bump must succeed.
-                await TryBumpAsync(contextFactory(), sessionId, totalTokens, lastActivityAt, cancellationToken);
+                // ExternalKey) index): the row exists now, so the recovery bump on a fresh context
+                // succeeds — which is also why this upsert must never run inside an ambient
+                // transaction (see ISessionRepository): there contextFactory() would return the
+                // shared, already-aborted transactional context. A false result here means the
+                // insert failed for another reason (e.g. the project was deleted concurrently);
+                // best-effort, so log it rather than fail the caller.
+                if (!await TryBumpAsync(contextFactory(), sessionId, totalTokens, lastActivityAt, cancellationToken))
+                {
+                    logger.LogWarning(
+                        "Session upsert lost the insert race but the recovery bump found no row for session {SessionId}",
+                        sessionId);
+                }
             }
             return;
         }
@@ -57,18 +72,26 @@ internal class SessionRepository
         }
         else
         {
-            // Modify in place, mirroring the relational ExecuteUpdate path (including UpdatedAt).
+            // Modify in place, mirroring the relational ExecuteUpdate path (including the
+            // forward-only LastActivityAt and UpdatedAt).
             context.Entry(existing).CurrentValues.SetValues(new
             {
-                LastActivityAt = lastActivityAt,
+                LastActivityAt = lastActivityAt > existing.LastActivityAt ? lastActivityAt : existing.LastActivityAt,
                 TraceCount = existing.TraceCount + 1,
                 TotalTokens = existing.TotalTokens + totalTokens,
-                UpdatedAt = lastActivityAt,
+                UpdatedAt = lastActivityAt > existing.UpdatedAt ? lastActivityAt : existing.UpdatedAt,
             });
         }
         await context.SaveChangesAsync(cancellationToken);
     }
 
+    // LastActivityAt and UpdatedAt only ever move forward (CASE in SQL): a redelivered or
+    // out-of-order ingest carrying an older CreatedAt must not rewind the session's activity (and
+    // flip its Live indicator off) — and a rewound UpdatedAt could even fall before the row's
+    // CreatedAt, making the entity fail domain validation on load. The counters still bump — the
+    // trace did arrive. The forward-only rule is hand-synced with the in-memory branch above;
+    // unit tests (in-memory provider) cover only that mirror — this CASE path runs for real only
+    // in the perf suite / e2e stack, so keep both branches in sync when changing either.
     private static async Task<bool> TryBumpAsync(
         StorageDbContext context,
         Guid sessionId,
@@ -78,10 +101,10 @@ internal class SessionRepository
         => await context.Set<SessionEntity>()
             .Where(e => e.Id == sessionId)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(e => e.LastActivityAt, lastActivityAt)
+                .SetProperty(e => e.LastActivityAt, e => e.LastActivityAt > lastActivityAt ? e.LastActivityAt : lastActivityAt)
                 .SetProperty(e => e.TraceCount, e => e.TraceCount + 1)
                 .SetProperty(e => e.TotalTokens, e => e.TotalTokens + totalTokens)
-                .SetProperty(e => e.UpdatedAt, lastActivityAt), cancellationToken) > 0;
+                .SetProperty(e => e.UpdatedAt, e => e.UpdatedAt > lastActivityAt ? e.UpdatedAt : lastActivityAt), cancellationToken) > 0;
 
     private static SessionEntity NewRow(
         Guid sessionId, string externalKey, Guid projectId, long totalTokens, DateTimeOffset lastActivityAt)

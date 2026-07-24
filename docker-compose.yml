@@ -59,7 +59,7 @@ services:
   proxy:
     build:
       context: .
-      dockerfile: Proxytrace.Proxy/Dockerfile
+      dockerfile: Proxytrace.Proxy.Api/Dockerfile
       args:
         # Bake the throwaway TEST license public key so local/e2e/perf stacks trust the
         # committed test-signed license JWTs. Official release images pass no override and

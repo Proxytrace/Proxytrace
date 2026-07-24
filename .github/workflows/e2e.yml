@@ -70,6 +70,38 @@ jobs:
           path: e2e/playwright-report/
           retention-days: 14
 
+      # Runs before teardown: `down -v` destroys the containers and with them every
+      # stack-side clue about why a spec failed (crash, restart, hang, 502 from nginx).
+      - name: Capture e2e stack logs
+        if: failure()
+        run: |
+          compose() {
+            docker compose -f docker-compose.yml -f docker-compose.e2e.yml "$@"
+          }
+          mkdir -p stack-logs
+          # Container states — exit codes, restart counts, health. Echoed into the job log
+          # too, so the common cases need no artifact download at all.
+          compose ps -a | tee stack-logs/compose-ps.txt || true
+          # Combined log for cross-service correlation, plus one file per service because
+          # the interleaved dump is unreadable at volume.
+          compose logs --no-color --timestamps > stack-logs/compose-logs.txt 2>&1 || true
+          for service in $(compose config --services); do
+            compose logs --no-color --timestamps "$service" \
+              > "stack-logs/$service.log" 2>&1 || true
+          done
+          # Restart counts, exit codes, OOMKilled — the "did it crash or hang?" evidence.
+          compose ps -aq | xargs -r docker inspect \
+            > stack-logs/docker-inspect.json 2>&1 || true
+
+      - name: Upload e2e stack logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-stack-logs
+          path: stack-logs/
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Tear down e2e stack
         if: always()
         run: |
