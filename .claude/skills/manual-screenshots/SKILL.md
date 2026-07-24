@@ -17,8 +17,8 @@ items off and keep it current as you capture.
 
 - **Docker required.** If `docker info` fails, stop and tell the user — there is no fallback.
 - The kiosk stack is isolated: compose project `proxytrace-kiosk`, **in-memory** storage, ports
-  `5200`/`5201`. It cannot reach the user's `proxytrace` DB or app ports. Still — only ever manage
-  the kiosk compose; never `down` other compose projects.
+  `5200`/`5201`/`5202`. It cannot reach the user's `proxytrace` DB or app ports. Still — only
+  ever manage the kiosk compose; never `down` other compose projects.
 - **Plain screenshots only** — no annotations, arrows, or callouts.
 - **Always tear the stack down** at the end, including on failure.
 - Manual/docs-only change ⇒ **no `CHANGELOG.md` entry** (changelog is for product changes). Keeping
