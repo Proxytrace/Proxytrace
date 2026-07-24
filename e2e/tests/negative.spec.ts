@@ -14,6 +14,11 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 //   • Unknown id → 404. GET /api/test-suites/{id:guid} → suiteRepository.FindAsync → null →
 //     NotFound(). (A well-formed-but-unknown guid hits the route, unlike a garbage path which the
 //     SPA fallback would swallow.)
+//   • Kiosk proxy route absent in production → 404. KioskProxyMounting.Apply() strips the
+//     Proxytrace.Proxy assembly part from the MVC application parts when kiosk mode is off.
+//     The e2e stack runs with Kiosk__Enabled=false (production shape), so /openai/v1/{**path}
+//     must never be mounted. Hit the api service directly (port 5100) — nginx only routes /api
+//     and /mcp, so the SPA fallback would swallow the request through the frontend layer.
 //
 // All calls use the raw `request` fixture with an explicit Bearer header. Each error response must
 // be JSON (a handled error envelope / ProblemDetails), never an unhandled crash.
@@ -100,5 +105,26 @@ test.describe('Negative API paths', () => {
     if (text.trim().length > 0) {
       expect(() => JSON.parse(text), 'any 404 body must be valid JSON').not.toThrow();
     }
+  });
+});
+
+// Guard: KioskProxyMounting.Apply() strips the Proxytrace.Proxy MVC application part unless
+// kiosk mode AND a configured Kiosk:Endpoint are both active. The e2e stack boots with
+// Kiosk__Enabled=false (production shape), so the OpenAI proxy controller — and its
+// openai/v1/{**path} route — must never be mounted. This assertion catches the regression
+// "Program.cs stops calling Apply()", which would silently re-expose the route and 500
+// clients (the controller's dependencies are only registered in kiosk+endpoint mode).
+//
+// We bypass nginx (which only routes /api and /mcp) and hit the api service directly on
+// the port mapped in docker-compose.yml (5100:8080).
+const API_DIRECT_URL = 'http://localhost:5100';
+
+test.describe('Kiosk proxy route isolation', () => {
+  test('openai proxy route is absent outside kiosk mode', async ({ request }) => {
+    // No auth header: the route should be entirely absent (404), not auth-gated (401/403).
+    // A 500 here would mean the controller is mounted but its DI dependencies are missing —
+    // the exact failure mode KioskProxyMounting is designed to prevent.
+    const res = await request.get(`${API_DIRECT_URL}/openai/v1/models`);
+    expect(res.status()).toBe(404);
   });
 });
