@@ -125,8 +125,8 @@ msgid "{0, plural, one {# suite} other {# suites}}"
 msgstr "{0, plural, one {# Suite} other {# Suite}}"
 
 #. placeholder {0}: agent.toolCount
+#. placeholder {0}: agent.tools.length
 #. placeholder {0}: entry.toolCount
-#. placeholder {0}: v.tools.length
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# Tool} other {# Tools}}"
 
@@ -744,6 +744,9 @@ msgstr "Testing A/B"
 msgid "Acceptable"
 msgstr "Accettabile"
 
+msgid "Accepted"
+msgstr "Accettato"
+
 msgid "Access Denied"
 msgstr "Accesso negato"
 
@@ -1253,6 +1256,9 @@ msgstr "Funzionalità"
 
 msgid "Capture everything"
 msgstr "Cattura tutto"
+
+msgid "Captured"
+msgstr "Acquisito"
 
 msgid "Captured failing trace cluster"
 msgstr "Cluster di Trace fallite catturate"
@@ -1857,6 +1863,9 @@ msgstr "Scarica"
 msgid "Download .md"
 msgstr "Scarica .md"
 
+msgid "Draft"
+msgstr "Bozza"
+
 msgid "Drag to reorder"
 msgstr "Trascina per riordinare"
 
@@ -2337,6 +2346,9 @@ msgstr "Come posso aiutarti?"
 
 msgid "How many of the agent's most recent successful calls form the baseline."
 msgstr "Quante delle chiamate riuscite più recenti dell'Agent formano la baseline."
+
+msgid "HTTP status"
+msgstr "Stato HTTP"
 
 msgid "https://api.openai.com/v1"
 msgstr "https://api.openai.com/v1"
@@ -3458,6 +3470,12 @@ msgstr "Apri Agent \"{0}\""
 msgid "Open in playground"
 msgstr "Apri in Playground"
 
+msgid "Open notification: {title}"
+msgstr "Apri notifica: {title}"
+
+msgid "Open proposal"
+msgstr "Apri proposal"
+
 msgid "Open proposals"
 msgstr "Apri proposals"
 
@@ -3467,6 +3485,9 @@ msgstr "Apri Run"
 #. placeholder {0}: s.name
 msgid "Open suite \"{0}\""
 msgstr "Apri Suite \"{0}\""
+
+msgid "Open test run"
+msgstr "Apri run di test"
 
 msgid "Open this result in the run matrix"
 msgstr "Apri questo risultato nella matrice dei Run"
@@ -3760,6 +3781,9 @@ msgstr "Caso precedente"
 msgid "Previous trace"
 msgstr "Trace precedente"
 
+msgid "Priority"
+msgstr "Priorità"
+
 msgid "Project"
 msgstr "Progetto"
 
@@ -3803,6 +3827,9 @@ msgstr "Promosso — in attesa di adozione nel tuo Agent."
 msgid "Prompt rewrite"
 msgstr "Riscrittura del Prompt"
 
+msgid "Proposal"
+msgstr "Proposal"
+
 msgid "Proposal Auto-Adopted"
 msgstr "Proposal adottata automaticamente"
 
@@ -3814,6 +3841,9 @@ msgstr "La Proposal non è ancora stata sottoposta a benchmark rispetto a un Tes
 
 msgid "Proposal not found."
 msgstr "Proposal non trovata."
+
+msgid "Proposal ready"
+msgstr "Proposal pronto"
 
 msgid "Proposal Status Changed"
 msgstr "Stato della Proposal modificato"
@@ -3908,6 +3938,9 @@ msgstr "Preset rapidi"
 msgid "Quick ranges"
 msgstr "Intervalli rapidi"
 
+msgid "Raised"
+msgstr "Generata"
+
 msgid "Range"
 msgstr "Intervallo"
 
@@ -3932,6 +3965,9 @@ msgstr "Ricalcolato"
 
 msgid "Re-scored · edited"
 msgstr "Ricalcolato · modificato"
+
+msgid "Read"
+msgstr "Letto"
 
 msgid "Reasoning"
 msgstr "Reasoning"
@@ -5055,6 +5091,9 @@ msgstr "Questa è una feature Enterprise"
 msgid "This is an offline license. It is never re-validated against the license server, so it keeps working with no outbound connection — only its expiry ends it."
 msgstr "Questa è una licenza offline. Non viene mai nuovamente convalidata con il server di licenza, quindi continua a funzionare senza alcuna connessione in uscita — solo la sua scadenza la interrompe."
 
+msgid "This item could not be loaded — it may have been deleted since the notification was raised."
+msgstr "Impossibile caricare questo elemento — potrebbe essere stato eliminato dopo la generazione della notifica."
+
 msgid "This license key is not valid."
 msgstr "Questa license key non è valida."
 
@@ -5223,6 +5262,9 @@ msgstr "Costo totale"
 msgid "Total runs"
 msgstr "Totale Run"
 
+msgid "Trace"
+msgstr "Trace"
+
 msgid "Trace Deleted"
 msgstr "Trace eliminata"
 
@@ -5342,6 +5384,9 @@ msgstr "agent sconosciuto"
 msgid "Unknown agent"
 msgstr "Agent sconosciuto"
 
+msgid "Unknown project"
+msgstr "Progetto sconosciuto"
+
 msgid "Unlimited agents"
 msgstr "Agent illimitati"
 
@@ -5357,6 +5402,9 @@ msgstr "Test suite illimitate"
 msgid "Unlock everything with Enterprise — proxytrace.dev"
 msgstr "Sblocca tutto con Enterprise — proxytrace.dev"
 
+msgid "Unread"
+msgstr "Non letto"
+
 msgid "Unsaved changes."
 msgstr "Modifiche non salvate."
 
@@ -5365,6 +5413,9 @@ msgstr "Aggiorna automaticamente l'indice quando le entità vengono create, aggi
 
 msgid "updated"
 msgstr "aggiornato"
+
+msgid "Updated"
+msgstr "Aggiornato"
 
 msgid "Upgrade to Enterprise"
 msgstr "Passa a Enterprise"
@@ -5492,9 +5543,6 @@ msgstr "Visualizza tutto ›"
 
 msgid "View all →"
 msgstr "Visualizza tutto →"
-
-msgid "View details"
-msgstr "Visualizza dettagli"
 
 msgid "View Enterprise plans"
 msgstr "Visualizza i piani Enterprise"

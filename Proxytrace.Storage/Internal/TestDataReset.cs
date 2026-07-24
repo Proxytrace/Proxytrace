@@ -19,7 +19,7 @@ internal sealed class TestDataReset : ITestDataReset
           "TestResultEntity", "TestRunEntity", "TestRunStatsEntity", "TestRunGroupEntity",
           "OptimizationProposalEntity", "InviteEntity", "PasswordResetTokenEntity",
           "UserTotpEnrollmentEntity", "MfaBackupCodeEntity",
-          "ApplicationErrorEntity", "AuditLogEntryEntity"
+          "ApplicationErrorEntity", "AuditLogEntryEntity", "NotificationEntity"
         CASCADE;
         """;
 

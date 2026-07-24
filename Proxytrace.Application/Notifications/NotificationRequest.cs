@@ -3,9 +3,10 @@ using Proxytrace.Domain.Notification;
 namespace Proxytrace.Application.Notifications;
 
 /// <summary>
-/// An un-persisted notification intent. Fanned out by <see cref="INotificationService"/> to every
-/// registered <see cref="INotificationChannel"/>. Decoupled from <see cref="INotification"/> so a
-/// channel can deliver (e.g. send an email) without touching the database.
+/// An un-persisted notification intent — the producer-facing input to
+/// <see cref="INotificationService.NotifyAsync"/>. The service de-duplicates it, turns it into a
+/// persisted <see cref="INotification"/>, and hands that entity to every
+/// <see cref="INotificationChannel"/>; producers never deal with ids or persistence.
 /// </summary>
 public record NotificationRequest(
     NotificationKind Kind,

@@ -53,6 +53,14 @@ function EvaluatorDeepLinkRedirect() {
   return <Navigate to={id ? `/evaluators?id=${encodeURIComponent(id)}` : '/evaluators'} replace />;
 }
 
+// Notification emails link to a stable /notifications/<id>. There is no notifications *page* — the
+// detail drawer lives in the topbar and opens off `?notification=`, so this lands on the dashboard
+// with the drawer open.
+function NotificationDeepLinkRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={id ? `/dashboard?notification=${encodeURIComponent(id)}` : '/dashboard'} replace />;
+}
+
 export function AppRoutes() {
   const { data: setupStatus } = useQuery({
     queryKey: QUERY_KEYS.setupStatus,
@@ -100,6 +108,8 @@ export function AppRoutes() {
         {/* Legacy/deep-link path form → canonical ?id= query selection. */}
         <Route path="evaluators/:id" element={<EvaluatorDeepLinkRedirect />} />
         <Route path="runs" element={wrap(<Runs />)} />
+        {/* Stable link target for notification emails → the topbar drawer's `?notification=`. */}
+        <Route path="notifications/:id" element={<NotificationDeepLinkRedirect />} />
         <Route path="playground" element={wrap(<Playground />)} />
         <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />
         <Route path="upgrade" element={wrap(<UpgradePlaceholder />)} />
