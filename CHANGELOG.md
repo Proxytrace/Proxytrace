@@ -18,6 +18,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Provider key rotation and revocation now take effect on the very next proxied request.** The
+  ingestion proxy previously cached resolved credentials — including the decrypted upstream provider
+  key — for up to 30 seconds, so a rotated key could keep being forwarded (and the replaced key kept
+  authenticating inbound) until the cache expired, in every proxy replica independently. The proxy
+  now resolves credentials from the database on every request and fails closed when the database is
+  unreachable instead of serving stale credentials. The `ApiKeyCache` setting is removed.
 - **Keyboard focus is now visible on the remaining bespoke controls.** The playground settings
   rail, agent picker, endpoint chip, tool result/error tabs, suite-wizard preset chips, search
   indexing kind toggles, the evaluator recent-evaluations filter chip, and the move-version target

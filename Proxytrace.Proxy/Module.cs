@@ -92,17 +92,13 @@ internal sealed class Module : Autofac.Module
         builder.RegisterType<UnusedProviderClient>()
             .As<Proxytrace.Domain.ModelProvider.IProviderClient>();
 
-        var cacheTtlSeconds = configuration.GetSection("ApiKeyCache").GetValue<int?>("TtlSeconds") ?? 30;
-        // Per-request lifetime, NOT SingleInstance: a singleton resolver captures its repositories
-        // (and their per-call StorageDbContext) against the root scope, so the InstancePerDependency
-        // contexts created on every cache-miss are never disposed until shutdown — a connection leak.
-        // The cache that actually has to be shared is IMemoryCache, which is already a singleton.
-        builder.Register(ctx => new CachedApiKeyResolver(
-                ctx.Resolve<IApiKeyRepository>(),
-                ctx.Resolve<IModelProviderRepository>(),
-                ctx.Resolve<IProjectRepository>(),
-                ctx.Resolve<IMemoryCache>(),
-                TimeSpan.FromSeconds(cacheTtlSeconds)))
+        // Deliberately uncached (#407): a shared positive credential cache would keep forwarding a
+        // rotated upstream key — and keep accepting a revoked inbound one — until its TTL expired,
+        // in every proxy replica independently. Resolution hits storage on every request and fails
+        // closed when the database is unreachable. Per-request lifetime, NOT SingleInstance: the
+        // resolver captures its repositories (and their per-call StorageDbContext), which must not
+        // pin against the root scope.
+        builder.RegisterType<ApiKeyResolver>()
             .As<IApiKeyResolver>()
             .InstancePerLifetimeScope();
 

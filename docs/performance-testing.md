@@ -60,6 +60,18 @@ capped at 50). All four budgets are **uncalibrated placeholders** — set conser
 full run lands. (`StatsQueryTranslationTests` in the unit suite additionally locks these aggregate
 shapes to server-side Npgsql translation via `ToQueryString`, without a live database.)
 
+### Proxy credential resolution (`Scenarios/ApiKeyResolutionScenario.cs`)
+
+The proxy resolves inbound credentials from storage on **every** proxied request (no positive
+credential cache — a cached snapshot would delay key rotation/revocation, #407), so resolution is a
+per-request hot path. The scenario idempotently seeds one Proxytrace-issued key and one dedicated
+provider with a known upstream key, then times both resolution paths (`proxyResolveProxytraceKey`,
+`proxyResolveUpstreamKey`) mirroring `ApiKeyResolver.ResolveAsync`'s repository call sequence, each
+iteration in a fresh lifetime scope because per-request scope/DbContext construction is part of the
+cost the proxy pays. The point of the budget is flatness: resolution is a handful of indexed point
+lookups independent of `AgentCall` volume, and a breach signals a lost index or an accidental join
+to a high-volume table. See `_comment_proxyResolve` in `perf/perf-budgets.json`.
+
 ## Budgets (`perf/perf-budgets.json`)
 
 The single source of absolute budgets, shared by all three scopes (the DB-layer runner and benchmarks

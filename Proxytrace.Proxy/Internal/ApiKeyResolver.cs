@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using Proxytrace.Common.Text;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
@@ -6,49 +5,30 @@ using Proxytrace.Domain.Project;
 
 namespace Proxytrace.Proxy.Internal;
 
-internal sealed class CachedApiKeyResolver : IApiKeyResolver
+internal sealed class ApiKeyResolver : IApiKeyResolver
 {
     private readonly IApiKeyRepository apiKeys;
     private readonly IModelProviderRepository providers;
     private readonly IProjectRepository projects;
-    private readonly IMemoryCache cache;
-    private readonly TimeSpan ttl;
 
-    public CachedApiKeyResolver(
+    public ApiKeyResolver(
         IApiKeyRepository apiKeys,
         IModelProviderRepository providers,
-        IProjectRepository projects,
-        IMemoryCache cache,
-        TimeSpan ttl)
+        IProjectRepository projects)
     {
         this.apiKeys = apiKeys;
         this.providers = providers;
         this.projects = projects;
-        this.cache = cache;
-        this.ttl = ttl;
     }
 
+    // Deliberately resolves from storage on every request — no positive credential cache. A cached
+    // ResolvedApiKey carries the decrypted upstream provider key, so any TTL becomes a window in
+    // which a rotated key keeps being forwarded and a revoked inbound credential keeps
+    // authenticating, independently per proxy replica (#407). Rotation and revocation must take
+    // effect on the next request; when the database is unreachable the proxy fails closed instead
+    // of serving stale credentials. The per-request cost is a few indexed point lookups (guarded by
+    // the proxyResolve* perf budgets), negligible next to an upstream LLM round trip.
     public async Task<ResolvedApiKey?> ResolveAsync(string rawKey, string? projectSlug, CancellationToken cancellationToken)
-    {
-        var cacheKey = CacheKey(rawKey, projectSlug);
-        if (cache.TryGetValue(cacheKey, out ResolvedApiKey? cached) && cached is not null)
-        {
-            return cached;
-        }
-
-        ResolvedApiKey? resolved = await ResolveFromStoreAsync(rawKey, projectSlug, cancellationToken);
-
-        // Only cache positive resolutions so an outage can't pin a key to "unknown", and so the
-        // last-known-good mapping keeps the proxy serving while the database is briefly unreachable.
-        if (resolved is not null && ttl > TimeSpan.Zero)
-        {
-            cache.Set(cacheKey, resolved, ttl);
-        }
-
-        return resolved;
-    }
-
-    private async Task<ResolvedApiKey?> ResolveFromStoreAsync(string rawKey, string? projectSlug, CancellationToken cancellationToken)
     {
         // Proxytrace-issued key path wins on collisions. The key already carries its project, so the
         // path slug is optional — but when supplied it must agree, to avoid silently mis-attributing.
@@ -84,17 +64,5 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
         }
 
         return new ResolvedApiKey(project, provider);
-    }
-
-    private static string CacheKey(string rawKey, string? projectSlug)
-        => $"apikey:{projectSlug}:{Hash(rawKey)}";
-
-    // Hash the raw key for the in-memory cache key so the plaintext secret is not held as a
-    // dictionary key (memory dumps, accidental logging of cache keys).
-    private static string Hash(string rawKey)
-    {
-        Span<byte> hash = stackalloc byte[32];
-        System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawKey), hash);
-        return Convert.ToHexString(hash);
     }
 }

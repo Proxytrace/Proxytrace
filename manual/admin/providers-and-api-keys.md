@@ -57,9 +57,9 @@ To replace the credential Proxytrace uses when forwarding requests to a provider
 
 If the provider rejects the key or cannot be reached, Proxytrace leaves the existing key unchanged
 and shows the reason. A successful provider response that reports no models is shown as a warning,
-but the replacement is saved because a zero-model response can be valid. Proxies refresh cached
-provider credentials within the configured API-key cache interval (30 seconds by default), after
-which new requests use the replacement key.
+but the replacement is saved because a zero-model response can be valid. The rotation takes effect
+immediately: the proxy resolves credentials on every request, so the next proxied call forwards the
+replacement key, and the replaced key stops authenticating at the proxy at the same moment.
 
 ### Azure OpenAI
 

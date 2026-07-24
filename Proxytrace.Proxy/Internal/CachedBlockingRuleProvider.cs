@@ -5,9 +5,11 @@ using Proxytrace.Licensing;
 namespace Proxytrace.Proxy.Internal;
 
 /// <summary>
-/// TTL-cached blocking-rule lookup, mirroring <see cref="CachedApiKeyResolver"/>. Unlike the key
-/// resolver it also caches EMPTY lists: most projects have no blocking detectors, and without
-/// negative caching every proxied request would hit the database. Detector edits therefore
+/// TTL-cached blocking-rule lookup. Rules may be cached where credentials must not
+/// (<see cref="ApiKeyResolver"/> is deliberately uncached, #407): a stale rule list delays a
+/// detector edit by one TTL, not a security-sensitive key rotation. It also caches EMPTY lists:
+/// most projects have no blocking detectors, and without negative caching every proxied request
+/// would hit the database. Detector edits therefore
 /// propagate within one TTL (default 30 s). A database error is fail-open — log and return no
 /// rules (uncached, so recovery is immediate) rather than failing the LLM call. Blocking is
 /// Enterprise-gated: without <see cref="LicenseFeature.CustomAnomalyDetectors"/> no rules apply.
