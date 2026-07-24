@@ -77,8 +77,8 @@ docker compose -f docker-compose.kiosk.yml up --build
 ```
 
 Without a `.env` (or with credentials omitted) the stack starts in **read-only demo mode**: the
-API and UI boot normally but the proxy returns `503` and the sample client idles — useful for
-passive walkthroughs of the pre-seeded data.
+API and UI boot normally but the OpenAI proxy route is not mounted (requests to `/openai/v1/*`
+return `404`) and the sample client idles — useful for passive walkthroughs of the pre-seeded data.
 
 **Demo API key.** When a live endpoint is configured, the kiosk mints a fixed API key
 (`pk-kiosk-demo` by default, overridable via `KIOSK_DEMO_API_KEY` in `.env`) shared by the

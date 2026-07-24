@@ -80,7 +80,8 @@ Ports:
 | Sample client   | 5202      | http://localhost:5202      |
 
 **Read-only mode (no `.env`):** the stack boots with in-memory storage and no real LLM endpoint.
-The frontend is fully browsable; the OpenAI proxy returns 503 and the sample client idles.
+The frontend is fully browsable; the OpenAI proxy route is not mounted (`/openai/v1/*` returns 404)
+and the sample client idles.
 
 **Live demo mode:** copy `kiosk.env.example` to `.env` and fill in your LLM credentials:
 

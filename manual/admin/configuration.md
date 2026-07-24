@@ -210,8 +210,10 @@ public instance.
 The seeded model provider, model, and endpoint are created from the `Kiosk:Endpoint` values
 and become the project's **system endpoint** powering all interactive features.
 
-- `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
-  is missing or invalid, the API fails fast on startup with a clear error.
+- `BaseUrl`, `ApiKey` and `Model` are **required** together. Leave **all three** blank (the showcase
+  compose's env-less default) and the endpoint is treated as absent — the kiosk runs in read-only mode
+  and the OpenAI proxy route is not mounted. Set **some but not all** of them and the API fails fast on
+  startup with a clear error (an invalid `BaseUrl` or `Kind` fails fast too).
 - `Kind` is one of `OpenAi` or `OpenAiCompatible` (default `OpenAi`).
 - `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional. Token costs are
   **EUR per 1M tokens** (e.g. `2.50` for €2.50 per million input tokens). When omitted, the

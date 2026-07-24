@@ -212,6 +212,8 @@ Now click **⚡ The trick (demo)** shortcut again.
 
 **SEE:** The agent responds with a polite, policy-grounded refusal — acknowledges the difficulty, cites the 30-day policy, notes no exception is on record, and offers 50% store credit. No `issue_refund` tool call is made.
 
+> **Note:** the prompt panel trims trailing whitespace on Apply, so the live prompt can differ from the clipboard by a stray newline. If adoption does not auto-fire after the trick re-runs, use **Mark adopted** in the Handoff panel (see Recovery below).
+
 **DO:** Switch back to Proxytrace → **Proposals**. Within a few seconds, the proposal status flips to **Adopted** (auto-detected from the new live traffic matching the exact prompt change).
 
 **SAY:** "Proxytrace detected the change in live traffic and closed the loop — from 'trick succeeded' to 'trick refused', with a traceable evidence trail the whole way."
@@ -239,6 +241,8 @@ Now click **⚡ The trick (demo)** shortcut again.
 ### Theory shows "No improvement" (A/B found no significant win)
 
 The A/B test ran but the candidate did not improve the pass rate enough to clear the significance threshold. Dedup blocks re-submitting the identical theory. Recovery path:
+
+> **Statistical margin.** With ~5 baseline failures the win sits right on the significance edge — a single flaky candidate case can push it just under (p≈0.055), so the run legitimately reports "No improvement". This is expected variance, not a broken demo; take one of the retry paths below.
 
 **Option A — trigger a new theory from a fresh failed run:** Navigate to **Test Suites** → **Customer Support — Refund Policy Accuracy**. Run the trick again in the sample client and add it as a second corrected case, then rerun the suite. The optimizer generates a new (different) theory on the next failed run.
 

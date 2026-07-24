@@ -19,9 +19,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   Without credentials the stack still boots in read-only demo mode; the demo API key defaults to
   `pk-kiosk-demo`. The full presenter runbook is in `sample-client/README.md`.
 
-- **The demo "Customer Support" agent can now demo social-engineering resistance.** The kiosk seed
+- **The demo "Customer Support" agent can now showcase social-engineering resistance.** The kiosk seed
   arms the support agent with an `issue_refund` tool and a ten-case refund test suite — five of
-  which are social-engineering attempts to extract unauthorized refunds — pre-seeded with a 100 %
+  which are social-engineering attempts to extract unauthorized refunds — pre-seeded with a 100%
   pass-rate history, so a presenter can trigger the trick in the sample chat client and watch the
   pass-rate drop on screen.
 
