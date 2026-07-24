@@ -2,6 +2,7 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
@@ -9,6 +10,7 @@ using Proxytrace.Api.Auth.Mcp;
 using Proxytrace.Api.Kiosk;
 using Proxytrace.Api.Middleware;
 using Proxytrace.Domain.Kiosk;
+using Proxytrace.Proxy.Controllers;
 using Module = Proxytrace.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,6 +111,20 @@ var app = builder.Build();
 // Resolve the kiosk decision from the container (the Module is the single source of truth — it reads
 // appsettings.local.json, which builder.Configuration does not). Re-reading config here would diverge.
 var kioskEnabled = app.Services.GetRequiredService<KioskOptions>().Enabled;
+
+// Kiosk showcase: mount the OpenAI-compatible proxy controller in-process ONLY when kiosk runs with a
+// live Kiosk:Endpoint (the same gate Proxytrace.Api.Module uses to register Proxytrace.Proxy.Module).
+// The controller lives in the referenced Proxytrace.Proxy library, which is NOT an MVC application part
+// by default, so its `openai/v1/{**path}` routes exist only when its assembly is added here — in
+// production and kiosk-without-endpoint the routes never resolve. Added before MapControllers so the
+// action descriptors pick it up. See docs/architecture.md.
+var mountKioskProxy = kioskEnabled
+                      && app.Services.GetRequiredService<KioskEndpointOptions>().IsConfigured;
+if (mountKioskProxy)
+{
+    app.Services.GetRequiredService<ApplicationPartManager>()
+        .ApplicationParts.Add(new AssemblyPart(typeof(OpenAiProxyController).Assembly));
+}
 
 if (app.Environment.IsDevelopment())
 {

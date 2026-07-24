@@ -210,6 +210,7 @@ public sealed class OpenAiProxyBlockingTests
             ResolverFor(ApiKey()),
             new RequestBlocker(ruleProvider),
             new KioskOptions(),
+            new KioskEndpointOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 
     private static AnomalyTrigger Phrase(string pattern)

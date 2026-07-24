@@ -103,6 +103,19 @@ internal sealed class Module : Autofac.Module
             .RegisterInstance(kioskEndpoint)
             .SingleInstance();
 
+        // Kiosk showcase: when kiosk runs with a live LLM endpoint, host the OpenAI-compatible proxy
+        // pipeline in-process so a sample client can point its OpenAI SDK baseURL at the kiosk API and
+        // have every call captured as a live trace (single-process, in-memory, no Redis, no separate
+        // proxy container). The pipeline's controller publishes to the same in-process IIngestionStream
+        // the app's ingestion worker consumes. Registered ONLY in kiosk+endpoint mode — in production or
+        // kiosk-without-endpoint the pipeline services are absent and the route (Program.cs application
+        // part) is never mounted. See docs/architecture.md.
+        var mountKioskProxy = kiosk.Enabled && kioskEndpoint.IsConfigured;
+        if (mountKioskProxy)
+        {
+            builder.RegisterModule<Proxytrace.Proxy.Module>();
+        }
+
         var agentCallCleanupConfiguration = configuration.GetSection("AgentCallCleanup")
             .Get<AgentCallCleanupConfiguration>() ?? new AgentCallCleanupConfiguration();
         builder

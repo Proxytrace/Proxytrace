@@ -33,6 +33,13 @@ internal sealed class Module : Autofac.Module
         var kiosk = configuration.GetSection("Kiosk").Get<KioskOptions>() ?? new KioskOptions();
         builder.RegisterInstance(kiosk).SingleInstance();
 
+        // The proxy controller reads this to decide whether kiosk mode has a live upstream to
+        // forward to (kiosk + no endpoint refuses; a configured endpoint serves). The standalone
+        // host is normally non-kiosk, but bind it so the controller can always resolve it.
+        var kioskEndpoint = configuration.GetSection("Kiosk:Endpoint").Get<KioskEndpointOptions>()
+                            ?? new KioskEndpointOptions();
+        builder.RegisterInstance(kioskEndpoint).SingleInstance();
+
         // Redis ingestion transport (producer side). Registered before storage so the in-process
         // default the application module would otherwise pick can never take precedence.
         builder.RegisterModule(new Proxytrace.Messaging.Module(BuildMessagingConfiguration(configuration)));

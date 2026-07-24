@@ -146,6 +146,10 @@ internal sealed class CoreSeedScenario : IDemoScenario
             reviewEndpoint = realEndpoint;
             analyticsEndpoint = realEndpoint;
             triageEndpoint = realEndpoint;
+
+            // Exposed for DemoApiKeySeedScenario: the seeded demo ingestion key points at this real
+            // provider so the in-process kiosk proxy forwards to the live upstream.
+            ctx.KioskLiveProvider = realProvider;
         }
 
         var project = await projects.AddAsync(projectFactory(

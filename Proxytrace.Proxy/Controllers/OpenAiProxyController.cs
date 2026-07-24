@@ -90,6 +90,7 @@ public class OpenAiProxyController : ControllerBase
     private readonly IApiKeyResolver apiKeyResolver;
     private readonly IRequestBlocker requestBlocker;
     private readonly KioskOptions kioskOptions;
+    private readonly KioskEndpointOptions kioskEndpoint;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
@@ -98,6 +99,7 @@ public class OpenAiProxyController : ControllerBase
         IApiKeyResolver apiKeyResolver,
         IRequestBlocker requestBlocker,
         KioskOptions kioskOptions,
+        KioskEndpointOptions kioskEndpoint,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
@@ -105,6 +107,7 @@ public class OpenAiProxyController : ControllerBase
         this.apiKeyResolver = apiKeyResolver;
         this.requestBlocker = requestBlocker;
         this.kioskOptions = kioskOptions;
+        this.kioskEndpoint = kioskEndpoint;
         this.logger = logger;
     }
 
@@ -299,7 +302,11 @@ public class OpenAiProxyController : ControllerBase
         string? project,
         CancellationToken cancellationToken)
     {
-        if (kioskOptions.Enabled)
+        // Refuse only when kiosk mode has NO live endpoint: a plain demo has no real upstream to
+        // forward to. When a live Kiosk:Endpoint IS configured the kiosk API mounts this route
+        // in-process so a sample client can turn calls into live traces, so the proxy must serve.
+        // Outside kiosk (the standalone proxy host / production) Enabled is false and it always serves.
+        if (kioskOptions.Enabled && !kioskEndpoint.IsConfigured)
         {
             Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
             Response.ContentType = "application/json";
