@@ -121,6 +121,35 @@ public sealed class NotificationServiceTests : BaseTest<Module>
         await channel.Received(1).DeliverAsync(Arg.Is<INotification>(n => n != null && n.Id == persistedId), CancellationToken);
     }
 
+    [TestMethod]
+    public async Task NotifyAsync_WhenPersistFails_SwallowsAndDoesNotDeliver()
+    {
+        var channel = Substitute.For<INotificationChannel>();
+        channel.Name.Returns("Any");
+
+        var repository = Substitute.For<INotificationRepository>();
+        repository.AddAsync(Arg.Any<INotification>(), Arg.Any<CancellationToken>())
+            .Returns<INotification>(_ => throw new InvalidOperationException("db down"));
+
+        IServiceProvider services = Build(builder =>
+        {
+            builder.RegisterInstance(repository).As<INotificationRepository>();
+            builder.RegisterInstance(channel).As<INotificationChannel>();
+        });
+
+        // Null target → dedup is skipped, so AddAsync is reached and throws.
+        var request = new NotificationRequest(
+            NotificationKind.Anomaly, NotificationSeverity.Warning, "t", "m", ProjectId: null);
+
+        // Best-effort: a transient persist failure must not throw out of NotifyAsync, because
+        // producers call it as an unguarded trailing statement.
+        var act = () => services.GetRequiredService<INotificationService>().NotifyAsync(request, CancellationToken);
+        await act.Should().NotThrowAsync();
+
+        // Nothing persisted → nothing to deliver.
+        await channel.DidNotReceive().DeliverAsync(Arg.Any<INotification>(), Arg.Any<CancellationToken>());
+    }
+
     /// <summary>
     /// Builds a provider running the real <see cref="NotificationService"/> over the in-memory
     /// notification repository, so the tests exercise the actual create-then-fan-out sequence.

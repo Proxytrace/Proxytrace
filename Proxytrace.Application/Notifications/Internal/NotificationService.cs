@@ -38,16 +38,34 @@ internal sealed class NotificationService : INotificationService
 
         // The notification *is* the record: it is created here, once, before any channel runs, so
         // every channel delivers the same persisted entity and can reference it by id.
-        var notification = await notifications.AddAsync(
-            createNotification(
-                request.Kind,
-                request.Severity,
-                request.Title,
-                request.Message,
-                request.ProjectId,
-                request.TargetKind,
-                request.TargetId),
-            cancellationToken);
+        //
+        // The persist is best-effort, exactly as it was when it lived inside the dashboard channel's
+        // try/catch: a transient DB failure here must not throw out of NotifyAsync, which producers
+        // (BlockedCallRecorder, AnomalyDetectionService's per-anomaly loop) call as an unguarded
+        // trailing statement. A failed persist is logged and swallowed.
+        INotification notification;
+        try
+        {
+            notification = await notifications.AddAsync(
+                createNotification(
+                    request.Kind,
+                    request.Severity,
+                    request.Title,
+                    request.Message,
+                    request.ProjectId,
+                    request.TargetKind,
+                    request.TargetId),
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to persist notification '{Title}'", request.Title);
+            return;
+        }
 
         foreach (var channel in channels)
         {
