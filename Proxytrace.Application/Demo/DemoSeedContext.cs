@@ -1,6 +1,7 @@
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -15,6 +16,13 @@ internal sealed class DemoSeedContext
 {
     public IUser? DemoUser { get; set; }
     public IProject? Project { get; set; }
+
+    /// <summary>
+    /// The real model provider created from <c>Kiosk:Endpoint</c> (populated only when a live endpoint
+    /// is configured). The seeded demo ingestion API key points at it so the in-process proxy forwards
+    /// to the live upstream. Null in a demo without a live endpoint.
+    /// </summary>
+    public IModelProvider? KioskLiveProvider { get; set; }
 
     public IModelEndpoint? Gpt54Endpoint { get; set; }
     public IModelEndpoint? Gpt54MiniEndpoint { get; set; }
@@ -46,6 +54,7 @@ internal sealed class DemoSeedContext
 
     public IUser RequireDemoUser() => DemoUser ?? throw Missing(nameof(DemoUser));
     public IProject RequireProject() => Project ?? throw Missing(nameof(Project));
+    public IModelProvider RequireKioskLiveProvider() => KioskLiveProvider ?? throw Missing(nameof(KioskLiveProvider));
     public IModelEndpoint RequireGpt54Endpoint() => Gpt54Endpoint ?? throw Missing(nameof(Gpt54Endpoint));
     public IModelEndpoint RequireGpt54MiniEndpoint() => Gpt54MiniEndpoint ?? throw Missing(nameof(Gpt54MiniEndpoint));
     public IModelEndpoint RequireClaudeEndpoint() => ClaudeEndpoint ?? throw Missing(nameof(ClaudeEndpoint));

@@ -34,6 +34,7 @@
     <ProjectReference Include="..\Proxytrace.Storage\Proxytrace.Storage.csproj" />
     <ProjectReference Include="..\Proxytrace.Application\Proxytrace.Application.csproj" />
     <ProjectReference Include="..\Proxytrace.Licensing\Proxytrace.Licensing.csproj" />
+    <ProjectReference Include="..\Proxytrace.Proxy\Proxytrace.Proxy.csproj" />
   </ItemGroup>
 
   <ItemGroup>

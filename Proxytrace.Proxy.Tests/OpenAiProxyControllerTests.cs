@@ -425,6 +425,7 @@ public sealed class OpenAiProxyControllerTests
             resolver,
             Substitute.For<IRequestBlocker>(),
             new KioskOptions(),
+            new KioskEndpointOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 
     private static IApiKeyResolver NoKeyResolver()

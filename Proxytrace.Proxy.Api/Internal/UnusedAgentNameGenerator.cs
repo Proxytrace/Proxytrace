@@ -2,7 +2,7 @@ using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 
-namespace Proxytrace.Proxy;
+namespace Proxytrace.Proxy.Api.Internal;
 
 /// <summary>
 /// The storage repository graph (resolved when EF builds its model) depends on

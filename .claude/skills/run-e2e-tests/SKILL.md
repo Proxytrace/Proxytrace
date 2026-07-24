@@ -137,6 +137,14 @@ coverage, weigh it separately from the deterministic core tests.
 | Trace / screenshot / video | `e2e/test-results/<spec>/` | Per-failure artifacts. Open a trace with `npx playwright show-trace e2e/test-results/.../trace.zip`. |
 | Last-run summary | `e2e/test-results/.last-run.json` | `{ "status", "failedTests" }` — quick machine-readable pass/fail. |
 
+When the failure is in **CI**, the run also has an `e2e-stack-logs` artifact (uploaded
+only on failure by `.github/workflows/e2e.yml`): `compose-ps.txt` (container states,
+exit codes, health), `<service>.log` per service, the interleaved `compose-logs.txt`,
+and `docker-inspect.json` (restart counts, `OOMKilled`, exit codes). Reach for it
+whenever the Playwright evidence points *at* the stack rather than at the app — a
+5xx, an `ECONNREFUSED`, or a container that died mid-run. `docker compose ps -a` is
+also echoed into the job log, so check there first.
+
 In a headless/agent environment you can't open a browser. Prefer
 `--reporter=list` for readable terminal output, read `.last-run.json` for the
 verdict, and quote the actual assertion error + the spec `file:line` rather than

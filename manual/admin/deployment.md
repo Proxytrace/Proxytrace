@@ -50,11 +50,44 @@ Kiosk mode runs the app as a single process — the **.NET API serves the compil
 from its `wwwroot/`** and no Redis is required. Useful for demos and simple installs.
 
 ```bash
-docker compose -f docker-compose.kiosk.yml up --build   # API on :5200, frontend on :5201
+docker compose -f docker-compose.kiosk.yml up --build   # API :5200, UI :5201, sample client :5202
 ```
 
 Locally, `./dev.sh` runs the kiosk shape by default; `SPLIT=1 ./dev.sh` runs the split
 shape with a throwaway Redis.
+
+### Live showcase stack
+
+The compose file ships a bundled **sample chat client** (`:5202`) and supports a **live LLM
+endpoint** so a presenter can drive real calls through the kiosk and watch them appear as traces
+in the web UI in real time.
+
+| Service | Port | URL |
+|---------|------|-----|
+| Proxytrace API | 5200 | `http://localhost:5200` |
+| Proxytrace UI | 5201 | `http://localhost:5201` |
+| Sample chat client | 5202 | `http://localhost:5202` |
+
+**Configuration.** Copy `kiosk.env.example` to `.env` at the repo root and fill in your LLM
+credentials, then start the stack:
+
+```bash
+cp kiosk.env.example .env   # set KIOSK_LLM_BASE_URL, KIOSK_LLM_API_KEY, KIOSK_LLM_MODEL
+docker compose -f docker-compose.kiosk.yml up --build
+```
+
+Without a `.env` (or with credentials omitted) the stack starts in **read-only demo mode**: the
+API and UI boot normally but the OpenAI proxy route is not mounted (requests to `/openai/v1/*`
+return `404`) and the sample client idles — useful for passive walkthroughs of the pre-seeded data.
+
+**Demo API key.** When a live endpoint is configured, the kiosk mints a fixed API key
+(`pk-kiosk-demo` by default, overridable via `KIOSK_DEMO_API_KEY` in `.env`) shared by the
+API and the sample client. Both containers read the same variable, so they stay in sync
+automatically. See [Configuration](/admin/configuration#interactive-kiosk-real-llm-endpoint)
+for the full `Kiosk:DemoApiKey` setting.
+
+**Presenter runbook.** The step-by-step demo script — walk-through flow, the "trick" shortcut,
+troubleshooting tips — ships in `sample-client/README.md`.
 
 ## The bundled manual (`/docs`)
 

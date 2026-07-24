@@ -4,40 +4,24 @@ using Proxytrace.Domain.Notification;
 namespace Proxytrace.Application.Notifications.Internal;
 
 /// <summary>
-/// Persists notifications so the dashboard section can read them, and pushes a live SSE event so
-/// open dashboards update immediately. De-duplication against active notifications for the same
-/// target is handled upstream by <see cref="NotificationService"/> before any channel is invoked.
+/// Pushes a live SSE event so open dashboards show the notification immediately. Persistence and
+/// de-duplication both happen upstream in <see cref="NotificationService"/> before any channel is
+/// invoked — this channel only broadcasts the already-stored entity.
 /// </summary>
 internal sealed class DashboardNotificationChannel : INotificationChannel
 {
-    private readonly INotificationRepository notifications;
-    private readonly INotification.CreateNew createNotification;
     private readonly INotificationBroadcaster broadcaster;
 
-    public DashboardNotificationChannel(
-        INotificationRepository notifications,
-        INotification.CreateNew createNotification,
-        INotificationBroadcaster broadcaster)
+    public DashboardNotificationChannel(INotificationBroadcaster broadcaster)
     {
-        this.notifications = notifications;
-        this.createNotification = createNotification;
         this.broadcaster = broadcaster;
     }
 
     public string Name => "Dashboard";
 
-    public async Task DeliverAsync(NotificationRequest request, CancellationToken cancellationToken = default)
+    public Task DeliverAsync(INotification notification, CancellationToken cancellationToken = default)
     {
-        var notification = createNotification(
-            request.Kind,
-            request.Severity,
-            request.Title,
-            request.Message,
-            request.ProjectId,
-            request.TargetKind,
-            request.TargetId);
-
-        notification = await notifications.AddAsync(notification, cancellationToken);
         broadcaster.Publish(NotificationCreatedEvent.Create(notification));
+        return Task.CompletedTask;
     }
 }

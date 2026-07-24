@@ -198,6 +198,10 @@ When `Kiosk:Endpoint` is present, kiosk becomes fully read-write for a single us
 - **Chat with Tracey** — the AI assistant becomes visible and usable. Each exchange is
   captured through the in-process ingestion pipeline and shows up as a new trace attributed
   to the Tracey system agent.
+- **Accept and trace live LLM calls** — the kiosk mounts an OpenAI-compatible proxy at
+  `/openai/v1` that forwards to the configured endpoint. Any OpenAI SDK client pointed at
+  `http://<host>:5200/openai/v1` with the demo API key will have its calls captured as
+  traces in real time. The bundled showcase stack uses this route automatically.
 
 All data remains **in-memory only** and is lost when the process restarts. Interactive kiosk
 is intended for a single user or a private hands-on demo — it is not designed for a shared
@@ -206,12 +210,20 @@ public instance.
 The seeded model provider, model, and endpoint are created from the `Kiosk:Endpoint` values
 and become the project's **system endpoint** powering all interactive features.
 
-- `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
-  is missing or invalid, the API fails fast on startup with a clear error.
+- `BaseUrl`, `ApiKey` and `Model` are **required** together. Leave **all three** blank (the showcase
+  compose's env-less default) and the endpoint is treated as absent — the kiosk runs in read-only mode
+  and the OpenAI proxy route is not mounted. Set **some but not all** of them and the API fails fast on
+  startup with a clear error (an invalid `BaseUrl` or `Kind` fails fast too).
 - `Kind` is one of `OpenAi` or `OpenAiCompatible` (default `OpenAi`).
 - `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional. Token costs are
   **EUR per 1M tokens** (e.g. `2.50` for €2.50 per million input tokens). When omitted, the
   endpoint falls back to a small-model rate (0.15 in / 0.60 out) so traces still display a cost.
+
+`Kiosk:DemoApiKey` controls the fixed ingestion key seeded in the demo project (default:
+`pk-kiosk-demo`). The showcase stack's sample chat client uses this key to authenticate calls
+through the in-process proxy. Override the default only if you need a custom key — and if you
+do, set the same value on both the API and the sample client (the showcase `.env` handles this
+via the single `KIOSK_DEMO_API_KEY` variable).
 
 If `Kiosk:Endpoint` is omitted, the kiosk seeds the full demo dataset with credential-less
 providers (LLM calls will not succeed); interactive features including Tracey stay hidden

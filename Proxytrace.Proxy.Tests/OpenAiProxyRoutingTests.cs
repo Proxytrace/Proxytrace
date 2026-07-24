@@ -128,6 +128,7 @@ public sealed class OpenAiProxyRoutingTests
         builder.Services.AddSingleton<IApiKeyResolver>(ResolverForAnyKey());
         builder.Services.AddSingleton(Substitute.For<IRequestBlocker>());
         builder.Services.AddSingleton(new KioskOptions());
+        builder.Services.AddSingleton(new KioskEndpointOptions());
         builder.Services.AddControllers().AddApplicationPart(typeof(OpenAiProxyController).Assembly);
 
         var app = builder.Build();

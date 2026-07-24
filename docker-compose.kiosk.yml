@@ -17,6 +17,22 @@ services:
       - Frontend__AllowedOrigin=http://localhost:5201
       # Demo mode runs single-process with no proxy/Redis: ingestion stays in-process.
       - Messaging__Provider=InProcess
+      # Demo API key — shared with the sample-client so both sides stay in sync.
+      - Kiosk__DemoApiKey=${KIOSK_DEMO_API_KEY:-pk-kiosk-demo}
+      # Live LLM endpoint (optional). When all three are set the kiosk becomes fully functional:
+      # sample-client calls are traced live. Defaults empty → read-only browsing kiosk.
+      - Kiosk__Endpoint__BaseUrl=${KIOSK_LLM_BASE_URL:-}
+      - Kiosk__Endpoint__ApiKey=${KIOSK_LLM_API_KEY:-}
+      # MODEL feeds BOTH services (one variable prevents endpoint/model mismatch mid-demo).
+      - Kiosk__Endpoint__Model=${KIOSK_LLM_MODEL:-}
+      - Kiosk__Endpoint__Kind=${KIOSK_LLM_KIND:-OpenAi}
+    healthcheck:
+      # Same bash /dev/tcp pattern used by the e2e compose — no curl/wget dependency.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
@@ -25,6 +41,24 @@ services:
     ports:
       - "5201:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     volumes:
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  sample-client:
+    build:
+      context: sample-client
+      dockerfile: Dockerfile
+    ports:
+      - "5202:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      # Key-only proxy URL: the project is derived from the Proxytrace-issued API key alone.
+      - PROXYTRACE_BASE_URL=http://api:8080/openai/v1
+      # Must match Kiosk:DemoApiKey on the api service (both default to pk-kiosk-demo).
+      - PROXYTRACE_API_KEY=${KIOSK_DEMO_API_KEY:-pk-kiosk-demo}
+      # Same variable as Kiosk__Endpoint__Model above — guarantees both sides use one model.
+      - MODEL=${KIOSK_LLM_MODEL:-}

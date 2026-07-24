@@ -56,6 +56,20 @@ export interface TheoryDto {
   updatedAt: string;
 }
 
+export interface NotificationDto {
+  id: string;
+  kind: string;
+  severity: string;
+  title: string;
+  message: string;
+  status: string;
+  projectId: string | null;
+  targetKind: string | null;
+  targetId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class ProxytraceApiClient {
   constructor(
     private readonly request: APIRequestContext,
@@ -1108,6 +1122,61 @@ export class ProxytraceApiClient {
     }>;
   }> {
     return this.getList('/api/audit-log', params);
+  }
+
+  // ── Notifications ──────────────────────────────────────────────────────────
+  // Seeds a row directly (test-only endpoint) rather than through the anomaly detector, so a spec
+  // controls severity, target, and whether the target actually exists.
+  async seedNotification(opts: {
+    projectId: string | null;
+    title: string;
+    message: string;
+    severity?: 'Info' | 'Warning' | 'Critical';
+    kind?: 'Anomaly' | 'ProposalReady';
+    targetKind?: 'TestRunGroup' | 'Agent' | 'OptimizationProposal' | 'AgentCall';
+    targetId?: string;
+  }): Promise<NotificationDto> {
+    const res = await this.request.post('/api/notifications/seed', {
+      headers: this.headers(),
+      data: {
+        kind: opts.kind ?? 'Anomaly',
+        severity: opts.severity ?? 'Warning',
+        title: opts.title,
+        message: opts.message,
+        projectId: opts.projectId,
+        targetKind: opts.targetKind ?? null,
+        targetId: opts.targetId ?? null,
+      },
+    });
+    if (!res.ok()) throw new Error(`seed notification failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async listNotifications(params: { projectId?: string; includeRead?: boolean } = {}): Promise<NotificationDto[]> {
+    return this.getList('/api/notifications', params as Record<string, string | number | undefined>);
+  }
+
+  async getNotification(id: string): Promise<NotificationDto> {
+    const res = await this.request.get(`/api/notifications/${id}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get notification failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  /** Raw response so a spec can assert the status code (e.g. 404 for an unknown/out-of-scope id). */
+  notificationResponse(id: string) {
+    return this.request.get(`/api/notifications/${id}`, { headers: this.headers() });
+  }
+
+  async markNotificationRead(id: string): Promise<NotificationDto> {
+    const res = await this.request.patch(`/api/notifications/${id}/read`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`mark notification read failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async dismissNotification(id: string): Promise<NotificationDto> {
+    const res = await this.request.patch(`/api/notifications/${id}/dismiss`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`dismiss notification failed: ${res.status()} ${await res.text()}`);
+    return res.json();
   }
 
   private async getList<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
