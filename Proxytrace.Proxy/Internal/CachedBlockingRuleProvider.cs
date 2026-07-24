@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Domain.CustomAnomaly;
 using Proxytrace.Licensing;
 

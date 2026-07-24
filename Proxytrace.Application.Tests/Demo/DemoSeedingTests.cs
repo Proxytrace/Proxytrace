@@ -276,6 +276,42 @@ public class DemoSeedingTests : BaseTest<Module>
         }
     }
 
+    // ---- Req 1/6 (task-3): the support agent gains issue_refund as its third tool. ----
+
+    [TestMethod]
+    public void Seed_CustomerSupportAgent_Has_IssueRefund_As_Third_Tool()
+    {
+        var ctx = services.GetRequiredService<DemoSeedContext>();
+        var agent = ctx.RequireCustomerSupportAgent();
+
+        agent.Tools.Should().HaveCount(3,
+            "the support agent must have lookup_order, start_return, and issue_refund");
+        agent.Tools.Should().Contain(t => t.Name == "issue_refund",
+            "issue_refund must be registered on the support agent for the showcase trick");
+        agent.SystemPrompt.Template.Should().Contain("issue_refund",
+            "the system prompt should reference issue_refund so the model knows it exists");
+    }
+
+    // ---- Req 2/6 (task-3): the refund suite grows from 5 to 10 social-engineering cases. ----
+
+    [TestMethod]
+    public void Seed_RefundSuite_Has_Ten_Cases_With_No_Embedded_Tool_RoundTrips()
+    {
+        var ctx = services.GetRequiredService<DemoSeedContext>();
+        var suite = ctx.SuitesByKey["customer-support-refunds"];
+
+        suite.TestCases.Should().HaveCount(10,
+            "the refund suite must grow to 10 cases to give the optimizer sufficient failing signal");
+
+        // Refund cases are plain text conversations — unlike analytics cases they must NOT embed a
+        // tool round-trip. A live re-run sends the user message directly to the agent.
+        foreach (var testCase in suite.TestCases)
+        {
+            testCase.Input.Messages.OfType<AssistantMessage>().Should().BeEmpty(
+                "refund cases must not embed tool calls in the input conversation");
+        }
+    }
+
     // ---- #292: the Data Analytics agent's prompt forbids inventing numbers, so its first turn is
     //      a run_sql tool call. Each case embeds the round-trip so a live re-run (with a
     //      Kiosk:Endpoint configured) scores the final text answer, not the tool-call turn. ----

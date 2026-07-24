@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Wien: Wetter & Top-Sehenswürdigkeiten",
+    "prompt": "Wie ist das Wetter in Wien gerade, und welches sind die 3 beliebtesten Touristenattraktionen?"
+  },
+  {
+    "label": "3-Tage-Tokio unter 2.000 $",
+    "prompt": "Helfen Sie mir, eine 3-tägige Reise nach Tokio zu planen. Wie ist das Wetter dort, welche Sehenswürdigkeiten sind ein Muss, und was würden Flüge von New York ungefähr kosten?"
+  },
+  {
+    "label": "Barcelona – beste Reisezeit & Kosten",
+    "prompt": "Wann ist die beste Reisezeit für Barcelona, um gutes Wetter zu haben? Rechnen Sie bitte auch 500 € in USD um, damit ich mein Budget kenne."
+  },
+  {
+    "label": "Schneller Wetter-Check: Reykjavik",
+    "prompt": "Ist es gerade kalt in Reykjavik? Sollte ich Winterkleidung einpacken, wenn ich morgen abfliege?"
+  },
+  {
+    "label": "Lissabon – nur Sehenswürdigkeiten",
+    "prompt": "Ich bin 24 Stunden in Lissabon. Nennen Sie mir die 5 beliebtesten Sehenswürdigkeiten — kein Wetter, nur die Liste."
+  },
+  {
+    "label": "Flugpreis: LA → Sydney",
+    "prompt": "Was kostet ein typischer Economy-Hin-und-Rückflug von Los Angeles nach Sydney? Business Class bitte auch, falls vorhanden."
+  },
+  {
+    "label": "120.000 ¥ in USD umrechnen",
+    "prompt": "Rechnen Sie 120.000 JPY in USD um, damit ich mein Tokio-Hotelbudget planen kann."
+  },
+  {
+    "label": "Paris vs. Rom im Mai",
+    "prompt": "Ich habe eine Woche im Mai. Vergleichen Sie Paris und Rom nach Wetter, Top-Sehenswürdigkeiten und ungefähren Flugkosten ab New York. Welche Stadt würden Sie empfehlen?"
+  },
+  {
+    "label": "Familienfreundliche Woche in Bangkok",
+    "prompt": "Planen Sie eine familienfreundliche Woche in Bangkok. Wir benötigen Wetterinformationen, eine kindergeeignete Sehenswürdigkeitsliste (Top 5) und Flugkosten ab London."
+  },
+  {
+    "label": "Günstige Alternative zu Paris im Frühling",
+    "prompt": "Flüge nach Paris sind zu teuer. Empfehlen Sie eine günstigere europäische Stadt mit ähnlichem Frühlingsambiente — prüfen Sie das Wetter dort und geben Sie eine Schätzung für Flüge ab New York."
+  }
+]

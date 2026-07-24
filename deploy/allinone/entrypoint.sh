@@ -135,7 +135,7 @@ stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
 
 [program:proxy]
-command=/usr/local/bin/wait-for.sh http http://127.0.0.1:8080/api/health -- dotnet /opt/proxytrace/proxy/Proxytrace.Proxy.dll
+command=/usr/local/bin/wait-for.sh http http://127.0.0.1:8080/api/health -- dotnet /opt/proxytrace/proxy/Proxytrace.Proxy.Api.dll
 directory=/opt/proxytrace/proxy
 user=app
 priority=30

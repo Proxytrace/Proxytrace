@@ -90,18 +90,37 @@ internal sealed class Module : Autofac.Module
             .RegisterInstance(kiosk)
             .SingleInstance();
 
-        // Optional real LLM endpoint for a fully functional kiosk demo. When the Kiosk:Endpoint
-        // section is present, validate it up front (fail fast on partial/invalid config) so the
-        // seeded provider/model/endpoint can power Tracey chat and test runs against a real LLM.
-        var kioskEndpointSection = configuration.GetSection("Kiosk:Endpoint");
-        var kioskEndpoint = kioskEndpointSection.Get<KioskEndpointOptions>() ?? new KioskEndpointOptions();
-        if (kioskEndpointSection.Exists())
+        // Optional real LLM endpoint for a fully functional kiosk demo. Validate it up front (fail fast
+        // on partial/invalid config) so the seeded provider/model/endpoint can power Tracey chat and test
+        // runs against a real LLM. The showcase compose (docker-compose.kiosk.yml) supplies empty-string
+        // defaults for BaseUrl/ApiKey/Model plus a non-empty Kind, so GetSection("Kiosk:Endpoint").Exists()
+        // is true even with no credentials — the documented no-.env read-only kiosk. Treat an all-blank
+        // credential set (BaseUrl, ApiKey and Model all null/whitespace) as ABSENT and skip Resolve(); only
+        // a genuinely partial section (at least one of the three set, but not all) fails fast.
+        var kioskEndpoint = configuration.GetSection("Kiosk:Endpoint").Get<KioskEndpointOptions>()
+                            ?? new KioskEndpointOptions();
+        if (kioskEndpoint.HasAnyCredential)
         {
             kioskEndpoint.Resolve();
         }
         builder
             .RegisterInstance(kioskEndpoint)
             .SingleInstance();
+
+        // Kiosk showcase: when kiosk runs with a live LLM endpoint, host the OpenAI-compatible proxy
+        // pipeline in-process so a sample client can point its OpenAI SDK baseURL at the kiosk API and
+        // have every call captured as a live trace (single-process, in-memory, no Redis, no separate
+        // proxy container). The pipeline's controller publishes to the same in-process IIngestionStream
+        // the app's ingestion worker consumes. Registered ONLY in kiosk+endpoint mode — in production or
+        // kiosk-without-endpoint the pipeline services are absent, so the proxy controller must not be
+        // reachable either. The Web SDK auto-adds the controller's assembly as an MVC application part in
+        // every build, so Program.cs (via KioskProxyMounting) strips that part outside kiosk+endpoint mode,
+        // leaving `openai/v1/{**path}` absent (404). See docs/architecture.md.
+        var mountKioskProxy = kiosk.Enabled && kioskEndpoint.IsConfigured;
+        if (mountKioskProxy)
+        {
+            builder.RegisterModule<Proxytrace.Proxy.Module>();
+        }
 
         var agentCallCleanupConfiguration = configuration.GetSection("AgentCallCleanup")
             .Get<AgentCallCleanupConfiguration>() ?? new AgentCallCleanupConfiguration();

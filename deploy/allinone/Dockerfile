@@ -49,6 +49,7 @@ ARG APP_VERSION=0.0.0-dev
 ARG LICENSE_PUBLIC_KEY=
 WORKDIR /src
 COPY ["Proxytrace.Api/Proxytrace.Api.csproj", "Proxytrace.Api/"]
+COPY ["Proxytrace.Proxy.Api/Proxytrace.Proxy.Api.csproj", "Proxytrace.Proxy.Api/"]
 COPY ["Proxytrace.Proxy/Proxytrace.Proxy.csproj", "Proxytrace.Proxy/"]
 COPY ["Proxytrace.Application/Proxytrace.Application.csproj", "Proxytrace.Application/"]
 COPY ["Proxytrace.Common/Proxytrace.Common.csproj", "Proxytrace.Common/"]
@@ -58,7 +59,7 @@ COPY ["Proxytrace.Messaging/Proxytrace.Messaging.csproj", "Proxytrace.Messaging/
 COPY ["Proxytrace.Serialization/Proxytrace.Serialization.csproj", "Proxytrace.Serialization/"]
 COPY ["Proxytrace.Storage/Proxytrace.Storage.csproj", "Proxytrace.Storage/"]
 RUN dotnet restore "Proxytrace.Api/Proxytrace.Api.csproj" -a $TARGETARCH \
- && dotnet restore "Proxytrace.Proxy/Proxytrace.Proxy.csproj" -a $TARGETARCH
+ && dotnet restore "Proxytrace.Proxy.Api/Proxytrace.Proxy.Api.csproj" -a $TARGETARCH
 COPY . .
 # SkipManualBuild: the manual is built by the `manual` stage above and served by nginx, not
 # from the API's wwwroot. DebugType=none: ship no PDBs (they carry a SourceLink map back to
@@ -66,7 +67,7 @@ COPY . .
 RUN dotnet publish "Proxytrace.Api/Proxytrace.Api.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION \
       -o /out/api /p:UseAppHost=false /p:SkipManualBuild=true -p:Version=$APP_VERSION \
       -p:DebugType=none "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY" \
- && dotnet publish "Proxytrace.Proxy/Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION \
+ && dotnet publish "Proxytrace.Proxy.Api/Proxytrace.Proxy.Api.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION \
       -o /out/proxy /p:UseAppHost=false -p:Version=$APP_VERSION \
       -p:DebugType=none "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
 

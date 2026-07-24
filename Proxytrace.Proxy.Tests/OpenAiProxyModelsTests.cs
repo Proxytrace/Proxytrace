@@ -91,6 +91,7 @@ public sealed class OpenAiProxyModelsTests
             ResolverFor(key),
             Substitute.For<IRequestBlocker>(),
             new KioskOptions(),
+            new KioskEndpointOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 
     private static string ReadResponse(ControllerBase controller)
