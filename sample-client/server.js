@@ -55,7 +55,7 @@ app.put("/agents/:id/system-prompt", (req, res) => {
   if (typeof systemPrompt !== "string") {
     return res.status(400).json({ error: "systemPrompt must be a string" });
   }
-  const trimmed = systemPrompt.replace(/\s+$/, "");
+  const trimmed = systemPrompt.trimEnd();
   if (!trimmed) return res.status(400).json({ error: "systemPrompt cannot be empty after trimming" });
   systemPromptOverrides[req.params.id] = trimmed;
   console.log(`[prompt] override set for agent=${req.params.id} (${trimmed.length} chars)`);
