@@ -687,11 +687,51 @@ export function executeTool(name, argsJson) {
   }
 }
 
+// Hard cap on assistant turns per exchange. Turn 1 is non-streaming (so the
+// initial tool_calls are detected in one shot); every turn after it streams.
+// The cap bounds a pathological model that keeps requesting tools forever — a
+// support flow like lookup_order → issue_refund needs only 2–3 turns.
+const MAX_TURNS = 5;
+
+// Consumes a streaming chat completion, forwarding text deltas to `onEvent`
+// as they arrive and re-assembling any streamed tool_calls (which arrive as
+// index-keyed fragments — id/name/arguments spread across chunks). Returns the
+// full assistant message so the caller can append it and chain another turn.
+async function streamAssistantTurn({ openai, model, messages, tools, params, sessionHeaders, onEvent }) {
+  const stream = await openai.chat.completions.create(
+    { model, messages, tools, stream: true, ...params },
+    { headers: sessionHeaders },
+  );
+
+  let content = "";
+  const toolCalls = []; // dense array indexed by delta.tool_calls[].index
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta;
+    if (!delta) continue;
+    if (delta.content) {
+      content += delta.content;
+      onEvent({ text: delta.content });
+    }
+    for (const frag of delta.tool_calls ?? []) {
+      const i = frag.index ?? 0;
+      const acc = (toolCalls[i] ??= { id: "", type: "function", function: { name: "", arguments: "" } });
+      if (frag.id) acc.id = frag.id;
+      if (frag.function?.name) acc.function.name += frag.function.name;
+      if (frag.function?.arguments) acc.function.arguments += frag.function.arguments;
+    }
+  }
+  // Shaped like a chat message so the caller can treat it uniformly with the
+  // non-streaming turn-1 response.
+  return { content, tool_calls: toolCalls.filter(Boolean) };
+}
+
 // Runs one chat exchange against the OpenAI-compatible endpoint, replicating
-// the Proxytrace-friendly two-turn tool-call flow:
-//   Turn 1 — non-streaming with tools so tool_calls can be detected
-//   Turn 2 — streaming, with executed tool results appended (only if tools
-//            were called)
+// the Proxytrace-friendly tool-call flow as a bounded multi-turn loop:
+//   Turn 1  — non-streaming with tools so the first tool_calls are detected
+//   Turn 2+ — streaming, with executed tool results appended; further
+//             tool_calls emitted mid-stream are re-assembled and chained
+//             (so e.g. lookup_order on turn 1 then issue_refund on turn 2
+//             both run instead of the second call being dropped)
 //
 // `onEvent` is invoked synchronously for each user-visible event:
 //   { text }                     — assistant text delta (or full message
@@ -701,39 +741,43 @@ export function executeTool(name, argsJson) {
 //
 // Throws on transport / API errors; the caller decides how to surface them.
 export async function runChat({ agent, messages, openai, model, params = {}, sessionHeaders = {}, onEvent }) {
-  const fullMessages = [{ role: "system", content: agent.systemPrompt }, ...messages];
+  const convo = [{ role: "system", content: agent.systemPrompt }, ...messages];
 
+  // Turn 1 is non-streaming: the whole message (including tool_calls) lands in
+  // one response, matching the seeded trace shape for the demo.
   const turn1 = await openai.chat.completions.create(
-    { model, messages: fullMessages, tools: agent.tools, stream: false, ...params },
+    { model, messages: convo, tools: agent.tools, stream: false, ...params },
     { headers: sessionHeaders },
   );
+  let assistant = turn1.choices[0].message;
 
-  const choice = turn1.choices[0];
-  const toolCalls = choice.message.tool_calls ?? [];
+  for (let turn = 1; turn <= MAX_TURNS; turn++) {
+    const toolCalls = assistant.tool_calls ?? [];
 
-  if (toolCalls.length === 0) {
-    onEvent({ text: choice.message.content ?? "" });
-    return;
-  }
+    if (toolCalls.length === 0) {
+      // No tool call this turn — this is the final answer. For turn 1 (which
+      // never streamed) emit the text now; streamed turns already emitted it.
+      if (turn === 1) onEvent({ text: assistant.content ?? "" });
+      return;
+    }
 
-  const toolMessages = [{ role: "assistant", content: null, tool_calls: toolCalls }];
-  for (const tc of toolCalls) {
-    const argsJson = tc.function.arguments;
-    onEvent({ toolCall: { name: tc.function.name, arguments: argsJson } });
-    const result = executeTool(tc.function.name, argsJson);
-    onEvent({ toolResult: { name: tc.function.name, result } });
-    toolMessages.push({ role: "tool", tool_call_id: tc.id, content: result });
-  }
+    // Execute the requested tools and append the assistant + tool messages so
+    // the next turn sees the results.
+    convo.push({ role: "assistant", content: assistant.content ?? null, tool_calls: toolCalls });
+    for (const tc of toolCalls) {
+      const argsJson = tc.function.arguments;
+      onEvent({ toolCall: { name: tc.function.name, arguments: argsJson } });
+      const result = executeTool(tc.function.name, argsJson);
+      onEvent({ toolResult: { name: tc.function.name, result } });
+      convo.push({ role: "tool", tool_call_id: tc.id, content: result });
+    }
 
-  // Turn 2: stream the final answer with tool results in context. Tools are
-  // re-sent so the model can chain another call if needed.
-  const stream = await openai.chat.completions.create(
-    { model, messages: [...fullMessages, ...toolMessages], tools: agent.tools, stream: true, ...params },
-    { headers: sessionHeaders },
-  );
+    if (turn === MAX_TURNS) return; // hit the cap — stop chaining
 
-  for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta?.content ?? "";
-    if (delta) onEvent({ text: delta });
+    // Next turn streams the continuation; tools are re-sent so the model can
+    // chain another call if it needs one.
+    assistant = await streamAssistantTurn({
+      openai, model, messages: convo, tools: agent.tools, params, sessionHeaders, onEvent,
+    });
   }
 }
