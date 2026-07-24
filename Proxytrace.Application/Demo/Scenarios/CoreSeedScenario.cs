@@ -146,6 +146,10 @@ internal sealed class CoreSeedScenario : IDemoScenario
             reviewEndpoint = realEndpoint;
             analyticsEndpoint = realEndpoint;
             triageEndpoint = realEndpoint;
+
+            // Exposed for DemoApiKeySeedScenario: the seeded demo ingestion key points at this real
+            // provider so the in-process kiosk proxy forwards to the live upstream.
+            ctx.KioskLiveProvider = realProvider;
         }
 
         var project = await projects.AddAsync(projectFactory(
@@ -165,13 +169,20 @@ internal sealed class CoreSeedScenario : IDemoScenario
             arguments: ToolArguments.FromJsonSchema(
                 """{"type":"object","properties":{"order_id":{"type":"string"},"reason":{"type":"string","enum":["damaged","wrong_item","no_longer_needed"]}},"required":["order_id","reason"]}"""));
 
+        var issueRefundTool = new ToolSpecification(
+            name: "issue_refund",
+            description: "Issue a full or partial refund for an order to the customer's original payment method.",
+            arguments: ToolArguments.FromJsonSchema(
+                """{"type":"object","properties":{"order_id":{"type":"string"},"percent":{"type":"integer","minimum":1,"maximum":100},"reason":{"type":"string"}},"required":["order_id","percent"]}"""));
+
         var supportAgent = await agentFactory(
             "Customer Support Agent",
             promptFactory("support-system",
                 "You are a friendly, concise customer-support agent for an e-commerce store. "
                 + "Always acknowledge the issue, propose a clear next step, and close politely. "
-                + "Use the `lookup_order` and `start_return` tools when a customer references an order id."),
-            tools: [lookupOrderTool, startReturnTool],
+                + "Use the `lookup_order` and `start_return` tools when a customer references an order id, "
+                + "and `issue_refund` to process approved refunds."),
+            tools: [lookupOrderTool, startReturnTool, issueRefundTool],
             endpoint: supportEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.3),

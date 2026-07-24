@@ -2,7 +2,7 @@ using Autofac;
 using Proxytrace.Domain.Licensing;
 using Proxytrace.Licensing;
 
-namespace Proxytrace.Proxy.Internal;
+namespace Proxytrace.Proxy.Api.Internal;
 
 /// <summary>
 /// Keeps the proxy's license snapshot in sync with the database-stored license (set via the main

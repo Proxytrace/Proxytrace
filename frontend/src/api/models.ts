@@ -1166,6 +1166,7 @@ export enum NotificationTargetKind {
   TestRunGroup = 'TestRunGroup',
   Agent = 'Agent',
   OptimizationProposal = 'OptimizationProposal',
+  AgentCall = 'AgentCall',
 }
 
 export interface NotificationDto {

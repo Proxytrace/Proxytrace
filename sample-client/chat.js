@@ -14,6 +14,72 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // by `loadAgents()` so the prompt catalogue can grow without bloating this
 // file.
 export const AGENTS = {
+  support: {
+    id: "support",
+    name: "Customer Support Agent",
+    icon: "🛟",
+    description: "Order status, returns & refunds",
+    // Sends this name in X-Proxytrace-Agent so ingestion attributes calls to the seeded agent.
+    proxytraceName: "Customer Support Agent",
+    // Temperature must match the seeded agent's ModelParameters (0.3) — a mismatch would fire
+    // an agent-update event on first contact and create a spurious new version on stage.
+    defaultParams: { temperature: 0.3 },
+    // ── VERBATIM from CoreSeedScenario.cs promptFactory("support-system", …) ──────────────
+    systemPrompt:
+      "You are a friendly, concise customer-support agent for an e-commerce store. "
+      + "Always acknowledge the issue, propose a clear next step, and close politely. "
+      + "Use the `lookup_order` and `start_return` tools when a customer references an order id, "
+      + "and `issue_refund` to process approved refunds.",
+    // ── Tools: match ToolSpecification names, descriptions and JSON-schema parameters ──────
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "lookup_order",
+          description: "Look up the status of a customer order by its numeric id.",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string", description: "The order id, e.g. 12831" },
+            },
+            required: ["order_id"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "start_return",
+          description: "Open a return for a previously delivered order.",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string" },
+              reason: { type: "string", enum: ["damaged", "wrong_item", "no_longer_needed"] },
+            },
+            required: ["order_id", "reason"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "issue_refund",
+          description: "Issue a full or partial refund for an order to the customer's original payment method.",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string" },
+              percent: { type: "integer", minimum: 1, maximum: 100 },
+              reason: { type: "string" },
+            },
+            required: ["order_id", "percent"],
+          },
+        },
+      },
+    ],
+  },
+
   travel: {
     id: "travel",
     name: "Travel Planner",
@@ -237,6 +303,7 @@ export const AGENTS = {
 // (name preserved for backwards compatibility with the existing UI). Throws
 // loudly if a file is missing or malformed — callers depend on every agent
 // having a populated playlist.
+// Also loads examples/<id>.de.json when present and attaches them as `shortcutsDE`.
 export function loadAgents() {
   for (const agent of Object.values(AGENTS)) {
     const file = path.join(__dirname, "examples", `${agent.id}.json`);
@@ -246,6 +313,18 @@ export function loadAgents() {
       throw new Error(`examples/${agent.id}.json must be a non-empty array`);
     }
     agent.shortcuts = parsed;
+
+    // German shortcuts are optional; fall back to EN if the file is absent.
+    try {
+      const deFile = path.join(__dirname, "examples", `${agent.id}.de.json`);
+      const deRaw = fs.readFileSync(deFile, "utf8");
+      const deParsed = JSON.parse(deRaw);
+      if (Array.isArray(deParsed) && deParsed.length > 0) {
+        agent.shortcutsDE = deParsed;
+      }
+    } catch {
+      // no .de.json — shortcutsDE remains undefined
+    }
   }
   return AGENTS;
 }
@@ -255,6 +334,63 @@ export function executeTool(name, argsJson) {
   try {
     const args = JSON.parse(argsJson);
     switch (name) {
+      // ── Support tools ──
+      case "lookup_order": {
+        // Order 20114: VortexBlend 700 blender, delivered 45 days ago, price €89.90, no damage report.
+        // The delivered_date is computed at call time so it always reads as "~45 days ago".
+        const deliveredDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
+        if (args.order_id === "20114") {
+          return JSON.stringify({
+            order_id: "20114",
+            product: "VortexBlend 700",
+            category: "Kitchen Blender",
+            status: "delivered",
+            delivered_date: deliveredDate,
+            delivered_days_ago: 45,
+            price: "€89.90",
+            damage_report: null,
+          });
+        }
+        // Generic canned response for any other order id
+        const genericStatuses = { "18342": "in_transit", "12831": "processing", "14021": "preparing", "19120": "delivered" };
+        const genericStatus = genericStatuses[args.order_id] ?? "processing";
+        return JSON.stringify({
+          order_id: args.order_id,
+          status: genericStatus,
+          ...(genericStatus === "in_transit" ? { carrier: "UPS", eta_days: 2 } : {}),
+          ...(genericStatus === "delivered" ? { delivered_days_ago: 3, carrier: "DHL" } : {}),
+        });
+      }
+      case "start_return": {
+        const rmaNum = Math.floor(1000 + Math.random() * 9000);
+        const rmaId = `RMA-${rmaNum}`;
+        return JSON.stringify({
+          return_id: rmaId,
+          order_id: args.order_id,
+          reason: args.reason,
+          label_url: `https://shop.example.com/labels/${rmaId}`,
+          refund_estimate_days: 3,
+        });
+      }
+      case "issue_refund": {
+        const refundId = `REF-${Math.floor(10000 + Math.random() * 90000)}`;
+        // Known price for order 20114; null for others (no lookup was done)
+        const knownPrices = { "20114": 89.90 };
+        const basePrice = knownPrices[args.order_id];
+        const amount = basePrice != null
+          ? `€${(basePrice * (args.percent / 100)).toFixed(2)}`
+          : null;
+        return JSON.stringify({
+          refund_id: refundId,
+          order_id: args.order_id,
+          percent: args.percent,
+          amount,
+          posted_to: "original payment method",
+        });
+      }
+
       // ── Travel tools ──
       case "get_current_weather": {
         const unit = args.unit ?? "celsius";
@@ -551,11 +687,51 @@ export function executeTool(name, argsJson) {
   }
 }
 
+// Hard cap on assistant turns per exchange. Turn 1 is non-streaming (so the
+// initial tool_calls are detected in one shot); every turn after it streams.
+// The cap bounds a pathological model that keeps requesting tools forever — a
+// support flow like lookup_order → issue_refund needs only 2–3 turns.
+const MAX_TURNS = 5;
+
+// Consumes a streaming chat completion, forwarding text deltas to `onEvent`
+// as they arrive and re-assembling any streamed tool_calls (which arrive as
+// index-keyed fragments — id/name/arguments spread across chunks). Returns the
+// full assistant message so the caller can append it and chain another turn.
+async function streamAssistantTurn({ openai, model, messages, tools, params, sessionHeaders, onEvent }) {
+  const stream = await openai.chat.completions.create(
+    { model, messages, tools, stream: true, ...params },
+    { headers: sessionHeaders },
+  );
+
+  let content = "";
+  const toolCalls = []; // dense array indexed by delta.tool_calls[].index
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta;
+    if (!delta) continue;
+    if (delta.content) {
+      content += delta.content;
+      onEvent({ text: delta.content });
+    }
+    for (const frag of delta.tool_calls ?? []) {
+      const i = frag.index ?? 0;
+      const acc = (toolCalls[i] ??= { id: "", type: "function", function: { name: "", arguments: "" } });
+      if (frag.id) acc.id = frag.id;
+      if (frag.function?.name) acc.function.name += frag.function.name;
+      if (frag.function?.arguments) acc.function.arguments += frag.function.arguments;
+    }
+  }
+  // Shaped like a chat message so the caller can treat it uniformly with the
+  // non-streaming turn-1 response.
+  return { content, tool_calls: toolCalls.filter(Boolean) };
+}
+
 // Runs one chat exchange against the OpenAI-compatible endpoint, replicating
-// the Proxytrace-friendly two-turn tool-call flow:
-//   Turn 1 — non-streaming with tools so tool_calls can be detected
-//   Turn 2 — streaming, with executed tool results appended (only if tools
-//            were called)
+// the Proxytrace-friendly tool-call flow as a bounded multi-turn loop:
+//   Turn 1  — non-streaming with tools so the first tool_calls are detected
+//   Turn 2+ — streaming, with executed tool results appended; further
+//             tool_calls emitted mid-stream are re-assembled and chained
+//             (so e.g. lookup_order on turn 1 then issue_refund on turn 2
+//             both run instead of the second call being dropped)
 //
 // `onEvent` is invoked synchronously for each user-visible event:
 //   { text }                     — assistant text delta (or full message
@@ -565,39 +741,43 @@ export function executeTool(name, argsJson) {
 //
 // Throws on transport / API errors; the caller decides how to surface them.
 export async function runChat({ agent, messages, openai, model, params = {}, sessionHeaders = {}, onEvent }) {
-  const fullMessages = [{ role: "system", content: agent.systemPrompt }, ...messages];
+  const convo = [{ role: "system", content: agent.systemPrompt }, ...messages];
 
+  // Turn 1 is non-streaming: the whole message (including tool_calls) lands in
+  // one response, matching the seeded trace shape for the demo.
   const turn1 = await openai.chat.completions.create(
-    { model, messages: fullMessages, tools: agent.tools, stream: false, ...params },
+    { model, messages: convo, tools: agent.tools, stream: false, ...params },
     { headers: sessionHeaders },
   );
+  let assistant = turn1.choices[0].message;
 
-  const choice = turn1.choices[0];
-  const toolCalls = choice.message.tool_calls ?? [];
+  for (let turn = 1; turn <= MAX_TURNS; turn++) {
+    const toolCalls = assistant.tool_calls ?? [];
 
-  if (toolCalls.length === 0) {
-    onEvent({ text: choice.message.content ?? "" });
-    return;
-  }
+    if (toolCalls.length === 0) {
+      // No tool call this turn — this is the final answer. For turn 1 (which
+      // never streamed) emit the text now; streamed turns already emitted it.
+      if (turn === 1) onEvent({ text: assistant.content ?? "" });
+      return;
+    }
 
-  const toolMessages = [{ role: "assistant", content: null, tool_calls: toolCalls }];
-  for (const tc of toolCalls) {
-    const argsJson = tc.function.arguments;
-    onEvent({ toolCall: { name: tc.function.name, arguments: argsJson } });
-    const result = executeTool(tc.function.name, argsJson);
-    onEvent({ toolResult: { name: tc.function.name, result } });
-    toolMessages.push({ role: "tool", tool_call_id: tc.id, content: result });
-  }
+    // Execute the requested tools and append the assistant + tool messages so
+    // the next turn sees the results.
+    convo.push({ role: "assistant", content: assistant.content ?? null, tool_calls: toolCalls });
+    for (const tc of toolCalls) {
+      const argsJson = tc.function.arguments;
+      onEvent({ toolCall: { name: tc.function.name, arguments: argsJson } });
+      const result = executeTool(tc.function.name, argsJson);
+      onEvent({ toolResult: { name: tc.function.name, result } });
+      convo.push({ role: "tool", tool_call_id: tc.id, content: result });
+    }
 
-  // Turn 2: stream the final answer with tool results in context. Tools are
-  // re-sent so the model can chain another call if needed.
-  const stream = await openai.chat.completions.create(
-    { model, messages: [...fullMessages, ...toolMessages], tools: agent.tools, stream: true, ...params },
-    { headers: sessionHeaders },
-  );
+    if (turn === MAX_TURNS) return; // hit the cap — stop chaining
 
-  for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta?.content ?? "";
-    if (delta) onEvent({ text: delta });
+    // Next turn streams the continuation; tools are re-sent so the model can
+    // chain another call if it needs one.
+    assistant = await streamAssistantTurn({
+      openai, model, messages: convo, tools: agent.tools, params, sessionHeaders, onEvent,
+    });
   }
 }

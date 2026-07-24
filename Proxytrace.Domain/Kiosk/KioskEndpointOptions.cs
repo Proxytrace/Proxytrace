@@ -46,6 +46,18 @@ public sealed record KioskEndpointOptions
     public decimal? OutputTokenCost { get; init; }
 
     /// <summary>
+    /// Whether any of the three credential fields (<see cref="BaseUrl"/>, <see cref="ApiKey"/>,
+    /// <see cref="Model"/>) is set. Distinguishes an all-blank section — which the composition root treats
+    /// as ABSENT (the read-only kiosk) — from a partially filled one that <see cref="Resolve"/> rejects.
+    /// The <see cref="Kind"/>/<see cref="ProviderName"/> defaults are deliberately ignored: they are
+    /// non-null by design and would otherwise make an empty section look configured.
+    /// </summary>
+    public bool HasAnyCredential =>
+        !string.IsNullOrWhiteSpace(BaseUrl)
+        || !string.IsNullOrWhiteSpace(ApiKey)
+        || !string.IsNullOrWhiteSpace(Model);
+
+    /// <summary>
     /// Whether all required fields (<see cref="BaseUrl"/>, <see cref="ApiKey"/>, <see cref="Model"/>)
     /// are present.
     /// </summary>

@@ -265,6 +265,7 @@ public sealed class OpenAiProxyPassthroughTests
             ResolverFor(ApiKey(new Uri("http://upstream.test/v1"))),
             Substitute.For<IRequestBlocker>(),
             new KioskOptions { Enabled = true },
+            new KioskEndpointOptions(),
             NullLogger<OpenAiProxyController>.Instance);
         controller.ControllerContext = BuildContext("Bearer valid");
 
@@ -285,6 +286,7 @@ public sealed class OpenAiProxyPassthroughTests
             resolver,
             Substitute.For<IRequestBlocker>(),
             new KioskOptions(),
+            new KioskEndpointOptions(),
             NullLogger<OpenAiProxyController>.Instance);
 
     private static IApiKeyResolver NoKeyResolver()

@@ -1,21 +1,23 @@
 import { useState } from 'react';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { Popover } from '../../components/ui/Popover';
 import { IconButton } from '../../components/ui/Button';
-import { Skeleton } from '../../components/ui/Skeleton';
 import { BellIcon } from '../../components/icons';
 import { useNotificationStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { NotificationStatus } from '../../api/models';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { useNotifications, useNotificationMutations } from './hooks/useNotifications';
-import { NotificationRow } from './components/NotificationRow';
+import { useSelectedId } from '../../hooks/useSelectedId';
+import { useNotification, useNotifications, useNotificationMutations } from './hooks/useNotifications';
+import { useMarkReadOnOpen } from './hooks/useMarkReadOnOpen';
+import { NotificationsPanel } from './components/NotificationsPanel';
+import { NotificationDetailDrawer } from './components/NotificationDetailDrawer';
 
 /**
  * Top-bar notifications inbox: a bell `IconButton` with an unread badge that opens a
- * GitHub-style popover panel. Mounted once in the `Shell` topbar so the badge and live
- * updates apply on every page, not just the dashboard.
+ * GitHub-style popover panel, plus the detail drawer the rows open. Mounted once in the `Shell`
+ * topbar so the badge, live updates, and the `?notification=<id>` deep link all work on every page.
  */
 export function NotificationsMenu() {
   const { t } = useLingui();
@@ -27,86 +29,96 @@ export function NotificationsMenu() {
 
   const { data: notifications, isLoading } = useNotifications(projectId, enabled);
   const { markRead, dismiss } = useNotificationMutations();
-  const isBusy = markRead.isPending || dismiss.isPending;
+
+  // Which notification the drawer shows lives in the URL, so an emailed `/notifications/<id>` link
+  // (redirected to `?notification=<id>`) opens it wherever the user lands.
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query-param key
+  const [selectedId, selectNotification] = useSelectedId('notification');
+  const fromList = notifications?.find(n => n.id === selectedId) ?? null;
+  // A dismissed notification — or, for a member, a global one — is not in the list; fetch by id.
+  const { data: fetched } = useNotification(fromList ? null : selectedId);
+  const openNotification = fromList ?? fetched ?? null;
+  useMarkReadOnOpen(openNotification, markRead.mutate);
 
   // Live updates app-wide — refresh the cache on any notification SSE event for this project.
   useNotificationStream(projectId, () => {
     qc.invalidateQueries({ queryKey: QUERY_KEYS.notificationsRoot });
   });
 
-  const unreadCount = notifications?.filter((n) => n.status === NotificationStatus.Unread).length ?? 0;
+  const rows = notifications ?? [];
+  const unreadCount = rows.filter(n => n.status === NotificationStatus.Unread).length;
   const hasUnread = unreadCount > 0;
-  const isEmpty = !isLoading && (!notifications || notifications.length === 0);
+
+  // Only the row whose mutation is in flight is disabled — not the whole list.
+  const pendingId = (markRead.isPending ? markRead.variables : undefined)
+    ?? (dismiss.isPending ? dismiss.variables : undefined)
+    ?? null;
+
+  // Prev/next step through the loaded list, so they survive the popover closing. A deep-linked
+  // notification that isn't in the list (dismissed) simply has neither.
+  const openIndex = openNotification ? rows.findIndex(n => n.id === openNotification.id) : -1;
+  const prev = openIndex > 0 ? rows[openIndex - 1] : null;
+  const next = openIndex >= 0 && openIndex < rows.length - 1 ? rows[openIndex + 1] : null;
+
+  function openDetail(id: string) {
+    // The popover renders above the drawer (z-[80] vs z-50), so it must close for the drawer to
+    // be visible. Don't raise the drawer's z-index — every drawer in the app shares it.
+    setOpen(false);
+    selectNotification(id);
+  }
+
+  function handleDismiss(id: string) {
+    dismiss.mutate(id);
+    if (id === selectedId) selectNotification(null);
+  }
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
-      align="end"
-      className="w-[380px]"
-      trigger={
-        <IconButton
-          data-testid="notifications-menu-trigger"
-          aria-label={hasUnread ? t`Notifications (${unreadCount} unread)` : t`Notifications`}
-          className="relative"
-        >
-          <BellIcon size={16} />
-          {hasUnread && (
-            <span
-              data-testid="notifications-unread-badge"
-              aria-hidden
-              className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 inline-flex items-center justify-center rounded-none bg-accent text-accent-ink text-caption font-bold leading-none tabular-nums"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </IconButton>
-      }
-    >
-      <div data-testid="notifications-panel" className="flex flex-col max-h-[440px]">
-        <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-border-subtle shrink-0">
-          <span className="text-title font-semibold text-primary"><Trans>Notifications</Trans></span>
-          {hasUnread && (
-            <span
-              data-testid="notifications-unread-count"
-              className="text-caption font-semibold text-accent-hover tabular-nums"
-            >
-              <Trans>{unreadCount} new</Trans>
-            </span>
-          )}
-        </div>
-
-        {isLoading ? (
-          <div className="flex flex-col gap-2 p-3.5">
-            <Skeleton height={52} />
-            <Skeleton height={52} />
-            <Skeleton height={52} />
-          </div>
-        ) : isEmpty ? (
-          <div
-            data-testid="notifications-empty-state"
-            className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center"
+    <>
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+        align="end"
+        className="w-[380px]"
+        trigger={
+          <IconButton
+            data-testid="notifications-menu-trigger"
+            aria-label={hasUnread ? t`Notifications (${unreadCount} unread)` : t`Notifications`}
+            className="relative"
           >
-            <BellIcon size={22} className="text-muted" />
-            <span className="text-body-sm font-semibold text-primary"><Trans>No notifications</Trans></span>
-            <span className="text-body-sm text-muted">
-              <Trans>Anomalies and alerts from your test runs will appear here.</Trans>
-            </span>
-          </div>
-        ) : (
-          <div data-testid="notifications-list" className="overflow-y-auto">
-            {notifications?.map((n) => (
-              <NotificationRow
-                key={n.id}
-                notification={n}
-                onMarkRead={markRead.mutate}
-                onDismiss={dismiss.mutate}
-                isBusy={isBusy}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </Popover>
+            <BellIcon size={16} />
+            {hasUnread && (
+              <span
+                data-testid="notifications-unread-badge"
+                aria-hidden
+                className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 inline-flex items-center justify-center rounded-none bg-accent text-accent-ink text-caption font-bold leading-none tabular-nums"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </IconButton>
+        }
+      >
+        <NotificationsPanel
+          notifications={rows}
+          isLoading={isLoading}
+          unreadCount={unreadCount}
+          pendingId={pendingId}
+          onOpen={openDetail}
+          onMarkRead={markRead.mutate}
+          onDismiss={handleDismiss}
+        />
+      </Popover>
+
+      {openNotification && (
+        <NotificationDetailDrawer
+          key={openNotification.id}
+          notification={openNotification}
+          onClose={() => selectNotification(null)}
+          onPrev={prev ? () => selectNotification(prev.id) : undefined}
+          onNext={next ? () => selectNotification(next.id) : undefined}
+          onDismiss={handleDismiss}
+        />
+      )}
+    </>
   );
 }

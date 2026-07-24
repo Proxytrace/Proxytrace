@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Proxytrace.Proxy": {
+    "Proxytrace.Proxy.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5002",

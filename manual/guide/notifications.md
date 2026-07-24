@@ -29,15 +29,41 @@ reported.
 - Notifications appear **live**, without refreshing the page.
 - Each alert is colour-coded by **severity** (Info, Warning, Critical) and shows when it was
   raised.
-- **View details** deep-links to the run, agent, or proposal the notification is about.
-- **Mark as read** keeps a notification in the list but clears it from the unread count.
-- **Dismiss** removes it from the list.
+- **Click a notification** to open its details (see below). Opening it also marks it read.
+- **Mark as read** (the tick) keeps a notification in the list but clears it from the unread count.
+- **Dismiss** (the ✕) removes it from the list.
 
 An unread count is shown on the bell badge and the panel header so you can see at a glance
 whether anything needs attention. When there's nothing to report the panel shows a short
 placeholder explaining where notifications will appear.
 
 ![Close-up of the notifications panel — severity-coded alerts, relative timestamps, and per-item mark-read and dismiss actions](/screenshots/notifications/inbox-panel.png)
+
+## Notification details
+
+The panel shows only the first two lines of a message, so click any notification to open its
+**details** in a panel on the right. That's where the whole alert lives:
+
+- The **full message** — anomaly alerts explain exactly what changed (which suite, how far the
+  pass rate fell, which model got slower), and that rarely fits in the list.
+- Its **kind**, current **status**, the **project** it belongs to, and when it was raised and last
+  updated.
+- A **summary of what it's about** — the test run, agent, proposal, or trace the alert points at,
+  with a link straight to it. The summary is live: it shows the item's current status, not a
+  snapshot from when the alert was raised.
+- **Dismiss** in the panel header, and **‹ ›** to step through the rest of the inbox without
+  going back to the bell.
+
+![The notification details panel — a Critical anomaly's full message, its kind, status, project and timestamps, and a live summary of the failed test run it points at with a link to open it](/screenshots/notifications/detail-drawer.png)
+
+For most alerts this panel *is* the record — an anomaly is not stored anywhere else — so the
+details stay readable even when the thing they describe is gone. If the run, agent, proposal, or
+trace has since been deleted, the summary says so plainly instead of linking nowhere.
+
+Every notification also has its own **shareable link**. Opening the details puts
+`?notification=…` in the address bar, so you can copy the URL to a colleague and it will open the
+same panel for them (subject to their project access). Notification **emails** link to the
+notification this way too, rather than dropping you on a list page.
 
 ## Scope
 

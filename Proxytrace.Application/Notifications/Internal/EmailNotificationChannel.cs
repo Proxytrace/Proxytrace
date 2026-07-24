@@ -38,17 +38,17 @@ internal sealed class EmailNotificationChannel : INotificationChannel
 
     public string Name => "Email";
 
-    public async Task DeliverAsync(NotificationRequest request, CancellationToken cancellationToken = default)
+    public async Task DeliverAsync(INotification notification, CancellationToken cancellationToken = default)
     {
         EmailSettings? settings = await settingsStore.GetAsync(cancellationToken);
         if (settings is null || !settings.Enabled)
             return;
 
-        if (request.Severity < settings.MinSeverity)
+        if (notification.Severity < settings.MinSeverity)
             return;
 
         IReadOnlyCollection<IUser> candidates;
-        if (request.ProjectId is { } projectId)
+        if (notification.ProjectId is { } projectId)
         {
             var project = await projects.FindAsync(projectId, cancellationToken);
             if (project is null)
@@ -62,16 +62,16 @@ internal sealed class EmailNotificationChannel : INotificationChannel
 
         var recipients = candidates
             .Where(u => u.EmailNotificationsEnabled
-                        && request.Severity >= u.EmailNotificationMinSeverity
+                        && notification.Severity >= u.EmailNotificationMinSeverity
                         && !string.IsNullOrWhiteSpace(u.Email))
             .ToList();
         if (recipients.Count == 0)
             return;
 
-        var subject = $"[{request.Severity}] {request.Title}";
-        var link = BuildLink(settings.AppBaseUrl, request.TargetKind, request.TargetId);
-        var textBody = BuildText(request, link);
-        var htmlBody = BuildHtml(request, link);
+        var subject = $"[{notification.Severity}] {notification.Title}";
+        var link = BuildLink(settings.AppBaseUrl, notification.Id);
+        var textBody = BuildText(notification, link);
+        var htmlBody = BuildHtml(notification, link);
 
         foreach (var recipient in recipients)
         {
@@ -87,38 +87,30 @@ internal sealed class EmailNotificationChannel : INotificationChannel
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to email {Recipient} for '{Title}'", recipient.Email, request.Title);
+                logger.LogWarning(ex, "Failed to email {Recipient} for '{Title}'", recipient.Email, notification.Title);
             }
         }
     }
 
-    private static string? BuildLink(string? appBaseUrl, NotificationTargetKind? kind, Guid? id)
-    {
-        if (string.IsNullOrWhiteSpace(appBaseUrl) || kind is not { } k || id is not { } i)
-            return null;
+    // Links to the notification itself rather than to its target: the notification is the only
+    // record of an anomaly, it always exists (the target may have been deleted), and the app opens
+    // its detail drawer from this stable route on any page.
+    private static string? BuildLink(string? appBaseUrl, Guid notificationId)
+        => string.IsNullOrWhiteSpace(appBaseUrl)
+            ? null
+            : $"{appBaseUrl.TrimEnd('/')}/notifications/{notificationId}";
 
-        var route = k switch
-        {
-            NotificationTargetKind.TestRunGroup => $"/runs?id={i}",
-            NotificationTargetKind.Agent => $"/agents?id={i}",
-            NotificationTargetKind.OptimizationProposal => $"/proposals?id={i}",
-            NotificationTargetKind.AgentCall => $"/traces?focus={i}",
-            _ => null,
-        };
-        return route is null ? null : appBaseUrl.TrimEnd('/') + route;
-    }
-
-    private static string BuildText(NotificationRequest request, string? link)
+    private static string BuildText(INotification notification, string? link)
     {
-        var body = $"{request.Title}\n\n{request.Message}\n\nSeverity: {request.Severity}";
+        var body = $"{notification.Title}\n\n{notification.Message}\n\nSeverity: {notification.Severity}";
         return link is null ? body : $"{body}\n\nView details: {link}";
     }
 
-    private static string BuildHtml(NotificationRequest request, string? link)
+    private static string BuildHtml(INotification notification, string? link)
     {
-        var title = WebUtility.HtmlEncode(request.Title);
-        var message = WebUtility.HtmlEncode(request.Message);
-        var severity = WebUtility.HtmlEncode(request.Severity.ToString());
+        var title = WebUtility.HtmlEncode(notification.Title);
+        var message = WebUtility.HtmlEncode(notification.Message);
+        var severity = WebUtility.HtmlEncode(notification.Severity.ToString());
         var button = link is null
             ? string.Empty
             : $"<p><a href=\"{link}\">View details</a></p>";

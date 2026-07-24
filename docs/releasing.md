@@ -70,7 +70,7 @@ Propagation:
    This is the **only** released image — it contains nginx + the SPA + the manual, the API, the
    ingestion proxy, and (started only when `ConnectionStrings__Default` / `Redis__ConnectionString`
    are unset) PostgreSQL and Redis, supervised by supervisord (`deploy/allinone/entrypoint.sh`).
-   The per-service Dockerfiles (`Proxytrace.Api/`, `Proxytrace.Proxy/`, `frontend/`) still back
+   The per-service Dockerfiles (`Proxytrace.Api/`, `Proxytrace.Proxy.Api/`, `frontend/`) still back
    the source-built dev/e2e/perf composes; they are not published. `ci.yml`'s **image** job builds
    the same Dockerfile and boots the container on a cold volume, so a broken release image fails
    on the PR, not on the tag.

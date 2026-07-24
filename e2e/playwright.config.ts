@@ -67,6 +67,7 @@ export default defineConfig({
         '**/negative.spec.ts',
         '**/sse.spec.ts',
         '**/mfa.spec.ts',
+        '**/notifications.spec.ts',
       ],
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],
