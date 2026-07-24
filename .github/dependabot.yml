@@ -39,7 +39,7 @@ updates:
   - package-ecosystem: docker
     directories:
       - /Proxytrace.Api
-      - /Proxytrace.Proxy
+      - /Proxytrace.Proxy.Api
       - /frontend
     schedule:
       interval: weekly

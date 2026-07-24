@@ -18,6 +18,7 @@ ARG APP_VERSION=0.0.0-dev
 # production key. The dev/e2e/perf composes pass the test key; official images pass nothing.
 ARG LICENSE_PUBLIC_KEY=
 WORKDIR /src
+COPY ["Proxytrace.Proxy.Api/Proxytrace.Proxy.Api.csproj", "Proxytrace.Proxy.Api/"]
 COPY ["Proxytrace.Proxy/Proxytrace.Proxy.csproj", "Proxytrace.Proxy/"]
 COPY ["Proxytrace.Application/Proxytrace.Application.csproj", "Proxytrace.Application/"]
 COPY ["Proxytrace.Common/Proxytrace.Common.csproj", "Proxytrace.Common/"]
@@ -25,10 +26,10 @@ COPY ["Proxytrace.Domain/Proxytrace.Domain.csproj", "Proxytrace.Domain/"]
 COPY ["Proxytrace.Messaging/Proxytrace.Messaging.csproj", "Proxytrace.Messaging/"]
 COPY ["Proxytrace.Serialization/Proxytrace.Serialization.csproj", "Proxytrace.Serialization/"]
 COPY ["Proxytrace.Storage/Proxytrace.Storage.csproj", "Proxytrace.Storage/"]
-RUN dotnet restore "Proxytrace.Proxy/Proxytrace.Proxy.csproj" -a $TARGETARCH
+RUN dotnet restore "Proxytrace.Proxy.Api/Proxytrace.Proxy.Api.csproj" -a $TARGETARCH
 COPY . .
-WORKDIR "/src/Proxytrace.Proxy"
-RUN dotnet build "./Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/build -p:Version=$APP_VERSION "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
+WORKDIR "/src/Proxytrace.Proxy.Api"
+RUN dotnet build "./Proxytrace.Proxy.Api.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/build -p:Version=$APP_VERSION "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
 
 FROM build AS publish
 ARG TARGETARCH
@@ -38,9 +39,9 @@ ARG LICENSE_PUBLIC_KEY=
 # DebugType=none: ship no PDBs — they carry line-accurate symbols and a SourceLink map
 # pointing at the source repo + commit SHA (needless bloat). Trade-off: production stack traces lose
 # file/line info (exception messages and frames remain).
-RUN dotnet publish "./Proxytrace.Proxy.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:Version=$APP_VERSION -p:DebugType=none "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
+RUN dotnet publish "./Proxytrace.Proxy.Api.csproj" -a $TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:Version=$APP_VERSION -p:DebugType=none "-p:LicensePublicKey=$LICENSE_PUBLIC_KEY"
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Proxytrace.Proxy.dll"]
+ENTRYPOINT ["dotnet", "Proxytrace.Proxy.Api.dll"]

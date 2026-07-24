@@ -103,7 +103,7 @@ Credentials created after the upgrade are unaffected.
 
 ## Credential freshness at the ingestion proxy (no positive credential cache)
 
-The proxy resolves inbound credentials (`Proxytrace.Proxy/Internal/ApiKeyResolver.cs`) **from
+The proxy resolves inbound credentials (`Proxytrace.Proxy/Internal/ApiKeyResolver.cs`, shared lib) **from
 storage on every request** — deliberately uncached. A cached `ResolvedApiKey` carries the decrypted
 upstream provider key, so any TTL becomes a window in which a rotated key keeps being forwarded and
 a revoked inbound credential keeps authenticating, independently per proxy replica (#407; a

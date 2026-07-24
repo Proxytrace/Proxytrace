@@ -1,6 +1,6 @@
 using Proxytrace.Domain.ModelProvider;
 
-namespace Proxytrace.Proxy;
+namespace Proxytrace.Proxy.Api.Internal;
 
 /// <summary>
 /// Reconstituting a <see cref="IModelProvider"/> domain entity (which happens when the proxy
