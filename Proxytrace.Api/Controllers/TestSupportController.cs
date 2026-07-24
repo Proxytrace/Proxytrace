@@ -25,8 +25,8 @@ public class TestSupportController : ControllerBase
 
     /// <summary>
     /// Clears all per-run domain content (agents, traces, evaluators, suites, runs, proposals,
-    /// invites, MFA enrollments) while preserving the setup baseline, so a spec can start from a
-    /// known state.
+    /// invites, MFA enrollments, notifications) while preserving the setup baseline, so a spec can
+    /// start from a known state.
     /// </summary>
     /// <remarks>
     /// Anonymous on purpose: the reset must be reachable to restore a clean baseline even when the

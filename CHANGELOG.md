@@ -11,6 +11,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Notification details view.** Clicking a notification in the bell inbox now opens a detail drawer
+  instead of navigating away: the full, untruncated message, its kind, status, project and
+  timestamps, and a live summary of whatever the notification is about (test run, agent, proposal
+  or trace) with a link to it. If that item has since been deleted the drawer says so rather than
+  linking nowhere — a notification is often the only record an anomaly ever had. The drawer steps
+  through the inbox with prev/next, is deep-linkable on any page via `?notification=<id>`, and
+  notification emails now link straight to it (`/notifications/<id>`) instead of to the target's
+  list page.
+
 - **German language selection for the sample client.** The sample chat client in the kiosk showcase now has an EN/DE toggle in the header. UI chrome, agent display names, and example shortcuts (including a stage-ready German version of the trick message) switch to German instantly; the agent system prompt, tool definitions, and `X-Proxytrace-Agent` attribution header remain byte-identical English so ingestion attribution and the optimizer loop are unaffected.
 
 - **One-command live showcase stack.** The kiosk now serves an OpenAI-compatible proxy in-process
@@ -33,6 +42,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   The key value itself is never recorded.
 
 ### Fixed
+
+- **A notification about a trace no longer blanks the whole app.** Notifications raised for a
+  captured call (a blocked call, or a custom anomaly detector's review) carried a target kind the
+  web UI did not know, and rendering one threw while drawing the top bar — which sits outside every
+  page's error boundary, so the entire app went blank until a reload. Unknown target kinds now
+  degrade to a notification with no link.
+- **Opening a notification marks it read**, including when it is opened from a deep link or an
+  emailed link; previously the unread badge stayed until you clicked the tick explicitly.
+- **The notification panel no longer closes over the page you navigated to**, and marking one
+  notification read or dismissing it no longer freezes the buttons on every other row while the
+  request is in flight.
 
 - **Provider key rotation and revocation now take effect on the very next proxied request.** The
   ingestion proxy previously cached resolved credentials — including the decrypted upstream provider

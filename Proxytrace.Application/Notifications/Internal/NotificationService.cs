@@ -7,15 +7,18 @@ internal sealed class NotificationService : INotificationService
 {
     private readonly IEnumerable<INotificationChannel> channels;
     private readonly INotificationRepository notifications;
+    private readonly INotification.CreateNew createNotification;
     private readonly ILogger<NotificationService> logger;
 
     public NotificationService(
         IEnumerable<INotificationChannel> channels,
         INotificationRepository notifications,
+        INotification.CreateNew createNotification,
         ILogger<NotificationService> logger)
     {
         this.channels = channels;
         this.notifications = notifications;
+        this.createNotification = createNotification;
         this.logger = logger;
     }
 
@@ -33,11 +36,24 @@ internal sealed class NotificationService : INotificationService
             }
         }
 
+        // The notification *is* the record: it is created here, once, before any channel runs, so
+        // every channel delivers the same persisted entity and can reference it by id.
+        var notification = await notifications.AddAsync(
+            createNotification(
+                request.Kind,
+                request.Severity,
+                request.Title,
+                request.Message,
+                request.ProjectId,
+                request.TargetKind,
+                request.TargetId),
+            cancellationToken);
+
         foreach (var channel in channels)
         {
             try
             {
-                await channel.DeliverAsync(request, cancellationToken);
+                await channel.DeliverAsync(notification, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -51,7 +67,7 @@ internal sealed class NotificationService : INotificationService
                     ex,
                     "Notification channel {Channel} failed to deliver '{Title}'",
                     channel.Name,
-                    request.Title);
+                    notification.Title);
             }
         }
     }

@@ -77,6 +77,8 @@ export const QUERY_KEYS = {
   testSuiteRunStats: (id: string, from?: string, to?: string) =>
     ['test-suites', 'detail', id, 'run-stats', from ?? null, to ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
+  /** A single proposal by id — the notification drawer's target preview. */
+  proposal: (id: string) => ['proposals', 'detail', id] as const,
   theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   theory: (id: string) => ['theory', id] as const,
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
@@ -117,6 +119,9 @@ export const QUERY_KEYS = {
   outlierSettings: ['outlier-settings'] as const,
 
   notifications: (projectId?: string) => ['notifications', projectId ?? null] as const,
+  /** A single notification by id (the `?notification=` deep-link, e.g. from a notification email).
+   * Shares the {@link notificationsRoot} prefix so a mark-read/dismiss also refreshes the drawer. */
+  notification: (id?: string) => ['notifications', 'detail', id ?? null] as const,
   /** Prefix matching every notifications query — use for invalidation. */
   notificationsRoot: ['notifications'] as const,
 

@@ -26,7 +26,7 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
         IServiceProvider services = Build(sender, Settings() with { Enabled = false });
         var channel = services.GetRequiredService<EmailNotificationChannel>();
 
-        await channel.DeliverAsync(GlobalRequest(NotificationSeverity.Critical), CancellationToken);
+        await channel.DeliverAsync(GlobalNotification(services, NotificationSeverity.Critical), CancellationToken);
 
         await sender.DidNotReceive().SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
@@ -38,7 +38,7 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
         IServiceProvider services = Build(sender, Settings() with { MinSeverity = NotificationSeverity.Critical });
         var channel = services.GetRequiredService<EmailNotificationChannel>();
 
-        await channel.DeliverAsync(GlobalRequest(NotificationSeverity.Warning), CancellationToken);
+        await channel.DeliverAsync(GlobalNotification(services, NotificationSeverity.Warning), CancellationToken);
 
         await sender.DidNotReceive().SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
@@ -54,7 +54,7 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
         await create("off@example.test", null, "h", UserRole.Member, "en", false, NotificationSeverity.Warning).AddAsync(CancellationToken);
         await create("high@example.test", null, "h", UserRole.Member, "en", true, NotificationSeverity.Critical).AddAsync(CancellationToken);
 
-        await channelFor(services).DeliverAsync(GlobalRequest(NotificationSeverity.Warning), CancellationToken);
+        await channelFor(services).DeliverAsync(GlobalNotification(services, NotificationSeverity.Warning), CancellationToken);
 
         await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "on@example.test"), CancellationToken);
         await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "off@example.test"), Arg.Any<CancellationToken>());
@@ -74,10 +74,9 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
         var project = services.GetRequiredService<IProject.CreateNew>()("P", endpoint, [member]);
         await services.GetRequiredService<IRepository<IProject>>().AddAsync(project, CancellationToken);
 
-        var request = new NotificationRequest(
-            NotificationKind.Anomaly, NotificationSeverity.Critical, "t", "m", project.Id);
+        var notification = Notification(services, NotificationSeverity.Critical, "t", "m", project.Id);
 
-        await channelFor(services).DeliverAsync(request, CancellationToken);
+        await channelFor(services).DeliverAsync(notification, CancellationToken);
 
         await sender.Received(1).SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "member@example.test"), CancellationToken);
         await sender.DidNotReceive().SendAsync(Arg.Is<EmailMessage>(m => m != null && m.To == "outsider@example.test"), Arg.Any<CancellationToken>());
@@ -87,6 +86,59 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
     public async Task DeliverAsync_TitleWithHtmlChars_EncodesInHtmlBody()
     {
         var captured = new List<EmailMessage>();
+        IServiceProvider services = Build(CapturingSender(captured), Settings());
+        var create = services.GetRequiredService<IUser.CreateNew>();
+        await create("enc@example.test", null, "h", UserRole.Member, "en", true, NotificationSeverity.Warning).AddAsync(CancellationToken);
+
+        var notification = Notification(
+            services, NotificationSeverity.Warning, "<b>x</b>", "<script>alert(1)</script>", projectId: null);
+
+        await channelFor(services).DeliverAsync(notification, CancellationToken);
+
+        var html = captured.Should().ContainSingle().Which.HtmlBody;
+        html.Should().Contain("&lt;b&gt;");
+        html.Should().NotContain("<b>");
+        html.Should().Contain("&lt;script&gt;");
+        html.Should().NotContain("<script>");
+    }
+
+    [TestMethod]
+    public async Task DeliverAsync_LinksToTheNotificationItself_NotItsTarget()
+    {
+        var captured = new List<EmailMessage>();
+        IServiceProvider services = Build(CapturingSender(captured), Settings());
+        var create = services.GetRequiredService<IUser.CreateNew>();
+        await create("link@example.test", null, "h", UserRole.Member, "en", true, NotificationSeverity.Warning).AddAsync(CancellationToken);
+
+        // A target is set, but the link must still point at the notification — the target may be
+        // deleted, and the notification is the record the email is about.
+        var notification = Notification(
+            services, NotificationSeverity.Warning, "t", "m", projectId: null,
+            targetKind: NotificationTargetKind.TestRunGroup, targetId: Guid.NewGuid());
+
+        await channelFor(services).DeliverAsync(notification, CancellationToken);
+
+        var message = captured.Should().ContainSingle().Which;
+        var expected = $"https://app.example/notifications/{notification.Id}";
+        message.HtmlBody.Should().Contain(expected);
+        message.TextBody.Should().Contain(expected);
+    }
+
+    [TestMethod]
+    public async Task DeliverAsync_WithoutAppBaseUrl_OmitsTheLink()
+    {
+        var captured = new List<EmailMessage>();
+        IServiceProvider services = Build(CapturingSender(captured), Settings() with { AppBaseUrl = null });
+        var create = services.GetRequiredService<IUser.CreateNew>();
+        await create("nolink@example.test", null, "h", UserRole.Member, "en", true, NotificationSeverity.Warning).AddAsync(CancellationToken);
+
+        await channelFor(services).DeliverAsync(GlobalNotification(services, NotificationSeverity.Warning), CancellationToken);
+
+        captured.Should().ContainSingle().Which.HtmlBody.Should().NotContain("/notifications/");
+    }
+
+    private static IEmailSender CapturingSender(List<EmailMessage> captured)
+    {
         var sender = Substitute.For<IEmailSender>();
         sender.When(s => s.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()))
               .Do(call =>
@@ -95,21 +147,7 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
                   ArgumentNullException.ThrowIfNull(message);
                   captured.Add(message);
               });
-
-        IServiceProvider services = Build(sender, Settings());
-        var create = services.GetRequiredService<IUser.CreateNew>();
-        await create("enc@example.test", null, "h", UserRole.Member, "en", true, NotificationSeverity.Warning).AddAsync(CancellationToken);
-
-        var request = new NotificationRequest(
-            NotificationKind.Anomaly, NotificationSeverity.Warning, "<b>x</b>", "<script>alert(1)</script>", ProjectId: null);
-
-        await channelFor(services).DeliverAsync(request, CancellationToken);
-
-        var html = captured.Should().ContainSingle().Which.HtmlBody;
-        html.Should().Contain("&lt;b&gt;");
-        html.Should().NotContain("<b>");
-        html.Should().Contain("&lt;script&gt;");
-        html.Should().NotContain("<script>");
+        return sender;
     }
 
     private static EmailNotificationChannel channelFor(IServiceProvider services)
@@ -129,8 +167,19 @@ public sealed class EmailNotificationChannelTests : BaseTest<Module>
         });
     }
 
-    private static NotificationRequest GlobalRequest(NotificationSeverity severity)
-        => new(NotificationKind.Anomaly, severity, "title", "message", ProjectId: null);
+    private static INotification GlobalNotification(IServiceProvider services, NotificationSeverity severity)
+        => Notification(services, severity, "title", "message", projectId: null);
+
+    private static INotification Notification(
+        IServiceProvider services,
+        NotificationSeverity severity,
+        string title,
+        string message,
+        Guid? projectId,
+        NotificationTargetKind? targetKind = null,
+        Guid? targetId = null)
+        => services.GetRequiredService<INotification.CreateNew>()(
+            NotificationKind.Anomaly, severity, title, message, projectId, targetKind, targetId);
 
     private static EmailSettings Settings() => new(
         Enabled: true, SmtpHost: "smtp", SmtpPort: 25, Security: SmtpSecurity.None,
