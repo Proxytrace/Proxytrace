@@ -1,11 +1,11 @@
 import { cn } from '../../lib/cn';
 
-export type StatTone = 'teal' | 'success' | 'warn' | 'accent';
+export type StatTone = 'info' | 'success' | 'warn' | 'accent';
 
 /* eslint-disable lingui/no-unlocalized-strings -- Tailwind class recipes, not user-facing copy */
 /** Tone → icon chip classes: subtle fill + inset ring + icon text color. */
 const TONE_ICON: Record<StatTone, string> = {
-  teal: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)] ring-[color-mix(in_srgb,var(--teal)_32%,transparent)] text-[var(--teal)]',
+  info: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)] ring-[color-mix(in_srgb,var(--teal)_32%,transparent)] text-[var(--teal)]',
   success: 'bg-[color-mix(in_srgb,var(--success)_14%,transparent)] ring-[color-mix(in_srgb,var(--success)_32%,transparent)] text-[var(--success)]',
   warn: 'bg-[color-mix(in_srgb,var(--warn)_14%,transparent)] ring-[color-mix(in_srgb,var(--warn)_32%,transparent)] text-[var(--warn)]',
   accent: 'bg-[color-mix(in_srgb,var(--accent-primary)_14%,transparent)] ring-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-[var(--accent-primary)]',
@@ -13,7 +13,7 @@ const TONE_ICON: Record<StatTone, string> = {
 
 /** Tone → value text color (overrides the default primary). */
 const TONE_VALUE_TEXT: Record<StatTone, string> = {
-  teal: 'text-[var(--teal)]',
+  info: 'text-[var(--teal)]',
   success: 'text-[var(--success)]',
   warn: 'text-[var(--warn)]',
   accent: 'text-[var(--accent-primary)]',
@@ -39,7 +39,7 @@ export function DrawerStat({ label, value, sub, icon, tone, valueTone, children,
           {icon}
         </div>
         <div className="min-w-0 leading-tight">
-          <div className="text-caption text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
+          <div className="text-caption text-secondary font-medium tracking-[0.05em] uppercase">{label}</div>
           {value !== undefined && (
             <div data-testid={valueTestId} className={cn('text-h1 font-bold mt-0.5 font-mono', valueTone ? TONE_VALUE_TEXT[valueTone] : 'text-primary')}>
               {value}

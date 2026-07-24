@@ -1,4 +1,6 @@
 using System.ClientModel;
+using System.ClientModel.Primitives;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using OpenAI;
@@ -27,16 +29,29 @@ internal sealed class ProviderClient : IProviderClient
         this.pricingService = pricingService;
     }
 
-    public async Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default)
+    public async Task<ProviderConnectionResult> VerifyConnectionAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            await GetModelsAsync(cancellationToken);
-            return true;
+            EnsureSupportedKind();
+            IReadOnlyList<DiscoveredModel> discovered = await DiscoverClassifiedAsync(cancellationToken);
+            return new ProviderConnectionResult(true, null, discovered.Count);
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return false;
+            throw;
+        }
+        catch (NotSupportedException)
+        {
+            return new ProviderConnectionResult(false, ProviderConnectionError.UnsupportedKind, 0);
+        }
+        catch (ProviderConnectionException ex)
+        {
+            return new ProviderConnectionResult(false, ex.Error, 0);
+        }
+        catch (Exception)
+        {
+            return new ProviderConnectionResult(false, ProviderConnectionError.Unknown, 0);
         }
     }
 
@@ -44,7 +59,7 @@ internal sealed class ProviderClient : IProviderClient
     {
         EnsureSupportedKind();
 
-        IReadOnlyList<DiscoveredModel> discovered = await DiscoverAsync(cancellationToken);
+        IReadOnlyList<DiscoveredModel> discovered = await DiscoverClassifiedAsync(cancellationToken);
 
         var result = new List<PricedModel>(discovered.Count);
         foreach (DiscoveredModel dm in discovered)
@@ -68,62 +83,96 @@ internal sealed class ProviderClient : IProviderClient
         return names.Select(n => new DiscoveredModel(n, n)).ToArray();
     }
 
-    private async Task<IReadOnlyList<DiscoveredModel>> GetAzureDeploymentsAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<DiscoveredModel>> DiscoverClassifiedAsync(CancellationToken cancellationToken)
     {
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, ProviderEndpoints.AzureDeploymentsUri(provider.Endpoint));
-            request.Headers.Add("api-key", provider.ApiKey);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
-
-            using HttpResponseMessage response = await http.SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                return [];
-
-            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using JsonDocument doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-            if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || data.ValueKind != JsonValueKind.Array)
-                return [];
-
-            var models = new List<DiscoveredModel>();
-            foreach (JsonElement item in data.EnumerateArray())
-            {
-                string? id = item.TryGetProperty("id", out JsonElement idEl) && idEl.ValueKind == JsonValueKind.String
-                    ? idEl.GetString() : null;
-                if (string.IsNullOrWhiteSpace(id))
-                    continue;
-                string baseModel = item.TryGetProperty("model", out JsonElement mEl) && mEl.ValueKind == JsonValueKind.String
-                    ? mEl.GetString() ?? id : id;
-                models.Add(new DiscoveredModel(id, baseModel));
-            }
-            return models;
+            return await DiscoverAsync(cancellationToken);
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return [];
+            throw;
         }
+        catch (Exception ex)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            throw new ProviderConnectionException(Classify(ex), ex);
+        }
+    }
+
+    private async Task<IReadOnlyList<DiscoveredModel>> GetAzureDeploymentsAsync(CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, ProviderEndpoints.AzureDeploymentsUri(provider.Endpoint));
+        request.Headers.Add("api-key", provider.ApiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+
+        using HttpResponseMessage response = await http.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using JsonDocument doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || data.ValueKind != JsonValueKind.Array)
+            return [];
+
+        var models = new List<DiscoveredModel>();
+        foreach (JsonElement item in data.EnumerateArray())
+        {
+            string? id = item.TryGetProperty("id", out JsonElement idEl) && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString() : null;
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+            string baseModel = item.TryGetProperty("model", out JsonElement mEl) && mEl.ValueKind == JsonValueKind.String
+                ? mEl.GetString() ?? id : id;
+            models.Add(new DiscoveredModel(id, baseModel));
+        }
+        return models;
     }
 
     private async Task<IReadOnlyList<string>> GetOpenAiModelNamesAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            OpenAIModelClient modelClient = CreateOpenAiClient();
-            var result = (await modelClient.GetModelsAsync(cancellationToken))?.Value?.ToArray() ?? [];
-            return result.Select(m => m.Id).ToArray();
-        }
-        catch
-        {
-            return [];
-        }
+        OpenAIModelClient modelClient = CreateOpenAiClient();
+        var result = (await modelClient.GetModelsAsync(cancellationToken)).Value.ToArray();
+        return result.Select(m => m.Id).ToArray();
     }
 
     private OpenAIModelClient CreateOpenAiClient()
     {
         EnsureSupportedKind();
         var credential = new ApiKeyCredential(provider.ApiKey);
-        var options = new OpenAIClientOptions { Endpoint = provider.Endpoint };
+        var options = new OpenAIClientOptions
+        {
+            Endpoint = provider.Endpoint,
+            Transport = new HttpClientPipelineTransport(http),
+        };
         return new OpenAIModelClient(credential, options);
+    }
+
+    private static ProviderConnectionError Classify(Exception exception)
+    {
+        if (exception is ClientResultException { Status: 401 or 403 })
+            return ProviderConnectionError.Unauthorized;
+
+        if (exception is HttpRequestException { StatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden })
+            return ProviderConnectionError.Unauthorized;
+
+        if (exception is HttpRequestException or TimeoutException or OperationCanceledException
+            || exception is ClientResultException { Status: 0 or 408 })
+            return ProviderConnectionError.NetworkError;
+
+        if (exception is NotSupportedException)
+            return ProviderConnectionError.UnsupportedKind;
+
+        if (exception is AggregateException aggregate)
+        {
+            ProviderConnectionError[] errors = aggregate.Flatten().InnerExceptions.Select(Classify).ToArray();
+            if (errors.Contains(ProviderConnectionError.Unauthorized))
+                return ProviderConnectionError.Unauthorized;
+            if (errors.Length > 0 && errors.All(error => error == ProviderConnectionError.NetworkError))
+                return ProviderConnectionError.NetworkError;
+        }
+
+        return ProviderConnectionError.Unknown;
     }
 
     private void EnsureSupportedKind()

@@ -38,7 +38,7 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
       data-testid="error-log-table"
       className={cn('flex flex-col', isFetching && 'opacity-60 transition-opacity')}
     >
-      <div className="grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2 text-body-sm font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
+      <div className="grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2 text-body-sm font-semibold uppercase tracking-[0.06em] text-secondary border-b border-hairline">
         <span><Trans>Level</Trans></span>
         <span><Trans>Message</Trans></span>
         <span><Trans>Source</Trans></span>

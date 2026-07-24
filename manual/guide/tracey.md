@@ -65,7 +65,7 @@ glides back up. This is purely presentational — your history still persists pe
 
 ## Quick actions, chips, and the "/" menu
 
-![The Tracey "/" menu: curated Quick Actions (List agents, Plot token usage, Run a suite, Review proposals, Optimize an agent) above the Tools list.](/screenshots/tracey/menu.png)
+![The Tracey "/" menu, scrolled to the section break: curated quick actions (Run a suite, Review proposals, Optimize an agent, Diagnose an agent) sit above the Tools list (navigate, search_docs, load_skill).](/screenshots/tracey/menu.png)
 
 In the opening view, **chips** surface common quick actions (e.g. *List agents*, *Plot token
 usage*, *Improve failing runs*). Click one and its request is **sent straight away** — no extra
@@ -83,7 +83,7 @@ lists, tables, and code blocks).
 ## Ask Tracey from anywhere
 
 You don't have to start on the Tracey page. Wherever the app shows something worth
-investigating, a gold **⚡ Ask Tracey** button appears next to it. Clicking it opens Tracey AI
+investigating, a cyan **⚡ Ask Tracey** button appears next to it. Clicking it opens Tracey AI
 in a fresh conversation and immediately asks her about the thing you were looking at — with all
 the context (ids, anomaly reasons, pass rates) already filled in:
 

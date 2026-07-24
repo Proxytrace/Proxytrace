@@ -18,7 +18,7 @@ export function ToolCallBlock({ name, id, arguments: args }: Props) {
   return (
     <div className="rounded-md p-2.5 border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle">
       <div className="flex items-center gap-2 text-body-sm mono mb-1.5">
-        <span className="inline-flex items-center px-1.5 py-0.25 rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success">
+        <span className="inline-flex items-center px-1.5 py-0.25 rounded-none text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success">
           <Trans>tool call</Trans>
         </span>
         <span className="font-bold text-success">{name}</span>

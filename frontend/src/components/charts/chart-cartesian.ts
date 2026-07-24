@@ -7,7 +7,6 @@ export interface AreaChartData {
   solidGridPath: string; dashedGridPath: string;
   grid: GridLine[];
   xLabels: { x: number; label: string }[];
-  endX: number; endY: number;
   pts: AreaPoint[];
   plotL: number; plotR: number; plotT: number; plotB: number;
 }
@@ -35,7 +34,7 @@ export function computeAreaChart(
     return {
       linePath: '', areaPath: '',
       solidGridPath: '', dashedGridPath: '',
-      grid: [], xLabels: [], endX: 0, endY: 0,
+      grid: [], xLabels: [],
       pts: [], plotL: padL, plotR: width - padR, plotT: padT, plotB: height - padB,
     };
   }
@@ -66,7 +65,6 @@ export function computeAreaChart(
   const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
   return {
     linePath: linePts, areaPath, solidGridPath, dashedGridPath, grid, xLabels,
-    endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1],
     pts: ptsTyped,
     plotL: padL, plotR: padL + w, plotT: padT, plotB: padT + h,
   };
@@ -92,13 +90,6 @@ export function computeHistogram(
   }));
   const barsPath = barsRectPath(rects);
   return { rects, barsPath, baselineY: padT + h };
-}
-
-/** Path for a rect with only its top two corners rounded. */
-export function roundedTopRectPath(x: number, y: number, w: number, h: number, r: number): string {
-  if (h <= 0) return '';
-  const rr = Math.min(r, h, w / 2);
-  return `M ${x.toFixed(1)} ${(y + h).toFixed(1)} L ${x.toFixed(1)} ${(y + rr).toFixed(1)} Q ${x.toFixed(1)} ${y.toFixed(1)} ${(x + rr).toFixed(1)} ${y.toFixed(1)} L ${(x + w - rr).toFixed(1)} ${y.toFixed(1)} Q ${(x + w).toFixed(1)} ${y.toFixed(1)} ${(x + w).toFixed(1)} ${(y + rr).toFixed(1)} L ${(x + w).toFixed(1)} ${(y + h).toFixed(1)} Z`;
 }
 
 export function computeModelBars(

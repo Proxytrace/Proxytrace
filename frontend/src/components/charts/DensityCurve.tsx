@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { HistogramBinDto } from '../../api/models';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { ChartTooltip } from './ChartTooltip';
@@ -38,14 +38,13 @@ function smoothPath(pts: { x: number; y: number }[]): string {
 /* eslint-enable lingui/no-unlocalized-strings */
 
 /**
- * Smooth density curve of a pre-binned sample: the distribution's *shape* as a soft filled area
- * (gradient under a Catmull-Rom line) instead of discrete bars. Hover reads a bin's value range and
- * count. A single bin (every sample equal) collapses to a centered marker.
+ * Smooth density curve of a pre-binned sample: the distribution's *shape* as a flat tinted area
+ * under a Catmull-Rom line instead of discrete bars. Hover reads a bin's value range and count.
+ * A single bin (every sample equal) collapses to a centered marker.
  */
 export function DensityCurve({ bins, color, formatValue, formatCount, valueUnit, height = 22 }: DensityCurveProps) {
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(240);
   const w = measuredWidth || 240;
-  const gid = useId();
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const geom = useMemo(() => {
@@ -76,7 +75,7 @@ export function DensityCurve({ bins, color, formatValue, formatCount, valueUnit,
   if (!geom) {
     return (
       <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} className="block" preserveAspectRatio="none">
-        <rect x={44} y={height / 2 - 4} width={12} height={8} rx={4} fill={color} opacity={0.6} />
+        <rect x={44} y={height / 2 - 4} width={12} height={8} fill={color} opacity={0.6} />
       </svg>
     );
   }
@@ -84,13 +83,7 @@ export function DensityCurve({ bins, color, formatValue, formatCount, valueUnit,
   return (
     <div ref={ref} className="relative w-full" onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
       <svg width="100%" height={height} viewBox={`0 0 ${w} ${height}`} className="block overflow-visible">
-        <defs>
-          <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.22} />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={geom.area} fill={`url(#${gid})`} />
+        <path d={geom.area} fill={color} fillOpacity={0.18} />
         <path d={geom.line} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         {hoverIdx !== null && (
           <line

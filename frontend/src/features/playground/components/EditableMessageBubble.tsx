@@ -113,7 +113,7 @@ export function EditableMessageBubble(props: Props) {
 function EmptyTurn({ role, actions }: { role: string; actions: React.ReactNode }) {
   return (
     <div className="group relative rounded-lg bg-card-2 border border-border border-dashed flex items-center gap-2 px-3 py-2.5">
-      <span className="font-mono text-caption font-bold tracking-[0.08em] text-muted uppercase">{role}</span>
+      <span className="font-mono text-caption font-bold tracking-[0.08em] text-secondary uppercase">{role}</span>
       <span className="text-body text-muted italic"><Trans>(empty — click edit to add content)</Trans></span>
       <span className="ml-auto" />
       {actions}

@@ -7,6 +7,7 @@ import { TRACEY_TOOLS_META } from '../tracey-tools';
 import { ArrowUpIcon, MessagePlusIcon, SparklesIcon, StopIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING_FIELD } from '../../../lib/constants';
 import { SlashMenu, type SlashItem } from './SlashMenu';
 import { ToolChips } from './ToolChips';
 
@@ -25,13 +26,11 @@ const ALL_ITEMS: SlashItem[] = [
 const COMPOSER_BTN_CLS = cn(
   'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md transition-[background,color,opacity] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] disabled:cursor-not-allowed disabled:opacity-40',
 );
-// Send: the gold primary CTA (dark accent-ink on the gold fill per DESIGN.md). Stop: neutral halt
-// control (gold fill is reserved for the one primary action, and a halt reads better as a calm
-// neutral square). The arrow nudges up on hover — a transform inside the fixed-size button, so it
-// never shifts layout.
-const SEND_BTN_CLS = cn(
-  'group bg-[image:var(--grad-accent)] text-accent-ink shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)]',
-);
+// Send: the cyan primary CTA (dark accent-ink on the flat cyan fill). Stop: neutral halt control
+// (the cyan fill is reserved for the one primary action, and a halt reads better as a calm neutral
+// square). The arrow nudges up on hover — a transform inside the fixed-size button, so it never
+// shifts layout.
+const SEND_BTN_CLS = cn('group bg-accent text-accent-ink hover:bg-accent-hover');
 const STOP_BTN_CLS = cn('border border-border bg-card-2 text-primary hover:bg-card');
 
 function matches(item: SlashItem, query: string, i18n: I18n): boolean {
@@ -132,7 +131,13 @@ export function TraceyComposer({ onNewConversation, showStarters }: TraceyCompos
         )}
         <ComposerPrimitive.Root
           className={cn(
-            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[var(--shadow-card)] transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+            'flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 transition-[border-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)] focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+            // The frame is the field — the textarea is deliberately borderless — so the composer's
+            // focus ring lives here rather than on the textarea (DESIGN §7). It is scoped to the
+            // text control: plain `focus-within:` would also light the whole frame when the Send /
+            // Stop button is focused, and those ring themselves. The 40% border tint stays as the
+            // softer "a control in the composer has focus" cue.
+            FOCUS_RING_FIELD,
             isRunning && 'streaming-border',
           )}
         >

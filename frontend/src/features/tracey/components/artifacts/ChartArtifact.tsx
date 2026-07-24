@@ -19,7 +19,7 @@ import { ChartTooltip } from './ChartTooltip';
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-caption uppercase tracking-[0.06em] text-muted">{label}</span>
+      <span className="text-caption uppercase tracking-[0.06em] text-secondary">{label}</span>
       <span className="font-mono text-title font-semibold tabular-nums text-primary">{value}</span>
     </div>
   );

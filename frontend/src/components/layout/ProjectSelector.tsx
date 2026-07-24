@@ -56,7 +56,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
         </RowButton>
       }
     >
-      <div className="px-3 pt-2 pb-1 text-caption font-semibold tracking-[0.08em] text-muted uppercase">
+      <div className="px-3 pt-2 pb-1 text-caption font-semibold tracking-[0.08em] text-secondary uppercase">
         <Trans>Switch project</Trans>
       </div>
       {projects.length === 0 && <div className="px-3 py-2 text-body text-muted"><Trans>No projects</Trans></div>}

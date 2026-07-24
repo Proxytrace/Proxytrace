@@ -25,7 +25,7 @@ const REASON_TONE_CLS = {
   danger: 'bg-danger-subtle text-danger',
 } as const;
 
-const CHIP_CLS = 'shrink-0 rounded-full text-caption px-1.5 py-0.5 whitespace-nowrap max-w-32 truncate';
+const CHIP_CLS = 'shrink-0 rounded-none text-caption px-1.5 py-0.5 whitespace-nowrap max-w-32 truncate';
 /* eslint-enable lingui/no-unlocalized-strings */
 
 /** Why a call was flagged, as at most {@link VISIBLE_REASONS} chips plus a "+N" overflow chip:

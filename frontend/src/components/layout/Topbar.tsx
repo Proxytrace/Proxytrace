@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { LanguageMenuItems } from './LanguageMenuItems';
 import { EmailNotificationMenuItems } from './EmailNotificationMenuItems';
-import { navItems, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL, type HealthStatus } from './shellNav';
+import { navItems, HEALTH_CHIP, HEALTH_DOT, HEALTH_LABEL, type HealthStatus } from './shellNav';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useAuthMode } from '../../auth/authMode';
 import { useHealth } from '../../hooks/useHealth';
@@ -27,7 +27,7 @@ interface TopbarProps {
   onToggleSidebar: () => void;
 }
 
-/** App top bar — breadcrumb, global search (⌘K), health pill, license badge, notifications, user menu.
+/** App top bar — breadcrumb, global search (⌘K), health chip, license badge, notifications, user menu.
  *  Owns its own search ref + shortcut and derives the active page from the route. */
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { t, i18n } = useLingui();
@@ -65,13 +65,13 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
   return (
     <header
-      className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[3] m-[10px_10px_0_10px] rounded-lg bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
+      className="h-[48px] shrink-0 flex items-center px-4 gap-3 relative z-[3] bg-surface-2 border-b border-border"
     >
       <IconButton onClick={onToggleSidebar} aria-label={t`Toggle sidebar`}>
         <LayoutSidebarIcon size={16} />
       </IconButton>
 
-      <div className="flex items-center gap-2 text-title min-w-0 shrink whitespace-nowrap">
+      <div className="flex items-center gap-2 text-title min-w-0 shrink whitespace-nowrap font-mono">
         <span className="text-muted truncate max-w-[180px] hidden md:inline">{currentProject?.name ?? '—'}</span>
         <span className="text-muted hidden md:inline">/</span>
         <span className="font-semibold truncate">{pageLabel}</span>
@@ -90,8 +90,8 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       <div
         title={i18n._(HEALTH_LABEL[healthStatus])}
         className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-body-sm font-semibold whitespace-nowrap shrink-0',
-          HEALTH_PILL[healthStatus],
+          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-none border text-body-sm font-semibold whitespace-nowrap shrink-0',
+          HEALTH_CHIP[healthStatus],
         )}
       >
         <span

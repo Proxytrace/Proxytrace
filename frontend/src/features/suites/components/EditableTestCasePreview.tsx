@@ -48,7 +48,7 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
 
   return (
     <div className="h-full min-h-0 px-4 py-4 flex flex-col gap-3">
-      <div className="text-caption font-semibold text-muted uppercase tracking-[0.08em] shrink-0">
+      <div className="text-caption font-semibold text-secondary uppercase tracking-[0.08em] shrink-0">
         <Trans>Edit expected output</Trans>
       </div>
       <ExpectedOutputEditor value={draft} tools={tools} onChange={setDraft} fill />

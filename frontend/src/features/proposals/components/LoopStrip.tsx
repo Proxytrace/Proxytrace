@@ -76,13 +76,13 @@ function LoopNode({ segment, label, onJump }: { segment: Segment; label: Message
   const { i18n } = useLingui();
   const dimmed = segment.count === 0;
   return (
-    // eslint-disable-next-line no-restricted-syntax -- bespoke pipeline node; Button variants don't cover the tinted-pill treatment
+    // eslint-disable-next-line no-restricted-syntax -- bespoke pipeline node; Button variants don't cover the tinted-tag treatment
     <button
       type="button"
       onClick={() => onJump(segment.group)}
       data-testid={`loop-node-${segment.group}`}
       className={cn(
-        'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-body-sm font-medium transition-colors duration-[var(--motion-fast)]',
+        'inline-flex cursor-pointer items-center gap-1.5 rounded-none px-2.5 py-1 text-body-sm font-medium transition-colors duration-[var(--motion-fast)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
         dimmed ? 'text-muted hover:bg-card-2' : cn(TONE_SUBTLE_BG[segment.tone], TONE_TEXT[segment.tone], 'hover:brightness-110'),
       )}

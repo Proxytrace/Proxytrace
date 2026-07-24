@@ -116,6 +116,31 @@ test.describe('Search', () => {
     await expect(page.getByTestId(`search-result-${agentId}`)).toBeVisible();
   });
 
+  test('the clear button can be operated with the keyboard', async ({ page }) => {
+    await page.goto('/dashboard', { waitUntil: 'load' });
+
+    const input = page.getByTestId('search-input');
+    await expect(input).toBeVisible();
+    await input.click();
+    await input.fill(token);
+    await expect(input).toHaveValue(token);
+
+    // Regression (#396): the clear button was bound to onMouseDown only, so it sat in the tab
+    // order but did nothing on Enter or Space — a keyboard user could focus it and get no
+    // response, and had to select-all + delete in the input instead. `press` focuses the
+    // control first, so this exercises the real keyboard-activation path.
+    const clear = page.getByTestId('search-clear-btn');
+    await expect(clear).toBeVisible();
+    await clear.press('Enter');
+    await expect(input).toHaveValue('');
+
+    // Space is the button's other native activation key; both must work.
+    await input.fill(token);
+    await expect(clear).toBeVisible();
+    await clear.press(' ');
+    await expect(input).toHaveValue('');
+  });
+
   test('clicking a trace hit opens the Traces page with its detail drawer', async ({ page }) => {
     // Seed a captured call whose message carries the distinctive token, then reindex and poll
     // until it surfaces as a hit (the reindex is asynchronous).

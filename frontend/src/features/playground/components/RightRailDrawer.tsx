@@ -44,7 +44,7 @@ export function RightRailDrawer({
     <div className="w-[340px] rounded-lg flex flex-col overflow-hidden mr-2 fade-up bg-card border border-border shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border">
         <div className="flex flex-col min-w-0">
-          <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Settings</Trans></span>
+          <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary"><Trans>Settings</Trans></span>
           <span className="text-title font-semibold text-primary truncate">{i18n._(SECTION_TITLES[active])}</span>
         </div>
         <IconButton

@@ -11,9 +11,9 @@ interface DetailPanelProps {
 }
 
 /**
- * The shared right-side detail shell: a dimmed overlay plus a floating, rounded card pinned below
- * the top bar. Owns the chrome (positioning, elevation, enter animation, overlay/Esc/arrow close)
- * and nothing about the interior — features render their own header and body as children.
+ * The shared right-side detail shell: a dimmed overlay plus a square, ruled panel pinned below
+ * the top bar. Owns the chrome (positioning, enter animation, overlay/Esc/arrow close) and
+ * nothing about the interior — features render their own header and body as children.
  */
 export function DetailPanel({ onClose, onPrev, onNext, keyboardEnabled = true, testId, children }: DetailPanelProps) {
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cn } from '../../lib/cn';
+import { FOCUS_RING } from '../../lib/constants';
 import { Spinner } from './Spinner';
 
 export type ButtonVariant =
@@ -26,7 +27,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT_CLS: Record<ButtonVariant, string> = {
   primary: cn(
-    'bg-[image:var(--grad-accent)] text-accent-ink shadow-[var(--shadow-btn)] hover:bg-[image:var(--grad-accent-hover)] active:bg-[image:none] active:bg-[var(--accent-press)] active:shadow-[inset_0_2px_4px_rgba(80,50,10,0.3)] disabled:opacity-40 disabled:cursor-not-allowed',
+    'bg-accent text-accent-ink hover:bg-[var(--accent-hover)] active:bg-[var(--accent-press)] disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   secondary: cn(
     'bg-card-2 text-secondary border border-border hover:text-primary hover:bg-[var(--bg-wash-active)] disabled:opacity-40 disabled:cursor-not-allowed',
@@ -35,13 +36,13 @@ const VARIANT_CLS: Record<ButtonVariant, string> = {
     'text-secondary hover:text-primary hover:bg-[var(--bg-wash-hover)] border border-transparent disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   danger: cn(
-    'bg-danger text-white shadow-[var(--shadow-btn-danger)] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
+    'bg-danger text-danger-ink hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   dangerOutline: cn(
     'bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   success: cn(
-    'bg-[image:var(--grad-success)] text-white shadow-[var(--shadow-btn-success)] hover:opacity-92 disabled:opacity-40 disabled:cursor-not-allowed',
+    'bg-success text-success-ink hover:opacity-92 disabled:opacity-40 disabled:cursor-not-allowed',
   ),
   link: cn(
     'bg-transparent text-accent hover:text-accent-hover hover:underline shadow-none gap-1 disabled:opacity-40 disabled:cursor-not-allowed',
@@ -60,7 +61,8 @@ const WRITE_VARIANTS: ButtonVariant[] = ['primary', 'danger', 'dangerOutline', '
 const BASE_CLS = cn(
   'inline-flex items-center justify-center font-semibold whitespace-nowrap select-none',
   'transition-[background,color,opacity,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] focus-visible:ring-offset-0',
+  FOCUS_RING,
+  'focus-visible:ring-offset-0',
 );
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -131,7 +133,10 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(f
       ref={ref}
       type={type}
       data-write={danger || undefined}
-      className={cn('btn-icon', size === 'sm' && 'btn-icon-sm', danger && 'btn-icon-danger', className)}
+      // `.btn-icon` is plain CSS in index.css with no focus rule; the ring is applied here as a
+      // Tailwind utility instead so a call site can still override it (an unlayered index.css rule
+      // would beat every utility). Every icon-only button in the product inherits it.
+      className={cn('btn-icon', FOCUS_RING, size === 'sm' && 'btn-icon-sm', danger && 'btn-icon-danger', className)}
       {...rest}
     />
   );

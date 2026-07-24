@@ -7,6 +7,7 @@ import { Popover } from '../../../components/ui/Popover';
 import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { useAutosizeTextarea } from '../../../hooks/useAutosizeTextarea';
 import { cn } from '../../../lib/cn';
+import { FOCUS_RING, FOCUS_RING_FIELD } from '../../../lib/constants';
 
 interface Props {
   disabled: boolean;
@@ -57,12 +58,19 @@ export function ComposeBox({
 
   return (
     <div className="border-t border-border p-3 flex flex-col gap-2 bg-black/[0.12]">
+      {/* The frame is the field — the textarea below is deliberately borderless — so the focus ring
+          lives here, scoped to the text control so the endpoint chip and Send button below ring
+          themselves instead (DESIGN §7, same treatment as the Tracey composer).
+          The border used to tint on `canSend`, i.e. on *having text*, which read as a focus signal
+          while being the opposite of one: lit when unfocused-but-typed-in, dark when focused-and-
+          empty. It now tracks focus like every other field; the Send button's disabled state is
+          what conveys "nothing to send". */}
       <div
         className={cn(
-          'rounded-lg flex flex-col bg-card border transition-[border-color,box-shadow] duration-150 ease-[ease]',
-          canSend
-            ? 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-primary)_12%,transparent)]'
-            : 'border-border shadow-[var(--shadow-pill)]',
+          'rounded-lg flex flex-col bg-card border border-border',
+          'transition-[border-color,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
+          'focus-within:border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)]',
+          FOCUS_RING_FIELD,
         )}
       >
         {/* eslint-disable-next-line no-restricted-syntax -- bespoke auto-resizing borderless composer textarea */}
@@ -89,12 +97,13 @@ export function ComposeBox({
               align="start"
               className="w-[280px] py-1.5 max-h-[320px] overflow-y-auto"
               trigger={
-                // eslint-disable-next-line no-restricted-syntax -- bespoke endpoint pill trigger (ZapIcon + modified dot); Popover asChild target
+                // eslint-disable-next-line no-restricted-syntax -- bespoke endpoint chip trigger (ZapIcon + modified dot); Popover asChild target
                 <button
                   type="button"
                   data-testid="endpoint-picker"
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-caption mono cursor-pointer transition-colors hover:text-primary border',
+                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-caption mono cursor-pointer transition-colors hover:text-primary border',
+                    FOCUS_RING,
                     pickerOpen
                       ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
                       : 'bg-[var(--bg-wash-hover)] border-border text-secondary',
@@ -115,7 +124,7 @@ export function ComposeBox({
             >
               <div role="listbox">
                 <div className="px-2.5 pt-0.5 pb-1.5 flex items-center justify-between">
-                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-muted"><Trans>Endpoint</Trans></span>
+                  <span className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary"><Trans>Endpoint</Trans></span>
                   {defaultEndpointId && endpointId !== defaultEndpointId && (
                     <Button
                       variant="link"

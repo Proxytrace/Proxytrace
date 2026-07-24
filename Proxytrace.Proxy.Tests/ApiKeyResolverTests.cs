@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using Microsoft.Extensions.Caching.Memory;
 using NSubstitute;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
@@ -9,63 +8,63 @@ using Proxytrace.Proxy.Internal;
 namespace Proxytrace.Proxy.Tests;
 
 [TestClass]
-public sealed class CachedApiKeyResolverTests
+public sealed class ApiKeyResolverTests
 {
     [TestMethod]
-    public async Task ResolveAsync_WithinTtl_HitsRepositoryOnce()
+    public async Task ResolveAsync_EveryCall_HitsRepositoryAgain()
     {
+        // No positive credential caching (#407): each request must observe the current stored
+        // credentials so rotation and revocation take effect immediately.
         IApiKey apiKey = ProxytraceKey();
         var apiKeys = Substitute.For<IApiKeyRepository>();
         var providers = Substitute.For<IModelProviderRepository>();
         var projects = Substitute.For<IProjectRepository>();
         apiKeys.FindByKeyAsync("key", Arg.Any<CancellationToken>()).Returns(apiKey);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
-
-        var first = await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None);
-        var second = await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None);
-
-        first.Should().NotBeNull();
-        first.Provider.Should().BeSameAs(apiKey.Provider);
-        second.Should().BeSameAs(first);
-        await apiKeys.Received(1).FindByKeyAsync("key", Arg.Any<CancellationToken>());
-        await providers.DidNotReceive().FindByApiKeyAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-    }
-
-    [TestMethod]
-    public async Task ResolveAsync_WhenNotFound_DoesNotCacheNull()
-    {
-        var apiKeys = Substitute.For<IApiKeyRepository>();
-        var providers = Substitute.For<IModelProviderRepository>();
-        var projects = Substitute.For<IProjectRepository>();
-        apiKeys.FindByKeyAsync("missing", Arg.Any<CancellationToken>()).Returns((IApiKey?)null);
-        providers.FindByApiKeyAsync("missing", Arg.Any<CancellationToken>()).Returns((IModelProvider?)null);
-
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
-
-        (await resolver.ResolveAsync("missing", "p", CancellationToken.None)).Should().BeNull();
-        (await resolver.ResolveAsync("missing", "p", CancellationToken.None)).Should().BeNull();
-
-        await apiKeys.Received(2).FindByKeyAsync("missing", Arg.Any<CancellationToken>());
-        await providers.Received(2).FindByApiKeyAsync("missing", Arg.Any<CancellationToken>());
-    }
-
-    [TestMethod]
-    public async Task ResolveAsync_WhenEntryExpired_RefetchesFromRepository()
-    {
-        IApiKey apiKey = ProxytraceKey();
-        var apiKeys = Substitute.For<IApiKeyRepository>();
-        var providers = Substitute.For<IModelProviderRepository>();
-        var projects = Substitute.For<IProjectRepository>();
-        apiKeys.FindByKeyAsync("key", Arg.Any<CancellationToken>()).Returns(apiKey);
-
-        // Zero TTL disables caching, so every lookup hits the repository again.
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.Zero);
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None);
         await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None);
 
         await apiKeys.Received(2).FindByKeyAsync("key", Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task ResolveAsync_AfterRotation_ReturnsTheNewProviderSnapshot()
+    {
+        // The second resolve must surface what the repository returns *now*, not a snapshot from
+        // the first resolve — this is the rotation-freshness guarantee at the resolver level.
+        IApiKey before = ProxytraceKey();
+        IApiKey after = ProxytraceKey();
+        var apiKeys = Substitute.For<IApiKeyRepository>();
+        var providers = Substitute.For<IModelProviderRepository>();
+        var projects = Substitute.For<IProjectRepository>();
+        apiKeys.FindByKeyAsync("key", Arg.Any<CancellationToken>()).Returns(before, after);
+
+        var resolver = NewResolver(apiKeys, providers, projects);
+
+        var first = await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None);
+        var second = await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None);
+
+        first.Should().NotBeNull();
+        first.Provider.Should().BeSameAs(before.Provider);
+        second.Should().NotBeNull();
+        second.Provider.Should().BeSameAs(after.Provider);
+    }
+
+    [TestMethod]
+    public async Task ResolveAsync_AfterRevocation_ReturnsNullImmediately()
+    {
+        IApiKey apiKey = ProxytraceKey();
+        var apiKeys = Substitute.For<IApiKeyRepository>();
+        var providers = Substitute.For<IModelProviderRepository>();
+        var projects = Substitute.For<IProjectRepository>();
+        apiKeys.FindByKeyAsync("key", Arg.Any<CancellationToken>()).Returns(apiKey, (IApiKey?)null);
+
+        var resolver = NewResolver(apiKeys, providers, projects);
+
+        (await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None)).Should().NotBeNull();
+        (await resolver.ResolveAsync("key", projectSlug: null, CancellationToken.None)).Should().BeNull();
     }
 
     [TestMethod]
@@ -82,7 +81,7 @@ public sealed class CachedApiKeyResolverTests
         providers.FindByApiKeyAsync("upstream", Arg.Any<CancellationToken>()).Returns(provider);
         projects.FindBySlugAsync("my-project", Arg.Any<CancellationToken>()).Returns(project);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         var result = await resolver.ResolveAsync("upstream", "my-project", CancellationToken.None);
 
@@ -102,7 +101,7 @@ public sealed class CachedApiKeyResolverTests
         apiKeys.FindByKeyAsync("upstream", Arg.Any<CancellationToken>()).Returns((IApiKey?)null);
         providers.FindByApiKeyAsync("upstream", Arg.Any<CancellationToken>()).Returns(provider);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         (await resolver.ResolveAsync("upstream", projectSlug: null, CancellationToken.None)).Should().BeNull();
         await projects.DidNotReceive().FindBySlugAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -120,7 +119,7 @@ public sealed class CachedApiKeyResolverTests
         providers.FindByApiKeyAsync("upstream", Arg.Any<CancellationToken>()).Returns(provider);
         projects.FindBySlugAsync("ghost", Arg.Any<CancellationToken>()).Returns((IProject?)null);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         (await resolver.ResolveAsync("upstream", "ghost", CancellationToken.None)).Should().BeNull();
     }
@@ -134,7 +133,7 @@ public sealed class CachedApiKeyResolverTests
         var projects = Substitute.For<IProjectRepository>();
         apiKeys.FindByKeyAsync("pt", Arg.Any<CancellationToken>()).Returns(apiKey);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         (await resolver.ResolveAsync("pt", "other-project", CancellationToken.None)).Should().BeNull();
     }
@@ -148,7 +147,7 @@ public sealed class CachedApiKeyResolverTests
         var projects = Substitute.For<IProjectRepository>();
         apiKeys.FindByKeyAsync("pt", Arg.Any<CancellationToken>()).Returns(apiKey);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         var result = await resolver.ResolveAsync("pt", "showcase-project", CancellationToken.None);
 
@@ -165,7 +164,7 @@ public sealed class CachedApiKeyResolverTests
         var projects = Substitute.For<IProjectRepository>();
         apiKeys.FindByKeyAsync("pt", Arg.Any<CancellationToken>()).Returns(apiKey);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         // The slug arrives from the URL path with its original casing ("Showcase-Project"); it must
         // still match the key's canonical lower-cased project slug rather than 401.
@@ -174,7 +173,6 @@ public sealed class CachedApiKeyResolverTests
         result.Should().NotBeNull();
         result.Project.Should().BeSameAs(apiKey.Project);
     }
-
 
     [TestMethod]
     public async Task ResolveAsync_ProxytraceKeyWins_OnCollisionWithProviderKey()
@@ -185,7 +183,7 @@ public sealed class CachedApiKeyResolverTests
         var projects = Substitute.For<IProjectRepository>();
         apiKeys.FindByKeyAsync("colliding", Arg.Any<CancellationToken>()).Returns(apiKey);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         var result = await resolver.ResolveAsync("colliding", projectSlug: null, CancellationToken.None);
 
@@ -193,13 +191,6 @@ public sealed class CachedApiKeyResolverTests
         result.Provider.Should().BeSameAs(apiKey.Provider);
         await providers.DidNotReceive().FindByApiKeyAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
-
-    private static CachedApiKeyResolver NewResolver(
-        IApiKeyRepository apiKeys,
-        IModelProviderRepository providers,
-        IProjectRepository projects,
-        TimeSpan ttl)
-        => new(apiKeys, providers, projects, new MemoryCache(new MemoryCacheOptions()), ttl);
 
     [TestMethod]
     public async Task ResolveAsync_ProxytraceKey_WithoutIngestionScope_Rejected()
@@ -211,10 +202,16 @@ public sealed class CachedApiKeyResolverTests
         var projects = Substitute.For<IProjectRepository>();
         apiKeys.FindByKeyAsync("mcp-only", Arg.Any<CancellationToken>()).Returns(apiKey);
 
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+        var resolver = NewResolver(apiKeys, providers, projects);
 
         (await resolver.ResolveAsync("mcp-only", projectSlug: null, CancellationToken.None)).Should().BeNull();
     }
+
+    private static ApiKeyResolver NewResolver(
+        IApiKeyRepository apiKeys,
+        IModelProviderRepository providers,
+        IProjectRepository projects)
+        => new(apiKeys, providers, projects);
 
     private static IApiKey ProxytraceKey(string projectName = "Some Project", ApiKeyScopes scopes = ApiKeyScopes.Ingestion)
     {

@@ -67,7 +67,7 @@ export function MembersSection() {
                 data-testid={`member-row-${m.id}`}
                 className="flex items-center gap-3 px-3 py-2.5 border-b border-hairline last:border-b-0"
               >
-                <Avatar initials={initials(m.email)} color={colorFor(m.id)} className="w-7 h-7 rounded-md text-caption" />
+                <Avatar initials={initials(m.email)} color={colorFor(m.id)} className="w-7 h-7 rounded-full text-caption" />
                 <span className="flex-1 text-title font-semibold text-primary truncate">{m.email}</span>
                 <IconButton
                   data-write

@@ -22,12 +22,8 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface p-6 sm:p-10">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,color-mix(in srgb, var(--accent-primary) 10%, transparent),transparent_55%),radial-gradient(circle_at_80%_110%,color-mix(in srgb, var(--teal) 8%, transparent),transparent_55%)]"
-      />
       <form
-        className="relative w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-8 shadow-[var(--shadow-float)]"
+        className="relative w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-8"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!passwordIsValid(password)) return;
@@ -49,8 +45,7 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
           <div className="mb-2 text-body-sm font-semibold uppercase tracking-[0.08em] text-accent">
             <Trans>Step 0</Trans>
           </div>
-          {/* display-tier: intentional, outside type scale */}
-          <h1 className="text-[20px] font-bold text-primary tracking-[-0.01em]"><Trans>Create the first admin</Trans></h1>
+          <h1 className="text-display-sm font-bold text-primary tracking-[-0.01em]"><Trans>Create the first admin</Trans></h1>
           <p className="mt-1.5 text-title text-secondary">
             <Trans>Local install needs an administrator account before you can configure providers.</Trans>
           </p>

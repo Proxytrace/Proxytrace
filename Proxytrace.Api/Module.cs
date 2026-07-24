@@ -140,7 +140,7 @@ internal sealed class Module : Autofac.Module
             .SingleInstance();
 
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
-                          ?? "http://localhost:5000";
+                          ?? "http://localhost:5001";
 
         builder.RegisterServiceCollection(services =>
         {

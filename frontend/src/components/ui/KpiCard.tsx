@@ -1,6 +1,7 @@
 import { Sparkline } from '../charts';
 import { ArrowUpIcon, ArrowDownIcon } from '../icons';
 import { cn } from '../../lib/cn';
+import { EYEBROW_CLS } from './classes';
 
 interface KpiCardProps {
   icon?: React.ReactNode;
@@ -52,18 +53,12 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        'rounded-xl p-5 relative overflow-hidden',
+        'p-5 relative overflow-hidden',
         accent
-          ? 'bg-[linear-gradient(155deg,var(--accent-subtle),transparent_60%),var(--bg-card)] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_2px_4px_rgba(0,0,0,0.25),0_12px_32px_-12px_var(--accent-glow)]'
+          ? 'bg-[color-mix(in_srgb,var(--accent-primary)_8%,var(--bg-card))] shadow-[var(--shadow-card)]'
           : 'bg-card shadow-[var(--shadow-card)]',
       )}
     >
-      {accent && (
-        <div
-          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none bg-[radial-gradient(circle,var(--accent-glow),transparent_70%)]"
-        />
-      )}
-
       <div className="flex items-center justify-between mb-3 relative">
         <div className="flex items-center gap-2">
           {icon && (
@@ -73,7 +68,7 @@ export function KpiCard({
               }`}
             >{icon}</div>
           )}
-          <span className="text-body-sm text-secondary font-medium">{displayLabel}</span>
+          <span className={cn(EYEBROW_CLS)}>{displayLabel}</span>
         </div>
         {trendText && (
           <div

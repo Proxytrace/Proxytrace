@@ -82,7 +82,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var setup = Substitute.For<ISetupService>();
         setup.TestProviderConnectionAsync(Arg.Any<ProviderConnectionInput>(), Arg.Any<CancellationToken>())
-            .Returns(true);
+            .Returns(new ProviderConnectionResult(true, null, 3));
         var controller = CreateController(services, setup: setup);
 
         var result = await controller.TestConnection(
@@ -90,9 +90,48 @@ public sealed class SetupControllerTests : BaseTest<Module>
             CancellationToken);
 
         result.Success.Should().BeTrue();
+        result.ModelCount.Should().Be(3);
         await setup.Received(1).TestProviderConnectionAsync(
             Arg.Is<ProviderConnectionInput>(i => i != null && i.ProviderEndpoint == new Uri("https://provider.example/v1")),
             Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task TestConnection_WhenProviderRejectsKey_ReturnsClassifiedFailure()
+    {
+        IServiceProvider services = GetServices();
+        var setup = Substitute.For<ISetupService>();
+        setup.TestProviderConnectionAsync(Arg.Any<ProviderConnectionInput>(), Arg.Any<CancellationToken>())
+            .Returns(new ProviderConnectionResult(false, ProviderConnectionError.Unauthorized, 0));
+        var controller = CreateController(services, setup: setup);
+
+        var result = await controller.TestConnection(
+            new TestConnectionRequest("p", "https://provider.example", "wrong-key", ModelProviderKind.OpenAiCompatible),
+            CancellationToken);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(nameof(ProviderConnectionError.Unauthorized));
+        result.ModelCount.Should().Be(0);
+        result.Error.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task TestConnection_WhenCallerCancels_PropagatesCancellation()
+    {
+        IServiceProvider services = GetServices();
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        var setup = Substitute.For<ISetupService>();
+        setup.TestProviderConnectionAsync(Arg.Any<ProviderConnectionInput>(), cancellation.Token)
+            .Returns<ProviderConnectionResult>(_ => throw new OperationCanceledException(cancellation.Token));
+        var controller = CreateController(services, setup: setup);
+
+        await FluentActions
+            .Invoking(() => controller.TestConnection(
+                new TestConnectionRequest("p", "https://provider.example", "key", ModelProviderKind.OpenAiCompatible),
+                cancellation.Token))
+            .Should()
+            .ThrowAsync<OperationCanceledException>();
     }
 
     [TestMethod]
@@ -101,7 +140,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var setup = Substitute.For<ISetupService>();
         setup.TestProviderConnectionAsync(Arg.Any<ProviderConnectionInput>(), Arg.Any<CancellationToken>())
-            .Returns<bool>(_ => throw new InvalidOperationException("connect failed at db host 10.0.0.5"));
+            .Returns<ProviderConnectionResult>(_ => throw new InvalidOperationException("connect failed at db host 10.0.0.5"));
         var controller = CreateController(services, setup: setup);
 
         var result = await controller.TestConnection(
@@ -110,8 +149,9 @@ public sealed class SetupControllerTests : BaseTest<Module>
 
         result.Success.Should().BeFalse();
         // Outside Development the raw exception message (host/credential/internal detail) must not leak.
-        result.Error.Should().NotContain("10.0.0.5");
-        result.Error.Should().StartWith("An unexpected error occurred");
+        result.Error.Should().BeNull();
+        result.ErrorId.Should().NotBeNull();
+        result.ErrorCode.Should().Be(nameof(ProviderConnectionError.Unknown));
     }
 
     [TestMethod]
@@ -120,7 +160,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var setup = Substitute.For<ISetupService>();
         setup.TestProviderConnectionAsync(Arg.Any<ProviderConnectionInput>(), Arg.Any<CancellationToken>())
-            .Returns<bool>(_ => throw new InvalidOperationException("connect failed at db host 10.0.0.5"));
+            .Returns<ProviderConnectionResult>(_ => throw new InvalidOperationException("connect failed at db host 10.0.0.5"));
         var controller = CreateController(services, isDevelopment: true, setup: setup);
 
         var result = await controller.TestConnection(
@@ -129,5 +169,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
 
         result.Success.Should().BeFalse();
         result.Error.Should().Be("connect failed at db host 10.0.0.5");
+        result.ErrorId.Should().NotBeNull();
+        result.ErrorCode.Should().Be(nameof(ProviderConnectionError.Unknown));
     }
 }

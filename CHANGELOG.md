@@ -25,6 +25,101 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   sessions (most recently active first, with per-session trace and token counters) and
   `GET /api/sessions/{id}` returns one; sessions are scoped to the projects you can access, exactly
   like traces.
+- **Upstream provider key rotations are audited distinctly.** Replacing a provider's upstream API
+  key now records a dedicated *Provider Key Rotated* audit event instead of the generic provider
+  config update, so credential rotations stand out in incident review and compliance reporting.
+  The key value itself is never recorded.
+
+### Changed
+
+- **`x-proxytrace-session-id` now names a debugging session, not a conversation.** The header that
+  used to set the conversation/thread key now identifies the broader *session* (see Added), and
+  thread-level grouping moves to the new `x-proxytrace-conversation-id` header. Existing clients need
+  no change: when no `x-proxytrace-conversation-id` is sent, the session key still drives conversation
+  grouping, so calls keep grouping into threads byte-for-byte as before — and now gain a session view
+  on top. Send `x-proxytrace-conversation-id` only when you want one session to hold several distinct
+  conversations. Neither header is forwarded upstream.
+
+### Fixed
+
+- **Provider key rotation and revocation now take effect on the very next proxied request.** The
+  ingestion proxy previously cached resolved credentials — including the decrypted upstream provider
+  key — for up to 30 seconds, so a rotated key could keep being forwarded (and the replaced key kept
+  authenticating inbound) until the cache expired, in every proxy replica independently. The proxy
+  now resolves credentials from the database on every request and fails closed when the database is
+  unreachable instead of serving stale credentials. The `ApiKeyCache` setting is removed.
+- **Keyboard focus is now visible on the remaining bespoke controls.** The playground settings
+  rail, agent picker, endpoint chip, tool result/error tabs, suite-wizard preset chips, search
+  indexing kind toggles, the evaluator recent-evaluations filter chip, and the move-version target
+  list now show the standard focus indicator when reached with the keyboard, completing the
+  focus-ring sweep started with the shared button and row primitives.
+- **All text sizes now come from the design type scale.** Seven components (evaluator cost and
+  stat panels, the setup wizard headings, and the evaluator playground score chip) used one-off
+  pixel sizes; they now use scale tokens, including a new intermediate 22px display size, and the
+  score chip's "/5" suffix no longer renders below the 10px legibility floor.
+
+- **The demo seed now backdates evaluation history along with its runs.** Evaluation statistics
+  previously kept the seed time even when their runs were spread across the past 30 days, so the
+  evaluator workspace's pass-rate trend showed "Not enough data" in the demo/kiosk stack. Updated
+  test results now rewrite their evaluation-statistics timestamps, and the trend chart renders
+  real history.
+
+## [1.8.0] - 2026-07-22
+
+### Added
+
+- **Upstream provider keys can be rotated from Settings.** Admins can edit a provider's upstream
+  API key inline; Proxytrace verifies the replacement against the provider before saving it and
+  keeps the existing credential when verification fails.
+
+### Changed
+
+- **The interface has been redesigned.** Proxytrace now wears *Signal Desk* — a flat, ruled
+  instrument surface in blue-petrol ink with a single signal-cyan accent, in place of the previous
+  rounded, gold-accented, softly-shadowed look. Structure comes from 1px rules rather than from
+  shadows and floating panels: corners are square, fills are one flat colour, and the gradients,
+  glows, and background atmosphere are gone. Mono type now carries the structural labels — table
+  headers, KPI eyebrows, nav page codes, the breadcrumb — so the data reads as instrument
+  readout rather than prose. Nothing moved: every screen keeps its layout, and no workflow
+  changed. Alongside the reskin, label and on-fill text contrast was corrected across the app so
+  small text meets WCAG AA, and a few visual defects were fixed — row and message-header hover
+  states now fill their full row, and chart end-point markers no longer overhang the card edge.
+  The bundled manual at `/docs` was rethemed to match.
+
+### Fixed
+
+- **Provider connection tests no longer report invalid credentials as successful.** Upstream
+  authentication and network failures are now surfaced in the setup wizard instead of being
+  mistaken for a successful connection with an empty model list. A successful provider response
+  with no models remains valid and is shown as a warning.
+- **The Tracey message box now shows a focus ring.** Clicking or tabbing into the "Ask Tracey…" box
+  previously changed nothing but a faint 1px tint on its border — easy to miss against the dark panel,
+  and the one input in the app that opted out of the standard focus ring. The composer frame now
+  carries the same accent ring every other control uses, and it lights only while the message field
+  itself holds focus, so the New conversation and Send/Stop buttons still show focus on themselves. (#388)
+- **The global search box can be cleared with the keyboard.** The **✕** button beside the search
+  field sat in the tab order but responded only to a mouse click — pressing Enter or Space on it did
+  nothing, so keyboard users had to select-all and delete instead. It now activates on Enter and
+  Space like any other button, shows a focus ring, and uses the standard close icon. (#396)
+- **Firefox shows which parameter slider has keyboard focus.** The Agent Playground's temperature and
+  top-p sliders suppressed the browser's own focus outline but only drew a replacement ring on
+  Chrome and Safari, so on Firefox tabbing to a slider changed nothing on screen and the arrow keys
+  then adjusted a value with no indication of which one. Firefox now gets the same ring — plus the
+  hover and drag states it was also missing. (#395)
+- **`./dev.sh` now actually serves the UI.** The dev frontend proxied `/api` and `/mcp` to port 5000
+  while `dev.sh` started the backend on 5001, so every request from http://localhost:4201 failed with
+  `http proxy error … ECONNREFUSED` and the app never loaded. The dev backend port is now 5001
+  consistently — `launchSettings.json`, the `Self:BaseUrl` default, `vite.config.ts`, and the docs —
+  so both `./dev.sh` and `cd Proxytrace.Api && dotnet run` work with `npm run dev`.
+- **The sample client pointed at a port that serves nothing.** `sample-client/.env.example` set
+  `PROXYTRACE_BASE_URL` to `localhost:5000/openai/v1`, but `/openai/v1` is served by the standalone
+  ingestion proxy, never by the API — it is `localhost:5002` under `SPLIT=1 ./dev.sh` and
+  `localhost:5102` under Docker Compose. The example now points at 5002.
+
+## [1.7.0] - 2026-07-20
+
+### Added
+
 - **Scoped API keys for the REST API.** A Proxytrace API key can now drive `/api/*` directly, so an
   external service no longer needs a long-lived user login (with MFA disabled and a token-refresh loop)
   to call the API. Mint a key with the new **REST API read** and/or **REST API write** capabilities:
@@ -39,13 +134,6 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
-- **`x-proxytrace-session-id` now names a debugging session, not a conversation.** The header that
-  used to set the conversation/thread key now identifies the broader *session* (see Added), and
-  thread-level grouping moves to the new `x-proxytrace-conversation-id` header. Existing clients need
-  no change: when no `x-proxytrace-conversation-id` is sent, the session key still drives conversation
-  grouping, so calls keep grouping into threads byte-for-byte as before — and now gain a session view
-  on top. Send `x-proxytrace-conversation-id` only when you want one session to hold several distinct
-  conversations. Neither header is forwarded upstream.
 - **The proxy now forwards client headers transparently.** LLM requests through the ingestion proxy
   previously only passed a small fixed set of headers to the upstream provider; everything else was
   dropped. Now every header travels upstream unchanged — `OpenAI-Beta`, `openai-organization`,

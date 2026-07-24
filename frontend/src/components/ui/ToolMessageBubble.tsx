@@ -52,17 +52,19 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
 
   return (
     <div
-      className="relative group rounded-lg overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+      className="relative group rounded-lg overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)]"
     >
       <CopyButton text={copyText} label={t`Copy tool call`} className={hoverRevealOverlayCls} />
       {/* Header. The toggle and the Definition action are siblings so we never nest one
           interactive control inside another (invalid HTML + broken a11y). */}
-      <div className="flex items-center pr-9">
+      {/* The hover wash sits on the header row so it fills the whole header — on the toggle
+          button alone it stopped short of the Definition action and the right padding. */}
+      <div className="flex items-center pr-9 transition-colors duration-100 hover:bg-success-subtle">
         <button
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(o => !o)}
-          className="flex-1 min-w-0 flex items-center gap-2 pl-3 py-2.5 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 hover:bg-success-subtle"
+          className="flex-1 min-w-0 flex items-center gap-2 pl-3 py-2.5 text-left bg-transparent border-0 cursor-pointer"
         >
           <span
             aria-hidden
@@ -81,13 +83,13 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
           )}
           <span
             title={statusTitle}
-            className="ml-auto inline-flex items-center gap-1.25 px-1.75 py-0.5 rounded-full text-caption font-semibold font-mono shrink-0"
+            className="ml-auto inline-flex items-center gap-1.25 px-1.75 py-0.5 rounded-none text-caption font-semibold font-mono shrink-0"
             style={{ background: statusBg, color: statusFg }}
           >
             <span aria-hidden className="w-[5px] h-[5px] rounded-full" style={{ background: statusFg }} />
             {statusLabel}
           </span>
-          <span className="font-mono text-caption uppercase tracking-[0.08em] shrink-0 text-muted">
+          <span className="font-mono text-caption uppercase tracking-[0.08em] shrink-0 text-secondary">
             {request.id.slice(0, 16)}
           </span>
         </button>

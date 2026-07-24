@@ -43,9 +43,6 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
 
   return (
     <div data-testid="hero-token-card" className="relative overflow-hidden rounded-lg bg-card px-4 pt-3 pb-3.5 flex flex-col gap-2.5 shadow-[var(--shadow-card)]">
-      <div className="absolute -top-20 -left-16 w-[420px] h-[280px] pointer-events-none bg-[radial-gradient(ellipse,var(--accent-subtle),transparent_70%)]" />
-      <div className="absolute -bottom-24 -right-16 w-[380px] h-[260px] pointer-events-none bg-[radial-gradient(ellipse,color-mix(in_srgb,var(--teal)_6%,transparent),transparent_70%)]" />
-
       {/* Header: value + range picker */}
       <div className="relative flex items-start justify-between">
         <div>
@@ -57,7 +54,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             <span
               data-testid="hero-token-total"
               data-token-total={totalTokens}
-              className="text-[68px] font-extrabold tracking-[-0.045em] leading-[0.92] tabular-nums bg-[linear-gradient(180deg,var(--text-primary)_55%,var(--accent-hover))] bg-clip-text text-transparent"
+              className="text-[68px] font-bold tracking-[-0.045em] leading-[0.92] tabular-nums text-primary"
             >
               {tokenNum}<span>{tokenSuffix}</span>
             </span>
@@ -91,8 +88,6 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
             data={tokenVolume}
             height={140}
             color="var(--accent-primary)"
-            // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG gradient element id, not UI copy
-            gradientId="heroVolGrad"
             showAxis
             drawIn
             xLabelFn={xLabelFn}
@@ -109,7 +104,7 @@ export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, mode
       {/* Model split */}
       <div className="relative flex flex-col gap-1.5 pt-2 border-t border-border-subtle">
         <div className="flex items-center justify-between">
-          <div className="text-caption text-muted tracking-[0.14em] uppercase font-mono font-bold"><Trans>Split by model</Trans></div>
+          <div className={EYEBROW_CLS}><Trans>Split by model</Trans></div>
           <div className="text-caption text-muted font-mono"><Trans>{modelSplit.models.length} active</Trans></div>
         </div>
         {modelSplit.models.length > 0 ? (

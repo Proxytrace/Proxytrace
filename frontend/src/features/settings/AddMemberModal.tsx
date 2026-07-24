@@ -56,7 +56,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
               <Avatar
                 initials={initials(u.email)}
                 color={colorFor(u.id)}
-                className="w-7 h-7 rounded-md text-caption"
+                className="w-7 h-7 rounded-full text-caption"
               />
               <span className="flex-1 min-w-0 truncate text-primary font-semibold">{u.email}</span>
             </RowButton>

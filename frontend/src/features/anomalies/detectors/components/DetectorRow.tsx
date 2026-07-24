@@ -25,7 +25,7 @@ export function DetectorRow({ detector: d, isSelected, onSelect }: Props) {
       style={isSelected ? selectionRowStyle(color) : undefined}
     >
       <span
-        className="w-[3px] self-stretch rounded-full shrink-0"
+        className="w-[3px] self-stretch shrink-0"
         style={isSelected ? selectionBarStyle(color) : undefined}
       />
       <div className="flex-1 min-w-0">

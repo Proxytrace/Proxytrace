@@ -8,10 +8,8 @@ interface AreaChartProps {
   width?: number;
   height?: number;
   color: string;
-  gradientId: string;
   padding?: { l?: number; r?: number; t?: number; b?: number };
   showAxis?: boolean;
-  showEndMarker?: boolean;
   xLabelFn?: (i: number, n: number) => string | null;
   formatValue?: (v: number) => string;
   tooltipLabelFn?: (i: number) => string;
@@ -24,10 +22,8 @@ export function AreaChart({
   width = 820,
   height = 240,
   color,
-  gradientId,
   padding,
   showAxis = true,
-  showEndMarker = true,
   xLabelFn,
   formatValue,
   tooltipLabelFn,
@@ -75,12 +71,6 @@ export function AreaChart({
         height={height}
         className="block overflow-visible"
       >
-        <defs>
-          <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.30" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
         {showAxis && (
           <>
             <path d={chart.solidGridPath} stroke="var(--border-color)" strokeWidth="1" fill="none" />
@@ -90,7 +80,9 @@ export function AreaChart({
             ))}
           </>
         )}
-        <path d={chart.areaPath} fill={`url(#${gradientId})`} />
+        {/* Flat semi-transparent fill of the series color — reads as a body under the line
+            without the dimensional fade-to-transparent gradient. */}
+        <path d={chart.areaPath} fill={color} fillOpacity={0.18} />
         <path
           d={chart.linePath}
           fill="none"
@@ -100,13 +92,6 @@ export function AreaChart({
           strokeLinejoin="round"
           className={drawIn ? 'chart-draw-in' : undefined}
         />
-        {showEndMarker && hoverIdx === null && (
-          <>
-            <circle cx={chart.endX} cy={chart.endY} r="8" fill={color} opacity="0.15" />
-            <circle cx={chart.endX} cy={chart.endY} r="4" fill={color} />
-            <circle cx={chart.endX} cy={chart.endY} r="2" fill="var(--bg-card)" />
-          </>
-        )}
         {hoverPt && (
           <>
             <line

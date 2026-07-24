@@ -3,6 +3,8 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import type { AgentDto, AgentVersionDto } from '../../../api/models';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
 import { Input } from '../../../components/ui/Input';
+import { fieldFocusCls } from '../../../components/ui/classes';
+import { cn } from '../../../lib/cn';
 import {
   MOVE_CANDIDATE_FETCH_LIMIT, useMoveVersion, useMoveVersionCandidates,
 } from '../hooks/useMoveVersion';
@@ -64,7 +66,11 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
         <Trans>Target agent</Trans>
         {/* eslint-disable-next-line no-restricted-syntax -- multi-row listbox (size=N), not a dropdown Select */}
         <select
-          className="mt-1 w-full rounded-md border border-border bg-card-2 p-2 text-body"
+          className={cn(
+            'mt-1 w-full rounded-md border border-border bg-card-2 p-2 text-body outline-none',
+            'transition-[border-color,box-shadow] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
+            fieldFocusCls,
+          )}
           value={targetAgentId}
           onChange={(e) => setTargetAgentId(e.target.value)}
           size={Math.min(8, Math.max(2, filtered.length))}

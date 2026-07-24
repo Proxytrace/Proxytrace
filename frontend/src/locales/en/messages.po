@@ -1389,6 +1389,9 @@ msgstr "Configure your evaluator."
 msgid "Connect your model provider"
 msgstr "Connect your model provider"
 
+msgid "Connected, but the provider reported no models."
+msgstr "Connected, but the provider reported no models."
+
 msgid "Connecting…"
 msgstr "Connecting…"
 
@@ -1495,6 +1498,9 @@ msgstr "Could not load the request for this case."
 msgid "Could not open the trace for this response."
 msgstr "Could not open the trace for this response."
 
+msgid "Could not reach the provider."
+msgstr "Could not reach the provider."
+
 msgid "Could not reset your password. Please try again."
 msgstr "Could not reset your password. Please try again."
 
@@ -1507,8 +1513,18 @@ msgstr "could not test"
 msgid "Could not test"
 msgstr "Could not test"
 
+msgid "Could not update the upstream API key."
+msgstr "Could not update the upstream API key."
+
 msgid "Could not verify the code. Please try again."
 msgstr "Could not verify the code. Please try again."
+
+msgid "Could not verify the provider connection."
+msgstr "Could not verify the provider connection."
+
+#. placeholder {0}: details.errorId
+msgid "Could not verify the provider connection. Error ID: {0}"
+msgstr "Could not verify the provider connection. Error ID: {0}"
 
 msgid "Couldn't load detectors."
 msgstr "Couldn't load detectors."
@@ -2486,6 +2502,9 @@ msgstr "Key"
 #. placeholder {0}: created.name
 msgid "Key \"{0}\" created — copy it now, it won't be shown again"
 msgstr "Key \"{0}\" created — copy it now, it won't be shown again"
+
+msgid "Key accepted, but the provider reported no models."
+msgstr "Key accepted, but the provider reported no models."
 
 msgid "Key name"
 msgstr "Key name"
@@ -3848,6 +3867,9 @@ msgstr "Provider Config Deleted"
 msgid "Provider Config Updated"
 msgstr "Provider Config Updated"
 
+msgid "Provider Key Rotated"
+msgstr "Provider Key Rotated"
+
 msgid "Provider kind"
 msgstr "Provider kind"
 
@@ -4930,6 +4952,9 @@ msgstr "testing"
 msgid "Text response"
 msgstr "Text response"
 
+msgid "That key was rejected by the provider."
+msgstr "That key was rejected by the provider."
+
 msgid "The A/B test could not run — the theory was not tested."
 msgstr "The A/B test could not run — the theory was not tested."
 
@@ -5065,6 +5090,9 @@ msgstr "This password reset link is missing or malformed. Request a new one."
 
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "This permanently deletes the run and its results. This action cannot be undone."
+
+msgid "This provider kind does not support connection testing."
+msgstr "This provider kind does not support connection testing."
 
 msgid "This removes the detector and its review history. This can't be undone."
 msgstr "This removes the detector and its review history. This can't be undone."
@@ -5371,6 +5399,9 @@ msgstr "Upgrade to schedule"
 msgid "Upstream API key"
 msgstr "Upstream API key"
 
+msgid "Upstream API key updated."
+msgstr "Upstream API key updated."
+
 msgid "Upstream key copied"
 msgstr "Upstream key copied"
 
@@ -5449,6 +5480,9 @@ msgstr "Verify"
 
 msgid "Verify & enable"
 msgstr "Verify & enable"
+
+msgid "Verifying key…"
+msgstr "Verifying key…"
 
 msgid "Version history"
 msgstr "Version history"

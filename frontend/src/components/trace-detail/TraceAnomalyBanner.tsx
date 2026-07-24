@@ -11,9 +11,9 @@ interface Props {
 
 /* eslint-disable lingui/no-unlocalized-strings -- Tailwind class recipes, not user-facing copy */
 const FLAG_CHIP_CLS =
-  'shrink-0 rounded-full text-caption px-1.5 py-0.5 whitespace-nowrap bg-warn-subtle text-warn';
+  'shrink-0 rounded-none text-caption px-1.5 py-0.5 whitespace-nowrap bg-warn-subtle text-warn';
 const DETECTOR_CHIP_CLS =
-  'shrink-0 rounded-full text-caption font-semibold px-1.5 py-0.5 whitespace-nowrap max-w-48 truncate bg-danger-subtle text-danger';
+  'shrink-0 rounded-none text-caption font-semibold px-1.5 py-0.5 whitespace-nowrap max-w-48 truncate bg-danger-subtle text-danger';
 /* eslint-enable lingui/no-unlocalized-strings */
 
 /**

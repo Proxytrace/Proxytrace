@@ -27,14 +27,14 @@ export function AttachedPanel({ suites, agents, onOpenSuite, onOpenAgent }: Prop
   return (
     <section data-testid="evaluator-attached-panel" className="bg-card rounded-lg shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Attached to</Trans></span>
+        <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold"><Trans>Attached to</Trans></span>
         <span className="text-body-sm text-muted">
           <Plural value={suites.length} one="# suite" other="# suites" /> · <Plural value={agents.length} one="# agent" other="# agents" />
         </span>
       </header>
       <div className="grid grid-cols-2 gap-4.5 px-4 py-3.5">
         <div>
-          <div className="text-caption text-muted uppercase tracking-[0.07em] font-semibold mb-2"><Trans>Test suites</Trans></div>
+          <div className="text-caption text-secondary uppercase tracking-[0.07em] font-semibold mb-2"><Trans>Test suites</Trans></div>
           {suites.length ? (
             <div className="flex flex-col gap-1.5">
               {suites.map(s => (
@@ -54,7 +54,7 @@ export function AttachedPanel({ suites, agents, onOpenSuite, onOpenAgent }: Prop
           ) : <span className="text-body-sm text-muted"><Trans>Not attached to any suite yet.</Trans></span>}
         </div>
         <div>
-          <div className="text-caption text-muted uppercase tracking-[0.07em] font-semibold mb-2"><Trans>Agents</Trans></div>
+          <div className="text-caption text-secondary uppercase tracking-[0.07em] font-semibold mb-2"><Trans>Agents</Trans></div>
           {agents.length ? (
             <div className="flex flex-col gap-1.5">
               {agents.map(a => (

@@ -37,7 +37,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
           className={cn(
             'pointer-events-none absolute inset-0 rounded-sm border border-border bg-card-2',
             'transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
-            'peer-checked:border-transparent peer-checked:bg-[image:var(--grad-accent)]',
+            'peer-checked:border-transparent peer-checked:bg-accent',
             'peer-focus-visible:ring-2 peer-focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
             'peer-data-[invalid=true]:border-danger',
           )}
@@ -45,7 +45,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         <CheckIcon
           size={11}
           strokeWidth={3}
-          className="pointer-events-none absolute inset-0 m-auto text-white opacity-0 transition-opacity duration-[var(--motion-fast)] peer-checked:opacity-100"
+          className="pointer-events-none absolute inset-0 m-auto text-accent-ink opacity-0 transition-opacity duration-[var(--motion-fast)] peer-checked:opacity-100"
         />
       </span>
       {label != null && <span className="text-title text-secondary">{label}</span>}

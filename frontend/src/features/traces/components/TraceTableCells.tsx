@@ -18,8 +18,8 @@ export function LatencyBar({ ms }: { ms: number }) {
   const pct = latencyBarPct(ms);
   const barColor = ms > 3000 ? 'var(--warn)' : 'var(--accent-primary)';
   return (
-    <span className="flex-1 max-w-[60px] h-[3px] rounded-full overflow-hidden inline-block align-middle bg-white/[0.05]">
-      <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
+    <span className="flex-1 max-w-[60px] h-[3px] overflow-hidden inline-block align-middle bg-white/[0.05]">
+      <span className="block h-full" style={{ width: `${pct}%`, background: barColor }} />
     </span>
   );
 }
@@ -31,7 +31,7 @@ export function MessagePreviewCell({ trace }: { trace: AgentCallListItemDto }) {
   const preview = tracePreview(trace);
   return (
     <span className="flex items-center gap-2 min-w-0">
-      <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
+      <span className="w-[3px] h-[18px] shrink-0" style={{ background: c }} />
       <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
         {preview ?? <span className="text-muted">—</span>}
       </span>
@@ -54,7 +54,7 @@ export function OutlierCell({ flags }: { flags: number }) {
       <span
         data-testid={`trace-outlier-marker-${flags}`}
         aria-label={label}
-        className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-warn-subtle text-warn"
+        className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-none bg-warn-subtle text-warn"
       >
         <AlertTriangleIcon size={11} />
       </span>

@@ -83,7 +83,7 @@ export function ConversationView({
         <div className="max-w-[560px] w-full flex flex-col gap-4 text-center">
           <div className="flex justify-center">
             <span
-              className="inline-flex items-center justify-center size-[44px] rounded-full bg-accent-subtle text-accent-hover"
+              className="inline-flex items-center justify-center size-[44px] rounded-none bg-accent-subtle text-accent-hover"
             >
               <SparklesIcon size={20} strokeWidth={1.8} />
             </span>
@@ -100,18 +100,18 @@ export function ConversationView({
             <div
               className="rounded-md text-left p-3 text-body leading-[1.55] text-secondary bg-white/[0.02] border border-border"
             >
-              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted mb-1"><Trans>System prompt</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary mb-1"><Trans>System prompt</Trans></div>
               <div className="whitespace-pre-wrap">{trimmed.length > 380 ? trimmed.slice(0, 377) + '…' : trimmed}</div>
             </div>
           )}
           {tools && tools.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-muted text-left"><Trans>Tools available</Trans></div>
+              <div className="text-caption font-semibold uppercase tracking-[0.08em] text-secondary text-left"><Trans>Tools available</Trans></div>
               <div className="flex flex-wrap gap-1.5 justify-start">
                 {tools.map(t => (
                   <span
                     key={t.name}
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-body-sm mono bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)] text-success"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-body-sm mono bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)] text-success"
                     title={t.description}
                   >
                     {t.name}
@@ -132,7 +132,7 @@ export function ConversationView({
   const dropIndicator = (
     <div
       aria-hidden
-      className="h-[2px] rounded-full mx-0.5 bg-[linear-gradient(90deg,transparent,var(--accent-primary),transparent)] shadow-[0_0_12px_var(--accent-glow)]"
+      className="h-[2px] mx-0.5 bg-accent"
     />
   );
 

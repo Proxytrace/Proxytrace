@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
-import { formInputCls } from './classes';
+import { fieldFocusWithinCls, formInputCls } from './classes';
 
 type Size = 'sm' | 'md';
 
@@ -26,9 +26,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
       <div
         className={cn(
           'relative flex items-center w-full bg-card-2 border border-border rounded-md',
-          'transition-[border-color,box-shadow] duration-[var(--motion-fast)]',
-          'focus-within:border-accent focus-within:ring-1 focus-within:ring-[color-mix(in_srgb,var(--accent-primary)_45%,transparent)]',
-          invalid && 'border-danger focus-within:ring-[color-mix(in_srgb,var(--danger)_45%,transparent)]',
+          'transition-[border-color,box-shadow] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
+          fieldFocusWithinCls,
+          invalid && 'border-danger focus-within:border-danger focus-within:ring-danger',
         )}
       >
         {leftAddon && <span className="pl-3 text-secondary flex items-center text-body-sm">{leftAddon}</span>}

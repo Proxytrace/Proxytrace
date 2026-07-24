@@ -6,11 +6,11 @@ import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
-import { CopyIcon, TrashIcon } from '../../../components/icons';
+import { TrashIcon } from '../../../components/icons';
 import { providerColor } from '../../../lib/colors';
-import useToast from '../../../hooks/useToast';
-import { PROVIDER_KIND_OPTIONS, kindColor, kindLabel, maskKey, isDefaultEndpoint, isAzureEndpoint } from '../providerMeta';
+import { PROVIDER_KIND_OPTIONS, kindColor, kindLabel, isDefaultEndpoint, isAzureEndpoint } from '../providerMeta';
 import { useDeleteProvider, useUpdateProviderKind } from '../hooks/useProviderMutations';
+import { UpstreamKeyRow } from './UpstreamKeyRow';
 
 interface ProviderDetailHeaderProps {
   provider: ProviderDto;
@@ -19,10 +19,8 @@ interface ProviderDetailHeaderProps {
 
 export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHeaderProps) {
   const { t, i18n } = useLingui();
-  const { show: toast } = useToast();
   const [editingKind, setEditingKind] = useState(false);
   const [editKindValue, setEditKindValue] = useState<ModelProviderKind>(provider.kind);
-  const [revealKey, setRevealKey] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateKind = useUpdateProviderKind();
@@ -91,24 +89,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
         </Button>
       </div>
 
-      <div className="mt-4 px-3.5 py-2.5 bg-card-2 rounded-md border border-hairline flex items-center gap-2.5">
-        <span className="text-body-sm text-muted whitespace-nowrap"><Trans>Upstream API key</Trans></span>
-        <code className="flex-1 font-mono text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
-          {revealKey ? provider.upstreamApiKey : maskKey(provider.upstreamApiKey)}
-        </code>
-        <Button size="sm" variant="ghost" onClick={() => setRevealKey(v => !v)}>
-          {revealKey ? <Trans>Hide</Trans> : <Trans>Reveal</Trans>}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          leftIcon={<CopyIcon size={12} />}
-          // eslint-disable-next-line lingui/no-unlocalized-strings -- toast tone token, not UI copy
-          onClick={() => { navigator.clipboard.writeText(provider.upstreamApiKey); toast(t`Upstream key copied`, 'success'); }}
-        >
-          <Trans>Copy</Trans>
-        </Button>
-      </div>
+      <UpstreamKeyRow provider={provider} />
 
       {confirmDelete && (
         <ConfirmDialog

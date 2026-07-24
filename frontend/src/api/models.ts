@@ -1301,6 +1301,7 @@ export enum AuditAction {
   CustomAnomalyDetectorCreated = 'CustomAnomalyDetectorCreated',
   CustomAnomalyDetectorUpdated = 'CustomAnomalyDetectorUpdated',
   CustomAnomalyDetectorDeleted = 'CustomAnomalyDetectorDeleted',
+  ProviderUpstreamKeyRotated = 'ProviderUpstreamKeyRotated',
 }
 
 export enum AuditActorType {

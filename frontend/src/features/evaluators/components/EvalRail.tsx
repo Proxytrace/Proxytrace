@@ -71,7 +71,7 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
               ? evaluators.length
               : evaluators.filter(e => KIND_CATEGORY[e.kind] === opt.key).length,
             icon: opt.category
-              ? <span className={cn('w-[5px] h-[5px] rounded-[1px]', categoryBg[opt.category])} />
+              ? <span className={cn('w-[5px] h-[5px] rounded-none', categoryBg[opt.category])} />
               : undefined,
           }))}
         />
@@ -90,8 +90,8 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
         {groups.map(g => (
           <div key={g.type} className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2 px-1 mb-0.5">
-              <span className={cn('w-[5px] h-[5px] rounded-[1px]', categoryBg[g.type])} />
-              <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold">
+              <span className={cn('w-[5px] h-[5px] rounded-none', categoryBg[g.type])} />
+              <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold">
                 {i18n._(TYPE_META[g.type].short)}
               </span>
               <span className="text-caption text-muted font-mono ml-auto">{g.items.length}</span>

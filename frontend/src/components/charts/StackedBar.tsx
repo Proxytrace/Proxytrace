@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { computeStackedBar, roundedTopRectPath, type StackedDatum, type StackedRect } from './chart-math';
+import { computeStackedBar, type StackedDatum, type StackedRect } from './chart-math';
 import { ChartTooltip } from './ChartTooltip';
 import { useElementWidth } from '../../hooks/useElementWidth';
 
@@ -50,11 +50,10 @@ export function StackedBar({ data, width = 640, height = 200, formatValue, forma
         ))}
         {chart.bars.map((bar, i) => (
           <g key={i}>
+            {/* Square bars — the topmost segment is no longer rounded. */}
             {bar.rects.map((r, j) => {
               const dim = hover !== null && hover !== r;
-              return r.top
-                ? <path key={j} d={roundedTopRectPath(r.x, r.y, r.w, r.h, 3)} fill={r.color} opacity={dim ? 0.5 : 1} />
-                : <rect key={j} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.color} opacity={dim ? 0.5 : 1} />;
+              return <rect key={j} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.color} opacity={dim ? 0.5 : 1} />;
             })}
             {i % chart.labelStep === 0 && (
               <text x={bar.centerX} y={height - 10} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontFamily="JetBrains Mono, monospace">{bar.label}</text>

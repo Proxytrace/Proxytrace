@@ -70,6 +70,7 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, MessageDescriptor> = {
   [AuditAction.CustomAnomalyDetectorCreated]: msg`Anomaly Detector Created`,
   [AuditAction.CustomAnomalyDetectorUpdated]: msg`Anomaly Detector Updated`,
   [AuditAction.CustomAnomalyDetectorDeleted]: msg`Anomaly Detector Deleted`,
+  [AuditAction.ProviderUpstreamKeyRotated]: msg`Provider Key Rotated`,
 };
 
 export const AUDIT_ACTOR_TYPE_LABEL: Record<AuditActorType, MessageDescriptor> = {
@@ -151,4 +152,5 @@ export const ACTION_COLOR: Record<AuditAction, string> = {
   [AuditAction.CustomAnomalyDetectorCreated]: 'var(--success)',
   [AuditAction.CustomAnomalyDetectorUpdated]: 'var(--warn)',
   [AuditAction.CustomAnomalyDetectorDeleted]: 'var(--danger)',
+  [AuditAction.ProviderUpstreamKeyRotated]: 'var(--warn)',
 };

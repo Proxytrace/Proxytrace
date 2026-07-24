@@ -26,7 +26,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Extract version from tag
         id: version
@@ -63,7 +63,7 @@ jobs:
       DOCKERHUB_USERNAME: proxytrace
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # QEMU lets the amd64 runner emulate arm64 for the multi-arch build below.
       # The heavy compile steps cross-compile natively (the Dockerfile pins its build
@@ -94,7 +94,7 @@ jobs:
       # Both registries get the identical tag set from this one build.
       - name: Compute image tags
         id: docker-meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/proxytrace/proxytrace
@@ -123,7 +123,7 @@ jobs:
       # whose image is already published.
       - name: Sync Docker Hub repo description
         continue-on-error: true
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Extract release notes
         run: scripts/release/extract-changelog.sh "${{ needs.meta.outputs.version }}" > release-notes.md

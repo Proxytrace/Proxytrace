@@ -34,7 +34,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
       <header className="flex items-end justify-between mb-3">
         <div>
           <span className="text-caption text-accent-hover font-mono tracking-[0.18em] uppercase font-bold flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-success pulse-dot shadow-[0_0_10px_var(--success)]" />
+            <span className="size-1.5 rounded-full bg-success pulse-dot" />
             <Trans>Live feed</Trans>
           </span>
           <p className="text-body-sm text-muted mt-0.5 font-mono">
@@ -46,7 +46,11 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         </Button>
       </header>
 
-      <div className={cn(LIVE_STREAM_GRID, COL_HEADER_CLS, 'px-1.5 pb-2.5 border-b border-border-subtle')}>
+      {/* The header rule and every row run full-bleed: they cancel the section's `px-3.5` with
+          `-mx-3.5` and re-apply the inset as their own `px-5` (14px card padding + the rows' own
+          6px). Without that the row hover wash and the divider stopped 14px short of the card
+          edge, so a hovered row read as a floating strip rather than a filled row. */}
+      <div className={cn(LIVE_STREAM_GRID, COL_HEADER_CLS, '-mx-3.5 px-5 pb-2.5 border-b border-border-subtle')}>
         <span /><span><Trans>Message</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Turns</Trans></span><span className={cn('text-center', NARROW_HIDDEN)}><Trans>Model</Trans></span><span className="text-center"><Trans>Status</Trans></span><span className="text-right"><Trans>Tokens</Trans></span><span className="text-right"><Trans>Latency</Trans></span><span className="text-right"><Trans>Age</Trans></span>
       </div>
 
@@ -62,7 +66,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
           />
         </div>
       ) : (
-        <div>
+        <div className="-mx-3.5">
           {rows.map((row, i) => (
             <LiveStreamRow
               key={row.type === 'flat' ? row.trace.id : row.conversationId}

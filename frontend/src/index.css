@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind v4 auto-detects sources from the project root, which pulls in the AI design docs.
+   Class names that appear only inside DESIGN.md / BEST_PRACTICES.md code samples would otherwise
+   be compiled into the production stylesheet (and can reference tokens that no longer exist).
+   Documentation is never a class-name source. */
+@source not "../docs";
+
 @theme {
   /* Surface colors */
   --color-surface: var(--bg-primary);
@@ -22,24 +28,25 @@
   --color-accent: var(--accent-primary);
   --color-accent-hover: var(--accent-hover);
   --color-accent-subtle: var(--accent-subtle);
-  --color-accent-glow: var(--accent-glow);
   --color-accent-ink: var(--accent-ink);
   --color-accent-text: var(--accent-text);
 
   /* Semantic */
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
+  --color-success-ink: var(--success-ink);
   --color-warn: var(--warn);
   --color-warn-subtle: var(--warn-subtle);
   --color-danger: var(--danger);
   --color-danger-subtle: var(--danger-subtle);
+  --color-danger-ink: var(--danger-ink);
   --color-teal: var(--teal);
 
-  /* Radii (overrides Tailwind defaults intentionally) */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  /* Radii (Signal Desk: square corners everywhere; rounded-full only for dots/avatars) */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 
   /* Type scale (font-size utilities: text-caption / text-body-sm / …) */
   --text-caption: 10px;
@@ -48,6 +55,7 @@
   --text-title: 13px;
   --text-h2: 14px;
   --text-h1: 18px;
+  --text-display-sm: 22px;
   --text-display: 28px;
   /* Reading tier — Tracey chat prose only (see DESIGN.md "Tracey exception") */
   --text-chat: 15px;
@@ -60,66 +68,55 @@
   /* Shadow utilities */
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
-  --shadow-pill: var(--shadow-pill);
-  --shadow-btn: var(--shadow-btn);
-  --shadow-btn-success: var(--shadow-btn-success);
-  --shadow-btn-danger: var(--shadow-btn-danger);
 }
 
 :root {
-  /* Backgrounds — deep ink (subtle blue cast) so cards lift and gold pops */
-  --bg-primary: #121317;
-  --bg-secondary: #17181d;
-  --bg-sidebar: #15161b;
-  --bg-card: #1c1d24;
-  --bg-card-2: #26272f;
+  /* Backgrounds — blue-petrol ink (Signal Desk "Wire"): flat panes divided by rules */
+  --bg-primary: #0a0f14;
+  --bg-secondary: #0d141b;
+  --bg-sidebar: #0d141b;
+  --bg-card: #101a23;
+  --bg-card-2: #152230;
 
-  /* Borders */
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --hairline: rgba(255, 255, 255, 0.06);
+  /* Borders — opaque steel rules (panes are divided, not floated) */
+  --border-color: #1e2b38;
+  --border-subtle: #16212c;
+  --hairline: #182430;
 
   /* Text */
-  --text-primary: #edeef2;
-  --text-secondary: #9da1ac;
-  --text-muted: #686d7a;
+  --text-primary: #d5e1ea;
+  --text-secondary: #8ba0b2;
+  --text-muted: #5d7488;
 
-  /* Accent (amber/gold) */
-  --accent-primary: #d9a158;
-  --accent-hover: #ecbf83;
-  --accent-press: #c68f46;           /* solid-gold active/pressed */
-  --accent-ink: #251a04;             /* text/icon ON gold fills (AA on accent) */
-  --accent-text: #f0cd92;            /* gold text on dark — active chip / status */
-  --accent-border: rgba(217, 161, 88, 0.45); /* gold hairline — active chip / status */
-  --accent-subtle: rgba(217, 161, 88, 0.13);
-  --accent-glow: rgba(217, 161, 88, 0.25);
+  /* Accent (signal cyan) */
+  --accent-primary: #57c4d3;
+  --accent-hover: #7dd3e0;
+  --accent-press: #45aebc;           /* solid-cyan active/pressed */
+  --accent-ink: #062229;             /* text/icon ON cyan fills (AA on accent) */
+  --accent-text: #a8e2ec;            /* cyan text on dark — active chip / status */
+  --accent-border: rgba(87, 196, 211, 0.45); /* cyan hairline — active chip / status */
+  --accent-subtle: rgba(87, 196, 211, 0.13);
 
   /* Semantic */
-  --success: #46b97c;
-  --success-subtle: rgba(70, 185, 124, 0.11);
-  --warn: #dd9a64;
-  --warn-subtle: rgba(221, 154, 100, 0.11);
-  --danger: #e25d5d;
-  --danger-subtle: rgba(226, 93, 93, 0.11);
-  --teal: #74a8b6;
+  --success: #5aba80;
+  --success-subtle: rgba(90, 186, 128, 0.11);
+  --success-ink: #05220f;            /* text/icon ON success fills (7.06:1 — AA) */
+  --warn: #d9a23f;
+  --warn-subtle: rgba(217, 162, 63, 0.12);
+  --danger: #dd5959;
+  --danger-subtle: rgba(221, 89, 89, 0.12);
+  --danger-ink: #290606;             /* text/icon ON danger fills (5.03:1 — AA) */
+  --teal: #7d95c9; /* steel-blue — rule-based evaluators / info (token name kept for churn-free migration) */
 
-  /* Shadows — every elevation carries a 1px edge ring (crisp lift on the dark ink bg) */
-  --shadow-card: 0 0 0 1px rgba(255,255,255,0.045), 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.25), 0 8px 24px -8px rgba(0,0,0,0.5);
-  --shadow-float: 0 0 0 1px rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.05) inset, 0 4px 12px rgba(0,0,0,0.4), 0 20px 48px -12px rgba(0,0,0,0.65);
-  --shadow-pill: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-sidebar: 0 0 0 1px rgba(255,255,255,0.04), 2px 0 24px -6px rgba(0,0,0,0.5);
-  --shadow-topbar: 0 0 0 1px rgba(255,255,255,0.045), 0 4px 20px -8px rgba(0,0,0,0.5);
+  /* Shadows — flat tier: a 1px rule ring only; overlays get one soft drop for layering */
+  --shadow-card: 0 0 0 1px var(--border-subtle);
+  --shadow-float: 0 0 0 1px var(--border-color), 0 16px 40px -12px rgba(0, 0, 0, 0.6);
 
-  /* Button shadows — bevel highlight + a faint colored under-glow on filled buttons */
-  --shadow-btn: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.35), 0 3px 10px -2px var(--accent-glow);
-  --shadow-btn-success: inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 2px rgba(0,0,0,0.35), 0 3px 10px -2px rgba(70,185,124,0.25);
-  --shadow-btn-danger: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.35), 0 3px 10px -2px rgba(226,93,93,0.25);
-
-  /* Radii (collapsed scale — sm/md/lg/xl) */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  /* Radii (Signal Desk: square) */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 
   /* Spacing scale (for runtime-computed inline values; prefer Tailwind p-N/gap-N) */
   --space-1: 4px;
@@ -138,6 +135,7 @@
   --text-title: 13px;
   --text-h2: 14px;
   --text-h1: 18px;
+  --text-display-sm: 22px;
   --text-display: 28px;
   /* Reading tier — Tracey chat prose only (see DESIGN.md "Tracey exception") */
   --text-chat: 15px;
@@ -150,11 +148,6 @@
   /* Neutral wash (hover/active backgrounds) */
   --bg-wash-hover: rgba(255,255,255,0.04);
   --bg-wash-active: rgba(255,255,255,0.07);
-
-  /* Branded gradients — light-from-above dimensional fills (filled buttons) */
-  --grad-accent: linear-gradient(180deg, #e2ad66, #cd9046);
-  --grad-accent-hover: linear-gradient(180deg, #f0c585, #dba055);
-  --grad-success: linear-gradient(180deg, #4fc287, #3aa266);
 
   /* Motion */
   --motion-fast: 120ms;
@@ -174,28 +167,7 @@ html, body, #root {
   font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
-/* Atmosphere — gold aurora top, teal corner glow. Sits under the app shell
-   (the shell container is transparent so this shows through page gutters). */
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -25%, rgba(217, 161, 88, 0.055), transparent 60%),
-    radial-gradient(ellipse 45% 40% at 105% 105%, rgba(116, 168, 182, 0.045), transparent 65%),
-    radial-gradient(ellipse 40% 35% at -5% 30%, rgba(217, 161, 88, 0.02), transparent 60%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Film grain — a whisper of texture over everything kills the flat "rendered" look. */
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.02;
-  pointer-events: none;
-  z-index: 100;
-}
+/* Signal Desk: no atmosphere layers — the surface is a flat instrument pane. */
 
 * { box-sizing: border-box; }
 
@@ -217,8 +189,8 @@ body::after {
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 3px solid var(--bg-primary); }
-::-webkit-scrollbar-thumb:hover { background: #4a4c55; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 0; border: 3px solid var(--bg-primary); }
+::-webkit-scrollbar-thumb:hover { background: #33475a; }
 
 /* ── Animations ── */
 @keyframes fade-up {
@@ -229,9 +201,10 @@ body::after {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
 }
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Generic loading breathe — a flat opacity pulse (the Wire replacement for a gradient shimmer). */
+@keyframes pulse-fade {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
 }
 @keyframes slide-in {
   from { transform: translateX(20px); opacity: 0; }
@@ -257,12 +230,11 @@ body::after {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
+  /* A solid arc segment travelling around the rule — hard stops, no soft fade. */
   background: conic-gradient(
     from var(--streaming-angle),
-    transparent 0deg,
-    var(--streaming-color, var(--accent-primary)) 80deg,
-    transparent 200deg,
-    transparent 360deg
+    var(--streaming-color, var(--accent-primary)) 0deg 80deg,
+    transparent 80deg 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -293,36 +265,13 @@ body::after {
   .pulse-dot { animation: none; }
 }
 
-/* Celebratory CTA sheen — a periodic light sweep across a gold-filled button.
-   Reserved for one-off milestone actions (setup "Get started"); never on routine UI. */
-@keyframes btn-sheen-sweep {
-  0%   { transform: translateX(-130%) skewX(-18deg); }
-  55%  { transform: translateX(230%) skewX(-18deg); }
-  100% { transform: translateX(230%) skewX(-18deg); }
-}
-.btn-sheen { position: relative; overflow: hidden; }
-.btn-sheen::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: btn-sheen-sweep 3s var(--ease-standard) infinite;
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .btn-sheen::after { animation: none; display: none; }
-}
-
-/* Ask-Tracey bolt glint — a periodic soft glow pulse on the bolt icon of `AskTraceyButton`
-   (components/tracey). Deliberately subtle: the accent glow breathes every ~3s rather than
-   flashing. Scoped to that button; do not reuse on idle UI. */
+/* Ask-Tracey bolt blink — a periodic opacity pulse on the bolt icon of `AskTraceyButton`
+   (components/tracey). Deliberately subtle: the icon dips every ~3s rather than flashing.
+   Scoped to that button; do not reuse on idle UI. */
 @keyframes tracey-bolt {
-  0%, 62%, 100% { opacity: 1; filter: none; }
-  74% { opacity: 0.6; filter: drop-shadow(0 0 3px var(--accent-primary)); }
-  86% { opacity: 1; filter: drop-shadow(0 0 6px var(--accent-primary)); }
+  0%, 62%, 100% { opacity: 1; }
+  74% { opacity: 0.6; }
+  86% { opacity: 1; }
 }
 .tracey-bolt { animation: tracey-bolt 3.2s var(--ease-standard) infinite; }
 @media (prefers-reduced-motion: reduce) {
@@ -342,7 +291,7 @@ body::after {
   bottom: 0;
   width: 40%;
   border-radius: inherit;
-  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  background: var(--teal);
   animation: indeterminate-bar 1.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -351,7 +300,7 @@ body::after {
 
 /* ── Dashboard showpiece tier (dashboard route only — see DESIGN.md "Dashboard exception") ── */
 
-/* Vertical light sweep across the pulse band when a trace arrives. */
+/* Vertical playhead crossing the pulse band when a trace arrives — a solid 2px rule, not a beam. */
 @keyframes pulse-sweep {
   from { left: -2%; opacity: 0.9; }
   to   { left: 102%; opacity: 0; }
@@ -361,7 +310,7 @@ body::after {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: linear-gradient(180deg, transparent, var(--accent-hover), transparent);
+  background: var(--accent-primary);
   animation: pulse-sweep 1.2s var(--ease-standard) both;
   pointer-events: none;
 }
@@ -369,7 +318,7 @@ body::after {
   .pulse-sweep { animation: none; display: none; }
 }
 
-/* Slow ambient shimmer for an idle (flatlined) pulse band — intentional, not broken. */
+/* Slow travelling segment across an idle (flatlined) pulse band — intentional, not broken. */
 @keyframes pulse-idle-sweep {
   0%   { left: -30%; }
   100% { left: 110%; }
@@ -380,7 +329,7 @@ body::after {
   top: 0;
   bottom: 0;
   width: 25%;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-primary) 7%, transparent), transparent);
+  background: color-mix(in srgb, var(--accent-primary) 7%, transparent);
   animation: pulse-idle-sweep 5s ease-in-out infinite;
   pointer-events: none;
 }
@@ -388,7 +337,7 @@ body::after {
   .pulse-idle-sweep::after { animation: none; display: none; }
 }
 
-/* One-shot amber wash on a freshly arrived feed row. */
+/* One-shot cyan wash on a freshly arrived feed row. */
 @keyframes arrival-flash {
   0%   { background-color: color-mix(in srgb, var(--accent-primary) 16%, transparent); }
   100% { background-color: transparent; }
@@ -421,90 +370,33 @@ body::after {
   .digit-tick { animation: none; }
 }
 
-/* ── Tracey assistant tier (Tracey AI chat only — see DESIGN.md "Tracey exception") ── */
+/* ── Tracey assistant tier (Tracey AI chat only) ── */
 
-/* Identity halo — a conic gold→teal ring around Tracey's avatar. Rotates slowly while idle
-   (her "alive" signal) and spins fast while a turn is running (.tracey-halo-active). With
-   reduced motion the ring stays as a static gradient — identity without movement. */
-@property --tracey-halo-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-@keyframes tracey-halo-spin {
-  to { --tracey-halo-angle: 360deg; }
-}
+/* Identity ring — a static 1px accent rule around Tracey's avatar; it brightens while a turn is
+   running (.tracey-halo-active). */
 .tracey-halo { position: relative; }
 .tracey-halo::before {
   content: '';
   position: absolute;
   inset: 0;
+  border: 1px solid var(--accent-primary);
   border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--tracey-halo-angle),
-    var(--accent-primary),
-    var(--teal) 120deg,
-    color-mix(in srgb, var(--accent-primary) 35%, transparent) 210deg,
-    var(--accent-hover) 300deg,
-    var(--accent-primary)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
   pointer-events: none;
-  animation: tracey-halo-spin 9s linear infinite;
 }
-.tracey-halo-active::before { animation-duration: 1.6s; }
-@media (prefers-reduced-motion: reduce) {
-  .tracey-halo::before { animation: none; }
-}
+.tracey-halo-active::before { border-color: var(--accent-hover); }
 
-/* Aurora — a faint gold/teal glow drifting along the top of the chat panel. */
-@keyframes tracey-aurora-drift {
-  from { transform: translateX(-2.5%); }
-  to   { transform: translateX(2.5%); }
-}
-.tracey-aurora { position: relative; }
-.tracey-aurora::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 220px;
-  border-radius: inherit;
-  background:
-    radial-gradient(55% 95% at 22% 0%, color-mix(in srgb, var(--accent-primary) 7%, transparent), transparent 70%),
-    radial-gradient(45% 85% at 78% 0%, color-mix(in srgb, var(--teal) 6%, transparent), transparent 70%);
-  pointer-events: none;
-  animation: tracey-aurora-drift 16s ease-in-out infinite alternate;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tracey-aurora::before { animation: none; }
-}
-
-/* Gradient-clipped identity text — the "Tracey AI" wordmark and the empty-thread hero line. */
+/* Identity text — the "Tracey AI" wordmark and the empty-thread hero line. */
 .tracey-gradient-text {
-  background: linear-gradient(92deg, var(--text-primary) 0%, var(--accent-hover) 55%, var(--accent-primary) 100%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
+  color: var(--accent-hover);
 }
 
-/* Shimmering "Thinking…" label while a turn runs (reuses the shimmer keyframe). */
+/* "Thinking…" label while a turn runs — an opacity pulse, not a shimmer wash. */
 .tracey-thinking-text {
-  background: linear-gradient(90deg, var(--text-secondary) 25%, var(--text-primary) 50%, var(--text-secondary) 75%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-  animation: shimmer 2.4s linear infinite;
+  color: var(--text-secondary);
+  animation: pulse-fade 1.6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .tracey-thinking-text {
-    animation: none;
-    background: none;
-    color: var(--text-secondary);
-  }
+  .tracey-thinking-text { animation: none; }
 }
 
 /* ── Nav ── */
@@ -513,7 +405,7 @@ body::after {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -526,10 +418,8 @@ body::after {
   color: var(--text-primary);
 }
 .nav-item.nav-active {
-  background: linear-gradient(90deg,
-    color-mix(in srgb, var(--accent-primary) 16%, transparent),
-    color-mix(in srgb, var(--accent-primary) 6%, transparent));
-  color: var(--accent-text);
+  background: var(--bg-wash-active);
+  color: var(--text-primary);
 }
 
 /* Tracey "/" menu: keep the active option highlight independent of utility-class generation. */
@@ -545,7 +435,7 @@ body::after {
   align-items: center;
   justify-content: center;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 0;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -553,15 +443,15 @@ body::after {
   transition: background 0.15s, color 0.15s;
   flex-shrink: 0;
 }
-.btn-icon:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+.btn-icon:hover { background: var(--bg-wash-active); color: var(--text-secondary); }
 .btn-icon.btn-icon-danger { color: var(--danger); }
-.btn-icon.btn-icon-danger:hover { background: rgba(217,85,85,0.12); color: var(--danger); }
-.btn-icon-sm { padding: 4px; border-radius: 6px; }
+.btn-icon.btn-icon-danger:hover { background: var(--danger-subtle); color: var(--danger); }
+.btn-icon-sm { padding: 4px; border-radius: 0; }
 
 /* ── Cards ── */
 .dash-card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   display: flex;
@@ -598,31 +488,9 @@ body::after {
 
 .kpi-card {
   background: var(--bg-card);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 20px 22px;
-}
-
-/* ── Pills ── */
-.model-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  box-shadow: var(--shadow-pill);
-}
-
-.agent-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 500;
-  box-shadow: var(--shadow-pill);
 }
 
 /* ── Status dots ── */
@@ -647,7 +515,7 @@ body::after {
 .modal-panel {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-float);
   max-height: 90vh;
   overflow-y: auto;
@@ -667,12 +535,14 @@ body::after {
 }
 .trace-row:hover { background: rgba(255,255,255,0.02); }
 
-/* ── Skeleton loader ── */
+/* ── Skeleton loader — a flat block that breathes; no gradient sweep ── */
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-2) 50%, var(--bg-card) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+  background: var(--bg-card-2);
+  animation: pulse-fade 1.5s ease-in-out infinite;
+  border-radius: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
 }
 
 /* ── Mono font util ── */
@@ -690,25 +560,31 @@ body::after {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #f0ede8;
+  background: var(--text-primary);
   border: 2px solid var(--accent-primary);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 0 0 4px rgba(201,148,74,0.0);
   cursor: grab;
   transition: box-shadow 0.15s, transform 0.1s;
   margin-top: 0;
 }
-.param-slider::-webkit-slider-thumb:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 0 0 5px rgba(201,148,74,0.18); }
+/* Hard knockout rings only — no blur, no halo. */
+.param-slider::-webkit-slider-thumb:hover { box-shadow: 0 0 0 4px var(--accent-subtle); }
 .param-slider:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.06); }
-.param-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 0 0 4px rgba(201,148,74,0.32); }
+.param-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--accent-border); }
 .param-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #f0ede8;
+  background: var(--text-primary);
   border: 2px solid var(--accent-primary);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
   cursor: grab;
+  transition: box-shadow 0.15s, transform 0.1s;
 }
+/* Gecko needs its own copies of the three rules above — the thumb pseudo-elements are not
+   interchangeable, and without these Firefox has no focus indicator at all (the outline is
+   removed for every engine below). */
+.param-slider::-moz-range-thumb:hover { box-shadow: 0 0 0 4px var(--accent-subtle); }
+.param-slider:active::-moz-range-thumb { cursor: grabbing; transform: scale(1.06); }
+.param-slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--accent-border); }
 .param-slider:focus { outline: none; }
 .param-slider:focus-visible { outline: none; }
 
@@ -717,12 +593,12 @@ body::after {
   display: inline-flex;
   align-items: center;
   padding: 1px 5px;
-  border-radius: 5px;
+  border-radius: 0;
   font-size: 10px;
   font-family: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace;
-  background: rgba(0,0,0,0.32);
-  color: rgba(255,255,255,0.85);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--bg-card-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   letter-spacing: 0.04em;
 }
 

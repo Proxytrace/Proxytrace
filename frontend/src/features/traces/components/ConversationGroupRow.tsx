@@ -49,9 +49,9 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
         )}
       >
         <span className="flex items-center gap-2 min-w-0">
-          <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
+          <span className="w-[3px] h-[18px] shrink-0" style={{ background: c }} />
           <span
-            className="inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+            className="inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-none shrink-0"
             style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
           >
             <Plural value={turns.length} one="# turn" other="# turns" />

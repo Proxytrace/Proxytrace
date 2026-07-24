@@ -51,7 +51,7 @@ export function JsonBlock({ value, className, maxHeight, hideCopy, transparent }
     }).catch(() => { /* ignore */ });
   }
 
-  const containerClass = cn('relative rounded-md overflow-auto px-4 py-3.5', transparent ? '' : 'bg-black/[0.28]', className);
+  const containerClass = cn('relative overflow-auto px-4 py-3.5', transparent ? '' : 'bg-surface', className);
   const containerStyle = maxHeight != null ? { maxHeight } : undefined;
 
   return (
@@ -80,7 +80,7 @@ export function JsonBlock({ value, className, maxHeight, hideCopy, transparent }
           onClick={copy}
           aria-label={t`Copy JSON`}
           title={t`Copy JSON`}
-          className={`absolute top-2 right-2 inline-flex items-center gap-1 text-caption font-medium px-1.75 py-0.75 rounded-sm cursor-pointer transition-colors duration-150 bg-card-2 hover:bg-white/[0.06] ${copied ? 'text-success' : 'text-muted'}`}
+          className={`absolute top-2 right-2 inline-flex items-center gap-1 text-caption font-medium px-1.75 py-0.75 rounded-sm cursor-pointer transition-colors duration-150 bg-card-2 hover:bg-[var(--bg-wash-active)] ${copied ? 'text-success' : 'text-muted'}`}
         >
           {copied ? <CheckIcon size={11} strokeWidth={2.5} /> : <CopyIcon size={11} strokeWidth={2} />}
           <span aria-live="polite">{copied ? <Trans>Copied</Trans> : <Trans>Copy</Trans>}</span>

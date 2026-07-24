@@ -27,7 +27,7 @@ export function ScoreDistributionPanel({ buckets, category, totalRuns, range, se
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
-        <span className="text-caption text-muted uppercase tracking-[0.09em] font-semibold"><Trans>Score distribution</Trans></span>
+        <span className="text-caption text-secondary uppercase tracking-[0.09em] font-semibold"><Trans>Score distribution</Trans></span>
         <span className="text-body-sm text-muted"><Trans>{range} · {totalRuns.toLocaleString()} runs</Trans></span>
         {selectedScore && (
           <span className="ml-auto text-caption text-muted"><Trans>Click a score to filter · selected highlights below</Trans></span>

@@ -9,8 +9,9 @@ namespace Proxytrace.Proxy;
 /// <see cref="Domain.ApiKey.IApiKey"/> (which carries its own project) or the provider's own
 /// upstream <see cref="Domain.ModelProvider.IModelProvider.ApiKey"/> (which needs the project
 /// slug from the path for attribution); the Proxytrace key wins if the same string matches both.
-/// Implemented with a short-TTL cache so the proxy keeps authenticating during brief database
-/// blips or while the main app runs migrations.
+/// Resolution is deliberately uncached: it hits storage on every request so key rotation and
+/// revocation take effect immediately, and it fails closed (the request errors) when the database
+/// is unreachable rather than serving stale credentials (#407).
 /// </summary>
 public interface IApiKeyResolver
 {

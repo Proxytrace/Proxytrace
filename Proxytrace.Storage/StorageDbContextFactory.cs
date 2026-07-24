@@ -99,7 +99,7 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
     /// </summary>
     private sealed class DesignTimeProviderClient : IProviderClient
     {
-        public Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default)
+        public Task<ProviderConnectionResult> VerifyConnectionAsync(CancellationToken cancellationToken = default)
             => throw new NotSupportedException("Provider client operations are not available at design time.");
 
         public Task<IReadOnlyList<PricedModel>> GetModelsAsync(CancellationToken cancellationToken = default)

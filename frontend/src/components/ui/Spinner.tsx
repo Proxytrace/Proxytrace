@@ -17,7 +17,7 @@ export function Spinner({ size = 16, color, className = '' }: SpinnerProps) {
       style={{
         width: size,
         height: size,
-        border: `${border}px solid rgba(255,255,255,0.25)`,
+        border: `${border}px solid var(--border-color)`,
         borderTopColor: color ?? 'currentColor',
       }}
     />

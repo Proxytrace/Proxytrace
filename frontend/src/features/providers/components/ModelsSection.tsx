@@ -42,7 +42,7 @@ export function ModelsSection({ models, reloading, onReload }: ModelsSectionProp
       )}
       {models.length > 0 && (
         <div className="bg-card-2 rounded-lg border border-hairline overflow-hidden">
-          <div className={`${GRID} px-4 py-2.5 text-caption font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline`}>
+          <div className={`${GRID} px-4 py-2.5 text-caption font-semibold text-secondary tracking-[0.07em] uppercase border-b border-hairline`}>
             <span><Trans>Model</Trans></span><span><Trans>Input / 1M €</Trans></span><span><Trans>Output / 1M €</Trans></span><span><Trans>Cached / 1M €</Trans></span><span />
           </div>
           {models.map((m, i) => (

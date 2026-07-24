@@ -27,9 +27,18 @@ export interface ProviderConnectionRequest {
   providerKind: ModelProviderKind;
 }
 
+export type ProviderConnectionErrorCode =
+  | 'Unauthorized'
+  | 'NetworkError'
+  | 'UnsupportedKind'
+  | 'Unknown';
+
 export interface TestConnectionResponse {
   success: boolean;
+  errorCode: ProviderConnectionErrorCode | null;
+  modelCount: number;
   error: string | null;
+  errorId: string | null;
 }
 
 export interface ListModelsResponse {

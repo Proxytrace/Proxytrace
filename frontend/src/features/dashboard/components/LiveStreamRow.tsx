@@ -49,7 +49,9 @@ interface Props {
 }
 
 export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
-  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-1.5 font-mono text-body-sm cursor-pointer transition-colors', hoverAccentWashCls, isLast ? '' : 'border-b border-border-subtle');
+  // `px-5` (not `px-1.5`) because the row is full-bleed — the list cancels the card's `px-3.5`
+  // so the hover wash and the divider reach the card edge; see LiveTraceStream.
+  const rowCls = cn('w-full text-left', LIVE_STREAM_GRID, 'items-center py-2.5 px-5 font-mono text-body-sm cursor-pointer transition-colors', hoverAccentWashCls, isLast ? '' : 'border-b border-border-subtle');
 
   if (row.type === 'flat') {
     const t = row.trace;
@@ -61,7 +63,7 @@ export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
         onClick={() => onSelect(t.id)}
         className={cn(rowCls, isFresh && 'slide-in arrival-flash')}
       >
-        <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
+        <span className="size-[7px] rounded-full" style={{ background: sc }} />
         <span className="min-w-0 flex flex-col gap-0.5 pr-2 overflow-hidden">
           <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
             {tracePreview(t) ?? <span className="text-muted">—</span>}
@@ -93,7 +95,7 @@ export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
       onClick={() => onSelect(head.id)}
       className={cn(rowCls, isFresh && 'slide-in arrival-flash')}
     >
-      <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
+      <span className="size-[7px] rounded-full" style={{ background: sc }} />
       <span className="min-w-0 flex flex-col gap-0.5 pr-2 overflow-hidden">
         <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
           {tracePreview(head) ?? <span className="text-muted">—</span>}
@@ -102,7 +104,7 @@ export function LiveStreamRow({ row, freshIds, isLast, now, onSelect }: Props) {
           {head.agentName ?? <Trans>unknown agent</Trans>}
         </span>
       </span>
-      <span className={cn('justify-self-center inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-full text-accent bg-accent-subtle', NARROW_HIDDEN)}>
+      <span className={cn('justify-self-center inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded-none text-accent bg-accent-subtle', NARROW_HIDDEN)}>
         <Plural value={turns.length} one="# turn" other="# turns" />
       </span>
       <span className={cn('justify-self-center', NARROW_HIDDEN)}><Pill label={head.model} color={modelColor(head.model)} size="sm" /></span>

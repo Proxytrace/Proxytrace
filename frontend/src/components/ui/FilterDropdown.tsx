@@ -22,7 +22,7 @@ interface FilterDropdownProps {
   /**
    * `md` (default) — the standalone toolbar filter chip (filled, 36px).
    * `sm` — a compact, quiet trigger for inline/header use (transparent, 28px); avoids the
-   * oversized filled pill warping a dense header row.
+   * oversized filled chip warping a dense header row.
    */
   size?: 'sm' | 'md';
   /** When set, tags the trigger `{testId}` and each option `{testId}-option-{key}` for e2e. */
@@ -30,7 +30,7 @@ interface FilterDropdownProps {
 }
 
 /**
- * Labelled single-select filter pill (Radix DropdownMenu-backed: portalled,
+ * Labelled single-select filter chip (Radix DropdownMenu-backed: portalled,
  * collision-aware, keyboard-navigable). API-compatible drop-in.
  */
 export function FilterDropdown({
@@ -63,11 +63,11 @@ export function FilterDropdown({
             size === 'sm'
               ? 'bg-transparent text-secondary hover:text-primary hover:bg-card-2'
               : active
-                ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
-                : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
+                ? 'bg-card-2 text-primary shadow-[inset_0_0_0_1px_var(--border-color)]'
+                : 'bg-card text-secondary hover:text-primary',
           )}
         >
-          {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
+          {accent && <span className="w-[7px] h-[7px] shrink-0" style={{ background: accent }} />}
           {label && <span className="text-muted font-medium">{label}</span>}
           <span>{displayLabel}</span>
           <ChevronDownIcon
@@ -83,7 +83,7 @@ export function FilterDropdown({
           side={direction === 'up' ? 'top' : 'bottom'}
           sideOffset={6}
           style={{ minWidth: width }}
-          className="z-[60] bg-card-2 rounded-md py-1 max-h-[280px] overflow-y-auto shadow-[var(--shadow-float)] ring-1 ring-[rgba(255,255,255,0.06)]"
+          className="z-[60] bg-card-2 py-1 max-h-[280px] overflow-y-auto shadow-[var(--shadow-float)] border border-border"
         >
           {options.map(opt => {
             const isSel = opt.key === value;
@@ -93,11 +93,11 @@ export function FilterDropdown({
                 data-testid={testId ? `${testId}-option-${opt.key}` : undefined}
                 onSelect={() => onChange(opt.key)}
                 className={cn(
-                  'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-white/[0.05]',
+                  'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-[var(--bg-wash-hover)]',
                   isSel ? 'text-primary' : 'text-secondary',
                 )}
               >
-                {opt.accent && <span className="w-[8px] h-[8px] rounded-[2px] shrink-0" style={{ background: opt.accent }} />}
+                {opt.accent && <span className="w-[8px] h-[8px] shrink-0" style={{ background: opt.accent }} />}
                 <span className="flex-1 truncate">{opt.label}</span>
                 {isSel && <CheckIcon size={12} strokeWidth={2.5} className="text-accent shrink-0" />}
               </DropdownMenu.Item>

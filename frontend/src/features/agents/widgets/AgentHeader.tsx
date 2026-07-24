@@ -33,14 +33,13 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
       data-testid="agent-header"
       className={`bg-card rounded-lg overflow-hidden shadow-[var(--shadow-card)] ${className ?? ''}`}
     >
-      <div className="h-1" style={{ background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 27%, transparent))` }} />
+      <div className="h-1" style={{ background: c }} />
       <div className="px-5 py-4 flex items-start gap-4 flex-wrap">
         <div
           className="flex items-center justify-center shrink-0 w-[52px] h-[52px] rounded-lg"
           style={{
             background: `color-mix(in srgb, ${c} 13%, transparent)`,
             border: `2px solid color-mix(in srgb, ${c} 27%, transparent)`,
-            boxShadow: `0 0 24px color-mix(in srgb, ${c} 20%, transparent)`,
           }}
         >
           <span className="text-h1 font-bold font-mono" style={{ color: c }}>{initial}</span>
@@ -65,7 +64,7 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
                 onClick={() => navigate(`/proposals?agentId=${agent.id}`)}
                 data-testid="agent-proposals-pill"
                 leftIcon={<SparklesIcon size={11} />}
-                className="rounded-full text-accent bg-accent-subtle hover:text-accent-hover shadow-[var(--shadow-pill)]"
+                className="rounded-none text-accent bg-accent-subtle hover:text-accent-hover"
               >
                 <Plural value={proposals} one="# proposal ready" other="# proposals ready" />
               </Button>
@@ -73,7 +72,7 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
           </div>
           <div className="flex items-center gap-2 flex-wrap text-body-sm text-muted">
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono font-medium"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none font-mono font-medium"
               style={{
                 background: `color-mix(in srgb, ${mc} 12%, transparent)`,
                 color: mc,

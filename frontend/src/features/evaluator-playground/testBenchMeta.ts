@@ -10,7 +10,7 @@ export const KIND_LABEL: Record<EvaluatorKind, MessageDescriptor> = {
   [EvaluatorKind.JsonSchemaMatch]: msg`JSON schema`,
 };
 
-/** Per-score accent color (CSS var) for the test-bench result pill. */
+/** Per-score accent color (CSS var) for the test-bench result tag. */
 export const SCORE_COLOR: Record<EvaluationScore, string> = {
   [EvaluationScore.Terrible]: 'var(--danger)',
   [EvaluationScore.Bad]: 'var(--warn)',
@@ -19,7 +19,7 @@ export const SCORE_COLOR: Record<EvaluationScore, string> = {
   [EvaluationScore.Excellent]: 'var(--success)',
 };
 
-/** Resolves the pill color for a score, falling back to the accent for null/unknown scores. */
+/** Resolves the tag color for a score, falling back to the accent for null/unknown scores. */
 export function scoreColor(score: EvaluationScore | null | undefined): string {
   return score ? (SCORE_COLOR[score] ?? 'var(--accent-primary)') : 'var(--accent-primary)';
 }

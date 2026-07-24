@@ -61,7 +61,7 @@ export function TraceyConversationRail({ chat }: TraceyConversationRailProps) {
                 {active && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
+                    className="pointer-events-none absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-none"
                     style={selectionBarStyle(ACCENT)}
                   />
                 )}

@@ -38,7 +38,7 @@ export function AuditLogTable({ entries, selectedId, onSelect, isFetching }: Aud
       data-testid="audit-log-table"
       className={cn('flex flex-col', isFetching && 'opacity-60 transition-opacity')}
     >
-      <div className="grid grid-cols-[180px_1fr_160px_190px] gap-3 px-3 py-2 text-body-sm font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
+      <div className="grid grid-cols-[180px_1fr_160px_190px] gap-3 px-3 py-2 text-body-sm font-semibold uppercase tracking-[0.06em] text-secondary border-b border-hairline">
         <span><Trans>Action</Trans></span>
         <span><Trans>Actor</Trans></span>
         <span><Trans>Target</Trans></span>

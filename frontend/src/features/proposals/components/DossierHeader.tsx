@@ -41,7 +41,7 @@ export function DossierHeader({ theory, proposal, suiteName }: Props) {
       <div className="flex flex-wrap items-center gap-1.5">
         <KindPill kind={theory.kind} />
         <span
-          className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-caption font-semibold', TONE_SUBTLE_BG[status.tone], TONE_TEXT[status.tone])}
+          className={cn('inline-flex items-center gap-1.5 rounded-none px-2 py-0.5 text-caption font-semibold', TONE_SUBTLE_BG[status.tone], TONE_TEXT[status.tone])}
           data-testid="dossier-status"
         >
           {'pulse' in status && status.pulse && <span aria-hidden className={cn('pulse-dot size-1.5 rounded-full', TONE_BG[status.tone])} />}
@@ -49,7 +49,7 @@ export function DossierHeader({ theory, proposal, suiteName }: Props) {
         </span>
         {/* agentColor is a runtime hash-derived color → inline style is the sanctioned use (DESIGN §6). */}
         <span
-          className="mono inline-flex items-center gap-1 rounded-full px-2 py-px text-caption font-medium"
+          className="mono inline-flex items-center gap-1 rounded-none px-2 py-px text-caption font-medium"
           style={{ background: `color-mix(in srgb, ${aColor} 12%, transparent)`, color: aColor }}
         >
           <span aria-hidden className="size-1.5 rounded-full" style={{ background: aColor }} />

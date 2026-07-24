@@ -51,9 +51,9 @@ export function ToolInspector({ tool, defaultOpen = false, last = false }: Props
           )}
           {tool.arguments.length > 0 ? (
             <>
-              <div className="text-caption font-semibold text-muted tracking-[0.07em] uppercase"><Trans>Parameters</Trans></div>
+              <div className="text-caption font-semibold text-secondary tracking-[0.07em] uppercase"><Trans>Parameters</Trans></div>
               <div className="rounded-md bg-surface overflow-hidden">
-                <div className="grid grid-cols-[1.2fr_0.8fr_0.4fr_2.5fr] px-3 py-1.5 text-caption font-bold text-muted tracking-[0.07em] uppercase border-b border-hairline">
+                <div className="grid grid-cols-[1.2fr_0.8fr_0.4fr_2.5fr] px-3 py-1.5 text-caption font-bold text-secondary tracking-[0.07em] uppercase border-b border-hairline">
                   <span><Trans>Name</Trans></span><span><Trans>Type</Trans></span><span><Trans>Req</Trans></span><span><Trans>Description</Trans></span>
                 </div>
                 {tool.arguments.map((p, i) => (

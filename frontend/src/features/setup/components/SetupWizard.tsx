@@ -31,9 +31,9 @@ export function SetupWizard() {
           testResult={wiz.testResult}
           error={wiz.currentStep === SETUP_STEPS.provider ? wiz.error : null}
           onPresetChange={wiz.handlePresetChange}
-          onNameChange={(v) => { wiz.setProviderName(v); wiz.setTestResult(null); wiz.resetModels(); }}
-          onEndpointChange={(v) => { wiz.setProviderEndpoint(v); wiz.setTestResult(null); wiz.resetModels(); }}
-          onApiKeyChange={(v) => { wiz.setProviderApiKey(v); wiz.setTestResult(null); wiz.resetModels(); }}
+          onNameChange={(v) => { wiz.setProviderName(v); wiz.clearTestResult(); wiz.resetModels(); }}
+          onEndpointChange={(v) => { wiz.setProviderEndpoint(v); wiz.clearTestResult(); wiz.resetModels(); }}
+          onApiKeyChange={(v) => { wiz.setProviderApiKey(v); wiz.clearTestResult(); wiz.resetModels(); }}
           onTestConnection={wiz.handleTestConnection}
           onKeyDown={wiz.handleEnter}
         />
@@ -83,11 +83,6 @@ export function SetupWizard() {
 
   return (
     <div className="relative min-h-screen bg-surface flex items-center justify-center p-6 sm:p-10 overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,color-mix(in srgb, var(--accent-primary) 10%, transparent),transparent_55%),radial-gradient(circle_at_80%_110%,color-mix(in srgb, var(--teal) 8%, transparent),transparent_55%)]"
-      />
-
       <div className="relative w-full max-w-[640px]">
         <div className="flex items-center justify-between mb-7">
           <div className="flex items-center gap-3">
@@ -101,14 +96,13 @@ export function SetupWizard() {
           <div className="text-body-sm text-muted hidden sm:block"><Trans>~ 2 minutes</Trans></div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-7 sm:p-8 shadow-[var(--shadow-float)]">
+        <div className="bg-card border border-border rounded-xl p-7 sm:p-8">
           {heading && (
             <div className="mb-7">
               <div className="text-body-sm font-semibold uppercase tracking-[0.08em] text-accent mb-2">
                 <Trans>Step {wiz.currentStep + 1}</Trans>
               </div>
-              {/* display-tier: intentional, outside type scale */}
-              <h1 className="text-[20px] font-bold text-primary leading-snug tracking-[-0.01em]">
+              <h1 className="text-display-sm font-bold text-primary leading-snug tracking-[-0.01em]">
                 {i18n._(heading.title)}
               </h1>
               <p className="text-title text-secondary mt-1.5 leading-relaxed">

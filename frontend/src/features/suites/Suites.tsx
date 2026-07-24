@@ -107,7 +107,7 @@ export default function Suites() {
   }
 
   // Only agents that actually own a suite are offered as filter options — a flat
-  // dropdown scales to many agents where wrapping pill tabs did not.
+  // dropdown scales to many agents where wrapping tab strips did not.
   const agentFilterOptions = useMemo<FilterDropdownOption[]>(() => {
     const byAgent = new Map<string, { name: string; count: number }>();
     for (const s of suites) {

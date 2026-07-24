@@ -115,10 +115,10 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         <TraceAnomalyBanner trace={trace} />
 
         {/* Stat band */}
-        <div className="mx-5 mt-3.5 px-4 py-3.5 bg-card-2 rounded-xl grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))] gap-3.5 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
+        <div className="mx-5 mt-3.5 px-4 py-3.5 bg-card-2 grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))] gap-3.5 shrink-0 shadow-[inset_0_0_0_1px_var(--hairline)]">
           {/* eslint-disable-next-line lingui/no-unlocalized-strings -- DrawerStat tone enum values, not UI copy */}
-          <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} tone={trace.durationMs > 3000 ? 'warn' : 'teal'} valueTone={trace.durationMs > 3000 ? 'warn' : undefined} />
-          <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} tone="teal" />
+          <DrawerStat label={t`Latency`} value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} tone={trace.durationMs > 3000 ? 'warn' : 'info'} valueTone={trace.durationMs > 3000 ? 'warn' : undefined} />
+          <DrawerStat label={t`Input`} value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} tone="info" />
           <DrawerStat label={t`Output`} value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} tone="success" />
           <DrawerStat
             label={t`Cached`}
@@ -151,7 +151,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
               <span className="inline-flex items-center gap-1.5">
                 {i18n._(TAB_LABELS[t])}
                 {count !== null && (
-                  <span className="px-1.5 py-px rounded-full text-caption font-mono font-semibold bg-card-2 text-muted group-data-[state=active]:bg-accent-subtle group-data-[state=active]:text-accent-hover">{count}</span>
+                  <span className="px-1.5 py-px rounded-none text-caption font-mono font-semibold bg-card-2 text-muted group-data-[state=active]:bg-accent-subtle group-data-[state=active]:text-accent-hover">{count}</span>
                 )}
               </span>
             ),

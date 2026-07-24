@@ -98,11 +98,10 @@ export default function Dashboard() {
       <div className="fade-up flex items-center justify-between gap-3 px-0.5">
         <div className="flex items-center gap-3.5">
           <span className="text-caption text-accent-hover font-mono tracking-[0.18em] flex items-center gap-1.5 font-semibold">
-            <span className="size-1.5 rounded-full bg-success pulse-dot shadow-[0_0_10px_var(--success)]" />
+            <span className="size-1.5 rounded-full bg-success pulse-dot" />
             <Trans>LIVE</Trans>
           </span>
-          {/* display-tier: intentional, outside type scale */}
-          <h1 className="text-[20px] font-extrabold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
+          <h1 className="text-h1 font-bold tracking-[-0.025em] leading-none"><Trans>Mission Control</Trans></h1>
           <p className="text-body-sm text-muted">{currentProject?.name ?? t`All projects`}</p>
         </div>
         <div className="flex items-center gap-3">

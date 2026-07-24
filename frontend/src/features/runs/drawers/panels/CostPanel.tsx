@@ -14,7 +14,7 @@ export function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
         <div className="text-body-sm text-muted"><Trans>{fmtTokens(totalTok)} tok</Trans></div>
       </div>
       {totalCost > 0 && (
-        <div className="flex h-1 rounded-full overflow-hidden mb-2.5">
+        <div className="flex h-1 overflow-hidden mb-2.5">
           {endpoints.map(ep => (
             <div
               key={ep.id}

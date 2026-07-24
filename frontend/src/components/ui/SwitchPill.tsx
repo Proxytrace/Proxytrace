@@ -23,10 +23,10 @@ const SIZE_CLS: Record<SwitchPillSize, string> = {
 /* eslint-enable lingui/no-unlocalized-strings */
 
 /**
- * Labeled switch-pill: a `role="switch"` control that fuses a small rounded track + sliding white
- * thumb with an inline label inside one tinted pill. Unlike the plain `Switch` primitive, the label
- * lives *inside* the control, so a toolbar / footer toggle reads as a single pill. On = accent-subtle
- * wash + gold track; off = recessed card wash. Motion respects `prefers-reduced-motion`.
+ * Labeled switch tag: a `role="switch"` control that fuses a small square track + sliding white
+ * thumb with an inline label inside one tinted tag. Unlike the plain `Switch` primitive, the label
+ * lives *inside* the control, so a toolbar / footer toggle reads as a single square tag. On =
+ * accent-subtle wash + cyan track; off = recessed card wash. Motion respects `prefers-reduced-motion`.
  */
 export function SwitchPill({
   checked,
@@ -52,14 +52,15 @@ export function SwitchPill({
         FOCUS_RING,
         SIZE_CLS[size],
         checked
-          ? 'text-accent bg-accent-subtle shadow-[0_0_0_1px_var(--accent-primary),var(--shadow-pill)]'
-          : 'text-secondary bg-card shadow-[var(--shadow-pill)]',
+          ? 'text-accent bg-accent-subtle shadow-[0_0_0_1px_var(--accent-primary)]'
+          : 'text-secondary bg-card shadow-[inset_0_0_0_1px_var(--border-color)]',
       )}
     >
       <span
         className={cn(
+          // Round track to match the round knob — see Switch.tsx.
           'w-7 h-4 rounded-full relative transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
-          checked ? 'bg-accent' : 'bg-white/[0.12]',
+          checked ? 'bg-accent' : 'bg-[var(--border-color)]',
         )}
         aria-hidden="true"
       >

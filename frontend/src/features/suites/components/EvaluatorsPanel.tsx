@@ -40,7 +40,7 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
   return (
     <div className="flex flex-col gap-3 min-h-0 h-full">
       <div className="flex items-center justify-between">
-        <span className="text-caption font-semibold text-muted uppercase tracking-[0.08em]">
+        <span className="text-caption font-semibold text-secondary uppercase tracking-[0.08em]">
           <Trans>{stagedIds.size} of {evaluators.length} attached</Trans>
         </span>
         <DiffSummary baseline={baselineIds} staged={stagedIds} />

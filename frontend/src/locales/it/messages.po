@@ -1389,6 +1389,9 @@ msgstr "Configura il tuo Evaluator."
 msgid "Connect your model provider"
 msgstr "Connetti il tuo model Provider"
 
+msgid "Connected, but the provider reported no models."
+msgstr "Connessione riuscita, ma il provider non ha segnalato alcun modello."
+
 msgid "Connecting…"
 msgstr "Connessione in corso…"
 
@@ -1495,6 +1498,9 @@ msgstr "Impossibile caricare la richiesta per questo caso."
 msgid "Could not open the trace for this response."
 msgstr "Impossibile aprire il Trace per questa risposta."
 
+msgid "Could not reach the provider."
+msgstr "Impossibile contattare il provider."
+
 msgid "Could not reset your password. Please try again."
 msgstr "Impossibile reimpostare la password. Riprova."
 
@@ -1507,8 +1513,18 @@ msgstr "non testate"
 msgid "Could not test"
 msgstr "Non testata"
 
+msgid "Could not update the upstream API key."
+msgstr "Impossibile aggiornare l'API key upstream."
+
 msgid "Could not verify the code. Please try again."
 msgstr "Impossibile verificare il codice. Riprova."
+
+msgid "Could not verify the provider connection."
+msgstr "Impossibile verificare la connessione al provider."
+
+#. placeholder {0}: details.errorId
+msgid "Could not verify the provider connection. Error ID: {0}"
+msgstr "Impossibile verificare la connessione al provider. ID errore: {0}"
 
 msgid "Couldn't load detectors."
 msgstr "Impossibile caricare i detector."
@@ -2486,6 +2502,9 @@ msgstr "Chiave"
 #. placeholder {0}: created.name
 msgid "Key \"{0}\" created — copy it now, it won't be shown again"
 msgstr "Chiave \"{0}\" creata — copiala subito, non verrà più mostrata"
+
+msgid "Key accepted, but the provider reported no models."
+msgstr "API key accettata, ma il provider non ha segnalato alcun modello."
 
 msgid "Key name"
 msgstr "Nome della chiave"
@@ -3848,6 +3867,9 @@ msgstr "Configurazione di Provider eliminata"
 msgid "Provider Config Updated"
 msgstr "Configurazione Provider aggiornata"
 
+msgid "Provider Key Rotated"
+msgstr "Chiave Provider ruotata"
+
 msgid "Provider kind"
 msgstr "Tipo di Provider"
 
@@ -4930,6 +4952,9 @@ msgstr "in test"
 msgid "Text response"
 msgstr "Risposta di testo"
 
+msgid "That key was rejected by the provider."
+msgstr "Questa API key è stata rifiutata dal provider."
+
 msgid "The A/B test could not run — the theory was not tested."
 msgstr "Il A/B test non ha potuto essere eseguito — la theory non è stata testata."
 
@@ -5065,6 +5090,9 @@ msgstr "Questo link di reset della password manca o non è valido. Richiedine un
 
 msgid "This permanently deletes the run and its results. This action cannot be undone."
 msgstr "Questo elimina definitivamente il run e i suoi risultati. Questa azione non può essere annullata."
+
+msgid "This provider kind does not support connection testing."
+msgstr "Questo tipo di provider non supporta il test della connessione."
 
 msgid "This removes the detector and its review history. This can't be undone."
 msgstr "Rimuove il detector e la sua cronologia di revisione. Questa operazione non può essere annullata."
@@ -5371,6 +5399,9 @@ msgstr "Passa alla pianificazione"
 msgid "Upstream API key"
 msgstr "API key upstream"
 
+msgid "Upstream API key updated."
+msgstr "API key upstream aggiornata."
+
 msgid "Upstream key copied"
 msgstr "API key upstream copiata"
 
@@ -5449,6 +5480,9 @@ msgstr "Verifica"
 
 msgid "Verify & enable"
 msgstr "Verifica e abilita"
+
+msgid "Verifying key…"
+msgstr "Verifica dell'API key…"
 
 msgid "Version history"
 msgstr "Cronologia versioni"

@@ -48,7 +48,7 @@ export function QueueRow({ theory, proposal, group, selected, onSelect }: Props)
       className={cn('relative rounded-md px-3 py-2.5 transition-colors duration-[var(--motion-fast)]', !selected && SELECTION_ROW_INACTIVE)}
       style={selected ? selectionRowStyle(aColor) : undefined}
     >
-      {selected && <span aria-hidden className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full" style={selectionBarStyle(aColor)} />}
+      {selected && <span aria-hidden className="absolute left-0 top-1.5 bottom-1.5 w-[3px]" style={selectionBarStyle(aColor)} />}
 
       <div className="flex items-center gap-1.5">
         <span className={cn('inline-flex items-center gap-1 text-caption font-semibold', KIND_TEXT[theory.kind])}>
@@ -59,7 +59,7 @@ export function QueueRow({ theory, proposal, group, selected, onSelect }: Props)
             transition && transition.deltaPt !== 0 && (
               <span
                 className={cn(
-                  'mono rounded-full px-1.5 py-px text-caption font-semibold',
+                  'mono rounded-none px-1.5 py-px text-caption font-semibold',
                   transition.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger',
                 )}
               >
@@ -89,7 +89,7 @@ export function QueueRow({ theory, proposal, group, selected, onSelect }: Props)
       </div>
 
       {theory.status === TheoryStatus.Validating && (
-        <div className="indeterminate-bar mt-2 h-[3px] overflow-hidden rounded-full bg-card-2" />
+        <div className="indeterminate-bar mt-2 h-[3px] overflow-hidden bg-card-2" />
       )}
     </RowButton>
   );

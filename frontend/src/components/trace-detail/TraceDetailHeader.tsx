@@ -46,7 +46,7 @@ export function TraceDetailHeader({ trace, anomalyHits, onClose, onPrev, onNext,
     <div className="px-5 pt-4 pb-3 flex flex-col gap-2.5 border-b border-hairline shrink-0">
       {/* Identity row: agent (title) + model + status, prev/next right */}
       <div className="flex items-center gap-2.5 min-w-0">
-        <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
+        <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor }} />
         {trace.agentName && trace.agentId ? (
           <Button
             variant="link"
@@ -66,7 +66,7 @@ export function TraceDetailHeader({ trace, anomalyHits, onClose, onPrev, onNext,
         <ColoredBadge color={modelColor(trace.model)} label={trace.model} dot size="md" />
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-caption font-semibold font-mono shrink-0',
+            'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-caption font-semibold font-mono shrink-0',
             statusOk ? 'bg-success-subtle' : statusErr ? 'bg-danger-subtle' : 'bg-[color-mix(in_srgb,var(--warn)_15%,transparent)]',
           )}
           style={{ color: statusColor }}

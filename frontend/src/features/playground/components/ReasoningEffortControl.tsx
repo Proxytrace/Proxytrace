@@ -27,7 +27,7 @@ export function ReasoningEffortControl({ overrides, onChange }: ReasoningEffortC
   const { i18n } = useLingui();
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Reasoning effort</Trans></span>
+      <span className="text-caption text-secondary uppercase tracking-[0.06em] font-semibold"><Trans>Reasoning effort</Trans></span>
       <SegmentedControl
         // eslint-disable-next-line lingui/no-unlocalized-strings -- "off" sentinel maps null reasoning effort, not UI copy
         value={overrides.parameters.reasoningEffort ?? 'off'}

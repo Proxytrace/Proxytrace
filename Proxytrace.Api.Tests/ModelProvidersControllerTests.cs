@@ -98,6 +98,57 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Update_ChangedUpstreamKey_AuditsKeyRotation()
+    {
+        IServiceProvider services = GetServices();
+        var audit = new RecordingAuditLogger();
+        var controller = ResolveController(services, audit: audit);
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+
+        await controller.Update(
+            provider.Id,
+            new UpdateModelProviderRequest(provider.Name, provider.Endpoint.ToString(), "sk-rotated", provider.Kind),
+            CancellationToken);
+
+        audit.Events.Should().ContainSingle()
+            .Which.Id.Should().Be((int)AuditAction.ProviderUpstreamKeyRotated);
+    }
+
+    [TestMethod]
+    public async Task Update_UnchangedUpstreamKey_AuditsConfigUpdateOnly()
+    {
+        IServiceProvider services = GetServices();
+        var audit = new RecordingAuditLogger();
+        var controller = ResolveController(services, audit: audit);
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+
+        await controller.Update(
+            provider.Id,
+            new UpdateModelProviderRequest("Renamed", provider.Endpoint.ToString(), provider.ApiKey, provider.Kind),
+            CancellationToken);
+
+        audit.Events.Should().ContainSingle()
+            .Which.Id.Should().Be((int)AuditAction.ProviderConfigUpdated);
+    }
+
+    [TestMethod]
+    public async Task Update_ChangedKeyAndName_AuditsRotationAndConfigUpdate()
+    {
+        IServiceProvider services = GetServices();
+        var audit = new RecordingAuditLogger();
+        var controller = ResolveController(services, audit: audit);
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+
+        await controller.Update(
+            provider.Id,
+            new UpdateModelProviderRequest("Renamed", provider.Endpoint.ToString(), "sk-rotated", provider.Kind),
+            CancellationToken);
+
+        audit.Events.Select(e => e.Id).Should().BeEquivalentTo(
+            [(int)AuditAction.ProviderUpstreamKeyRotated, (int)AuditAction.ProviderConfigUpdated]);
+    }
+
+    [TestMethod]
     public async Task Update_Unknown_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();
@@ -380,7 +431,56 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
-    private static ModelProvidersController ResolveController(IServiceProvider services) => new(
+    [TestMethod]
+    public async Task GetAvailableModels_WhenProviderRejectsKey_ReturnsBadRequest()
+    {
+        var providerClient = Substitute.For<IProviderClient>();
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns<IReadOnlyList<PricedModel>>(_ => throw new ProviderConnectionException(
+                ProviderConnectionError.Unauthorized,
+                new HttpRequestException("Unauthorized")));
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient));
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var controller = ResolveController(services);
+
+        var result = await controller.GetAvailableModels(provider.Id, CancellationToken);
+
+        var badRequest = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequest.Value.Should().Be(nameof(ProviderConnectionError.Unauthorized));
+    }
+
+    // Captures the EventIds the controller audits, so tests can assert which AuditAction was
+    // recorded (same shape as AuditDeniedAccessMiddlewareTests.RecordingAuditLogger).
+    private sealed class RecordingAuditLogger : Microsoft.Extensions.Logging.ILogger<Audit>
+    {
+        public List<Microsoft.Extensions.Logging.EventId> Events { get; } = [];
+
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            Microsoft.Extensions.Logging.LogLevel logLevel,
+            Microsoft.Extensions.Logging.EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+            => Events.Add(eventId);
+
+        private sealed class NullScope : IDisposable
+        {
+            public static readonly NullScope Instance = new();
+
+            public void Dispose()
+            {
+            }
+        }
+    }
+
+    private static ModelProvidersController ResolveController(
+        IServiceProvider services,
+        Microsoft.Extensions.Logging.ILogger<Audit>? audit = null) => new(
         services.GetRequiredService<IModelProviderRepository>(),
         services.GetRequiredService<IApiKeyRepository>(),
         services.GetRequiredService<IProjectRepository>(),
@@ -395,5 +495,5 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<IModelPriceRefresher>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IRepository<IUser>>(),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
+        audit ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 }

@@ -41,8 +41,7 @@ export function WelcomeStep() {
   return (
     <div className="flex flex-col gap-6" data-testid="setup-welcome">
       <div>
-        {/* display-tier: intentional, outside type scale */}
-        <h1 className="text-[22px] font-bold text-primary leading-snug tracking-[-0.01em]">
+        <h1 className="text-display-sm font-bold text-primary leading-snug tracking-[-0.01em]">
           <Trans>Welcome to <span className="text-accent-text">Proxytrace</span></Trans>
         </h1>
         <p className="text-title text-secondary mt-1.5 leading-relaxed">
@@ -103,7 +102,7 @@ function TierPanel({ tier }: { tier: ReturnType<typeof buildTierSummary> }) {
             <LockIcon size={13} className="mt-0.5 shrink-0" />
             <span>
               {i18n._(line)}
-              <span className="text-caption text-muted ml-1.5 uppercase"><Trans>Enterprise</Trans></span>
+              <span className="text-caption text-secondary ml-1.5 uppercase"><Trans>Enterprise</Trans></span>
             </span>
           </li>
         ))}

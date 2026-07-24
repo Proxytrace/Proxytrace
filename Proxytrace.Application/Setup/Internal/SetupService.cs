@@ -64,7 +64,20 @@ internal class SetupService : ISetupService
     }
 
     public async Task<bool> AnyUsersExistAsync(CancellationToken cancellationToken = default)
-        => await users.CountAsync(cancellationToken) > 0;
+    {
+        var count = await users.CountAsync(cancellationToken);
+#if DEBUG
+        // The DEBUG-only back-door admin (docs/debug_api.md) is seeded on startup, before anyone
+        // opens the app. It must not count as a completed first-run setup — otherwise a fresh dev
+        // database goes straight to the login form and the onboarding wizard is never shown.
+        if (count == 1
+            && await users.FindByEmailAsync(DebugBackDoorAccount.Email, cancellationToken) is not null)
+        {
+            return false;
+        }
+#endif
+        return count > 0;
+    }
 
     public async Task<FirstAdminResult> CreateFirstAdminAsync(string email, string password, CancellationToken cancellationToken = default)
     {
@@ -123,7 +136,7 @@ internal class SetupService : ISetupService
         return result;
     }
 
-    public Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default)
+    public Task<ProviderConnectionResult> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default)
         => CreateProvider(input)
             .CreateClient()
             .VerifyConnectionAsync(cancellationToken);

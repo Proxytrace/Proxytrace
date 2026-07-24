@@ -113,4 +113,9 @@ public enum AuditAction
     // A theory's A/B validation errored out (unreachable provider, incomplete run) — the theory
     // settled Failed instead of Invalidated and can be retried (System actor).
     TheoryValidationFailed = 69,
+
+    // A provider's upstream API key was replaced (credential rotation) — recorded distinctly from
+    // ProviderConfigUpdated so security review can find rotations without diffing configurations.
+    // The key value itself is never recorded.
+    ProviderUpstreamKeyRotated = 70,
 }

@@ -102,7 +102,7 @@ export function Select({
         <DropdownMenu.Content
           align="start"
           sideOffset={6}
-          className="z-[60] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-[280px] overflow-y-auto bg-card-2 rounded-md py-1 shadow-[var(--shadow-float)] ring-1 ring-[rgba(255,255,255,0.06)]"
+          className="z-[60] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-[280px] overflow-y-auto bg-card-2 py-1 shadow-[var(--shadow-float)] border border-border"
         >
           {options.map((opt, i) => {
             const isSel = opt.value === value;
@@ -115,7 +115,7 @@ export function Select({
                 onSelect={() => onValueChange(opt.value)}
                 className={cn(
                   'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none',
-                  'transition-colors duration-100 data-[highlighted]:bg-white/[0.05]',
+                  'transition-colors duration-100 data-[highlighted]:bg-[var(--bg-wash-hover)]',
                   'data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed',
                   isSel ? 'text-primary' : 'text-secondary',
                 )}

@@ -26,8 +26,7 @@ export function TraceyChatPanel({ chat, railCollapsed, onToggleRail }: TraceyCha
   const isRunning = useThread(t => t.isRunning);
 
   return (
-    // Tracey tier (DESIGN.md §8.2): the panel carries a faint drifting gold/teal aurora at the top.
-    <div className="tracey-aurora flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface-2">
+    <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface-2">
       <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
         <div className="flex items-center gap-2.5">
           {/* Identity halo instead of a static ring; spins up while she's thinking. */}

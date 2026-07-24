@@ -37,8 +37,6 @@ export function AgentFleetSection({ fleet, isLoading, proposalCount }: AgentFlee
       className="relative overflow-hidden rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)] @container"
       style={{ '--fleet-grid': FLEET_GRID_WIDE, '--fleet-grid-mid': FLEET_GRID_MID, '--fleet-grid-narrow': FLEET_GRID_NARROW } as React.CSSProperties}
     >
-      <div className="absolute -top-20 -left-16 w-[420px] h-[240px] pointer-events-none bg-[radial-gradient(ellipse,var(--accent-subtle),transparent_70%)]" />
-
       <header className="relative flex items-end justify-between mb-3">
         <div>
           <span className={EYEBROW_CLS}>
@@ -57,7 +55,7 @@ export function AgentFleetSection({ fleet, isLoading, proposalCount }: AgentFlee
               data-testid="dashboard-proposals-chip"
               onClick={() => navigate('/proposals')}
               className={cn(
-                'w-auto px-2.5 py-1.5 rounded-md text-body-sm font-semibold text-accent-hover inline-flex items-center gap-1.5 bg-[linear-gradient(135deg,var(--accent-subtle),color-mix(in_srgb,var(--teal)_8%,transparent))] transition-colors hover:text-accent-text',
+                'w-auto px-2.5 py-1.5 text-body-sm font-semibold text-accent-hover inline-flex items-center gap-1.5 bg-accent-subtle transition-colors hover:text-accent-text',
                 FOCUS_RING,
               )}
             >

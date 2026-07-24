@@ -65,7 +65,7 @@ export function ParametersSection({
 
       <div className="grid grid-cols-3 gap-1.5">
         <label className="flex flex-col gap-0.5">
-          <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Max tokens</Trans></span>
+          <span className="text-caption text-secondary uppercase tracking-[0.06em] font-semibold"><Trans>Max tokens</Trans></span>
           <Input
             type="number" min={1} step={1}
             value={overrides.parameters.maxTokens ?? ''}
@@ -74,7 +74,7 @@ export function ParametersSection({
           />
         </label>
         <label className="flex flex-col gap-0.5">
-          <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>Seed</Trans></span>
+          <span className="text-caption text-secondary uppercase tracking-[0.06em] font-semibold"><Trans>Seed</Trans></span>
           <Input
             type="number" step={1}
             value={overrides.parameters.seed ?? ''}
@@ -83,7 +83,7 @@ export function ParametersSection({
           />
         </label>
         <label className="flex flex-col gap-0.5">
-          <span className="text-caption text-muted uppercase tracking-[0.06em] font-semibold"><Trans>N</Trans></span>
+          <span className="text-caption text-secondary uppercase tracking-[0.06em] font-semibold"><Trans>N</Trans></span>
           <Input
             type="number" min={1} step={1}
             value={overrides.parameters.n ?? ''}
