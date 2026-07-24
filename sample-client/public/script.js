@@ -72,10 +72,10 @@ const STRINGS = {
     done: "Fertig",
     systemPromptTitle: "System-Prompt",
     promptModalHint:
-      "Der <strong>Standard-Prompt</strong> wird unten immer angezeigt (schreibgeschützt). "
-      + "Fügen Sie einen verbesserten Prompt in das Feld <strong>Überschreiben</strong> ein "
-      + "und klicken Sie auf „Ubernehmen“ — die nächste Nachricht verwendet ihn. "
-      + "„Zurücksetzen“ stellt den Standard wieder her und startet eine neue Sitzung.",
+      'Der <strong>Standard-Prompt</strong> wird unten immer angezeigt (schreibgeschützt). '
+      + 'Fügen Sie einen verbesserten Prompt in das Feld <strong>Überschreiben</strong> ein '
+      + 'und klicken Sie auf „Übernehmen“ — die nächste Nachricht verwendet ihn. '
+      + '„Zurücksetzen“ stellt den Standard wieder her und startet eine neue Sitzung.',
     defaultPromptLabel: "Standard-Prompt",
     overrideLabel: "Überschreiben",
     overridePlaceholder: "Verbesserten Prompt des Optimierers hier einfügen…",
