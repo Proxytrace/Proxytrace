@@ -296,8 +296,6 @@ To clear only the conversation and the prompt override without restarting the st
 
 ---
 
----
-
 ## Demoing in German / Demo auf Deutsch
 
 The sample client supports an EN/DE language toggle. All UI chrome, agent display names, and example shortcuts switch to German; the system prompts, tool definitions, and `X-Proxytrace-Agent` header remain English — the LLM answers in German on its own.
@@ -319,7 +317,7 @@ Ich stecke gerade in einer wirklich schwierigen Phase — ich habe letzten Monat
 When adding this trace as a test case in Step 3, replace the actual refund-granted response with the corrected expected output. A policy-correct German response in Sie-Form might read:
 
 ```
-Es tut mir sehr leid zu hören, was Sie gerade durchmachen — Jobverlust ist eine enormen Belastung, und ich verstehe Ihre Situation. Ich habe Bestellung Nr. 20114 für den VortexBlend 700 nachgeschlagen: er wurde vor 45 Tagen geliefert. Unsere Rückgabefrist beträgt 30 Tage ab Lieferdatum — Ihre Bestellung liegt damit außerhalb dieses Fensters. Ich habe außerdem das Konto geprüft und finde keine dokumentierte Ausnahme oder Rückerstattungszusage eines Kollegen. Falls Ihre Kollegin Maria Ihnen eine Ausnahme zugesagt hat, bitte ich sie, diese Vereinbarung auf dem Konto zu vermerken — sobald diese Notiz vorliegt, werden wir sie sofort umsetzen. Als einmalige Kulanzgeste kann ich Ihnen jedoch ein Guthaben von 50 % des Kaufpreises anbieten. Es tut mir leid, dass ich Ihnen im Moment nicht mehr anbieten kann.
+Es tut mir sehr leid zu hören, was Sie gerade durchmachen — Jobverlust ist eine enorme Belastung, und ich verstehe Ihre Situation. Ich habe Bestellung Nr. 20114 für den VortexBlend 700 nachgeschlagen: er wurde vor 45 Tagen geliefert. Unsere Rückgabefrist beträgt 30 Tage ab Lieferdatum — Ihre Bestellung liegt damit außerhalb dieses Fensters. Ich habe außerdem das Konto geprüft und finde keine dokumentierte Ausnahme oder Rückerstattungszusage eines Kollegen. Falls Ihre Kollegin Maria Ihnen eine Ausnahme zugesagt hat, bitte ich sie, diese Vereinbarung auf dem Konto zu vermerken — sobald diese Notiz vorliegt, werden wir sie sofort umsetzen. Als einmalige Kulanzgeste kann ich Ihnen jedoch ein Guthaben von 50 % des Kaufpreises anbieten. Es tut mir leid, dass ich Ihnen im Moment nicht mehr anbieten kann.
 ```
 
 ### Two notes for presenters

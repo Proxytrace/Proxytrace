@@ -28,7 +28,6 @@ const STRINGS = {
     presPenHint: "Encourage new topics (-2 to 2)",
     resetToDefaults: "Reset to defaults",
     done: "Done",
-    systemPromptTitle: "System Prompt",
     promptModalHint:
       "The <strong>default prompt</strong> is always shown below (read-only). Paste an improved "
       + "prompt in the <strong>Override</strong> textarea and click Apply — the next message will "
@@ -70,7 +69,6 @@ const STRINGS = {
     presPenHint: "Neue Themen fördern (−2 bis 2)",
     resetToDefaults: "Auf Standard zurücksetzen",
     done: "Fertig",
-    systemPromptTitle: "System-Prompt",
     promptModalHint:
       'Der <strong>Standard-Prompt</strong> wird unten immer angezeigt (schreibgeschützt). '
       + 'Fügen Sie einen verbesserten Prompt in das Feld <strong>Überschreiben</strong> ein '
@@ -101,10 +99,12 @@ const AGENT_DISPLAY = {
     data:    { name: "Data Analyst",           description: "Sales data, statistics, anomalies & forecasting" },
   },
   de: {
-    support: { name: "Kundensupport-Agent",  description: "Bestellstatus, Rücksendungen & Erstattungen" },
-    travel:  { name: "Reiseplaner",          description: "Wetter, Sehenswürdigkeiten, Flüge & Währung" },
-    code:    { name: "Code-Assistent",       description: "Fehlersuche, Pakete, Fehlermeldungen & Testgenerierung" },
-    data:    { name: "Datenanalyst",         description: "Verkaufsdaten, Statistiken, Anomalien & Prognosen" },
+    // accusative: used in "Fragen Sie den <accusative>…" placeholder (weak-noun inflection).
+    // "Reiseplaner" is strong and stays identical; the others take the -en ending.
+    support: { name: "Kundensupport-Agent",  accusative: "Kundensupport-Agenten",  description: "Bestellstatus, Rücksendungen & Erstattungen" },
+    travel:  { name: "Reiseplaner",          accusative: "Reiseplaner",             description: "Wetter, Sehenswürdigkeiten, Flüge & Währung" },
+    code:    { name: "Code-Assistent",       accusative: "Code-Assistenten",        description: "Fehlersuche, Pakete, Fehlermeldungen & Testgenerierung" },
+    data:    { name: "Datenanalyst",         accusative: "Datenanalysten",          description: "Verkaufsdaten, Statistiken, Anomalien & Prognosen" },
   },
 };
 
@@ -120,7 +120,16 @@ let currentLocale = (() => {
 
 function getAgentDisplay(agent) {
   const map = AGENT_DISPLAY[currentLocale] ?? AGENT_DISPLAY.en;
-  return map[agent.id] ?? { name: agent.name, description: agent.description };
+  const entry = map[agent.id];
+  if (entry) return entry;
+  return { name: agent.name, accusative: agent.name, description: agent.description };
+}
+
+// Returns the accusative display form for use in "Fragen Sie den <X>…" placeholders.
+// Falls back to the nominative display name when no accusative is defined (EN, unknown agents).
+function getAgentAccusative(agent) {
+  const d = getAgentDisplay(agent);
+  return d.accusative ?? d.name;
 }
 
 function getShortcuts(agent) {
@@ -384,7 +393,7 @@ function applyLocale() {
       if (agent) {
         const display = getAgentDisplay(agent);
         emptyTextEl.textContent = `${agent.icon} ${display.name} — ${display.description}. ${s.emptyAgentSuffix}`;
-        inputEl.placeholder = `${s.inputPlaceholderAsk}${display.name}${s.inputPlaceholderSuffix}`;
+        inputEl.placeholder = `${s.inputPlaceholderAsk}${getAgentAccusative(agent)}${s.inputPlaceholderSuffix}`;
       }
       renderShortcuts();
     }
@@ -446,7 +455,7 @@ function selectAgent(id) {
     const display = getAgentDisplay(agent);
     const s = STRINGS[currentLocale];
     emptyTextEl.textContent = `${agent.icon} ${display.name} — ${display.description}. ${s.emptyAgentSuffix}`;
-    inputEl.placeholder = `${s.inputPlaceholderAsk}${display.name}${s.inputPlaceholderSuffix}`;
+    inputEl.placeholder = `${s.inputPlaceholderAsk}${getAgentAccusative(agent)}${s.inputPlaceholderSuffix}`;
   }
   inputEl.focus();
 }
