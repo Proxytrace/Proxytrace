@@ -14,12 +14,16 @@ namespace Proxytrace.Proxy.Tests;
 
 /// <summary>
 /// Guards the kiosk-showcase mounting rule that <c>Proxytrace.Api/Program.cs</c> implements: the
-/// OpenAI-compatible proxy controller (which lives in this shared library, referenced by the API but
-/// NOT an MVC application part by default) is added as an application part — so its
-/// <c>openai/v1/{**path}</c> routes resolve — ONLY when kiosk mode runs with a live
-/// <c>Kiosk:Endpoint</c>. In production and kiosk-without-endpoint the route must not exist (404).
-/// The mounted route with no proxy API key returns 401, which distinguishes "route matched" from
-/// "route absent". This test also proves the controller assembly is not silently auto-discovered.
+/// OpenAI-compatible proxy controller (which lives in this shared library and is referenced by the API)
+/// is mounted as an MVC application part — so its <c>openai/v1/{**path}</c> routes resolve — ONLY when
+/// kiosk mode runs with a live <c>Kiosk:Endpoint</c>. In production and kiosk-without-endpoint the route
+/// must not exist (404). The mounted route with no proxy API key returns 401, which distinguishes "route
+/// matched" from "route absent".
+///
+/// The real API does NOT get the part by choice: the Web SDK auto-generates
+/// <c>[assembly: ApplicationPart("Proxytrace.Proxy")]</c> into <c>Proxytrace.Api</c> at build time, so the
+/// part is present in every mode and Program.cs must actively STRIP it outside kiosk+endpoint. This test
+/// reproduces that by seeding the part unconditionally before applying the same mount/strip decision.
 /// </summary>
 [TestClass]
 public sealed class KioskProxyMountingTests
@@ -73,26 +77,48 @@ public sealed class KioskProxyMountingTests
             ? new KioskEndpointOptions { BaseUrl = "https://api.example-llm.com/v1", ApiKey = "sk-live", Model = "demo-gpt" }
             : new KioskEndpointOptions());
 
-        // Register controllers WITHOUT the proxy application part — exactly as Program.cs does before
-        // its post-build conditional add.
-        builder.Services.AddControllers();
+        // Reproduce the Web SDK's build-time behaviour: it auto-generates
+        // [assembly: ApplicationPart("Proxytrace.Proxy")] into Proxytrace.Api, so the proxy controller's
+        // assembly is present as an application part in EVERY mode. Seed it unconditionally here so the
+        // strip path below is actually exercised.
+        builder.Services.AddControllers()
+            .ConfigureApplicationPartManager(apm =>
+                apm.ApplicationParts.Add(new AssemblyPart(typeof(OpenAiProxyController).Assembly)));
 
         var app = builder.Build();
 
-        // Mirror Program.cs: add the proxy controller's assembly as an application part only when kiosk
-        // runs with a live endpoint. Done post-build (before MapControllers) so the action descriptors
-        // pick it up.
+        // Mirror Program.cs exactly: keep the proxy part only when kiosk runs with a live endpoint,
+        // otherwise strip the auto-added part. Done post-build (before MapControllers) so the action
+        // descriptors reflect the decision.
         var mount = app.Services.GetRequiredService<KioskOptions>().Enabled
                     && app.Services.GetRequiredService<KioskEndpointOptions>().IsConfigured;
-        if (mount)
-        {
-            app.Services.GetRequiredService<ApplicationPartManager>()
-                .ApplicationParts.Add(new AssemblyPart(typeof(OpenAiProxyController).Assembly));
-        }
+        ApplyMountDecision(app.Services.GetRequiredService<ApplicationPartManager>(), mount);
 
         app.MapControllers();
 
         await app.StartAsync(CancellationToken.None);
         return app;
+    }
+
+    // Mirror of Proxytrace.Api.Kiosk.KioskProxyMounting.Apply (this test project does not reference the
+    // API host). Keep the proxy assembly's part when mounting; strip the SDK's auto-added part otherwise.
+    private static void ApplyMountDecision(ApplicationPartManager partManager, bool mount)
+    {
+        var proxyAssembly = typeof(OpenAiProxyController).Assembly;
+        var existingPart = partManager.ApplicationParts
+            .OfType<AssemblyPart>()
+            .FirstOrDefault(part => part.Assembly == proxyAssembly);
+
+        if (mount)
+        {
+            if (existingPart is null)
+            {
+                partManager.ApplicationParts.Add(new AssemblyPart(proxyAssembly));
+            }
+        }
+        else if (existingPart is not null)
+        {
+            partManager.ApplicationParts.Remove(existingPart);
+        }
     }
 }

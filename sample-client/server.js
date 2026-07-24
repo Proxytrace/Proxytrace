@@ -19,7 +19,9 @@ const openai = new OpenAI({
   baseURL: process.env.PROXYTRACE_BASE_URL ?? "https://api.openai.com/v1",
 });
 
-const MODEL = process.env.MODEL ?? "gpt-4o-mini";
+// `||` (not `??`) so the compose's empty-string MODEL default falls back too — `??` only replaces
+// null/undefined and would leave MODEL="" when the kiosk stack runs without a live endpoint.
+const MODEL = process.env.MODEL || "gpt-4o-mini";
 const AGENTS = loadAgents();
 
 // ── In-memory system-prompt overrides (keyed by agentId) ──────────────────────────────────
