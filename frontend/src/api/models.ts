@@ -177,6 +177,7 @@ export interface AgentVersionDto {
 /* ── Sessions ── */
 export interface SessionDto {
   id: string;
+  projectId: string;
   externalKey: string;
   createdAt: string;
   lastActivityAt: string;

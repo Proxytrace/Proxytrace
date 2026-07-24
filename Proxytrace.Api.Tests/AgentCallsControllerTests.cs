@@ -264,6 +264,40 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         session.TotalTokens.Should().Be(40);
     }
 
+    [TestMethod]
+    public async Task GetAll_AsNonAdminBySessionAndProject_ReturnsSessionTraces()
+    {
+        IServiceProvider services = GetServices();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        Guid projectId = agent.Project.Id;
+        var expectedSessionId = Proxytrace.Domain.Session.SessionIdDerivation.Derive(projectId, "run-77");
+
+        // Seed a session-stamped trace.
+        await ResolveController(services).Seed(
+            new SeedAgentCallRequest(
+                AgentId: agent.Id,
+                Model: "gpt-4o",
+                UserContent: "hi",
+                AssistantContent: "hello",
+                SystemContent: null,
+                InputTokens: 30,
+                OutputTokens: 10,
+                DurationMs: 100,
+                ConversationId: null,
+                SessionKey: "run-77"),
+            CancellationToken);
+
+        // A project-scoped (non-admin) member opens the session timeline: the list request carries
+        // both projectId and sessionId, so the access guard authorizes and the sessionId filter
+        // narrows to the one session. Without the projectId the guard would deny and the timeline
+        // would render empty for every non-admin.
+        var controller = ResolveController(services, ScopedGuard(projectId));
+        var result = await controller.GetAll(
+            projectId: projectId, sessionId: expectedSessionId, cancellationToken: CancellationToken);
+
+        result.Items.Should().ContainSingle(c => c.SessionId == expectedSessionId);
+    }
+
     private async Task<IAgentCall> SeedCallWithToolsAsync(
         IServiceProvider services,
         IAgent agent,
@@ -298,6 +332,18 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
         guard.GetAccessibleProjectIdsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyCollection<Guid>?>([]));
+        return guard;
+    }
+
+    // A non-admin scoped to a specific set of projects: the scope set is non-null (not admin) and
+    // contains exactly those projects.
+    private static Proxytrace.Api.Auth.IProjectAccessGuard ScopedGuard(params Guid[] projectIds)
+    {
+        var guard = Substitute.For<Proxytrace.Api.Auth.IProjectAccessGuard>();
+        guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(ci => projectIds.Contains(ci.Arg<Guid>()));
+        guard.GetAccessibleProjectIdsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyCollection<Guid>?>(projectIds));
         return guard;
     }
 

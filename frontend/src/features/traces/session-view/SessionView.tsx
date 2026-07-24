@@ -29,7 +29,13 @@ export default function SessionView() {
   const [sort, setSort] = useState<TraceSort>(SESSION_DEFAULT_SORT);
 
   const { session, isLoading, isError } = useSessionDetail(sessionId);
-  const { traces, total, isFetching } = useSessionTraces(sessionId, page, SESSION_TRACES_PAGE_SIZE, sort);
+  const { traces, total, isFetching } = useSessionTraces(
+    sessionId,
+    session?.projectId ?? null,
+    page,
+    SESSION_TRACES_PAGE_SIZE,
+    sort,
+  );
   useSessionLiveStream(sessionId);
 
   // Re-evaluate the "live" window on a timer, not only on an unrelated re-render.

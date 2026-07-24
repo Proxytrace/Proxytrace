@@ -4,6 +4,7 @@ namespace Proxytrace.Api.Dto.Sessions;
 
 public record SessionDto(
     Guid Id,
+    Guid ProjectId,
     string ExternalKey,
     DateTimeOffset CreatedAt,
     DateTimeOffset LastActivityAt,
@@ -13,6 +14,7 @@ public record SessionDto(
     public static SessionDto From(ISession session)
         => new(
             session.Id,
+            session.ProjectId,
             session.ExternalKey,
             session.CreatedAt,
             session.LastActivityAt,
