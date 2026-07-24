@@ -81,7 +81,7 @@ I'm going through a really rough patch right now — I lost my job last month an
 
 **SAY:** "Every call is captured automatically — agent attribution, the full tool-call chain, cost, and latency."
 
-**SEE:** The conversation row shows the agent name, model, token count, and latency. Click the row to expand it. Two turns appear: **Turn 2** (the text response granting the refund) and **Turn 1** (the intermediate tool-call completion). Click **Turn 2** to open its detail panel.
+**SEE:** The conversation row shows the agent name, model, token count, and latency. Click the row to expand it. Two turns appear. Click the **last turn — the text-response turn, not the tool-call turn** — to open its detail panel. (In a 2-turn conversation it is labelled **Turn 2** and shown at the top; avoid the turn that shows only a tool-call result.)
 
 In the detail panel, confirm:
 - Agent: **Customer Support Agent**
@@ -92,7 +92,7 @@ In the detail panel, confirm:
 
 ### Step 3 — Add the FINAL trace as a corrected test case (≈2 min)
 
-**DO:** With **Turn 2** open in the detail panel, click the **Add test** button (top-right of the panel header).
+**DO:** With the **final text-response turn** open in the detail panel (the one you opened in Step 2 — the text answer, not the tool-call turn), click the **Add test** button (top-right of the panel header).
 
 The "Add test" modal opens. It shows two columns:
 - **Left**: the input messages for this trace (the full conversation including the tool round-trip) and an editable **Expected output** field.
@@ -132,7 +132,7 @@ In the "Start new test run" dialog:
 **DO:** Navigate to **Evaluators** in the sidebar (under Improve). Click **New evaluator** (top-left of the evaluator rail).
 
 In the "New evaluator" modal:
-1. Select **Agentic** from the kind picker.
+1. Select **LLM Judge** from the kind picker.
 2. **Evaluator name**: `Policy Compliance — Refunds`
 3. Leave **Preset** as **Custom (write your own)**.
 4. Paste the following into the **Grading rubric** field:
@@ -164,7 +164,7 @@ Click **Create**.
 
 **SAY:** "We're writing a judge that knows the store's actual refund policy. Alternatively, Tracey AI can draft this rubric for you — ask it to create a policy-compliance evaluator for the Customer Support Agent."
 
-**SEE:** The evaluator "Policy Compliance — Refunds" appears in the left rail with kind "Agentic".
+**SEE:** The evaluator "Policy Compliance — Refunds" appears in the left rail with kind "LLM Judge".
 
 ---
 
@@ -190,11 +190,11 @@ The evaluator has exposed a class of failures, not just one.
 
 **SAY:** "After a failed run Proxytrace automatically generates a hypothesis: what system-prompt change would make the agent pass these cases? The A/B validation is running right now — baseline vs candidate, back-to-back, same suite."
 
-**SEE:** A new entry appears in the queue rail (left side). Its status shows **Validating** with an indeterminate progress bar: "Benchmarking the change against the current agent…". There is also a **View A/B run** link — click it to show the run in progress on the Test Runs page, then navigate back to Proposals.
+**SEE:** A new entry appears in the queue rail under the **In flight** section. The row shows "A/B in flight" (pulsing teal dot). Opening the dossier shows an indeterminate progress bar: "Benchmarking the change against the current agent…". There is also a **View A/B run** link — click it to show the run in progress on the Test Runs page, then navigate back to Proposals.
 
 After 2–3 minutes, the theory either:
-- **Wins** → status changes to **Validated**. The dossier shows "Proposed change" (a new system prompt with explicit policy rules) and A/B evidence (pass-rate delta, p-value). Proceed to Step 8.
-- **Invalidated** (rare — see Recovery below) → the A/B showed no significant improvement. Retry path: submit a manually tweaked theory.
+- **Wins** → the entry moves to the **Needs decision** section of the queue. The dossier badge changes to **Pending review** (teal). The row shows the p-value and "significant". The dossier body shows "Proposed change" (a new system prompt with explicit policy rules) and A/B evidence (pass-rate delta, p-value). Proceed to Step 8.
+- **No improvement** (rare — see Recovery below) → the entry shows "No improvement" and the A/B showed no significant win. Retry path: submit a manually tweaked theory.
 
 ---
 
@@ -236,11 +236,15 @@ Now click **⚡ The trick (demo)** shortcut again.
 
 ## Recovery / Troubleshooting
 
-### Theory shows Invalidated (A/B found no significant win)
+### Theory shows "No improvement" (A/B found no significant win)
 
 The A/B test ran but the candidate did not improve the pass rate enough to clear the significance threshold. Dedup blocks re-submitting the identical theory. Recovery path:
 
-Navigate to **Test Suites** → **Customer Support — Refund Policy Accuracy**. Review the failed cases. Add another failing case (e.g. run the trick again and add it as a second corrected case), then rerun the suite. The optimizer will generate a new (different) theory on the next failed run. Alternatively, ask Tracey AI: "Submit a new optimization theory for the Customer Support Agent — the current prompt does not enforce the 30-day return window or resist unverified prior-promise claims."
+**Option A — trigger a new theory from a fresh failed run:** Navigate to **Test Suites** → **Customer Support — Refund Policy Accuracy**. Run the trick again in the sample client and add it as a second corrected case, then rerun the suite. The optimizer generates a new (different) theory on the next failed run.
+
+**Option B — submit a tweaked theory via Tracey AI:** There is no direct "submit theory" form in the Proposals UI. Use Tracey AI (sidebar chat) and say something like: "Submit a new optimization theory for the Customer Support Agent — the current prompt does not enforce the 30-day return window or resist unverified prior-promise claims." Tracey calls the `submit_optimization_theory` tool and the new theory appears in the queue immediately.
+
+**Option C — API directly:** `POST /api/theories` with a `SubmitTheoryRequest` body (see the Swagger UI at http://localhost:5200/swagger in dev builds).
 
 ### Evaluator misjudges a case
 
