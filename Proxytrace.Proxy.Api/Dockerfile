@@ -20,9 +20,10 @@ ARG LICENSE_PUBLIC_KEY=
 WORKDIR /src
 COPY ["Proxytrace.Proxy.Api/Proxytrace.Proxy.Api.csproj", "Proxytrace.Proxy.Api/"]
 COPY ["Proxytrace.Proxy/Proxytrace.Proxy.csproj", "Proxytrace.Proxy/"]
-COPY ["Proxytrace.Application/Proxytrace.Application.csproj", "Proxytrace.Application/"]
 COPY ["Proxytrace.Common/Proxytrace.Common.csproj", "Proxytrace.Common/"]
 COPY ["Proxytrace.Domain/Proxytrace.Domain.csproj", "Proxytrace.Domain/"]
+COPY ["Proxytrace.Infrastructure/Proxytrace.Infrastructure.csproj", "Proxytrace.Infrastructure/"]
+COPY ["Proxytrace.Licensing/Proxytrace.Licensing.csproj", "Proxytrace.Licensing/"]
 COPY ["Proxytrace.Messaging/Proxytrace.Messaging.csproj", "Proxytrace.Messaging/"]
 COPY ["Proxytrace.Serialization/Proxytrace.Serialization.csproj", "Proxytrace.Serialization/"]
 COPY ["Proxytrace.Storage/Proxytrace.Storage.csproj", "Proxytrace.Storage/"]
