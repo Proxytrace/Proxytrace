@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from '../helpers/fixtures';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
@@ -9,7 +10,7 @@ import { addTraceFilter } from '../helpers/traces-ui';
 // LLM round-trip — so it runs in the `core` project.
 
 function unique(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}`;
 }
 
 async function makeClient(request: APIRequestContext): Promise<ProxytraceApiClient> {
