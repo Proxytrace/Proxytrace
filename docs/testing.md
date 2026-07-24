@@ -49,3 +49,8 @@ The e2e suite (repo-root `e2e/`) boots the full stack via Docker Compose (`docke
 will fail without one. Check first (e.g. `docker --version` and `docker info`); if Docker is
 unavailable, skip the e2e suite and say so rather than attempting to run it. See the
 `run-e2e-tests` skill for how to execute and triage them, and `create-e2e-test` to write them.
+
+In CI (`.github/workflows/e2e.yml`) a failing run uploads two artifacts: `playwright-report`
+(always) and `e2e-stack-logs` (on failure only) — per-service Docker Compose logs, container
+states, and `docker inspect` output, captured *before* teardown so stack-side failures stay
+triageable.
