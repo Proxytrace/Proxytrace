@@ -89,7 +89,9 @@ internal class SessionRepository
     // out-of-order ingest carrying an older CreatedAt must not rewind the session's activity (and
     // flip its Live indicator off) — and a rewound UpdatedAt could even fall before the row's
     // CreatedAt, making the entity fail domain validation on load. The counters still bump — the
-    // trace did arrive.
+    // trace did arrive. The forward-only rule is hand-synced with the in-memory branch above;
+    // unit tests (in-memory provider) cover only that mirror — this CASE path runs for real only
+    // in the perf suite / e2e stack, so keep both branches in sync when changing either.
     private static async Task<bool> TryBumpAsync(
         StorageDbContext context,
         Guid sessionId,

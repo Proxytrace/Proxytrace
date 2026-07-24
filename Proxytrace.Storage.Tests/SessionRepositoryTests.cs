@@ -61,6 +61,12 @@ public sealed class SessionRepositoryTests : BaseTest<Module>
 
         // A redelivered/out-of-order ingest carries an older CreatedAt: the counters still bump,
         // but LastActivityAt never moves backwards (it would flip the Live indicator off).
+        //
+        // COVERAGE NOTE: BaseTest runs on the in-memory provider, so this exercises only the
+        // in-memory branch of RecordActivityAsync. The shipped relational branch (the
+        // ExecuteUpdateAsync CASE expressions in TryBumpAsync) is the hand-synced mirror of the
+        // same forward-only rule and is executed only by the perf suite / e2e stack against real
+        // Postgres — keep the two branches in sync when changing either.
         await repo.RecordActivityAsync(id, "run-1", project.Id, 50, newer, CancellationToken);
         await repo.RecordActivityAsync(id, "run-1", project.Id, 70, older, CancellationToken);
 
