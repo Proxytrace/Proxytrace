@@ -22,7 +22,8 @@ public sealed class SessionRepositoryTests : BaseTest<Module>
 
         var session = await repo.FindAsync(id, CancellationToken);
         session.Should().NotBeNull();
-        session!.ExternalKey.Should().Be("run-1");
+        ArgumentNullException.ThrowIfNull(session);
+        session.ExternalKey.Should().Be("run-1");
         session.TraceCount.Should().Be(1);
         session.TotalTokens.Should().Be(50);
     }
@@ -42,9 +43,33 @@ public sealed class SessionRepositoryTests : BaseTest<Module>
 
         var session = await repo.FindAsync(id, CancellationToken);
         session.Should().NotBeNull();
-        session!.TraceCount.Should().Be(2);
+        ArgumentNullException.ThrowIfNull(session);
+        session.TraceCount.Should().Be(2);
         session.TotalTokens.Should().Be(120);
         session.LastActivityAt.Should().Be(t2);
+    }
+
+    [TestMethod]
+    public async Task RecordActivityAsync_OutOfOrderOlderActivity_BumpsCountersButKeepsLastActivity()
+    {
+        var services = GetServices();
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var repo = services.GetRequiredService<ISessionRepository>();
+        var id = SessionIdDerivation.Derive(project.Id, "run-1");
+        var newer = DateTimeOffset.UtcNow;
+        var older = newer.AddMinutes(-5);
+
+        // A redelivered/out-of-order ingest carries an older CreatedAt: the counters still bump,
+        // but LastActivityAt never moves backwards (it would flip the Live indicator off).
+        await repo.RecordActivityAsync(id, "run-1", project.Id, 50, newer, CancellationToken);
+        await repo.RecordActivityAsync(id, "run-1", project.Id, 70, older, CancellationToken);
+
+        var session = await repo.FindAsync(id, CancellationToken);
+        session.Should().NotBeNull();
+        ArgumentNullException.ThrowIfNull(session);
+        session.TraceCount.Should().Be(2);
+        session.TotalTokens.Should().Be(120);
+        session.LastActivityAt.Should().Be(newer);
     }
 
     [TestMethod]

@@ -20,6 +20,9 @@ import { isSessionLive, SESSION_TRACES_PAGE_SIZE } from './sessionMeta';
 // no conversation expand/collapse state — this stays empty and is never mutated.
 const NO_EXPANDED: Set<string> = new Set();
 // The session timeline is oldest-first so live arrivals append at the bottom (DESIGN §8).
+// Known limit: past SESSION_TRACES_PAGE_SIZE traces, a live arrival lands on the *last* page while
+// the viewer sits on page 1 — the header counters climb but no row appears until they page forward.
+// Accepted for now because sessions are bounded (one app run); revisit if long sessions become common.
 const SESSION_DEFAULT_SORT = { field: DEFAULT_TRACE_SORT.field, desc: false } as const;
 
 export default function SessionView() {
