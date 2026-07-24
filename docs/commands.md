@@ -98,6 +98,7 @@ docker compose -f docker-compose.kiosk.yml up --build
 | `KIOSK_LLM_API_KEY` | Provider API key |
 | `KIOSK_LLM_MODEL` | Model name, e.g. `gpt-4o-mini` — feeds **both** the api service and the sample client |
 | `KIOSK_LLM_KIND` | Provider kind: `OpenAi` \| `OpenAiCompatible` (default `OpenAi`) |
+| `KIOSK_DEMO_API_KEY` | Proxytrace demo key shared by api and sample-client (default `pk-kiosk-demo`). Override only if you need a custom key — change here and nowhere else; both sides derive from this variable |
 
 `KIOSK_LLM_MODEL` is deliberately shared between both services to prevent the registered endpoint
 and the chat client from drifting to different models (which would cause ingestion to flip the demo

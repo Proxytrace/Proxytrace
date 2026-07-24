@@ -26,6 +26,13 @@ services:
       # MODEL feeds BOTH services (one variable prevents endpoint/model mismatch mid-demo).
       - Kiosk__Endpoint__Model=${KIOSK_LLM_MODEL:-}
       - Kiosk__Endpoint__Kind=${KIOSK_LLM_KIND:-OpenAi}
+    healthcheck:
+      # Same bash /dev/tcp pattern used by the e2e compose — no curl/wget dependency.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
@@ -34,7 +41,8 @@ services:
     ports:
       - "5201:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     volumes:
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
@@ -45,7 +53,8 @@ services:
     ports:
       - "5202:3000"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     environment:
       # Key-only proxy URL: the project is derived from the Proxytrace-issued API key alone.
       - PROXYTRACE_BASE_URL=http://api:8080/openai/v1
