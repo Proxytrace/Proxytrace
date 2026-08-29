@@ -81,11 +81,9 @@ budget cannot cap unattributed spend; the project budget is what holds it.
 
 ## Monthly budgets
 
-::: info Enterprise feature
-Everyone can **see** this page and any configured budgets on every plan. **Setting** a budget
-requires an **Enterprise** license and an administrator account. Without a license the budgets you
-already configured stay visible and intact — they simply stop firing and stop blocking until the
-license is restored. See [Licensing](/admin/licensing).
+::: info Admins set budgets
+Everyone can **see** this page and any configured budgets. **Setting** a budget requires an
+administrator account.
 :::
 
 A budget sets up to two EUR amounts for one calendar month:

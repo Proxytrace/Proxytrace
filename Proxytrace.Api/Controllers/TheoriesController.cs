@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
 using Proxytrace.Api.Dto.Theories;
 using Proxytrace.Application.Optimization;
@@ -15,7 +14,6 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestSuite;
 using Nordstein.Core.AI.Tools;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -24,7 +22,6 @@ namespace Proxytrace.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-[RequiresFeature(LicenseFeature.OptimizationProposals)]
 [Route("api/theories")]
 public class TheoriesController : ControllerBase
 {

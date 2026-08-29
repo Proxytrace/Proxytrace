@@ -9,7 +9,6 @@ using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Mcp.Tools;
 
@@ -32,7 +31,6 @@ internal sealed class SuiteTools
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
     private readonly TestSuiteDtoMapper mapper;
-    private readonly ILicenseService license;
     private readonly ILogger<Audit> audit;
 
     /// <summary>
@@ -51,7 +49,6 @@ internal sealed class SuiteTools
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting,
         TestSuiteDtoMapper mapper,
-        ILicenseService license,
         ILogger<Audit> audit)
     {
         this.project = project;
@@ -66,7 +63,6 @@ internal sealed class SuiteTools
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
         this.mapper = mapper;
-        this.license = license;
         this.audit = audit;
     }
 
@@ -122,8 +118,6 @@ internal sealed class SuiteTools
         var agent = await agents.FindAsync(agentId, cancellationToken);
         if (agent is null || agent.Project.Id != p.Id)
             throw new McpException($"Agent '{agentId}' was not found in this project.");
-
-        license.Ensure(LicenseLimit.MaxTestSuites, await suites.CountAsync(cancellationToken));
 
         var defaultEvaluator = await evaluators.AddAsync(createEvaluator(agent.Project), cancellationToken);
 

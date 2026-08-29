@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { useFeature } from '../../hooks/useLicense';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { ID_SHORT_LEN } from '../../lib/constants';
 import type { StatisticsBucket } from '../../lib/time-range';
@@ -34,8 +33,8 @@ type EditorState = { mode: 'closed' } | { mode: 'create' } | { mode: 'edit'; id:
 
 /**
  * Costs page: a management summary of spend development for the current project, plus the monthly
- * budgets (soft warning / hard block) that govern it. Reading is free on every tier; only changing
- * a budget is licensed.
+ * budgets (soft warning / hard block) that govern it. Reading is open to every member; changing a
+ * budget is admin-only.
  */
 export default function Costs() {
   const [timeRange, setTimeRange] = useLocalStorageState<TimeRange>('costs.timeRange', DEFAULT_RANGE);
@@ -50,7 +49,6 @@ export default function Costs() {
   // clause here also hid the editor from OIDC admins, whose requests the backend accepts perfectly
   // well: the button vanished with no explanation while the feature was available to them.
   const isAdmin = useCurrentUser()?.role === 'Admin';
-  const licensed = useFeature('CostControls');
 
   const { overview, from, to, effectiveBucket, isLoading, isError } = useCostOverview(timeRange, bucket);
   // Budgets are their own cheap read — a budget change re-runs this, never the telemetry above.
@@ -172,7 +170,6 @@ export default function Costs() {
         <div className="flex flex-col gap-4 min-w-0">
           <BudgetSection
             budgets={budgets}
-            canEdit={isAdmin && licensed}
             isAdmin={isAdmin}
             isLoading={budgetsLoading || limitsLoading}
             canCreate={canCreateAny(availability)}

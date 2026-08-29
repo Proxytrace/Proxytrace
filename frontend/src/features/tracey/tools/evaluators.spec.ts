@@ -100,16 +100,6 @@ describe('create_evaluator', () => {
     expect(evaluatorsApi.create).not.toHaveBeenCalled();
   });
 
-  it('maps a 402 (unlicensed agentic) to a notLicensed outcome instead of throwing', async () => {
-    const ctx = makeCtx();
-    evaluatorsApi.create.mockRejectedValue(Object.assign(new Error('payment required'), { status: 402 }));
-
-    const tool = createEvaluatorTools(ctx, store).create_evaluator;
-    const result = await run(tool, { details: agenticDetails }, ctx) as { outcome: string };
-
-    expect(result.outcome).toBe('notLicensed');
-  });
-
   it('maps any other failure to a plain error outcome', async () => {
     const ctx = makeCtx();
     evaluatorsApi.create.mockRejectedValue(Object.assign(new Error('boom'), { status: 500 }));

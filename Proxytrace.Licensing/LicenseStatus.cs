@@ -12,7 +12,7 @@ public enum LicenseStatus
 
     /// <summary>
     /// A license was configured but failed validation (malformed, bad signature, expired, …).
-    /// The deployment runs with Free-tier entitlements until the license is corrected.
+    /// The deployment reports no support contract until the key is corrected.
     /// </summary>
     Invalid,
 }

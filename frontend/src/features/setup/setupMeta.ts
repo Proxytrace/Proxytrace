@@ -1,9 +1,6 @@
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 import { ModelProviderKind } from '../../api/models';
-import type { LicenseDto, LicenseFeature } from '../../api/license';
-import { FEATURE_LABELS } from '../../components/license/licenseUtils';
-import { fmtTokens } from '../../lib/format';
 
 /* ── Provider presets ─────────────────────────────────────────────────── */
 
@@ -106,73 +103,3 @@ export const STEP_HEADINGS: ({ title: MessageDescriptor; subtitle: MessageDescri
     subtitle: msg`Swap the base URL for your project’s proxy endpoint — your existing provider API key keeps working.`,
   },
 ];
-
-/* ── Welcome-step tier summary ─────────────────────────────────────────── */
-
-const ALL_FEATURES = Object.keys(FEATURE_LABELS) as LicenseFeature[];
-
-export interface TierSummary {
-  isFree: boolean;
-  tierLabel: MessageDescriptor;
-  /** What this installation includes, shown with a check. */
-  included: MessageDescriptor[];
-  /** Enterprise features this installation does not have (Free only). */
-  locked: MessageDescriptor[];
-}
-
-/** One Free-tier limit line per resource, pluralized by the granted count (0/undefined = unlimited). */
-function projectsLimitLine(n: number | undefined): MessageDescriptor {
-  if (n === undefined || n <= 0) return msg`Unlimited projects`;
-  if (n === 1) return msg`1 project`;
-  return msg`${n} projects`;
-}
-
-function agentsLimitLine(n: number | undefined): MessageDescriptor {
-  if (n === undefined || n <= 0) return msg`Unlimited agents`;
-  if (n === 1) return msg`1 agent`;
-  return msg`${n} agents`;
-}
-
-function testSuitesLimitLine(n: number | undefined): MessageDescriptor {
-  if (n === undefined || n <= 0) return msg`Unlimited test suites`;
-  if (n === 1) return msg`1 test suite`;
-  return msg`${n} test suites`;
-}
-
-/** Builds the Welcome-step feature summary from the license snapshot. */
-export function buildTierSummary(license: LicenseDto | undefined): TierSummary {
-  const isFree = license?.tier !== 'enterprise';
-  const limits = license?.limits ?? {};
-
-  const included: MessageDescriptor[] = [
-    msg`Full trace capture through the OpenAI-compatible proxy`,
-    msg`Dashboard, agents, test suites & evaluators`,
-  ];
-
-  if (isFree) {
-    included.push(
-      projectsLimitLine(limits.MaxProjects ?? 1),
-      agentsLimitLine(limits.MaxAgents ?? 1),
-      testSuitesLimitLine(limits.MaxTestSuites ?? 1),
-      msg`${fmtTokens(limits.MaxTracesPerMonth ?? 10_000)} traces per month, kept ${limits.TraceRetentionDays ?? 14} days`,
-    );
-  } else {
-    included.push(
-      msg`Unlimited projects, agents & test suites`,
-      ...(license?.features ?? []).map(f => FEATURE_LABELS[f]),
-      msg`${limits.TraceRetentionDays ?? 365}-day trace retention`,
-    );
-  }
-
-  const granted = new Set(license?.features ?? []);
-  const locked = isFree ? ALL_FEATURES.filter(f => !granted.has(f)).map(f => FEATURE_LABELS[f]) : [];
-
-  return {
-    isFree,
-    tierLabel: isFree ? msg`Free` : msg`Enterprise`,
-    included,
-    locked,
-  };
-}
-
-export const UPGRADE_URL = 'https://proxytrace.dev';

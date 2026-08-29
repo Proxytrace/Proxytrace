@@ -15,8 +15,6 @@ using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
-using Proxytrace.Licensing.Exceptions;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -182,37 +180,9 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task BuildAgentic_WhenFeatureNotLicensed_ThrowsFeatureNotLicensed()
+    public async Task BuildAgentic_BuildsEvaluator()
     {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Returns(false);
-        license.Current.Returns(LicenseSnapshot.Free());
-
-        IServiceProvider services = GetServices(b => b.RegisterInstance(license).As<ILicenseService>());
-        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
-        var builder = services.GetRequiredService<EvaluatorBuilder>();
-
-        await FluentActions
-            .Invoking(() => builder.BuildAsync(
-                new CreateAgenticEvaluatorRequest
-                {
-                    ProjectId = project.Id,
-                    Name = "Judge",
-                    SystemMessage = "Rate the answer.",
-                },
-                project,
-                CancellationToken))
-            .Should().ThrowAsync<FeatureNotLicensedException>()
-            .Where(e => e.Feature == LicenseFeature.AgenticEvaluators);
-    }
-
-    [TestMethod]
-    public async Task BuildAgentic_WhenFeatureLicensed_BuildsEvaluator()
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Returns(true);
-
-        IServiceProvider services = GetServices(b => b.RegisterInstance(license).As<ILicenseService>());
+        IServiceProvider services = GetServices();
         var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
         var builder = services.GetRequiredService<EvaluatorBuilder>();
 

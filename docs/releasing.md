@@ -106,8 +106,8 @@ this is harmless, but `latest` advances ahead of the release going live.
 
 ## Source protection in shipped images
 
-Self-hosted .NET ships decompilable IL — accepted (the protection model is licensing +
-the proprietary LICENSE, like every commercial self-hosted product). The cheap hardening
+Self-hosted .NET ships decompilable IL — accepted (the source is public anyway; the protection
+model is the PolyForm Shield license's non-compete clause, not obscurity). The cheap hardening
 that *is* applied: backend Dockerfiles publish with `-p:DebugType=none`, so released images
 contain **no PDBs** — which would otherwise carry line-accurate symbols and a SourceLink map
 revealing the private repo URL + commit SHA. Consequence: production stacktraces (error log)

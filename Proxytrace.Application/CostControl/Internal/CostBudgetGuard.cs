@@ -8,7 +8,6 @@ using Proxytrace.Domain.CostLimit;
 using Proxytrace.Domain.CostLimitBreach;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.Statistics;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.CostControl.Internal;
 
@@ -30,7 +29,6 @@ internal sealed class CostBudgetGuard : BackgroundService
     private readonly ICostLimitBreachRepository breaches;
     private readonly ICostLimitBreach.CreateNew createBreach;
     private readonly INotificationService notifications;
-    private readonly ILicenseService licenseService;
     private readonly ISerializer serializer;
     private readonly IClock clock;
     private readonly CostControlOptions options;
@@ -46,7 +44,6 @@ internal sealed class CostBudgetGuard : BackgroundService
         ICostLimitBreachRepository breaches,
         ICostLimitBreach.CreateNew createBreach,
         INotificationService notifications,
-        ILicenseService licenseService,
         ISerializer serializer,
         IClock clock,
         CostControlOptions options,
@@ -58,7 +55,6 @@ internal sealed class CostBudgetGuard : BackgroundService
         this.breaches = breaches;
         this.createBreach = createBreach;
         this.notifications = notifications;
-        this.licenseService = licenseService;
         this.serializer = serializer;
         this.clock = clock;
         this.options = options;
@@ -95,11 +91,6 @@ internal sealed class CostBudgetGuard : BackgroundService
     {
         try
         {
-            // Use-time degrade: an unlicensed install keeps its budget configuration but nothing
-            // fires and nothing blocks, so re-licensing restores enforcement without re-entry.
-            if (!licenseService.IsFeatureEnabled(LicenseFeature.CostControls))
-                return;
-
             IReadOnlyList<ICostLimit> limits = await costLimits.GetAllEnabledAsync(cancellationToken);
             if (limits.Count == 0)
                 return;

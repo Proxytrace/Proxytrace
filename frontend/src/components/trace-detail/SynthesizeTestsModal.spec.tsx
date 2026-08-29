@@ -32,14 +32,10 @@ vi.mock('react-router', async importOriginal => ({
   useNavigate: () => navigate,
 }));
 vi.mock('../../hooks/useToast', () => ({ default: () => ({ show: toastShow }) }));
-// The panel reads the current project (for evaluator creation) and the licence (for the judge
-// card). Both are app-wide context; stub them rather than mounting the whole provider tree.
+// The panel reads the current project (for evaluator creation) — app-wide context; stub it
+// rather than mounting the whole provider tree.
 vi.mock('../../hooks/useCurrentProject', () => ({
   default: () => ({ currentProjectId: 'project-1' }),
-}));
-vi.mock('../../hooks/useLicense', () => ({
-  useFeature: () => true,
-  useLicense: () => ({ data: { limits: { MaxTestSuites: 100 } } }),
 }));
 
 import { SynthesizeTestsModal } from './SynthesizeTestsModal';

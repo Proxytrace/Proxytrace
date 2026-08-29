@@ -22,7 +22,6 @@ using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Application.Tests;
@@ -61,7 +60,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
     }
 
     /// Builds a suite carrying one Exact Match evaluator and one agentic evaluator, so a run's
-    /// evaluation count reveals whether the agentic one was skipped by the license gate.
+    /// evaluations show both kinds executing side by side.
     private static async Task<ITestSuite> BuildSuiteWithAgenticAsync(
         IServiceProvider services,
         AssistantMessage expectedOutput,
@@ -98,14 +97,6 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         for (var i = 0; i < count; i++)
             endpoints.Add(await generator.CreateAsync(CancellationToken));
         return endpoints;
-    }
-
-    private static void RegisterLicense(ContainerBuilder builder, bool agenticEnabled)
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(Arg.Any<LicenseFeature>()).Returns(true);
-        license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Returns(agenticEnabled);
-        builder.RegisterInstance(license).As<ILicenseService>();
     }
 
     // ── tests ─────────────────────────────────────────────────────────────────
@@ -759,38 +750,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task RunAsync_WhenAgenticEvaluatorsDisabled_SkipsAgenticEvaluator()
+    public async Task RunAsync_SuiteWithAgenticEvaluator_RunsAgenticEvaluator()
     {
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
-        var services = GetServices(config =>
-        {
-            RegisterFakeModelClient(config, expectedOutput);
-            RegisterLicense(config, agenticEnabled: false);
-        });
-
-        var suite = await BuildSuiteWithAgenticAsync(services, expectedOutput, CancellationToken);
-        var runner = services.GetRequiredService<ITestRunnerService>();
-        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
-
-        var group = await runner.RunInForegroundAsync(suite, [endpoint], cancellationToken: CancellationToken);
-
-        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
-        var testRun = (await testRunRepository.GetByGroupAsync(group.Id, CancellationToken)).First();
-
-        // Only the Exact Match evaluator runs; the agentic one is skipped (not errored).
-        testRun.TestResults[0].Evaluations.Should().ContainSingle()
-            .Which.Evaluator.Kind.Should().Be(EvaluatorKind.ExactMatch);
-    }
-
-    [TestMethod]
-    public async Task RunAsync_WhenAgenticEvaluatorsEnabled_RunsAgenticEvaluator()
-    {
-        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
-        var services = GetServices(config =>
-        {
-            RegisterFakeModelClient(config, expectedOutput);
-            RegisterLicense(config, agenticEnabled: true);
-        });
+        var services = GetServices(config => RegisterFakeModelClient(config, expectedOutput));
 
         var suite = await BuildSuiteWithAgenticAsync(services, expectedOutput, CancellationToken);
         var runner = services.GetRequiredService<ITestRunnerService>();

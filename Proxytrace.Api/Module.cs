@@ -208,7 +208,7 @@ internal sealed class Module : Autofac.Module
         if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
         {
             builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
-            builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration, kiosk.Enabled)));
+            builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration)));
         }
 
         StorageConfiguration storageConfig;
@@ -235,11 +235,6 @@ internal sealed class Module : Autofac.Module
         // longer pulls this in transitively, so the composition root registers it explicitly. See
         // docs/security.md.
         builder.RegisterModule<Infrastructure.Security.SecretProtectionModule>();
-
-        // Single registration: the global filter (Program.cs options.Filters.Add<T>()) resolves the
-        // enforcement filter per request from the scope, so only the scoped registration is needed.
-        builder.RegisterServiceCollection(services =>
-            services.AddScoped<Auth.Licensing.LicenseEnforcementFilter>());
 
         builder.RegisterType<CurrentUserAccessor>()
             .As<ICurrentUserAccessor>()
@@ -478,7 +473,7 @@ internal sealed class Module : Autofac.Module
         });
     }
 
-    private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(IConfiguration configuration, bool kioskEnabled)
+    private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(IConfiguration configuration)
     {
         var section = configuration.GetSection("Licensing");
 
@@ -528,12 +523,6 @@ internal sealed class Module : Autofac.Module
             CheckIntervalHours = section.GetValue<int?>("CheckIntervalHours") ?? 24,
             OfflineGracePeriodDays = section.GetValue<int?>("OfflineGracePeriodDays") ?? 7,
             CacheFilePath = cachePath,
-
-            // Kiosk/demo deployments always run on a fake, perpetual Enterprise license so the
-            // full feature set is visible without a real signed JWT.
-            OverrideSnapshot = kioskEnabled
-                ? Proxytrace.Licensing.LicenseSnapshot.Enterprise("kiosk@proxytrace.dev")
-                : null,
         };
     }
 

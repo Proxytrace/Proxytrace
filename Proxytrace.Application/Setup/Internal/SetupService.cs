@@ -8,7 +8,6 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.Setup.Internal;
 
@@ -28,10 +27,9 @@ internal class SetupService : ISetupService
     private readonly IAsyncLock asyncLock;
 
     /// <summary>Lock key serializing first-run setup against a concurrent submission of itself.</summary>
-    private const string SetupLockKey = "license-quota:setup";
+    private const string SetupLockKey = "setup";
     private readonly ILocalTokenIssuer tokens;
     private readonly ITransaction transaction;
-    private readonly ILicenseService license;
     private readonly IModelPriceRefresher priceRefresher;
 
     /// <summary>
@@ -52,7 +50,6 @@ internal class SetupService : ISetupService
         IAsyncLock asyncLock,
         ILocalTokenIssuer tokens,
         ITransaction transaction,
-        ILicenseService license,
         IModelPriceRefresher priceRefresher)
     {
         this.providers = providers;
@@ -69,7 +66,6 @@ internal class SetupService : ISetupService
         this.asyncLock = asyncLock;
         this.tokens = tokens;
         this.transaction = transaction;
-        this.license = license;
         this.priceRefresher = priceRefresher;
     }
 
@@ -114,8 +110,8 @@ internal class SetupService : ISetupService
     public async Task<SetupResult> CompleteAsync(SetupInput input, CancellationToken cancellationToken = default)
     {
         // Taken outside the transaction, and held for the whole of it: the "already completed" test
-        // and the project-limit check below are both check-then-act against the same count, so two
-        // concurrent setup submissions could each observe zero projects and each proceed.
+        // is check-then-act against the project count, so two concurrent setup submissions could
+        // each observe zero projects and each proceed.
         using IDisposable setupLock = await asyncLock.LockAsync(SetupLockKey, cancellationToken);
 
         IModelProvider? savedProvider = null;
@@ -124,8 +120,6 @@ internal class SetupService : ISetupService
             var projectCount = await projects.CountAsync(cancellationToken);
             if (projectCount > 0)
                 throw new InvalidOperationException("Setup has already been completed.");
-
-            license.Ensure(LicenseLimit.MaxProjects, projectCount);
 
             var user = await currentUser.GetCurrentUserAsync(cancellationToken)
                 ?? throw new InvalidOperationException("Setup requires an authenticated user.");

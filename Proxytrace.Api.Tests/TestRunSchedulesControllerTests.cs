@@ -1,15 +1,8 @@
 using Proxytrace.Domain.AuditLog;
-using System.Reflection;
 using AwesomeAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.TestRun;
@@ -19,7 +12,6 @@ using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestRunSchedule;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -236,55 +228,6 @@ public sealed class TestRunSchedulesControllerTests : BaseTest<Module>
 
         var scheduledGroups = await groups.GetByScheduleAsync(schedule.Id, 5, CancellationToken);
         scheduledGroups.Should().NotBeEmpty();
-    }
-
-    [TestMethod]
-    public void Create_Endpoint_RequiresScheduledTestRunsFeature()
-    {
-        var method = typeof(TestRunSchedulesController).GetMethod(nameof(TestRunSchedulesController.Create))
-            ?? throw new InvalidOperationException("Create method not found");
-        var attribute = method.GetCustomAttribute<RequiresFeatureAttribute>();
-        attribute.Should().NotBeNull();
-        attribute.Should().Match<RequiresFeatureAttribute>(a => a.Feature == LicenseFeature.ScheduledTestRuns);
-    }
-
-    [TestMethod]
-    public async Task LicenseFilter_CreateWithoutFeature_ReturnsPaymentRequired()
-    {
-        var service = Substitute.For<ILicenseService>();
-        service.IsFeatureEnabled(Arg.Any<LicenseFeature>()).Returns(false);
-        service.Current.Returns(new LicenseSnapshot(
-            LicenseTier.Free, LicenseStatus.Free, null, null, null, null,
-            new HashSet<LicenseFeature>(), new Dictionary<LicenseLimit, long>()));
-        var filter = new LicenseEnforcementFilter(service);
-        var context = BuildContext(new RequiresFeatureAttribute(LicenseFeature.ScheduledTestRuns));
-
-        await filter.OnAuthorizationAsync(context);
-
-        context.Result.Should().BeOfType<ObjectResult>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status402PaymentRequired);
-    }
-
-    [TestMethod]
-    public async Task LicenseFilter_CreateWithFeature_DoesNotShortCircuit()
-    {
-        var service = Substitute.For<ILicenseService>();
-        service.IsFeatureEnabled(LicenseFeature.ScheduledTestRuns).Returns(true);
-        var filter = new LicenseEnforcementFilter(service);
-        var context = BuildContext(new RequiresFeatureAttribute(LicenseFeature.ScheduledTestRuns));
-
-        await filter.OnAuthorizationAsync(context);
-
-        context.Result.Should().BeNull();
-    }
-
-    private static AuthorizationFilterContext BuildContext(params object[] endpointMetadata)
-    {
-        var actionContext = new ActionContext(
-            new DefaultHttpContext(),
-            new RouteData(),
-            new ActionDescriptor { EndpointMetadata = endpointMetadata });
-        return new AuthorizationFilterContext(actionContext, []);
     }
 
     private static TestRunSchedulesController ResolveController(IServiceProvider services) => new(

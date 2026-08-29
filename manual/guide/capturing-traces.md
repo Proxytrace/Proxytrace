@@ -156,7 +156,7 @@ you can ask something specific about this call (for example, “Why was the refu
 then hands the trace ID and your question to the [AI assistant](/guide/tracey). **Generate tests**
 reads the whole conversation and [proposes the test cases worth
 building](/guide/test-suites-and-cases#let-proxytrace-propose-the-cases) — it starts as soon as the
-panel opens (Enterprise). To turn traces into cases by hand instead, open a suite on the **Test
+panel opens. To turn traces into cases by hand instead, open a suite on the **Test
 Suites** page and use [Add from traces](/guide/test-suites-and-cases#building-a-suite-from-traces).
 
 If the call was [flagged as an outlier](/guide/outliers) or by a

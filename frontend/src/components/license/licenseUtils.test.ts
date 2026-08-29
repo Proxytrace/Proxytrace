@@ -1,6 +1,6 @@
 import { beforeAll, describe, it, expect } from 'vitest';
 import { i18n } from '../../i18n';
-import { daysLeft, licenseSourceNote, tierBadge, upgradeCopy } from './licenseUtils';
+import { daysLeft, licenseSourceNote, tierBadge } from './licenseUtils';
 
 // Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
 beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
@@ -32,59 +32,41 @@ describe('daysLeft', () => {
 });
 
 describe('tierBadge', () => {
-  it('shows a muted Free chip that links to upgrade', () => {
-    const badge = tierBadge('free', 'free');
-    expect(i18n._(badge.label)).toBe('Free');
-    expect(badge.tone).toBe('free');
-    expect(badge.linkToUpgrade).toBe(true);
+  it('shows no chip without a support contract', () => {
+    expect(tierBadge('free')).toBeNull();
   });
 
-  it('shows the cyan premium Enterprise chip when active', () => {
-    const badge = tierBadge('active', 'enterprise');
-    expect(i18n._(badge.label)).toBe('Enterprise');
-    expect(badge.tone).toBe('premium');
-    expect(badge.linkToUpgrade).toBe(false);
+  it('shows no chip while the configured key is invalid', () => {
+    expect(tierBadge('invalid')).toBeNull();
+  });
+
+  it('shows the cyan premium chip for an active support contract', () => {
+    const badge = tierBadge('active');
+    expect(badge).not.toBeNull();
+    expect(i18n._(badge?.label ?? msgFallback)).toBe('Enterprise support');
+    expect(badge?.tone).toBe('premium');
   });
 
   it('shows a pending (amber) chip while re-validation is in flight', () => {
-    expect(tierBadge('grace', 'enterprise').tone).toBe('pending');
-    expect(tierBadge('expired', 'enterprise').tone).toBe('pending');
-  });
-});
-
-describe('upgradeCopy', () => {
-  it('frames a limit hit distinctly from a feature gate', () => {
-    expect(i18n._(upgradeCopy('LicenseLimitExceeded').title)).toBe("You've reached a Free-tier limit");
-    expect(i18n._(upgradeCopy('FeatureNotLicensed').title)).toBe('This is an Enterprise feature');
-  });
-
-  it('provides a fallback body for each error type', () => {
-    expect(i18n._(upgradeCopy('LicenseLimitExceeded').fallback)).toBeTruthy();
-    expect(i18n._(upgradeCopy('FeatureNotLicensed').fallback)).toBeTruthy();
-  });
-});
-
-describe('invalid license', () => {
-  it('shows the Free upgrade chip while the configured license is invalid', () => {
-    const badge = tierBadge('invalid', 'free');
-    expect(i18n._(badge.label)).toBe('Free');
-    expect(badge.tone).toBe('free');
-    expect(badge.linkToUpgrade).toBe(true);
+    expect(tierBadge('grace')?.tone).toBe('pending');
+    expect(tierBadge('expired')?.tone).toBe('pending');
   });
 });
 
 describe('licenseSourceNote', () => {
-  it('explains environment, stored, and override sources', () => {
+  it('explains environment and stored sources', () => {
     const note = (source: Parameters<typeof licenseSourceNote>[0]) => {
       const descriptor = licenseSourceNote(source);
       return descriptor ? i18n._(descriptor) : null;
     };
     expect(note('environment')).toContain('PROXYTRACE_LICENSE');
     expect(note('stored')).toContain('stored in the database');
-    expect(note('override')).toContain('cannot be changed');
   });
 
-  it('returns null when no license is configured', () => {
+  it('returns null when no key is configured', () => {
     expect(licenseSourceNote('none')).toBeNull();
   });
 });
+
+// A descriptor that never matches, so a null badge fails the assertion loudly instead of passing.
+const msgFallback = { id: 'test.fallback', message: '<no badge>' };

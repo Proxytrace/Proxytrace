@@ -17,7 +17,6 @@ using Proxytrace.Domain.CostLimitBreach;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Statistics;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Application.Tests;
@@ -31,13 +30,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         public FixedClock(DateTimeOffset start) => UtcNow = start;
 
         public DateTimeOffset UtcNow { get; set; }
-    }
-
-    private static ILicenseService LicensedService(bool licensed = true)
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.CostControls).Returns(licensed);
-        return license;
     }
 
     private static ICostStatistics SpendOf(
@@ -63,7 +55,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -99,7 +90,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -133,7 +123,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -151,33 +140,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task Evaluate_WhenUnlicensed_DoesNothing()
-    {
-        var notifications = Substitute.For<INotificationService>();
-        var clock = new FixedClock(new DateTimeOffset(2026, 7, 15, 12, 0, 0, TimeSpan.Zero));
-
-        IServiceProvider services = GetServices(builder =>
-        {
-            builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService(licensed: false)).As<ILicenseService>();
-            builder.RegisterInstance(clock).As<IClock>();
-        });
-
-        (IProject project, IAgent agent) = await SeedAsync(services);
-        await AddLimitAsync(services, project, agent: null, soft: 50m, hard: 100m);
-
-        await BuildGuard(services, new ProjectAgentCostStat(project.Id, agent.Id, 999m))
-            .EvaluateAsync(CancellationToken);
-
-        // Use-time degrade: the configuration survives, nothing fires and nothing blocks.
-        await notifications.DidNotReceive().NotifyAsync(Arg.Any<NotificationRequest>(), Arg.Any<CancellationToken>());
-        var breaches = services.GetRequiredService<ICostLimitBreachRepository>();
-        (await breaches.GetFiredThresholdsAsync(
-                CostMonth.StartOf(clock.UtcNow), cancellationToken: CancellationToken))
-            .Should().BeEmpty();
-    }
-
-    [TestMethod]
     public async Task Evaluate_WhenLimitDisabled_DoesNotFire()
     {
         var notifications = Substitute.For<INotificationService>();
@@ -186,7 +148,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -208,7 +169,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -238,7 +198,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -266,7 +225,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -295,7 +253,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -328,7 +285,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -366,7 +322,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(notifications).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -399,7 +354,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
         IServiceProvider services = GetServices(builder =>
         {
             builder.RegisterInstance(Substitute.For<INotificationService>()).As<INotificationService>();
-            builder.RegisterInstance(LicensedService()).As<ILicenseService>();
             builder.RegisterInstance(clock).As<IClock>();
         });
 
@@ -458,7 +412,6 @@ public sealed class CostBudgetGuardTests : BaseTest<Module>
             services.GetRequiredService<ICostLimitBreachRepository>(),
             services.GetRequiredService<ICostLimitBreach.CreateNew>(),
             services.GetRequiredService<INotificationService>(),
-            services.GetRequiredService<ILicenseService>(),
             services.GetRequiredService<ISerializer>(),
             services.GetRequiredService<IClock>(),
             new CostControlOptions(),

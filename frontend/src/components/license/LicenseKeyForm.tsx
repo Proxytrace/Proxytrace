@@ -9,9 +9,8 @@ import { CheckIcon, AlertTriangleIcon } from '../icons';
 import { fmtDate } from '../../lib/format';
 
 /**
- * Paste-a-license-key form shared by the setup wizard's Welcome step and the
- * settings License page. "Validate" is a dry run (nothing stored); "Activate"
- * stores and applies the key without a restart.
+ * Paste-a-support-key form on the settings page. "Validate" is a dry run (nothing stored);
+ * "Activate" stores and applies the key without a restart.
  */
 export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
   const { t } = useLingui();
@@ -28,7 +27,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
   const onActivate = () =>
     apply.mutate(trimmed, {
       onSuccess: () => {
-        showToast(t`License activated.`, 'success');
+        showToast(t`Support key activated.`, 'success');
         setKey('');
         setPreview(null);
         onApplied?.();
@@ -45,17 +44,17 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
           setKey(e.target.value);
           setPreview(null);
         }}
-        placeholder={t`Paste your license key (JWT) here`}
+        placeholder={t`Paste your support key (JWT) here`}
         className="font-mono text-body-sm"
         data-testid="license-key-input"
-        aria-label={t`License key`}
+        aria-label={t`Support key`}
       />
 
       {preview && (preview.valid ? (
         <div className="flex items-center gap-1.5 text-body-sm text-success" data-testid="license-validate-ok">
           <CheckIcon size={12} strokeWidth={2.5} />
           <span>
-            {t`Valid ${preview.tier === 'enterprise' ? 'Enterprise' : 'Free'} license`}
+            {preview.tier === 'enterprise' ? t`Valid Enterprise support key` : t`Valid key`}
             {preview.offline ? t` (offline)` : ''}
             {preview.customerEmail ? t` for ${preview.customerEmail}` : ''}
             {preview.expiresAt ? t`, valid until ${fmtDate(preview.expiresAt)}` : ''}
@@ -64,7 +63,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
       ) : (
         <div className="flex items-center gap-1.5 text-body-sm text-danger" data-testid="license-validate-error">
           <AlertTriangleIcon size={12} />
-          <span>{preview.reason ?? t`This license key is not valid.`}</span>
+          <span>{preview.reason ?? t`This support key is not valid.`}</span>
         </div>
       ))}
 
@@ -87,7 +86,7 @@ export function LicenseKeyForm({ onApplied }: { onApplied?: () => void }) {
           onClick={onActivate}
           data-testid="license-activate-btn"
         >
-          <Trans>Activate license</Trans>
+          <Trans>Activate key</Trans>
         </Button>
       </div>
     </div>

@@ -4,10 +4,7 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Monthly cost budgets on the /costs page.
 //
-// Configuring a budget is admin-only AND gated behind the CostControls (Enterprise) license
-// feature; the default e2e stack (the `core` project, :5101) is Enterprise-licensed, so the
-// "New budget" button is live here. Reading the page and the budget list is free on every tier —
-// the Free-tier :5103 stack is exercised separately by licensing.spec.ts.
+// Configuring a budget is admin-only; reading the page and the budget list is open to every member.
 //
 // The spec covers the configuration half end-to-end (create through the UI, verify through the
 // API, see the consumption meter render). The hard-block 403 round trip is deliberately NOT

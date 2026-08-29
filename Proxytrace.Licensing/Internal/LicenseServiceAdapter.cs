@@ -4,8 +4,7 @@ namespace Proxytrace.Licensing.Internal;
 
 /// <summary>
 /// Proxytrace's <see cref="ILicenseService"/>, backed by the Nordstein.Core licensing engine.
-/// Feature/limit queries delegate directly on the canonical enum names; the snapshot is
-/// converted on read so it always reflects the engine's current state.
+/// The snapshot is converted on read so it always reflects the engine's current state.
 /// </summary>
 internal sealed class LicenseServiceAdapter : ILicenseService
 {
@@ -33,16 +32,6 @@ internal sealed class LicenseServiceAdapter : ILicenseService
         add => engine.Changed += value;
         remove => engine.Changed -= value;
     }
-
-    /// <summary>
-    /// Determines whether the feature enabled.
-    /// </summary>
-    public bool IsFeatureEnabled(LicenseFeature feature) => engine.HasFeature(feature.ToString());
-
-    /// <summary>
-    /// Gets the limit.
-    /// </summary>
-    public long GetLimit(LicenseLimit limit) => engine.GetLimit(limit.ToString());
 
     /// <summary>
     /// Force refresh asynchronously.

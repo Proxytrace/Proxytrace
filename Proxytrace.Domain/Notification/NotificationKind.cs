@@ -14,14 +14,10 @@ public enum NotificationKind
     ProposalReady,
 
     /// <summary>
-    /// The installation has reached its licensed monthly trace limit and captures for this project
-    /// are being dropped.
+    /// Historical: the installation had reached its licensed monthly trace limit. No longer raised —
+    /// Proxytrace has no trace quota — but kept because persisted notification rows may still carry
+    /// this kind.
     /// </summary>
-    /// <remarks>
-    /// A dropped capture is still acknowledged to the client — failing the proxied call would take
-    /// the caller's application down over a billing limit — so without this notification the only
-    /// symptom was traces quietly going missing.
-    /// </remarks>
     TraceQuotaReached,
 
     /// <summary>

@@ -2,7 +2,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Session;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.Cleanup.Internal;
 
@@ -12,7 +11,6 @@ internal sealed class AgentCallCleanupService : BackgroundService
     private readonly ILogger<AgentCallCleanupService> logger;
     private readonly IAgentCallRepository agentCallRepository;
     private readonly ISessionRepository sessionRepository;
-    private readonly ILicenseService license;
 
     private readonly int configuredRetentionDays;
 
@@ -23,14 +21,12 @@ internal sealed class AgentCallCleanupService : BackgroundService
         AgentCallCleanupConfiguration configuration,
         ILogger<AgentCallCleanupService> logger,
         IAgentCallRepository agentCallRepository,
-        ISessionRepository sessionRepository,
-        ILicenseService license)
+        ISessionRepository sessionRepository)
     {
         this.configuration = configuration;
         this.logger = logger;
         this.agentCallRepository = agentCallRepository;
         this.sessionRepository = sessionRepository;
-        this.license = license;
 
         if (configuration.RetentionDurationDays <= 0)
         {
@@ -47,12 +43,7 @@ internal sealed class AgentCallCleanupService : BackgroundService
     {
         try
         {
-            // The license can cap how long traces are retained; never retain longer than allowed.
-            var cap = license.GetLimit(LicenseLimit.TraceRetentionDays);
-            var effectiveDays = cap == long.MaxValue
-                ? configuredRetentionDays
-                : (int)Math.Min(configuredRetentionDays, cap);
-            var retentionDuration = TimeSpan.FromDays(effectiveDays);
+            var retentionDuration = TimeSpan.FromDays(configuredRetentionDays);
             var cutoffDate = DateTimeOffset.UtcNow - retentionDuration;
 
             // Read the per-session deltas BEFORE the delete — afterwards the rows are gone and the

@@ -302,7 +302,7 @@ be induced to make.
 - Override: `Authentication:SessionCookie:Secure`. Set it to `false` only for a deliberate
   plain-HTTP deployment on a host that is **not** `localhost` — browsers treat `http://localhost` as
   a secure context and accept `Secure` cookies there, so the local Docker/e2e/kiosk stacks
-  (`http://localhost:5101`, `:5103`) work with the default.
+  (`http://localhost:5101`) work with the default.
 
 This setting is the mirror image of `ForwardedHeaders` / `RateLimiting` above: it is read from the
 **container's** configuration view (`Proxytrace.Api/Module.cs`), the one that also sees
@@ -355,7 +355,7 @@ load balancer without that work.
 
 The repo is scanned for committed credentials with [gitleaks](https://github.com/gitleaks/gitleaks);
 config lives in `.gitleaks.toml` (default rules + an allowlist of the fake fixture credentials that
-are committed on purpose — the test-signed e2e/perf license JWT, demo-data keys, test strings).
+are committed on purpose — the test-signed e2e support-key JWT, demo-data keys, test strings).
 
 - **Pre-commit hook** — `scripts/git-hooks/pre-commit` scans staged changes and blocks the commit on
   a finding. Enable once per clone with `./scripts/install-git-hooks.sh` (sets `core.hooksPath`);

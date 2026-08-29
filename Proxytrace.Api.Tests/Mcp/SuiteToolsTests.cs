@@ -13,7 +13,6 @@ using Nordstein.Core.AI.Messages;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests.Mcp;
@@ -165,6 +164,5 @@ public sealed class SuiteToolsTests : BaseTest<Module>
             services.GetRequiredService<ITestSuite.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateExisting>(),
             services.GetRequiredService<TestSuiteDtoMapper>(),
-            services.GetRequiredService<ILicenseService>(),
             NullLogger<Audit>.Instance);
 }

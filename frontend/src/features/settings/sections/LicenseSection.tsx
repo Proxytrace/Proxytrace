@@ -1,21 +1,22 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLicense, useRefreshLicense, useRemoveLicense } from '../../../hooks/useLicense';
-import { FEATURE_LABELS, STATUS_LABELS, licenseSourceNote } from '../../../components/license/licenseUtils';
+import { STATUS_LABELS, licenseSourceNote } from '../../../components/license/licenseUtils';
 import { LicenseKeyForm } from '../../../components/license/LicenseKeyForm';
 import { Button } from '../../../components/ui/Button';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
-import { AlertTriangleIcon, CrownIcon, ResetIcon, ServerIcon, SparklesIcon, TrashIcon } from '../../../components/icons';
+import { AlertTriangleIcon, CrownIcon, ResetIcon, ServerIcon, TrashIcon } from '../../../components/icons';
 import { fmtDate } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatusCell } from '../components/StatusCell';
 
 /**
- * Workspace-level license management: shows the active tier/status/source,
- * lets an admin validate + activate a new key without a restart, remove the
- * stored key, or force a re-check against the license server.
+ * Enterprise support key: shows whether a support contract is on file (status, validity, who it
+ * is registered to), and lets an admin validate + activate a key without a restart, remove the
+ * stored key, or force a re-check against the license server. The key has no functional effect —
+ * every feature is available regardless.
  */
 export function LicenseSection() {
   const { t, i18n } = useLingui();
@@ -24,17 +25,23 @@ export function LicenseSection() {
   const remove = useRemoveLicense();
   const [confirmingRemove, setConfirmingRemove] = useState(false);
 
+  const header = (
+    <SectionHeader
+      title={t`Enterprise support`}
+      subtitle={t`Every feature is included in Proxytrace. A support key records your Enterprise support contract.`}
+    />
+  );
+
   if (isLoading || !license) {
     return (
       <div className="w-full min-w-0 flex flex-col" data-testid="settings-license">
-        <SectionHeader title={t`License`} subtitle={t`Manage this installation's license key.`} />
+        {header}
         <Skeleton height={160} className="max-w-[760px]" />
       </div>
     );
   }
 
-  const isOverride = license.source === 'override';
-  const isPaid = license.tier !== 'free';
+  const hasContract = license.tier === 'enterprise';
   const sourceNote = licenseSourceNote(license.source);
   const statusTone =
     license.status === 'active' ? cn('text-success')
@@ -44,16 +51,16 @@ export function LicenseSection() {
 
   return (
     <div className="w-full min-w-0 flex flex-col" data-testid="settings-license">
-      <SectionHeader title={t`License`} subtitle={t`Manage this installation's license key.`} />
+      {header}
 
       <div className="max-w-[760px] flex flex-col gap-5">
         <div className="bg-card-2 border border-hairline rounded-lg p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h3 className="text-h2 font-semibold m-0 text-primary flex items-center gap-2">
-              {isPaid ? <CrownIcon size={14} className="text-accent" /> : <SparklesIcon size={14} className="text-accent" />}
-              <Trans>Current license</Trans>
+              <CrownIcon size={14} className={hasContract ? 'text-accent' : 'text-muted'} />
+              <Trans>Support contract</Trans>
             </h3>
-            {isPaid && !isOverride && !license.offline && (
+            {hasContract && !license.offline && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -70,7 +77,7 @@ export function LicenseSection() {
           <div className="grid grid-cols-3 gap-3">
             <StatusCell
               label={t`Tier`}
-              value={license.tier === 'enterprise' ? t`Enterprise` : t`Free`}
+              value={hasContract ? t`Enterprise support` : t`None`}
               testId="license-tier"
             />
             <StatusCell
@@ -80,7 +87,7 @@ export function LicenseSection() {
               testId="license-status"
             />
             <StatusCell
-              label={t`Expires`}
+              label={t`Valid until`}
               value={license.expiresAt ? fmtDate(license.expiresAt) : '—'}
               testId="license-expires"
             />
@@ -88,7 +95,7 @@ export function LicenseSection() {
 
           {license.customerEmail && (
             <div className="text-body-sm text-secondary">
-              <Trans>Licensed to <span className="text-primary">{license.customerEmail}</span></Trans>
+              <Trans>Registered to <span className="text-primary">{license.customerEmail}</span></Trans>
             </div>
           )}
 
@@ -97,9 +104,9 @@ export function LicenseSection() {
               <AlertTriangleIcon size={12} className="mt-0.5 shrink-0" />
               <span>
                 <Trans>
-                  The configured license could not be validated
-                  {license.invalidReason ? ` — ${license.invalidReason}` : ''}. The installation runs
-                  with Free-tier limits until a valid key is activated.
+                  The configured support key could not be validated
+                  {license.invalidReason ? ` — ${license.invalidReason}` : ''}. Nothing is affected,
+                  but no support contract is recorded until a valid key is activated.
                 </Trans>
               </span>
             </div>
@@ -110,37 +117,26 @@ export function LicenseSection() {
               <ServerIcon size={12} className="mt-0.5 shrink-0 text-teal" />
               <span>
                 <Trans>
-                  This is an offline license. It is never re-validated against the license server, so
-                  it keeps working with no outbound connection — only its expiry ends it.
+                  This is an offline key. It is never re-validated against the license server, so
+                  it works with no outbound connection — only its expiry ends it.
                 </Trans>
               </span>
             </div>
           )}
 
           {sourceNote && <p className="text-body-sm text-muted m-0">{i18n._(sourceNote)}</p>}
-
-          {license.features.length > 0 && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 border-t border-hairline">
-              {license.features.map(f => (
-                <span key={f} className="text-body-sm text-secondary">{i18n._(FEATURE_LABELS[f])}</span>
-              ))}
-            </div>
-          )}
         </div>
 
-        {!isOverride && (
-          <div className="flex flex-col gap-3">
-            <h3 className="text-h2 font-semibold m-0 text-primary"><Trans>Activate a license key</Trans></h3>
-            <p className="text-body-sm text-muted m-0">
-              <Trans>
-                Paste the key from your purchase email. It is validated offline, stored in the
-                database, and applied immediately — no restart needed. Without a key, Proxytrace
-                runs on the Free tier.
-              </Trans>
-            </p>
-            <LicenseKeyForm />
-          </div>
-        )}
+        <div className="flex flex-col gap-3">
+          <h3 className="text-h2 font-semibold m-0 text-primary"><Trans>Activate a support key</Trans></h3>
+          <p className="text-body-sm text-muted m-0">
+            <Trans>
+              Paste the key from your support contract. It is validated offline, stored in the
+              database, and applied immediately — no restart needed.
+            </Trans>
+          </p>
+          <LicenseKeyForm />
+        </div>
 
         {license.source === 'stored' && (
           <div className="flex items-center gap-2 pt-2 border-t border-hairline">
@@ -152,10 +148,10 @@ export function LicenseSection() {
               onClick={() => setConfirmingRemove(true)}
               data-testid="license-remove-btn"
             >
-              <Trans>Remove stored license</Trans>
+              <Trans>Remove stored key</Trans>
             </Button>
             <span className="text-body-sm text-muted">
-              <Trans>Falls back to the environment-supplied license, or the Free tier.</Trans>
+              <Trans>Falls back to the environment-supplied key, if any.</Trans>
             </span>
           </div>
         )}
@@ -163,9 +159,9 @@ export function LicenseSection() {
 
       {confirmingRemove && (
         <ConfirmDialog
-          title={t`Remove stored license?`}
-          message={t`The installation falls back to the environment-supplied license, or the Free tier. Enterprise features stop working immediately if no other license is configured.`}
-          confirmLabel={t`Remove license`}
+          title={t`Remove stored support key?`}
+          message={t`The installation falls back to the environment-supplied key, if any. Every feature keeps working; only the recorded support contract changes.`}
+          confirmLabel={t`Remove key`}
           loading={remove.isPending}
           onCancel={() => setConfirmingRemove(false)}
           onConfirm={() => remove.mutate(undefined, { onSuccess: () => setConfirmingRemove(false) })}

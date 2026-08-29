@@ -6,14 +6,12 @@ using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Json;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Api.Dto.TestCases;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.TestCase;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -105,8 +103,8 @@ public class AgentCallsController : ControllerBase
 
     // The agents the overview lists: one project's when the scope names one (the indexed load),
     // the union of the caller's projects when it spans several, and every agent for an unrestricted
-    // admin. Mirrors EvaluatorsController.ListScopedAsync — the agents table is small and bounded by
-    // the licensed agent limit, so narrowing a multi-project scope in memory is cheap.
+    // admin. Mirrors EvaluatorsController.ListScopedAsync — the agents table is small, so narrowing
+    // a multi-project scope in memory is cheap.
     private async Task<IReadOnlyList<IAgent>> ScopedAgentsAsync(
         IReadOnlyCollection<Guid>? scope,
         CancellationToken cancellationToken)
@@ -428,7 +426,6 @@ public class AgentCallsController : ControllerBase
     /// score what it proposes, and <c>rounds</c> to refine a previous answer instead of starting over.
     /// </summary>
     [HttpPost("{id:guid}/test-case-proposals")]
-    [RequiresFeature(LicenseFeature.TestCaseSynthesis)]
     public async Task<ActionResult<TestCaseProposalSetDto>> ProposeTestCases(
         Guid id,
         [FromBody] SynthesizeTestCasesRequest request,

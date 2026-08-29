@@ -5,7 +5,6 @@ using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestRunSchedule;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.TestRun.Internal;
 
@@ -18,7 +17,6 @@ internal sealed class TestRunSchedulerService : BackgroundService
     private readonly ITestRunScheduleRepository schedules;
     private readonly ITestRunGroupRepository groups;
     private readonly ITestRunnerService runner;
-    private readonly ILicenseService license;
     private readonly TestRunSchedulerConfiguration configuration;
     private readonly ILogger<TestRunSchedulerService> logger;
     private readonly IAgentRepository agents;
@@ -31,7 +29,6 @@ internal sealed class TestRunSchedulerService : BackgroundService
         ITestRunScheduleRepository schedules,
         ITestRunGroupRepository groups,
         ITestRunnerService runner,
-        ILicenseService license,
         TestRunSchedulerConfiguration configuration,
         ILogger<TestRunSchedulerService> logger,
         IAgentRepository agents,
@@ -40,7 +37,6 @@ internal sealed class TestRunSchedulerService : BackgroundService
         this.schedules = schedules;
         this.groups = groups;
         this.runner = runner;
-        this.license = license;
         this.configuration = configuration;
         this.logger = logger;
         this.agents = agents;
@@ -72,9 +68,6 @@ internal sealed class TestRunSchedulerService : BackgroundService
 
     internal async Task RunDueSchedulesAsync(DateTimeOffset now, CancellationToken cancellationToken)
     {
-        if (!license.IsFeatureEnabled(LicenseFeature.ScheduledTestRuns))
-            return;
-
         var due = await schedules.GetDueAsync(now, cancellationToken);
 
         foreach (var schedule in due)

@@ -3,9 +3,7 @@ import type { AgentCallDto } from '../../api/models';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtDateTime } from '../../lib/format';
 import { cn } from '../../lib/cn';
-import { ChevronRightIcon, KeyIcon, SparklesIcon, LockIcon } from '../icons';
-import { useFeature } from '../../hooks/useLicense';
-import { showUpgradeModal } from '../license/UpgradeModal';
+import { ChevronRightIcon, KeyIcon, SparklesIcon } from '../icons';
 import { CopyButton } from '../ui/CopyButton';
 import { ColoredBadge } from '../ui/ColoredBadge';
 import { Button, IconButton } from '../ui/Button';
@@ -34,12 +32,11 @@ interface Props {
  * counts are deliberately absent — the tab badges below already carry them.
  *
  * Generate tests is the drawer's only test-creation action, so it holds the primary slot. Adding a
- * case by hand lives on the Test Suites page ("Add from traces"), which is not license-gated.
+ * case by hand lives on the Test Suites page ("Add from traces").
  */
 export function TraceDetailHeader({ trace, onClose, onPrev, onNext, onAskTracey, generate }: Props) {
   const navigate = useNavigate();
   const { t } = useLingui();
-  const canGenerate = useFeature('TestCaseSynthesis');
 
   const aColor = agentColor(trace.agentId ?? trace.id);
   const statusOk = trace.httpStatus >= 200 && trace.httpStatus < 300;
@@ -126,19 +123,14 @@ export function TraceDetailHeader({ trace, onClose, onPrev, onNext, onAskTracey,
           />
           <Button
             data-testid="generate-tests-btn"
-            onClick={() => {
-              // Keep the action discoverable on Free: route to the upgrade modal rather than
-              // hiding it, so the capability is visible without being usable.
-              if (!canGenerate) { showUpgradeModal({ errorType: 'FeatureNotLicensed' }); return; }
-              if (!generate.disabled) generate.onStart();
-            }}
-            disabled={canGenerate && generate.disabled}
-            title={canGenerate ? generate.tooltip || undefined : undefined}
+            onClick={() => { if (!generate.disabled) generate.onStart(); }}
+            disabled={generate.disabled}
+            title={generate.tooltip || undefined}
             variant="primary"
             size="sm"
-            leftIcon={canGenerate ? <SparklesIcon size={12} /> : <LockIcon size={12} />}
+            leftIcon={<SparklesIcon size={12} />}
           >
-            {canGenerate ? <Trans>Generate tests</Trans> : <Trans>Upgrade to generate</Trans>}
+            <Trans>Generate tests</Trans>
           </Button>
         </div>
       </div>

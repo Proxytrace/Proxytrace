@@ -17,7 +17,6 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Invite;
 using Proxytrace.Domain.Notification;
 using Proxytrace.Domain.User;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -276,16 +275,8 @@ public sealed class AuthControllerTests : BaseTest<Module>
     public async Task CreateInvite_FallsBackToAllowedOriginForLink()
     {
         var accessor = Substitute.For<ICurrentUserAccessor>();
-        // The default (Free) license caps MaxUsers at 1; with the admin seeded below the invite
-        // would trip the limit before reaching the link-building logic under test. Lift the cap so
-        // the invite path is reachable — the limit itself is covered by InviteServiceTests.
-        var license = Substitute.For<ILicenseService>();
-        license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
         IServiceProvider services = GetServices(builder =>
-        {
-            builder.RegisterInstance(accessor).As<ICurrentUserAccessor>();
-            builder.RegisterInstance(license).As<ILicenseService>();
-        });
+            builder.RegisterInstance(accessor).As<ICurrentUserAccessor>());
         var admin = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(admin);
 

@@ -122,7 +122,7 @@ Calls that aren't part of a tracked conversation are treated as their own single
 conversation. Each row's tooltip shows how many samples it is based on, and a metric with no
 samples in the window shows **—**.
 
-**Deleting an agent** removes it from the agent list and frees its licensed-agent slot, but keeps
+**Deleting an agent** removes it from the agent list but keeps
 its captured traces, versions, and test suites intact for historical reference. Built-in **system
 agents** (Tracey, optimizers, and the judges behind agentic evaluators) can't be deleted. If the
 same prompt-and-tools combination is observed in traffic again later, the agent reappears.

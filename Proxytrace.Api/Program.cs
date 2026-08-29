@@ -55,8 +55,7 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser());
 });
 
-builder.Services.AddControllers(options =>
-        options.Filters.Add<Proxytrace.Api.Auth.Licensing.LicenseEnforcementFilter>())
+builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;

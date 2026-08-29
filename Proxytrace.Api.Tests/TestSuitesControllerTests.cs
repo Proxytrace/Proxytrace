@@ -13,8 +13,6 @@ using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
-using Proxytrace.Licensing.Exceptions;
 using Nordstein.Core.Testing;
 // ReSharper disable NullableWarningSuppressionIsUsed
 
@@ -620,7 +618,6 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
     private static TestSuitesController ResolveController(
         IServiceProvider services,
-        ILicenseService? license = null,
         Proxytrace.Api.Auth.IProjectAccessGuard? accessGuard = null) =>
         new(
             services.GetRequiredService<ITestSuiteRepository>(),
@@ -636,9 +633,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<ITestSuite.CreateExisting>(),
             services.GetRequiredService<TestSuiteDtoMapper>(),
             services.GetRequiredService<IStatsReader<TestRunStats, TestRunStats.Filter>>(),
-            license ?? UnlimitedLicense(),
             accessGuard ?? services.GetRequiredService<Proxytrace.Api.Auth.IProjectAccessGuard>(),
-            services.GetRequiredService<Nordstein.Core.Common.Async.IAsyncLock>(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 
     [TestMethod]
@@ -687,41 +682,11 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             cancellationToken: CancellationToken);
     }
 
-    private static ILicenseService UnlimitedLicense()
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
-        return license;
-    }
-
-    private static ILicenseService LicenseWithSuiteLimit(long max)
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
-        license.GetLimit(LicenseLimit.MaxTestSuites).Returns(max);
-        return license;
-    }
-
     [TestMethod]
-    public async Task Create_WhenSuiteLimitReached_ThrowsLicenseLimitExceeded()
+    public async Task Create_ValidRequest_Succeeds()
     {
         IServiceProvider services = GetServices();
-        var controller = ResolveController(services, LicenseWithSuiteLimit(0));
-        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
-
-        var request = new CreateTestSuiteRequest(Name: "Suite", AgentId: agent.Id, TestCases: []);
-
-        await FluentActions
-            .Invoking(() => controller.Create(request, CancellationToken))
-            .Should().ThrowAsync<LicenseLimitExceededException>()
-            .Where(e => e.Limit == LicenseLimit.MaxTestSuites);
-    }
-
-    [TestMethod]
-    public async Task Create_WhenBelowSuiteLimit_Succeeds()
-    {
-        IServiceProvider services = GetServices();
-        var controller = ResolveController(services, LicenseWithSuiteLimit(5));
+        var controller = ResolveController(services);
         var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
 
         var request = new CreateTestSuiteRequest(Name: "Suite", AgentId: agent.Id, TestCases: []);
@@ -729,62 +694,5 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         var result = await controller.Create(request, CancellationToken);
 
         result.Result.Should().BeOfType<CreatedAtActionResult>();
-    }
-
-    [TestMethod]
-    public async Task Create_WhenTwoRequestsRaceAtTheLimit_OnlyOneSucceeds()
-    {
-        // The count and the create it authorises are check-then-act. Concurrently, both requests
-        // observed "0 suites" against a limit of 1 and both proceeded, leaving a Free-tier install
-        // with two suites and no way to notice.
-        IServiceProvider services = GetServices();
-        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
-        var license = LicenseWithSuiteLimit(1);
-
-        // Separate controller instances, as two concurrent requests would have. They share the
-        // singleton IAsyncLock from the container, which is what actually serializes them.
-        var first = ResolveController(services, license);
-        var second = ResolveController(services, license);
-
-        var results = await Task.WhenAll(
-            Attempt(first, "Suite A"),
-            Attempt(second, "Suite B"));
-
-        results.Count(r => r).Should().Be(1, "exactly one of the two racing creates may be admitted");
-        (await services.GetRequiredService<ITestSuiteRepository>().CountAsync(CancellationToken))
-            .Should().Be(1, "the licensed limit must hold under concurrency");
-
-        async Task<bool> Attempt(TestSuitesController controller, string name)
-        {
-            try
-            {
-                await controller.Create(
-                    new CreateTestSuiteRequest(Name: name, AgentId: agent.Id, TestCases: []),
-                    CancellationToken);
-                return true;
-            }
-            catch (LicenseLimitExceededException)
-            {
-                return false;
-            }
-        }
-    }
-
-    [TestMethod]
-    public async Task PromoteFromTraces_WhenSuiteLimitReached_ThrowsLicenseLimitExceeded()
-    {
-        IServiceProvider services = GetServices();
-        var controller = ResolveController(services, LicenseWithSuiteLimit(0));
-        var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
-
-        var request = new PromoteTracesRequest(
-            Name: "Promoted",
-            AgentId: call.Agent.Id,
-            AgentCallIds: [call.Id]);
-
-        await FluentActions
-            .Invoking(() => controller.PromoteFromTraces(request, CancellationToken))
-            .Should().ThrowAsync<LicenseLimitExceededException>()
-            .Where(e => e.Limit == LicenseLimit.MaxTestSuites);
     }
 }

@@ -5,9 +5,9 @@ import { LockIcon } from '../icons';
 import { daysLeft } from './licenseUtils';
 
 /**
- * Slim warning bar pinned above the top bar while the license is in its offline
- * grace window. Communicates how long the install will keep working before it
- * falls back to the Free tier.
+ * Slim warning bar pinned above the top bar while the support key is in its offline grace
+ * window. Nothing stops working when it lapses — every feature is always available — but the
+ * support entitlement would then show as expired, so an operator wants to know before that.
  */
 export function GracePeriodBanner() {
   const { data } = useLicense();
@@ -24,12 +24,12 @@ export function GracePeriodBanner() {
       <LockIcon size={14} />
       <span>
         <Trans>
-          License server unreachable — running on cached license. Enterprise features
-          stay active for{' '}
-          <Plural value={remaining} one="# more day" other="# more days" />.
+          License server unreachable — the Enterprise support key could not be re-validated. It
+          lapses in{' '}
+          <Plural value={remaining} one="# day" other="# days" />.
         </Trans>
       </span>
-      <Link to="/upgrade" className="ml-auto underline underline-offset-2 hover:text-primary">
+      <Link to="/settings/license" className="ml-auto underline underline-offset-2 hover:text-primary">
         <Trans>Details</Trans>
       </Link>
     </div>

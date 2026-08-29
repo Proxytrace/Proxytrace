@@ -9,7 +9,7 @@ namespace Proxytrace.Application.Ingestion.Internal;
 /// <summary>
 /// Consumer side of ingestion. Reads captured calls off the <see cref="IIngestionStream"/>
 /// (Redis Streams in the split deployment, in-memory otherwise) and hands each one to the shared
-/// <see cref="IIngestionExecutor"/>, which enforces the quota, re-hydrates the referenced
+/// <see cref="IIngestionExecutor"/>, which re-hydrates the referenced
 /// provider/project, and persists the call. Replaces the producer half of the old in-process
 /// ingestor, which now lives in the proxy service. In-process producers (e.g. Tracey) call the
 /// executor directly instead of round-tripping through the transport.

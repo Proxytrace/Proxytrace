@@ -1,22 +1,19 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
-import { useFeature } from '../../../hooks/useLicense';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
-import { PlusIcon, LockIcon } from '../../../components/icons';
-import { showUpgradeModal } from '../../../components/license/UpgradeModal';
+import { PlusIcon } from '../../../components/icons';
 import { useTestRunSchedules } from '../hooks/useTestRunSchedules';
 import { useTestRunScheduleMutations } from '../hooks/useTestRunScheduleMutations';
 import { ScheduleCard } from './ScheduleCard';
 import { ScheduleFormDialog, type ScheduleFormValues } from './ScheduleFormDialog';
 
 /**
- * "Scheduled runs" section of the Runs page. Lists the project's schedules (optionally agent-filtered),
- * gates creation/mutation behind the `ScheduledTestRuns` license feature, and owns the create/edit
- * dialog and delete confirmation. Recent-run clicks bubble up via `onSelectRun` to drive the page's
+ * "Scheduled runs" section of the Runs page. Lists the project's schedules (optionally agent-filtered)
+ * and owns the create/edit dialog and delete confirmation. Recent-run clicks bubble up via `onSelectRun` to drive the page's
  * existing `?id=` selection.
  */
 export function SchedulesSection({ agentFilter, onSelectRun }: {
@@ -24,7 +21,6 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
   onSelectRun: (groupId: string) => void;
 }) {
   const { t } = useLingui();
-  const licensed = useFeature('ScheduledTestRuns');
   const { schedules, isLoading } = useTestRunSchedules(agentFilter);
   const { create, update, remove } = useTestRunScheduleMutations();
 
@@ -79,21 +75,9 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
     <div className="flex flex-col gap-3" data-testid="schedules-section">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-h2 font-semibold text-primary"><Trans>Scheduled runs</Trans></h2>
-        {licensed ? (
-          <Button variant="primary" size="sm" onClick={openCreate} leftIcon={<PlusIcon size={14} />} data-testid="schedule-create-btn">
-            <Trans>New schedule</Trans>
-          </Button>
-        ) : (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => showUpgradeModal({ errorType: 'FeatureNotLicensed' })}
-            leftIcon={<LockIcon size={14} />}
-            data-testid="schedule-upgrade-btn"
-          >
-            <Trans>Upgrade to schedule</Trans>
-          </Button>
-        )}
+        <Button variant="primary" size="sm" onClick={openCreate} leftIcon={<PlusIcon size={14} />} data-testid="schedule-create-btn">
+          <Trans>New schedule</Trans>
+        </Button>
       </div>
 
       {isLoading && <SkeletonList rows={3} height={120} gap={10} />}
@@ -102,9 +86,7 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
         <div data-testid="schedules-empty-state">
           <EmptyState
             title={t`No scheduled runs`}
-            description={licensed
-              ? t`Create a schedule to run a suite on a recurring cadence.`
-              : t`Scheduled test runs are part of the Enterprise tier.`}
+            description={t`Create a schedule to run a suite on a recurring cadence.`}
           />
         </div>
       )}

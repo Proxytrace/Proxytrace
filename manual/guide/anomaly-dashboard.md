@@ -9,9 +9,9 @@ this page steps back and answers "**is anything going wrong right now, and where
 It brings together two kinds of signal:
 
 - **Statistical outliers** — the automatic, per-agent flags (high tokens, high latency, low cache
-  hit, many tool calls) described under [Finding Outliers](/guide/outliers). Every plan gets these.
-- **Custom detector flags** — anomalies raised by your own [custom detectors](#custom-anomaly-detectors)
-  (an Enterprise feature), where an LLM reviews a call against instructions you wrote.
+  hit, many tool calls) described under [Finding Outliers](/guide/outliers).
+- **Custom detector flags** — anomalies raised by your own [custom detectors](#custom-anomaly-detectors),
+  where an LLM reviews a call against instructions you wrote.
 
 ## The Overview
 
@@ -52,11 +52,6 @@ reviewer's reasoning for calling the call anomalous.
 
 ## Custom anomaly detectors
 
-::: info Enterprise feature
-Custom anomaly detectors require an **Enterprise** license. Without one, the dashboard still shows
-statistical outliers, but the detector management UI is hidden. See
-[Licensing](/admin/licensing).
-:::
 
 A **custom detector** lets you describe, in plain language, what "anomalous" means for *your*
 agents — something the built-in statistical flags can't know. For example: "flag any reply that
@@ -132,7 +127,6 @@ Things to know:
 - **Best-effort, not a hard guarantee.** If the proxy cannot load the rules (for example the
   database is briefly unreachable), it fails open and forwards rather than taking your LLM traffic
   down; the post-hoc review pipeline still flags what slipped through.
-- Blocking is part of the same **Enterprise** feature as custom detectors.
 
 ### Managing detectors
 

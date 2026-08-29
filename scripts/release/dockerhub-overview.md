@@ -53,8 +53,7 @@ identical digests, same tags. GHCR has no anonymous pull-rate limit.
 
 ## License
 
-Source-available under the [Elastic License 2.0](https://github.com/NordsteinSoftware/Proxytrace/blob/master/LICENSE):
-you may use, copy, modify and redistribute it, but you may not offer it as a managed service to
-third parties, circumvent the license-key functionality, or remove the licensing/copyright notices.
-
-A free tier is built in; paid tiers unlock higher limits and additional features.
+Source-available under the [PolyForm Shield 1.0.0](https://github.com/NordsteinSoftware/Proxytrace/blob/master/LICENSE)
+license: free for any use — including commercial and internal business use — with every feature
+included and no limits. The one restriction: you may not offer a product or service that competes
+with Proxytrace. Enterprise support contracts are available at https://proxytrace.dev/#pricing.

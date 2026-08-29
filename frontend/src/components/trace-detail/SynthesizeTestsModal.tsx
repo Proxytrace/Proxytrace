@@ -9,7 +9,6 @@ import {
 } from '../../api/models';
 import useToast from '../../hooks/useToast';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { useFeature, useLicense } from '../../hooks/useLicense';
 import { Modal } from '../overlays/Modal';
 import { Button } from '../ui/Button';
 import { SkeletonList } from '../ui/Skeleton';
@@ -50,12 +49,7 @@ export function SynthesizeTestsModal({ trace, suites, onClose }: Props) {
   const { conversation, proposals, roundsUsed, generate, approve, abort } = synthesis;
   const selection = useProposalSelection(new Map(conversation.map(call => [call.id, call])));
 
-  const canJudge = useFeature('AgenticEvaluators');
-  const { data: license } = useLicense();
   const selectedSuite = suites.find(suite => suite.id === suiteId) ?? null;
-  // On Free, MaxTestSuites is 1 and a project holds a single agent — so "the agent's suites" IS
-  // the project's suites and this is exact. On Enterprise the limit is unbounded and never trips.
-  const suiteLimitReached = suites.length >= (license?.limits.MaxTestSuites ?? Number.POSITIVE_INFINITY);
 
   // Synchronizing with something outside React — an in-flight fetch. Closing the panel must not
   // leave a generation running against the user's budget.
@@ -113,7 +107,7 @@ export function SynthesizeTestsModal({ trace, suites, onClose }: Props) {
     if (!proposals) return;
     const writes = selection.writes(proposals.proposals);
     const suggestion = proposals.evaluatorSuggestion;
-    const useJudge = canJudge && suggestion !== null && judge.target !== 'none';
+    const useJudge = suggestion !== null && judge.target !== 'none';
     approve.mutate({
       suiteId,
       agentId: trace.agentId ?? '',
@@ -195,13 +189,11 @@ export function SynthesizeTestsModal({ trace, suites, onClose }: Props) {
               judge={{
                 choice: judge,
                 onChange: setJudge,
-                licensed: canJudge,
                 destination: {
                   // Named, not "this suite": the options say what happens to a suite the user can
                   // see by name at the top of this same column.
                   name: selectedSuite?.name ?? t`the suite`,
                   caseCount: selectedSuite?.testCaseCount ?? 0,
-                  limitReached: suiteLimitReached,
                 },
               }}
               onFocusCall={setHighlightedCallId}

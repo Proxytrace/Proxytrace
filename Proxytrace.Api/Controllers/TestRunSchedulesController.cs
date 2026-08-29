@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
@@ -13,7 +12,6 @@ using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestRunSchedule;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -100,8 +98,7 @@ public class TestRunSchedulesController : ControllerBase
     }
 
     /// <summary>
-    /// Lists schedules. Ungated so existing schedules stay visible after a license downgrade —
-    /// only creation/management is feature-gated.
+    /// Lists schedules.
     /// </summary>
     [HttpGet]
     public async Task<IReadOnlyList<TestRunScheduleDto>> GetAll(
@@ -132,7 +129,6 @@ public class TestRunSchedulesController : ControllerBase
     /// Creates.
     /// </summary>
     [HttpPost]
-    [RequiresFeature(LicenseFeature.ScheduledTestRuns)]
     public async Task<ActionResult<TestRunScheduleDto>> Create(
         [FromBody] CreateTestRunScheduleRequest request,
         CancellationToken cancellationToken)
@@ -171,7 +167,6 @@ public class TestRunSchedulesController : ControllerBase
     /// Updates.
     /// </summary>
     [HttpPatch("{id:guid}")]
-    [RequiresFeature(LicenseFeature.ScheduledTestRuns)]
     public async Task<ActionResult<TestRunScheduleDto>> Update(
         Guid id,
         [FromBody] UpdateTestRunScheduleRequest request,
@@ -210,7 +205,6 @@ public class TestRunSchedulesController : ControllerBase
     /// Deletes.
     /// </summary>
     [HttpDelete("{id:guid}")]
-    [RequiresFeature(LicenseFeature.ScheduledTestRuns)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var schedule = await scheduleRepository.FindAsync(id, cancellationToken);
@@ -231,7 +225,6 @@ public class TestRunSchedulesController : ControllerBase
     /// Runs the now.
     /// </summary>
     [HttpPost("{id:guid}/run-now")]
-    [RequiresFeature(LicenseFeature.ScheduledTestRuns)]
     public async Task<ActionResult<TestRunScheduleDto>> RunNow(Guid id, CancellationToken cancellationToken)
     {
         var schedule = await scheduleRepository.FindAsync(id, cancellationToken);

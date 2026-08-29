@@ -22,15 +22,8 @@ public sealed record LicensingConfiguration
     public string? LicenseJwt { get; init; }
 
     /// <summary>
-    /// A pre-resolved license snapshot that bypasses JWT validation entirely. When set, the
-    /// licensing subsystem adopts it verbatim and performs no online verification. Used by
-    /// kiosk/demo deployments to run at a fixed tier without a real signed license.
-    /// </summary>
-    public LicenseSnapshot? OverrideSnapshot { get; init; }
-
-    /// <summary>
     /// Whether the background service contacts the license server for periodic revocation/grace
-    /// checks. When false the startup snapshot (from JWT validation or the override) is kept as-is
+    /// checks. When false the startup snapshot (from JWT validation) is kept as-is
     /// and no network calls are made — used by local dev builds to avoid needing the license server.
     /// </summary>
     public bool ServerCheckEnabled { get; init; } = true;

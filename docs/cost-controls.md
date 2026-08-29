@@ -71,10 +71,9 @@ fired threshold — a breach is a fact about what happened, and is never un-fire
 ## The guard
 
 `Proxytrace.Application/CostControl/Internal/CostBudgetGuard.cs` — a `BackgroundService` mirroring
-`TraceQuotaGuard`, ticking every `CostControl:GuardIntervalSeconds` (default 300). Per tick:
+`CostBudgetGuard`, ticking every `CostControl:GuardIntervalSeconds` (default 300). Per tick:
 
-1. Unlicensed (`LicenseFeature.CostControls`) → return. Configuration is preserved; nothing fires.
-2. `GetAllEnabledAsync()`; empty → return. This fast path means an install with no budgets never
+1. `GetAllEnabledAsync()`; empty → return. This fast path means an install with no budgets never
    runs the spend query at all.
 3. Month-to-date spend via `ICostStatistics.GetMonthToDateSpendAsync` → `IAgentCallStatsReader.GetCostByProjectAndAgentAsync`.
    The per-key aggregate (`GetMonthToDateSpendByApiKeyAsync`) is fetched **only when at least one
@@ -259,19 +258,14 @@ calendar month; the read is now cheap enough that the special case earns nothing
 (`resolveCostWindow`) so budgets and chart agree on the period — deliberate, but a trigger reading
 "All time" promised the full history and quietly showed one month (#493).
 
-## Licensing and permissions
+## Permissions
 
 | Surface | Gate |
 |---|---|
-| Costs page, `GET /api/statistics/cost-overview`, `GET /api/cost-limits`, `GET /api/cost-limits/status` | free, any project member |
-| `POST`/`PUT`/`DELETE /api/cost-limits` | `Admin` role **and** `RequiresFeature(CostControls)` (402) |
-| The guard and the proxy block | degrade silently when unlicensed |
+| Costs page, `GET /api/statistics/cost-overview`, `GET /api/cost-limits`, `GET /api/cost-limits/status` | any project member |
+| `POST`/`PUT`/`DELETE /api/cost-limits` | `Admin` role |
 
-The degrade is at **use time**, not entry time: an install that loses its license keeps its budget
-configuration and restores enforcement the moment it is re-licensed. See
-[`licensing.md`](licensing.md).
-
-**"Free for any project member" is a constraint on what the page may fetch.** Every query the Costs
+**"Readable by any project member" is a constraint on what the page may fetch.** Every query the Costs
 page issues must itself be member-readable, and `app/queryClient.ts` sets `throwOnError: true`
 globally — so a single admin-gated request does not degrade one card, it rethrows during render and
 replaces the whole route with the error boundary. Two rules follow, both load-bearing:

@@ -7,7 +7,6 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { GracePeriodBanner } from '../license/GracePeriodBanner';
 import { InvalidLicenseBanner } from '../license/InvalidLicenseBanner';
-import { QuotaBanner } from '../license/QuotaBanner';
 import { UpdateBanner } from '../updates/UpdateBanner';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 
@@ -50,7 +49,7 @@ export function Shell() {
 
       {/* Main area */}
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        {/* Two boundaries, not one: the four banners are decorative and safe to lose, but `Topbar`
+        {/* Two boundaries, not one: the three banners are decorative and safe to lose, but `Topbar`
             carries the only mobile navigation affordance (the hamburger — the sidebar is off-canvas
             below md). A banner render throw must not collapse the masthead and drop the hamburger,
             stranding a mobile user with no nav. Same region-granularity reasoning that split the
@@ -58,7 +57,6 @@ export function Shell() {
         <ErrorBoundary resetKeys={[location.key]} fallback={<ChromeErrorFallback className="h-[48px] shrink-0 bg-surface-2 border-b border-border" />}>
           <InvalidLicenseBanner />
           <GracePeriodBanner />
-          <QuotaBanner />
           <UpdateBanner />
         </ErrorBoundary>
         <ErrorBoundary resetKeys={[location.key]} fallback={<ChromeErrorFallback className="h-[48px] shrink-0 bg-surface-2 border-b border-border" />}>

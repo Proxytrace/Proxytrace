@@ -1,10 +1,5 @@
 # Tracey — the In-App AI Assistant
 
-::: tip Enterprise feature
-Tracey is part of the **Enterprise** tier. On the Free tier the **Tracey AI** sidebar entry
-is locked and the page shows an upgrade prompt. See [Licensing](/admin/licensing).
-:::
-
 Tracey is a conversational assistant with her own full-page **Tracey AI** view. She
 understands plain-language requests, reads your project's live state (agents, test suites,
 runs, proposals, dashboard stats), navigates you around the UI, and can run a small set of
@@ -123,7 +118,7 @@ buttons send their contextual request immediately:
 
 Your current conversation isn't lost — it is archived to the conversation history (right-hand
 rail) and the button starts a new one. The button only appears when Tracey is available
-(Enterprise license, interactive mode, a project selected).
+(interactive mode, a project selected).
 
 ## Follow-up suggestions
 
@@ -237,7 +232,7 @@ at the traces you care about and she'll do the curation:
   each marked as locking in the current behavior or asserting a corrected one. She proposes only;
   nothing is created until you tell her to add them. This is the same agent behind
   [**Generate tests**](/guide/test-suites-and-cases#let-proxytrace-propose-the-cases) in the trace
-  detail panel, and it needs an Enterprise license.
+  detail panel.
 
 The resulting suite renders as a card you can open. A natural flow: find notable traces → build
 or extend a suite → refine the key cases → start a run.

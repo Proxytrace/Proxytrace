@@ -9,7 +9,7 @@ the two-step login, the MFA endpoints, or the enrollment/backup-code entities.
 - **Opt-in per user.** Each user enables MFA from their own account page; there is no org-wide
   enforcement toggle.
 - **Backup codes** (10, single-use) are issued at activation for device-loss recovery.
-- **Not license-gated** — available on every tier.
+- **Available on every install** — like every other feature.
 - **Local auth only.** All MFA endpoints are `[RequireLocalMode]`; OIDC delegates MFA to the IdP and
   the kiosk has no real sessions. "MFA is active for a user" is **derived** — a *confirmed*
   `UserTotpEnrollment` exists — not a flag on `IUser`.

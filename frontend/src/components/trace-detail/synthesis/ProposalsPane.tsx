@@ -12,8 +12,7 @@ import type { ProposalSelection } from './useProposalSelection';
 export interface JudgePaneProps {
   choice: JudgeChoice;
   onChange: (choice: JudgeChoice) => void;
-  licensed: boolean;
-  destination: { name: string; caseCount: number; limitReached: boolean };
+  destination: { name: string; caseCount: number };
 }
 
 interface Props {
@@ -71,7 +70,6 @@ export function ProposalsPane({
         <EvaluatorSuggestionCard
           suggestion={proposals.evaluatorSuggestion}
           destination={judge.destination}
-          licensed={judge.licensed}
           choice={judge.choice}
           onChange={judge.onChange}
         />

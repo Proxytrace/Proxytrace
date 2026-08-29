@@ -18,8 +18,8 @@ builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterModule<Proxytrace.Proxy.Api.Module>());
 
-// Same reasoning as the app API: a faulted BackgroundService (here the stored-license watcher)
-// must degrade that loop, not stop the forwarding host with a clean exit 0. See #522.
+// Same reasoning as the app API: a faulted BackgroundService must degrade that loop, not stop
+// the forwarding host with a clean exit 0. See #522.
 builder.Services.AddResilientBackgroundServices();
 
 builder.Services.AddControllers()

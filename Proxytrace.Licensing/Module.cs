@@ -15,7 +15,7 @@ public sealed class Module : Autofac.Module
     /// <summary>
     /// Autofac <c>builder.Properties</c> key marking that a licensing module has already been
     /// registered by a composition root with a real configuration. Downstream modules check it to
-    /// skip their Free-tier fallback registration (and to avoid registering twice).
+    /// skip their no-key fallback registration (and to avoid registering twice).
     /// </summary>
     public const string RegisteredKey = "Proxytrace.Licensing.Registered";
 
@@ -67,9 +67,6 @@ public sealed class Module : Autofac.Module
         ServerUrl = configuration.ServerUrl,
         PublicKeys = configuration.PublicKeys,
         LicenseJwt = configuration.LicenseJwt,
-        OverrideSnapshot = configuration.OverrideSnapshot is { } snapshot
-            ? LicenseSnapshotMapper.ToCore(snapshot)
-            : null,
         ServerCheckEnabled = configuration.ServerCheckEnabled,
         CheckIntervalHours = configuration.CheckIntervalHours,
         OfflineGracePeriodDays = configuration.OfflineGracePeriodDays,

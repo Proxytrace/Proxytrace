@@ -7,7 +7,6 @@ using Nordstein.Core.Common.DependencyInjection;
 using Nordstein.Core.Common.Time;
 using Proxytrace.Domain.CostLimitBreach;
 using Proxytrace.Domain.CustomAnomaly;
-using Proxytrace.Licensing;
 using Proxytrace.Proxy.Internal;
 
 namespace Proxytrace.Proxy;
@@ -44,7 +43,6 @@ public sealed class Module : Autofac.Module
             var ttlSeconds = config.GetSection("BlockingRuleCache").GetValue<int?>("TtlSeconds") ?? 30;
             return new CachedBlockingRuleProvider(
                 ctx.Resolve<ICustomAnomalyDetectorRepository>(),
-                ctx.Resolve<ILicenseService>(),
                 ctx.Resolve<IMemoryCache>(),
                 TimeSpan.FromSeconds(ttlSeconds),
                 ctx.Resolve<ILogger<CachedBlockingRuleProvider>>());
@@ -64,7 +62,6 @@ public sealed class Module : Autofac.Module
             var ttlSeconds = config.GetSection("BudgetBlockCache").GetValue<int?>("TtlSeconds") ?? 30;
             return new CachedBudgetBlockProvider(
                 ctx.Resolve<ICostLimitBreachRepository>(),
-                ctx.Resolve<ILicenseService>(),
                 ctx.Resolve<IMemoryCache>(),
                 ctx.Resolve<IClock>(),
                 TimeSpan.FromSeconds(ttlSeconds),

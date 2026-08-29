@@ -1,6 +1,5 @@
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
-import type { LicenseFeature } from '../../api/license';
 import { cn } from '../../lib/cn';
 
 /** The rail's page-code vocabulary: one unique mono two-letter glyph per destination, rendered
@@ -14,7 +13,6 @@ export interface NavEntry {
   /** Mono two-letter page code the rail renders instead of an icon glyph. */
   code: NavCode;
   to: string;
-  requiresFeature?: LicenseFeature;
   /** Only rendered for admin users (backend still enforces authorization). */
   adminOnly?: boolean;
 }
@@ -33,8 +31,7 @@ export const navGroups: NavGroup[] = [
   {
     label: null,
     items: [
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
-      { label: msg`Tracey AI`, code: 'TY', to: '/tracey-ai', requiresFeature: 'Tracey' },
+      { label: msg`Tracey AI`, code: 'TY', to: '/tracey-ai' },
     ],
   },
   {
@@ -43,7 +40,6 @@ export const navGroups: NavGroup[] = [
       { label: msg`Dashboard`, code: 'DB', to: '/dashboard' },
       { label: msg`Traces`, code: 'TR', to: '/traces' },
       { label: msg`Anomalies`, code: 'AN', to: '/anomalies' },
-      // No requiresFeature: the page (and the budget list) is free; only *changing* a budget is licensed.
       { label: msg`Costs`, code: 'CO', to: '/costs' },
     ],
   },
@@ -61,8 +57,7 @@ export const navGroups: NavGroup[] = [
       { label: msg`Evaluators`, code: 'EV', to: '/evaluators' },
       { label: msg`Evaluator Playground`, code: 'EP', to: '/evaluator-playground' },
       { label: msg`Test Runs`, code: 'RN', to: '/runs' },
-      // eslint-disable-next-line lingui/no-unlocalized-strings -- LicenseFeature enum value, not UI copy
-      { label: msg`Proposals`, code: 'PR', to: '/proposals', requiresFeature: 'OptimizationProposals' },
+      { label: msg`Proposals`, code: 'PR', to: '/proposals' },
     ],
   },
 ];

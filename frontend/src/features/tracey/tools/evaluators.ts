@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { msg } from '@lingui/core/macro';
 import { evaluatorsApi } from '../../../api/evaluators';
 import { EvaluatorKind } from '../../../api/models';
 import { type ToolFactory, tool, CANCELLED, listDigest, presentArg } from './shared';
@@ -53,7 +52,7 @@ export const createEvaluatorTools: ToolFactory = (ctx, store) => {
       description:
         'Create an evaluator to score test cases with. Requires confirmation. Kinds: Agentic (an ' +
         'LLM judge you give a focused system prompt — best for behavioral checks like tone, ' +
-        'brevity, or a specific failure pattern; needs an enterprise license), ExactMatch, ' +
+        'brevity, or a specific failure pattern), ExactMatch, ' +
         'NumericMatch (regex + tolerance), JsonSchemaMatch. Attach the returned id to a suite via ' +
         'create_suite\'s evaluatorIds.',
       parameters: z.object({ details: evaluatorDetailsSchema }),
@@ -67,13 +66,6 @@ export const createEvaluatorTools: ToolFactory = (ctx, store) => {
           const created = await evaluatorsApi.create({ ...details, projectId });
           return { id: created.id, kind: created.kind, name: created.name };
         } catch (error) {
-          const status = (error as { status?: number }).status;
-          if (status === 402) {
-            return {
-              outcome: 'notLicensed',
-              message: msg`Agentic evaluators require a licensed installation. Use a non-agentic kind or the suite's default exact-match evaluator instead.`,
-            };
-          }
           return { outcome: 'error', message: error instanceof Error ? error.message : 'Failed to create the evaluator.' };
         }
       },

@@ -33,7 +33,7 @@ const SECTIONS: NavSection[] = [
       { label: msg`Projects`, to: '/settings/projects', testId: 'settings-nav-projects' },
       { label: msg`Providers`, to: '/settings/providers', testId: 'settings-nav-providers' },
       { label: msg`Users`, to: '/settings/users', testId: 'settings-nav-users' },
-      { label: msg`License`, to: '/settings/license', testId: 'settings-nav-license' },
+      { label: msg`Enterprise support`, to: '/settings/license', testId: 'settings-nav-license' },
       { label: msg`Error log`, to: '/settings/error-log', testId: 'settings-nav-error-log' },
       { label: msg`Email notifications`, to: '/settings/email-notifications', testId: 'settings-nav-email-notifications' },
       { label: msg`Outlier detection`, to: '/settings/outlier-detection', testId: 'settings-nav-outlier-detection' },

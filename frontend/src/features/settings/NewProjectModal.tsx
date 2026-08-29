@@ -16,7 +16,11 @@ interface NewProjectModalProps {
 export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewProjectModalProps) {
   const { t } = useLingui();
   const [name, setName] = useState('');
-  const [systemEndpointId, setSystemEndpointId] = useState(endpoints[0]?.id ?? '');
+  // Only an explicit pick is stored; the default is derived so it follows the endpoints list
+  // even when the modal mounts before that query has resolved (BEST_PRACTICES §4.2). Seeding
+  // `useState` from `endpoints[0]` froze '' in that case and the submit never enabled.
+  const [pickedEndpointId, setPickedEndpointId] = useState<string | null>(null);
+  const systemEndpointId = pickedEndpointId ?? endpoints[0]?.id ?? '';
 
   const valid = name.trim().length > 0 && systemEndpointId.length > 0;
 
@@ -45,7 +49,7 @@ export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewP
           />
         </FormField>
         <FormField label={t`System endpoint`}>
-          <Select value={systemEndpointId} onValueChange={setSystemEndpointId}>
+          <Select value={systemEndpointId} onValueChange={setPickedEndpointId}>
             {endpoints.length === 0 && <option value="">{t`No endpoints available`}</option>}
             {endpoints.map(e => (
               <option key={e.id} value={e.id}>

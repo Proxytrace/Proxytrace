@@ -8,7 +8,6 @@ using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.CustomAnomaly;
 using Nordstein.Core.AI.Messages;
 using Proxytrace.Domain.Notification;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.CustomAnomaly.Internal;
 
@@ -27,7 +26,6 @@ internal sealed class CustomAnomalyReviewService : BackgroundService, ICustomAno
     /// <summary>Cap on the turn text handed to the judge, so a huge turn cannot blow the context.</summary>
     private const int MaxReviewTextLength = 16_000;
 
-    private readonly ILicenseService license;
     private readonly IAgentCallRepository agentCalls;
     private readonly ICustomAnomalyDetectorRepository detectors;
     private readonly ICustomAnomalyResultRepository results;
@@ -47,7 +45,6 @@ internal sealed class CustomAnomalyReviewService : BackgroundService, ICustomAno
     /// Initializes a new instance of the <see cref="CustomAnomalyReviewService"/> class.
     /// </summary>
     public CustomAnomalyReviewService(
-        ILicenseService license,
         IAgentCallRepository agentCalls,
         ICustomAnomalyDetectorRepository detectors,
         ICustomAnomalyResultRepository results,
@@ -56,7 +53,6 @@ internal sealed class CustomAnomalyReviewService : BackgroundService, ICustomAno
         INotificationService notifications,
         ILogger<CustomAnomalyReviewService> logger)
     {
-        this.license = license;
         this.agentCalls = agentCalls;
         this.detectors = detectors;
         this.results = results;
@@ -102,11 +98,6 @@ internal sealed class CustomAnomalyReviewService : BackgroundService, ICustomAno
     // the background loop.
     internal async Task ReviewAsync(Guid callId, CancellationToken cancellationToken)
     {
-        // Dormant without the feature — queued ids are drained and dropped, so a downgrade simply
-        // pauses reviews and a re-upgrade resumes them for new traffic.
-        if (!license.IsFeatureEnabled(LicenseFeature.CustomAnomalyDetectors))
-            return;
-
         var call = await agentCalls.FindAsync(callId, cancellationToken);
         if (call is null)
         {

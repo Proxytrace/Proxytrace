@@ -71,11 +71,6 @@ theory's *View run* link also reveals the linked A/B run automatically and selec
 
 ## Schedule periodic runs
 
-::: tip Enterprise feature
-Scheduling is part of the Enterprise tier. On the Free tier the scheduling controls are
-unavailable; existing schedules stay listable but do not run.
-:::
-
 Instead of starting every run by hand, you can have a suite run **automatically on a recurring
 interval** against a fixed set of model endpoints — for example, run your regression suite every
 6 hours, or once a day. Each scheduled run behaves exactly like a manual one: it produces a test

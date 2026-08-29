@@ -6,8 +6,6 @@ using Nordstein.Core.AI.Completions;
 using Proxytrace.Domain.Project;
 using Nordstein.Core.AI.Prompts;
 using Proxytrace.Domain.Prompt;
-using Proxytrace.Licensing;
-using Proxytrace.Licensing.Exceptions;
 
 namespace Proxytrace.Api.Evaluators;
 
@@ -31,7 +29,6 @@ public sealed class EvaluatorBuilder
     private readonly INumericMatchEvaluator.CreateExisting createNumericMatchExisting;
     private readonly IJsonSchemaMatchEvaluator.CreateNew createJsonSchemaMatch;
     private readonly IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting;
-    private readonly ILicenseService licenseService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EvaluatorBuilder"/> class.
@@ -47,8 +44,7 @@ public sealed class EvaluatorBuilder
         INumericMatchEvaluator.CreateNew createNumericMatch,
         INumericMatchEvaluator.CreateExisting createNumericMatchExisting,
         IJsonSchemaMatchEvaluator.CreateNew createJsonSchemaMatch,
-        IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting,
-        ILicenseService licenseService)
+        IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting)
     {
         this.createAgent = createAgent;
         this.createModelParameters = createModelParameters;
@@ -61,13 +57,6 @@ public sealed class EvaluatorBuilder
         this.createNumericMatchExisting = createNumericMatchExisting;
         this.createJsonSchemaMatch = createJsonSchemaMatch;
         this.createJsonSchemaMatchExisting = createJsonSchemaMatchExisting;
-        this.licenseService = licenseService;
-    }
-
-    private void EnsureAgenticLicensed()
-    {
-        if (!licenseService.IsFeatureEnabled(LicenseFeature.AgenticEvaluators))
-            throw new FeatureNotLicensedException(LicenseFeature.AgenticEvaluators, licenseService.Current.Tier);
     }
 
     /// <summary>
@@ -120,8 +109,6 @@ public sealed class EvaluatorBuilder
         IProject project,
         CancellationToken cancellationToken)
     {
-        EnsureAgenticLicensed();
-
         var prompt = createPromptTemplate(request.Name, request.SystemMessage);
         var agent = createAgent(
             name: request.Name,
@@ -140,8 +127,6 @@ public sealed class EvaluatorBuilder
         IAgenticEvaluator current,
         CancellationToken cancellationToken)
     {
-        EnsureAgenticLicensed();
-
         var name = request.Name ?? current.Name;
         var template = request.SystemMessage ?? current.Agent.SystemPrompt.Template;
         var prompt = createPromptTemplate(name, template);

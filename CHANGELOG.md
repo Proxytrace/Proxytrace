@@ -9,6 +9,35 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Changed
+
+- **Proxytrace is now free for everyone, with every feature and no limits.** The source license
+  changed from the Elastic License 2.0 to the **PolyForm Shield 1.0.0**: any use is permitted —
+  personal, academic, commercial, and internal business use — as long as you do not offer a
+  product or service that competes with Proxytrace. There is no Free tier any more: optimization
+  proposals, Tracey, agentic evaluators, scheduled runs, custom anomaly detectors, cost budgets,
+  test-case synthesis, SSO, and the audit log are available on every install, and projects,
+  users, agents, test suites, and monthly traces are unlimited.
+- **The license key now only records an Enterprise support contract.** Settings → License became
+  **Settings → Enterprise support**; the top-bar chip appears only when a support key is on file.
+  Existing Enterprise keys keep validating.
+- **Trace retention is purely `AgentCallCleanup:RetentionDurationDays`** (default 30 days). The
+  former 14-day Free-tier cap is gone, so installs that ran without a key now keep traces for the
+  configured duration.
+
+### Fixed
+
+- **New project dialog could stay disabled.** When the dialog opened before the endpoint list had
+  loaded, it never picked a default system endpoint and *Create project* stayed greyed out until
+  the dialog was reopened. The default now follows the list.
+
+### Removed
+
+- The HTTP `402` `FeatureNotLicensed` / `LicenseLimitExceeded` responses, the `features`, `limits`
+  and `quotaExceeded` fields of `GET /api/license`, the `/upgrade` page and upgrade dialogs, the
+  setup wizard's license step, the monthly trace quota (and its notification and banner), and the
+  standalone proxy's license polling (`Licensing:StoredLicensePollSeconds`).
+
 ## [1.11.0] - 2026-08-16
 
 ### Added

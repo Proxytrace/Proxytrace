@@ -8,14 +8,14 @@ import { test as base, expect, type APIRequestContext } from '@playwright/test';
 // To support that, we override `request` with a passthrough to a *worker-scoped* APIRequestContext
 // (`_apiContext`). Because the underlying context lives for the whole worker, the same instance is
 // returned in `beforeAll` and in every test, so reuse is allowed. The context inherits the running
-// project's `baseURL` (e.g. :5101 for the default stack, :5103 for the licensing projects). Our API
+// project's `baseURL` (:5101 for the default stack). Our API
 // calls authenticate with Bearer tokens from `login()`, so dropping per-test storageState cookies on
 // this context is harmless.
 // Projects whose specs run authenticated against the default stack and accumulate domain data in
 // the shared DB. Before each of their tests we reset the server to the setup baseline (see below)
 // so specs that assert exact counts / empty states are not affected by earlier specs' data. The
-// `setup` project (creates the baseline), `auth-flows` (drives auth from a clean session) and the
-// licensing projects (separate stack) are intentionally excluded.
+// `setup` project (creates the baseline) and `auth-flows` (drives auth from a clean session) are
+// intentionally excluded.
 const RESET_PROJECTS = new Set(['core', 'smoke']);
 
 export const test = base.extend<{ _reset: void }, { _apiContext: APIRequestContext }>({

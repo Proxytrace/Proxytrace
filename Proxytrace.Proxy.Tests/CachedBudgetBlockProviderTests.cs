@@ -5,7 +5,6 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Nordstein.Core.Common.Time;
 using Proxytrace.Domain.CostLimitBreach;
-using Proxytrace.Licensing;
 using Proxytrace.Proxy.Internal;
 
 namespace Proxytrace.Proxy.Tests;
@@ -77,19 +76,6 @@ public sealed class CachedBudgetBlockProviderTests
     }
 
     [TestMethod]
-    public async Task GetBlocksAsync_UnlicensedFeature_ReturnsEmptyWithoutRepositoryCall()
-    {
-        var breaches = Substitute.For<ICostLimitBreachRepository>();
-        CachedBudgetBlockProvider provider = NewProvider(breaches, TimeSpan.FromSeconds(30), featureEnabled: false);
-
-        IReadOnlyList<BudgetHardBlock> blocks = await provider.GetBlocksAsync(Guid.NewGuid(), CancellationToken.None);
-
-        blocks.Should().BeEmpty();
-        await breaches.DidNotReceive()
-            .GetActiveHardBlocksAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
-    }
-
-    [TestMethod]
     public async Task GetBlocksAsync_RepositoryError_FailsOpenAndDoesNotCacheTheFailure()
     {
         var projectId = Guid.NewGuid();
@@ -153,14 +139,10 @@ public sealed class CachedBudgetBlockProviderTests
     private static CachedBudgetBlockProvider NewProvider(
         ICostLimitBreachRepository breaches,
         TimeSpan ttl,
-        bool featureEnabled = true,
         IClock? clock = null)
     {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.CostControls).Returns(featureEnabled);
         return new CachedBudgetBlockProvider(
             breaches,
-            license,
             new MemoryCache(new MemoryCacheOptions()),
             clock ?? new FixedClock(DateTimeOffset.UtcNow),
             ttl,

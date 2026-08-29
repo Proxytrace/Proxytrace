@@ -57,8 +57,7 @@ no entity, no migration; they are reviewed in the trace detail's *Generate tests
 Tracey's `propose_test_cases`) and written through the ordinary endpoints above, so every case is
 still a plain promotion or correction underneath. Nothing the model says is trusted:
 `ProposalValidator` re-checks every `agentCallId` against the real conversation, drops a call with no
-response, and flags the traps below rather than hiding them. Gated by
-`LicenseFeature.TestCaseSynthesis` (see [`licensing.md`](licensing.md)).
+response, and flags the traps below rather than hiding them.
 
 **The synthesis call asks for no reasoning.** A user watches a panel block on this single model
 call, and on a reasoning model the hidden thinking dwarfs the answer: measured against a four-call
@@ -169,7 +168,7 @@ Runs can be kicked off **manually** (the API/UI) or on a **schedule**. A `TestRu
 domain entity binding a suite to a fixed set of endpoints — capped at 3, like manual runs — + a
 cadence) is polled by
 `TestRunSchedulerService` — a `BackgroundService` on a ~60s `PeriodicTimer`, disabled in kiosk —
-which fires `RunInBackgroundAsync(suite, endpoints, scheduleId)` for each due/enabled/licensed
+which fires `RunInBackgroundAsync(suite, endpoints, scheduleId)` for each due/enabled
 schedule (skipping any whose prior run is still in flight, then advancing `NextRunAt` so missed
 ticks collapse). The resulting `TestRunGroup` therefore carries a `ScheduleId`; scheduled runs
 feed every downstream stage of this loop exactly like manual ones.
@@ -420,7 +419,7 @@ to the **Proposals** review desk over SSE via `IProposalBroadcaster` (`proposal-
 **Promote = handoff, not auto-apply.** On promote the UI offers the handoff package: copy
 buttons for the proposed prompt / tools JSON / model name, a client-generated markdown
 "apply this change" doc, and the machine-readable artifact endpoint
-`GET /api/proposals/{id}/artifact` (license-gated like the rest of the controller).
+`GET /api/proposals/{id}/artifact`.
 
 `ITheoryValidationService` also supports **resetting** a terminal theory (Validated, Invalidated,
 or Failed) for re-validation (`TheoryResetOutcome`) — refused if the spawned proposal was already
@@ -474,7 +473,3 @@ auto-detection gaps — reverting to an already-stored old version (no new-versi
 traffic attributed to a different agent — are covered by Mark adopted; the handoff doc
 recommends pinning attribution with the `X-Proxytrace-Agent` header.
 
-## Licensing
-
-`OptimizationProposals` and `AgenticEvaluators` are **license-gated features** — gate access
-through `ILicenseService` (see [`licensing.md`](licensing.md)), not by checking tiers inline.

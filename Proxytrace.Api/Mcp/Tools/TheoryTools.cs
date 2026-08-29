@@ -13,7 +13,6 @@ using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestSuite;
 using Nordstein.Core.AI.Tools;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Mcp.Tools;
 
@@ -29,8 +28,7 @@ internal enum McpTheoryChangeKind
 
 /// <summary>
 /// MCP tools for the optimization-theory loop in the current project: read past theories and submit a
-/// new one for background A/B validation. Gated by the <see cref="LicenseFeature.OptimizationProposals"/>
-/// license feature.
+/// new one for background A/B validation.
 /// </summary>
 [McpServerToolType]
 internal sealed class TheoryTools
@@ -45,7 +43,6 @@ internal sealed class TheoryTools
     private readonly IModelSwitchTheory.CreateNew createModelSwitch;
     private readonly IToolUpdateTheory.CreateNew createToolUpdate;
     private readonly TheoryDtoMapper mapper;
-    private readonly ILicenseService license;
     private readonly ILogger<Audit> audit;
 
     /// <summary>
@@ -62,7 +59,6 @@ internal sealed class TheoryTools
         IModelSwitchTheory.CreateNew createModelSwitch,
         IToolUpdateTheory.CreateNew createToolUpdate,
         TheoryDtoMapper mapper,
-        ILicenseService license,
         ILogger<Audit> audit)
     {
         this.project = project;
@@ -75,7 +71,6 @@ internal sealed class TheoryTools
         this.createModelSwitch = createModelSwitch;
         this.createToolUpdate = createToolUpdate;
         this.mapper = mapper;
-        this.license = license;
         this.audit = audit;
     }
 
@@ -89,7 +84,6 @@ internal sealed class TheoryTools
         [Description("Optional status filter: Proposed, Validating, Validated or Invalidated.")] TheoryStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        EnsureFeature();
         var p = await project.GetProjectAsync(cancellationToken);
         IReadOnlyList<IOptimizationTheory> theories = await repository.GetByProjectAsync(p.Id, cancellationToken);
         if (status.HasValue)
@@ -106,7 +100,6 @@ internal sealed class TheoryTools
         [Description("The theory id (GUID), from list_theories.")] Guid theoryId,
         CancellationToken cancellationToken)
     {
-        EnsureFeature();
         var p = await project.GetProjectAsync(cancellationToken);
         var theory = await repository.FindAsync(theoryId, cancellationToken);
         if (theory is null || theory.Agent.Project.Id != p.Id)
@@ -134,7 +127,6 @@ internal sealed class TheoryTools
         CancellationToken cancellationToken = default)
     {
         project.RequireWriteScope();
-        EnsureFeature();
         if (string.IsNullOrWhiteSpace(rationale))
             throw new McpException("A rationale is required.");
 
@@ -218,11 +210,5 @@ internal sealed class TheoryTools
                 s.Description ?? string.Empty,
                 string.IsNullOrWhiteSpace(s.ParametersJson) ? ToolArguments.None : ToolArguments.FromJsonSchema(s.ParametersJson)))
             .ToArray();
-    }
-
-    private void EnsureFeature()
-    {
-        if (!license.IsFeatureEnabled(LicenseFeature.OptimizationProposals))
-            throw new McpException("Optimization theories are not available on the current license tier.");
     }
 }

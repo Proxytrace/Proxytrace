@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.License;
-using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Licensing;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain.User;
@@ -27,7 +26,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
         bool usersExist = true,
         bool authenticatedAsAdmin = false)
     {
-        var quotaGuard = services.GetRequiredService<ITraceQuotaGuard>();
         var setup = Substitute.For<ISetupService>();
         setup.AnyUsersExistAsync(Arg.Any<CancellationToken>()).Returns(usersExist);
 
@@ -35,7 +33,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             licenseService,
             keyManager ?? Substitute.For<ILicenseKeyManager>(),
             setup,
-            quotaGuard,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Proxytrace.Domain.AuditLog.Audit>.Instance);
 
         var identity = authenticatedAsAdmin
@@ -53,10 +50,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     {
         var service = Substitute.For<ILicenseService>();
         service.Current.Returns(snapshot);
-        service.IsFeatureEnabled(Arg.Any<LicenseFeature>())
-            .Returns(call => snapshot.Features.Contains(call.Arg<LicenseFeature>()));
-        service.GetLimit(Arg.Any<LicenseLimit>())
-            .Returns(call => snapshot.Limits.TryGetValue(call.Arg<LicenseLimit>(), out var v) ? v : 0);
         return service;
     }
 
@@ -71,14 +64,11 @@ public sealed class LicenseControllerTests : BaseTest<Module>
         dto.Tier.Should().Be("free");
         dto.Status.Should().Be("free");
         dto.Source.Should().Be("none");
-        dto.Features.Should().BeEmpty();
-        dto.Limits.Should().ContainKey(nameof(LicenseLimit.MaxProjects));
     }
 
     [TestMethod]
     public void Get_ActiveEnterprise_ReturnsEnterpriseDto()
     {
-        var definition = LicensePolicy.For(LicenseTier.Enterprise);
         var snapshot = new LicenseSnapshot(
             LicenseTier.Enterprise,
             LicenseStatus.Active,
@@ -86,8 +76,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             null,
             "customer@example.com",
             "jti-1",
-            definition.Features,
-            definition.Limits,
             LicenseSource.Stored);
 
         var services = GetServices();
@@ -97,16 +85,14 @@ public sealed class LicenseControllerTests : BaseTest<Module>
         dto.Status.Should().Be("active");
         dto.Source.Should().Be("stored");
         dto.CustomerEmail.Should().Be("customer@example.com");
-        dto.Features.Should().Contain(nameof(LicenseFeature.OptimizationProposals));
     }
 
     [TestMethod]
     public void Get_Anonymously_WithholdsTheCustomerEmail()
     {
-        // The endpoint is deliberately anonymous (the setup wizard and sign-in screen need the tier
-        // before any user exists), so it must not disclose who the licence belongs to — otherwise a
+        // The endpoint is deliberately anonymous (the sign-in screen shows the support badge before
+        // any user exists), so it must not disclose who the key belongs to — otherwise a
         // plain unauthenticated GET yields the purchaser's email address.
-        var definition = LicensePolicy.For(LicenseTier.Enterprise);
         var snapshot = new LicenseSnapshot(
             LicenseTier.Enterprise,
             LicenseStatus.Active,
@@ -114,8 +100,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             null,
             "customer@example.com",
             "jti-1",
-            definition.Features,
-            definition.Limits,
             LicenseSource.Stored);
 
         var services = GetServices();
@@ -130,7 +114,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     [TestMethod]
     public void Get_OfflineLicense_ProjectsOfflineFlag()
     {
-        var definition = LicensePolicy.For(LicenseTier.Enterprise);
         var snapshot = new LicenseSnapshot(
             LicenseTier.Enterprise,
             LicenseStatus.Active,
@@ -138,8 +121,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             null,
             "airgap@example.com",
             "jti-offline",
-            definition.Features,
-            definition.Limits,
             LicenseSource.Stored,
             InvalidReason: null,
             Offline: true);
@@ -164,7 +145,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     {
         var services = GetServices();
         var keyManager = Substitute.For<ILicenseKeyManager>();
-        var definition = LicensePolicy.For(LicenseTier.Enterprise);
         keyManager.Validate("jwt").Returns(new LicenseSnapshot(
             LicenseTier.Enterprise,
             LicenseStatus.Active,
@@ -172,8 +152,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
             null,
             "airgap@example.com",
             "jti-offline",
-            definition.Features,
-            definition.Limits,
             LicenseSource.None,
             InvalidReason: null,
             Offline: true));
@@ -229,8 +207,7 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task Set_AnonymousBeforeSetup_SetsLicense()
     {
-        // The setup wizard's first step runs before any user exists; setting the license must
-        // be possible there — the same gate as first-admin creation.
+        // A key may be applied before any user exists — the same gate as first-admin creation.
         var services = GetServices();
         var keyManager = Substitute.For<ILicenseKeyManager>();
         var controller = ResolveController(
@@ -264,22 +241,6 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task Set_OverrideSource_ReturnsConflict()
-    {
-        // Kiosk/demo deployments run on a fixed override snapshot; the license is not manageable.
-        var services = GetServices();
-        var controller = ResolveController(
-            services,
-            StubLicense(LicenseSnapshot.Enterprise("kiosk@proxytrace.dev")),
-            usersExist: true,
-            authenticatedAsAdmin: true);
-
-        var result = await controller.Set(new SetLicenseRequest("jwt"), CancellationToken);
-
-        result.Result.Should().BeOfType<ConflictObjectResult>();
-    }
-
-    [TestMethod]
     public async Task Remove_AsAdmin_RemovesStoredLicense()
     {
         var services = GetServices();
@@ -300,16 +261,13 @@ public sealed class LicenseControllerTests : BaseTest<Module>
     {
         var services = GetServices();
         var keyManager = Substitute.For<ILicenseKeyManager>();
-        var definition = LicensePolicy.For(LicenseTier.Enterprise);
         keyManager.Validate("jwt").Returns(new LicenseSnapshot(
             LicenseTier.Enterprise,
             LicenseStatus.Active,
             DateTimeOffset.UtcNow.AddDays(30),
             null,
             "customer@example.com",
-            "jti-1",
-            definition.Features,
-            definition.Limits));
+            "jti-1"));
         var controller = ResolveController(services, StubLicense(LicenseSnapshot.Free()), keyManager);
 
         var result = controller.Validate(new SetLicenseRequest("jwt"));

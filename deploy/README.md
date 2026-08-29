@@ -50,12 +50,13 @@ docker compose up -d
 Database migrations apply automatically on startup. See the manual's
 [Upgrading](http://localhost:5101/docs/admin/upgrading.html) page for details.
 
-## License
+## Enterprise support key (optional)
 
-Without a license, Proxytrace runs the Free tier. To activate a license key, either:
+Every feature is included with no key. If you hold an Enterprise support contract, record it by
+either:
 
-- enter it during the first-run setup wizard or under **Settings → License** (stored
-  in the database, applies immediately — no restart), or
-- set `PROXYTRACE_LICENSE` in `.env` and run `docker compose up -d`.
+- entering the key under **Settings → Enterprise support** (stored in the database, applies
+  immediately — no restart), or
+- setting `PROXYTRACE_LICENSE` in `.env` and running `docker compose up -d`.
 
 A key activated in the UI takes precedence over the environment variable.

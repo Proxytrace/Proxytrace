@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Tracey;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -16,7 +14,6 @@ namespace Proxytrace.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-[RequiresFeature(LicenseFeature.Tracey)]
 [Route("api/tracey")]
 public class TraceyController : ControllerBase
 {

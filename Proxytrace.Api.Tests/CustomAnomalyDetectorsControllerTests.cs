@@ -1,10 +1,8 @@
-using System.Reflection;
 using AwesomeAssertions;
 using Autofac;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Anomalies;
 using Proxytrace.Domain;
@@ -12,7 +10,6 @@ using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.CustomAnomaly;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -303,17 +300,6 @@ public sealed class CustomAnomalyDetectorsControllerTests : BaseTest<Module>
         guard.CanAccessProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
         var controller = ResolveController(services, guard);
         return await controller.Get(dto.Id, CancellationToken);
-    }
-
-    // ── licensing ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public void Controller_RequiresCustomAnomalyDetectorsFeature()
-    {
-        var attribute = typeof(CustomAnomalyDetectorsController).GetCustomAttribute<RequiresFeatureAttribute>();
-
-        attribute.Should().NotBeNull();
-        attribute.Should().Match<RequiresFeatureAttribute>(a => a.Feature == LicenseFeature.CustomAnomalyDetectors);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

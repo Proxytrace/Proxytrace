@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Anomalies;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -15,7 +14,6 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Nordstein.Core.AI.Prompts;
 using Proxytrace.Domain.Prompt;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -27,7 +25,6 @@ namespace Proxytrace.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/anomaly-detectors")]
-[RequiresFeature(LicenseFeature.CustomAnomalyDetectors)]
 public class CustomAnomalyDetectorsController : ControllerBase
 {
     private readonly ICustomAnomalyDetectorRepository detectorRepository;

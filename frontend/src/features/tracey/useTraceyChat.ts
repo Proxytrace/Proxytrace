@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
 import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 import { traceyApi, type TraceySessionDto } from '../../api/tracey';
-import { useFeature } from '../../hooks/useLicense';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useCurrentUser } from '../../auth/useCurrentUser';
@@ -56,9 +55,8 @@ export interface TraceyChat {
    */
   activate: () => void;
   /**
-   * True when Tracey can actually be used here: a project is selected, kiosk mode is
-   * interactive, and the Tracey license feature is on. `AskTraceyButton` renders only when
-   * true (mirrors the sidebar nav gating).
+   * True when Tracey can actually be used here: a project is selected and kiosk mode is
+   * interactive. `AskTraceyButton` renders only when true (mirrors the sidebar nav).
    */
   available: boolean;
   /**
@@ -77,8 +75,6 @@ export function useTraceyChat(): TraceyChat {
   // Since the runtime mounts app-wide (above the router), gate the session here so it's only
   // provisioned when Tracey is actually available.
   const { interactive } = useKiosk();
-  // Tracey is an Enterprise feature; on a Free install the session endpoint 402s, so never fire it.
-  const traceyLicensed = useFeature('Tracey');
   // The runtime mounts app-wide, but the session (and its backend agent provisioning) is only
   // created once the user opens Tracey. Latched on, so it stays alive across navigation.
   const [activated, setActivated] = useState(false);
@@ -118,7 +114,7 @@ export function useTraceyChat(): TraceyChat {
   const { data: session, status: queryStatus } = useQuery<TraceySessionDto>({
     queryKey: QUERY_KEYS.traceySession(projectId),
     queryFn: () => traceyApi.getSession(projectId),
-    enabled: !!projectId && interactive && traceyLicensed && activated,
+    enabled: !!projectId && interactive && activated,
     // Refresh comfortably before the 1-hour key expiry.
     staleTime: 50 * 60 * 1000,
     refetchInterval: 50 * 60 * 1000,
@@ -249,7 +245,7 @@ export function useTraceyChat(): TraceyChat {
         ? 'error'
         : 'ready';
 
-  const available = !!projectId && interactive && traceyLicensed;
+  const available = !!projectId && interactive;
   const askTracey = useAskTracey({ runtime, status, activate, startFreshThread, navigate });
 
   return {

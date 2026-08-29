@@ -222,10 +222,9 @@ When `Kiosk:Endpoint` is present, kiosk becomes fully read-write for a single us
   `http://<host>:5200/openai/v1` with the demo API key will have its calls captured as
   traces in real time. The bundled showcase stack uses this route automatically.
 
-The seeded demo user is an **administrator**, and the kiosk always runs on a perpetual
-Enterprise license, so admin-only and licensed surfaces are demonstrable rather than locked —
-**Settings** appears in the sidebar, and you can set **monthly cost budgets** on the Costs page
-(both require the Admin role on top of the license).
+The seeded demo user is an **administrator**, so admin-only surfaces are demonstrable rather than
+locked — **Settings** appears in the sidebar, and you can set **monthly cost budgets** on the Costs
+page (both require the Admin role).
 
 All data remains **in-memory only** and is lost when the process restarts. Interactive kiosk
 is intended for a single user or a private hands-on demo — it is not designed for a shared

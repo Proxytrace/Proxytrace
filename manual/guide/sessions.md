@@ -9,7 +9,7 @@ live, chronological timeline you can watch as it happens.
 
 Sessions are **auto-created** — the first trace that arrives with a session key Proxytrace
 hasn't seen before creates the session; every later trace with the same key joins it. There is
-nothing to set up in the UI and no configuration; sessions work on **every license tier**.
+nothing to set up in the UI and no configuration.
 
 ## Sending a session key
 

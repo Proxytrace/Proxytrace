@@ -1,8 +1,9 @@
 namespace Proxytrace.Licensing;
 
 /// <summary>
-/// Provides the current resolved license and answers feature/limit queries.
-/// The single source of truth for licensing decisions across the application.
+/// Provides the current resolved support key. The single source of truth for license state
+/// across the application. Nothing is gated on it — every feature is always available; the
+/// key only signals an Enterprise support contract.
 /// </summary>
 public interface ILicenseService
 {
@@ -15,16 +16,6 @@ public interface ILicenseService
     /// Raised whenever <see cref="Current"/> changes (e.g. a background check downgrades the tier).
     /// </summary>
     event Action Changed;
-
-    /// <summary>
-    /// Returns true when the given feature is granted by the current license.
-    /// </summary>
-    bool IsFeatureEnabled(LicenseFeature feature);
-
-    /// <summary>
-    /// Returns the effective value of the given limit; <see cref="long.MaxValue"/> means unlimited.
-    /// </summary>
-    long GetLimit(LicenseLimit limit);
 
     /// <summary>
     /// Forces an immediate license server check, updating <see cref="Current"/> if it changed.

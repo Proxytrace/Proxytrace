@@ -43,7 +43,7 @@ The actions recorded today:
 | Anomaly detectors | Anomaly detector created, updated, deleted |
 | Providers | Provider created/updated/deleted, upstream provider key rotated, model endpoint created/updated/deleted |
 | Optimization | Theory submitted, reset, or rejected; theory validated/invalidated by A/B run; proposal generated; proposal status changed (approved / rejected / adopted); proposal auto-adopted |
-| Licensing | License set, license removed |
+| Support key | Support key set, support key removed |
 | Operations | Non-model data purged; secrets backfilled at rest |
 
 ::: info Authentication events are local-mode

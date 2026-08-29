@@ -12,8 +12,6 @@ using Proxytrace.Api.Middleware;
 using Proxytrace.Api.Middleware.Exceptions;
 using Nordstein.Core.Common.Net;
 using Nordstein.Core.Domain.Exceptions;
-using Proxytrace.Licensing;
-using Proxytrace.Licensing.Exceptions;
 
 namespace Proxytrace.Api.Tests.Middleware;
 
@@ -33,8 +31,6 @@ public sealed class ExceptionHandlingMiddlewareTests
             new EntityNotFoundExceptionMapper(),
             new EntityConflictExceptionMapper(),
             new NotImplementedExceptionMapper(),
-            new FeatureNotLicensedExceptionMapper(),
-            new LicenseLimitExceededExceptionMapper(),
             new DbUpdateExceptionMapper(),
             new MalformedEndpointUrlExceptionMapper(),
         ];
@@ -117,21 +113,6 @@ public sealed class ExceptionHandlingMiddlewareTests
         var (status, _) = await InvokeAsync(middleware);
 
         status.Should().Be(StatusCodes.Status501NotImplemented);
-    }
-
-    [TestMethod]
-    public async Task InvokeAsync_FeatureNotLicensed_Returns402_WithFeatureFields()
-    {
-        var middleware = Create(_ =>
-            throw new FeatureNotLicensedException(LicenseFeature.CustomEvaluators, LicenseTier.Free));
-
-        var (status, body) = await InvokeAsync(middleware);
-
-        status.Should().Be(StatusCodes.Status402PaymentRequired);
-        var error = Error(body);
-        error.GetProperty("type").GetString().Should().Be("FeatureNotLicensed");
-        error.GetProperty("feature").GetString().Should().Be(nameof(LicenseFeature.CustomEvaluators));
-        error.GetProperty("tier").GetString().Should().Be(nameof(LicenseTier.Free));
     }
 
     [TestMethod]

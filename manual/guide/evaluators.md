@@ -51,10 +51,6 @@ These use a model to judge qualities that rules can't capture:
 | **Politeness** | Tone and courtesy of the response. |
 | **Custom** | A criterion you define. |
 
-LLM-based (agentic) evaluators require a **paid plan**. On the free tier they appear locked
-(🔒) in the suite editor and can't be attached; if a suite already uses one when a plan lapses,
-it is simply skipped during runs (it never errors a run).
-
 ## Default evaluators
 
 Every project starts with a ready-to-use set of evaluators, created automatically — an
@@ -66,8 +62,7 @@ suite and start running. The agentic ones still require a paid plan to run (see 
 
 Evaluators are attached to [test suites](/guide/test-suites-and-cases) (many-to-many): a
 suite can use several evaluators, and each evaluator can be reused across suites. Pick the
-set that expresses what "correct" means for that benchmark. Agentic evaluators are locked on
-the free tier.
+set that expresses what "correct" means for that benchmark.
 
 ## The evaluator workspace
 

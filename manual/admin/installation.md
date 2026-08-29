@@ -76,8 +76,8 @@ docker compose up -d
 
 Every setting has a working default: the Postgres container is internal-only with a default
 password, the session signing key and the at-rest secret-encryption key ring are generated on
-first start and persisted in the `appdata` volume, and without a license Proxytrace runs the
-Free tier. To override anything (ports, public URL, your own database password — recommended
+first start and persisted in the `appdata` volume, and every feature is included without a
+license key. To override anything (ports, public URL, your own database password — recommended
 for production):
 
 ```bash
@@ -129,13 +129,12 @@ tags (`X.Y.Z`, `X.Y`, `X`, `latest`), identical digests, both `linux/amd64` and 
 
 Pin the exact `X.Y.Z` tag in production; `latest` is a convenience for evaluation.
 
-## License
+## Enterprise support key
 
-Without a license, Proxytrace runs the Free tier. To activate a license key, enter it
-during the first-run setup wizard or later under **Settings → License** (applies
-immediately, no restart), or set the `PROXYTRACE_LICENSE` environment variable. A key
-activated in the UI takes precedence over the environment variable — see
-[Licensing](/admin/licensing).
+Every feature is included with no key. If you hold an Enterprise support contract, record it
+under **Settings → Enterprise support** (applies immediately, no restart) or set the
+`PROXYTRACE_LICENSE` environment variable. A key activated in the UI takes precedence over the
+environment variable — see [Enterprise support key](/admin/licensing).
 
 ## Run from source (development)
 

@@ -26,8 +26,7 @@ This page covers the backend design; the user/integrator guide is `manual/guide/
   the auth handler stashes the owner as the current user, so `ICurrentUserAccessor` resolves them inside
   the tools exactly as a JWT request would. The owner is chosen when the key is minted (an explicit
   user, else the creating admin).
-- **Ungated.** MCP itself is not license-gated, consistent with `IApiKey`. (Proposal/theory tools still
-  respect `LicenseFeature.OptimizationProposals`, like their REST controllers.)
+- **Ungated.** Nothing in MCP (or anywhere else) is gated on the support key.
 
 ## Hosting
 

@@ -133,7 +133,7 @@ prompt or tool changes never split your traffic into a separate agent. See
 
 ::: warning Requests can be blocked in real time
 If the project has [blocking anomaly detectors](/guide/anomaly-dashboard#blocking-detectors)
-configured (an Enterprise feature — e.g. a password-pattern guard), the proxy rejects a matching
+configured (e.g. a password-pattern guard), the proxy rejects a matching
 request **before it reaches the provider** with HTTP `403` and an OpenAI-style error whose `code`
 is `proxytrace_blocked`. The blocked call still appears as a flagged trace.
 

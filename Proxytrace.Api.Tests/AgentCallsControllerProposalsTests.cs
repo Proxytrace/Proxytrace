@@ -1,10 +1,8 @@
-using System.Reflection;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
@@ -17,7 +15,6 @@ using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.TestSuite;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -110,18 +107,6 @@ public sealed class AgentCallsControllerProposalsTests : BaseTest<Module>
                 list => list != null && list.Count == TestCaseProposalSet.MaxRounds),
             Arg.Any<string?>(),
             Arg.Any<CancellationToken>());
-    }
-
-    [TestMethod]
-    public void ProposeTestCases_Endpoint_RequiresTheTestCaseSynthesisFeature()
-    {
-        var method = typeof(AgentCallsController).GetMethod(nameof(AgentCallsController.ProposeTestCases))
-            ?? throw new InvalidOperationException("ProposeTestCases method not found");
-
-        var attribute = method.GetCustomAttribute<RequiresFeatureAttribute>();
-
-        attribute.Should().NotBeNull();
-        attribute.Should().Match<RequiresFeatureAttribute>(a => a.Feature == LicenseFeature.TestCaseSynthesis);
     }
 
     private static ITestCaseSynthesisService SynthesisReturning(TestCaseProposalSet result)

@@ -23,7 +23,6 @@ using Nordstein.Core.AI.Prompts;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Session;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Application.Tests;
@@ -781,48 +780,10 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
                                                         ]
                                                     }
                                                     """;
-
     [TestMethod]
-    public async Task IngestAsync_WhenAgentLimitReached_DropsTraceForNewAgent()
+    public async Task IngestAsync_DistinctPrompts_CreatesSecondAgent()
     {
-        // Cap non-system agents at 1 explicitly, independent of the Free tier value.
-        var services = GetServices(builder =>
-        {
-            var license = Substitute.For<ILicenseService>();
-            license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
-            license.GetLimit(LicenseLimit.MaxAgents).Returns(1);
-            builder.RegisterInstance(license).As<ILicenseService>();
-        });
-        var ingestion = services.GetRequiredService<AgentCallProcessor>();
-        var agentRepo = services.GetRequiredService<IAgentRepository>();
-        var callRepo = services.GetRequiredService<IAgentCallRepository>();
-        var (provider, project) = await GetProviderAndProjectAsync(services);
-
-        // First distinct agent: allowed (count 0 < 1).
-        await ingestion.IngestAsync(
-            new IngestJob(provider, project, FirstRequestBody, FirstResponseBody,
-                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        // Second distinct agent: would be agent #2 → dropped, and its trace with it.
-        await ingestion.IngestAsync(
-            new IngestJob(provider, project, SecondAgentRequestBody, ChatTurn1ResponseBody,
-                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        (await agentRepo.CountNonSystemAsync(CancellationToken)).Should().Be(1);
-        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
-    }
-
-    [TestMethod]
-    public async Task IngestAsync_WhenAgentLimitUnlimited_CreatesSecondAgent()
-    {
-        var services = GetServices(builder =>
-        {
-            var license = Substitute.For<ILicenseService>();
-            license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
-            builder.RegisterInstance(license).As<ILicenseService>();
-        });
+        var services = GetServices();
         var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var agentRepo = services.GetRequiredService<IAgentRepository>();
         var callRepo = services.GetRequiredService<IAgentCallRepository>();

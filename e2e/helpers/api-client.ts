@@ -341,37 +341,14 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
-  // The license snapshot served by GET /api/license (AllowAnonymous). `features` is empty on the
-  // Free tier; `tier` is the lowercased LicenseTier ('free' | 'enterprise').
-  async getLicense(): Promise<{ tier: string; status: string; features: string[] }> {
+  // The support-key snapshot served by GET /api/license (AllowAnonymous). `tier` is the lowercased
+  // LicenseTier ('free' | 'enterprise'); nothing is gated on it.
+  async getLicense(): Promise<{ tier: string; status: string; source: string }> {
     const res = await this.request.get('/api/license', { headers: this.headers() });
     if (!res.ok()) throw new Error(`get license failed: ${res.status()} ${await res.text()}`);
     return res.json();
   }
 
-  // Raw GET /api/proposals returning the response so callers can assert on the status code.
-  // On the Free tier the controller's [RequiresFeature(OptimizationProposals)] gate replies 402
-  // before the action runs — this is the backend half of the free-tier feature gate.
-  proposalsResponse(): Promise<APIResponse> {
-    return this.request.get('/api/proposals', { headers: this.headers() });
-  }
-
-  // Raw GET /api/tracey/session returning the response so callers can assert on the status code.
-  // On the Free tier the controller's [RequiresFeature(Tracey)] gate replies 402 before the action
-  // runs — the backend half of the free-tier Tracey feature gate.
-  traceySessionResponse(): Promise<APIResponse> {
-    return this.request.get('/api/tracey/session', { headers: this.headers() });
-  }
-
-  // Raw POST /api/agent-calls/{id}/test-case-proposals returning the response so callers can assert
-  // on the status code. The [RequiresFeature(TestCaseSynthesis)] gate runs before the action, so on
-  // the Free tier this replies 402 whatever the id resolves to — no trace needs to exist.
-  testCaseProposalsResponse(agentCallId: string): Promise<APIResponse> {
-    return this.request.post(`/api/agent-calls/${agentCallId}/test-case-proposals`, {
-      headers: this.headers(),
-      data: { suiteId: null, instruction: null, rounds: null },
-    });
-  }
 
   // ── Optimization theories ────────────────────────────────────────────────
   // POST /api/theories submits an unproven theory; the validator A/B-tests it in the
@@ -1092,9 +1069,7 @@ export class ProxytraceApiClient {
   }
 
   // ── Test-run schedules ───────────────────────────────────────────────────
-  // Periodic test-run schedules. Creation/management is gated behind the ScheduledTestRuns
-  // (Enterprise) license feature — the controller's [RequiresFeature] gate 402s on the Free tier
-  // — so seed/assert against the default (Enterprise) e2e stack. The request body mirrors
+  // Periodic test-run schedules. The request body mirrors
   // CreateTestRunScheduleRequest: { name, testSuiteId, modelEndpointIds, intervalMinutes, enabled }.
   async createTestRunSchedule(opts: {
     name: string;

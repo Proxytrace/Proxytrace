@@ -24,9 +24,6 @@ msgstr " for {0}"
 msgid ", valid until {0}"
 msgstr ", valid until {0}"
 
-msgid ". Paste a valid key below, or continue on the Free tier."
-msgstr ". Paste a valid key below, or continue on the Free tier."
-
 #. placeholder {0}: pendingAddTraces.length
 msgid "· +{0} pending"
 msgstr "· +{0} pending"
@@ -382,15 +379,6 @@ msgstr "{0} tools"
 msgid "{0} traces"
 msgstr "{0} traces"
 
-#. placeholder {0}: fmtTokens(limits.MaxTracesPerMonth ?? 10_000)
-#. placeholder {1}: limits.TraceRetentionDays ?? 14
-msgid "{0} traces per month, kept {1} days"
-msgstr "{0} traces per month, kept {1} days"
-
-#. placeholder {0}: limits.TraceRetentionDays ?? 365
-msgid "{0}-day trace retention"
-msgstr "{0}-day trace retention"
-
 #. placeholder {0}: first.toLocaleString()
 #. placeholder {1}: last.toLocaleString()
 #. placeholder {2}: total.toLocaleString()
@@ -500,14 +488,8 @@ msgstr "{evaluatorName}’s verdict"
 msgid "{kindLabel} for {0}"
 msgstr "{kindLabel} for {0}"
 
-msgid "{label} (Enterprise)"
-msgstr "{label} (Enterprise)"
-
-msgid "{label} tier"
-msgstr "{label} tier"
-
-msgid "{label} tier — upgrade"
-msgstr "{label} tier — upgrade"
+msgid "{label} — active"
+msgstr "{label} — active"
 
 msgid "{lineCount, plural, one {# line} other {# lines}}"
 msgstr "{lineCount, plural, one {# line} other {# lines}}"
@@ -515,20 +497,11 @@ msgstr "{lineCount, plural, one {# line} other {# lines}}"
 msgid "{memberCount, plural, one {# member} other {# members}}"
 msgstr "{memberCount, plural, one {# member} other {# members}}"
 
-msgid "{n} agents"
-msgstr "{n} agents"
-
 msgid "{n} calls"
 msgstr "{n} calls"
 
 msgid "{n} conversations"
 msgstr "{n} conversations"
-
-msgid "{n} projects"
-msgstr "{n} projects"
-
-msgid "{n} test suites"
-msgstr "{n} test suites"
 
 #. placeholder {0}: cell.doneSamples
 #. placeholder {1}: cell.sampleCount
@@ -698,23 +671,14 @@ msgstr "○ Not attached"
 msgid "● Attached"
 msgstr "● Attached"
 
-msgid "1 agent"
-msgstr "1 agent"
-
 msgid "1 call"
 msgstr "1 call"
 
 msgid "1 conversation"
 msgstr "1 conversation"
 
-msgid "1 project"
-msgstr "1 project"
-
 msgid "1 sample"
 msgstr "1 sample"
-
-msgid "1 test suite"
-msgstr "1 test suite"
 
 msgid "5 min"
 msgstr "5 min"
@@ -795,11 +759,11 @@ msgstr "Action"
 msgid "Action:"
 msgstr "Action:"
 
-msgid "Activate a license key"
-msgstr "Activate a license key"
+msgid "Activate a support key"
+msgstr "Activate a support key"
 
-msgid "Activate license"
-msgstr "Activate license"
+msgid "Activate key"
+msgstr "Activate key"
 
 msgid "Active"
 msgstr "Active"
@@ -940,23 +904,8 @@ msgstr "Agent stats · 30d"
 msgid "Agent Version Moved"
 msgstr "Agent Version Moved"
 
-msgid "Agent-proposed test cases"
-msgstr "Agent-proposed test cases"
-
 msgid "Agent:"
 msgstr "Agent:"
-
-msgid "Agentic evaluators"
-msgstr "Agentic evaluators"
-
-msgid "Agentic evaluators are not included in your licence, so these cases will be scored by the suite's existing evaluators."
-msgstr "Agentic evaluators are not included in your licence, so these cases will be scored by the suite's existing evaluators."
-
-msgid "Agentic evaluators require a licensed installation. Use a non-agentic kind or the suite's default exact-match evaluator instead."
-msgstr "Agentic evaluators require a licensed installation. Use a non-agentic kind or the suite's default exact-match evaluator instead."
-
-msgid "Agentic evaluators require a paid plan"
-msgstr "Agentic evaluators require a paid plan"
 
 msgid "Agents"
 msgstr "Agents"
@@ -1570,9 +1519,6 @@ msgstr "Cost Budget Updated"
 msgid "Cost Budget Warning"
 msgstr "Cost Budget Warning"
 
-msgid "Cost budgets & alerting"
-msgstr "Cost budgets & alerting"
-
 msgid "Cost over time"
 msgstr "Cost over time"
 
@@ -1775,26 +1721,17 @@ msgstr "current"
 msgid "Current calendar month (UTC)"
 msgstr "Current calendar month (UTC)"
 
-msgid "Current license"
-msgstr "Current license"
-
 msgid "Custom"
 msgstr "Custom"
 
 msgid "Custom (write your own)"
 msgstr "Custom (write your own)"
 
-msgid "Custom anomaly detectors"
-msgstr "Custom anomaly detectors"
-
 msgid "Custom detector"
 msgstr "Custom detector"
 
 msgid "Custom detectors review matched calls with an LLM judge and flag anomalies beyond the built-in statistical checks."
 msgstr "Custom detectors review matched calls with an LLM judge and flag anomalies beyond the built-in statistical checks."
-
-msgid "Custom evaluators"
-msgstr "Custom evaluators"
 
 msgid "Custom range"
 msgstr "Custom range"
@@ -1813,9 +1750,6 @@ msgstr "Danger zone"
 
 msgid "Dashboard"
 msgstr "Dashboard"
-
-msgid "Dashboard, agents, test suites & evaluators"
-msgstr "Dashboard, agents, test suites & evaluators"
 
 msgid "Data Purged"
 msgstr "Data Purged"
@@ -2129,8 +2063,8 @@ msgstr "Enter your email and we'll send a link to reset your password."
 msgid "Enter your password to turn off two-factor authentication. Your backup codes will be discarded."
 msgstr "Enter your password to turn off two-factor authentication. Your backup codes will be discarded."
 
-msgid "Enterprise"
-msgstr "Enterprise"
+msgid "Enterprise support"
+msgstr "Enterprise support"
 
 msgid "error"
 msgstr "error"
@@ -2209,6 +2143,12 @@ msgstr "Every agent in this project already has a budget. Edit one instead."
 
 msgid "Every API key in this project already has a budget. Edit one instead."
 msgstr "Every API key in this project already has a budget. Edit one instead."
+
+msgid "Every feature is included in Proxytrace. A support key records your Enterprise support contract."
+msgstr "Every feature is included in Proxytrace. A support key records your Enterprise support contract."
+
+msgid "Every feature is included, with no limits — nothing to unlock."
+msgstr "Every feature is included, with no limits — nothing to unlock."
 
 msgid "Every proxied call authenticates with a key, so this block cannot be bypassed — except by callers using the provider's own key, which the project budget holds. A key's spend also counts toward the project budget."
 msgstr "Every proxied call authenticates with a key, so this block cannot be bypassed — except by callers using the provider's own key, which the project budget holds. A key's spend also counts toward the project budget."
@@ -2320,8 +2260,8 @@ msgstr "Failure"
 msgid "Failure Cases"
 msgstr "Failure Cases"
 
-msgid "Falls back to the environment-supplied license, or the Free tier."
-msgstr "Falls back to the environment-supplied license, or the Free tier."
+msgid "Falls back to the environment-supplied key, if any."
+msgstr "Falls back to the environment-supplied key, if any."
 
 msgid "Fastest"
 msgstr "Fastest"
@@ -2344,8 +2284,8 @@ msgstr "Finish reason returned by the model"
 msgid "First seen"
 msgstr "First seen"
 
-msgid "Fix license"
-msgstr "Fix license"
+msgid "Fix key"
+msgstr "Fix key"
 
 msgid "Fixed"
 msgstr "Fixed"
@@ -2367,12 +2307,6 @@ msgstr "Flaky"
 
 msgid "Forgot password?"
 msgstr "Forgot password?"
-
-msgid "Free"
-msgstr "Free"
-
-msgid "Free tier"
-msgstr "Free tier"
 
 msgid "Freq Penalty"
 msgstr "Freq Penalty"
@@ -2397,9 +2331,6 @@ msgstr "Full calendar month"
 
 msgid "Full proxy setup guide →"
 msgstr "Full proxy setup guide →"
-
-msgid "Full trace capture through the OpenAI-compatible proxy"
-msgstr "Full trace capture through the OpenAI-compatible proxy"
 
 msgid "Fully correct"
 msgstr "Fully correct"
@@ -2463,9 +2394,6 @@ msgstr "Grok models via xAI’s OpenAI-compatible API."
 
 msgid "Hard limit"
 msgstr "Hard limit"
-
-msgid "Have a license key?"
-msgstr "Have a license key?"
 
 msgid "Hide"
 msgstr "Hide"
@@ -2789,27 +2717,14 @@ msgstr "Leave blank to keep current password"
 msgid "Level"
 msgstr "Level"
 
-msgid "License"
-msgstr "License"
-
-msgid "License activated."
-msgstr "License activated."
-
-msgid "License key"
-msgstr "License key"
-
 msgid "License Removed"
 msgstr "License Removed"
 
-msgid "License server unreachable — running on cached license. Enterprise features stay active for {remaining, plural, one {# more day} other {# more days}}."
-msgstr "License server unreachable — running on cached license. Enterprise features stay active for {remaining, plural, one {# more day} other {# more days}}."
+msgid "License server unreachable — the Enterprise support key could not be re-validated. It lapses in {remaining, plural, one {# day} other {# days}}."
+msgstr "License server unreachable — the Enterprise support key could not be re-validated. It lapses in {remaining, plural, one {# day} other {# days}}."
 
 msgid "License Set"
 msgstr "License Set"
-
-#. placeholder {0}: license.customerEmail
-msgid "Licensed to <0>{0}</0>"
-msgstr "Licensed to <0>{0}</0>"
 
 msgid "List agents"
 msgstr "List agents"
@@ -2945,9 +2860,6 @@ msgstr "Low cache hit"
 
 msgid "Manage"
 msgstr "Manage"
-
-msgid "Manage this installation's license key."
-msgstr "Manage this installation's license key."
 
 msgid "Many tool calls"
 msgstr "Many tool calls"
@@ -3130,9 +3042,6 @@ msgstr "Month to date"
 
 msgid "Monthly budgets"
 msgstr "Monthly budgets"
-
-msgid "Monthly trace quota reached — new traces are being dropped until the quota resets next month."
-msgstr "Monthly trace quota reached — new traces are being dropped until the quota resets next month."
 
 msgid "More actions"
 msgstr "More actions"
@@ -3518,6 +3427,9 @@ msgstr "No successful traces found in this range."
 msgid "No suite runs yet"
 msgstr "No suite runs yet"
 
+msgid "No support contract"
+msgstr "No support contract"
+
 msgid "No test cases"
 msgstr "No test cases"
 
@@ -3619,9 +3531,6 @@ msgstr "Not enough data"
 
 msgid "not in this run"
 msgstr "not in this run"
-
-msgid "Not now"
-msgstr "Not now"
 
 msgid "not scored"
 msgstr "not scored"
@@ -3915,11 +3824,11 @@ msgstr "Past evaluation"
 msgid "Paste an example JSON value first."
 msgstr "Paste an example JSON value first."
 
-msgid "Paste the key from your purchase email. It is validated offline, stored in the database, and applied immediately — no restart needed. Without a key, Proxytrace runs on the Free tier."
-msgstr "Paste the key from your purchase email. It is validated offline, stored in the database, and applied immediately — no restart needed. Without a key, Proxytrace runs on the Free tier."
+msgid "Paste the key from your support contract. It is validated offline, stored in the database, and applied immediately — no restart needed."
+msgstr "Paste the key from your support contract. It is validated offline, stored in the database, and applied immediately — no restart needed."
 
-msgid "Paste your license key (JWT) here"
-msgstr "Paste your license key (JWT) here"
+msgid "Paste your support key (JWT) here"
+msgstr "Paste your support key (JWT) here"
 
 msgid "Paused"
 msgstr "Paused"
@@ -4301,6 +4210,10 @@ msgstr "Refine the proposed test cases"
 msgid "Regex"
 msgstr "Regex"
 
+#. placeholder {0}: license.customerEmail
+msgid "Registered to <0>{0}</0>"
+msgstr "Registered to <0>{0}</0>"
+
 msgid "Regressed"
 msgstr "Regressed"
 
@@ -4356,14 +4269,14 @@ msgstr "Remove filter"
 msgid "Remove from staged"
 msgstr "Remove from staged"
 
-msgid "Remove license"
-msgstr "Remove license"
+msgid "Remove key"
+msgstr "Remove key"
 
-msgid "Remove stored license"
-msgstr "Remove stored license"
+msgid "Remove stored key"
+msgstr "Remove stored key"
 
-msgid "Remove stored license?"
-msgstr "Remove stored license?"
+msgid "Remove stored support key?"
+msgstr "Remove stored support key?"
 
 msgid "Remove tool"
 msgstr "Remove tool"
@@ -4406,12 +4319,6 @@ msgstr "required"
 
 msgid "Required"
 msgstr "Required"
-
-msgid "Requires Enterprise"
-msgstr "Requires Enterprise"
-
-msgid "Requires the Enterprise tier. Upgrade to enable LLM-judge evaluators."
-msgstr "Requires the Enterprise tier. Upgrade to enable LLM-judge evaluators."
 
 msgid "Reset"
 msgstr "Reset"
@@ -4659,12 +4566,6 @@ msgstr "Scheduled"
 
 msgid "Scheduled runs"
 msgstr "Scheduled runs"
-
-msgid "Scheduled test runs"
-msgstr "Scheduled test runs"
-
-msgid "Scheduled test runs are part of the Enterprise tier."
-msgstr "Scheduled test runs are part of the Enterprise tier."
 
 msgid "Schedules"
 msgstr "Schedules"
@@ -5090,9 +4991,6 @@ msgstr "Split by model"
 msgid "SSO"
 msgstr "SSO"
 
-msgid "SSO / OIDC sign-in"
-msgstr "SSO / OIDC sign-in"
-
 msgid "Stacktrace"
 msgstr "Stacktrace"
 
@@ -5186,6 +5084,15 @@ msgstr "Suites"
 
 msgid "Sunday"
 msgstr "Sunday"
+
+msgid "Support contract"
+msgstr "Support contract"
+
+msgid "Support key"
+msgstr "Support key"
+
+msgid "Support key activated."
+msgstr "Support key activated."
 
 msgid "Swap the base URL for your project’s proxy endpoint — your existing provider API key keeps working."
 msgstr "Swap the base URL for your project’s proxy endpoint — your existing provider API key keeps working."
@@ -5374,24 +5281,18 @@ msgstr "The change beat the baseline. Promote it to get the handoff package, or 
 msgid "The change is live in the agent."
 msgstr "The change is live in the agent."
 
-msgid "The configured license could not be validated"
-msgstr "The configured license could not be validated"
+msgid "The configured Enterprise support key is invalid."
+msgstr "The configured Enterprise support key is invalid."
 
 #. placeholder {0}: license.invalidReason ? ` — ${license.invalidReason}` : ''
-msgid "The configured license could not be validated{0}. The installation runs with Free-tier limits until a valid key is activated."
-msgstr "The configured license could not be validated{0}. The installation runs with Free-tier limits until a valid key is activated."
-
-msgid "The configured license is invalid — running with Free-tier limits."
-msgstr "The configured license is invalid — running with Free-tier limits."
+msgid "The configured support key could not be validated{0}. Nothing is affected, but no support contract is recorded until a valid key is activated."
+msgstr "The configured support key could not be validated{0}. Nothing is affected, but no support contract is recorded until a valid key is activated."
 
 msgid "The expected output calls a tool this agent was not offered."
 msgstr "The expected output calls a tool this agent was not offered."
 
-msgid "The installation falls back to the environment-supplied license, or the Free tier. Enterprise features stop working immediately if no other license is configured."
-msgstr "The installation falls back to the environment-supplied license, or the Free tier. Enterprise features stop working immediately if no other license is configured."
-
-msgid "The license is fixed by this deployment (demo mode) and cannot be changed here."
-msgstr "The license is fixed by this deployment (demo mode) and cannot be changed here."
+msgid "The installation falls back to the environment-supplied key, if any. Every feature keeps working; only the recorded support contract changes."
+msgstr "The installation falls back to the environment-supplied key, if any. Every feature keeps working; only the recorded support contract changes."
 
 msgid "The native OpenAI API — works out of the box."
 msgstr "The native OpenAI API — works out of the box."
@@ -5450,9 +5351,6 @@ msgstr "This action cannot be undone."
 msgid "This action cannot be undone. Type <0>{entityName}</0> to confirm."
 msgstr "This action cannot be undone. Type <0>{entityName}</0> to confirm."
 
-msgid "This action exceeds a usage limit of your current license tier. Upgrade to Enterprise for unlimited projects, agents, users, and test suites."
-msgstr "This action exceeds a usage limit of your current license tier. Upgrade to Enterprise for unlimited projects, agents, users, and test suites."
-
 msgid "This becomes your project's default model. All discovered models are added with prices loaded automatically from the catalogue — nothing to type in."
 msgstr "This becomes your project's default model. All discovered models are added with prices loaded automatically from the catalogue — nothing to type in."
 
@@ -5474,39 +5372,23 @@ msgstr "This evaluator hasn’t scored this case yet."
 msgid "This evaluator kind returns a score without written reasoning."
 msgstr "This evaluator kind returns a score without written reasoning."
 
-msgid "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock it."
-msgstr "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock it."
-
-msgid "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more."
-msgstr "This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more."
-
-#. placeholder {0}: i18n._(tier.tierLabel)
-msgid "This installation: {0}"
-msgstr "This installation: {0}"
-
 msgid "This is a read-only demo — changes aren't saved."
 msgstr "This is a read-only demo — changes aren't saved."
 
 msgid "This is a read-only demo — messages aren't sent."
 msgstr "This is a read-only demo — messages aren't sent."
 
-msgid "This is an Enterprise feature"
-msgstr "This is an Enterprise feature"
-
-msgid "This is an offline license. It is never re-validated against the license server, so it keeps working with no outbound connection — only its expiry ends it."
-msgstr "This is an offline license. It is never re-validated against the license server, so it keeps working with no outbound connection — only its expiry ends it."
+msgid "This is an offline key. It is never re-validated against the license server, so it works with no outbound connection — only its expiry ends it."
+msgstr "This is an offline key. It is never re-validated against the license server, so it works with no outbound connection — only its expiry ends it."
 
 msgid "This item could not be loaded — it may have been deleted since the notification was raised."
 msgstr "This item could not be loaded — it may have been deleted since the notification was raised."
 
-msgid "This license key is not valid."
-msgstr "This license key is not valid."
+msgid "This key was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied key."
+msgstr "This key was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied key."
 
-msgid "This license was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied license."
-msgstr "This license was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied license."
-
-msgid "This license was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it."
-msgstr "This license was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it."
+msgid "This key was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it."
+msgstr "This key was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it."
 
 msgid "This month"
 msgstr "This month"
@@ -5549,6 +5431,9 @@ msgstr "This stops future runs. Existing runs it produced are kept."
 
 msgid "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
 msgstr "This stops future runs. Existing runs it produced are kept. This action cannot be undone."
+
+msgid "This support key is not valid."
+msgstr "This support key is not valid."
 
 msgid "This theory was dismissed without running an A/B validation."
 msgstr "This theory was dismissed without running an A/B validation."
@@ -5736,9 +5621,6 @@ msgstr "traces/min"
 msgid "Tracey AI"
 msgstr "Tracey AI"
 
-msgid "Tracey AI assistant"
-msgstr "Tracey AI assistant"
-
 msgid "Tracey couldn’t load this."
 msgstr "Tracey couldn’t load this."
 
@@ -5839,21 +5721,6 @@ msgstr "Unknown agent"
 msgid "Unknown project"
 msgstr "Unknown project"
 
-msgid "Unlimited agents"
-msgstr "Unlimited agents"
-
-msgid "Unlimited projects"
-msgstr "Unlimited projects"
-
-msgid "Unlimited projects, agents & test suites"
-msgstr "Unlimited projects, agents & test suites"
-
-msgid "Unlimited test suites"
-msgstr "Unlimited test suites"
-
-msgid "Unlock everything with Enterprise — proxytrace.dev"
-msgstr "Unlock everything with Enterprise — proxytrace.dev"
-
 msgid "Unread"
 msgstr "Unread"
 
@@ -5868,18 +5735,6 @@ msgstr "updated"
 
 msgid "Updated"
 msgstr "Updated"
-
-msgid "Upgrade to Enterprise"
-msgstr "Upgrade to Enterprise"
-
-msgid "Upgrade to generate"
-msgstr "Upgrade to generate"
-
-msgid "Upgrade to schedule"
-msgstr "Upgrade to schedule"
-
-msgid "Upgrade to set budgets"
-msgstr "Upgrade to set budgets"
 
 msgid "Upstream API key"
 msgstr "Upstream API key"
@@ -5938,9 +5793,14 @@ msgstr "UTC"
 msgid "UTC · proxy"
 msgstr "UTC · proxy"
 
-#. placeholder {0}: preview.tier === 'enterprise' ? 'Enterprise' : 'Free'
-msgid "Valid {0} license"
-msgstr "Valid {0} license"
+msgid "Valid Enterprise support key"
+msgstr "Valid Enterprise support key"
+
+msgid "Valid key"
+msgstr "Valid key"
+
+msgid "Valid until"
+msgstr "Valid until"
 
 msgid "Validate"
 msgstr "Validate"
@@ -6008,14 +5868,8 @@ msgstr "View all ›"
 msgid "View all →"
 msgstr "View all →"
 
-msgid "View Enterprise plans"
-msgstr "View Enterprise plans"
-
 msgid "View ingested trace"
 msgstr "View ingested trace"
-
-msgid "View plans"
-msgstr "View plans"
 
 msgid "View proposal"
 msgstr "View proposal"
@@ -6175,9 +6029,6 @@ msgstr "You cannot change your own account."
 
 msgid "You stopped before these finished — they keep running in the background."
 msgstr "You stopped before these finished — they keep running in the background."
-
-msgid "You've reached a Free-tier limit"
-msgstr "You've reached a Free-tier limit"
 
 msgid "you@example.com"
 msgstr "you@example.com"

@@ -85,8 +85,8 @@ component  →  feature query hook (useXxx)  →  api/<service>.ts  →  api/cli
 
 - **`api/<service>.ts`** — thin typed functions returning DTOs. One per resource (see `api/agents.ts`). No React, no query logic. New endpoints get a function here first.
   - **Every request goes through `api/client.ts`.** It is not just a `fetch` wrapper — it owns the
-    auth header, the 401 handling, the error toast, `silentStatuses`, the 402 upgrade routing, and
-    the kiosk **read-only guard** that refuses mutating verbs before they leave the browser. A
+    auth header, the 401 handling, the error toast, `silentStatuses`, and the kiosk
+    **read-only guard** that refuses mutating verbs before they leave the browser. A
     hand-rolled `fetch` silently opts out of all of it. If you genuinely need one (a streaming
     endpoint the typed helpers can't express — `api/playground.ts` is the only case), call
     `isWriteBlocked()` yourself and never echo the raw response body into user-visible text.
@@ -259,7 +259,7 @@ during render. That is the right default for a page — the boundary turns it in
 makes *where* a component renders load-bearing:
 
 - **Every region gets a boundary.** `wrap()` in `app/AppRoutes.tsx` covers route elements, but the
-  router `Outlet` is only part of the tree. `Shell` renders the nav rail, the license/update banners
+  router `Outlet` is only part of the tree. `Shell` renders the nav rail, the support-key/update banners
   and the masthead as **siblings** of the `Outlet`, so a route-level boundary structurally cannot
   catch a throw in them — `Shell` wraps each of those regions in its own `ErrorBoundary`. Per-region,
   not one at the root: a root boundary replaces the router too, so the user cannot navigate away

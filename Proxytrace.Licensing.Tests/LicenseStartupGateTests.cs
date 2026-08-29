@@ -9,8 +9,8 @@ namespace Proxytrace.Licensing.Tests;
 /// Startup resolution through the full product wiring: the Proxytrace module parameterizes the
 /// Nordstein.Core engine with the product policy, and the engine resolves the configured
 /// license synchronously at container build. These tests pin the product-visible outcomes —
-/// enum-typed tiers, features, statuses — of that resolution, including that an invalid
-/// configured license never crashes the host.
+/// enum-typed tiers and statuses — of that resolution, including that an invalid configured
+/// license never crashes the host.
 /// </summary>
 [TestClass]
 public sealed class LicenseStartupGateTests : BaseTest<Module>
@@ -40,7 +40,6 @@ public sealed class LicenseStartupGateTests : BaseTest<Module>
         service.Current.Tier.Should().Be(LicenseTier.Enterprise);
         service.Current.Status.Should().Be(LicenseStatus.Active);
         service.Current.Source.Should().Be(LicenseSource.Environment);
-        service.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Should().BeTrue();
     }
 
     [TestMethod]
@@ -64,8 +63,8 @@ public sealed class LicenseStartupGateTests : BaseTest<Module>
         => AssertInvalid(Create(Module.Factory.CreateJwt(expires: DateTimeOffset.UtcNow.AddMinutes(-1))));
 
     /// <summary>
-    /// An invalid configured license must never crash the host: it boots with Free-tier
-    /// entitlements, LicenseStatus.Invalid, and the rejection reason for the UI.
+    /// An invalid configured license must never crash the host: it boots as Free with
+    /// LicenseStatus.Invalid and the rejection reason for the UI.
     /// </summary>
     private static void AssertInvalid(ILicenseService service)
     {
@@ -73,21 +72,23 @@ public sealed class LicenseStartupGateTests : BaseTest<Module>
         service.Current.Status.Should().Be(LicenseStatus.Invalid);
         service.Current.Source.Should().Be(LicenseSource.Environment);
         service.Current.InvalidReason.Should().NotBeNullOrEmpty();
-        service.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Should().BeFalse();
     }
 
     [TestMethod]
-    public void Construct_FeatureAndLimitOverlays_MapToProductEnums()
+    public void Construct_LegacyFeatureAndLimitClaims_AreIgnored()
     {
-        // The JWT claim values are the enum member names — the wire-format contract the
-        // extraction must preserve. Overlays on a Free-tier token must surface as the
-        // corresponding product enums.
-        var jwt = Module.Factory.CreateJwt(tier: "Free", features: ["AuditLog"], limits: ["MaxUsers=50"]);
+        // Keys issued while Proxytrace still gated features carry `feat`/`lim` claims. The
+        // product no longer has that vocabulary, so the engine must drop them (with a warning)
+        // instead of rejecting an otherwise valid support key.
+        var jwt = Module.Factory.CreateJwt(
+            tier: "Enterprise",
+            features: ["AuditLog", "Tracey"],
+            limits: ["MaxUsers=50"]);
 
         var service = Create(jwt);
 
-        service.IsFeatureEnabled(LicenseFeature.AuditLog).Should().BeTrue();
-        service.GetLimit(LicenseLimit.MaxUsers).Should().Be(50);
+        service.Current.Tier.Should().Be(LicenseTier.Enterprise);
+        service.Current.Status.Should().Be(LicenseStatus.Active);
     }
 
     [TestMethod]
@@ -121,27 +122,5 @@ public sealed class LicenseStartupGateTests : BaseTest<Module>
 
         service.Current.Offline.Should().BeTrue();
         service.Current.Tier.Should().Be(LicenseTier.Enterprise);
-    }
-
-    [TestMethod]
-    public void Construct_KioskOverrideSnapshot_AdoptedWithoutVerification()
-    {
-        // Kiosk/demo deployments pin a pre-resolved Enterprise snapshot; it must round-trip
-        // through the engine's string vocabulary unscathed.
-        var config = Module.Factory.Configuration() with
-        {
-            OverrideSnapshot = LicenseSnapshot.Enterprise("kiosk@proxytrace.dev"),
-        };
-
-        var services = GetServices(builder => builder.RegisterInstance(config).SingleInstance());
-        var service = services.GetRequiredService<ILicenseService>();
-
-        service.Current.Tier.Should().Be(LicenseTier.Enterprise);
-        service.Current.Status.Should().Be(LicenseStatus.Active);
-        service.Current.Source.Should().Be(LicenseSource.Override);
-        service.Current.CustomerEmail.Should().Be("kiosk@proxytrace.dev");
-        service.Current.Jti.Should().BeNull("an override snapshot has no JWT identity to re-verify");
-        service.IsFeatureEnabled(LicenseFeature.Tracey).Should().BeTrue();
-        service.GetLimit(LicenseLimit.MaxProjects).Should().Be(long.MaxValue);
     }
 }

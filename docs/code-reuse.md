@@ -40,9 +40,9 @@ switch (Npgsql / in-memory), the migrations assembly and its snapshot, the concr
 entities/configurations/repositories, the statistics/query stores, and the backfills. The foundation
 is threaded off a `DbContext` base so it is product-context-agnostic, and off EF Core Relational
 only so it is provider-agnostic — each product supplies its own provider, concrete context and
-migrations. For licensing, `Proxytrace.Licensing` keeps the product policy — the
-`LicenseFeature`/`LicenseLimit`/`LicenseTier` enums, `LicensePolicy`, the issuer/audience, the
-`LicensePublicKeys` trust root, and thin enum-typed adapters over the engine's string vocabulary —
+migrations. For licensing, `Proxytrace.Licensing` keeps the product identity — the `LicenseTier` enum (an
+empty feature/limit vocabulary: nothing is gated), the issuer/audience, the `LicensePublicKeys`
+trust root, and thin enum-typed adapters over the engine's string vocabulary —
 while the engine (validation, activation, snapshot, server check, offline grace) lives in
 `Nordstein.Core.Licensing`; see [`docs/licensing.md`](licensing.md) and
 [`core/docs/licensing.md`](../core/docs/licensing.md). Whole subsystems like audit logging,

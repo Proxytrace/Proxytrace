@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Dto.License;
-using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Licensing;
 using Proxytrace.Application.Setup;
 using Proxytrace.Domain.AuditLog;
@@ -14,7 +13,8 @@ using Proxytrace.Licensing.Exceptions;
 namespace Proxytrace.Api.Controllers;
 
 /// <summary>
-/// API controller for license operations.
+/// API controller for the Enterprise support key. The key has no functional effect — every
+/// feature is always available — it only records whether a support contract is on file.
 /// </summary>
 [ApiController]
 [Route("api/license")]
@@ -23,7 +23,6 @@ public class LicenseController : ControllerBase
     private readonly ILicenseService licenseService;
     private readonly ILicenseKeyManager keyManager;
     private readonly ISetupService setup;
-    private readonly ITraceQuotaGuard quotaGuard;
     private readonly ILogger<Audit> audit;
 
     /// <summary>
@@ -33,19 +32,17 @@ public class LicenseController : ControllerBase
         ILicenseService licenseService,
         ILicenseKeyManager keyManager,
         ISetupService setup,
-        ITraceQuotaGuard quotaGuard,
         ILogger<Audit> audit)
     {
         this.licenseService = licenseService;
         this.keyManager = keyManager;
         this.setup = setup;
-        this.quotaGuard = quotaGuard;
         this.audit = audit;
     }
 
     /// <summary>
-    /// The current license. Anonymous by design — the setup wizard and the login screen need the
-    /// tier before any user exists — but the licensee's identity is withheld from unauthenticated
+    /// The current support key. Anonymous by design — the login screen renders the support badge
+    /// before any user exists — but the licensee's identity is withheld from unauthenticated
     /// callers: without that, <c>curl https://host/api/license</c> from the internet discloses the
     /// purchaser's email address. Signed-in callers (the Settings → License panel) still see it.
     /// </summary>
@@ -91,8 +88,8 @@ public class LicenseController : ControllerBase
     }
 
     /// <summary>
-    /// Sets the installation's license key. Admin-only once users exist; anonymous while setup
-    /// is incomplete (no users yet) so the setup wizard's first step can apply a license —
+    /// Sets the installation's support key. Admin-only once users exist; anonymous while setup
+    /// is incomplete (no users yet) so a key can be applied before the first admin exists —
     /// the same gate as first-admin creation.
     /// </summary>
     [HttpPut]
@@ -101,9 +98,6 @@ public class LicenseController : ControllerBase
         [FromBody] SetLicenseRequest request,
         CancellationToken cancellationToken)
     {
-        if (licenseService.Current.Source == LicenseSource.Override)
-            return Conflict("The license is managed by the deployment and cannot be changed here.");
-
         if (!await CanManageAsync(cancellationToken))
             return Forbid();
 
@@ -120,16 +114,13 @@ public class LicenseController : ControllerBase
     }
 
     /// <summary>
-    /// Removes the stored license key; the installation falls back to the environment-supplied
-    /// license, or the Free tier when none is configured.
+    /// Removes the stored support key; the installation falls back to the environment-supplied
+    /// key, or to no support contract when none is configured.
     /// </summary>
     [HttpDelete]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<LicenseDto>> Remove(CancellationToken cancellationToken)
     {
-        if (licenseService.Current.Source == LicenseSource.Override)
-            return Conflict("The license is managed by the deployment and cannot be changed here.");
-
         await keyManager.RemoveAsync(cancellationToken);
         audit.LogAudit(AuditAction.LicenseRemoved, targetType: "License");
         return Map(licenseService.Current);
@@ -158,8 +149,5 @@ public class LicenseController : ControllerBase
         ExpiresAt: snapshot.ExpiresAt,
         GracePeriodEndsAt: snapshot.GracePeriodEndsAt,
         CustomerEmail: snapshot.CustomerEmail,
-        Features: snapshot.Features.Select(f => f.ToString()).ToArray(),
-        Limits: snapshot.Limits.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
-        QuotaExceeded: quotaGuard.IsCurrentMonthOverQuota,
         Offline: snapshot.Offline);
 }

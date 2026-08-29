@@ -11,8 +11,8 @@
 # anything you care about: the database can then be backed up, tuned and upgraded on its own.
 #
 # No .env is required: the database password defaults (postgres is never exposed), the session
-# signing key is generated and persisted on first start, and without a license key Proxytrace
-# runs the Free tier. Copy .env.example to .env to override any of these — recommended for
+# signing key is generated and persisted on first start, and every feature is included without a
+# key. Copy .env.example to .env to override any of these — recommended for
 # production: set your own POSTGRES_PASSWORD.
 #
 # The release artifact attached to each GitHub release ships this file with PROXYTRACE_VERSION
@@ -81,8 +81,8 @@ services:
       # Optional: when unset, a signing key is generated on first start and persisted in the
       # data volume, so sessions survive restarts and upgrades.
       - Authentication__Local__SigningKey=${PROXYTRACE_SIGNING_KEY:-}
-      # Optional license key (JWT). Leave empty for the Free tier; a license can also be set
-      # later in the setup wizard or under Settings → License.
+      # Optional Enterprise support key (JWT). Nothing is gated on it; it can also be set later
+      # under Settings → Enterprise support.
       - PROXYTRACE_LICENSE=${PROXYTRACE_LICENSE:-}
     volumes:
       # Generated secrets + the Data Protection key ring (it encrypts your stored provider

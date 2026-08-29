@@ -2,13 +2,8 @@ import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { i18n } from '../../i18n';
 import { setupApi } from '../../api/setup';
 import { ModelProviderKind } from '../../api/models';
-import type { LicenseDto } from '../../api/license';
-import { buildTierSummary, presetById, PROVIDER_PRESETS } from './setupMeta';
+import { presetById, PROVIDER_PRESETS } from './setupMeta';
 import { buildQuickStartSnippets } from '../../lib/ingestionSnippets';
-import { FEATURE_LABELS } from '../../components/license/licenseUtils';
-
-/** Free tier locks every enterprise feature; derive the count so a new feature can't stale this. */
-const ENTERPRISE_FEATURE_COUNT = Object.keys(FEATURE_LABELS).length;
 
 // Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
 beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
@@ -161,58 +156,5 @@ describe('provider presets', () => {
     expect(presetById('xai').endpoint).toBe('https://api.x.ai/v1');
     expect(presetById('azure-foundry').endpoint).toBe('');
     expect(presetById('custom').endpoint).toBe('');
-  });
-});
-
-describe('buildTierSummary', () => {
-  const freeLicense: LicenseDto = {
-    tier: 'free',
-    status: 'free',
-    source: 'none',
-    invalidReason: null,
-    expiresAt: null,
-    gracePeriodEndsAt: null,
-    customerEmail: null,
-    features: [],
-    limits: { MaxProjects: 1, MaxAgents: 1, MaxTestSuites: 1, MaxTracesPerMonth: 10000, TraceRetentionDays: 14 },
-    offline: false,
-  };
-
-  const enterpriseLicense: LicenseDto = {
-    ...freeLicense,
-    tier: 'enterprise',
-    status: 'active',
-    features: ['OptimizationProposals', 'AgenticEvaluators', 'CustomEvaluators', 'SsoOidc', 'AuditLog'],
-    limits: { TraceRetentionDays: 365 },
-  };
-
-  it('free tier lists limits and locks all enterprise features', () => {
-    const summary = buildTierSummary(freeLicense);
-    const included = summary.included.map(line => i18n._(line));
-    const locked = summary.locked.map(line => i18n._(line));
-    expect(summary.isFree).toBe(true);
-    expect(i18n._(summary.tierLabel)).toBe('Free');
-    expect(included.join(' ')).toContain('1 project');
-    expect(included.join(' ')).toContain('traces per month');
-    expect(locked).toContain('Optimization proposals');
-    expect(locked).toContain('SSO / OIDC sign-in');
-    expect(locked).toContain('Tracey AI assistant');
-    expect(summary.locked).toHaveLength(ENTERPRISE_FEATURE_COUNT);
-  });
-
-  it('enterprise tier includes granted features and locks nothing', () => {
-    const summary = buildTierSummary(enterpriseLicense);
-    const included = summary.included.map(line => i18n._(line));
-    expect(summary.isFree).toBe(false);
-    expect(i18n._(summary.tierLabel)).toBe('Enterprise');
-    expect(included).toContain('Optimization proposals');
-    expect(included).toContain('Unlimited projects, agents & test suites');
-    expect(summary.locked).toHaveLength(0);
-  });
-
-  it('treats an undefined license as Free', () => {
-    const summary = buildTierSummary(undefined);
-    expect(summary.isFree).toBe(true);
-    expect(summary.locked).toHaveLength(ENTERPRISE_FEATURE_COUNT);
   });
 });

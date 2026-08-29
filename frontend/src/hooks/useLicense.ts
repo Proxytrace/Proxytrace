@@ -1,14 +1,14 @@
-// License queries/mutations. Shared (not feature-local) because license state is consumed
-// across many features (setup, settings, suites, runs, evaluators) and the layout shell, and
-// feature hooks must not be imported across feature boundaries (BEST_PRACTICES §2/§15).
+// Support-key queries/mutations. Shared (not feature-local) because the key state is consumed by
+// the settings section and the layout shell (badge + banners), and feature hooks must not be
+// imported across feature boundaries (BEST_PRACTICES §2/§15).
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { licenseApi, type LicenseFeature } from '../api/license';
+import { licenseApi } from '../api/license';
 import { QUERY_KEYS } from '../api/query-keys';
 
 /**
- * The current license snapshot. License state changes rarely, so it is cached
- * for an hour and not refetched on window focus.
+ * The current support-key snapshot. It changes rarely, so it is cached for an hour and not
+ * refetched on window focus.
  */
 export function useLicense() {
   return useQuery({
@@ -21,15 +21,6 @@ export function useLicense() {
     // the chrome boundary (BEST_PRACTICES §9.1), matching sibling useNotifications/useUpdateStatus.
     throwOnError: false,
   });
-}
-
-/**
- * Whether a given feature is enabled by the current license. Defaults to false
- * while the license is still loading so gated UI stays hidden until confirmed.
- */
-export function useFeature(feature: LicenseFeature): boolean {
-  const { data } = useLicense();
-  return data?.features.includes(feature) ?? false;
 }
 
 /** Admin-only: force a re-check against the license server, then refresh the cache. */
@@ -49,9 +40,8 @@ export function useValidateLicense() {
 }
 
 /**
- * Sets the installation's license key (stores + activates it without a restart).
- * Allowed for admins, and anonymously while setup is incomplete (the wizard's
- * Welcome step runs before the first admin exists).
+ * Sets the installation's support key (stores + activates it without a restart).
+ * Allowed for admins, and anonymously while setup is incomplete.
  */
 export function useSetLicense() {
   const queryClient = useQueryClient();
@@ -63,7 +53,7 @@ export function useSetLicense() {
   });
 }
 
-/** Admin-only: removes the stored key; falls back to the environment license or Free. */
+/** Admin-only: removes the stored key; falls back to the environment key or none. */
 export function useRemoveLicense() {
   const queryClient = useQueryClient();
   return useMutation({

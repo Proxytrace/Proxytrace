@@ -145,8 +145,8 @@ export function LimitEditor({
         </p>
 
         {errorText && <p className="text-body-sm text-danger" data-testid="budget-editor-error">{errorText}</p>}
-        {/* The API's own refusal — a scope taken since the dialog opened, a licence lapse. It used
-            to reach the user only as a bare "409 Conflict" toast beside an unchanged dialog. */}
+        {/* The API's own refusal — e.g. a scope taken since the dialog opened. It used to reach
+            the user only as a bare "409 Conflict" toast beside an unchanged dialog. */}
         {saveError && <p className="text-body-sm text-danger" data-testid="budget-save-error">{saveError}</p>}
 
         <div className="flex items-center justify-between">

@@ -728,7 +728,7 @@ is unavailable in non-interactive kiosk mode.
 Pages deep-link *into* Tracey via `TraceyChat.askTracey(prompt)`:
 `components/tracey/AskTraceyButton.tsx` (square cyan-subtle chip — `bg-accent-subtle` /
 `text-accent-text` / `rounded-none` — with a blinking `ZapFilledIcon`, hidden when
-`TraceyChat.available` is false — Free license / non-interactive kiosk / no project) calls it with
+`TraceyChat.available` is false — non-interactive kiosk / no project) calls it with
 a prompt built by the pure builders in `components/tracey/askTraceyPrompts.ts` (unit-tested).
 `askTracey` archives the current conversation (`startFreshThread`), navigates to `/tracey-ai`,
 `activate()`s the session, and queues the prompt in `useAskTracey.ts` until `status === 'ready'`
@@ -789,8 +789,7 @@ Current skills (`skills/*.md`):
   calls — `outlierOnly=true` list, flag bits decoded into reasons in the digest), analyzes the
   flagged traces, then turns the problem into test cases: add to a fitting suite, or create a new
   anomaly suite with a matching evaluator (`list_evaluators` / `create_evaluator` +
-  `create_suite`'s `evaluatorIds`; an unlicensed Agentic create returns `notLicensed` and the
-  playbook falls back to the default exact-match evaluator). It then runs the suite and finishes
+  `create_suite`'s `evaluatorIds`). It then runs the suite and finishes
   through the same theory → A/B path as `optimize-agent`.
 
 ## Product-manual search (`search_docs`)

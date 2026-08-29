@@ -131,7 +131,8 @@ A/B test that validated it.
 
 ## License
 
-Source-available under the [Elastic License 2.0](LICENSE): you may use, copy, modify and
-redistribute Proxytrace, but you may not offer it as a managed service to third parties,
-circumvent its license-key functionality, or remove its licensing and copyright notices.
-A free tier is built in; paid tiers unlock higher limits and additional features.
+Source-available under the [PolyForm Shield 1.0.0](LICENSE) license: free for any use —
+personal, academic, commercial, and internal business use alike — with **every feature included
+and no limits**. The one restriction: you may not offer a product or service that competes with
+Proxytrace. Proxytrace comes without support obligations; Enterprise support contracts are
+available at [proxytrace.dev](https://proxytrace.dev/#pricing).

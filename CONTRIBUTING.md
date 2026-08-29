@@ -1,7 +1,6 @@
 # Contributing
 
-Proxytrace is a commercial product whose source is published for transparency under the
-[Elastic License 2.0](LICENSE). To keep ownership of the codebase unambiguous, **we do
+Proxytrace's source is published under the [PolyForm Shield 1.0.0](LICENSE) license. To keep ownership of the codebase unambiguous, **we do
 not accept pull requests** — external contributions are not merged, and open PRs will be
 closed with a pointer to this policy.
 

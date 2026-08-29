@@ -2,10 +2,7 @@ import { test, expect } from '../helpers/fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
-// Scheduled test runs (the "Scheduled" tab on the /runs page). Creating a schedule is gated behind
-// the ScheduledTestRuns (Enterprise) license feature; the default e2e stack (the `core` project,
-// :5101) is Enterprise-licensed, so the "New schedule" button is enabled here. (The Free-tier
-// :5103 stack is exercised separately by licensing.spec.ts.)
+// Scheduled test runs (the "Scheduled" tab on the /runs page).
 //
 // This spec drives the full create flow through the UI: seed prerequisites (agent + evaluator +
 // suite with the setup endpoint) via the API, then switch to the Scheduled tab, open the dialog,
@@ -64,7 +61,6 @@ test.describe('Scheduled test runs', () => {
     // Switch to the Scheduled tab and confirm the section rendered.
     await page.getByTestId('schedules-tab').click();
     await expect(page.getByTestId('schedules-section')).toBeVisible();
-    // Enterprise stack → the create button is present (not the upgrade CTA).
     await expect(page.getByTestId('schedule-create-btn')).toBeVisible();
 
     // Open the New schedule dialog.

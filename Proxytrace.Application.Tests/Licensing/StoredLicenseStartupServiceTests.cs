@@ -14,16 +14,8 @@ public sealed class StoredLicenseStartupServiceTests : BaseTest<Module>
 {
     private static StoredLicenseStartupService Create(
         IStoredLicenseStore store,
-        ILicenseActivator activator,
-        ILicenseService licenseService)
-        => new(store, activator, licenseService, NullLogger<StoredLicenseStartupService>.Instance);
-
-    private static ILicenseService Stub(LicenseSnapshot snapshot)
-    {
-        var service = Substitute.For<ILicenseService>();
-        service.Current.Returns(snapshot);
-        return service;
-    }
+        ILicenseActivator activator)
+        => new(store, activator, NullLogger<StoredLicenseStartupService>.Instance);
 
     [TestMethod]
     public async Task StartAsync_WithStoredLicense_AppliesItOverStartupLicense()
@@ -33,7 +25,7 @@ public sealed class StoredLicenseStartupServiceTests : BaseTest<Module>
         await store.SaveAsync("stored-jwt", CancellationToken);
         var activator = Substitute.For<ILicenseActivator>();
 
-        await Create(store, activator, Stub(LicenseSnapshot.Free())).StartAsync(CancellationToken);
+        await Create(store, activator).StartAsync(CancellationToken);
 
         activator.Received(1).ActivateOrInvalid("stored-jwt", LicenseSource.Stored);
     }
@@ -45,22 +37,7 @@ public sealed class StoredLicenseStartupServiceTests : BaseTest<Module>
         var store = services.GetRequiredService<IStoredLicenseStore>();
         var activator = Substitute.For<ILicenseActivator>();
 
-        await Create(store, activator, Stub(LicenseSnapshot.Free())).StartAsync(CancellationToken);
-
-        activator.DidNotReceive().ActivateOrInvalid(Arg.Any<string>(), Arg.Any<LicenseSource>());
-    }
-
-    [TestMethod]
-    public async Task StartAsync_OverrideLicense_NeverReplacesIt()
-    {
-        // Kiosk/demo deployments run on a fixed override snapshot; a stored license must not
-        // replace it.
-        var services = GetServices();
-        var store = services.GetRequiredService<IStoredLicenseStore>();
-        await store.SaveAsync("stored-jwt", CancellationToken);
-        var activator = Substitute.For<ILicenseActivator>();
-
-        await Create(store, activator, Stub(LicenseSnapshot.Enterprise())).StartAsync(CancellationToken);
+        await Create(store, activator).StartAsync(CancellationToken);
 
         activator.DidNotReceive().ActivateOrInvalid(Arg.Any<string>(), Arg.Any<LicenseSource>());
     }
@@ -76,7 +53,7 @@ public sealed class StoredLicenseStartupServiceTests : BaseTest<Module>
         var activator = Substitute.For<ILicenseActivator>();
 
         await FluentActions
-            .Invoking(() => Create(store, activator, Stub(LicenseSnapshot.Free())).StartAsync(CancellationToken))
+            .Invoking(() => Create(store, activator).StartAsync(CancellationToken))
             .Should().NotThrowAsync();
     }
 }

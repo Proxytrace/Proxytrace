@@ -18,15 +18,9 @@ Because cases come from real traffic, suites stay grounded in behaviors that act
 matter.
 
 To add traces to a suite yourself, without the agent's help, open the suite on the **Test Suites**
-page and use **Add from traces** — pick the traces, and each becomes a case. That route works on
-every license tier.
+page and use **Add from traces** — pick the traces, and each becomes a case.
 
 ## Let Proxytrace propose the cases
-
-::: tip Enterprise feature
-Generating test cases requires an Enterprise license. On other tiers, build suites by hand with
-**Add from traces** on the Test Suites page.
-:::
 
 A multi-turn conversation offers a lot of possible test cases, and most of them are not worth
 having. If you want to check that a support agent grants refunds correctly, what matters is
@@ -187,8 +181,7 @@ evaluators that express what "correct" means for the suite in the detail panel's
 
 The detail panel's **Schedules** tab configures the suite's **schedules** — recurring runs on
 a fixed interval against a chosen set of model endpoints. Create, edit, pause/resume, and
-delete a suite's schedules there. Scheduled runs require an Enterprise license; see
-[Running tests](/guide/running-tests).
+delete a suite's schedules there; see [Running tests](/guide/running-tests).
 
 ## Creating a suite
 

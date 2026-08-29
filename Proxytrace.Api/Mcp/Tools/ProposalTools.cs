@@ -7,13 +7,11 @@ using Proxytrace.Api.Dto.Proposals;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.AuditLog;
 using Proxytrace.Domain.OptimizationProposal;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Mcp.Tools;
 
 /// <summary>
-/// MCP tools for reviewing and acting on optimization proposals in the current project. Gated by the
-/// <see cref="LicenseFeature.OptimizationProposals"/> license feature, mirroring the REST controller.
+/// MCP tools for reviewing and acting on optimization proposals in the current project.
 /// </summary>
 [McpServerToolType]
 internal sealed class ProposalTools
@@ -22,7 +20,6 @@ internal sealed class ProposalTools
     private readonly IOptimizationProposalRepository repository;
     private readonly OptimizationProposalDtoMapper mapper;
     private readonly IProposalBroadcaster broadcaster;
-    private readonly ILicenseService license;
     private readonly ILogger<Audit> audit;
 
     /// <summary>
@@ -33,14 +30,12 @@ internal sealed class ProposalTools
         IOptimizationProposalRepository repository,
         OptimizationProposalDtoMapper mapper,
         IProposalBroadcaster broadcaster,
-        ILicenseService license,
         ILogger<Audit> audit)
     {
         this.project = project;
         this.repository = repository;
         this.mapper = mapper;
         this.broadcaster = broadcaster;
-        this.license = license;
         this.audit = audit;
     }
 
@@ -52,7 +47,6 @@ internal sealed class ProposalTools
     /// </summary>
     public async Task<IReadOnlyList<OptimizationProposalDto>> ListProposals(CancellationToken cancellationToken)
     {
-        EnsureFeature();
         var p = await project.GetProjectAsync(cancellationToken);
         var proposals = await repository.GetByProjectAsync(p.Id, cancellationToken);
         return proposals.Select(mapper.ToDto).ToArray();
@@ -125,17 +119,10 @@ internal sealed class ProposalTools
 
     private async Task<IOptimizationProposal> RequireProposalAsync(Guid proposalId, CancellationToken cancellationToken)
     {
-        EnsureFeature();
         var p = await project.GetProjectAsync(cancellationToken);
         var proposal = await repository.FindAsync(proposalId, cancellationToken);
         if (proposal is null || proposal.Agent.Project.Id != p.Id)
             throw new McpException($"Proposal '{proposalId}' was not found in this project.");
         return proposal;
-    }
-
-    private void EnsureFeature()
-    {
-        if (!license.IsFeatureEnabled(LicenseFeature.OptimizationProposals))
-            throw new McpException("Optimization proposals are not available on the current license tier.");
     }
 }

@@ -78,22 +78,4 @@ public sealed class LicenseKeyManagerTests : BaseTest<Module>
         (await store.GetAsync(CancellationToken)).Should().BeNull();
         activator.Received(1).ActivateConfigured();
     }
-
-    [TestMethod]
-    public async Task SetAsync_OverrideLicense_Throws()
-    {
-        // Kiosk/demo deployments run on a fixed override snapshot; the license cannot be managed.
-        var licenseService = Substitute.For<ILicenseService>();
-        licenseService.Current.Returns(LicenseSnapshot.Enterprise("kiosk@proxytrace.dev"));
-        var services = GetServices(builder =>
-            builder.RegisterInstance(licenseService).As<ILicenseService>());
-        var manager = services.GetRequiredService<ILicenseKeyManager>();
-        var store = services.GetRequiredService<IStoredLicenseStore>();
-
-        await FluentActions
-            .Invoking(() => manager.SetAsync("jwt", CancellationToken))
-            .Should().ThrowAsync<InvalidOperationException>();
-
-        (await store.GetAsync(CancellationToken)).Should().BeNull();
-    }
 }

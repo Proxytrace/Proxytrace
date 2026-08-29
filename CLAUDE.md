@@ -14,7 +14,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/database.md`](docs/database.md) | Anything storage-, provider-, or EF-migration-related |
 | [`docs/security.md`](docs/security.md) | Touching at-rest secret protection — encryption/hashing seams, blind-index lookups, the Data Protection key ring, or the secrets backfill |
 | [`docs/mfa.md`](docs/mfa.md) | Touching multi-factor auth (TOTP) — the two-step login, MFA endpoints, the challenge ticket, or the enrollment/backup-code entities |
-| [`docs/licensing.md`](docs/licensing.md) | Gating a feature/limit behind a license tier (`ILicenseService`) |
+| [`docs/licensing.md`](docs/licensing.md) | Touching the Enterprise support-key subsystem (`ILicenseService`, key activation) — nothing is feature-gated |
 | [`docs/cost-controls.md`](docs/cost-controls.md) | Touching cost tracking/budgets — the Costs page, the spend guard, breach state, or the proxy's budget hard-block |
 | [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
 | [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |

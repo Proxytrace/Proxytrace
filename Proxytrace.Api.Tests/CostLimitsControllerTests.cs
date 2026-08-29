@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Auth;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Costs;
@@ -19,7 +18,6 @@ using Proxytrace.Domain.CostLimit;
 using Proxytrace.Domain.CostLimitBreach;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
-using Proxytrace.Licensing;
 using Nordstein.Core.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -431,28 +429,19 @@ public sealed class CostLimitsControllerTests : BaseTest<Module>
         result.Should().BeOfType<NotFoundResult>();
     }
 
-    // ── authorization / licensing ─────────────────────────────────────────────
-
-    [TestMethod]
-    public void Controller_DoesNotGateReadsBehindALicense()
-    {
-        // Listing budgets stays free so the Costs page renders identically on every tier.
-        typeof(CostLimitsController).GetCustomAttribute<RequiresFeatureAttribute>().Should().BeNull();
-    }
+    // ── authorization ─────────────────────────────────────────────────────────
 
     [TestMethod]
     [DataRow(nameof(CostLimitsController.Create))]
     [DataRow(nameof(CostLimitsController.Update))]
     [DataRow(nameof(CostLimitsController.Delete))]
-    public void MutatingActions_RequireAdminAndTheCostControlsFeature(string actionName)
+    public void MutatingActions_RequireAdmin(string actionName)
     {
         MethodInfo action = typeof(CostLimitsController).GetMethod(actionName)
             ?? throw new InvalidOperationException($"{actionName} not found");
 
         action.GetCustomAttribute<AuthorizeAttribute>().Should()
             .Match<AuthorizeAttribute>(a => a.Roles == nameof(UserRole.Admin));
-        action.GetCustomAttribute<RequiresFeatureAttribute>().Should()
-            .Match<RequiresFeatureAttribute>(a => a.Feature == LicenseFeature.CostControls);
     }
 
     [TestMethod]

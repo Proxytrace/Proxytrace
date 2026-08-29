@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Api.Auth;
-using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Costs;
 using Proxytrace.Application.CostControl;
 using Proxytrace.Domain;
@@ -14,15 +13,12 @@ using Proxytrace.Domain.CostLimit;
 using Proxytrace.Domain.CostLimitBreach;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
-using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
 /// <summary>
-/// CRUD for monthly cost budgets. Listing is free and open to every project member so the Costs
-/// page renders the same regardless of tier; mutations are admin-only and gated behind
-/// <see cref="LicenseFeature.CostControls"/>, so an unlicensed install keeps its configuration
-/// (and can restore enforcement by re-licensing) but cannot add to it.
+/// CRUD for monthly cost budgets. Listing is open to every project member; mutations are
+/// admin-only.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -135,13 +131,11 @@ public class CostLimitsController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a monthly cost budget scoped to a project, agent, or API key. Admin-only; requires
-    /// the <c>CostControls</c> license feature. Returns 409 when a budget with the same scope
-    /// already exists, and 400 when thresholds are invalid.
+    /// Creates a monthly cost budget scoped to a project, agent, or API key. Admin-only. Returns
+    /// 409 when a budget with the same scope already exists, and 400 when thresholds are invalid.
     /// </summary>
     [HttpPost]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    [RequiresFeature(LicenseFeature.CostControls)]
     public async Task<ActionResult<CostLimitDto>> Create(
         [FromBody] CreateCostLimitRequest request,
         CancellationToken cancellationToken)
@@ -210,12 +204,11 @@ public class CostLimitsController : ControllerBase
 
     /// <summary>
     /// Updates the soft/hard limit amounts and enabled state for a budget. Clears any existing
-    /// breach records so the budget is re-armed after a threshold change. Admin-only; requires the
-    /// <c>CostControls</c> license feature. Returns 404 when the budget does not exist.
+    /// breach records so the budget is re-armed after a threshold change. Admin-only. Returns 404
+    /// when the budget does not exist.
     /// </summary>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    [RequiresFeature(LicenseFeature.CostControls)]
     public async Task<ActionResult<CostLimitDto>> Update(
         Guid id,
         [FromBody] UpdateCostLimitRequest request,
@@ -255,12 +248,10 @@ public class CostLimitsController : ControllerBase
 
     /// <summary>
     /// Deletes a cost budget and clears its breach records, lifting any active hard-block on the
-    /// proxy. Admin-only; requires the <c>CostControls</c> license feature. Returns 404 when the
-    /// budget does not exist.
+    /// proxy. Admin-only. Returns 404 when the budget does not exist.
     /// </summary>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    [RequiresFeature(LicenseFeature.CostControls)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         ICostLimit? limit = await costLimits.FindAsync(id, cancellationToken);

@@ -12,7 +12,7 @@ useDefault = true
 
 [allowlist]
 regexes = [
-  # Test-signed Enterprise license JWT used by the e2e/perf stacks. Signed with the
+  # Test-signed Enterprise support-key JWT used by the e2e stack. Signed with the
   # throwaway test private key whose public half is the embedded key; grants nothing
   # against production. Matched by its unique signature segment.
   '''u6J5NJhOP7EUA2tKbRKQcs7T8gmPqXuwGIXiAIUpujUs1zikc-QCbK0x0y2dJWzd_ZIE4GlZgH1aaEGG1EaH_w''',

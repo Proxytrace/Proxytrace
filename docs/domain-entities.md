@@ -121,7 +121,7 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
 **Adopters:**
 - **`Evaluator`** — archiving deletes its `TestSuiteEvaluatorEntity` rows via `ArchiveRelationsAsync`
   so suites stop using it; past `TestResult` evaluations still resolve it by id.
-- **`Agent`** — list query + the licensed-agent count (`CountNonSystemAsync`) exclude archived;
+- **`Agent`** — list query + the non-system agent count (`CountNonSystemAsync`) exclude archived;
   versions/suites/calls are preserved (the `Cascade` no longer fires). The controller refuses to
   archive **system agents** (`IsSystemAgent`: Tracey, optimizers, agentic-evaluator judges) with a
   409. Ingestion attribution (`GetOrCreateAsync`/`FindByNameAsync`) is a by-key lookup, so an

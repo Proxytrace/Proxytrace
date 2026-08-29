@@ -106,6 +106,5 @@ The optimization and curation workflows need a key with **MCP write**; the read-
 
 ::: warning Writes have real effects
 Write tools act immediately — there is no confirmation step. In particular, `start_test_run` makes
-real LLM calls against the agent's endpoint and **incurs cost**. The proposal and theory tools require
-a license tier that includes optimization features.
+real LLM calls against the agent's endpoint and **incurs cost**.
 :::

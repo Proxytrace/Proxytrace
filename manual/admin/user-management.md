@@ -52,12 +52,6 @@ Expired). Use **Revoke** to cancel one that hasn't been used yet. The link is **
 after creation — invite tokens are stored hashed, so if you lose a link, revoke the invite and create
 a new one.
 
-::: warning Free tier is single-user
-The **Free** tier is limited to a **single user**. Once that seat is taken, creating an invite is
-rejected with an upgrade prompt — user management is effectively disabled until you upgrade. See
-[Licensing](/admin/licensing).
-:::
-
 ## Assigning users to projects
 
 Click **Projects** on a user's row to open the project assignment editor. Tick a project to add

@@ -20,8 +20,7 @@ export interface JudgeChoice {
 
 interface Props {
   suggestion: EvaluatorSuggestionDto;
-  destination: { name: string; caseCount: number; limitReached: boolean };
-  licensed: boolean;
+  destination: { name: string; caseCount: number };
   choice: JudgeChoice;
   onChange: (choice: JudgeChoice) => void;
 }
@@ -40,7 +39,7 @@ interface Props {
  * once is what lets the choice be compared instead of discovered — the old card revealed the blast
  * radius only *after* the option was selected, and never mentioned the redirect at all.
  */
-export function EvaluatorSuggestionCard({ suggestion, destination, licensed, choice, onChange }: Props) {
+export function EvaluatorSuggestionCard({ suggestion, destination, choice, onChange }: Props) {
   const { t } = useLingui();
 
   return (
@@ -52,15 +51,7 @@ export function EvaluatorSuggestionCard({ suggestion, destination, licensed, cho
       <p className="text-body-sm text-secondary">{suggestion.reason}</p>
       <p className="text-h2 font-semibold text-primary">{suggestion.name}</p>
 
-      {!licensed ? (
-        <p className="text-body-sm text-secondary">
-          <Trans>
-            Agentic evaluators are not included in your licence, so these cases will be scored by
-            the suite's existing evaluators.
-          </Trans>
-        </p>
-      ) : (
-        <RadioGroup
+      <RadioGroup
           name="synthesis-judge"
           ariaLabel={t`What to do with this judge`}
           value={choice.target}
@@ -81,17 +72,13 @@ export function EvaluatorSuggestionCard({ suggestion, destination, licensed, cho
             caution
           />
 
-          {/* The Free tier caps MaxTestSuites at 1, so there is no room for a second suite — offer
-              the option only where it can actually succeed rather than letting the server 402. */}
-          {!destination.limitReached && (
-            <JudgeOption
-              value={EvaluatorSuggestionTarget.NewSuite}
-              testId="synthesis-judge-new-suite"
-              recommended={suggestion.target === EvaluatorSuggestionTarget.NewSuite}
-              title={t`Put the cases in a new suite`}
-              consequence={t`They go there instead of ${destination.name}, with the judge attached.`}
-            />
-          )}
+          <JudgeOption
+            value={EvaluatorSuggestionTarget.NewSuite}
+            testId="synthesis-judge-new-suite"
+            recommended={suggestion.target === EvaluatorSuggestionTarget.NewSuite}
+            title={t`Put the cases in a new suite`}
+            consequence={t`They go there instead of ${destination.name}, with the judge attached.`}
+          />
           {choice.target === EvaluatorSuggestionTarget.NewSuite && (
             <div className="pl-6">
               <Input
@@ -111,7 +98,6 @@ export function EvaluatorSuggestionCard({ suggestion, destination, licensed, cho
             consequence={t`${destination.name}'s current evaluators score the cases.`}
           />
         </RadioGroup>
-      )}
     </div>
   );
 }

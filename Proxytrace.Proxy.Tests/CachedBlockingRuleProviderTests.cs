@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Proxytrace.Domain.CustomAnomaly;
-using Proxytrace.Licensing;
 using Proxytrace.Proxy.Internal;
 
 namespace Proxytrace.Proxy.Tests;
@@ -65,19 +64,6 @@ public sealed class CachedBlockingRuleProviderTests
     }
 
     [TestMethod]
-    public async Task GetRulesAsync_UnlicensedFeature_ReturnsEmptyWithoutRepositoryCall()
-    {
-        var detectors = Substitute.For<ICustomAnomalyDetectorRepository>();
-        var provider = NewProvider(detectors, TimeSpan.FromSeconds(30), featureEnabled: false);
-
-        var rules = await provider.GetRulesAsync(Guid.NewGuid(), CancellationToken.None);
-
-        rules.Should().BeEmpty();
-        await detectors.DidNotReceive()
-            .GetEnabledBlockingRulesByProjectAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-    }
-
-    [TestMethod]
     public async Task GetRulesAsync_RepositoryError_FailsOpenAndDoesNotCacheTheFailure()
     {
         var projectId = Guid.NewGuid();
@@ -98,14 +84,10 @@ public sealed class CachedBlockingRuleProviderTests
 
     private static CachedBlockingRuleProvider NewProvider(
         ICustomAnomalyDetectorRepository detectors,
-        TimeSpan ttl,
-        bool featureEnabled = true)
+        TimeSpan ttl)
     {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.CustomAnomalyDetectors).Returns(featureEnabled);
         return new CachedBlockingRuleProvider(
             detectors,
-            license,
             new MemoryCache(new MemoryCacheOptions()),
             ttl,
             NullLogger<CachedBlockingRuleProvider>.Instance);

@@ -14,8 +14,7 @@ import { EmptyDetectorDetail } from './EmptyDetectorDetail';
 import { DetectorFormModal } from './DetectorFormModal';
 
 /** Detectors tab: master/detail over the project's custom anomaly detectors — rail on the left,
- * the selected detector's instructions/triggers/scope on the right. Mounted behind
- * `RequiresFeature` (Enterprise), so this body assumes the feature is licensed. */
+ * the selected detector's instructions/triggers/scope on the right. */
 export function DetectorsTab() {
   const { t } = useLingui();
   const { show: toast } = useToast();

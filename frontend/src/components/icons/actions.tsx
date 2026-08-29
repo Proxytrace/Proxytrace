@@ -133,7 +133,7 @@ export function StopIcon({ size = 16, className }: { size?: number; className?: 
   );
 }
 
-/** Closed padlock — marks license-gated nav entries and upgrade affordances. */
+/** Closed padlock — security and locked-state affordances. */
 export function LockIcon(props: IconProps) {
   return (
     <Svg {...props}>

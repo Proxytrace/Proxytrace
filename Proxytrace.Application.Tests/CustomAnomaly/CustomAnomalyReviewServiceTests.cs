@@ -15,7 +15,6 @@ using Proxytrace.Domain.CustomAnomaly;
 using Nordstein.Core.AI.Messages;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Notification;
-using Proxytrace.Licensing;
 using Nordstein.Core.AI.Serialization;
 using Nordstein.Core.Testing;
 
@@ -41,7 +40,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
                 return Task.CompletedTask;
             });
 
-        IServiceProvider services = GetServices(builder => Register(builder, LicenseOn(), broadcaster, notifications, clients));
+        IServiceProvider services = GetServices(builder => Register(builder, broadcaster, notifications, clients));
         var detector = await CreateDetectorAsync(services, "Refund promises", "refund", isEnabled: true);
         clients.ByAgentId[detector.Agent.Id] = CannedClient(services, AnomalousJson);
         var call = await CreateCallAsync(services, "I demand a refund immediately!");
@@ -97,7 +96,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
     public async Task ReviewAsync_NonAnomalousVerdict_PersistsNothing()
     {
         var (broadcaster, notifications, clients) = BuildCollaborators();
-        IServiceProvider services = GetServices(builder => Register(builder, LicenseOn(), broadcaster, notifications, clients));
+        IServiceProvider services = GetServices(builder => Register(builder, broadcaster, notifications, clients));
         var detector = await CreateDetectorAsync(services, "Refund promises", "refund", isEnabled: true);
         clients.ByAgentId[detector.Agent.Id] = CannedClient(services, BenignJson);
         var call = await CreateCallAsync(services, "I demand a refund immediately!");
@@ -112,7 +111,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
     public async Task ReviewAsync_JudgeThrows_OtherDetectorsStillReview()
     {
         var (broadcaster, notifications, clients) = BuildCollaborators();
-        IServiceProvider services = GetServices(builder => Register(builder, LicenseOn(), broadcaster, notifications, clients));
+        IServiceProvider services = GetServices(builder => Register(builder, broadcaster, notifications, clients));
         var failing = await CreateDetectorAsync(services, "Failing detector", "refund", isEnabled: true);
         var working = await CreateDetectorAsync(services, "Working detector", "refund", isEnabled: true);
         clients.ByAgentId[failing.Agent.Id] = new ThrowingClient();
@@ -130,7 +129,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
     public async Task ReviewAsync_DisabledDetector_IsSkipped()
     {
         var (broadcaster, notifications, clients) = BuildCollaborators();
-        IServiceProvider services = GetServices(builder => Register(builder, LicenseOn(), broadcaster, notifications, clients));
+        IServiceProvider services = GetServices(builder => Register(builder, broadcaster, notifications, clients));
         await CreateDetectorAsync(services, "Disabled detector", "refund", isEnabled: false);
         var call = await CreateCallAsync(services, "I demand a refund immediately!");
 
@@ -144,7 +143,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
     public async Task ReviewAsync_CallFromOutOfScopeAgent_IsSkipped()
     {
         var (broadcaster, notifications, clients) = BuildCollaborators();
-        IServiceProvider services = GetServices(builder => Register(builder, LicenseOn(), broadcaster, notifications, clients));
+        IServiceProvider services = GetServices(builder => Register(builder, broadcaster, notifications, clients));
 
         // Scope the detector to a different agent than the one making the call.
         var scopedAgent = await services.GetRequiredService<IAgentGenerator>()
@@ -162,7 +161,7 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
     public async Task ReviewAsync_NoTriggerMatch_DoesNotInvokeJudge()
     {
         var (broadcaster, notifications, clients) = BuildCollaborators();
-        IServiceProvider services = GetServices(builder => Register(builder, LicenseOn(), broadcaster, notifications, clients));
+        IServiceProvider services = GetServices(builder => Register(builder, broadcaster, notifications, clients));
         await CreateDetectorAsync(services, "Refund promises", "refund", isEnabled: true);
         var call = await CreateCallAsync(services, "What is the weather like today?");
 
@@ -172,43 +171,17 @@ public sealed class CustomAnomalyReviewServiceTests : BaseTest<Module>
         clients.SkipIngestionFlags.Should().BeEmpty("without a trigger hit there is no LLM review");
     }
 
-    [TestMethod]
-    public async Task ReviewAsync_FeatureNotLicensed_IsDormant()
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.CustomAnomalyDetectors).Returns(false);
-        var (broadcaster, notifications, clients) = BuildCollaborators();
-        IServiceProvider services = GetServices(builder => Register(builder, license, broadcaster, notifications, clients));
-        var detector = await CreateDetectorAsync(services, "Refund promises", "refund", isEnabled: true);
-        clients.ByAgentId[detector.Agent.Id] = CannedClient(services, AnomalousJson);
-        var call = await CreateCallAsync(services, "I demand a refund immediately!");
-
-        await ResolveService(services).ReviewAsync(call.Id, CancellationToken);
-
-        await AssertNothingRecordedAsync(services, broadcaster, notifications, call.Id);
-        clients.SkipIngestionFlags.Should().BeEmpty("an unlicensed review pipeline is dormant");
-    }
-
     // ── helpers ───────────────────────────────────────────────────────────────
-
-    private static ILicenseService LicenseOn()
-    {
-        var license = Substitute.For<ILicenseService>();
-        license.IsFeatureEnabled(LicenseFeature.CustomAnomalyDetectors).Returns(true);
-        return license;
-    }
 
     private static (ICustomAnomalyBroadcaster Broadcaster, INotificationService Notifications, ClientMap Clients) BuildCollaborators()
         => (Substitute.For<ICustomAnomalyBroadcaster>(), Substitute.For<INotificationService>(), new ClientMap());
 
     private static void Register(
         ContainerBuilder builder,
-        ILicenseService license,
         ICustomAnomalyBroadcaster broadcaster,
         INotificationService notifications,
         ClientMap clients)
     {
-        builder.RegisterInstance(license).As<ILicenseService>();
         builder.RegisterInstance(broadcaster).As<ICustomAnomalyBroadcaster>();
         builder.RegisterInstance(notifications).As<INotificationService>();
         builder.RegisterInstance<ModelClientFactory>((agent, _, skipIngestion) => clients.Resolve(agent, skipIngestion));

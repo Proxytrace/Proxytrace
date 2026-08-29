@@ -1,8 +1,10 @@
 namespace Proxytrace.Licensing;
 
 /// <summary>
-/// An immutable point-in-time view of the resolved license: tier, status, validity window,
-/// the effective features and limits in force, and where the license came from.
+/// An immutable point-in-time view of the resolved support key: tier, status, validity window,
+/// and where the key came from. Every feature of Proxytrace is available regardless of the
+/// snapshot — the license key only records whether the deployment holds an Enterprise support
+/// contract.
 /// </summary>
 /// <param name="Offline">
 /// True when the license JWT carries the <c>offline: true</c> claim — an air-gapped,
@@ -17,33 +19,25 @@ public sealed record LicenseSnapshot(
     DateTimeOffset? GracePeriodEndsAt,
     string? CustomerEmail,
     string? Jti,
-    IReadOnlySet<LicenseFeature> Features,
-    IReadOnlyDictionary<LicenseLimit, long> Limits,
     LicenseSource Source = LicenseSource.None,
     string? InvalidReason = null,
     bool Offline = false)
 {
     /// <summary>
-    /// Builds the default Free-tier snapshot used when no license JWT is configured.
+    /// Builds the default snapshot used when no support key is configured.
     /// </summary>
-    public static LicenseSnapshot Free()
-    {
-        var definition = LicensePolicy.For(LicenseTier.Free);
-        return new LicenseSnapshot(
-            LicenseTier.Free,
-            LicenseStatus.Free,
-            ExpiresAt: null,
-            GracePeriodEndsAt: null,
-            CustomerEmail: null,
-            Jti: null,
-            definition.Features,
-            definition.Limits);
-    }
+    public static LicenseSnapshot Free() => new(
+        LicenseTier.Free,
+        LicenseStatus.Free,
+        ExpiresAt: null,
+        GracePeriodEndsAt: null,
+        CustomerEmail: null,
+        Jti: null);
 
     /// <summary>
-    /// Builds the snapshot used when a configured license fails validation: Free-tier
-    /// entitlements with <see cref="LicenseStatus.Invalid"/> and the rejection reason, so the
-    /// deployment keeps running while the UI can surface the problem.
+    /// Builds the snapshot used when a configured key fails validation: Free tier with
+    /// <see cref="LicenseStatus.Invalid"/> and the rejection reason, so the deployment keeps
+    /// running while the UI can surface the problem.
     /// </summary>
     public static LicenseSnapshot Invalid(LicenseSource source, string reason)
         => Free() with
@@ -52,24 +46,4 @@ public sealed record LicenseSnapshot(
             Source = source,
             InvalidReason = reason,
         };
-
-    /// <summary>
-    /// Builds an active, perpetual Enterprise-tier snapshot with no JWT identity. Because
-    /// <see cref="Jti"/> is null, the background check service never re-verifies or degrades it.
-    /// Used by kiosk/demo deployments to showcase the full feature set without a signed license.
-    /// </summary>
-    public static LicenseSnapshot Enterprise(string? customerEmail = null)
-    {
-        var definition = LicensePolicy.For(LicenseTier.Enterprise);
-        return new LicenseSnapshot(
-            LicenseTier.Enterprise,
-            LicenseStatus.Active,
-            ExpiresAt: null,
-            GracePeriodEndsAt: null,
-            CustomerEmail: customerEmail,
-            Jti: null,
-            definition.Features,
-            definition.Limits,
-            LicenseSource.Override);
-    }
 }

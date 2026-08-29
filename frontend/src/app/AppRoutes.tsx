@@ -5,8 +5,6 @@ import { LocaleSync } from '../i18n/LocaleSync';
 import { Shell } from '../components/layout/Shell';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import ProjectProvider from '../contexts/ProjectProvider';
-import { RequiresFeature } from '../components/license/RequiresFeature';
-import { UpgradePlaceholder } from '../components/license/UpgradePlaceholder';
 import { PageLoader } from './PageLoader';
 import { ErrorLogNavBridge } from './ErrorLogNavBridge';
 import { setupApi } from '../api/setup';
@@ -120,7 +118,7 @@ export function AppRoutes() {
         <Route path="sessions/:sessionId" element={wrap(<SessionView />)} />
         <Route path="anomalies" element={wrap(<AnomalyDashboard />)} />
         <Route path="costs" element={wrap(<Costs />)} />
-        <Route path="tracey-ai" element={wrap(<RequiresFeature feature="Tracey"><TraceyAI /></RequiresFeature>)} />
+        <Route path="tracey-ai" element={wrap(<TraceyAI />)} />
         <Route path="agents" element={wrap(<Agents />)} />
         <Route path="suites" element={wrap(<Suites />)} />
         <Route path="evaluators" element={wrap(<Evaluators />)} />
@@ -131,13 +129,9 @@ export function AppRoutes() {
         <Route path="notifications/:id" element={<NotificationDeepLinkRedirect />} />
         <Route path="playground" element={wrap(<Playground />)} />
         <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />
-        <Route path="upgrade" element={wrap(<UpgradePlaceholder />)} />
         {/* Per-user account security (MFA) — available to every authenticated user, not admin-gated. */}
         <Route path="account" element={wrap(<AccountSecurity />)} />
-        <Route
-          path="proposals"
-          element={wrap(<RequiresFeature feature="OptimizationProposals"><Proposals /></RequiresFeature>)}
-        />
+        <Route path="proposals" element={wrap(<Proposals />)} />
         {/* The entire settings hub is admin-only (the backend independently enforces this on every
             settings-mutating endpoint). Providers, Users, and the Error Log now live here as
             sections rather than as top-level routes. */}

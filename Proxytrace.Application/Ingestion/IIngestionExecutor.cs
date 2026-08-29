@@ -3,7 +3,7 @@ using Proxytrace.Messaging;
 namespace Proxytrace.Application.Ingestion;
 
 /// <summary>
-/// Persists a captured call <b>in-process</b>: enforces the monthly trace quota, re-hydrates the
+/// Persists a captured call <b>in-process</b>: re-hydrates the
 /// referenced provider/project, and hands the work to the ingestion processor.
 /// <para>
 /// This is the exact work the <see cref="IIngestionStream"/> consumer does per envelope, exposed

@@ -25,33 +25,23 @@ OPENAI_API_KEY=sk-... bash e2e/run.sh
 
 Without the key, `@llm` specs are skipped automatically — the rest of the suite still passes.
 
-## Licensing
+## Support key
 
-The e2e overlay injects a committed throwaway Enterprise license (`PROXYTRACE_LICENSE` in
-`docker-compose.e2e.yml`) so the suite can exercise paid features such as optimization proposals.
-It is an ES256 token (kid `2026-05`) signed with the test private key whose public half is the
-active embedded verification key, so it validates in any build configuration with no public-key
-override. The keypair is generated for tests only and grants nothing against production, which
-ships a different embedded public key. No action is needed to run the suite; this is purely
-informational.
-
-To also cover the **Free tier**, the overlay starts a second API (`api-free`) and frontend
-(`frontend-free`) with **no license configured** — `LicenseService` falls back to Free. These share
-the same database as the Enterprise pair, so the Free stack reuses the admin/project created during
-setup. The `licensing` Playwright project points at the Free stack (`:5103`) and asserts the
-feature gates the Enterprise stack can never show (the optimization-proposals API returns `402`, the
-top-bar badge reads "Free" and links to `/upgrade`, gated routes render the upgrade placeholder).
+The e2e overlay injects a committed throwaway Enterprise **support key** (`PROXYTRACE_LICENSE` in
+`docker-compose.e2e.yml`) so the suite can assert the "contract on file" path (the top-bar chip and
+`GET /api/license`). Nothing is gated on it — every feature is available with or without a key. It
+is an ES256 token signed with a test private key whose public half is baked into the e2e images via
+the `LICENSE_PUBLIC_KEY` build-arg; production images embed a different key and reject it. No action
+is needed to run the suite; this is purely informational.
 
 ## Compose ports (e2e overlay)
 
 | Service  | Host port | Purpose |
 |----------|-----------|---------|
-| nginx (frontend) | 5101 | Playwright base URL (Enterprise) |
-| api | 5100 | REST / SSE (Enterprise) |
+| nginx (frontend) | 5101 | Playwright base URL |
+| api | 5100 | REST / SSE |
 | proxy | 5102 | OpenAI-compatible ingestion endpoint |
-| nginx (frontend-free) | 5103 | Base URL for the `licensing` project (Free tier) |
-| api-free | — | Free-tier REST (internal only; reached via `:5103`) |
-| postgres | 5432 | Database (fresh per run; shared by both tiers) |
+| postgres | 5432 | Database (fresh per run) |
 | redis | 6379 | Ingestion transport |
 
 ## Test projects
@@ -62,12 +52,11 @@ assume ordering. Projects:
 | Project | Covers | Auth | LLM |
 |---------|--------|------|-----|
 | `setup` | first-admin + initial setup, saves browser storageState | — | no |
-| `core` | all CRUD/UI flows: providers, agents, suites, traces, evaluators, dashboard, settings, admin, proposals (seeded), error handling | storageState | no |
+| `core` | all CRUD/UI flows: providers, agents, suites, traces, evaluators, dashboard, settings, admin, proposals (seeded), the support key, error handling | storageState | no |
 | `smoke` | every main route loads clean | storageState | no |
 | `auth-flows` | login/logout/signup/access-control from a clean session | **no** storageState | no |
 | `llm-ingestion` / `llm-proxy-trace` | real proxy call → trace in Traces UI | storageState | yes |
 | `llm-test-run` / `llm-playground` / `llm-evaluator-playground` | runs, playground, agentic test bench | storageState | yes |
-| `licensing-setup` / `licensing` | Free-tier feature gates on the `:5103` stack | storageState | no |
 
 Non-LLM coverage (`core`, `smoke`, `auth-flows`) runs in CI on every PR; the `llm-*` projects
 run only when `OPENAI_API_KEY` is present.
@@ -78,7 +67,6 @@ npx playwright test --project=smoke
 npx playwright test --project=core
 npx playwright test --project=auth-flows
 npx playwright test --project=llm-ingestion --project=llm-test-run   # needs OPENAI_API_KEY
-npx playwright test --project=licensing                              # Free stack on :5103
 ```
 
 ## Seeding without an LLM

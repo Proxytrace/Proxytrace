@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { TestRunScheduleDto } from '../../../api/models';
-import { useFeature } from '../../../hooks/useLicense';
-import { showUpgradeModal } from '../../../components/license/UpgradeModal';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
-import { ClockIcon, LockIcon } from '../../../components/icons';
+import { ClockIcon } from '../../../components/icons';
 import { useTestRunSchedules } from '../../runs/hooks/useTestRunSchedules';
 import { useTestRunScheduleMutations } from '../../runs/hooks/useTestRunScheduleMutations';
 import { ScheduleCard } from '../../runs/components/ScheduleCard';
@@ -18,12 +16,10 @@ interface Props { suiteId: string; suiteName: string; agentId: string; }
 
 /**
  * Per-suite schedules surfaced inside the suite detail. Reuses the Runs schedule card/dialog/hooks,
- * filtering the agent-scoped list down to this suite and locking creation to it. Gated behind the
- * `ScheduledTestRuns` feature like the rest of scheduling.
+ * filtering the agent-scoped list down to this suite and locking creation to it.
  */
 export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
   const { t } = useLingui();
-  const licensed = useFeature('ScheduledTestRuns');
   const navigate = useNavigate();
   const { schedules, isLoading } = useTestRunSchedules(agentId);
   const { create, update, remove } = useTestRunScheduleMutations();
@@ -36,7 +32,6 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
 
   function close() { setDialogOpen(false); setEditing(null); }
   function openCreate() {
-    if (!licensed) { showUpgradeModal({ errorType: 'FeatureNotLicensed' }); return; }
     setEditing(null);
     setDialogOpen(true);
   }
@@ -64,10 +59,10 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
           variant="secondary"
           size="sm"
           onClick={openCreate}
-          leftIcon={licensed ? <ClockIcon size={13} /> : <LockIcon size={13} />}
+          leftIcon={<ClockIcon size={13} />}
           data-testid="suite-schedule-create-btn"
         >
-          {licensed ? <Trans>New schedule</Trans> : <Trans>Upgrade to schedule</Trans>}
+          <Trans>New schedule</Trans>
         </Button>
       </div>
 

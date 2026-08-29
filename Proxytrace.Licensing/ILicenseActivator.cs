@@ -23,8 +23,8 @@ public interface ILicenseActivator
     LicenseSnapshot Activate(string licenseJwt, LicenseSource source);
 
     /// <summary>
-    /// Like <see cref="Activate"/>, but never throws: a rejected JWT activates a Free-tier
-    /// snapshot with <see cref="LicenseStatus.Invalid"/> and the rejection reason instead. Used
+    /// Like <see cref="Activate"/>, but never throws: a rejected JWT activates a Free
+    /// (no-contract) snapshot with <see cref="LicenseStatus.Invalid"/> and the rejection reason instead. Used
     /// when applying a previously accepted license (e.g. the stored one at startup) that may
     /// have expired since.
     /// </summary>

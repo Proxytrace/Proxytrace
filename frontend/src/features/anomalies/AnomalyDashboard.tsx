@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { cn } from '../../lib/cn';
 import { Tabs } from '../../components/ui/Tabs';
-import { RequiresFeature } from '../../components/license/RequiresFeature';
 import { AnomalyOverview } from './components/AnomalyOverview';
 import { DetectorsTab } from './detectors/components/DetectorsTab';
 import { AskTraceyButton } from '../../components/tracey/AskTraceyButton';
@@ -13,9 +12,7 @@ const TABS = { overview: 'overview', detectors: 'detectors' } as const;
 type TabValue = (typeof TABS)[keyof typeof TABS];
 
 /**
- * Anomaly dashboard page: an **Overview** tab (timeline + recent list) and a **Detectors** CRUD tab
- * gated behind the Enterprise `CustomAnomalyDetectors` feature (the panel renders the upgrade
- * placeholder when unlicensed, so the tab is always visible).
+ * Anomaly dashboard page: an **Overview** tab (timeline + recent list) and a **Detectors** CRUD tab.
  */
 export default function AnomalyDashboard() {
   const { t } = useLingui();
@@ -41,9 +38,7 @@ export default function AnomalyDashboard() {
       </div>
 
       {tab === TABS.overview && <AnomalyOverview />}
-      {tab === TABS.detectors && (
-        <RequiresFeature feature="CustomAnomalyDetectors"><DetectorsTab /></RequiresFeature>
-      )}
+      {tab === TABS.detectors && <DetectorsTab />}
     </div>
   );
 }

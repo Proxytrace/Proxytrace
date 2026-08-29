@@ -32,9 +32,9 @@ the primary create/edit dialog, one detail view). Fewer is better.
 
 **Skip pages the kiosk can't represent** — login/MFA, user management, invites, and deployment/ops
 pages with no product UI: the kiosk has no sign-in and exactly one seeded user. Leave those without
-screenshots or handle case-by-case. `/settings/*` *is* reachable — the demo user is an administrator
-and the kiosk runs on an Enterprise override license, so admin-only and licensed surfaces (settings,
-cost budgets, Tracey) render fully rather than locked.
+screenshots or handle case-by-case. `/settings/*` *is* reachable — the demo user is an administrator,
+so admin-only surfaces (settings, cost budgets) render fully; every feature is available on every
+install, so nothing else is locked either.
 
 ### 2. Preflight
 - `docker info` succeeds (else stop).
@@ -111,4 +111,4 @@ shot, raise the viewport height: `launch({ height: 1600 })`.
 
 ## Not in scope
 Annotations/callouts, a global screenshot manifest or batch refresh, non-Docker capture, and
-screenshots of auth / user-management / licensing-admin UI.
+screenshots of auth / user-management / support-key UI.

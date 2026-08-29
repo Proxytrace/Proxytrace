@@ -16,7 +16,6 @@ internal sealed class StoredLicenseStartupService : IHostedService
 {
     private readonly IStoredLicenseStore store;
     private readonly ILicenseActivator activator;
-    private readonly ILicenseService licenseService;
     private readonly ILogger<StoredLicenseStartupService> logger;
 
     /// <summary>
@@ -25,12 +24,10 @@ internal sealed class StoredLicenseStartupService : IHostedService
     public StoredLicenseStartupService(
         IStoredLicenseStore store,
         ILicenseActivator activator,
-        ILicenseService licenseService,
         ILogger<StoredLicenseStartupService> logger)
     {
         this.store = store;
         this.activator = activator;
-        this.licenseService = licenseService;
         this.logger = logger;
     }
 
@@ -39,10 +36,6 @@ internal sealed class StoredLicenseStartupService : IHostedService
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        // Kiosk/demo deployments run on a fixed override snapshot; never replace it.
-        if (licenseService.Current.Source == LicenseSource.Override)
-            return;
-
         try
         {
             var stored = await store.GetAsync(cancellationToken);
@@ -50,7 +43,7 @@ internal sealed class StoredLicenseStartupService : IHostedService
                 return;
 
             // ActivateOrInvalid: an expired/rejected stored license surfaces as Invalid in the
-            // UI (with Free entitlements) instead of being silently ignored, so an admin can
+            // UI instead of being silently ignored, so an admin can
             // correct it in the settings.
             activator.ActivateOrInvalid(stored, LicenseSource.Stored);
         }

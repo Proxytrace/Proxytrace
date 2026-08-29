@@ -6,7 +6,7 @@ namespace Proxytrace.Licensing;
 public enum LicenseSource
 {
     /// <summary>
-    /// No license is configured; the deployment runs the Free tier.
+    /// No support key is configured.
     /// </summary>
     None,
 
@@ -20,9 +20,4 @@ public enum LicenseSource
     /// database. A stored license takes precedence over an environment-supplied one.
     /// </summary>
     Stored,
-
-    /// <summary>
-    /// A pre-resolved override snapshot (kiosk/demo deployments). Not user-manageable.
-    /// </summary>
-    Override,
 }

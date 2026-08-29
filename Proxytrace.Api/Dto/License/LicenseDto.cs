@@ -1,7 +1,7 @@
 namespace Proxytrace.Api.Dto.License;
 
 /// <summary>
-/// Client-facing view of the current license state.
+/// Client-facing view of the current support-key state.
 /// </summary>
 public sealed record LicenseDto(
     string Tier,
@@ -11,7 +11,4 @@ public sealed record LicenseDto(
     DateTimeOffset? ExpiresAt,
     DateTimeOffset? GracePeriodEndsAt,
     string? CustomerEmail,
-    IReadOnlyList<string> Features,
-    IReadOnlyDictionary<string, long> Limits,
-    bool QuotaExceeded,
     bool Offline);

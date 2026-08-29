@@ -311,28 +311,8 @@ public sealed class Module : Autofac.Module
             builder.RegisterModule(new Messaging.Module());
         }
 
-        builder.RegisterType<TraceQuotaGuard>()
-            .As<ITraceQuotaGuard>()
-            .AsSelf()
-            .SingleInstance()
-            .IfNotRegistered(typeof(TraceQuotaGuard));
-
-        const string traceQuotaGuardKey = "Proxytrace.Application.TraceQuotaGuard.Registered";
-        if (!builder.Properties.ContainsKey(traceQuotaGuardKey))
-        {
-            builder.Properties[traceQuotaGuardKey] = true;
-            builder.RegisterServiceCollection(services =>
-                services.AddSingleton<IHostedService>(sc =>
-                {
-                    var kiosk = sc.GetRequiredService<KioskOptions>();
-                    return kiosk.Enabled
-                        ? new NullHostedService()
-                        : sc.GetRequiredService<TraceQuotaGuard>();
-                }));
-        }
-
         // Cost budgets. The guard is a singleton so the hosted-service registration and any direct
-        // resolve share one instance, mirroring TraceQuotaGuard above.
+        // resolve share one instance.
         builder.Register(_ => new CostControlOptions())
             .As<CostControlOptions>()
             .SingleInstance()

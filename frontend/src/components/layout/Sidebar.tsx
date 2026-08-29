@@ -1,10 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { NavItem } from './NavItem';
-import { LockedNavItem } from './LockedNavItem';
-import { isNavEntryLocked } from './navGating';
 import { ProjectSelector } from './ProjectSelector';
 import { navGroups, footerNavEntries, DOCS_NAV_CODE } from './shellNav';
-import { useLicense } from '../../hooks/useLicense';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useKiosk } from '../../contexts/KioskContext';
@@ -21,15 +18,13 @@ interface SidebarProps {
   onMobileNavClose: () => void;
 }
 
-/** App navigation rail — inline on md+, off-canvas drawer below. Pulls its own license/role/kiosk
+/** App navigation rail — inline on md+, off-canvas drawer below. Pulls its own role/kiosk
  *  context so the Shell only owns the collapse/drawer state. */
 export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarProps) {
   const { t, i18n } = useLingui();
   // The drawer always shows full labels — icon-only collapse is a desktop space trade-off.
   const isMobile = useIsMobile();
   const navCollapsed = isMobile ? false : collapsed;
-  const { data: license } = useLicense();
-  const licenseFeatures = license?.features ?? [];
   // interactive == full read-write kiosk (LLM endpoint configured); also whether Tracey is usable.
   const { interactive } = useKiosk();
   // Role is only populated in local-auth mode; OIDC users won't see admin-only nav (the backend
@@ -101,24 +96,15 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
                   {i18n._(group.label)}
                 </div>
               )}
-              {group.items.map(item =>
-                isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
-                  <LockedNavItem
-                    key={item.to}
-                    label={i18n._(item.label)}
-                    code={item.code}
-                    collapsed={navCollapsed}
-                  />
-                ) : (
-                  <NavItem
-                    key={item.to}
-                    label={i18n._(item.label)}
-                    code={item.code}
-                    to={item.to}
-                    collapsed={navCollapsed}
-                  />
-                ),
-              )}
+              {group.items.map(item => (
+                <NavItem
+                  key={item.to}
+                  label={i18n._(item.label)}
+                  code={item.code}
+                  to={item.to}
+                  collapsed={navCollapsed}
+                />
+              ))}
             </div>
           ))}
         </nav>
@@ -152,7 +138,7 @@ export function Sidebar({ collapsed, mobileNavOpen, onMobileNavClose }: SidebarP
             {!navCollapsed && (
               <>
                 <span className="flex-1 text-left"><Trans>Documentation</Trans></span>
-                {/* Kept on the right (like the lock on a gated row) — it opens a new tab. */}
+                {/* Kept on the right — it opens a new tab. */}
                 <ExternalLinkIcon size={13} className="shrink-0 text-muted" />
               </>
             )}

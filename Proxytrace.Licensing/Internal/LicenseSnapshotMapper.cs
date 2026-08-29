@@ -5,9 +5,10 @@ namespace Proxytrace.Licensing.Internal;
 
 /// <summary>
 /// Maps between the Nordstein.Core licensing engine's string-keyed snapshot and Proxytrace's
-/// enum-typed one. The engine resolves every name through
-/// <see cref="ProxytraceLicenseTierPolicy"/> before it reaches a snapshot, so the parses here
-/// always succeed; unknown names are skipped defensively rather than thrown on.
+/// enum-typed one. The engine resolves the tier through
+/// <see cref="ProxytraceLicenseTierPolicy"/> before it reaches a snapshot, so the parse here
+/// always succeeds; unknown tiers fall back to Free defensively. Proxytrace has no feature or
+/// limit vocabulary, so the engine's entitlement sets are not carried over.
 /// </summary>
 internal static class LicenseSnapshotMapper
 {
@@ -20,20 +21,6 @@ internal static class LicenseSnapshotMapper
             ? parsedTier
             : LicenseTier.Free;
 
-        var features = new HashSet<LicenseFeature>();
-        foreach (var feature in snapshot.Features)
-        {
-            if (Enum.TryParse<LicenseFeature>(feature, ignoreCase: true, out var parsed))
-                features.Add(parsed);
-        }
-
-        var limits = new Dictionary<LicenseLimit, long>();
-        foreach (var (name, value) in snapshot.Limits)
-        {
-            if (Enum.TryParse<LicenseLimit>(name, ignoreCase: true, out var parsed))
-                limits[parsed] = value;
-        }
-
         return new LicenseSnapshot(
             tier,
             ToProduct(snapshot.Status),
@@ -41,8 +28,6 @@ internal static class LicenseSnapshotMapper
             snapshot.GracePeriodEndsAt,
             snapshot.CustomerEmail,
             snapshot.Jti,
-            features,
-            limits,
             ToProduct(snapshot.Source),
             snapshot.InvalidReason,
             snapshot.Offline);
@@ -59,8 +44,8 @@ internal static class LicenseSnapshotMapper
             snapshot.GracePeriodEndsAt,
             snapshot.CustomerEmail,
             snapshot.Jti,
-            snapshot.Features.Select(f => f.ToString()).ToHashSet(),
-            snapshot.Limits.ToDictionary(pair => pair.Key.ToString(), pair => pair.Value),
+            new HashSet<string>(),
+            new Dictionary<string, long>(),
             ToCore(snapshot.Source),
             snapshot.InvalidReason,
             snapshot.Offline);
@@ -99,7 +84,6 @@ internal static class LicenseSnapshotMapper
         Core.LicenseSource.None => LicenseSource.None,
         Core.LicenseSource.Environment => LicenseSource.Environment,
         Core.LicenseSource.Stored => LicenseSource.Stored,
-        Core.LicenseSource.Override => LicenseSource.Override,
         _ => LicenseSource.None,
     };
 
@@ -111,7 +95,6 @@ internal static class LicenseSnapshotMapper
         LicenseSource.None => Core.LicenseSource.None,
         LicenseSource.Environment => Core.LicenseSource.Environment,
         LicenseSource.Stored => Core.LicenseSource.Stored,
-        LicenseSource.Override => Core.LicenseSource.Override,
         _ => Core.LicenseSource.None,
     };
 

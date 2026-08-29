@@ -11,7 +11,7 @@ namespace Proxytrace.Proxy.Tests;
 /// of <c>System.Net.Http.HttpClient.openai.*</c> log lines — four handler instances logging one
 /// request, on the hottest path in the system. <c>AddHttpClient</c> shares its plumbing through
 /// <c>TryAddEnumerable</c>, which dedupes only within a single <see cref="IServiceCollection"/>; the
-/// API host composes four modules (Api, Application, Licensing, Proxy) that each call it on their own
+/// API host composes several modules (Api, Application, Licensing, Proxy) that each call it on their own
 /// collection, so the container ended up with one logging filter per module.
 /// </summary>
 [TestClass]

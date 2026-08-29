@@ -4,9 +4,9 @@ import { useLicense } from '../../hooks/useLicense';
 import { AlertTriangleIcon } from '../icons';
 
 /**
- * Slim warning bar pinned above the top bar when a configured license failed
- * validation. The install keeps running with Free-tier entitlements; admins
- * fix the key on the settings License page.
+ * Slim warning bar pinned above the top bar when a configured support key failed validation.
+ * Nothing is gated on it, so the install runs unaffected; admins fix the key on the settings
+ * page so the support contract is recorded correctly.
  */
 export function InvalidLicenseBanner() {
   const { data } = useLicense();
@@ -20,11 +20,11 @@ export function InvalidLicenseBanner() {
     >
       <AlertTriangleIcon size={14} />
       <span>
-        <Trans>The configured license is invalid — running with Free-tier limits.</Trans>
+        <Trans>The configured Enterprise support key is invalid.</Trans>
         {data.invalidReason ? ` (${data.invalidReason})` : ''}
       </span>
       <Link to="/settings/license" className="ml-auto underline underline-offset-2 hover:text-primary">
-        <Trans>Fix license</Trans>
+        <Trans>Fix key</Trans>
       </Link>
     </div>
   );

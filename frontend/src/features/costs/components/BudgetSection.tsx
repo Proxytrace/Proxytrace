@@ -9,8 +9,7 @@ import { BudgetMeterRow } from './BudgetMeterRow';
 
 interface BudgetSectionProps {
   budgets: readonly BudgetRow[];
-  /** Admin *and* licensed — anything less renders the locked state instead of the editor. */
-  canEdit: boolean;
+  /** Only admins may create, edit, or delete budgets; everyone else sees the meters read-only. */
   isAdmin: boolean;
   isLoading: boolean;
   /** False when every scope already holds a budget — there is nothing left to create. */
@@ -21,8 +20,7 @@ interface BudgetSectionProps {
 }
 
 /**
- * The project's monthly budgets as consumption meters. Listing is free on every tier; only
- * changing a budget is licensed, so an unlicensed admin sees the same data behind a locked CTA.
+ * The project's monthly budgets as consumption meters.
  *
  * The create action sits in this card's header and nowhere else — one action, one place, always in
  * the same corner of the thing it acts on. It was previously in the page toolbar (with a second
@@ -31,7 +29,6 @@ interface BudgetSectionProps {
  */
 export function BudgetSection({
   budgets,
-  canEdit,
   isAdmin,
   isLoading,
   canCreate,
@@ -49,7 +46,6 @@ export function BudgetSection({
         description={t`Spend resets on the 1st (UTC). Alerts re-arm and blocks lift automatically.`}
         action={(
           <BudgetActionButton
-            canEdit={canEdit}
             isAdmin={isAdmin}
             canCreate={canCreate}
             isLoading={isLoading}
@@ -79,7 +75,7 @@ export function BudgetSection({
               <BudgetMeterRow
                 key={budget.costLimitId}
                 budget={budget}
-                canEdit={canEdit}
+                canEdit={isAdmin}
                 onEdit={() => onEdit(budget.costLimitId)}
                 onDelete={() => onDelete(budget.costLimitId)}
               />

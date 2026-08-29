@@ -60,4 +60,4 @@ jump to the Traces list. It updates live as new calls are captured.
 To watch anomalies across *every* agent at once — a live timeline, a "needs help" ranking of the
 noisiest agents, and a feed of recently flagged calls — open the
 [Anomaly dashboard](/guide/anomaly-dashboard). It also hosts **custom anomaly detectors**, where an
-LLM reviews calls against instructions you write (an Enterprise feature).
+LLM reviews calls against instructions you write.

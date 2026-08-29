@@ -9,8 +9,7 @@ import { Switch } from '../../../components/ui/Switch';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { RowButton } from '../../../components/ui/RowButton';
-import { SearchIcon, LockIcon } from '../../../components/icons';
-import { useLicense } from '../../../hooks/useLicense';
+import { SearchIcon } from '../../../components/icons';
 import { FOCUS_RING } from '../../../lib/constants';
 
 interface Props {
@@ -25,12 +24,6 @@ interface Props {
 export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId, onSelect, onToggle }: Props) {
   const { t } = useLingui();
   const [search, setSearch] = useState('');
-  const { data: license } = useLicense();
-  // Agentic evaluators require the AgenticEvaluators license feature. Without it, an unattached
-  // agentic evaluator can't be attached (locked); an already-attached one stays removable. The
-  // backend mirrors this by skipping agentic evaluators during runs on unlicensed installs.
-  // eslint-disable-next-line lingui/no-unlocalized-strings -- license feature-flag enum, not UI copy
-  const agenticGated = !(license?.features ?? []).includes('AgenticEvaluators');
 
   const q = search.trim().toLowerCase();
   const filtered = q
@@ -68,8 +61,6 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
               const staged = stagedIds.has(e.id);
               const wasBaseline = baselineIds.has(e.id);
               const focused = selectedId === e.id;
-              // Lock only unattached agentic evaluators on free tier; a staged one stays removable.
-              const locked = agenticGated && e.kind === 'Agentic' && !staged;
               /* eslint-disable lingui/no-unlocalized-strings -- dirty-state tokens, not UI copy */
               const dirtyState: 'added' | 'removed' | null =
                 staged && !wasBaseline ? 'added'
@@ -83,13 +74,11 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                     'transition-colors duration-100 border-b border-hairline border-l-[3px]',
                     staged ? 'border-l-accent' : 'border-l-transparent',
                     focused ? 'bg-white/[0.025]' : 'bg-transparent',
-                    locked && 'opacity-60',
                   )}
                 >
                   <div className="flex items-center gap-2 px-3 py-2.5">
                     <Switch
                       checked={staged}
-                      disabled={locked}
                       onChange={() => onToggle(e.id)}
                       aria-label={staged ? t`Detach ${e.name}` : t`Attach ${e.name}`}
                       data-testid={`edit-suite-evaluator-toggle-${e.id}`}
@@ -100,15 +89,6 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                       className={cn('flex items-center gap-2 flex-1 min-w-0 rounded-sm', FOCUS_RING)}
                     >
                       <span className="text-title font-medium flex-1 min-w-0 truncate">{e.name}</span>
-                      {locked && (
-                        <span
-                          data-testid={`edit-suite-evaluator-lock-${e.id}`}
-                          className="shrink-0 inline-flex items-center text-muted"
-                          title={t`Agentic evaluators require a paid plan`}
-                        >
-                          <LockIcon size={12} />
-                        </span>
-                      )}
                       {dirtyState === 'added' && (
                         <span className="text-caption font-semibold text-accent uppercase tracking-[0.08em] shrink-0"><Trans>+ Added</Trans></span>
                       )}
